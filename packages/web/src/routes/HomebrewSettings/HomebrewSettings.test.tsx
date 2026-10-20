@@ -85,9 +85,21 @@ const writesOf = (fetchMock: ReturnType<typeof stubApi>) =>
 
 const spells = () => screen.getByRole("region", { name: "Spells" });
 const items = () => screen.getByRole("region", { name: "Items" });
-const editor = () => screen.getByRole("dialog");
-const field = (role: "textbox" | "combobox" | "checkbox" | "spinbutton", name: string) =>
-  within(editor()).getByRole(role, { name });
+/** The open dialog by tag: `getByRole("dialog")` walks the whole page's accessibility tree on every helper call. */
+const editor = () => {
+  const open = document.querySelector<HTMLElement>("dialog[open]");
+  if (!open) throw new Error("no dialog is open");
+  return open;
+};
+const FIELD_SELECTOR = {
+  textbox: '[role="textbox"], textarea, input:not([type]), input[type="text"]',
+  combobox: '[role="combobox"], select',
+  checkbox: '[role="checkbox"], input[type="checkbox"]',
+  spinbutton: '[role="spinbutton"], input[type="number"]',
+};
+/** By label and tag rather than `getByRole`, which computes the name of every element of that role in the form. */
+const field = (role: keyof typeof FIELD_SELECTOR, name: string) =>
+  within(editor()).getByLabelText(name, { selector: FIELD_SELECTOR[role] });
 const click = (name: string) => {
   const button = within(editor()).getByRole("button", { name });
   fireEvent.click(button);

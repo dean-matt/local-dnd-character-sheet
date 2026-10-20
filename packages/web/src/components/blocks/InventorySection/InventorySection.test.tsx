@@ -553,6 +553,7 @@ describe("InventorySection", () => {
       enterGold("1250");
       enterGold("1,200+50");
 
+      // A write that is not coming has no signal to wait on; one macrotask lets a queued save start.
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(putBodies(fetchMock)).toHaveLength(0);
     });

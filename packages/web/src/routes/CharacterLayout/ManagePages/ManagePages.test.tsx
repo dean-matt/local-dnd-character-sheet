@@ -58,15 +58,23 @@ async function renderManaging(path = "/characters/abc/p/stats") {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Manage pages" }));
-  await screen.findByRole("heading", { level: 2, name: "Manage pages" });
+  fireEvent.click(await screen.findByText("Manage pages", { selector: "button span" }));
+  await screen.findByText("Manage pages", { selector: "h2" });
   return router;
 }
 
+/** Scoped to the open dialog: a role query on `screen` walks the whole sheet behind it. */
+const dialog = () => {
+  const open = document.querySelector<HTMLElement>("dialog[open]");
+  if (!open) throw new Error("no dialog is open");
+  return within(open);
+};
+
 const navTitles = () =>
-  within(screen.getByRole("navigation", { name: "Character pages" }))
-    .queryAllByRole("link")
-    .map((link) => link.textContent);
+  Array.from(
+    document.querySelectorAll("nav[aria-label='Character pages'] a"),
+    (link) => link.textContent,
+  );
 
 const status = () => document.querySelector("dialog p[aria-live='polite']");
 
@@ -89,7 +97,7 @@ describe("ManagePages", () => {
     stubServer(presetPageRecords());
     await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Close" }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Manage pages" })).toHaveFocus();
@@ -103,7 +111,7 @@ describe("ManagePages", () => {
     const server = stubServer(presetPageRecords());
     await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "Move Stats down" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Move Stats down" }));
 
     await waitFor(() =>
       expect(navTitles()).toEqual(["Spells", "Stats", "Inventory", "Features", ...LATER_TITLES]),
@@ -125,7 +133,7 @@ describe("ManagePages", () => {
     const server = stubServer(presetPageRecords());
     await renderManaging();
 
-    const down = screen.getByRole("button", { name: "Move Stats down" });
+    const down = dialog().getByRole("button", { name: "Move Stats down" });
     act(() => {
       down.click();
       down.click();
@@ -146,11 +154,11 @@ describe("ManagePages", () => {
     const server = stubServer(presetPageRecords());
     await renderManaging();
 
-    const up = screen.getByRole("button", { name: "Move Stats up" });
+    const up = dialog().getByRole("button", { name: "Move Stats up" });
     expect(up).toHaveAttribute("aria-disabled", "true");
     expect(up).toBeEnabled();
     fireEvent.click(up);
-    fireEvent.click(screen.getByRole("button", { name: "Move Notes down" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Move Notes down" }));
 
     expect(server.puts).toHaveLength(0);
   });
@@ -159,7 +167,7 @@ describe("ManagePages", () => {
     stubServer(presetPageRecords());
     const router = await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "Hide Spells" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Hide Spells" }));
 
     await waitFor(() =>
       expect(navTitles()).toEqual(["Stats", "Inventory", "Features", ...LATER_TITLES]),
@@ -178,7 +186,7 @@ describe("ManagePages", () => {
     ]);
     await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "Show Spells" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Show Spells" }));
 
     await waitFor(() =>
       expect(navTitles()).toEqual(["Stats", "Spells", "Inventory", "Features", ...LATER_TITLES]),
@@ -190,7 +198,7 @@ describe("ManagePages", () => {
     stubServer(presetPageRecords());
     const router = await renderManaging("/characters/abc/p/stats");
 
-    fireEvent.click(screen.getByRole("button", { name: "Hide Stats" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Hide Stats" }));
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/spells"));
   });
@@ -203,7 +211,7 @@ describe("ManagePages", () => {
     ]);
     await renderManaging();
 
-    const hide = screen.getByRole("button", { name: "Hide Stats" });
+    const hide = dialog().getByRole("button", { name: "Hide Stats" });
     expect(hide).toHaveAttribute("aria-disabled", "true");
     expect(hide).toHaveAccessibleDescription("The last visible page cannot be hidden or deleted.");
     fireEvent.click(hide);
@@ -216,7 +224,7 @@ describe("ManagePages", () => {
     const server = stubServer([...presetPageRecords(), { ...GRAPPLE, slug: "new-page" }]);
     const router = await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "New page" }));
+    fireEvent.click(dialog().getByRole("button", { name: "New page" }));
 
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.stored().at(-1)).toEqual({
@@ -230,7 +238,7 @@ describe("ManagePages", () => {
     expect(router.state.location.search).toBe("");
     expect(screen.getByRole("heading", { level: 2, name: "Manage pages" })).toBeInTheDocument();
     expect(status()).toHaveTextContent("New page added.");
-    const created = screen.getByRole("textbox", { name: "Rename New page" });
+    const created = dialog().getByRole("textbox", { name: "Rename New page" });
     await waitFor(() => expect(created).toHaveFocus());
     expect(created.closest("[data-page]")).toHaveAttribute("data-page", "new-page-2");
   });
@@ -239,9 +247,9 @@ describe("ManagePages", () => {
     const server = stubServer(presetPageRecords());
     const router = await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "New page" }));
+    fireEvent.click(dialog().getByRole("button", { name: "New page" }));
     await waitFor(() => expect(server.puts).toHaveLength(1));
-    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Undo page change" }));
 
     await waitFor(() => expect(server.puts).toHaveLength(2));
     expect(server.stored().map((page) => page.slug)).not.toContain("new-page");
@@ -252,38 +260,38 @@ describe("ManagePages", () => {
     const server = stubServer([GRAPPLE, ...presetPageRecords()]);
     await renderManaging();
 
-    const field = screen.getByRole("textbox", { name: "Rename Grapple" });
+    const field = dialog().getByRole("textbox", { name: "Rename Grapple" });
     fireEvent.change(field, { target: { value: "Shove" } });
     fireEvent.blur(field);
 
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.stored()[0]).toMatchObject({ slug: "grapple", title: "Shove" });
-    expect(await screen.findByRole("textbox", { name: "Rename Shove" })).toHaveValue("Shove");
+    expect(await dialog().findByRole("textbox", { name: "Rename Shove" })).toHaveValue("Shove");
   });
 
   it("renames a preset in its row, and restoring the defaults puts its title back", async () => {
     const server = stubServer(presetPageRecords());
     await renderManaging();
 
-    const field = screen.getByRole("textbox", { name: "Rename Stats" });
+    const field = dialog().getByRole("textbox", { name: "Rename Stats" });
     fireEvent.change(field, { target: { value: "Numbers" } });
     fireEvent.blur(field);
     await waitFor(() =>
       expect(server.stored()[0]).toMatchObject({ slug: "stats", title: "Numbers" }),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Restore defaults" }));
     await waitFor(() =>
       expect(server.stored()[0]).toMatchObject({ slug: "stats", title: "Stats" }),
     );
-    expect(await screen.findByRole("textbox", { name: "Rename Stats" })).toHaveValue("Stats");
+    expect(await dialog().findByRole("textbox", { name: "Rename Stats" })).toHaveValue("Stats");
   });
 
   it("deletes a page the user wrote, and leaves the page it was on", async () => {
     const server = stubServer([GRAPPLE, ...presetPageRecords()]);
     const router = await renderManaging("/characters/abc/p/grapple");
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete Grapple" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Delete Grapple" }));
 
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.stored().map((page) => page.slug)).not.toContain("grapple");
@@ -295,7 +303,7 @@ describe("ManagePages", () => {
     const server = stubServer(presetPageRecords());
     const router = await renderManaging("/characters/abc/p/stats");
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete Stats" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Delete Stats" }));
 
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.stored().map((page) => page.slug)).not.toContain("stats");
@@ -303,7 +311,7 @@ describe("ManagePages", () => {
     expect(router.state.location.pathname).toBe("/characters/abc/p/spells");
     await waitFor(() => expect(navTitles()).not.toContain("Stats"));
 
-    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Undo page change" }));
     await waitFor(() => expect(server.puts).toHaveLength(2));
     expect(server.puts[1]).toEqual(presetPageRecords().map(({ preset: _, ...page }) => page));
   });
@@ -316,7 +324,7 @@ describe("ManagePages", () => {
     ]);
     await renderManaging();
 
-    const remove = screen.getByRole("button", { name: "Delete Stats" });
+    const remove = dialog().getByRole("button", { name: "Delete Stats" });
     expect(remove).toHaveAttribute("aria-disabled", "true");
     expect(remove).toHaveAccessibleDescription(
       "The last visible page cannot be hidden or deleted.",
@@ -329,10 +337,10 @@ describe("ManagePages", () => {
   it("undoes a delete, writing back the list before it", async () => {
     const server = stubServer([GRAPPLE, ...presetPageRecords()]);
     await renderManaging();
-    const undo = screen.getByRole("button", { name: "Undo page change" });
+    const undo = dialog().getByRole("button", { name: "Undo page change" });
     expect(undo).toHaveAttribute("aria-disabled", "true");
 
-    fireEvent.click(screen.getByRole("button", { name: "Delete Grapple" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Delete Grapple" }));
     await waitFor(() => expect(server.puts).toHaveLength(1));
     fireEvent.click(undo);
 
@@ -353,7 +361,7 @@ describe("ManagePages", () => {
     ]);
     await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Restore defaults" }));
 
     await waitFor(() =>
       expect(navTitles()).toEqual(["Grapple", "Stats", "Spells", "Inventory", "Features"]),
@@ -367,9 +375,9 @@ describe("ManagePages", () => {
     const server = stubServer(before);
     await renderManaging();
 
-    fireEvent.click(screen.getByRole("button", { name: "Restore defaults" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Restore defaults" }));
     await waitFor(() => expect(status()).toHaveTextContent("Default pages restored."));
-    fireEvent.click(screen.getByRole("button", { name: "Undo page change" }));
+    fireEvent.click(dialog().getByRole("button", { name: "Undo page change" }));
 
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.puts[0]).toEqual(before.map(({ preset: _, ...page }) => page));

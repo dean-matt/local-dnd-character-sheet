@@ -410,6 +410,7 @@ describe("ItemList", () => {
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: "Add anyway" })).not.toBeInTheDocument(),
     );
+    await screen.findByText(/cannot take \+1 Weapon/);
     expect(screen.getByRole("alert")).toHaveTextContent("cannot take +1 Weapon");
   });
 

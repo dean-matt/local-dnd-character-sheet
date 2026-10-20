@@ -1,4 +1,5 @@
 import { CompletionContext } from "@codemirror/autocomplete";
+import { forceParsing } from "@codemirror/language";
 import { appliedItemFieldsSchema } from "@dnd/catalog";
 import { EditorView } from "codemirror";
 import {
@@ -12,8 +13,10 @@ import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
 
 let view: EditorView | undefined;
 
+// The parser works in a time slice, so a loaded machine hands back a partial tree and the completion finds no key.
 const editorOf = (doc: string) => {
   view = new EditorView({ doc, extensions: jsonSchema(ITEM_JSON_SCHEMA) });
+  forceParsing(view, doc.length, 5000);
   return view;
 };
 
