@@ -29,7 +29,7 @@ function joined(groups: readonly ClassGroup[]): Level[] {
     .flatMap((group) => group.levels)
     .map((level, index) => {
       if (index > 0 || level.rolled === undefined) return level;
-      const { rolled: _, ...rest } = level;
+      const { rolled: _, typed: __, ...rest } = level;
       return rest;
     });
 }
@@ -80,7 +80,7 @@ export function withSubclass(
  * level's position, or each roll dropped where `roll` is absent.
  */
 export function rerolled(levels: readonly Level[], roll?: (index: number) => number): Level[] {
-  return levels.map(({ rolled: _, ...level }, index) => {
+  return levels.map(({ rolled: _, typed: __, ...level }, index) => {
     const face = index === 0 ? undefined : roll?.(index);
     return face === undefined ? level : { ...level, rolled: face };
   });

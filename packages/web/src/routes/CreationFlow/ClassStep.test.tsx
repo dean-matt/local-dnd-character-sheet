@@ -389,6 +389,7 @@ describe("ClassStep", () => {
     type(3, "15");
     type(4, "");
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, undefined]);
+    expect(values.levels?.map((level) => level.typed)).toEqual([undefined, true, true, undefined]);
     expect(screen.getByText("38")).toBeVisible();
     type(4, "-10");
     expect(screen.getByText("33")).toBeVisible();
@@ -426,7 +427,7 @@ describe("ClassStep", () => {
     await waitFor(() =>
       expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 7, 15, 10]),
     );
-    expect(cells()).toEqual(["Level 2: 7", "Level 3: 15typed", "Level 4: 10"]);
+    expect(cells()).toEqual(["Level 2: 7typed", "Level 3: 15typed", "Level 4: 10"]);
 
     setLevel(2);
     await waitFor(() => expect(values.departures).toEqual([]));

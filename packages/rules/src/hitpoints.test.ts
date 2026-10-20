@@ -111,6 +111,13 @@ describe("hitPointSource", () => {
     expect(hitPointSource({ die: 8, rolled: 9 }, false)).toBe("typed");
     expect(hitPointSource({ die: 8, rolled: 0 }, false)).toBe("typed");
   });
+
+  it("names a typed gain within the die typed, not rolled", () => {
+    expect(hitPointSource({ die: 8, rolled: 6, typed: true }, false)).toBe("typed");
+    expect(maxHitPoints([{ die: 8 }, { die: 8, rolled: 6, typed: true }], 0).terms[1]?.label).toBe(
+      "Level 2: d8 typed 6 +0 Con",
+    );
+  });
 });
 
 describe("hitDiceRecovered", () => {

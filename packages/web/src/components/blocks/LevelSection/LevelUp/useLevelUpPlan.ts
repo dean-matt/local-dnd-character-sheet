@@ -160,9 +160,10 @@ export function useLevelUpPlan(
       setRefValue(setValue, "spells", definition.spells, dirty);
       setRefValue(setValue, "optionalFeatures", definition.optionalFeatures, dirty);
     },
-    setRolled: (rolled: number | undefined) => {
-      const { rolled: _, ...rest } = level;
-      setValue("levels", withLevel(rolled === undefined ? rest : { ...rest, rolled }), dirty);
+    setRolled: (rolled: number | undefined, typed: boolean) => {
+      const { rolled: _, typed: __, ...rest } = level;
+      const gain = typed ? { rolled, typed: true as const } : { rolled };
+      setValue("levels", withLevel(rolled === undefined ? rest : { ...rest, ...gain }), dirty);
     },
     setImprovement: (next: Improvement) => {
       if (!grant) return;

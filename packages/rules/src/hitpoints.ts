@@ -21,6 +21,8 @@ export type HitDie = (typeof HIT_DICE)[number];
 export type HitPointLevel = {
   die: HitDie;
   rolled?: number;
+  /** The player typed `rolled`; without it, a gain within the die's range reads as a roll. */
+  typed?: true;
 };
 
 /** The fixed value a class table prints, which is the die's average rounded up. */
@@ -50,11 +52,11 @@ function faceRolled(level: HitPointLevel, isFirstLevel: boolean): number {
 
 type HitPointSource = "highest" | "average" | "rolled" | "typed";
 
-/** Where a level's hit points come from; a gain the die cannot roll was typed. */
+/** Where a level's hit points come from; a gain the die cannot roll, or one marked `typed`, was typed. */
 export function hitPointSource(level: HitPointLevel, isFirstLevel: boolean): HitPointSource {
   if (isFirstLevel) return "highest";
   if (level.rolled === undefined) return "average";
-  return level.rolled > level.die || level.rolled < 1 ? "typed" : "rolled";
+  return level.typed || level.rolled > level.die || level.rolled < 1 ? "typed" : "rolled";
 }
 
 /**
