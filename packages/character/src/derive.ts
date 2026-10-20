@@ -71,12 +71,14 @@ import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
  * `hitDice` maps a class to its die, keyed by `entryKey` — a class is catalog or
  * homebrew data a character references rather than copies. A class the map does not
  * name is rejected rather than defaulted, since a guessed die invents hit points. A feat
- * such as Tough adds its own term after the levels.
+ * such as Tough adds its own term after the levels. `itemHitPointsPerLevel` is the house
+ * rule's flat amount: each grant that sets Constitution adds it for every level.
  */
 export function hitPointMaximum(
   definition: CharacterDefinition,
   hitDice: ReadonlyMap<string, HitDie>,
   grants: readonly AbilityGrant[] = [],
+  itemHitPointsPerLevel = 0,
 ): Breakdown<TermReference> {
   const levels = definition.levels.map((level) => {
     const key = entryKey(level.class);
@@ -88,7 +90,18 @@ export function hitPointMaximum(
     levels,
     abilityModifier(abilityScore(definition, "con", grants)),
   );
-  return breakdown([...terms, ...featHitPointTerms(definition, totalLevel(definition))]);
+  const level = totalLevel(definition);
+  const itemTerms: Term<TermReference>[] =
+    itemHitPointsPerLevel === 0
+      ? []
+      : grants
+          .filter((grant) => grant.static.con !== undefined)
+          .map((grant) => ({
+            label: grant.name,
+            value: itemHitPointsPerLevel * level,
+            reference: { houseRuleOption: "constitutionItemHitPointsPerLevel" },
+          }));
+  return breakdown([...terms, ...featHitPointTerms(definition, level), ...itemTerms]);
 }
 
 /**
@@ -947,7 +960,14 @@ export function deriveCharacter(
     abilityModifiers: perAbility((ability) =>
       fromBreakdown(abilityModifierBreakdown(scores[ability].total)),
     ),
-    hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice, grants)),
+    hitPointMaximum: fromBreakdown(
+      hitPointMaximum(
+        definition,
+        catalog.hitDice,
+        grants,
+        houseRule(definition, "constitutionItemHitPointsPerLevel"),
+      ),
+    ),
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
     speed: { computed: speed.speed, manual: null, terms: speed.terms },

@@ -5,6 +5,9 @@ import { useHeldSave } from "../../hooks/useHeldSave.ts";
 
 type Edition = CharacterRecord["edition"];
 
+/** The options that are a choice between printed and house; a numeric one needs its own control. */
+type SwitchRule = Exclude<HouseRule, "constitutionItemHitPointsPerLevel">;
+
 type Outcome = { label: string; description: string };
 
 /**
@@ -14,7 +17,7 @@ type Outcome = { label: string; description: string };
  * nothing.
  */
 const OPTIONS: Record<
-  HouseRule,
+  SwitchRule,
   { name: string; printed: Outcome; house: Outcome; editions: Edition[] }
 > = {
   encumbrance: {
@@ -112,7 +115,7 @@ const OPTIONS: Record<
   },
 };
 
-const RULES = Object.keys(OPTIONS) as HouseRule[];
+const RULES = Object.keys(OPTIONS) as SwitchRule[];
 
 /**
  * The rules this character's table bends: per option that changes something under the
@@ -124,10 +127,10 @@ const RULES = Object.keys(OPTIONS) as HouseRule[];
 export function HouseRulesCard({ character }: { character: CharacterRecord }) {
   const write = useHeldSave(character.id, "House rules");
   const ids = useId();
-  const [pending, setPending] = useState<Partial<Record<HouseRule, boolean>>>({});
+  const [pending, setPending] = useState<Partial<Record<SwitchRule, boolean>>>({});
   const { definition } = character;
 
-  const choose = (rule: HouseRule, on: boolean) => {
+  const choose = (rule: SwitchRule, on: boolean) => {
     setPending((current) => ({ ...current, [rule]: on }));
     write(rule, (latest) => ({
       ...latest,
