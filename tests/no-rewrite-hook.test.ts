@@ -1,8 +1,8 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 /**
  * Runs `scripts/no-rewrite.mjs` against a real repository, which the unit tests cannot
@@ -12,6 +12,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * Each case builds its own branch. A case that inherits the state of the one before it
  * passes in the suite and asserts the opposite of its name when run alone.
  */
+
+// A hosted Windows runner ran this file's four tests in 4.8 s against 0.5 s here, so
+// its ~30 git and node spawns cost ~160 ms each, and one failed on the 10 s hook default.
+// 60 s is over 12 times the file's measured Windows cost, so a hung spawn still fails.
+vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
+
 const SCRIPT = resolve(import.meta.dirname, "../scripts/no-rewrite.mjs");
 
 let work: string;
@@ -48,9 +54,11 @@ beforeAll(() => {
   work = join(root, "work");
   execFileSync("git", ["init", "--bare", "--quiet", join(root, "remote.git")]);
   execFileSync("git", ["init", "--quiet", "-b", "main", work]);
-  git("config", "user.email", "test@example.invalid");
-  git("config", "user.name", "Test");
-  git("remote", "add", "origin", join(root, "remote.git"));
+  // Three fewer spawns than `git config` twice and `git remote add`.
+  appendFileSync(
+    join(work, ".git", "config"),
+    `[user]\n\temail = test@example.invalid\n\tname = Test\n[remote "origin"]\n\turl = ${join(root, "remote.git")}\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n`,
+  );
   commit("root");
   git("push", "--quiet", "-u", "origin", "main");
 });

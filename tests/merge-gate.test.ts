@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   blockingBodyDeclines,
   blockingDeclines,
@@ -445,6 +445,9 @@ describe("the other three conditions", () => {
  * branch's own.
  */
 describe("the commits since the last pass", () => {
+  // Each case runs about 20 git spawns, which a hosted Windows runner takes ~160 ms
+  // apiece over: the 5 s test default leaves it a margin of a few spawns.
+  vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
   let dir = "";
   const git = (...args: string[]) =>
     execFileSync("git", args, { cwd: dir, encoding: "utf8" }).trim();
