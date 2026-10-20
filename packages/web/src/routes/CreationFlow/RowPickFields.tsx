@@ -1,20 +1,7 @@
 import type { EntryRef } from "@dnd/character";
 import { PickField, type PickFieldProps } from "../../components/PickField.tsx";
+import { spellOfferFilters } from "../../lib/spellOfferFilters.ts";
 import { cantripsOf, type PickGrantor, type RowPicks, spellsOf } from "./spellPicks.ts";
-
-const nameSource = (ref: { name: string; source: string }) => `${ref.name}|${ref.source}`;
-
-/** The `/search` filters narrowing a picker to what `row` leaves to a pick, none `offList`. */
-const offerFilters = ({ grantor, ref, parent, level, block }: RowPicks["row"], offList: boolean) =>
-  offList
-    ? {}
-    : {
-        offerGrantor: grantor,
-        offer: nameSource(ref),
-        ...(parent && { offerParent: nameSource(parent) }),
-        offerLevel: String(level),
-        ...(block !== undefined && { offerBlock: String(block) }),
-      };
 
 /**
  * The picks one row offers apart from the class's, each kind it offers or already holds a
@@ -34,7 +21,7 @@ export function RowPickFields({
 }) {
   const onPick = (ref: EntryRef) => pickFor(ref, row.pickedFor);
   const by = row.row.ref.name;
-  const filters = offerFilters(row.row, offList);
+  const filters = spellOfferFilters(row.row, offList);
   const cantrips = cantripsOf(row.picked);
   const spells = spellsOf(row.picked);
   const alternatives = row.owed.cantrips + row.owed.spells === 0;

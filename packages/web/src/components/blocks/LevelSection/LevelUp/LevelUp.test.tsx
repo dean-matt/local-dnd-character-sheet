@@ -38,19 +38,20 @@ const FIGHTER = { name: "Fighter", source: "XPHB" };
 const SORCERER = { name: "Sorcerer", source: "PHB" };
 const CLERIC = XPHB("Cleric");
 const KNIGHT_FIGHTER = { name: "Fighter", source: "PHB" };
-const fighterSubclass = (name: string, shortName: string) => ({
+const fighterSubclass = (name: string, shortName: string, json: object = {}) => ({
   name,
   source: "PHB",
   shortName,
   className: "Fighter",
   classSource: "PHB",
   edition: "classic",
-  json: { name, source: "PHB", shortName },
+  json: { name, source: "PHB", shortName, ...json },
 });
 
 /** Each spell's level and the classes whose list holds it. */
 const SPELLS: Record<string, { level: number; lists: string[] }> = {
   "Fire Bolt": { level: 0, lists: ["Sorcerer"] },
+  Prestidigitation: { level: 0, lists: ["Wizard"] },
   Shield: { level: 1, lists: ["Sorcerer"] },
   "Misty Step": { level: 2, lists: ["Sorcerer"] },
   Fireball: { level: 3, lists: ["Sorcerer", "Wizard"] },
@@ -199,6 +200,13 @@ const ROWS: Record<string, unknown> = {
     fighterSubclass("Eldritch Knight", "Eldritch Knight"),
     fighterSubclass("Champion", "Champion"),
     fighterSubclass("Battle Master", "Battle Master"),
+    fighterSubclass("Lorekeeper", "Lorekeeper", {
+      additionalSpells: [
+        {
+          known: { "3": [{ choose: "level=0|class=Wizard" }, { choose: "level=0|class=Wizard" }] },
+        },
+      ],
+    }),
   ]),
   "/api/classes/Fighter/PHB/at/2": casterGrants(2, {}, []),
   "/api/classes/Fighter/PHB/at/3": casterGrants(3, {}, []),
@@ -208,6 +216,7 @@ const ROWS: Record<string, unknown> = {
     [2],
   ),
   "/api/classes/Fighter/PHB/subclasses/Champion/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Battle%20Master/PHB/at/3": {
     ...casterGrants(3, {}, []),
     optionalFeatures: [{ featureType: "MV:B", known: 3 }],
@@ -828,6 +837,50 @@ describe("LevelUp", () => {
       const search = Object.fromEntries(spellSearches.at(-1) ?? []);
       expect(search).toMatchObject({ minLevel: "1", maxLevel: "9" });
       expect(search).not.toHaveProperty("class");
+    });
+
+    it("asks for the spells a subclass feature lets the character choose, and writes them under the class", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          spells: [],
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Lorekeeper");
+      const picks = await within(dialog()).findByRole("region", {
+        name: "Cantrips from Lorekeeper",
+      });
+      expect(picks).toHaveTextContent("Choose 2 — 0 selected");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+      await pickSpell("Add a cantrip", "Fire Bolt");
+      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({
+        offerGrantor: "subclass",
+        offer: "Lorekeeper|PHB",
+        offerParent: "Fighter|PHB",
+        offerLevel: "3",
+        minLevel: "0",
+        maxLevel: "0",
+      });
+      await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 1 selected"));
+      await pickSpell("Add a cantrip", "Prestidigitation");
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().spells).toEqual([
+        { ref: { name: "Fire Bolt", source: "PHB" }, prepared: false, origin: KNIGHT_FIGHTER },
+        {
+          ref: { name: "Prestidigitation", source: "PHB" },
+          prepared: false,
+          origin: KNIGHT_FIGHTER,
+        },
+      ]);
     });
 
     it("takes back the spells picked when the subclass changes", async () => {
