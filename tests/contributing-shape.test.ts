@@ -1,5 +1,8 @@
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
-import { deepHeadings, findForbidden, headings, read } from "./lib/doc-helpers.ts";
+import { deepHeadings, findForbidden, headings, ROOT, read } from "./lib/doc-helpers.ts";
 
 /**
  * Structure fence for CONTRIBUTING.md. Its job is the reasoning behind rules that
@@ -29,5 +32,21 @@ describe("CONTRIBUTING.md", () => {
 
   it("describes what is true now, not what changed", () => {
     expect(findForbidden(contributing)).toEqual([]);
+  });
+});
+
+describe("commit scopes", () => {
+  it("name every package, plus the repository-level scopes, in commitlint and CONTRIBUTING.md alike", async () => {
+    const config = (await import(pathToFileURL(join(ROOT, "commitlint.config.js")).href)) as {
+      default: { rules: { "scope-enum": [number, string, string[]] } };
+    };
+    const allowed = config.default.rules["scope-enum"][2];
+    const packages = readdirSync(join(ROOT, "packages"));
+    expect(allowed.filter((scope) => !["docs", "repo", "deps"].includes(scope)).sort()).toEqual(
+      packages.sort(),
+    );
+    const sentence = read("CONTRIBUTING.md").match(/scopes are([^.]*)\./s)?.[1] ?? "";
+    const listed = [...sentence.matchAll(/`([a-z]+)`/g)].map((m) => m[1]);
+    expect(listed.sort()).toEqual([...allowed].sort());
   });
 });
