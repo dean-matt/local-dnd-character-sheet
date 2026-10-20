@@ -104,10 +104,7 @@ describe("SearchPage", () => {
     });
 
     expect(await screen.findByText("Fire Giant")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Type Monsters" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    expect(screen.getByLabelText("Type Monsters")).toHaveAttribute("aria-expanded", "false");
   });
 
   it("keeps the character it was opened from through a filter change, and adds to it", async () => {
@@ -123,7 +120,7 @@ describe("SearchPage", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Fire Giant/ })).not.toBeInTheDocument();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Type All types" }));
+    fireEvent.click(await screen.findByLabelText("Type All types"));
     fireEvent.click(
       await screen.findByRole("checkbox", { name: "Spells (adds level and school filters)" }),
     );
@@ -139,7 +136,7 @@ describe("SearchPage", () => {
     });
     await screen.findByText("Fire Giant");
 
-    fireEvent.click(await screen.findByRole("button", { name: "Type All types" }));
+    fireEvent.click(await screen.findByLabelText("Type All types"));
     fireEvent.click(
       await screen.findByRole("checkbox", {
         name: "Spells (adds level and school filters)",
@@ -172,16 +169,16 @@ describe("SearchPage", () => {
       "/api/search?q=fire&limit=50&source=PHB": page([fireball]),
     });
     await screen.findByText("Fire Giant");
-    fireEvent.click(await screen.findByRole("button", { name: "Source All sources" }));
+    fireEvent.click(await screen.findByLabelText("Source All sources"));
     const list = screen.getByRole("group", { name: "Sources to search" });
     fireEvent.click(await within(list).findByRole("checkbox", { name: "PHB" }));
     expect(where()).toBe("/search?q=fire&source=PHB");
-    expect(screen.getByRole("button", { name: "Source PHB" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Source PHB")).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByRole("status", { name: "" })).toHaveTextContent("1 result"),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Clear sources" }));
+    fireEvent.click(screen.getByLabelText("Clear sources"));
     expect(where()).toBe("/search?q=fire");
   });
 
@@ -197,7 +194,7 @@ describe("SearchPage", () => {
       "/api/search?limit=50&type=item&rarity=very+rare": page([]),
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Rarity All rarities" }));
+    fireEvent.click(await screen.findByLabelText("Rarity All rarities"));
     fireEvent.click(screen.getByRole("checkbox", { name: "Very rare" }));
     expect(where()).toBe("/search?type=item&rarity=very+rare");
     expect(screen.queryByRole("spinbutton", { name: "Min" })).not.toBeInTheDocument();
@@ -209,7 +206,7 @@ describe("SearchPage", () => {
       "/api/search?limit=50&type=item&kind=melee%2Cshield": page([]),
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Kind Melee weapon" }));
+    fireEvent.click(await screen.findByLabelText("Kind Melee weapon"));
     const kinds = screen.getByRole("group", { name: "Kinds to search" });
     expect(within(kinds).getByRole("checkbox", { name: "Melee weapon" })).toBeChecked();
     fireEvent.click(within(kinds).getByRole("checkbox", { name: "Shield" }));
@@ -260,7 +257,7 @@ describe("SearchPage", () => {
       "/api/search?q=fire&limit=50&type=item%2Cmonster": page([]),
     });
 
-    const button = await screen.findByRole("button", { name: "Type All types" });
+    const button = await screen.findByLabelText("Type All types");
     fireEvent.click(button);
     const list = await screen.findByRole("group", { name: "Types to search" });
     const items = within(list).getByRole("checkbox", {
@@ -271,18 +268,18 @@ describe("SearchPage", () => {
     expect(items).toHaveFocus();
     fireEvent.click(items);
     expect(where()).toBe("/search?q=fire&type=item");
-    expect(await screen.findByRole("button", { name: "Kind All kinds" })).toBeInTheDocument();
+    expect(await screen.findByLabelText("Kind All kinds")).toBeInTheDocument();
 
     fireEvent.keyDown(items, { key: "ArrowDown" });
     const monsters = within(list).getByRole("checkbox", { name: "Monsters" });
     expect(monsters).toHaveFocus();
     fireEvent.click(monsters);
     expect(where()).toBe("/search?q=fire&type=item%2Cmonster");
-    expect(screen.getByRole("button", { name: "Type Items, Monsters" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Type Items, Monsters")).toBeInTheDocument();
 
     fireEvent.keyDown(monsters, { key: "Escape" });
     expect(screen.queryByRole("group", { name: "Types to search" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Type Items, Monsters" })).toHaveFocus();
+    expect(screen.getByLabelText("Type Items, Monsters")).toHaveFocus();
   });
 
   it("collapses to a filter icon that counts the filters on and opens the rail again", async () => {
@@ -290,29 +287,26 @@ describe("SearchPage", () => {
       "/api/search?limit=50&type=item&kind=melee%2Cranged": page([]),
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Collapse filters" }));
-    const show = screen.getByRole("button", { name: "Show filters (3 on)" });
+    fireEvent.click(await screen.findByLabelText("Collapse filters"));
+    const show = screen.getByLabelText("Show filters (3 on)");
     expect(show).toHaveTextContent("3");
     expect(screen.queryByRole("button", { name: /^Type/ })).not.toBeInTheDocument();
 
     fireEvent.click(show);
-    expect(screen.getByRole("button", { name: "Type Items" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Type Items")).toBeInTheDocument();
   });
 
   it("keeps the foot toggle in the collapsed rail, which expands it again", async () => {
     renderAt("/search?type=item", { "/api/search?limit=50&type=item": page([]) });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Collapse filters" }));
-    const expand = screen.getByRole("button", { name: "Expand filters" });
+    fireEvent.click(await screen.findByLabelText("Collapse filters"));
+    const expand = screen.getByLabelText("Expand filters");
     expect(expand).toHaveAttribute("aria-expanded", "false");
     expect(expand).not.toHaveTextContent("Collapse");
 
     fireEvent.click(expand);
-    expect(screen.getByRole("button", { name: "Type Items" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Collapse filters" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
+    expect(screen.getByLabelText("Type Items")).toBeInTheDocument();
+    expect(screen.getByLabelText("Collapse filters")).toHaveAttribute("aria-expanded", "true");
   });
 
   it("pages through results by offset", async () => {
@@ -354,7 +348,7 @@ describe("SearchPage", () => {
     setDisabledSources(["MM"]);
     try {
       renderAt("/search?source=MM", {});
-      fireEvent.click(await screen.findByRole("button", { name: "Source MM" }));
+      fireEvent.click(await screen.findByLabelText("Source MM"));
       const list = screen.getByRole("group", { name: "Sources to search" });
       const mm = await within(list).findByRole("checkbox", { name: "MM" });
       expect(mm).toBeChecked();

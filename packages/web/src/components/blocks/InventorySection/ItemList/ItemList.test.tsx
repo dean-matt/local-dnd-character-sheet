@@ -213,7 +213,7 @@ async function pick(label: string, query: string, option: RegExp) {
 
 /** Opens `group`'s Add item modal and picks from its search. */
 async function addFrom(group: string, query: string, option: RegExp) {
-  fireEvent.click(await screen.findByRole("button", { name: `Add item to ${group}` }));
+  fireEvent.click(await screen.findByLabelText(`Add item to ${group}`));
   await pick("Search items", query, option);
 }
 
@@ -242,14 +242,14 @@ describe("ItemList", () => {
     });
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(1);
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("button", { name: "Add item to Gear" })).toHaveFocus();
+    expect(screen.getByLabelText("Add item to Gear")).toHaveFocus();
   });
 
   it("searches a column's own items first, and every item once the filter is cleared", async () => {
     const fetchMock = renderList();
 
     await screen.findByText("Longsword");
-    fireEvent.click(screen.getByRole("button", { name: "Add item to Armor" }));
+    fireEvent.click(screen.getByLabelText("Add item to Armor"));
     fireEvent.change(screen.getByRole("combobox", { name: "Search items" }), {
       target: { value: "pl" },
     });
@@ -274,7 +274,7 @@ describe("ItemList", () => {
     const fetchMock = renderList();
 
     await screen.findByText("Longsword");
-    fireEvent.click(screen.getByRole("button", { name: "Add item to Gear" }));
+    fireEvent.click(screen.getByLabelText("Add item to Gear"));
     fireEvent.change(screen.getByRole("combobox", { name: "Search items" }), {
       target: { value: "r" },
     });
@@ -303,7 +303,7 @@ describe("ItemList", () => {
 
     expect(await screen.findByText("No weapons.")).toBeInTheDocument();
     for (const group of ["Weapons", "Armor", "Gear"]) {
-      expect(screen.getByRole("button", { name: `Add item to ${group}` })).toBeInTheDocument();
+      expect(screen.getByLabelText(`Add item to ${group}`)).toBeInTheDocument();
     }
   });
 
@@ -334,7 +334,7 @@ describe("ItemList", () => {
       variant: { name: "+1 Weapon", source: "XDMG" },
     });
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.getByRole("button", { name: "Add item to Weapons" })).toHaveFocus();
+    expect(screen.getByLabelText("Add item to Weapons")).toHaveFocus();
   });
 
   it("says why a variant refuses the base item picked, and saves nothing", async () => {
@@ -372,7 +372,7 @@ describe("ItemList", () => {
     await screen.findByText("Longsword");
     await addFrom("Weapons", "+1", /^\+1 Weapon/);
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
-    fireEvent.click(await screen.findByRole("button", { name: "Add anyway" }));
+    fireEvent.click(await screen.findByText("Add anyway"));
 
     const definition = await written(fetchMock);
     expect(definition.inventory[3]).toMatchObject({
@@ -405,11 +405,9 @@ describe("ItemList", () => {
     await screen.findByText("Longsword");
     await addFrom("Weapons", "+1", /^\+1 Weapon/);
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
-    fireEvent.click(await screen.findByRole("button", { name: "Add anyway" }));
+    fireEvent.click(await screen.findByText("Add anyway"));
 
-    await waitFor(() =>
-      expect(screen.queryByRole("button", { name: "Add anyway" })).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByText("Add anyway")).not.toBeInTheDocument());
     await screen.findByText(/cannot take \+1 Weapon/);
     expect(screen.getByRole("alert")).toHaveTextContent("cannot take +1 Weapon");
   });
@@ -429,7 +427,7 @@ describe("ItemList", () => {
     await pick("Base item for +1 Weapon", "dag", /^Dagger/);
 
     await screen.findByRole("alert");
-    expect(screen.queryByRole("button", { name: "Add anyway" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Add anyway")).not.toBeInTheDocument();
   });
 
   it("says a variant check that failed was not a refusal", async () => {
@@ -458,7 +456,7 @@ describe("ItemList", () => {
       containers: [{ entry: 1, name: "Cloak of Protection", overflow: [] }],
     });
 
-    fireEvent.click(await screen.findByRole("combobox", { name: "Kept in, Longsword" }));
+    fireEvent.click(await screen.findByLabelText("Kept in, Longsword"));
     fireEvent.click(screen.getByRole("option", { name: "In Cloak of Protection" }));
 
     const definition = await written(fetchMock);
@@ -470,7 +468,7 @@ describe("ItemList", () => {
   it("removes an item", async () => {
     const fetchMock = renderList();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Remove Cloak of Protection" }));
+    fireEvent.click(await screen.findByLabelText("Remove Cloak of Protection"));
 
     const definition = await written(fetchMock);
     expect(definition.inventory.map((entry: { ref: { name: string } }) => entry.ref.name)).toEqual([
@@ -484,7 +482,7 @@ describe("ItemList", () => {
     const arrow = { ...cloak, name: "Arrow of Slaying (*)", attuned: false };
     const fetchMock = renderList(derivedRecord(), [arrow, cloak, ring]);
 
-    const remove = await screen.findByRole("button", { name: "Remove Arrow of Slaying" });
+    const remove = await screen.findByLabelText("Remove Arrow of Slaying");
     expect(screen.getByText("Arrow of Slaying")).toBeInTheDocument();
     expect(screen.queryByText(/\(\*\)/)).toBeNull();
     fireEvent.click(remove);
@@ -503,12 +501,12 @@ describe("ItemList", () => {
       { holdFirstPut: true },
     );
 
-    const remove = await screen.findByRole("button", { name: "Remove Longsword" });
+    const remove = await screen.findByLabelText("Remove Longsword");
     const list = remove.closest("ul") as HTMLElement;
     expect(list).toHaveAttribute("aria-busy", "false");
     fireEvent.click(remove);
     await waitFor(() => expect(list).toHaveAttribute("aria-busy", "true"));
-    const equip = screen.getByRole("button", { name: "Equipped, Ring of Warmth" });
+    const equip = screen.getByLabelText("Equipped, Ring of Warmth");
     expect(equip).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByRole("combobox", { name: "Kept in, Longsword" })).toHaveAttribute(
       "aria-disabled",
@@ -537,9 +535,9 @@ describe("ItemList", () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
+    fireEvent.click(await screen.findByLabelText("Remove Longsword"));
     await written(fetchMock);
-    const cloak = screen.getByRole("button", { name: "Remove Cloak of Protection" });
+    const cloak = screen.getByLabelText("Remove Cloak of Protection");
     await waitFor(() => expect(cloak).toHaveAttribute("aria-disabled", "true"));
     fireEvent.click(cloak);
 
@@ -563,7 +561,7 @@ describe("ItemList", () => {
       </QueryClientProvider>,
     );
 
-    const [remove] = await screen.findAllByRole("button", { name: "Remove Longsword" });
+    const [remove] = await screen.findAllByLabelText("Remove Longsword");
     fireEvent.click(remove as HTMLElement);
     fireEvent.click(remove as HTMLElement);
 
@@ -583,7 +581,7 @@ describe("ItemList", () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Equipped, Ring of Warmth" }));
+    fireEvent.click(await screen.findByLabelText("Equipped, Ring of Warmth"));
     await addFrom("Gear", "rope", /^Rope/);
     releasePut();
     await waitFor(() =>
@@ -591,7 +589,7 @@ describe("ItemList", () => {
     );
     await waitFor(() => expect(client.isMutating() + client.isFetching()).toBe(0));
 
-    fireEvent.click(screen.getByRole("button", { name: "Remove Longsword" }));
+    fireEvent.click(screen.getByLabelText("Remove Longsword"));
     await waitFor(() =>
       expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(3),
     );
@@ -607,15 +605,13 @@ describe("ItemList", () => {
       </QueryClientProvider>,
     );
 
-    expect(
-      await screen.findByRole("button", { name: "Attuned, Ring of Warmth" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByLabelText("Attuned, Ring of Warmth")).toBeInTheDocument();
   });
 
   it("changes an item's quantity", async () => {
     const fetchMock = renderList();
 
-    const quantity = await screen.findByRole("textbox", { name: "Longsword quantity" });
+    const quantity = await screen.findByLabelText("Longsword quantity");
     expect(quantity).toHaveValue("1");
     fireEvent.change(quantity, { target: { value: "2" } });
     fireEvent.blur(quantity);
@@ -626,7 +622,7 @@ describe("ItemList", () => {
   it("refuses a quantity under one rather than removing the item", async () => {
     const fetchMock = renderList();
 
-    const quantity = await screen.findByRole("textbox", { name: "Longsword quantity" });
+    const quantity = await screen.findByLabelText("Longsword quantity");
     fireEvent.change(quantity, { target: { value: "0" } });
     fireEvent.blur(quantity);
 
@@ -638,10 +634,10 @@ describe("ItemList", () => {
   it("draws the equip toggle as a backpack while stowed and the type's icon once equipped", async () => {
     renderList(derivedRecord(), [{ ...ITEMS[0], equipped: true } as SheetItem, ...ITEMS.slice(1)]);
 
-    const sword = await screen.findByRole("button", { name: "Equipped, Longsword" });
+    const sword = await screen.findByLabelText("Equipped, Longsword");
     expect(sword).toHaveAttribute("aria-pressed", "true");
     expect(sword.querySelector("svg")).toHaveClass("lucide-sword");
-    const cloak = screen.getByRole("button", { name: "Equipped, Cloak of Protection" });
+    const cloak = screen.getByLabelText("Equipped, Cloak of Protection");
     expect(cloak).toHaveAttribute("aria-pressed", "false");
     expect(cloak.querySelector("svg")).toHaveClass("lucide-backpack");
   });
@@ -655,7 +651,7 @@ describe("ItemList", () => {
     it("equips as printed", async () => {
       const fetchMock = renderList(unproficient());
 
-      fireEvent.click(await screen.findByRole("button", { name: "Equipped, Longsword" }));
+      fireEvent.click(await screen.findByLabelText("Equipped, Longsword"));
 
       expect((await written(fetchMock)).inventory[0].equipped).toBe(true);
     });
@@ -665,15 +661,15 @@ describe("ItemList", () => {
         houseRules: { requireEquipProficiency: true },
       });
 
-      const blocked = await screen.findByRole("button", { name: "Equip Longsword, unavailable" });
-      expect(screen.queryByRole("button", { name: "Equipped, Longsword" })).toBeNull();
+      const blocked = await screen.findByLabelText("Equip Longsword, unavailable");
+      expect(screen.queryByLabelText("Equipped, Longsword")).toBeNull();
       fireEvent.click(blocked);
       expect(
         within(screen.getByRole("group", { name: "Can't equip" })).getByText(
           "Requires Martial weapons proficiency.",
         ),
       ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "Equipped, Cloak of Protection" })).toBeEnabled();
+      expect(screen.getByLabelText("Equipped, Cloak of Protection")).toBeEnabled();
       expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
     });
 
@@ -684,7 +680,7 @@ describe("ItemList", () => {
         { houseRules: { requireEquipProficiency: true } },
       );
 
-      fireEvent.click(await screen.findByRole("button", { name: "Equipped, Longsword" }));
+      fireEvent.click(await screen.findByLabelText("Equipped, Longsword"));
 
       expect((await written(fetchMock)).inventory[0].equipped).toBe(false);
     });
@@ -693,7 +689,7 @@ describe("ItemList", () => {
   it("carries an item it equips", async () => {
     const fetchMock = renderList();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Equipped, Ring of Warmth" }));
+    fireEvent.click(await screen.findByLabelText("Equipped, Ring of Warmth"));
 
     expect((await written(fetchMock)).inventory[2]).toMatchObject({
       equipped: true,
@@ -706,11 +702,11 @@ describe("ItemList", () => {
 
     await screen.findByText("Ring of Warmth");
     const ring = within(row("Ring of Warmth"));
-    fireEvent.click(ring.getByRole("button", { name: "Attuned, Ring of Warmth" }));
+    fireEvent.click(ring.getByLabelText("Attuned, Ring of Warmth"));
     expect((await written(fetchMock)).inventory[2].attuned).toBe(true);
 
     const cloak = within(row("Cloak of Protection"));
-    expect(cloak.getByRole("button", { name: "Attuned, Cloak of Protection" })).toHaveAttribute(
+    expect(cloak.getByLabelText("Attuned, Cloak of Protection")).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -724,9 +720,7 @@ describe("ItemList", () => {
     });
 
     await screen.findByText("Ring of Warmth");
-    fireEvent.click(
-      within(row("Ring of Warmth")).getByRole("button", { name: "Attuned, Ring of Warmth" }),
-    );
+    fireEvent.click(within(row("Ring of Warmth")).getByLabelText("Attuned, Ring of Warmth"));
 
     expect((await written(fetchMock)).inventory[2].attuned).toBe(true);
   });
@@ -738,7 +732,7 @@ describe("ItemList", () => {
       vi.fn(async () => json({ error: "disk full" }, 500)),
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Remove Longsword" }));
+    fireEvent.click(await screen.findByLabelText("Remove Longsword"));
     expect(
       await saveToasts().findByText("Inventory: Couldn't save: disk full"),
     ).toBeInTheDocument();
