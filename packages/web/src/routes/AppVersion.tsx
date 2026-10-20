@@ -1,11 +1,12 @@
 import { Check, CircleAlert, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
+import { appVersionText } from "./appVersionText.ts";
 
 const SHOWN_MS = 2000;
 
 /** The build's version and commit as a rail row that copies them on click. */
 export function AppVersion({ collapsed }: { collapsed: boolean }) {
-  const text = `${import.meta.env.VITE_APP_VERSION} (${import.meta.env.VITE_APP_COMMIT})`;
+  const text = appVersionText();
   const [status, setStatus] = useState("");
 
   useEffect(() => {
