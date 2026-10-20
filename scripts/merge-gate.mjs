@@ -183,6 +183,24 @@ export function blockingDeclines(comments) {
     .map((c) => c.html_url);
 }
 
+const BODY_DECLINED = /^\*\*Declined\*\* (critical|warning)\b/;
+
+/**
+ * A finding the pass could not anchor to a line has no thread, so its verdict is a plain
+ * pull request comment opening `**Declined** critical` or `**Declined** warning`, and the
+ * user's `**Accepted**` is a later plain comment. GitHub gives such comments no reply link,
+ * so an acceptance clears every body decline posted before it, never one posted after.
+ * `comments` must run oldest first, as the API returns them.
+ */
+export function blockingBodyDeclines(comments) {
+  let pending = [];
+  for (const c of comments) {
+    if (BODY_DECLINED.test(c.body ?? "")) pending.push(c.html_url);
+    else if (ACCEPTED.test(c.body ?? "")) pending = [];
+  }
+  return pending;
+}
+
 /**
  * A non-null return blocks the merge and is the sentence the user reads, so a branch that
  * is only behind takes its own: `merge-pr` recovers that one by merging `main` in, and
@@ -300,7 +318,10 @@ function gate(n) {
   const comments = api(`repos/{owner}/{repo}/pulls/${n}/comments`);
   const open = unanswered(comments);
   report(open.length === 0, "every thread carries a verdict", open.join("\n      "));
-  const declined = blockingDeclines(comments);
+  const declined = [
+    ...blockingDeclines(comments),
+    ...blockingBodyDeclines(api(`repos/{owner}/{repo}/issues/${n}/comments`)),
+  ];
   report(
     declined.length === 0,
     "no declined finding is critical or warning",

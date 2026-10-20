@@ -52,7 +52,10 @@ description: Run the review loop on one open local-dnd-character-sheet pull requ
    pull request holding the code the review rejected.
 
    Reply into each thread last, `**Applied** in <sha>` or `**Declined** — <reason>`, so
-   every finding carries a verdict. Each reply lands as its own empty review. A fix that
+   every finding carries a verdict. A finding no line anchors has no thread: post its
+   verdict as a pull request comment opening `**Applied**`, or `**Declined** critical` or
+   `**Declined** warning` (`**Declined** comment` for a comment), which the gate reads.
+   Each reply lands as its own empty review. A fix that
    moves a line outdates its thread, and the reply still posts.
 4. **Repeat 1 to 3 while a pass returns a `critical` or `warning` finding**, a fresh
    subagent each so none inherits the last one's conclusions. `PASS_CAP` in

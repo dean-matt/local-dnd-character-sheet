@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  blockingBodyDeclines,
   blockingDeclines,
   blockingFindings,
   capNote,
@@ -305,6 +306,29 @@ describe("thread verdicts", () => {
       otherDecline,
     ];
     expect(blockingDeclines(mixed)).toEqual([otherDecline.html_url]);
+  });
+});
+
+describe("body finding verdicts", () => {
+  const warning = finding(60, "**Declined** warning — the criterion reads as the field box");
+  const accepted = finding(61, "**Accepted** — the user approved the reading");
+
+  it("stops a declined critical or warning with no line thread", () => {
+    expect(blockingBodyDeclines([warning])).toEqual([warning.html_url]);
+    expect(
+      blockingBodyDeclines([finding(62, "**Declined** critical — out of scope")]),
+    ).toHaveLength(1);
+  });
+
+  it("lets a declined comment and ordinary discussion through", () => {
+    const quiet = [finding(63, "**Declined** comment — a taste call"), finding(64, "looks fine")];
+    expect(blockingBodyDeclines(quiet)).toEqual([]);
+  });
+
+  it("clears a decline the user accepted afterwards, not one posted after the acceptance", () => {
+    expect(blockingBodyDeclines([warning, accepted])).toEqual([]);
+    const later = finding(65, "**Declined** warning — a second finding");
+    expect(blockingBodyDeclines([warning, accepted, later])).toEqual([later.html_url]);
   });
 });
 
