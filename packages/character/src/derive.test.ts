@@ -1466,15 +1466,54 @@ describe("deriveCharacter", () => {
       expect(others.every((attack) => attack.critThreshold.computed === 20)).toBe(true);
     });
 
-    it("lists an item's vulnerability and its proficiency and language grants as the item", () => {
-      const block = withItems([worn(BELT), worn(BRACERS)]);
+    it("lists an item's vulnerability", () => {
+      const block = withItems([worn(BELT)]);
       expect(block.defenses.computed.vulnerabilities).toEqual([
         { name: "fire", from: [BELT.name] },
       ]);
-      expect(block.itemGrants.computed).toEqual({
-        skills: [],
-        proficiencies: [BRACERS.name],
-        languages: [BELT.name],
+    });
+
+    describe("a proficiency or a language the item flags without naming", () => {
+      const at = equipped.inventory.length;
+      const DWARVISH = { name: "Dwarvish", source: "PHB" };
+
+      it("grants nothing until the entry stores a pick, and says the grant waits on one", () => {
+        const block = withItems([worn(BELT), worn(BRACERS)]);
+        expect(block.itemGrants.computed).toEqual({
+          skills: [],
+          proficiencies: [],
+          languages: [],
+          pending: [
+            { entry: at, item: BELT.name, kind: "language" },
+            { entry: at + 1, item: BRACERS.name, kind: "proficiency" },
+          ],
+        });
+      });
+
+      it("lists the picked language and proficiency with the item as the source", () => {
+        const block = withItems([
+          { ...worn(BELT), languagePick: DWARVISH },
+          { ...worn(BRACERS), proficiencyPick: "Longbow" },
+        ]);
+        expect(block.itemGrants.computed).toEqual({
+          skills: [],
+          proficiencies: [{ name: "Longbow", from: BRACERS.name }],
+          languages: [{ name: "Dwarvish", from: BELT.name }],
+          pending: [],
+        });
+      });
+
+      it("drops the pick again when the item is unequipped", () => {
+        const stowed = withItems([
+          { ...worn(BELT), languagePick: DWARVISH, equipped: false },
+          { ...worn(BRACERS), proficiencyPick: "Longbow", equipped: false },
+        ]);
+        expect(stowed.itemGrants).toEqual(bare.itemGrants);
+      });
+
+      it("drops the pick when an item that needs attunement is not attuned", () => {
+        const unattuned = withItems([{ ...worn(BELT, false), languagePick: DWARVISH }]);
+        expect(unattuned.itemGrants).toEqual(bare.itemGrants);
       });
     });
 

@@ -1,4 +1,6 @@
-# An ability score the wearer picks
+# What the wearer picks on an item
+
+## An ability score
 
 Five rows at v2.34.1 let the wearer choose which score rises: `Deck of Many Things` (DMG,
 XDMG) writes `ability` as a bare `{from, count, amount}`, and `Book of Vile Darkness` (DMG,
@@ -15,3 +17,18 @@ re-pick replaces the list.
 Until the picks are made the item grants nothing, and `pendingAbilityPicks` in the derived
 block names the entry, the scores it offers and `count`, the total to pick. An unequipped item
 with picks unmade still appears, so a player can pick before equipping.
+
+## A proficiency or a language
+
+`grantsProficiency` and `grantsLanguage` are bare `true` flags at v2.34.1: they name no
+proficiency or language, and `grantsProficiency` on most weapons flags a tool or a skill. An
+inventory entry stores the player's pick, or the one the item's rules text names, as
+`proficiencyPick` (a name such as `Longbow`) and `languagePick` (a reference to a language row).
+Both sit on the entry, so two copies pick separately, and a pick on an item without the flag
+is ignored.
+
+Until the pick is stored the item grants nothing, and `itemGrants.pending` names the entry
+(`entry`, `item`, `kind`) so the "Granted by items" card says it waits on a choice. Once
+stored, the pick joins `itemGrants.proficiencies` or `itemGrants.languages` with the item as
+`from`. It counts while the item is equipped, and attuned where it requires attunement, so
+unequipping or un-attuning removes it. Only an item in effect appears as pending.

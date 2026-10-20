@@ -123,11 +123,11 @@ items that set or scale a speed. A homebrew item states the same two fields.
 ## Gear without proficiency
 
 An armor proficiency names a category (`Light`, `Shields`) or one armor, and a weapon
-proficiency a category or one base weapon, matched as `proficiencyKey` folds them. An item
-that makes its wearer proficient, such as `Elven Chain` (DMG), reaches the sheet as a
-proficiency the player names: upstream's `grantsProficiency` names none, and on most
-weapons it flags a tool or a skill. `unproficientItems` names, per inventory entry, the
-proficiency its weapon or armor lacks, equipped or not.
+proficiency a category or one base weapon, matched as `proficiencyKey` folds them.
+Upstream's `grantsProficiency` and `grantsLanguage` are bare flags that name nothing, so an
+inventory entry stores the pick as `proficiencyPick` and `languagePick`, and the item grants
+nothing until it does (see [`item-ability-picks.md`](item-ability-picks.md)). `unproficientItems`
+names, per inventory entry, the proficiency its weapon or armor lacks, equipped or not.
 
 An attack without proficiency adds none and carries a `Not proficient` term worth 0.
 Armor worn without proficiency adds Strength and Dexterity disadvantage on checks, saves

@@ -117,6 +117,7 @@ export function catalogReferences(
   });
   definition.inventory.forEach((entry, i) => {
     add(`inventory[${i}].ref`, "item", entry.ref);
+    add(`inventory[${i}].languagePick`, "language", entry.languagePick);
     add(
       `inventory[${i}].variant`,
       "item",

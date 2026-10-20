@@ -805,7 +805,10 @@ describe("derivedRoutes", () => {
     expect(worn.defenses.computed.vulnerabilities).toEqual([
       { name: "fire", from: [BOOTS_OF_SPEED.name] },
     ]);
-    expect(worn.itemGrants.computed.languages).toEqual([BOOTS_OF_SPEED.name]);
+    expect(worn.itemGrants.computed.languages).toEqual([]);
+    expect(worn.itemGrants.computed.pending).toEqual([
+      { entry: 0, item: BOOTS_OF_SPEED.name, kind: "language" },
+    ]);
     expect(worn.proficiencyBonus.computed).toBe(bare.proficiencyBonus.computed + 1);
     expect(worn.initiative.terms.at(-1)).toEqual({ label: "Luckstone", value: 1 });
     expect(bare.speed.terms).toEqual([]);

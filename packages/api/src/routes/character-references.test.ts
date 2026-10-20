@@ -262,6 +262,19 @@ describe("characterReferencesRoutes", () => {
     ]);
   });
 
+  it("reports a language an item's pick names once the catalog drops it", async () => {
+    publishReferencesFixture(dataDir, {
+      ...CATALOG,
+      lookups: [{ ...ATHLETICS, kind: "skill", qualifier: "" }],
+    });
+    store(definitionWith({ inventory: [{ ref: LONGSWORD, languagePick: COMMON }] }));
+    expect(await unresolved()).toContainEqual({
+      field: "inventory[0].languagePick",
+      kind: "language",
+      ref: COMMON,
+    });
+  });
+
   it("reports a variant its base item no longer takes, or that is no longer a variant", async () => {
     const DAGGER = { name: "Dagger", source: "PHB" };
     const CLUB = { name: "Club", source: "PHB" };
