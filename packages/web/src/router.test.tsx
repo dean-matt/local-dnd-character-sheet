@@ -25,8 +25,7 @@ function renderAt(path: string) {
 }
 
 describe("routing", () => {
-  // A lazy route's first import transforms its module graph, which took 1578 ms on the Windows
-  // runner (1024 ms on Ubuntu) against 75 ms once loaded; the 1 s `findBy*` default cannot cover it.
+  // A lazy route's first import is slow on CI and would spend the 1 s `findBy*` default.
   beforeAll(async () => {
     await Promise.all(lazyRoutes(routeConfig).map((lazy) => lazy()));
   });
