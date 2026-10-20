@@ -13,4 +13,5 @@ and changes the score as any item grant does, equipped and attuned where require
 re-pick replaces the list.
 
 Until the picks are made the item grants nothing, and `pendingAbilityPicks` in the derived
-block names the entry, the scores it offers and how many to pick.
+block names the entry, the scores it offers and `count`, the total to pick. An unequipped item
+with picks unmade still appears, so a player can pick before equipping.

@@ -267,7 +267,7 @@ export const characterDerivedSchema = z.strictObject({
   /**
    * One per inventory entry whose item lets the wearer pick which scores it raises, such as
    * the Deck of Many Things, and whose picks are not all made. The item grants nothing until
-   * they are. `entry` indexes the definition's `inventory`; `count` is how many to pick from `from`.
+   * they are. `entry` indexes the definition's `inventory`; `count` is the total to pick from `from`.
    */
   pendingAbilityPicks: z.array(
     z.strictObject({
