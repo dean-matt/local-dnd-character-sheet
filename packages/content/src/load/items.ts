@@ -16,7 +16,7 @@ import { EDITION_FILES, type Edition, editionOf, editions, ownFiles } from "./ed
 import { collectFluff, fluffKey, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { expandItemEntries, type ItemEntryTemplates, itemEntryTemplates } from "./item-entry.ts";
-import { type Entry, isRecord, kindedRows, text } from "./json.ts";
+import { type Entry, entriesOf, isRecord, kindedRows, text } from "./json.ts";
 
 type FromSource = (source: string) => Edition;
 
@@ -77,6 +77,48 @@ function requiresAttunement(fields: Entry, context: string): number {
   );
 }
 
+const REPLICATION = ["classFeatures", "optionalfeatures"] as const;
+
+/**
+ * What an Artificer replicates each member of an item group with, keyed `name|source`.
+ * Upstream writes the back-references on the group alone, so the members would otherwise
+ * never state them.
+ */
+function groupReplication(files: [string, unknown][]): Map<string, Entry> {
+  const groups = files
+    .filter(([path]) => KINDS[path]?.includes("itemGroup"))
+    .flatMap(([path, parsed]) => entriesOf(parsed, "itemGroup", path));
+  return new Map(
+    groups.flatMap((group) => {
+      const carried = Object.fromEntries(
+        REPLICATION.filter((key) => Array.isArray(group[key])).map((key) => [key, group[key]]),
+      );
+      const members = Array.isArray(group.items) ? group.items : [];
+      return members.map((member): [string, Entry] => [String(member), carried]);
+    }),
+  );
+}
+
+/** The group's replication fields the member's own entry leaves out, so a stated one wins. */
+function withGroupReplication(
+  entry: Entry,
+  kind: string,
+  context: string,
+  groups: Map<string, Entry>,
+): Entry {
+  const fields = itemFields(entry, kind, context);
+  const inherited = groups.get(
+    `${text(entry, "name", context)}|${text(fields, "source", context)}`,
+  );
+  if (inherited === undefined) return entry;
+  const missing = Object.fromEntries(
+    Object.entries(inherited).filter(([key]) => !Array.isArray(fields[key])),
+  );
+  return kind === VARIANT
+    ? { ...entry, inherits: { ...fields, ...missing } }
+    : { ...entry, ...missing };
+}
+
 function withExpanded(entry: Entry, fields: Entry, templates: ItemEntryTemplates): Entry {
   if (entry.entries === undefined) return entry;
   return { ...entry, entries: expandItemEntries(entry.entries, fields, templates) };
@@ -87,13 +129,15 @@ function withExpandedInherits(entry: Entry, fields: Entry, templates: ItemEntryT
 }
 
 function toRow(
-  entry: Entry,
+  listed: Entry,
   kind: string,
   context: string,
   fromSource: FromSource,
   fluff: (key: string) => Entry | undefined,
   templates: ItemEntryTemplates,
+  groups: Map<string, Entry>,
 ): Row {
+  const entry = withGroupReplication(listed, kind, context, groups);
   const fields = itemFields(entry, kind, context);
   const source = text(fields, "source", context);
   const withText = withFluff(entry, fluff(fluffKey(text(entry, "name", context), source)), context);
@@ -125,9 +169,10 @@ export const items: Loader = {
     );
     const files = ownFiles(sources).filter(([path]) => !isFluffPath(path));
     const templates = itemEntryTemplates(sources.get("data/items-base.json"));
+    const groups = groupReplication(files);
     return {
       items: kindedRows(files, KINDS, (entry, kind, context) =>
-        toRow(entry, kind, context, fromSource, fluff, templates),
+        toRow(entry, kind, context, fromSource, fluff, templates, groups),
       ),
     };
   },
