@@ -24,9 +24,10 @@ stops here.
 The merge raises the root `package.json` version, so a merge to `main` leaves no other open
 pull request with a version line to redo. The ruleset takes no direct push and requires every
 check green on a head carrying `main`'s tip, so the bump is one more commit on the branch,
-and it costs one more full CI run, Windows shards and e2e included, before every merge of a
-pull request that changes code. Skip a pull request `dependabot[bot]` opened. In the issue's worktree, where `.claude/worktrees/<issue>`
-is gone, open it as [`issue-worktree`](../issue-worktree/SKILL.md#opening) says first:
+and it costs one more full CI run before every merge of a pull request that changes code. Skip a pull request `dependabot[bot]` opened.
+
+Work in the issue's worktree; where `.claude/worktrees/<issue>` is gone, open it as
+[`issue-worktree`](../issue-worktree/SKILL.md#opening) says first:
 
 ```bash
 git pull --ff-only && git fetch origin main
@@ -39,11 +40,10 @@ prints `no bump` for a pull request that changes only prose or the mockup, and t
 version otherwise; for the version, commit and push:
 
 ```bash
-git commit -am "chore(repo): raise the version to <version>" && git push
+git commit package.json -m "chore(repo): raise the version to <version>" && git push
 ```
 
-Merging `main` in locally leaves the branch current, so the push is the only new head.
-A rerun after a bump already pushed prints `no bump`.
+A rerun after the bump is pushed prints `no bump`.
 
 ## Block on the checks
 
