@@ -22,7 +22,7 @@ export type HitPointLevel = {
   die: HitDie;
   rolled?: number;
   /** The player typed `rolled`; without it, a gain within the die's range reads as a roll. */
-  typed?: boolean;
+  typed?: true;
 };
 
 /** The fixed value a class table prints, which is the die's average rounded up. */
