@@ -12,17 +12,8 @@ marks it ready once the canvas carries the change.
 
 ## The version
 
-A pull request that changes any file outside `docs/` other than Markdown raises the root
-`package.json` version over `main`'s, once: `feat` raises the minor, every other type the
-patch.
-
-```bash
-npm version <minor|patch> --no-git-tag-version
-```
-
-`pnpm check` fails a branch without it, so `issue-to-pr` commits the bump with its first
-commit, before this skill runs. Where `main` raises it while the pull request is open,
-[`merge-pr`](../merge-pr/SKILL.md#where-the-branch-is-behind) raises it again.
+Leave the root `package.json` version alone. [`merge-pr`](../merge-pr/SKILL.md#raise-the-version)
+raises it from the title's type, so a pull request that edits it conflicts with every other.
 
 ## The pull request body
 

@@ -14,9 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          # The pull request's merge commit and its base parent, which the version check reads.
-          fetch-depth: 2
 
       - uses: pnpm/action-setup@v6
 
@@ -35,11 +32,6 @@ jobs:
 
       - name: Dead code
         run: pnpm deadcode
-
-      # Dependabot edits only workflow files and never raises the version.
-      - name: Version bump
-        if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
-        run: pnpm version:check HEAD~1
 
       - name: Build
         run: pnpm build

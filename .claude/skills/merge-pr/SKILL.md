@@ -17,6 +17,32 @@ issue=$(gh pr view "$n" --json body --jq '.body | capture("Closes #(?<i>[0-9]+)"
 The input is an open, non-draft pull request naming the issue it closes. Anything else
 stops here.
 
+## Raise the version
+
+The merge raises the root `package.json` version, so a merge to `main` leaves no other open
+pull request with a version line to redo. The ruleset takes no direct push and requires every
+check green on a head carrying `main`'s tip, so the bump is one more commit on the branch,
+and it costs one more full CI run, Windows shards and e2e included, before every merge of a
+pull request that changes code. In the issue's worktree, where `.claude/worktrees/<issue>`
+is gone, open it as [`issue-worktree`](../issue-worktree/SKILL.md#opening) says first:
+
+```bash
+git pull --ff-only && git fetch origin main
+git merge --no-edit origin/main
+node scripts/version-bump.mjs "$n"
+```
+
+A conflict in the merge goes to the user: `git merge --abort` and hand it over. The script
+prints `no bump` for a pull request that changes only prose or the mockup, and the new
+version otherwise; for the version, commit and push:
+
+```bash
+git commit -am "chore(repo): raise the version to <version>" && git push
+```
+
+Merging `main` in locally leaves the branch current, so the push is the only new head.
+A rerun after a bump already pushed prints `no bump`.
+
 ## Block on the checks
 
 ```bash
@@ -24,10 +50,8 @@ node scripts/wait-checks.mjs "$n"
 ```
 
 Run it with a 600000 ms tool timeout. On its exit 2, name what it printed and hand back.
-On exit 1, read the failed step first with `gh run view <id> --log-failed`. Where `static`
-fails at its Version bump step, do not rerun it — a rerun fails the same way — and go to
-[Raise the version again](behind-branch-recovery.md#raise-the-version-again). Rerun any
-other failed run once, never twice: one rerun covers a flaky runner, a second says the
+On exit 1, read the failed step first with `gh run view <id> --log-failed`. Rerun a failed
+run once, never twice: one rerun covers a flaky runner, a second says the
 failure is the branch's.
 
 ```bash
@@ -67,7 +91,7 @@ a comment.
 Two lines print beside *the review converged* and stop nothing: the distance line (how far
 behind the tip the last pass sits, and the `git log` range that counted it — run that range
 and weigh what it lists, since a pass short of the tip may be a fix answering it or code
-nobody read) and the cap line (a waiver at the cap, an overage past it). A `warn` line,
+nobody read; the version commit is one, and needs no weighing) and the cap line (a waiver at the cap, an overage past it). A `warn` line,
 *the pull request is not linked to its issue*, stops nothing either. Name it to the user:
 a dropped link needs a hand link from the pull request's Development box, and a body that
 does not open with `Closes #<issue>` needs that line.
