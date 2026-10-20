@@ -2,6 +2,7 @@ import { ChevronDown, MessageSquare, Settings } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useMatch } from "react-router";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
+import { appVersionText } from "../../appVersionText.ts";
 import { CharacterAvatar } from "./CharacterAvatar.tsx";
 import { GlobalSearch } from "./GlobalSearch/GlobalSearch.tsx";
 import { MechanicsMenu } from "./MechanicsMenu.tsx";
@@ -10,6 +11,9 @@ import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
 const FEEDBACK_URL =
   "https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback";
+
+// The form field `id: version` in .github/DISCUSSION_TEMPLATE/feedback.yml names this parameter.
+const feedbackUrl = () => `${FEEDBACK_URL}&version=${encodeURIComponent(appVersionText())}`;
 
 export function TopBar() {
   const characters = useCharacters();
@@ -119,7 +123,7 @@ export function TopBar() {
       <GlobalSearch onOpen={closeMenu} />
 
       <a
-        href={FEEDBACK_URL}
+        href={feedbackUrl()}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Feedback (opens GitHub in a new tab)"

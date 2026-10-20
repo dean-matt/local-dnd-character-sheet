@@ -21,6 +21,7 @@ function renderTopBar(path = "/") {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 describe("TopBar", () => {
@@ -67,6 +68,8 @@ describe("TopBar", () => {
   });
 
   it("Feedback opens a new Feedback discussion in a new tab, just left of Settings", () => {
+    vi.stubEnv("VITE_APP_VERSION", "0.5.1");
+    vi.stubEnv("VITE_APP_COMMIT", "41d05f0");
     stubFetchByUrl(noCharacters);
     renderTopBar();
 
@@ -75,7 +78,7 @@ describe("TopBar", () => {
     });
     expect(feedback).toHaveAttribute(
       "href",
-      "https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback",
+      "https://github.com/dean-matt/local-dnd-character-sheet/discussions/new?category=feedback&version=0.5.1%20(41d05f0)",
     );
     expect(feedback).toHaveAttribute("target", "_blank");
     expect(feedback).toHaveAttribute("rel", "noopener noreferrer");
