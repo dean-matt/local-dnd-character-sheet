@@ -29,17 +29,18 @@
 
   /*
    * Lightened in dark: at full strength the :focus-visible outline (a non-text
-   * indicator, 3:1 minimum) falls to 2.51:1 against --color-surface. The hover and
-   * active shades mix from var(--color-accent), so they follow.
+   * indicator, 3:1 minimum) falls to 2.51:1 against --color-surface. Lightness rises
+   * with hue and chroma held, where mixing in white would wash the color out. The hover
+   * and active shades mix from var(--color-accent), so they follow.
    */
   --color-accent: light-dark(
     var(--accent),
-    color-mix(in oklab, var(--accent), white var(--accent-ring-lift))
+    oklch(from var(--accent) calc(l + var(--accent-ring-lift)) c h)
   );
   /* Accent as small text: the dark accent measures 3.10:1 on surface, under AA. */
   --color-accent-text: light-dark(
     var(--accent),
-    color-mix(in oklab, var(--accent), white var(--accent-text-lift))
+    oklch(from var(--accent) calc(l + var(--accent-text-lift)) c h)
   );
   --color-accent-hover: color-mix(in oklab, var(--color-accent) 85%, black);
   --color-accent-active: color-mix(in oklab, var(--color-accent) 70%, black);
@@ -135,13 +136,13 @@
 }
 
 /*
- * The default accent and the white the dark theme mixes into it. A chosen accent overrides
+ * The default accent and the lightness the dark theme adds to it. A chosen accent overrides
  * all three on the root element, with lifts src/accent.ts derives for that color.
  */
 :root {
   --accent: #c1272d;
-  --accent-ring-lift: 10%;
-  --accent-text-lift: 40%;
+  --accent-ring-lift: 0.05;
+  --accent-text-lift: 0.19;
 }
 
 /*

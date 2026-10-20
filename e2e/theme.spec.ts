@@ -11,7 +11,7 @@ const dark = {
   name: "dark",
   ground: "var(--color-gray-900)",
   ink: "var(--color-gray-100)",
-  accent: "color-mix(in oklab, #c1272d 90%, white)",
+  accent: "oklch(from #c1272d calc(l + 0.05) c h)",
 };
 
 const cases = [
@@ -44,8 +44,8 @@ for (const { system, accent, text } of [
   { system: "light", accent: "#3a4f7a", text: "#3a4f7a" },
   {
     system: "dark",
-    accent: "color-mix(in oklab, #3a4f7a, white 21%)",
-    text: "color-mix(in oklab, #3a4f7a, white 46%)",
+    accent: "oklch(from #3a4f7a calc(l + 0.12) c h)",
+    text: "oklch(from #3a4f7a calc(l + 0.27) c h)",
   },
 ] as const) {
   test(`a chosen accent survives a reload and paints its ${system} shades`, async ({ page }) => {
