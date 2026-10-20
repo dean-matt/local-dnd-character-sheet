@@ -778,6 +778,21 @@ describe("inventory", () => {
     expect(characterDefinitionSchema.safeParse(picked(["luck"])).success).toBe(false);
   });
 
+  it("stores the proficiency and the language an item's flag leaves unnamed", () => {
+    const picked = (extra: object) => ({
+      ...structuredClone(definition),
+      inventory: [{ ref: { name: "Belt of Dwarvenkind", source: "DMG" }, ...extra }],
+    });
+    const entry = characterDefinitionSchema.parse(
+      picked({ proficiencyPick: "Longbow", languagePick: { name: "Dwarvish", source: "PHB" } }),
+    ).inventory[0];
+    expect(entry?.proficiencyPick).toBe("Longbow");
+    expect(entry?.languagePick).toEqual({ name: "Dwarvish", source: "PHB" });
+    expect(characterDefinitionSchema.safeParse(picked({ proficiencyPick: "" })).success).toBe(
+      false,
+    );
+  });
+
   it("names a magic variant beside the base item it expands, rather than storing it expanded", () => {
     const enchanted = {
       ...structuredClone(definition),

@@ -71,13 +71,22 @@ const defensesSchema = z.strictObject({
 });
 
 /**
- * The names of the equipped items that grant a proficiency or a language, which upstream
- * flags without naming, and the skills equipped items name, each with the items behind it.
+ * The proficiencies and languages equipped items grant, each as the inventory entry's pick
+ * names it, because upstream flags the grant without naming it. Also the skills equipped
+ * items name, each with the items behind it. `pending` lists the grants whose pick the entry
+ * has not stored; `entry` indexes the definition's `inventory`.
  */
 const itemGrantsSchema = z.strictObject({
   skills: z.array(skillGrantSchema),
-  proficiencies: z.array(z.string().min(1)),
-  languages: z.array(z.string().min(1)),
+  proficiencies: z.array(z.strictObject({ name: z.string().min(1), from: z.string().min(1) })),
+  languages: z.array(z.strictObject({ name: z.string().min(1), from: z.string().min(1) })),
+  pending: z.array(
+    z.strictObject({
+      entry: z.int().min(0),
+      item: z.string().min(1),
+      kind: z.enum(["proficiency", "language"]),
+    }),
+  ),
 });
 
 /**

@@ -369,8 +369,9 @@ describe("AbilitiesSection", () => {
               from: ["Mask of Shadows"],
             },
           ],
-          proficiencies: ["Bracers of Archery"],
-          languages: ["Belt of Dwarvenkind"],
+          proficiencies: [{ name: "Longbow", from: "Bracers of Archery" }],
+          languages: [{ name: "Dwarvish", from: "Belt of Dwarvenkind" }],
+          pending: [{ entry: 2, item: "Ring of Tongues", kind: "language" }],
         },
         manual: null,
         terms: [],
@@ -382,8 +383,9 @@ describe("AbilitiesSection", () => {
       "Boots of Speed: walk 30 to 6030",
     );
     const granted = card("Granted by items");
-    expect(granted.getByText("Bracers of Archery")).toBeInTheDocument();
-    expect(granted.getByText("Belt of Dwarvenkind")).toBeInTheDocument();
+    expect(granted.getByText("Longbow (Bracers of Archery)")).toBeInTheDocument();
+    expect(granted.getByText("Dwarvish (Belt of Dwarvenkind)")).toBeInTheDocument();
+    expect(granted.getByText("Ring of Tongues (language)")).toBeInTheDocument();
     expect(granted.getByText("Stealth (Mask of Shadows)")).toBeInTheDocument();
   });
 

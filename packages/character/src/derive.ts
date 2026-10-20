@@ -661,20 +661,35 @@ function derivedSenses(
 }
 
 /**
- * The equipped items, attuned where they must be, that grant a proficiency or a language,
- * and the skills they raise.
+ * The proficiencies and languages equipped items grant, attuned where they must be, as the
+ * entry's stored pick names them, and the entries still waiting on one. Upstream flags the
+ * grant without naming it, so an item grants nothing until the pick is stored.
  */
 function derivedItemGrants(
-  bonuses: readonly ItemBonusTrait[],
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
   skills: CharacterDerived["itemGrants"]["computed"]["skills"],
 ): CharacterDerived["itemGrants"] {
-  const named = (granted: (item: ItemBonusTrait) => boolean) =>
-    bonuses.filter(granted).map((item) => item.name);
-  return computed({
+  const grants: CharacterDerived["itemGrants"]["computed"] = {
     skills,
-    proficiencies: named((item) => item.grantsProficiency),
-    languages: named((item) => item.grantsLanguage),
+    proficiencies: [],
+    languages: [],
+    pending: [],
+  };
+  definition.inventory.forEach((entry, index) => {
+    const item = catalog.itemBonuses.get(itemKey(entry));
+    if (!item || !entry.equipped || (item.requiresAttunement && !entry.attuned)) return;
+    const from = item.name;
+    if (item.grantsProficiency) {
+      if (entry.proficiencyPick) grants.proficiencies.push({ name: entry.proficiencyPick, from });
+      else grants.pending.push({ entry: index, item: from, kind: "proficiency" });
+    }
+    if (item.grantsLanguage) {
+      if (entry.languagePick) grants.languages.push({ name: entry.languagePick.name, from });
+      else grants.pending.push({ entry: index, item: from, kind: "language" });
+    }
   });
+  return computed(grants);
 }
 
 /** The equipped armor, attuned where it must be, that states a Stealth penalty or a Strength requirement. */
@@ -964,7 +979,7 @@ export function deriveCharacter(
     attacks: derivedAttacks(definition, catalog, bonuses),
     defenses: derivedDefenses(definition, catalog, feats.defenses),
     senses: derivedSenses(definition, catalog, feats.senses),
-    itemGrants: derivedItemGrants(bonuses, feats.itemSkills),
+    itemGrants: derivedItemGrants(definition, catalog, feats.itemSkills),
     featGrants: computed(feats.granted),
     rollEffects: derivedRollEffects(definition, catalog, burdened),
     unproficientItems: derivedUnproficientItems(definition, catalog),

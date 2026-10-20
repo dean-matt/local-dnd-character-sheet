@@ -179,6 +179,8 @@ const inventoryEntrySchema = z
     attuned: z.boolean().default(false),
     grip: z.enum(GRIPS).optional(),
     abilityPicks: z.array(abilitySchema).max(ABILITIES.length).optional(),
+    proficiencyPick: z.string().min(1).optional(),
+    languagePick: contentRefSchema.optional(),
   })
   .refine((entry) => entry.carried || !entry.equipped, {
     error: "an item is equipped but not carried",
