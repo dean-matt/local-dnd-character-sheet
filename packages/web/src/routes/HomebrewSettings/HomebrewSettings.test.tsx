@@ -92,8 +92,8 @@ const editor = () => {
   return open;
 };
 const FIELD_SELECTOR = {
-  textbox: '[role="textbox"], textarea, input:not([type="number"]):not([type="checkbox"])',
-  combobox: '[role="combobox"]',
+  textbox: '[role="textbox"], textarea, input:not([type]), input[type="text"]',
+  combobox: '[role="combobox"], select',
   checkbox: '[role="checkbox"], input[type="checkbox"]',
   spinbutton: '[role="spinbutton"], input[type="number"]',
 };
