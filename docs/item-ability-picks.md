@@ -35,9 +35,5 @@ unequipping or un-attuning removes it. Only an item in effect appears as pending
 
 ## Hit points from a Constitution-setting item
 
-The Amulet of Health only sets Constitution, and the maximum follows through the modifier.
-The `constitutionItemHitPointsPerLevel` house rule is a number of hit points that each such
-item adds at every level, on top of the modifier. It counts while the item is equipped, and
-attuned where it requires attunement. The breakdown lists it as a term named for the item,
-and a manual maximum still wins. Until the settings page has a control for a number, the
-option is written through the definition's `houseRules`.
+The Amulet of Health only sets Constitution, and the maximum follows through the modifier at
+every level; no separate term is added.

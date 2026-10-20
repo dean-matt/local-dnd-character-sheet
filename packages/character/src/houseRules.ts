@@ -10,7 +10,7 @@ import { z } from "zod";
  * or off, but a fixed hit point maximum per level is a number, and a critical that
  * maxes dice rather than rolling them twice is a mode.
  */
-export const houseRulesSchema = z
+const houseRulesObject = z
   .strictObject({
     /**
      * The 2014 encumbrance variant applies. It is a variant the table opts into and the
@@ -59,14 +59,18 @@ export const houseRulesSchema = z
      * the equip goes through and the sheet marks what it costs.
      */
     requireEquipProficiency: z.boolean().optional(),
-    /**
-     * Hit points an equipped item that sets Constitution, such as the Amulet of Health,
-     * adds at each of the character's levels on top of the modifier it earns. Absent, the
-     * item only sets the score.
-     */
-    constitutionItemHitPointsPerLevel: z.int().positive().optional(),
   })
   .prefault({});
+
+/**
+ * The object is strict, so a definition saved while a since-removed option existed would stop
+ * parsing; the retired key is dropped before the parse rather than rejected.
+ */
+export const houseRulesSchema = z.preprocess((rules) => {
+  if (typeof rules !== "object" || rules === null) return rules;
+  const { constitutionItemHitPointsPerLevel: _retired, ...kept } = rules as Record<string, unknown>;
+  return kept;
+}, houseRulesObject);
 
 export type HouseRules = z.infer<typeof houseRulesSchema>;
 
@@ -84,5 +88,4 @@ export const PRINTED_RULE: Required<HouseRules> = {
   duplicateToolReplacement: false,
   feats: false,
   requireEquipProficiency: false,
-  constitutionItemHitPointsPerLevel: 0,
 };

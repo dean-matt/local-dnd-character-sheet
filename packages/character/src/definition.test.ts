@@ -240,6 +240,14 @@ describe("houseRules", () => {
     expect(parsed.houseRules).not.toHaveProperty("encumbrance");
   });
 
+  it("drops the retired per-level hit point option a saved definition may still hold", () => {
+    const saved = {
+      ...definition,
+      houseRules: { encumbrance: true, constitutionItemHitPointsPerLevel: 2 },
+    };
+    expect(characterDefinitionSchema.parse(saved).houseRules).toEqual({ encumbrance: true });
+  });
+
   it("rejects an option for a rule the sheet does not compute", () => {
     const flanking = { ...definition, houseRules: { flanking: true } };
     expect(characterDefinitionSchema.safeParse(flanking).success).toBe(false);
