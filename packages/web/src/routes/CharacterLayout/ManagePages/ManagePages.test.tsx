@@ -173,8 +173,13 @@ describe("ManagePages", () => {
       expect(navTitles()).toEqual(["Stats", "Inventory", "Features", ...LATER_TITLES]),
     );
     expect(status()).toHaveTextContent("Spells hidden.");
-    await router.navigate("/characters/abc/p/spells");
-    expect(await screen.findByRole("region", { name: "Spells" })).toBeInTheDocument();
+    // `act` flushes the render the navigation starts. The page is a `section` labelled with its
+    // title, found by selector because a role query computes accessibility for the whole sheet,
+    // which cost the Windows runner more than the 1 s default wait.
+    await act(() => router.navigate("/characters/abc/p/spells"));
+    await waitFor(() =>
+      expect(document.querySelector("section[aria-label='Spells']")).toBeInTheDocument(),
+    );
   });
 
   it("shows a hidden page again", async () => {
