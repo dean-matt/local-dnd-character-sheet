@@ -28,7 +28,13 @@ import {
   type Term,
   weaponAttack,
 } from "@dnd/rules";
-import { type AbilityGrant, abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";
+import {
+  type AbilityGrant,
+  abilityScore,
+  abilityScoreBreakdown,
+  pickedGrant,
+  validPicks,
+} from "./abilityScore.ts";
 import type {
   ArmorBurdenTrait,
   ArmorTrait,
@@ -531,7 +537,22 @@ function equippedAbilityGrants(
 ): AbilityGrant[] {
   return definition.inventory.flatMap((entry) => {
     const item = catalog.itemAbilities.get(itemKey(entry));
-    return item && entry.equipped && (entry.attuned || !item.requiresAttunement) ? [item] : [];
+    return item && entry.equipped && (entry.attuned || !item.requiresAttunement)
+      ? [pickedGrant(item, entry.abilityPicks)]
+      : [];
+  });
+}
+
+/** Each inventory entry whose item offers a pick of scores that the entry has not fully made. */
+function derivedPendingAbilityPicks(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+): CharacterDerived["pendingAbilityPicks"] {
+  return definition.inventory.flatMap((entry, index) => {
+    const item = catalog.itemAbilities.get(itemKey(entry));
+    const choose = item?.choose;
+    if (!item || !choose || validPicks(item, entry.abilityPicks).length >= choose.count) return [];
+    return [{ entry: index, from: [...choose.from], count: choose.count }];
   });
 }
 
@@ -947,6 +968,7 @@ export function deriveCharacter(
     featGrants: computed(feats.granted),
     rollEffects: derivedRollEffects(definition, catalog, burdened),
     unproficientItems: derivedUnproficientItems(definition, catalog),
+    pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),
   };
   return applyOverrides(block, stored);

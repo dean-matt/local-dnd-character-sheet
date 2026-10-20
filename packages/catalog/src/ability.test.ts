@@ -17,11 +17,45 @@ describe("abilityGrantSchema", () => {
     });
   });
 
-  it("grants nothing for a row without the field, a pick, a potion or a malformed score", () => {
-    expect(abilityGrantSchema.parse({})).toBeUndefined();
+  it("reads a choose group, and the bare from form, as a pick", () => {
     expect(
-      abilityGrantSchema.parse({ ability: { choose: [{ from: ["str"], amount: 2 }] } }),
-    ).toBeUndefined();
+      abilityGrantSchema.parse({ ability: { choose: [{ from: ["str", "dex"], amount: 2 }] } }),
+    ).toEqual({ static: {}, bonus: {}, choose: { from: ["str", "dex"], count: 1, amount: 2 } });
+    expect(abilityGrantSchema.parse({ ability: { from: ["wis"], count: 2, amount: 3 } })).toEqual({
+      static: {},
+      bonus: {},
+      choose: { from: ["wis"], count: 2, amount: 3 },
+    });
+  });
+
+  it.each([
+    [
+      "Deck of Many Things (DMG)",
+      { from: ["str", "dex", "con", "int", "wis", "cha"], count: 1, amount: 2 },
+    ],
+    [
+      "Deck of Many Things (XDMG)",
+      { from: ["str", "dex", "con", "int", "wis", "cha"], count: 1, amount: 2 },
+    ],
+    [
+      "Book of Vile Darkness (DMG)",
+      { choose: [{ from: ["str", "dex", "con", "int", "wis", "cha"], count: 1, amount: 2 }] },
+    ],
+    [
+      "Book of Vile Darkness (XDMG)",
+      { choose: [{ from: ["str", "dex", "con", "int", "wis", "cha"], count: 1, amount: 2 }] },
+    ],
+    [
+      "Deck of Several Things (LLK)",
+      { choose: [{ from: ["str", "dex", "con", "int", "wis", "cha"], count: 1 }] },
+    ],
+  ])("reads the pick %s writes", (_row, ability) => {
+    expect(abilityGrantSchema.parse({ ability })?.choose?.from).toHaveLength(6);
+  });
+
+  it("grants nothing for a row without the field, a potion or a malformed score or pick", () => {
+    expect(abilityGrantSchema.parse({})).toBeUndefined();
+    expect(abilityGrantSchema.parse({ ability: { choose: [{ from: ["luck"] }] } })).toBeUndefined();
     expect(
       abilityGrantSchema.parse({ type: "P|XPHB", ability: { static: { str: 21 } } }),
     ).toBeUndefined();
