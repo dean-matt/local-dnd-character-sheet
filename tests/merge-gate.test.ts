@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   blockingBodyDeclines,
   blockingDeclines,
@@ -437,6 +437,10 @@ describe("the other three conditions", () => {
     expect(dependenciesDiffer(before, { ...before, devDependencies: { vitest: "^4" } })).toBe(true);
   });
 });
+
+// Spawns cost about 160 ms each on a hosted Windows runner. 60 s is far above the ~20 a
+// case in the git block runs, and a hung one still fails. Covers the whole file.
+vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
 /**
  * The one piece of this note that runs git, over a repository built to hold the shape

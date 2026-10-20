@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 /**
  * Runs `scripts/no-rewrite.mjs` against a real repository, which the unit tests cannot
@@ -12,6 +12,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * Each case builds its own branch. A case that inherits the state of the one before it
  * passes in the suite and asserts the opposite of its name when run alone.
  */
+
+// Spawns cost about 160 ms each on a hosted Windows runner. 60 s is far above this file's
+// ~30 spawns, and a hung one still fails.
+vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
+
 const SCRIPT = resolve(import.meta.dirname, "../scripts/no-rewrite.mjs");
 
 let work: string;
