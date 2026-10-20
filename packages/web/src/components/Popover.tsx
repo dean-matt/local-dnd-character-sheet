@@ -189,7 +189,7 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
                 }
               : undefined
           }
-          className={`${inModal ? "inset-auto m-0" : "absolute top-full left-0 z-10"} mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-ink text-row shadow-lg`}
+          className={`${inModal ? "inset-auto m-0" : "absolute top-full left-0 z-10"} mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-ink text-row shadow-popover`}
         >
           <DepthContext.Provider value={depth + 1}>{children}</DepthContext.Provider>
         </span>
