@@ -57,6 +57,7 @@ describe("useCharacterPages", () => {
     });
     expect(result.current.replace.current()).toEqual(second);
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    // A third request that must not go out has no signal to wait on; 20 ms is many turns of the event loop.
     await new Promise((settle) => setTimeout(settle, 20));
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
@@ -150,6 +151,7 @@ describe("useCharacterPages", () => {
       result.current.replace.write(reversed);
       result.current.restore.mutate();
     });
+    // A restore request that must not go out has no signal to wait on; 20 ms is many turns of the event loop.
     await new Promise((settle) => setTimeout(settle, 20));
     const sent = () => fetchMock.mock.calls.map(([input]) => String(input));
     expect(sent().filter((url) => url.endsWith("/restore-defaults"))).toHaveLength(0);

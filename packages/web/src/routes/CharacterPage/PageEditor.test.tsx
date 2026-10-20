@@ -194,6 +194,7 @@ describe("PageEditor", () => {
     release();
 
     await waitFor(() => expect(server.page()?.blocks).toEqual([]));
+    // The dropped save has no signal to wait on; 50 ms lets a queued write reach the server.
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(server.puts).toHaveLength(1);
   });
