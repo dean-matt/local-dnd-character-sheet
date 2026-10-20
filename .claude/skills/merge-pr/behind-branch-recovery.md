@@ -41,8 +41,14 @@ reinvocations go to the user, carrying that reading.
 
 ## Where `main` raised the version meanwhile
 
-A merge landed after this branch's version commit, so both changed the `version` line and
-the update is a conflict. In the issue's worktree, merge `main` locally:
+After every update, clean or not, run the version step again. Two pull requests that raise
+the version to the same number do not conflict, since git accepts an identical edit, so a
+clean update can leave this branch at `main`'s version with nothing raised.
+
+In the issue's worktree, a clean update needs only `git pull --ff-only` before
+`node scripts/version-bump.mjs "$n"`, then the commit and push from *Raise the version* in
+[SKILL.md](SKILL.md#raise-the-version). A 422 conflict on the `version` line needs the merge
+done locally first:
 
 ```bash
 git pull --ff-only && git fetch origin main
@@ -51,5 +57,4 @@ git merge --no-edit origin/main
 
 A conflict anywhere but the `version` line goes to the user: `git merge --abort` and hand it
 over. On that line alone, set it to `main`'s version, then `git add package.json && git commit
---no-edit`, and run *Raise the version* in [SKILL.md](SKILL.md#raise-the-version) from its
-script step. Then wait out the stale window again.
+--no-edit` and run the script. Then wait out the stale window again.
