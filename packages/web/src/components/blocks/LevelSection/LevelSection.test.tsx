@@ -435,6 +435,9 @@ describe("LevelHistory", () => {
       await waitFor(() => expect(hp(2)).toBe("+10 (Level 2: d8 rolled 8 +2 Con)"));
       expect(gains()).toEqual([[{}, { rolled: 8 }, {}]]);
 
+      expect(within(history()).getByRole("spinbutton", { name: "Level 2 typed gain" })).toHaveValue(
+        8,
+      );
       type("12");
       await waitFor(() => expect(hp(2)).toBe("+14 (Level 2: d8 typed 12 +2 Con)"));
       expect(gains().at(-1)?.[1]).toEqual({ rolled: 12, typed: true });

@@ -35,7 +35,9 @@ export function LevelGainEdit({
 }) {
   const panel = useId();
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState(entry.rolled === undefined ? "" : String(entry.rolled));
+  // Follows the stored gain until the player types, so a roll or an undo never leaves a stale number to Set.
+  const [draft, setDraft] = useState<string>();
+  const text = draft ?? (entry.rolled === undefined ? "" : String(entry.rolled));
   const [refused, setRefused] = useState(false);
 
   if (level === 1) {
@@ -74,7 +76,10 @@ export function LevelGainEdit({
             <button
               type="button"
               aria-pressed={source === "average"}
-              onClick={() => onEdit({ kind: "average" })}
+              onClick={() => {
+                setDraft(undefined);
+                onEdit({ kind: "average" });
+              }}
               className={BUTTON}
             >
               Average ({average})
@@ -82,7 +87,10 @@ export function LevelGainEdit({
             <button
               type="button"
               aria-pressed={source === "rolled"}
-              onClick={() => onEdit({ kind: "roll", face: rollDice(`1d${die}`).total })}
+              onClick={() => {
+                setDraft(undefined);
+                onEdit({ kind: "roll", face: rollDice(`1d${die}`).total });
+              }}
               className={BUTTON}
             >
               {source === "rolled" ? "Reroll" : "Roll"} (d{die})
@@ -98,7 +106,7 @@ export function LevelGainEdit({
               placeholder="Type a gain"
               value={text}
               onChange={(event) => {
-                setText(event.target.value);
+                setDraft(event.target.value);
                 setRefused(false);
               }}
               error={refused && typedGainMessage}
