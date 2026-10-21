@@ -35,7 +35,7 @@ git merge --no-edit origin/main
 node scripts/version-bump.mjs "$n"
 ```
 
-A conflict in the merge goes to [merge-conflicts.md](merge-conflicts.md). The script
+A conflict in the merge goes to [merge-conflicts.md](merge-conflicts.md). `version-bump.mjs`
 prints `no bump` for a pull request that changes only prose or the mockup, and the new
 version otherwise; for the version, commit and push:
 

@@ -21,7 +21,13 @@ const ROW_BRANCH = "| [docs/reviving.md](docs/reviving.md) | Returning after a g
  * Two branches cut from one commit, each changing `file` its own way, with the branch
  * checked out and `main` merged into it. The merge is left conflicted.
  */
-function conflicted(file: string, start: string, onMain: string, onBranch: string) {
+function conflicted(
+  file: string,
+  start: string,
+  onMain: string,
+  onBranch: string,
+  autocrlf = "false",
+) {
   const dir = mkdtempSync(join(tmpdir(), "resolve-conflicts-"));
   const git = (...args: string[]) =>
     capture("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], { cwd: dir });
@@ -32,6 +38,7 @@ function conflicted(file: string, start: string, onMain: string, onBranch: strin
     git("commit", "-qm", text.length.toString());
   };
   git("init", "-q", "-b", "main");
+  git("config", "core.autocrlf", autocrlf);
   write(start);
   git("checkout", "-qb", "docs/1-reviving");
   write(onBranch);
@@ -48,6 +55,25 @@ describe("resolveConflicts", () => {
     try {
       expect(resolveConflicts("12", dir)).toBeNull();
       expect(readFileSync(join(dir, "README.md"), "utf8")).toBe(TABLE + ROW_MAIN + ROW_BRANCH);
+      expect(git("diff", "--name-only", "--diff-filter=U")).toBe("");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("settles added rows in a tree checked out with CRLF, and keeps its endings", () => {
+    const { dir, git } = conflicted(
+      "README.md",
+      TABLE,
+      TABLE + ROW_MAIN,
+      TABLE + ROW_BRANCH,
+      "true",
+    );
+    try {
+      expect(resolveConflicts("12", dir)).toBeNull();
+      expect(readFileSync(join(dir, "README.md"), "utf8")).toBe(
+        (TABLE + ROW_MAIN + ROW_BRANCH).replaceAll("\n", "\r\n"),
+      );
       expect(git("diff", "--name-only", "--diff-filter=U")).toBe("");
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -91,6 +117,11 @@ describe("resolveRows", () => {
 
   it("keeps a row both sides added once", () => {
     expect(resolveRows(hunk(ROW_MAIN + ROW_BRANCH, "", ROW_MAIN)).text).toBe(ROW_MAIN + ROW_BRANCH);
+  });
+
+  it("leaves a union type inside a code block as a conflict", () => {
+    const code = "```ts\ntype Size =\n";
+    expect(resolveRows(code + hunk('| "tiny"\n', "", '| "huge"\n')).unresolved).toHaveLength(1);
   });
 
   it("leaves prose, and a side that removed its rows, as conflicts", () => {

@@ -19,18 +19,23 @@ const HUNK = /^<{7} [^\n]*\n([\s\S]*?)^\|{7}[^\n]*\n([\s\S]*?)^={7}\n([\s\S]*?)^
 const isRows = (side) =>
   side !== "" && side.split("\n").every((l) => l === "" || l.startsWith("|"));
 
+/** An odd count of fence lines before `offset` puts it inside a code block. */
+const inCode = (text, offset) =>
+  (text.slice(0, offset).match(/^ {0,3}(`{3}|~{3})/gm) ?? []).length % 2 === 1;
+
 /**
  * Settles each diff3 hunk where the base is empty and both sides hold only table rows:
  * two independent additions. A hunk with a base edits a row one side kept, so taking
- * both would duplicate it, and stays a conflict.
+ * both would duplicate it, and stays a conflict; so does a hunk inside a code block, where
+ * a `|` line is a union type rather than a row.
  *
  * @param {string} text a file holding diff3 conflict markers
  * @returns {{ text: string, unresolved: string[] }}
  */
 export function resolveRows(text) {
   const unresolved = [];
-  const resolved = text.replace(HUNK, (hunk, ours, base, theirs) => {
-    if (base === "" && isRows(ours) && isRows(theirs)) {
+  const resolved = text.replace(HUNK, (hunk, ours, base, theirs, offset) => {
+    if (base === "" && isRows(ours) && isRows(theirs) && !inCode(text, offset)) {
       const rows = theirs.split("\n").filter(Boolean);
       return [...rows, ...ours.split("\n").filter((r) => r && !rows.includes(r))]
         .map((r) => `${r}\n`)
@@ -42,15 +47,41 @@ export function resolveRows(text) {
   return { text: resolved, unresolved };
 }
 
-/** Reads one conflicted file back with diff3 markers, or "" where it has none. */
+/**
+ * Reads one conflicted file back with diff3 markers and LF endings, or "" where it has
+ * none, and whether the working tree holds it with CRLF so a write can restore them.
+ */
 function marked(git, file, path) {
   try {
     git("checkout", "--conflict=diff3", "--", file);
-    return readFileSync(path, "utf8");
+    const raw = readFileSync(path, "utf8");
+    return { text: raw.replaceAll("\r\n", "\n"), crlf: raw.includes("\r\n") };
   } catch {
     // A delete or binary conflict has no diff3 form; it is reported without hunks.
-    return "";
+    return { text: "", crlf: false };
   }
+}
+
+/**
+ * Settles one conflicted file and stages it, or returns the hand-off lines naming its
+ * owner and quoting what is left.
+ */
+function settle(git, file, path, pr) {
+  const { text: original, crlf } = marked(git, file, path);
+  const hunks = original.match(HUNK) ?? [];
+  const { text, unresolved } = resolveRows(original);
+  const settles = file.endsWith(".md") && !FENCE.test(file);
+  if (settles && hunks.length > 0 && unresolved.length === 0) {
+    writeFileSync(path, crlf ? text.replaceAll("\n", "\r\n") : text);
+    git("add", "--", file);
+    return [];
+  }
+  const quoted = settles ? unresolved : hunks.map((h) => h.trimEnd());
+  const owner = FENCE.test(file) ? "the repo owner (fenced path)" : `the author of #${pr}`;
+  return [
+    `${file} — ${owner}`,
+    ...(quoted.length > 0 ? quoted : ["no conflict markers: a delete, rename or binary conflict"]),
+  ];
 }
 
 /**
@@ -61,27 +92,7 @@ function marked(git, file, path) {
 export function resolveConflicts(pr, cwd) {
   const git = (...args) => capture("git", args, { cwd });
   const files = git("diff", "--name-only", "--diff-filter=U").split("\n").filter(Boolean);
-  const handOff = [];
-  for (const file of files) {
-    const path = join(cwd ?? ".", file);
-    const original = marked(git, file, path);
-    const hunks = original.match(HUNK) ?? [];
-    const { text, unresolved } = resolveRows(original);
-    const settles = file.endsWith(".md") && !FENCE.test(file);
-    if (settles && hunks.length > 0 && unresolved.length === 0) {
-      writeFileSync(path, text);
-      git("add", "--", file);
-      continue;
-    }
-    const quoted = settles ? unresolved : hunks.map((h) => h.trimEnd());
-    const owner = FENCE.test(file) ? "the repo owner (fenced path)" : `the author of #${pr}`;
-    handOff.push(
-      `${file} — ${owner}`,
-      ...(quoted.length > 0
-        ? quoted
-        : ["no conflict markers: a delete, rename or binary conflict"]),
-    );
-  }
+  const handOff = files.flatMap((file) => settle(git, file, join(cwd ?? ".", file), pr));
   if (handOff.length === 0) return null;
   const base = git("rev-parse", "MERGE_HEAD").trim();
   return [`#${pr} conflicts with main at ${base}:`, ...handOff].join("\n");

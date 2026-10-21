@@ -34,7 +34,7 @@ file as below, runs `pnpm check`, and commits and pushes the merge. Never rebase
 | File | Resolution |
 |---|---|
 | `package.json` `version` | `main`'s version; the merge raises it again |
-| A table in `README.md` or `docs/` | both rows, as the script does; an edited row takes the edit and keeps the other side's |
+| A table in `README.md` or `docs/` | both rows, as the script does; a row both sides edited becomes one row carrying both edits |
 | A `docs/` file past its 200-line cap | keep both sides' text whole and split the file by subject, with a README row for the new file; never trim the other author's prose to fit |
 | `CLAUDE.md` past its 150-line cap | keep both, then extract to a skill as `CLAUDE.md` says; fenced, so the repo owner |
 | `pnpm-lock.yaml` | `git checkout --theirs pnpm-lock.yaml`, then `pnpm install` regenerates the branch's entries; never edit it by hand |

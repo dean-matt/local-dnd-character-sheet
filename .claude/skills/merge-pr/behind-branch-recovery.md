@@ -55,4 +55,4 @@ git merge --no-edit origin/main
 ```
 
 A conflict goes to [merge-conflicts.md](merge-conflicts.md); once its merge commit is pushed,
-run the script. Then wait out the stale window again.
+run `version-bump.mjs`. Then wait out the stale window again.
