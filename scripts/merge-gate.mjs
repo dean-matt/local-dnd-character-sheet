@@ -69,7 +69,7 @@ export function checksBlocked(checks, expected) {
 export function headBlocked(shown, sha) {
   return shown === sha
     ? null
-    : `GitHub shows ${shown} as the head, not ${sha} — wait, then ask again`;
+    : `GitHub shows ${shown} as the head, not ${sha} — wait for the push to show, or bring the local branch level with origin`;
 }
 
 /** The line `converge-review` step 2 opens a pass body with. It renders as nothing on GitHub. */
