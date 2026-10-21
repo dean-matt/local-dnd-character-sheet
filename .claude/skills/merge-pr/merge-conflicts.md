@@ -14,8 +14,10 @@ node scripts/resolve-conflicts.mjs "$n"
 ```
 
 It takes both sides of every conflict that is table rows each side added to a Markdown file
-outside the fence, `main`'s rows first, and stages the file. On `resolved`, `git commit
---no-edit`, push, and carry on where the caller left off.
+outside the fence, `main`'s rows first, and stages the file. On `resolved`, run `pnpm
+check`; where it passes, `git commit --no-edit`, push, and carry on where the caller left
+off. Where it fails, such as a `docs/` file the added rows took past its cap, abort the
+merge and hand the failure to the pull request's author.
 
 On exit 1, `git merge --abort` and hand its output back as it printed it. It opens with the
 pull request and the `main` commit the merge met, then lists each file left with the

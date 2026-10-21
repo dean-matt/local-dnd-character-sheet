@@ -16,8 +16,16 @@ import { FENCE } from "./merge-gate.mjs";
 
 const HUNK = /^<{7} [^\n]*\n([\s\S]*?)^\|{7}[^\n]*\n([\s\S]*?)^={7}\n([\s\S]*?)^>{7}[^\n]*\n/gm;
 
+/**
+ * Body rows only: a blank line or a separator row means a side adds a whole table, and two
+ * tables fused into one would carry the second header as a row.
+ */
 const isRows = (side) =>
-  side !== "" && side.split("\n").every((l) => l === "" || l.startsWith("|"));
+  side !== "" &&
+  side
+    .slice(0, -1)
+    .split("\n")
+    .every((l) => l.startsWith("|") && !/^\|[\s:|-]+$/.test(l));
 
 /** An odd count of fence lines before `offset` puts it inside a code block. */
 const inCode = (text, offset) =>

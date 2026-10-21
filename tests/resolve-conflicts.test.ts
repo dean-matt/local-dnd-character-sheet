@@ -119,6 +119,12 @@ describe("resolveRows", () => {
     expect(resolveRows(hunk(ROW_MAIN + ROW_BRANCH, "", ROW_MAIN)).text).toBe(ROW_MAIN + ROW_BRANCH);
   });
 
+  it("leaves a side that adds a whole table as a conflict", () => {
+    const table = "\n| Spell | Level |\n|---|---|\n| Shield | 1 |\n";
+    expect(resolveRows(hunk(table, "", ROW_MAIN)).unresolved).toHaveLength(1);
+    expect(resolveRows(hunk("|---|---|\n", "", ROW_MAIN)).unresolved).toHaveLength(1);
+  });
+
   it("leaves a union type inside a code block as a conflict", () => {
     const code = "```ts\ntype Size =\n";
     expect(resolveRows(code + hunk('| "tiny"\n', "", '| "huge"\n')).unresolved).toHaveLength(1);

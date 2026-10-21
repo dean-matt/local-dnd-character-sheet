@@ -141,7 +141,7 @@ plenty left there proves nothing.
 
 ## What this skill will not do
 
-**Resolve a conflict past added table rows.** [merge-conflicts.md](merge-conflicts.md) names its owner.
+**Resolve a conflict past the `version` line and added table rows.** [merge-conflicts.md](merge-conflicts.md) names its owner.
 
 **Waive a condition.** A gate that argues itself open on the merge it is judging is not a
 gate. Only `user-signoff`, run by the session holding the conversation, merges past one.
