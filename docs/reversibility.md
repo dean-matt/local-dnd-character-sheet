@@ -19,11 +19,11 @@ seconds merge into one entry. It does not reach:
 | The portrait | Nothing: #985 |
 | A deleted character | A snapshot in `data/backups/`, by hand, as `docs/reviving.md` says |
 | Homebrew rows | Nothing: #987 |
-| Browser settings: theme, accent, sources | A direct edit |
+| Browser settings: theme, accent, sources, the rail | A direct edit |
 | An undo itself | Making the edit again by hand. Deliberate: #967 leaves redo out |
 | A change older than the 50 newest | A direct edit, where one exists. The bound is deliberate: `undo_log` is a session affordance |
 
-Undo restores only the newest entry; #978 lets it step back to an earlier one.
+Undo restores only the newest entry; stepping back to an earlier one: #978.
 
 ## Creation
 
@@ -49,13 +49,13 @@ Undo restores only the newest entry; #978 lets it step back to an earlier one.
 | Skills, tools, languages | `components/blocks/AbilitiesSection/CatalogSkills.tsx`, `IdentitySection/ProficienciesCard.tsx`, `IdentitySection/LanguagesCard.tsx` | Undo, a direct edit |
 | Spells | `components/blocks/SpellsSection/SpellList/SpellList.tsx` | Undo, a direct edit |
 | Starting equipment and gold | The inventory rows below | Undo, a direct edit |
-| A homebrew class written inline | `hooks/useEnsureHomebrewClass.ts`, from `routes/CreationFlow/ClassField.tsx` | Deleting it under Homebrew, once no character holds it |
+| A homebrew class written inline | `hooks/useEnsureHomebrewClass.ts`, from `routes/CreationFlow/ClassField.tsx` | Deleting it under Homebrew once no character holds it, which for the character it was made for means deleting that character: #982 |
 
 ## Level-up
 
 | Decision | Written in | Reversed by |
 |---|---|---|
-| Taking a level | `components/blocks/LevelSection/LevelUp/LevelUpDialog.tsx` | Undo (its own entry), or removing the newest level (`LevelSection/LevelRemoval.tsx`) |
+| Taking a level | `components/blocks/LevelSection/LevelUp/LevelUpDialog.tsx` | Removing the newest level (`LevelSection/LevelRemoval.tsx`), or Undo, which merges it with a save to the same fields inside 30 seconds |
 | A level's hit point gain | `components/blocks/LevelSection/LevelGainEdit.tsx` | Undo, a direct edit |
 | A past level's choices | `components/blocks/LevelSection/LevelUp/LevelChoicesDialog.tsx` | Undo, reopening again; prerequisites: #980 |
 | An improvement or Epic Boon | `components/blocks/LevelSection/Improvements.tsx` | Undo, a direct edit |
@@ -104,6 +104,7 @@ Undo restores only the newest entry; #978 lets it step back to an earlier one.
 | Importing a character | `components/CharacterActions.tsx` | Deleting it |
 | Deleting a character | `routes/CharacterSettings/DeleteCharacterDialog.tsx` | A snapshot in `data/backups/`, by hand: `docs/reviving.md` |
 | Theme and accent | `theme.ts`, `accent.ts`, from `routes/DisplaySettings.tsx` | A direct edit |
+| The rail collapsed or open | `routes/Rail.tsx` | Toggling it |
 | Sources turned off | `lib/disabledSources.ts`, from `routes/SourcesSettings/SourcesSettings.tsx` | A direct edit |
 
 ## Play state
