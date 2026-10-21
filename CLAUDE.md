@@ -81,7 +81,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 | `content-import` | Adding or changing an entity type in the 5etools ETL |
 | `converge-review` | Running the review-and-fix loop on an open pull request |
 | `issue-to-pr` | Taking any issue from open to a reviewed pull request |
-| `issue-worktree` | Opening or closing the git worktree an issue is built in |
+| `issue-worktree` | Claiming an issue and opening, releasing or closing its worktree |
 | `merge-pr` | Carrying a reviewed pull request to main |
 | `open-pr` | Opening a pull request and writing its body |
 | `pick-issue` | Choosing which issue to take, when `issue-to-pr` names none |
