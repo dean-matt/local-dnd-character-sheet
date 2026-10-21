@@ -10,7 +10,7 @@ app binds to `127.0.0.1` only.
 ## Prerequisites
 
 - [Node.js](https://nodejs.org) 24 or newer — the version in `.node-version`
-- [pnpm](https://pnpm.io) 11 or newer, most easily via `corepack enable`
+- [pnpm](https://pnpm.io) 12 or newer, most easily via `corepack enable`
 - [typos](https://github.com/crate-ci/typos) for spellchecking — a standalone binary,
   not an npm package
   - macOS: `brew install typos-cli`
