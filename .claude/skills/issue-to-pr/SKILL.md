@@ -26,7 +26,8 @@ report as step 13 says.
 
 1. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to claim the issue and open
    its worktree**, then `cd` into it, before any other work. A named issue someone else
-   holds stops here with the holder's login. Run every later step from inside; step 13
+   holds stops here with the holder's login; one whose open pull request you hold goes
+   to step 12, as *Choosing* says. Run every later step from inside; step 13
    closes it.
 2. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of scope
    is a fence.
@@ -73,7 +74,7 @@ report as step 13 says.
     and skip the gate. On any other exit, run the gate and note its exit, each `FAIL` and
     `warn` line, and any failed check. Both paths go on to step 13.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
-    branch and the pull request stand. A run that stops after step 1 and before step 10
+    branch and the pull request stand. A run that stops after step 1, before a pull request opens,
     closes it the same way, then releases the claim as that skill says. Report the pull request, the label and what step 12
     noted. Under "waiting on the user", list what needs the user, such as each changed
     mockup file, a declined `critical` or `warning`, or an issue this run filed. With none,

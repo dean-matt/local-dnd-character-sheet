@@ -5,31 +5,44 @@ description: Claim an issue and open the git worktree it is built in — create 
 
 # The issue worktree
 
-## Claiming and opening
+## Claiming
 
-Creating the branch is the claim. The branch name derives from the issue alone, so two
-sessions claiming one issue create the same ref, and GitHub refuses the second with
+Creating the branch is the claim. The branch name derives from the issue, so two sessions
+claiming one issue create the same ref, and GitHub refuses the second with
 `Reference already exists (HTTP 422)`. Never claim with `gh issue develop`: it exits 0 on a
-branch already linked to the issue, so both sessions win.
+branch already linked to the issue, so both sessions win. A title or label edited since an
+earlier claim derives a different name, so the claim first refuses on any branch already
+named for the issue.
 
 ```bash
-main=$(git rev-parse --show-toplevel); n=<n>; d=.claude/worktrees/$n
-b=$(gh issue view "$n" --json number,title,labels --jq '"\(([.labels[].name
-  | select(startswith("type:")) | ltrimstr("type:")] + ["chore"])[0])/\(.number)-\([.title
-  | ascii_downcase | scan("[a-z0-9]+")][0:5] | join("-"))"')
-sha=$(gh api 'repos/{owner}/{repo}/git/ref/heads/main' --jq .object.sha)
-gh api 'repos/{owner}/{repo}/git/refs' -f ref="refs/heads/$b" -f sha="$sha" --silent
+n=<n>
+if git ls-remote --exit-code --heads origin "*/$n-*"; then echo held; else
+  b=$(gh issue view "$n" --json number,title,labels --jq '"\(([.labels[].name
+    | select(startswith("type:")) | ltrimstr("type:")] + ["chore"])[0])/\(.number)-\([.title
+    | ascii_downcase | scan("[a-z0-9]+")][0:5] | join("-"))"')
+  sha=$(gh api 'repos/{owner}/{repo}/git/ref/heads/main' --jq .object.sha)
+  gh api 'repos/{owner}/{repo}/git/refs' -f ref="refs/heads/$b" -f sha="$sha" --silent
+fi
 ```
 
-Where that exits 1 with the 422, someone else holds the issue: a picked issue goes to the
-next one `pick-issue` returned, and a named issue stops with the holder,
+Where that prints `held`, or the create exits 1 with the 422, the issue is held: a picked
+issue goes to the next one `pick-issue` returned, and a named issue stops with the holder,
 `gh issue view "$n" --json assignees --jq '[.assignees[].login] | join(",")'`, or the
-branch name where nobody is assigned yet. Otherwise assign it and open the worktree. Enter
-it with `cd`, not the harness's worktree tool, which refuses every `git` call a shell
-wrapper rewrites.
+branch name where nobody is assigned yet. The holder can be you: a branch an earlier run of
+yours left. Otherwise assign it:
 
 ```bash
 gh issue edit "$n" --add-assignee @me
+```
+
+## Opening
+
+`b` is the claimed branch, or the pull request's `headRefName` when `merge-pr` reopens a
+worktree. Enter it with `cd`, not the harness's worktree tool, which refuses every `git`
+call a shell wrapper rewrites.
+
+```bash
+main=$(git rev-parse --show-toplevel); n=<n>; b=<branch>; d=.claude/worktrees/$n
 git fetch --quiet origin "$b"
 git worktree prune
 git worktree add --quiet "$d" "$b"
@@ -59,11 +72,13 @@ One claim prints exit 0 and the other exit 1.
 
 A run that stops before its pull request opens releases the claim, so `pick-issue` does not
 skip the issue as a build in flight. Run it after closing the worktree. It deletes the
-branch only where it carries no commit beyond `main`; a branch with pushed work stays for
-the user to weigh.
+branch only where neither copy carries a commit beyond `main`; a branch with work on it
+stays for the user to weigh.
 
 ```bash
+n=<n>; b=<branch>; git fetch --quiet origin main
 [ "$(gh api "repos/{owner}/{repo}/compare/main...$b" --jq .ahead_by)" = 0 ] &&
+  [ "$(git rev-list --count "origin/main..$b")" = 0 ] &&
   git push --quiet origin --delete "$b" && git branch -D "$b"
 gh issue edit "$n" --remove-assignee @me
 ```
