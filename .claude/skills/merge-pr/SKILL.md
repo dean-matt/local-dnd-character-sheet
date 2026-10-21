@@ -7,7 +7,7 @@ description: Carry one reviewed local-dnd-character-sheet pull request to main â
 
 [`issue-to-pr`](../issue-to-pr/SKILL.md) labels a pull request and stops; this lands it. Run
 every command from the main checkout, since a worktree holds the branch the merge deletes â€”
-except *Raise the version*, which works in the issue's worktree.
+except *Raise the version*, which works in the issue's worktree and returns after its push.
 
 ```bash
 n=<pr>
@@ -52,10 +52,10 @@ and commit again. A rerun after the bump is pushed prints `no bump`.
 node scripts/wait-checks.mjs "$n"
 ```
 
-Run it with a 600000 ms tool timeout, straight after a push: the new head has no check yet,
-so `wait-checks` reads each required name as missing and waits. On exit 2, name what it
-printed and hand back. On exit 1, read the failed step with `gh run view <id> --log-failed`
-and rerun it once: one rerun covers a flaky runner, and a second exit 1 is the branch's.
+Run it with a 600000 ms tool timeout, straight after a push: a new head has no check yet, so
+`wait-checks` waits on each required name, and its two green polls 15 s apart outlast GitHub
+still showing the old head. On exit 2, name what it printed and hand back. On exit 1, read
+the failed step with `gh run view <id> --log-failed` and rerun the failed runs once.
 
 ```bash
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
