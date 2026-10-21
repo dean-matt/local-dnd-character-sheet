@@ -36,10 +36,10 @@ gh issue edit "$n" --add-assignee @me
 ```
 
 Two claims racing on one issue resolve to one holder. This probe shows it, then deletes
-the branch it made:
+the branch it made. It names issue `0`, which no issue carries, so it claims no real work:
 
 ```bash
-t=chore/<n>-claim-probe; sha=$(gh api 'repos/{owner}/{repo}/git/ref/heads/main' --jq .object.sha)
+t=chore/0-claim-probe; sha=$(gh api 'repos/{owner}/{repo}/git/ref/heads/main' --jq .object.sha)
 for i in 1 2; do (gh api 'repos/{owner}/{repo}/git/refs' -f ref="refs/heads/$t" -f sha="$sha" \
   --silent 2>/dev/null; echo "claim $i exit $?") & done; wait
 gh api -X DELETE "repos/{owner}/{repo}/git/refs/heads/$t"

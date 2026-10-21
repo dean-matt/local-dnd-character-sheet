@@ -79,7 +79,8 @@ report as step 13 says.
     branch and the pull request stand. A run that stops after step 1, before a pull request opens,
     closes it the same way, then releases the claim as that skill says. Report the pull request, the label and what step 12
     noted. Under "waiting on the user", list what needs the user, such as each changed
-    mockup file, a declined `critical` or `warning`, or an issue this run filed. With none,
+    mockup file, a declined `critical` or `warning`, a branch the release kept, or an issue
+    this run filed. With none,
     say "nothing". Never list the merge: `merge-gate` decides it.
 
 ## Rate limits
