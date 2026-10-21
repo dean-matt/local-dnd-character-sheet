@@ -51,14 +51,14 @@ export function LevelChoicesForm({
     level,
   );
   const blocked = !formState.isDirty || !plan.picksReady || saving || refusals.length > 0;
-  const { gained, offered } = plan.spellPicks;
+  const { owed } = plan.spellPicks;
   const asksNothing =
     plan.target.read &&
     !plan.target.asksSubclass &&
     plan.grant === undefined &&
     plan.offerings.length === 0 &&
     plan.optionPicks.gains.length === 0 &&
-    gained.cantrips + gained.spells + offered.cantrips + offered.spells === 0;
+    owed.cantrips + owed.spells + owed.subclassCantrips + owed.subclassSpells === 0;
   return (
     <Modal onClose={cancel}>
       <ModalEntry
