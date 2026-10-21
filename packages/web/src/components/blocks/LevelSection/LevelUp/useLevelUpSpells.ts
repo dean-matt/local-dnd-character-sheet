@@ -71,13 +71,33 @@ export function useLevelUpSpells(
       return list ? { list } : {};
     },
   );
-  const picked = added.flatMap((spell, index) => {
+  const read = added.flatMap((spell, index) => {
     const { ref } = spell;
     const found = looked[index];
     if (found === undefined) return [];
-    const { name, level } = found ?? { name: displayName(ref), level: undefined };
-    return [{ ref, name, level, subclass: bySubclass(spell) }];
+    const { name, level, listed } = found ?? { name: displayName(ref), level: undefined };
+    return [{ ref, name, level, listed, subclass: bySubclass(spell) }];
   });
+  // A past level's subclass picks hold the class as their origin, since Apply moved them
+  // there, so the class's picks past its count fill the subclass's offer, unlisted ones first.
+  const surplus = (cantrip: boolean, room: number, owed: number) => {
+    const kind = read.filter((pick) => (pick.level === 0) === cantrip);
+    const own = kind.filter((pick) => !pick.subclass);
+    const count = Math.min(own.length - room, owed - (kind.length - own.length));
+    const ordered = [
+      ...own.filter((pick) => pick.listed === false),
+      ...own.filter((pick) => pick.listed !== false),
+    ];
+    return ordered.slice(0, Math.max(0, count)).map((pick) => entryKey(pick.ref));
+  };
+  const moved = new Set([
+    ...surplus(true, gained.cantrips, offered.cantrips),
+    ...surplus(false, gained.spells, offered.spells),
+  ]);
+  const picked = read.map((pick) => ({
+    ...pick,
+    subclass: pick.subclass || moved.has(entryKey(pick.ref)),
+  }));
   const classPicked = picked.filter((pick) => !pick.subclass);
   const subclassPicked = picked.filter((pick) => pick.subclass);
   const cantrips = classPicked.filter((pick) => pick.level === 0);

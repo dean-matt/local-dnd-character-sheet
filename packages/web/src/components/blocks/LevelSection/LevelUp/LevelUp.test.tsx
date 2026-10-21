@@ -57,6 +57,7 @@ const SPELLS: Record<string, { level: number; lists: string[] }> = {
   "Misty Step": { level: 2, lists: ["Sorcerer"] },
   Fireball: { level: 3, lists: ["Sorcerer", "Wizard"] },
   "Magic Missile": { level: 1, lists: ["Wizard"] },
+  "Burning Hands": { level: 1, lists: ["Sorcerer"] },
   "Mage Armor": { level: 1, lists: ["Wizard"] },
 };
 const WIZARD = { name: "Wizard", source: "PHB" };
@@ -120,6 +121,15 @@ const ROWS: Record<string, unknown> = {
       edition: "one",
       json: { name: "Fiend Patron", source: "XPHB", shortName: "Fiend" },
     },
+    {
+      name: "Archfey Patron",
+      source: "XPHB",
+      shortName: "Archfey",
+      className: "Warlock",
+      classSource: "XPHB",
+      edition: "one",
+      json: { name: "Archfey Patron", source: "XPHB", shortName: "Archfey" },
+    },
   ]),
   // Three from the first level, where the 2024 table has one, so leveling to 2 asks for none.
   "/api/classes/Warlock/XPHB/at/1": grants(1, 3, [feature("Pact Magic", 1)]),
@@ -139,6 +149,16 @@ const ROWS: Record<string, unknown> = {
     feature("Fiend Gift", 3, { choose: 1 }),
     feature("Hellfire", 3, { offeredBy: XPHB("Fiend Gift") }),
   ]),
+  ...Object.fromEntries(
+    [3, 4].map((level) => [
+      `/api/classes/Warlock/XPHB/subclasses/Archfey%20Patron/XPHB/at/${level}`,
+      grants(level, 0, [
+        feature("Fey Gift", 3, { choose: 1 }),
+        feature("Misty Escape", 3, { offeredBy: XPHB("Fey Gift") }),
+        feature("Beguiling Defenses", 3, { offeredBy: XPHB("Fey Gift") }),
+      ]),
+    ]),
+  ),
   "/api/classes/Rogue/XPHB": entryRow(ROGUE, 8, {
     primaryAbility: [{ dex: true }],
     multiclassing: {
@@ -186,6 +206,11 @@ const ROWS: Record<string, unknown> = {
     { cantrips_known: "5", spells_known: "5" },
     [4, 3],
   ),
+  "/api/classes/Sorcerer/PHB/at/5": casterGrants(
+    5,
+    { cantrips_known: "5", spells_known: "6" },
+    [4, 3, 2],
+  ),
   "/api/classes/Fighter/PHB": {
     ...KNIGHT_FIGHTER,
     edition: "classic",
@@ -218,6 +243,8 @@ const ROWS: Record<string, unknown> = {
   ),
   "/api/classes/Fighter/PHB/subclasses/Champion/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/4": casterGrants(4, {}, []),
+  "/api/classes/Fighter/PHB/at/4": casterGrants(4, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Battle%20Master/PHB/at/3": {
     ...casterGrants(3, {}, []),
     optionalFeatures: [{ featureType: "MV:B", known: 3 }],
@@ -1198,6 +1225,169 @@ describe("LevelUp", () => {
       renderSeeded(warlock(1), { history: true });
       await within(history()).findByRole("rowheader", { name: "1" });
       expect(within(history()).queryByRole("button", { name: "Remove newest level" })).toBeNull();
+    });
+  });
+
+  describe("changing a past level's choices", () => {
+    const history = () => screen.getByRole("region", { name: "Level History" });
+    const undoEntry = () => new Headers(writes.mock.calls.at(-1)?.[1]?.headers).get("Undo-Entry");
+    const applyChanges = () => within(dialog()).getByRole("button", { name: "Apply changes" });
+    const picked = (name: string, extra: object = {}) => ({
+      ref: { name, source: "PHB" },
+      prepared: false,
+      origin: SORCERER,
+      pickedAt: 4,
+      ...extra,
+    });
+
+    /** Vex as a 2014 Sorcerer of five levels whose fourth picked Fire Bolt and Misty Step. */
+    function sorcererOfFive(misty: object = {}): CharacterRecord {
+      const base = sorcerer(5);
+      return {
+        ...base,
+        definition: {
+          ...base.definition,
+          spells: [
+            ...base.definition.spells,
+            picked("Fire Bolt"),
+            picked("Misty Step", misty),
+            { ...picked("Fireball"), pickedAt: 5 },
+          ],
+        },
+      };
+    }
+
+    async function reopen(level: number) {
+      fireEvent.click(
+        await within(history()).findByRole("button", { name: `Change level ${level} choices` }),
+      );
+      await within(dialog()).findByText(/Hit points change from the level's row/);
+    }
+
+    it("swaps a spell an earlier level picked, as one write and one undo entry", async () => {
+      const character = sorcererOfFive();
+      renderSeeded(character, { history: true });
+      await reopen(4);
+      const spells = await within(dialog()).findByRole("region", { name: "New spells" });
+      await within(spells).findByRole("button", { name: "Remove Misty Step" });
+      expect(within(dialog()).getByRole("region", { name: "New cantrips" })).toHaveTextContent(
+        "Choose 1 — 1 selected",
+      );
+
+      fireEvent.click(within(spells).getByRole("button", { name: "Remove Misty Step" }));
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "true"));
+      await pickSpell("Add a spell", "Burning Hands");
+      await within(spells).findByRole("button", { name: "Remove Burning Hands" });
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent()).toEqual({
+        ...character.definition,
+        spells: [
+          { ref: { name: "Shield", source: "PHB" }, prepared: false },
+          picked("Fire Bolt"),
+          { ...picked("Fireball"), pickedAt: 5 },
+          picked("Burning Hands"),
+        ],
+      });
+      expect(undoEntry()).toBe("own");
+      await waitFor(() => expect(document.querySelector("dialog[open]")).toBeNull());
+    });
+
+    it("refuses to drop a prepared spell, naming it, and writes nothing on Cancel", async () => {
+      renderSeeded(sorcererOfFive({ prepared: true }), { history: true });
+      await reopen(4);
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      await pickSpell("Add a spell", "Burning Hands");
+
+      expect(
+        await within(dialog()).findByText("Misty Step is prepared; unprepare it to drop the pick."),
+      ).toBeVisible();
+      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Cancel" }));
+      expect(writes).not.toHaveBeenCalled();
+    });
+
+    it("changes a subclass feature's choice an earlier level made, refusing a subclass change a later level builds on", async () => {
+      const gift = {
+        className: "Warlock",
+        classSource: "XPHB",
+        subclass: { shortName: "Archfey", source: "XPHB" },
+        ...XPHB("Fey Gift"),
+        level: 3,
+      };
+      const character = warlock(4, {
+        levels: [
+          { class: WARLOCK },
+          { class: WARLOCK },
+          { class: WARLOCK, subclass: XPHB("Archfey Patron") },
+          { class: WARLOCK },
+        ],
+        featureChoices: [{ feature: gift, options: [XPHB("Misty Escape")] }],
+      });
+      renderSeeded(character, { history: true });
+      await reopen(3);
+      expect(await within(dialog()).findByRole("combobox", { name: "Fey Gift" })).toHaveTextContent(
+        "Misty Escape",
+      );
+
+      choose("Warlock subclass", "Fiend Patron");
+      expect(
+        await within(dialog()).findByText(
+          "Level 4 builds on Archfey Patron; remove it to change the subclass.",
+        ),
+      ).toBeVisible();
+      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+
+      choose("Warlock subclass", "Archfey Patron");
+      choose("Fey Gift", "Beguiling Defenses");
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent()).toEqual({
+        ...character.definition,
+        featureChoices: [{ feature: gift, options: [XPHB("Beguiling Defenses")] }],
+      });
+      expect(undoEntry()).toBe("own");
+    });
+
+    it("re-offers a subclass's spell picks as its own, though Apply moved them under the class", async () => {
+      const lore = (name: string) => ({ ...picked(name), origin: KNIGHT_FIGHTER, pickedAt: 3 });
+      const base = sorcerer(4);
+      renderSeeded(
+        {
+          ...base,
+          definition: {
+            ...base.definition,
+            levels: [
+              { class: KNIGHT_FIGHTER },
+              { class: KNIGHT_FIGHTER },
+              { class: KNIGHT_FIGHTER, subclass: { name: "Lorekeeper", source: "PHB" } },
+              { class: KNIGHT_FIGHTER },
+            ],
+            spells: [lore("Fire Bolt"), lore("Prestidigitation")],
+          },
+        },
+        { history: true },
+      );
+      await reopen(3);
+
+      const picks = await within(dialog()).findByRole("region", {
+        name: "Cantrips from Lorekeeper",
+      });
+      await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 2 selected"));
+      expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+    });
+
+    it("offers no change to the first level, whose choices creation made", async () => {
+      renderSeeded(sorcererOfFive(), { history: true });
+      await within(history()).findByRole("button", { name: "Change level 2 choices" });
+      expect(
+        within(history()).queryByRole("button", { name: "Change level 1 choices" }),
+      ).toBeNull();
     });
   });
 });

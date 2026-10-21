@@ -108,20 +108,22 @@ export function useLevelUpPlan(
     setRefValue(setValue, "optionalFeatures", definition.optionalFeatures, dirty);
   };
 
-  const ready =
+  const picksReady =
     target.read &&
-    die !== undefined &&
-    (method === "average" || level.rolled !== undefined) &&
     (!target.asksSubclass || level.subclass !== undefined) &&
     improvements.read &&
     (grant === undefined ||
       (featList.isSuccess && isMade(improvement, catalogFeats, candidate?.totals))) &&
     offerings.every((offering) => chosen(offering) !== undefined) &&
-    entry.read &&
-    pickedSkills.length === (entry.skillPick?.count ?? 0) &&
-    entry.toolPicks.every((pick, index) => pickedTools[index]?.length === pick.count) &&
     spellPicks.ready &&
     optionPicks.ready;
+  const ready =
+    picksReady &&
+    die !== undefined &&
+    (method === "average" || level.rolled !== undefined) &&
+    entry.read &&
+    pickedSkills.length === (entry.skillPick?.count ?? 0) &&
+    entry.toolPicks.every((pick, index) => pickedTools[index]?.length === pick.count);
 
   return {
     target,
@@ -141,6 +143,8 @@ export function useLevelUpPlan(
     /** What an option's prerequisites read: the character with the level and its picks. */
     draft: { levels, spells, optionalFeatures },
     ready,
+    /** Whether the picks from the subclass on are made, which a past level's are changed by. */
+    picksReady,
     features: [
       ...featuresAt(target.after?.features ?? [], target.next),
       ...featuresAt(target.subclassAfter?.features ?? [], target.subclassFrom, target.next),
