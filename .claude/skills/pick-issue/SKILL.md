@@ -23,16 +23,16 @@ gh api graphql --paginate --slurp -f o=dean-matt -f r=local-dnd-character-sheet 
     | [.[].data.repository.issues.nodes[] | (.number | tostring) as $n
       | {number, milestone: .milestone.title,
          rank: ([.projectItems.nodes[] | select(.project.number == 1) | .fieldValueByName.number] | first),
-         holder: ([.assignees.nodes[].login, .closedByPullRequestsReferences.nodes[].author.login] | first),
+         holders: ([.assignees.nodes[].login, .closedByPullRequestsReferences.nodes[].author.login] | unique),
          pr: ([.closedByPullRequestsReferences.nodes[].number] | first),
          branch: ([.linkedBranches.nodes[].ref.name, ($refs[] | select(test("^[a-z]+/" + $n + "-")))] | first)}
       | select(.rank and .milestone)
-      | .skip = if .holder and .holder != $me then "held by \(.holder)"
+      | .skip = if .holders - [$me] != [] then "held by \(.holders - [$me] | join(","))"
                 elif .pr then null
                 elif .branch then "branch \(.branch) has no open pull request"
                 else null end]
     | sort_by(.milestone, .rank)
-    | {take: [.[] | select(.skip == null) | {number, pr}][0:3], skipped: [.[] | select(.skip) | {number, skip}]}'
+    | {take: [.[] | select(.skip == null) | {number, pr}][0:5], skipped: [.[] | select(.skip) | {number, skip}]}'
 ```
 
 `--slurp` hands jq every page at once; without it the sort runs per page. The query reads
@@ -45,9 +45,10 @@ Milestones sort by title, which holds while they are numbered. An unranked or
 milestone-less issue is backlog and waits for the user to name it. An empty `take` means no
 milestone holds a ranked open issue nobody else holds: say so and stop.
 
-`take` lists the candidates in order; `issue-to-pr` claims the first and moves to the next
-where the claim refuses. The holder is the assignee, or else the open pull request's author.
-An issue is skipped where someone other than you holds it, or where a branch named for it
+`take` lists the first five candidates in order; `issue-to-pr` claims the first and moves to
+the next where the claim refuses, and runs the query again once all five refuse. The
+holders are the assignees and the open pull requests' authors. An issue is skipped where
+anyone other than you holds it, or where a branch named for it
 has no open pull request — a build in flight, or a stopped run that never released its
 claim. An issue whose open pull request you hold is taken: re-picking a stopped run is how
 its pull request comes back to the user.

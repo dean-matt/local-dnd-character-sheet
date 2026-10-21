@@ -19,7 +19,7 @@ n=<n>
 if git ls-remote --exit-code --heads origin "*/$n-*"; then echo held; else
   b=$(gh issue view "$n" --json number,title,labels --jq '"\(([.labels[].name
     | select(startswith("type:")) | ltrimstr("type:")] + ["chore"])[0])/\(.number)-\([.title
-    | ascii_downcase | scan("[a-z0-9]+")][0:5] | join("-"))"')
+    | ascii_downcase | scan("[a-z0-9]+")][0:5] | join("-") | if . == "" then "issue" else . end)"')
   sha=$(gh api 'repos/{owner}/{repo}/git/ref/heads/main' --jq .object.sha)
   gh api 'repos/{owner}/{repo}/git/refs' -f ref="refs/heads/$b" -f sha="$sha" --silent
 fi
@@ -34,6 +34,18 @@ yours left. Otherwise assign it:
 ```bash
 gh issue edit "$n" --add-assignee @me
 ```
+
+Two claims racing on one issue resolve to one holder. This probe shows it, then deletes
+the branch it made:
+
+```bash
+t=chore/<n>-claim-probe; sha=$(gh api 'repos/{owner}/{repo}/git/ref/heads/main' --jq .object.sha)
+for i in 1 2; do (gh api 'repos/{owner}/{repo}/git/refs' -f ref="refs/heads/$t" -f sha="$sha" \
+  --silent 2>/dev/null; echo "claim $i exit $?") & done; wait
+gh api -X DELETE "repos/{owner}/{repo}/git/refs/heads/$t"
+```
+
+One claim prints exit 0 and the other exit 1.
 
 ## Opening
 
@@ -56,30 +68,19 @@ The add fails where a directory is already there — another agent on this issue
 Clear it by hand once no agent holds it. Never link `characters.db`: two agents writing it
 collide. Run every later step from the worktree.
 
-Two claims racing on one issue resolve to one holder. This probe shows it, then deletes
-the branch it made:
-
-```bash
-t=chore/<n>-claim-probe; sha=$(gh api 'repos/{owner}/{repo}/git/ref/heads/main' --jq .object.sha)
-for i in 1 2; do (gh api 'repos/{owner}/{repo}/git/refs' -f ref="refs/heads/$t" -f sha="$sha" \
-  --silent 2>/dev/null; echo "claim $i exit $?") & done; wait
-gh api -X DELETE "repos/{owner}/{repo}/git/refs/heads/$t"
-```
-
-One claim prints exit 0 and the other exit 1.
-
 ## Releasing
 
 A run that stops before its pull request opens releases the claim, so `pick-issue` does not
 skip the issue as a build in flight. Run it after closing the worktree. It deletes the
-branch only where neither copy carries a commit beyond `main`; a branch with work on it
+branch only where neither copy carries a commit beyond `main`, and a missing local copy
+counts as none; a branch with work on it
 stays for the user to weigh.
 
 ```bash
 n=<n>; b=<branch>; git fetch --quiet origin main
 [ "$(gh api "repos/{owner}/{repo}/compare/main...$b" --jq .ahead_by)" = 0 ] &&
-  [ "$(git rev-list --count "origin/main..$b")" = 0 ] &&
-  git push --quiet origin --delete "$b" && git branch -D "$b"
+  [ "$(git rev-list --count "origin/main..$b" 2>/dev/null || echo 0)" = 0 ] &&
+  git push --quiet origin --delete "$b" && { git branch -D "$b" 2>/dev/null; true; }
 gh issue edit "$n" --remove-assignee @me
 ```
 

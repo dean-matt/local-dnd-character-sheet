@@ -25,9 +25,11 @@ report as step 13 says.
 ## The sequence
 
 1. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to claim the issue and open
-   its worktree**, then `cd` into it, before any other work. A named issue someone else
-   holds stops here with the holder's login; one whose open pull request you hold goes
-   to step 12, as *Choosing* says. Run every later step from inside; step 13
+   its worktree**, then `cd` into it, before any other work. For a named issue, look for
+   its open pull request first, `gh pr list --state open --json number,author,closingIssuesReferences
+   --jq '.[] | select(any(.closingIssuesReferences[]; .number == <n>)) | "\(.number) \(.author.login)"'`:
+   where you wrote it, claim nothing and go to step 12, as *Choosing* says. A named issue
+   someone else holds stops at the claim with the holder's login. Run every later step from inside; step 13
    closes it.
 2. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of scope
    is a fence.
