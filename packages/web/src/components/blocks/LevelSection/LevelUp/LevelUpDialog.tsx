@@ -91,7 +91,7 @@ export function LevelUpDialog({
             abilityIncreases: values.abilityIncreases,
             featureChoices: values.featureChoices,
             proficiencies: values.proficiencies,
-            spells: spellsUnderClass(values.spells, values.levels.at(-1) as Level),
+            spells: spellsUnderClass(values.spells, values.levels, values.levels.at(-1) as Level),
             optionalFeatures: values.optionalFeatures,
             departures: values.departures,
           }),

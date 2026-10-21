@@ -138,11 +138,20 @@ describe("spellsUnderClass", () => {
 
   it("moves the picks held under the subclass to the class, and leaves the rest", () => {
     const spells = [spell("Fire Bolt", lore), spell("Shield", fighter), spell("Light")];
-    expect(spellsUnderClass(spells, { class: fighter, subclass: lore })).toEqual([
+    const chosen = { class: fighter, subclass: lore };
+    expect(spellsUnderClass(spells, [chosen], chosen)).toEqual([
       spell("Fire Bolt", fighter),
       spell("Shield", fighter),
       spell("Light"),
     ]);
-    expect(spellsUnderClass(spells, { class: fighter })).toBe(spells);
+    expect(spellsUnderClass(spells, [{ class: fighter }], { class: fighter })).toBe(spells);
+  });
+
+  it("moves them under the class where an earlier level chose the subclass", () => {
+    const spells = [spell("Fire Bolt", lore)];
+    const later = { class: fighter };
+    expect(spellsUnderClass(spells, [{ class: fighter, subclass: lore }, later], later)).toEqual([
+      spell("Fire Bolt", fighter),
+    ]);
   });
 });

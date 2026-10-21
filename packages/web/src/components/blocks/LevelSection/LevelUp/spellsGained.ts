@@ -1,5 +1,5 @@
 import { type ClassGrants, eitherPicks, offeredPicks } from "@dnd/catalog";
-import type { CharacterDefinition } from "@dnd/character";
+import { type CharacterDefinition, classLevels, entryKey } from "@dnd/character";
 import { casterFacts } from "../../../../lib/casterFacts.ts";
 
 type Table = Pick<ClassGrants, "resources" | "spellSlots">;
@@ -73,15 +73,20 @@ export function subclassSpellsGained(
 }
 
 /**
- * `spells` with each pick the level-up made under the subclass moved under the class, whose
- * spellcasting the sheet reads `origin` for. Applied to what is sent, not the draft, so a
- * save that fails leaves the draft telling the two kinds of pick apart.
+ * `spells` with each pick the level-up made under the subclass `levels` names for `level`'s
+ * class, on that level or an earlier one, moved under the class, whose spellcasting the
+ * sheet reads `origin` for. Applied to what is sent, not the draft, so a save that fails
+ * leaves the draft telling the two kinds of pick apart.
  */
 export function spellsUnderClass(
   spells: CharacterDefinition["spells"],
+  levels: readonly CharacterDefinition["levels"][number][],
   level: CharacterDefinition["levels"][number],
 ): CharacterDefinition["spells"] {
-  const { subclass, class: cls } = level;
+  const cls = level.class;
+  const subclass = classLevels({ levels }).find(
+    (group) => entryKey(group.class) === entryKey(cls),
+  )?.subclass;
   if (!subclass || !("name" in cls)) return spells;
   return spells.map((spell) =>
     spell.origin?.name === subclass.name && spell.origin.source === subclass.source
