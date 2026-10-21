@@ -1,6 +1,6 @@
 {
   "name": "local-dnd-character-sheet",
-  "version": "0.45.3",
+  "version": "0.45.4",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@12.14.0",
