@@ -41,8 +41,10 @@ the open issues and their own cards, never the board: the board holds hundreds o
 `refs` reads the first 100 branches; past that, a claim on a later branch goes unseen
 here and the claim itself still refuses it.
 
-Milestones sort by title, which holds while they are numbered. An unranked or
-milestone-less issue is backlog and waits for the user to name it. An empty `take` means no
+Milestones sort by title, which holds while they are numbered. The repository's
+collaborators own the rank order and the milestones, and any of them may rerank or
+re-milestone an issue; "the user" here names a collaborator. An unranked or milestone-less
+issue is backlog and waits for a collaborator to rank it. An empty `take` means no
 milestone holds a ranked open issue nobody else holds: say so and stop.
 
 `take` lists the first five candidates in order; `issue-to-pr` claims the first and moves to
