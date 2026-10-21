@@ -35,7 +35,7 @@ git merge --no-edit origin/main
 node scripts/version-bump.mjs "$n"
 ```
 
-A conflict in the merge goes to the user: `git merge --abort` and hand it over. The script
+A conflict in the merge goes to [merge-conflicts.md](merge-conflicts.md). `version-bump.mjs`
 prints `no bump` for a pull request that changes only prose or the mockup, and the new
 version otherwise; for the version, commit and push:
 
@@ -141,7 +141,7 @@ plenty left there proves nothing.
 
 ## What this skill will not do
 
-**Resolve a conflict.** It stops and hands the branch back.
+**Resolve a conflict past the `version` line and added table rows.** [merge-conflicts.md](merge-conflicts.md) names its owner.
 
 **Waive a condition.** A gate that argues itself open on the merge it is judging is not a
 gate. Only `user-signoff`, run by the session holding the conversation, merges past one.
