@@ -171,6 +171,7 @@ export type {
 export {
   blockLabels,
   chosenBlock,
+  eitherPicks,
   grantedSpellsSchema,
   offeredPicks,
   SPELL_GRANTORS,

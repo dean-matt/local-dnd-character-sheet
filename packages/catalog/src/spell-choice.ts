@@ -166,15 +166,18 @@ export function chosenBlock(json: unknown, block: number | undefined): number | 
 }
 
 /**
- * The picks a row's `additionalSpells` offers by `level`: the `choose` entries under each
- * level key at or below it, a key naming no level arriving with the row. An `expanded`
- * block only widens a list, so it offers none. A row offering several blocks offers them
- * as alternatives, as Magic Initiate offers six classes or an elf its lineages, so the
- * largest block counts and `alternatives` says the counts are a ceiling rather than owed.
- * Where `block` names one of them, that block's picks are owed. A
- * `choose` from a list of names reads as a spell unless every name is marked a cantrip.
+ * A filter naming spell level 0 beside another level picks a cantrip or a spell, as College
+ * of Lore's Magical Discoveries does.
  */
-export function offeredPicks(json: unknown, level: number, block?: number): OfferedPicks {
+const picksEither = (choose: Choose) =>
+  !picksCantrip(choose) &&
+  choose.filter
+    ?.match(/(?:^|\|)level=([^|]*)/)?.[1]
+    ?.split(";")
+    .includes("0") === true;
+
+/** The largest of the chosen blocks' picks, counted as `offeredPicks` and `eitherPicks` read them. */
+function largestBlock(json: unknown, level: number, block?: number) {
   const all = blocksOf(json);
   const at = chosenBlock(json, block);
   const blocks = at === undefined ? all : [all[at]];
@@ -188,15 +191,42 @@ export function offeredPicks(json: unknown, level: number, block?: number): Offe
       );
     const total = (keep: (choose: (typeof chooses)[number]) => boolean) =>
       chooses.filter(keep).reduce((sum, choose) => sum + choose.count, 0);
+    const known = (choose: (typeof chooses)[number]) => choose.kind === "known";
     return {
       cantrips: total(picksCantrip),
       spells: total((choose) => !picksCantrip(choose)),
-      learned: total((choose) => !picksCantrip(choose) && choose.kind === "known"),
+      learned: total((choose) => !picksCantrip(choose) && known(choose)),
+      either: total(picksEither),
+      eitherLearned: total((choose) => picksEither(choose) && known(choose)),
     };
   });
   const largest = each.reduce(
     (best, block) => (block.cantrips + block.spells > best.cantrips + best.spells ? block : best),
-    { cantrips: 0, spells: 0, learned: 0 },
+    { cantrips: 0, spells: 0, learned: 0, either: 0, eitherLearned: 0 },
   );
   return { ...largest, alternatives: blocks.length > 1 };
+}
+
+/**
+ * The picks a row's `additionalSpells` offers by `level`: the `choose` entries under each
+ * level key at or below it, a key naming no level arriving with the row. An `expanded`
+ * block only widens a list, so it offers none. A row offering several blocks offers them
+ * as alternatives, as Magic Initiate offers six classes or an elf its lineages, so the
+ * largest block counts and `alternatives` says the counts are a ceiling rather than owed.
+ * Where `block` names one of them, that block's picks are owed. A
+ * `choose` from a list of names reads as a spell unless every name is marked a cantrip.
+ */
+export function offeredPicks(json: unknown, level: number, block?: number): OfferedPicks {
+  const { cantrips, spells, learned, alternatives } = largestBlock(json, level, block);
+  return { cantrips, spells, learned, alternatives };
+}
+
+/**
+ * How many of `offeredPicks`' `spells` a cantrip may fill instead, as `either`, and how many
+ * of those a `known` key offers, as `learned`. A row offering alternative blocks reads its
+ * largest block here, so read this only where `offeredPicks` reports no `alternatives`.
+ */
+export function eitherPicks(json: unknown, level: number) {
+  const { either, eitherLearned } = largestBlock(json, level);
+  return { either, learned: eitherLearned };
 }

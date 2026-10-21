@@ -19,7 +19,7 @@ export function withReopenedLevel(
     feats: values.feats,
     abilityIncreases: values.abilityIncreases,
     featureChoices: values.featureChoices,
-    spells: spellsUnderClass(values.spells, chosen),
+    spells: spellsUnderClass(values.spells, values.levels, chosen),
     optionalFeatures: values.optionalFeatures,
   };
 }

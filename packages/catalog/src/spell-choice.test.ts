@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockLabels, offeredPicks } from "./index.ts";
+import { blockLabels, eitherPicks, offeredPicks } from "./index.ts";
 
 const row = (...additionalSpells: unknown[]) => ({ additionalSpells });
 
@@ -99,5 +99,19 @@ describe("a chosen alternative block", () => {
   it("labels each block by its name, or its position where unnamed", () => {
     expect(blockLabels(initiate)).toEqual(["Cleric Spells", "Option 2"]);
     expect(blockLabels(row({ known: {} }))).toEqual([]);
+  });
+});
+
+describe("eitherPicks", () => {
+  it("counts the spell picks whose filter admits a cantrip too, and those a known key offers", () => {
+    const lore = row({
+      known: { "6": [{ choose: "level=0;1;2;3" }, { choose: "level=0;1;2;3|class=Cleric" }] },
+      prepared: { "6": [{ choose: "level=1;2;3" }, { choose: "level=0|class=Wizard" }] },
+    });
+    expect(eitherPicks(lore, 5)).toEqual({ either: 0, learned: 0 });
+    expect(eitherPicks(lore, 6)).toEqual({ either: 2, learned: 2 });
+    expect(offeredPicks(lore, 6)).toMatchObject({ cantrips: 1, spells: 3 });
+    const prepared = row({ prepared: { "6": [{ choose: "level=0;1;2;3", count: 2 }] } });
+    expect(eitherPicks(prepared, 6)).toEqual({ either: 2, learned: 0 });
   });
 });

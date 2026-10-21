@@ -56,14 +56,34 @@ describe("subclassSpellsGained", () => {
   const none = { after: [], subclass: undefined };
 
   it("counts the picks a level reaches, and none before it", () => {
-    expect(subclassSpellsGained(lore, true, 5, 6, none)).toEqual({ cantrips: 0, spells: 2 });
-    expect(subclassSpellsGained(lore, true, 6, 7, none)).toEqual({ cantrips: 0, spells: 0 });
-    expect(subclassSpellsGained(lore, true, 4, 5, none)).toEqual({ cantrips: 0, spells: 0 });
+    expect(subclassSpellsGained(lore, true, 5, 6, none)).toEqual({
+      cantrips: 0,
+      spells: 2,
+      either: 2,
+    });
+    expect(subclassSpellsGained(lore, true, 6, 7, none)).toEqual({
+      cantrips: 0,
+      spells: 0,
+      either: 0,
+    });
+    expect(subclassSpellsGained(lore, true, 4, 5, none)).toEqual({
+      cantrips: 0,
+      spells: 0,
+      either: 0,
+    });
   });
 
   it("counts a cantrip filter as cantrips, and every pick when the level picks the subclass", () => {
-    expect(subclassSpellsGained(arcana, false, 0, 1, none)).toEqual({ cantrips: 2, spells: 0 });
-    expect(subclassSpellsGained(lore, false, 6, 7, none)).toEqual({ cantrips: 0, spells: 2 });
+    expect(subclassSpellsGained(arcana, false, 0, 1, none)).toEqual({
+      cantrips: 2,
+      spells: 0,
+      either: 0,
+    });
+    expect(subclassSpellsGained(lore, false, 6, 7, none)).toEqual({
+      cantrips: 0,
+      spells: 2,
+      either: 2,
+    });
   });
 
   it("leaves a kind the subclass's own table counts to the table", () => {
@@ -71,18 +91,39 @@ describe("subclassSpellsGained", () => {
     expect(subclassSpellsGained(arcana, false, 0, 1, { after: [], subclass: table })).toEqual({
       cantrips: 0,
       spells: 0,
+      either: 0,
     });
   });
 
   it("leaves out the spells a spellbook class learns, and a subclass's alternative blocks", () => {
     const savant = { additionalSpells: [{ known: { "3": choose("level=1;2", 2) } }] };
-    expect(subclassSpellsGained(savant, false, 2, 3, none)).toEqual({ cantrips: 0, spells: 2 });
+    expect(subclassSpellsGained(savant, false, 2, 3, none)).toEqual({
+      cantrips: 0,
+      spells: 2,
+      either: 0,
+    });
     expect(subclassSpellsGained(savant, false, 2, 3, none, true)).toEqual({
       cantrips: 0,
       spells: 0,
+      either: 0,
     });
     const blocks = { additionalSpells: [lore.additionalSpells[0], lore.additionalSpells[0]] };
-    expect(subclassSpellsGained(blocks, false, 5, 6, none)).toEqual({ cantrips: 0, spells: 0 });
+    expect(subclassSpellsGained(blocks, false, 5, 6, none)).toEqual({
+      cantrips: 0,
+      spells: 0,
+      either: 0,
+    });
+  });
+
+  it("lets a cantrip fill only a pick the class keeps, never one a spellbook class learns", () => {
+    const known = choose("level=0;1;2", 1);
+    const prepared = choose("level=1;2", 1);
+    const mixed = { additionalSpells: [{ known: { "3": known }, prepared: { "3": prepared } }] };
+    expect(subclassSpellsGained(mixed, false, 2, 3, none, true)).toEqual({
+      cantrips: 0,
+      spells: 1,
+      either: 0,
+    });
   });
 });
 
@@ -97,11 +138,20 @@ describe("spellsUnderClass", () => {
 
   it("moves the picks held under the subclass to the class, and leaves the rest", () => {
     const spells = [spell("Fire Bolt", lore), spell("Shield", fighter), spell("Light")];
-    expect(spellsUnderClass(spells, { class: fighter, subclass: lore })).toEqual([
+    const chosen = { class: fighter, subclass: lore };
+    expect(spellsUnderClass(spells, [chosen], chosen)).toEqual([
       spell("Fire Bolt", fighter),
       spell("Shield", fighter),
       spell("Light"),
     ]);
-    expect(spellsUnderClass(spells, { class: fighter })).toBe(spells);
+    expect(spellsUnderClass(spells, [{ class: fighter }], { class: fighter })).toBe(spells);
+  });
+
+  it("moves them under the class where an earlier level chose the subclass", () => {
+    const spells = [spell("Fire Bolt", lore)];
+    const later = { class: fighter };
+    expect(spellsUnderClass(spells, [{ class: fighter, subclass: lore }, later], later)).toEqual([
+      spell("Fire Bolt", fighter),
+    ]);
   });
 });

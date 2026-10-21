@@ -1,5 +1,5 @@
-import { type ClassGrants, offeredPicks } from "@dnd/catalog";
-import type { CharacterDefinition } from "@dnd/character";
+import { type ClassGrants, eitherPicks, offeredPicks } from "@dnd/catalog";
+import { type CharacterDefinition, classLevels, entryKey } from "@dnd/character";
 import { casterFacts } from "../../../../lib/casterFacts.ts";
 
 type Table = Pick<ClassGrants, "resources" | "spellSlots">;
@@ -32,11 +32,12 @@ export function spellsGained(
 
 /**
  * The cantrips and spells a subclass's `additionalSpells` leaves to a pick at `next` beyond
- * those it left at `level`, nothing at `level` where the level picks the subclass. A kind
- * the subclass's own table counts is `spellsGained`'s, as the Eldritch Knight's are. A
- * class that prepares its spells or keeps a `spellbook` takes none of the spells a subclass
- * has it learn, which go into the spellbook, and a subclass offering alternative blocks owes
- * none until the player chooses one.
+ * those it left at `level`, nothing at `level` where the level picks the subclass, and how
+ * many of those spells a cantrip may fill instead, as `either`. A kind the subclass's own
+ * table counts is `spellsGained`'s, as the Eldritch Knight's are. A class that prepares its
+ * spells or keeps a `spellbook` takes none of the spells a subclass has it learn, which go
+ * into the spellbook, and a subclass offering alternative blocks owes none until the player
+ * chooses one.
  */
 export function subclassSpellsGained(
   json: unknown,
@@ -51,27 +52,41 @@ export function subclassSpellsGained(
   const skipsLearned = spellbook || (casterFacts(present(tables.after))?.prepares ?? false);
   const owed = (at: number) => {
     const picks = offeredPicks(json, at);
-    if (picks.alternatives) return { cantrips: 0, spells: 0 };
-    return { cantrips: picks.cantrips, spells: picks.spells - (skipsLearned ? picks.learned : 0) };
+    if (picks.alternatives) return { cantrips: 0, spells: 0, either: 0 };
+    const either = eitherPicks(json, at);
+    return {
+      cantrips: picks.cantrips,
+      spells: picks.spells - (skipsLearned ? picks.learned : 0),
+      either: either.either - (skipsLearned ? either.learned : 0),
+    };
   };
   const now = owed(next);
-  const was = held ? owed(level) : { cantrips: 0, spells: 0 };
+  const was = held ? owed(level) : { cantrips: 0, spells: 0, either: 0 };
+  const spells = stated("spells_known", "prepared_spells")
+    ? 0
+    : Math.max(0, now.spells - was.spells);
   return {
     cantrips: stated("cantrips_known") ? 0 : Math.max(0, now.cantrips - was.cantrips),
-    spells: stated("spells_known", "prepared_spells") ? 0 : Math.max(0, now.spells - was.spells),
+    spells,
+    either: Math.min(spells, Math.max(0, now.either - was.either)),
   };
 }
 
 /**
- * `spells` with each pick the level-up made under the subclass moved under the class, whose
- * spellcasting the sheet reads `origin` for. Applied to what is sent, not the draft, so a
- * save that fails leaves the draft telling the two kinds of pick apart.
+ * `spells` with each pick the level-up made under the subclass `levels` names for `level`'s
+ * class, on that level or an earlier one, moved under the class, whose spellcasting the
+ * sheet reads `origin` for. Applied to what is sent, not the draft, so a save that fails
+ * leaves the draft telling the two kinds of pick apart.
  */
 export function spellsUnderClass(
   spells: CharacterDefinition["spells"],
+  levels: readonly CharacterDefinition["levels"][number][],
   level: CharacterDefinition["levels"][number],
 ): CharacterDefinition["spells"] {
-  const { subclass, class: cls } = level;
+  const cls = level.class;
+  const subclass = classLevels({ levels }).find(
+    (group) => entryKey(group.class) === entryKey(cls),
+  )?.subclass;
   if (!subclass || !("name" in cls)) return spells;
   return spells.map((spell) =>
     spell.origin?.name === subclass.name && spell.origin.source === subclass.source
