@@ -255,6 +255,19 @@ const ROWS: Record<string, unknown> = {
         },
       ],
     }),
+    fighterSubclass("Threesinger", "Threesinger", {
+      additionalSpells: [
+        {
+          known: {
+            "3": [
+              { choose: "level=0|class=Wizard" },
+              { choose: "level=0;1;2|class=Wizard" },
+              { choose: "level=1;2|class=Wizard" },
+            ],
+          },
+        },
+      ],
+    }),
   ]),
   "/api/classes/Fighter/PHB/at/2": casterGrants(2, {}, []),
   "/api/classes/Fighter/PHB/at/3": casterGrants(3, {}, []),
@@ -268,6 +281,7 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/4": casterGrants(4, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Loresinger/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Halfsinger/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Threesinger/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/at/4": casterGrants(4, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Battle%20Master/PHB/at/3": {
     ...casterGrants(3, {}, []),
@@ -1030,6 +1044,35 @@ describe("LevelUp", () => {
       await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 1 selected"));
       await pickSpell("Add a spell", "Magic Missile");
       expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({ minLevel: "1" });
+    });
+
+    it("shows a cantrip past the picks that admit one among the spells, and holds Apply", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          spells: [],
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Threesinger");
+      const spells = await within(dialog()).findByRole("region", {
+        name: "Spells from Threesinger",
+      });
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      for (const cantrip of ["Fire Bolt", "Prestidigitation", "Light"]) {
+        await pickSpell("Add a cantrip", cantrip);
+        await within(dialog()).findByRole("button", { name: `Remove ${cantrip}` });
+      }
+      await waitFor(() => expect(spells).toHaveTextContent("Choose 2 — 2 selected"));
+      expect(within(spells).getByRole("button", { name: "Remove Light" })).toBeVisible();
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+      fireEvent.click(within(spells).getByRole("button", { name: "Remove Light" }));
+      await pickSpell("Add a spell", "Magic Missile");
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
     });
 
     it("takes back the spells picked when the subclass changes", async () => {

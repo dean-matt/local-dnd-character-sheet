@@ -222,8 +222,9 @@ export function offeredPicks(json: unknown, level: number, block?: number): Offe
 }
 
 /**
- * How many of `offeredPicks`' `spells` a cantrip may fill instead, and how many of those a
- * `known` key offers, as its `learned` counts.
+ * How many of `offeredPicks`' `spells` a cantrip may fill instead, as `either`, and how many
+ * of those a `known` key offers, as `learned`. A row offering alternative blocks reads its
+ * largest block here, so read this only where `offeredPicks` reports no `alternatives`.
  */
 export function eitherPicks(json: unknown, level: number) {
   const { either, eitherLearned } = largestBlock(json, level);
