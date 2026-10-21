@@ -18,8 +18,8 @@ import type { CharactersDb, CharactersWriter as Db } from "./characters.ts";
  * changed, merges into it, so a field's autosave burst is one undo. The window slides
  * with each merge: one field edited without a 30-second pause stays one entry however
  * long it runs. A section with no keys, such as spells or a resized inventory, is one
- * field, so two separate edits to it inside the window merge too. A per-edit id sent by
- * the client is the way out for both.
+ * field, so two separate edits to it inside the window merge too. A write that sends
+ * `Undo-Entry: own` is the way out for both.
  */
 const COALESCE_WINDOW_MS = 30_000;
 
@@ -49,20 +49,29 @@ export function deleteUndoEntry(db: Db, id: number) {
   db.delete(undoLog).where(eq(undoLog.id, id)).run();
 }
 
-/** Records `before` as what undo restores after `after` lands, then prunes to the bound. */
+/**
+ * Records `before` as what undo restores after `after` lands, then prunes to the bound.
+ * An `own` change neither merges into the newest entry nor takes a later write into its own.
+ */
 export function recordChange(
   db: Db,
   characterId: string,
   before: CharacterDefinition,
   after: CharacterDefinition,
   now: Date,
+  own = false,
 ) {
   const change = describeChange(before, after);
   if (!change) return;
 
-  const newest = newestUndoEntry(db, characterId);
+  const newest = own ? undefined : newestUndoEntry(db, characterId);
   const start = newest && characterDefinitionSchema.safeParse(newest.previousState);
-  if (newest && start?.success && now.getTime() - newest.changedAt.getTime() < COALESCE_WINDOW_MS) {
+  if (
+    newest &&
+    !newest.sealed &&
+    start?.success &&
+    now.getTime() - newest.changedAt.getTime() < COALESCE_WINDOW_MS
+  ) {
     const sofar = describeChange(start.data, before);
     if (sofar && sameFields(sofar.paths, change.paths)) {
       const merged = describeChange(start.data, after);
@@ -79,7 +88,13 @@ export function recordChange(
   }
 
   db.insert(undoLog)
-    .values({ characterId, previousState: before, describedAs: change.describedAs, changedAt: now })
+    .values({
+      characterId,
+      previousState: before,
+      describedAs: change.describedAs,
+      changedAt: now,
+      sealed: own,
+    })
     .run();
   const kept = db
     .select({ id: undoLog.id })

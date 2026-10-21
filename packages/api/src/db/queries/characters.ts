@@ -145,6 +145,7 @@ export function updateCharacterDefinition(
   id: string,
   definition: CharacterDefinition,
   unmodifiedSince?: Date,
+  ownUndoEntry = false,
 ) {
   return db.transaction((tx) => {
     const current = tx
@@ -157,7 +158,7 @@ export function updateCharacterDefinition(
       return "stale" as const;
     const now = new Date();
     const before = characterDefinitionSchema.safeParse(current.definition);
-    if (before.success) recordChange(tx, id, before.data, definition, now);
+    if (before.success) recordChange(tx, id, before.data, definition, now, ownUndoEntry);
     return writeDefinition(tx, id, definition, now);
   });
 }

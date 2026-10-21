@@ -369,8 +369,15 @@ describe("the undo log", () => {
   let routes: ReturnType<typeof charactersRoutes>;
   let id: string;
 
-  const put = (definition: CharacterDefinition) =>
-    routes.request(`/characters/${id}`, { ...json(definition), method: "PUT" });
+  const put = (definition: CharacterDefinition, headers: Record<string, string> = {}) => {
+    const body = json(definition);
+    return routes.request(`/characters/${id}`, {
+      ...body,
+      method: "PUT",
+      headers: { ...body.headers, ...headers },
+    });
+  };
+  const own = { "Undo-Entry": "own" };
   const withCha = (cha: number) =>
     baseDefinition({ abilityScores: { ...baseDefinition().abilityScores, cha } });
   const entries = async () =>
@@ -456,9 +463,23 @@ describe("the undo log", () => {
     expect(opened.charactersDb.select().from(undoLog).all()).toHaveLength(50);
   });
 
+  it("keeps each write sent as its own entry apart inside the window", async () => {
+    await put(withCha(18), own);
+    await put(withCha(19), own);
+    await put(withCha(20));
+    expect((await entries()).map((e) => e.describedAs)).toEqual([
+      "Charisma 19 to 20",
+      "Charisma 18 to 19",
+      "Charisma 17 to 18",
+    ]);
+  });
+
+  it("refuses an Undo-Entry value other than own", async () => {
+    expect((await put(withCha(18), { "Undo-Entry": "merge" })).status).toBe(400);
+    expect(await entries()).toEqual([]);
+  });
+
   it("undoes each change to a level's hit point gain back to the gain before it", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    const minute = (n: number) => vi.setSystemTime(new Date(`2026-01-01T00:0${n}:00Z`));
     const withGain = (gain: object, departures: { field: string; note: string }[] = []) =>
       baseDefinition({
         levels: [{ class: WARLOCK }, { class: WARLOCK, ...gain }],
@@ -467,13 +488,10 @@ describe("the undo log", () => {
       });
     const second = async () =>
       (await (await routes.request(`/characters/${id}`)).json()).definition;
-    minute(0);
     await put(withGain({}));
-    minute(1);
-    await put(withGain({ rolled: 8 }));
-    minute(2);
+    await put(withGain({ rolled: 8 }), own);
     const noted = [{ field: "levels.1.rolled", note: "Level 2 gains 12 hit points" }];
-    await put(withGain({ rolled: 12, typed: true }, noted));
+    await put(withGain({ rolled: 12, typed: true }, noted), own);
 
     expect((await undo()).status).toBe(200);
     expect(await second()).toEqual(withGain({ rolled: 8 }));
