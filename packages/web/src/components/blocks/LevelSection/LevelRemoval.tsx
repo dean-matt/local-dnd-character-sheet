@@ -1,5 +1,5 @@
 import { type CharacterRecord, displayName, entryKey } from "@dnd/character";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import type { LevelHistoryRow } from "../../../lib/levelHistory.ts";
 import { withoutNewestLevel } from "../../../lib/levelRemoval.ts";
@@ -9,7 +9,8 @@ const BUTTON = "rounded-control border border-border bg-surface px-2 py-1 font-s
 /**
  * Removes the newest level and what it brought, once the player confirms the level it
  * names, as one write and one undo entry. The write is refused, and says so, where the
- * newest level is no longer `row`, as after a level-up from another tab.
+ * newest level is no longer `row` or the server holds an edit since the record was read, as
+ * after a level-up from another tab.
  */
 export function LevelRemoval({
   character,
@@ -20,6 +21,7 @@ export function LevelRemoval({
 }) {
   const panel = useId();
   const [open, setOpen] = useState(false);
+  const toggle = useRef<HTMLButtonElement>(null);
   const update = useUpdateCharacterDefinition(character.id);
   const named = `level ${row.level} (${displayName(row.cls)} ${row.classLevel})`;
 
@@ -36,9 +38,15 @@ export function LevelRemoval({
             throw new Error(`the newest level changed before ${named} could be removed.`);
           return withoutNewestLevel(latest);
         },
+        readAt: character.updatedAt,
         ownUndoEntry: true,
       },
-      { onSuccess: () => setOpen(false) },
+      {
+        onSuccess: () => {
+          setOpen(false);
+          toggle.current?.focus();
+        },
+      },
     );
   }
 
@@ -48,7 +56,11 @@ export function LevelRemoval({
         type="button"
         aria-expanded={open}
         aria-controls={panel}
-        onClick={() => setOpen(!open)}
+        ref={toggle}
+        onClick={() => {
+          update.reset();
+          setOpen(!open);
+        }}
         className="text-label text-muted underline"
       >
         Remove newest level
@@ -75,7 +87,15 @@ export function LevelRemoval({
             >
               Remove {named}
             </button>
-            <button type="button" onClick={() => setOpen(false)} className={BUTTON}>
+            <button
+              type="button"
+              onClick={() => {
+                update.reset();
+                setOpen(false);
+                toggle.current?.focus();
+              }}
+              className={BUTTON}
+            >
               Keep it
             </button>
           </div>

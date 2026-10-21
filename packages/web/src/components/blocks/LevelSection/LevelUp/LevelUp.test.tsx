@@ -1156,6 +1156,7 @@ describe("LevelUp", () => {
       await waitFor(() =>
         expect(within(history()).queryByRole("rowheader", { name: "4" })).toBeNull(),
       );
+      expect(within(history()).getByRole("button", { name: "Remove newest level" })).toHaveFocus();
     });
 
     it("takes back the subclass a level chose and the options picked under it", async () => {
