@@ -6,7 +6,7 @@ You have not touched this in a year. Here is the shortest path back to a running
 
 ```bash
 node --version    # must match .node-version
-pnpm --version    # 11 or newer
+pnpm --version    # 12 or newer
 ```
 
 If Node is wrong and you use a version manager, `nvm use` or `fnm use` reads
