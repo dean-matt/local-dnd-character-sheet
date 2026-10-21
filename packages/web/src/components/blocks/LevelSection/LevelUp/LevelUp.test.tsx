@@ -58,6 +58,7 @@ const SPELLS: Record<string, { level: number; lists: string[] }> = {
   Fireball: { level: 3, lists: ["Sorcerer", "Wizard"] },
   "Magic Missile": { level: 1, lists: ["Wizard"] },
   "Burning Hands": { level: 1, lists: ["Sorcerer"] },
+  Light: { level: 0, lists: ["Sorcerer"] },
   "Mage Armor": { level: 1, lists: ["Wizard"] },
 };
 const WIZARD = { name: "Wizard", source: "PHB" };
@@ -1307,6 +1308,52 @@ describe("LevelUp", () => {
       expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
       fireEvent.click(within(dialog()).getByRole("button", { name: "Cancel" }));
       expect(writes).not.toHaveBeenCalled();
+    });
+
+    it("asks a level whose spell the spell list swapped only for the picks it still holds", async () => {
+      const character = sorcererOfFive();
+      const spells = character.definition.spells.map((spell) =>
+        "name" in spell.ref && spell.ref.name === "Misty Step"
+          ? { ref: { name: "Burning Hands", source: "PHB" }, prepared: false, origin: SORCERER }
+          : spell,
+      );
+      renderSeeded(
+        { ...character, definition: { ...character.definition, spells } },
+        { history: true },
+      );
+      await reopen(4);
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" }));
+      await pickSpell("Add a cantrip", "Light");
+      await within(dialog()).findByRole("button", { name: "Remove Light" });
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().spells.map((spell) => spell.ref)).toEqual(
+        ["Shield", "Burning Hands", "Fireball", "Light"].map((name) => ({ name, source: "PHB" })),
+      );
+    });
+
+    it("offers Reload where the character changed since the dialog opened, and writes on the fresh read", async () => {
+      renderSeeded(sorcererOfFive(), { history: true });
+      await reopen(4);
+      editElsewhere({ experience: 9000 });
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      await pickSpell("Add a spell", "Burning Hands");
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Reload" }));
+      await waitFor(() =>
+        expect(within(dialog()).queryByRole("button", { name: "Reload" })).toBeNull(),
+      );
+
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      await pickSpell("Add a spell", "Burning Hands");
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(2));
+      expect(sent().experience).toBe(9000);
+      expect(sent().spells).toContainEqual(picked("Burning Hands"));
     });
 
     it("changes a subclass feature's choice an earlier level made, refusing a subclass change a later level builds on", async () => {

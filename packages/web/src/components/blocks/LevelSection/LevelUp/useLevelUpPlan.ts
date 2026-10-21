@@ -40,6 +40,8 @@ type Level = CharacterDefinition["levels"][number];
 export function useLevelUpPlan(
   definition: CharacterDefinition,
   method: HitPointMethod | undefined,
+  /** How many spells a reopened past level still holds stamped as its picks. */
+  stamped?: number,
 ) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const [
@@ -76,7 +78,7 @@ export function useLevelUpPlan(
   const level = (levels.at(-1) ?? definition.levels.at(-1)) as Level;
   const target = useLevelUpClass(definition, level.class, level.subclass);
   const entry = useMulticlassEntry(definition, level.class, target.name, target.json);
-  const spellPicks = useLevelUpSpells(definition, level.class, target, spells);
+  const spellPicks = useLevelUpSpells(definition, level.class, target, spells, stamped);
   const optionPicks = useLevelUpOptions(definition, level.class, target, optionalFeatures);
   const pickedSkills = (entry.skillPick?.options ?? []).filter((ref) =>
     proficiencies.skills.some((skill) => refKey(skill.ref) === refKey(ref)),
@@ -143,7 +145,7 @@ export function useLevelUpPlan(
     /** What an option's prerequisites read: the character with the level and its picks. */
     draft: { levels, spells, optionalFeatures },
     ready,
-    /** Whether the picks from the subclass on are made, which a past level's are changed by. */
+    /** Whether every pick from the subclass on is made, which is all a reopened past level needs. */
     picksReady,
     features: [
       ...featuresAt(target.after?.features ?? [], target.next),

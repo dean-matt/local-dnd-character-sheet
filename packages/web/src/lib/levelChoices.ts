@@ -111,8 +111,9 @@ const grantorDropped: Refusal = (before, after) => {
  * Why `after`, `before` with `level`'s choices made again, cannot be written, one line per
  * dependency, naming it: a later level in the class building on a subclass the level
  * changes, a prepared spell the level no longer picks, and a pick made for a feat or option
- * it no longer takes. A later option whose prerequisite a changed pick met is not judged,
- * since its prerequisite lives on the catalog row.
+ * it no longer takes. Not judged, since each prerequisite lives on a catalog row: a later
+ * option whose prerequisite a changed pick met, and a later feat or multiclass entry whose
+ * ability prerequisite a lowered increase met.
  */
 export const levelChoiceRefusals: Refusal = (before, after, level) =>
   [subclassBuiltOn, preparedDropped, grantorDropped].flatMap((refusal) =>

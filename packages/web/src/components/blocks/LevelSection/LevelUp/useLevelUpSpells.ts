@@ -17,13 +17,14 @@ const SPELLBOOK_SOURCES = ["PHB", "XPHB"];
  * class as its origin; a subclass pick holds the subclass there until `spellsUnderClass`
  * moves it at Apply, which is what tells the two apart. Each pick states the character level it
  * was `pickedAt`. A Wizard's spells go to its spellbook, which `spellbook`
- * reports.
+ * reports. `stamped`, for a reopened past level, is how many picks it still holds stamped.
  */
 export function useLevelUpSpells(
   definition: CharacterDefinition,
   cls: EntryRef,
   target: ReturnType<typeof useLevelUpClass>,
   spells: readonly Spell[],
+  stamped?: number,
 ) {
   const { setValue } = useFormContext<CharacterDefinition>();
   const catalog = "name" in cls ? cls : undefined;
@@ -106,6 +107,10 @@ export function useLevelUpSpells(
   const leveled = classPicked.filter((pick) => pick.level !== 0);
   const subclassCantrips = subclassPicked.filter((pick) => pick.level === 0);
   const subclassLeveled = subclassPicked.filter((pick) => pick.level !== 0);
+  const owed = gained.cantrips + gained.spells + offered.cantrips + offered.spells;
+  // A reopened level whose pick the spell list swapped holds fewer stamped picks than it
+  // owes, and the spell learned there fills the gap, so the level owes only what it holds.
+  const short = stamped === undefined ? 0 : Math.max(0, owed - stamped);
   const pickedAt = definition.levels.length + 1;
   const write = (next: Spell[]) => setRefValue(setValue, "spells", next, { shouldDirty: true });
   return {
@@ -123,10 +128,11 @@ export function useLevelUpSpells(
     subclassSpells: subclassLeveled,
     ready:
       picked.length === added.length &&
-      cantrips.length === gained.cantrips &&
-      leveled.length === gained.spells &&
-      subclassCantrips.length === offered.cantrips &&
-      subclassLeveled.length === offered.spells,
+      cantrips.length <= gained.cantrips &&
+      leveled.length <= gained.spells &&
+      subclassCantrips.length <= offered.cantrips &&
+      subclassLeveled.length <= offered.spells &&
+      picked.length === owed - short,
     add: (ref: EntryRef) =>
       write([...spells, { ref, prepared: false, ...(catalog && { origin: catalog }), pickedAt }]),
     addSubclass: (ref: EntryRef) =>

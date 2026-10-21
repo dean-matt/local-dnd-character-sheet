@@ -17,6 +17,8 @@ export interface LevelChoicesFormProps {
   level: number;
   saving: boolean;
   error: string | undefined;
+  /** Offered beside `error` where reading the character again is the way past it. */
+  onReload?: () => void;
   cancel: () => void;
 }
 
@@ -31,10 +33,12 @@ export function LevelChoicesForm({
   level,
   saving,
   error,
+  onReload,
   cancel,
 }: LevelChoicesFormProps) {
   const { getValues, formState } = useFormContext<CharacterDefinition>();
-  const plan = useLevelUpPlan(before, undefined);
+  const stamped = definition.spells.filter((spell) => spell.pickedAt === level).length;
+  const plan = useLevelUpPlan(before, undefined, stamped);
   const refusals = levelChoiceRefusals(
     definition,
     withReopenedLevel(definition, level, getValues()),
@@ -56,7 +60,20 @@ export function LevelChoicesForm({
         footer={
           <div className="flex items-center gap-2">
             <div role="alert" className="text-error text-row">
-              {error && <p>Couldn't save the choices: {error}</p>}
+              {error && (
+                <p>
+                  Couldn't save the choices: {error}
+                  {onReload && (
+                    <button
+                      type="button"
+                      onClick={onReload}
+                      className="ml-2 font-semibold text-accent underline hover:text-accent-hover"
+                    >
+                      Reload
+                    </button>
+                  )}
+                </p>
+              )}
               {refusals.map((refusal) => (
                 <p key={refusal}>{refusal}</p>
               ))}
