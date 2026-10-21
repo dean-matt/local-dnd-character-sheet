@@ -6,27 +6,25 @@ description: Carry one reviewed local-dnd-character-sheet pull request to main �
 # Merging a pull request
 
 [`issue-to-pr`](../issue-to-pr/SKILL.md) labels a pull request and stops; this lands it. Run
-every command from the main checkout — a worktree holds its branch, and the merge deletes it —
-except *Raise the version*, which works in the issue's worktree; return to the main checkout
-before the merge.
+every command from the main checkout, since a worktree holds the branch the merge deletes —
+except *Raise the version*, which works in the issue's worktree.
 
 ```bash
 n=<pr>
-gh pr view "$n" --json state,isDraft,url,headRefName
+gh pr view "$n" --json state,isDraft,url
+b=$(gh pr view "$n" --json headRefName --jq .headRefName)
 issue=$(gh pr view "$n" --json body --jq '.body | capture("Closes #(?<i>[0-9]+)").i')
 ```
 
-The input is an open, non-draft pull request naming the issue it closes. Anything else
-stops here.
+The input is an open, non-draft pull request naming the issue it closes; anything else stops.
 
 ## Raise the version
 
-The merge raises the root `package.json` version, so a merge to `main` leaves no other open
-pull request with a version line to redo. The ruleset takes no direct push and requires every
-check green on a head carrying `main`'s tip, so the bump is one more commit on the branch,
-and it costs one more full CI run before every merge of a pull request that changes code. Skip a pull request `dependabot[bot]` opened.
+The merge raises the root `package.json` version, so no other open pull request carries a
+version line to redo. The ruleset requires every check green on a head carrying `main`'s tip,
+so the bump is one more commit and one more CI run. Skip a `dependabot[bot]` pull request.
 
-Work in the issue's worktree; where `.claude/worktrees/<issue>` is gone, open it as
+Work in the issue's worktree; where `.claude/worktrees/<issue>` is gone, open it on `$b` as
 [`issue-worktree`](../issue-worktree/SKILL.md#opening) says first:
 
 ```bash
@@ -37,13 +35,16 @@ node scripts/version-bump.mjs "$n"
 
 A conflict in the merge goes to [merge-conflicts.md](merge-conflicts.md). `version-bump.mjs`
 prints `no bump` for a pull request that changes only prose or the mockup, and the new
-version otherwise; for the version, commit and push:
+version otherwise; for the version, install, commit and push:
 
 ```bash
+pnpm install --frozen-lockfile
 git commit package.json -m "chore(repo): raise the version to <version>" && git push
 ```
 
-A rerun after the bump is pushed prints `no bump`.
+pnpm installs before running a script once `package.json` changes, so without the install
+the pre-commit typecheck installs mid-hook. Where the hook still fails with `ENOENT`, install
+and commit again. A rerun after the bump is pushed prints `no bump`.
 
 ## Block on the checks
 
@@ -51,10 +52,10 @@ A rerun after the bump is pushed prints `no bump`.
 node scripts/wait-checks.mjs "$n"
 ```
 
-Run it with a 600000 ms tool timeout. On its exit 2, name what it printed and hand back.
-On exit 1, read the failed step first with `gh run view <id> --log-failed`. Rerun a failed
-run once, never twice: one rerun covers a flaky runner, a second says the
-failure is the branch's.
+Run it with a 600000 ms tool timeout, straight after a push: the new head has no check yet,
+so `wait-checks` reads each required name as missing and waits. On exit 2, name what it
+printed and hand back. On exit 1, read the failed step with `gh run view <id> --log-failed`
+and rerun it once: one rerun covers a flaky runner, and a second exit 1 is the branch's.
 
 ```bash
 gh pr checks "$n" --json bucket,link --jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")
@@ -64,8 +65,8 @@ sleep 30
 node scripts/wait-checks.mjs "$n"
 ```
 
-The sleep lets the rerun show as pending before `wait-checks` reads it. A second exit 1 is
-the branch's failure: name the failed checks and hand back.
+A rerun keeps the head and its red checks, so the sleep lets it show as pending first. On a
+second exit 1, name the failed checks and hand back.
 
 ## The gate
 
@@ -115,7 +116,7 @@ that is the user's call.
 
 Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree for `$issue`
 first, or `gh` cannot delete the branch it holds. It refuses rather than discarding anything
-uncommitted; stop on that refusal.
+uncommitted; stop on that refusal, and never force it.
 
 ```bash
 gh pr merge "$n" --squash --delete-branch
@@ -127,9 +128,8 @@ node scripts/unblock-issues.mjs "$issue"
 the section and the `blocked` label where nothing else it names is open, and prints each
 issue it unblocks or skips. A skip means the body changed between reads twice; rerun it once.
 
-Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
-a board item already `Done` changes nothing. A failure here, rate limit included, does not
-undo the merge: report the card as still not `Done` and carry on.
+Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. A failure
+here, rate limit included, does not undo the merge: report the card as not `Done` and carry on.
 
 Then report the merge commit, the issue it closed, which issues it unblocked or skipped and that the checkout is on `main`.
 
