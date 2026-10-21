@@ -162,11 +162,11 @@ export function unanswered(comments) {
 }
 
 /**
- * Who may sign off: the repository's owner, read from GitHub rather than a committed list,
- * so no pull request can add its own author. An organization owner names no user, so this
- * clears nothing there; a committed list under the fenced `.github/` is the way out.
+ * Who may sign off: the repository's collaborators, read from GitHub rather than a committed
+ * list, so no pull request can add its own author.
  */
-const signers = () => [gh(["repo", "view", "--json", "owner"]).owner.login];
+const signers = () =>
+  gh(["api", "--paginate", "repos/{owner}/{repo}/collaborators"]).map((c) => c.login);
 
 /**
  * A declined `comment` is a taste call refused and ends a healthy review; anything else is

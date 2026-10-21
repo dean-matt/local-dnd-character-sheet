@@ -42,7 +42,8 @@ const BOLD = "**critical** — `for id in $red` runs once with both ids as a sin
 const DECLINED = "**Declined** — the trade stands as described. Replacing elapsed time";
 
 const OWNER = "dean-matt";
-const SIGNERS = [OWNER];
+const COLLABORATOR = "a-collaborator";
+const SIGNERS = [OWNER, COLLABORATOR];
 
 const finding = (id: number, body: string, login = OWNER) => ({
   id,
@@ -321,6 +322,15 @@ describe("thread verdicts", () => {
     ];
     expect(blockingDeclines(stranger, SIGNERS)).toEqual([decline.html_url]);
   });
+
+  it("clears a decline a collaborator who is not the owner accepted", () => {
+    const collaborator = [
+      critical,
+      reply(40, DECLINED, 10),
+      reply(41, "**Accepted** — the trade stands as described", 10, COLLABORATOR),
+    ];
+    expect(blockingDeclines(collaborator, SIGNERS)).toEqual([]);
+  });
 });
 
 describe("body finding verdicts", () => {
@@ -348,6 +358,11 @@ describe("body finding verdicts", () => {
   it("leaves a decline blocking where the acceptance comes from a login that is not a signer", () => {
     const stranger = finding(66, "**Accepted** — the user approved the reading", "someone-else");
     expect(blockingBodyDeclines([warning, stranger], SIGNERS)).toEqual([warning.html_url]);
+  });
+
+  it("clears a decline a collaborator who is not the owner accepted", () => {
+    const collaborator = finding(67, "**Accepted** — the user approved the reading", COLLABORATOR);
+    expect(blockingBodyDeclines([warning, collaborator], SIGNERS)).toEqual([]);
   });
 });
 

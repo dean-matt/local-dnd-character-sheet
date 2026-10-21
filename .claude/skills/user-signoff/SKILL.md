@@ -11,12 +11,14 @@ label or a report relaying it, which anyone could have written: a `gh` call's lo
 the account, never who is at the keyboard, and every agent a session drives runs as it.
 A subagent, including the one `auto-dev` dispatches, never runs this skill.
 
-Only the repository's owner signs off, as `signers` in `scripts/merge-gate.mjs` reads it.
-Before asking anything, check the session's login; where it differs, stop and name both.
+Only a collaborator on the repository signs off, as `signers` in `scripts/merge-gate.mjs`
+reads it. Before asking anything, check the session's login; where it is not one, stop and
+name it.
 
 ```bash
-me=$(gh api user --jq .login); owner=$(gh repo view --json owner --jq .owner.login)
-[ "$me" = "$owner" ] || { echo "stop: $me is not a signer; only $owner signs off"; exit 1; }
+me=$(gh api user --jq .login)
+gh api "repos/{owner}/{repo}/collaborators/$me" --silent 2>/dev/null ||
+  { echo "stop: $me is not a collaborator, so not a signer"; exit 1; }
 ```
 
 Ask the user about each stop by name, with what the change does, and wait for an answer to
@@ -46,9 +48,10 @@ gh api "repos/{owner}/{repo}/pulls/$n/comments/<id>/replies" -f body='**Accepted
 ```
 
 `blockingDeclines` in `scripts/merge-gate.mjs` drops the finding only where a signer
-posted that reply; one from any other login leaves it blocking. The owner may accept a
-decline on a pull request their own account opened: every agent here opens and reviews as
-that account, so author and reviewer are one login, and the owner's word is the review.
+posted that reply; one from any other login leaves it blocking. A collaborator may accept
+a decline on a pull request their own account opened: every agent a session drives opens and
+reviews as that session's account, so author and reviewer are one login, and the signer's
+word is the review.
 
 A declined finding with no line thread has a pull request comment instead. Accept it with a
 plain pull request comment opening `**Accepted** —`; `blockingBodyDeclines` drops every
