@@ -1,4 +1,4 @@
-import type { CharacterDefinition } from "@dnd/character";
+import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
 import { levelChoiceRefusals } from "../../../../lib/levelChoices.ts";
 import { Modal } from "../../../Modal.tsx";
@@ -37,8 +37,14 @@ export function LevelChoicesForm({
   cancel,
 }: LevelChoicesFormProps) {
   const { getValues, formState } = useFormContext<CharacterDefinition>();
-  const stamped = definition.spells.filter((spell) => spell.pickedAt === level).length;
-  const plan = useLevelUpPlan(before, undefined, stamped);
+  const cls = definition.levels[level - 1]?.class;
+  const saved = {
+    subclass: definition.levels
+      .slice(0, level)
+      .find((each) => cls && entryKey(each.class) === entryKey(cls) && each.subclass)?.subclass,
+    picks: definition.spells.filter((spell) => spell.pickedAt === level),
+  };
+  const plan = useLevelUpPlan(before, undefined, saved);
   const refusals = levelChoiceRefusals(
     definition,
     withReopenedLevel(definition, level, getValues()),

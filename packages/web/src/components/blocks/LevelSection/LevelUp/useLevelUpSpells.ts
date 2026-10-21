@@ -1,4 +1,11 @@
-import { type CharacterDefinition, displayName, type EntryRef, entryKey } from "@dnd/character";
+import type { SpellLookup } from "@dnd/catalog";
+import {
+  type CharacterDefinition,
+  type ContentRef,
+  displayName,
+  type EntryRef,
+  entryKey,
+} from "@dnd/character";
 import { useFormContext } from "react-hook-form";
 import { useSpellLookup } from "../../../../hooks/useSpellLookup.ts";
 import { setRefValue } from "../../../../lib/setRefValue.ts";
@@ -17,14 +24,15 @@ const SPELLBOOK_SOURCES = ["PHB", "XPHB"];
  * class as its origin; a subclass pick holds the subclass there until `spellsUnderClass`
  * moves it at Apply, which is what tells the two apart. Each pick states the character level it
  * was `pickedAt`. A Wizard's spells go to its spellbook, which `spellbook`
- * reports. `stamped`, for a reopened past level, is how many picks it still holds stamped.
+ * reports. `saved`, for a reopened past level, is its subclass and the picks it holds stamped
+ * as saved.
  */
 export function useLevelUpSpells(
   definition: CharacterDefinition,
   cls: EntryRef,
   target: ReturnType<typeof useLevelUpClass>,
   spells: readonly Spell[],
-  stamped?: number,
+  saved?: { subclass: ContentRef | undefined; picks: readonly Spell[] },
 ) {
   const { setValue } = useFormContext<CharacterDefinition>();
   const catalog = "name" in cls ? cls : undefined;
@@ -64,53 +72,40 @@ export function useLevelUpSpells(
   };
   const known = new Set(definition.spells.map((spell) => entryKey(spell.ref)));
   const added = spells.filter((spell) => !known.has(entryKey(spell.ref)));
-  const { looked, failed } = useSpellLookup(
-    added.map((spell) => spell.ref),
-    (index) => {
-      const spell = added[index];
-      if (spell && bySubclass(spell) && offer) return { offer };
-      return list ? { list } : {};
-    },
-  );
-  const read = added.flatMap((spell, index) => {
-    const { ref } = spell;
-    const found = looked[index];
-    if (found === undefined) return [];
-    const { name, level, listed } = found ?? { name: displayName(ref), level: undefined };
-    return [{ ref, name, level, listed, subclass: bySubclass(spell) }];
-  });
-  // A past level's subclass picks hold the class as their origin, since Apply moved them
-  // there, so the class's picks past its count fill the subclass's offer, unlisted ones first.
-  // Where both lists hold a pick the split goes by order, so a class pick can land under a
-  // narrower offer that lacks it; stamping a subclass pick with its offer at Apply is the way out.
-  const surplus = (cantrip: boolean, room: number, owed: number) => {
-    const kind = read.filter((pick) => (pick.level === 0) === cantrip);
-    const own = kind.filter((pick) => !pick.subclass);
-    const count = Math.min(own.length - room, owed - (kind.length - own.length));
-    const ordered = [
-      ...own.filter((pick) => pick.listed === false),
-      ...own.filter((pick) => pick.listed !== false),
-    ];
-    return ordered.slice(0, Math.max(0, count)).map((pick) => entryKey(pick.ref));
+  const contextOf = (spell: Spell | undefined) => {
+    if (spell && bySubclass(spell) && offer) return { offer };
+    return list ? { list } : {};
   };
-  const moved = new Set([
-    ...surplus(true, gained.cantrips, offered.cantrips),
-    ...surplus(false, gained.spells, offered.spells),
-  ]);
-  const picked = read.map((pick) => ({
-    ...pick,
-    subclass: pick.subclass || moved.has(entryKey(pick.ref)),
-  }));
-  const classPicked = picked.filter((pick) => !pick.subclass);
-  const subclassPicked = picked.filter((pick) => pick.subclass);
-  const cantrips = classPicked.filter((pick) => pick.level === 0);
-  const leveled = classPicked.filter((pick) => pick.level !== 0);
-  const subclassCantrips = subclassPicked.filter((pick) => pick.level === 0);
-  const subclassLeveled = subclassPicked.filter((pick) => pick.level !== 0);
-  const owed = gained.cantrips + gained.spells + offered.cantrips + offered.spells;
-  // A reopened level whose pick the spell list swapped holds fewer stamped picks than it
-  // owes, and the spell learned there fills the gap, so the level owes only what it holds.
-  const short = stamped === undefined ? 0 : Math.max(0, owed - stamped);
+  const current = useSpellLookup(
+    added.map((spell) => spell.ref),
+    (index) => contextOf(added[index]),
+  );
+  const sameSubclass =
+    saved !== undefined &&
+    saved.subclass?.name === subclass?.name &&
+    saved.subclass?.source === subclass?.source;
+  const held = sameSubclass ? saved.picks : [];
+  const prior = useSpellLookup(
+    held.map((spell) => spell.ref),
+    (index) => contextOf(held[index]),
+  );
+  const room = {
+    cantrips: gained.cantrips,
+    spells: gained.spells,
+    subclassCantrips: offered.cantrips,
+    subclassSpells: offered.spells,
+  };
+  const now = splitPicks(added, current.looked, bySubclass, room);
+  const was = splitPicks(held, prior.looked, bySubclass, room);
+  // A reopened level whose pick the spell list swapped holds fewer stamped picks in that
+  // bucket than its table owes, and the spell learned there fills the gap, so the bucket owes
+  // only what the level held. A changed subclass owes its whole offer.
+  const owes = (bucket: keyof typeof room) =>
+    sameSubclass ? Math.min(room[bucket], was[bucket].length) : room[bucket];
+  const { cantrips, subclassCantrips } = now;
+  const leveled = now.spells;
+  const subclassLeveled = now.subclassSpells;
+  const failed = current.failed || prior.failed;
   const pickedAt = definition.levels.length + 1;
   const write = (next: Spell[]) => setRefValue(setValue, "spells", next, { shouldDirty: true });
   return {
@@ -126,18 +121,77 @@ export function useLevelUpSpells(
     subclassName: subclass?.name ?? "the subclass",
     subclassCantrips,
     subclassSpells: subclassLeveled,
+    /** How many of each kind the level owes, short of `gained` and `offered` on a reopened level. */
+    owed: {
+      cantrips: owes("cantrips"),
+      spells: owes("spells"),
+      subclassCantrips: owes("subclassCantrips"),
+      subclassSpells: owes("subclassSpells"),
+    },
     ready:
-      picked.length === added.length &&
-      cantrips.length <= gained.cantrips &&
-      leveled.length <= gained.spells &&
-      subclassCantrips.length <= offered.cantrips &&
-      subclassLeveled.length <= offered.spells &&
-      picked.length === owed - short,
+      now.read === added.length &&
+      was.read === held.length &&
+      cantrips.length === owes("cantrips") &&
+      leveled.length === owes("spells") &&
+      subclassCantrips.length === owes("subclassCantrips") &&
+      subclassLeveled.length === owes("subclassSpells"),
     add: (ref: EntryRef) =>
       write([...spells, { ref, prepared: false, ...(catalog && { origin: catalog }), pickedAt }]),
     addSubclass: (ref: EntryRef) =>
       write([...spells, { ref, prepared: false, ...(subclass && { origin: subclass }), pickedAt }]),
     remove: (ref: EntryRef) =>
       write(spells.filter((spell) => entryKey(spell.ref) !== entryKey(ref))),
+  };
+}
+
+type Room = { cantrips: number; spells: number; subclassCantrips: number; subclassSpells: number };
+
+/**
+ * `spells` with their lookups, those still loading left out and counted apart from `read`,
+ * split by kind and by whether each was picked under the class or its subclass. A past
+ * level's subclass picks hold the class as their origin, since Apply moved them there, so
+ * the class's picks past its room fill the subclass's, unlisted ones first. Where both lists
+ * hold a pick the split goes by order, so a class pick can land under a narrower offer that
+ * lacks it; stamping a subclass pick with its offer at Apply is the way out.
+ */
+function splitPicks(
+  spells: readonly Spell[],
+  looked: readonly (SpellLookup | undefined)[],
+  bySubclass: (spell: Spell) => boolean,
+  room: Room,
+) {
+  const read = spells.flatMap((spell, index) => {
+    const { ref } = spell;
+    const found = looked[index];
+    if (found === undefined) return [];
+    const { name, level, listed } = found ?? { name: displayName(ref), level: undefined };
+    return [{ ref, name, level, listed, subclass: bySubclass(spell) }];
+  });
+  const surplus = (cantrip: boolean, own: number, owed: number) => {
+    const kind = read.filter((pick) => (pick.level === 0) === cantrip);
+    const mine = kind.filter((pick) => !pick.subclass);
+    const count = Math.min(mine.length - own, owed - (kind.length - mine.length));
+    const ordered = [
+      ...mine.filter((pick) => pick.listed === false),
+      ...mine.filter((pick) => pick.listed !== false),
+    ];
+    return ordered.slice(0, Math.max(0, count)).map((pick) => entryKey(pick.ref));
+  };
+  const moved = new Set([
+    ...surplus(true, room.cantrips, room.subclassCantrips),
+    ...surplus(false, room.spells, room.subclassSpells),
+  ]);
+  const picked = read.map((pick) => ({
+    ...pick,
+    subclass: pick.subclass || moved.has(entryKey(pick.ref)),
+  }));
+  const of = (subclass: boolean, cantrip: boolean) =>
+    picked.filter((pick) => pick.subclass === subclass && (pick.level === 0) === cantrip);
+  return {
+    read: read.length,
+    cantrips: of(false, true),
+    spells: of(false, false),
+    subclassCantrips: of(true, true),
+    subclassSpells: of(true, false),
   };
 }

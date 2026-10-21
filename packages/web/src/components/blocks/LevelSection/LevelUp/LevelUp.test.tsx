@@ -1322,6 +1322,7 @@ describe("LevelUp", () => {
         { history: true },
       );
       await reopen(4);
+      expect(within(dialog()).queryByRole("region", { name: "New spells" })).toBeNull();
       fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" }));
       await pickSpell("Add a cantrip", "Light");
       await within(dialog()).findByRole("button", { name: "Remove Light" });
@@ -1331,6 +1332,51 @@ describe("LevelUp", () => {
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       expect(sent().spells.map((spell) => spell.ref)).toEqual(
         ["Shield", "Burning Hands", "Fireball", "Light"].map((name) => ({ name, source: "PHB" })),
+      );
+    });
+
+    it("asks a reopened level whose subclass changes for the whole of the new subclass's offer", async () => {
+      const base = sorcerer(3);
+      renderSeeded(
+        {
+          ...base,
+          definition: {
+            ...base.definition,
+            spells: [],
+            levels: [
+              { class: KNIGHT_FIGHTER },
+              { class: KNIGHT_FIGHTER },
+              { class: KNIGHT_FIGHTER, subclass: { name: "Champion", source: "PHB" } },
+            ],
+          },
+        },
+        { history: true },
+      );
+      await reopen(3);
+      choose("Fighter subclass", "Lorekeeper");
+      const picks = await within(dialog()).findByRole("region", {
+        name: "Cantrips from Lorekeeper",
+      });
+      expect(picks).toHaveTextContent("Choose 2 — 0 selected");
+      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+
+      await pickSpell("Add a cantrip", "Fire Bolt");
+      await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 1 selected"));
+      await pickSpell("Add a cantrip", "Prestidigitation");
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels[2]).toEqual({
+        class: KNIGHT_FIGHTER,
+        subclass: { name: "Lorekeeper", source: "PHB" },
+      });
+      expect(sent().spells).toEqual(
+        ["Fire Bolt", "Prestidigitation"].map((name) => ({
+          ...picked(name),
+          origin: KNIGHT_FIGHTER,
+          pickedAt: 3,
+        })),
       );
     });
 
