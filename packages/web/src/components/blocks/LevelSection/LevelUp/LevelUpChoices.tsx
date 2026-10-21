@@ -1,4 +1,4 @@
-import type { SearchHit, SubclassRecord } from "@dnd/catalog";
+import type { SearchHit } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   classLevels,
@@ -6,29 +6,19 @@ import {
   displayName,
   type EntryRef,
   entryKey,
-  featureKey,
-  refKey,
 } from "@dnd/character";
-import { useId } from "react";
 import { useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
 import { useCharacterDerived } from "../../../../hooks/useCharacterDerived.ts";
-import { useDisabledSources } from "../../../../hooks/useDisabledSources.ts";
-import { shownOptions } from "../../../../lib/featureChoices.ts";
-import { grantTitle } from "../../../../lib/improvementGrants.ts";
 import { searchHitKey } from "../../../../lib/searchHitKey.ts";
 import { FormField } from "../../../FormField.tsx";
-import { ImprovementField } from "../../../ImprovementField.tsx";
 import { Select } from "../../../Select.tsx";
 import { HitPointChoice } from "./HitPointChoice.tsx";
 import type { HitPointMethod } from "./hitPointPick.ts";
-import { LevelUpOptions } from "./LevelUpOptions.tsx";
-import { LevelUpSpells } from "./LevelUpSpells.tsx";
+import { LevelUpPicks } from "./LevelUpPicks.tsx";
 import { LevelUpSummary } from "./LevelUpSummary.tsx";
 import { MulticlassEntryFields } from "./MulticlassEntryFields.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 
-const UNCHOSEN = "Choose one";
-const subclassKey = (row: Pick<SubclassRecord, "name" | "source">) => `${row.name}|${row.source}`;
 const toRef = (hit: SearchHit): EntryRef =>
   "id" in hit ? { homebrewId: hit.id } : { name: hit.name, source: hit.source };
 const hitSource = (hit: SearchHit) => ("id" in hit ? "homebrew" : hit.source);
@@ -47,9 +37,7 @@ export interface LevelUpChoicesProps {
 /**
  * Every choice the level asks for, in order: the class, from one list of those the
  * character holds and those it could multiclass into, with what entering a new one asks;
- * the hit points, a subclass at the class's subclass level, an improvement, each option a
- * feature offers, the optional features, cantrips and spells the level adds. Then the
- * features the level brings.
+ * the hit points, then the picks from the subclass on. Then the features the level brings.
  */
 export function LevelUpChoices({
   characterId,
@@ -58,11 +46,9 @@ export function LevelUpChoices({
   method,
   onMethod,
 }: LevelUpChoicesProps) {
-  const improvementId = useId();
   const derived = useCharacterDerived(characterId);
-  const disabled = useDisabledSources();
   const groups = classLevels(definition);
-  const { target, die, level, grant, candidate } = plan;
+  const { target, die, level } = plan;
   const { entering } = plan.entry;
   const held = new Set(groups.map((group) => entryKey(group.class)));
   const classes = useCatalogSearch({
@@ -128,66 +114,7 @@ export function LevelUpChoices({
           }}
         />
       )}
-      {target.asksSubclass && (
-        <FormField label={`${target.name} subclass`}>
-          {(control) => (
-            <Select
-              {...control}
-              options={target.subclasses.map((each) => ({
-                value: subclassKey(each),
-                label: each.name,
-              }))}
-              value={level.subclass ? subclassKey(level.subclass) : UNCHOSEN}
-              onChange={(value) => {
-                const each = target.subclasses.find((option) => subclassKey(option) === value);
-                plan.setSubclass(each && { name: each.name, source: each.source });
-              }}
-            />
-          )}
-        </FormField>
-      )}
-      {grant && candidate && (
-        <section aria-labelledby={improvementId} className="flex flex-col gap-1.5">
-          <h3 id={improvementId} className="font-semibold text-label text-muted uppercase">
-            {grantTitle(grant)}
-          </h3>
-          <ImprovementField
-            name={`Level ${grant.level}`}
-            improvement={plan.improvement}
-            feats={plan.catalogFeats}
-            candidate={candidate}
-            onChange={plan.setImprovement}
-          />
-        </section>
-      )}
-      {plan.offerings.map((offering) => {
-        const option = plan.chosen(offering);
-        return (
-          <FormField key={featureKey(offering.feature)} label={offering.feature.name}>
-            {(control) => (
-              <Select
-                {...control}
-                options={shownOptions(offering.options, option, disabled).map((each) => ({
-                  value: refKey(each),
-                  label: each.name,
-                }))}
-                value={option ? refKey(option) : UNCHOSEN}
-                onChange={(value) => {
-                  const each = offering.options.find((one) => refKey(one) === value);
-                  if (each) plan.choose(offering, each);
-                }}
-              />
-            )}
-          </FormField>
-        );
-      })}
-      <LevelUpOptions plan={plan} />
-      <LevelUpSpells
-        key={`spells:${entryKey(level.class)}`}
-        edition={definition.edition}
-        className={target.name}
-        picks={plan.spellPicks}
-      />
+      <LevelUpPicks edition={definition.edition} plan={plan} />
       <LevelUpSummary changes={plan.table()} features={plan.features} />
       <p className="text-muted text-row">
         Hit points, proficiency bonus and spell slots are worked out once you apply, and the summary

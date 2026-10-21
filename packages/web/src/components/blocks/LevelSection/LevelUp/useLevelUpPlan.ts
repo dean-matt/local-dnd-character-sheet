@@ -40,6 +40,8 @@ type Level = CharacterDefinition["levels"][number];
 export function useLevelUpPlan(
   definition: CharacterDefinition,
   method: HitPointMethod | undefined,
+  /** A reopened past level's subclass and stamped spell picks, as saved. */
+  saved?: Parameters<typeof useLevelUpSpells>[4],
 ) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const [
@@ -76,7 +78,7 @@ export function useLevelUpPlan(
   const level = (levels.at(-1) ?? definition.levels.at(-1)) as Level;
   const target = useLevelUpClass(definition, level.class, level.subclass);
   const entry = useMulticlassEntry(definition, level.class, target.name, target.json);
-  const spellPicks = useLevelUpSpells(definition, level.class, target, spells);
+  const spellPicks = useLevelUpSpells(definition, level.class, target, spells, saved);
   const optionPicks = useLevelUpOptions(definition, level.class, target, optionalFeatures);
   const pickedSkills = (entry.skillPick?.options ?? []).filter((ref) =>
     proficiencies.skills.some((skill) => refKey(skill.ref) === refKey(ref)),
@@ -108,20 +110,22 @@ export function useLevelUpPlan(
     setRefValue(setValue, "optionalFeatures", definition.optionalFeatures, dirty);
   };
 
-  const ready =
+  const picksReady =
     target.read &&
-    die !== undefined &&
-    (method === "average" || level.rolled !== undefined) &&
     (!target.asksSubclass || level.subclass !== undefined) &&
     improvements.read &&
     (grant === undefined ||
       (featList.isSuccess && isMade(improvement, catalogFeats, candidate?.totals))) &&
     offerings.every((offering) => chosen(offering) !== undefined) &&
-    entry.read &&
-    pickedSkills.length === (entry.skillPick?.count ?? 0) &&
-    entry.toolPicks.every((pick, index) => pickedTools[index]?.length === pick.count) &&
     spellPicks.ready &&
     optionPicks.ready;
+  const ready =
+    picksReady &&
+    die !== undefined &&
+    (method === "average" || level.rolled !== undefined) &&
+    entry.read &&
+    pickedSkills.length === (entry.skillPick?.count ?? 0) &&
+    entry.toolPicks.every((pick, index) => pickedTools[index]?.length === pick.count);
 
   return {
     target,
@@ -141,6 +145,8 @@ export function useLevelUpPlan(
     /** What an option's prerequisites read: the character with the level and its picks. */
     draft: { levels, spells, optionalFeatures },
     ready,
+    /** Whether every pick from the subclass on is made, which is all a reopened past level needs. */
+    picksReady,
     features: [
       ...featuresAt(target.after?.features ?? [], target.next),
       ...featuresAt(target.subclassAfter?.features ?? [], target.subclassFrom, target.next),

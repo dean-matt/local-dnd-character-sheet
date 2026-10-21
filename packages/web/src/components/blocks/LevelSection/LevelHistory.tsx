@@ -14,6 +14,7 @@ import { DetailTrigger } from "../../DetailTrigger.tsx";
 import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
 import { LevelGainEdit } from "./LevelGainEdit.tsx";
 import { LevelRemoval } from "./LevelRemoval.tsx";
+import { LevelUp } from "./LevelUp/LevelUp.tsx";
 
 const HEAD = "px-1 pb-0.5 text-left";
 const CELL = "px-1 py-1 text-left align-top";
@@ -30,8 +31,8 @@ function featureLabel(feature: HistoryFeature, row: readonly HistoryFeature[]): 
  * points it added, the subclass chosen there, the features it granted and the improvement
  * taken. Hit points show the derived maximum's own per-level term, and wait while a write
  * recomputes it rather than show a gain the sheet no longer holds. Each level's gain can be
- * changed in place, each change one write and one undo entry, and the newest level, past the
- * first, can be removed.
+ * changed in place, each change one write and one undo entry, as can the choices each level
+ * past the first made, and the newest level, past the first, can be removed.
  */
 export function LevelHistory({ character }: { character: CharacterRecord }) {
   const { definition } = character;
@@ -133,6 +134,7 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
                       );
                     })}
                     {taken && <p>Improvement: {taken}</p>}
+                    {row.level > 1 && <LevelUp character={character} reopen={row.level} />}
                   </td>
                 </tr>
               );

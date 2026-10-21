@@ -22,10 +22,10 @@ export interface LevelUpSpellsProps {
  */
 export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps) {
   const [beyond, setBeyond] = useState(false);
-  const { gained, offered, offer, spellbook, list, known, failed } = picks;
+  const { gained, owed, offer, spellbook, list, known, failed } = picks;
   const by = picks.subclassName;
-  const subclassOwes = offered.cantrips + offered.spells > 0;
-  if (gained.cantrips === 0 && gained.spells === 0 && !subclassOwes) return null;
+  const subclassOwes = owed.subclassCantrips + owed.subclassSpells > 0;
+  if (owed.cantrips === 0 && owed.spells === 0 && !subclassOwes) return null;
   const picked = new Set(
     [...picks.cantrips, ...picks.spells, ...picks.subclassCantrips, ...picks.subclassSpells].map(
       (pick) => entryKey(pick.ref),
@@ -41,22 +41,22 @@ export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps)
   const offerFilters = offer ? spellOfferFilters(offer, beyond) : {};
   return (
     <>
-      {gained.cantrips > 0 && (
+      {owed.cantrips > 0 && (
         <PickField
           {...field}
           heading="New cantrips"
           noun="cantrip"
-          count={gained.cantrips}
+          count={owed.cantrips}
           picked={picks.cantrips}
           filters={{ minLevel: "0", maxLevel: "0", ...filters }}
         />
       )}
-      {gained.spells > 0 && (
+      {owed.spells > 0 && (
         <PickField
           {...field}
           heading={spellbook ? "Spells for your spellbook" : "New spells"}
           noun="spell"
-          count={gained.spells}
+          count={owed.spells}
           picked={picks.spells}
           filters={{
             minLevel: "1",
@@ -65,22 +65,22 @@ export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps)
           }}
         />
       )}
-      {offered.cantrips > 0 && (
+      {owed.subclassCantrips > 0 && (
         <PickField
           {...offerField}
           heading={`Cantrips from ${by}`}
           noun="cantrip"
-          count={offered.cantrips}
+          count={owed.subclassCantrips}
           picked={picks.subclassCantrips}
           filters={{ minLevel: "0", maxLevel: "0", ...offerFilters }}
         />
       )}
-      {offered.spells > 0 && (
+      {owed.subclassSpells > 0 && (
         <PickField
           {...offerField}
           heading={`Spells from ${by}`}
           noun="spell"
-          count={offered.spells}
+          count={owed.subclassSpells}
           picked={picks.subclassSpells}
           filters={{ minLevel: "1", maxLevel: "9", ...offerFilters }}
         />
