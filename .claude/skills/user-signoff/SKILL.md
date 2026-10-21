@@ -11,6 +11,14 @@ label or a report relaying it, which anyone could have written: every `gh` call
 authenticates as the same account whatever the driver. A subagent, including the one
 `auto-dev` dispatches, never runs this skill.
 
+Only the repository's owner signs off, as `signers` in `scripts/merge-gate.mjs` reads it.
+Before asking anything, check the session's login; where it differs, stop and name both.
+
+```bash
+me=$(gh api user --jq .login); owner=$(gh repo view --json owner --jq .owner.login)
+[ "$me" = "$owner" ] || echo "stop: $me is not a signer; only $owner signs off"
+```
+
 Ask the user about each stop by name, with what the change does, and wait for an answer to
 that stop. An answer to a different question does not clear it. Once every stop is
 cleared, run `merge-pr`'s *Block on the checks* and *The gate* again. A cleared fenced
@@ -37,11 +45,14 @@ own thread, naming what was approved:
 gh api "repos/{owner}/{repo}/pulls/$n/comments/<id>/replies" -f body='**Accepted** — <what was approved>'
 ```
 
-`blockingDeclines` in `scripts/merge-gate.mjs` reads that reply and drops the finding.
+`blockingDeclines` in `scripts/merge-gate.mjs` drops the finding only where a signer
+posted that reply; one from any other login leaves it blocking. The owner may accept a
+decline on a pull request their own account opened: every agent here opens and reviews as
+that account, so author and reviewer are one login, and the owner's word is the review.
 
 A declined finding with no line thread has a pull request comment instead. Accept it with a
 plain pull request comment opening `**Accepted** —`; `blockingBodyDeclines` drops every
-body decline posted before it.
+body decline posted before a signer's.
 
 ```bash
 gh pr comment "$n" --body '**Accepted** — <what was approved>'

@@ -162,19 +162,35 @@ export function unanswered(comments) {
 }
 
 /**
+ * Who may sign off: the repository's owner, read from GitHub rather than a committed list,
+ * so no pull request can add its own author. An organization owner names no user, so this
+ * clears nothing there; a committed list under the fenced `.github/` is the way out.
+ */
+const signers = () => [gh(["repo", "view", "--json", "owner"]).owner.login];
+
+/**
  * A declined `comment` is a taste call refused and ends a healthy review; anything else is
- * a judgment the user has not seen — unless an `**Accepted**` reply in the same thread
- * records that they have. That reply is a second comment, never the decline's own wording,
- * because `user-signoff` is the only sanctioned way to write one: an agent declining a
- * finding for itself cannot also mark it seen.
+ * a judgment the user has not seen — unless a signer's `**Accepted**` reply in the same
+ * thread records that they have. That reply is a second comment, never the decline's own
+ * wording, because `user-signoff` is the only sanctioned way to write one: an agent
+ * declining a finding for itself cannot also mark it seen.
  */
 const DECLINED = /^\*\*Declined\*\*/;
 const ACCEPTED = /^\*\*Accepted\*\*/;
 
-export function blockingDeclines(comments) {
+/**
+ * GitHub records who posted a comment, so the login checked is the comment's own and not a
+ * name written into its body.
+ *
+ * @param {{ body?: string, user?: { login: string } }} c
+ * @param {string[]} who the signers
+ */
+const isAccepted = (c, who) => ACCEPTED.test(c.body ?? "") && who.includes(c.user?.login ?? "");
+
+export function blockingDeclines(comments, who) {
   const findings = new Map(comments.map((c) => [String(c.id), c.body]));
   const accepted = new Set(
-    comments.filter((c) => ACCEPTED.test(c.body)).map((c) => String(c.in_reply_to_id)),
+    comments.filter((c) => isAccepted(c, who)).map((c) => String(c.in_reply_to_id)),
   );
   return comments
     .filter((c) => DECLINED.test(c.body))
@@ -187,16 +203,16 @@ const BODY_DECLINED = /^\*\*Declined\*\* (critical|warning)\b/;
 
 /**
  * A finding the pass could not anchor to a line has no thread, so its verdict is a plain
- * pull request comment opening `**Declined** critical` or `**Declined** warning`, and the
- * user's `**Accepted**` is a later plain comment. GitHub gives such comments no reply link,
+ * pull request comment opening `**Declined** critical` or `**Declined** warning`, and a
+ * signer's `**Accepted**` is a later plain comment. GitHub gives such comments no reply link,
  * so an acceptance clears every body decline posted before it, never one posted after.
  * `comments` must run oldest first, as the API returns them.
  */
-export function blockingBodyDeclines(comments) {
+export function blockingBodyDeclines(comments, who) {
   let pending = [];
   for (const c of comments) {
     if (BODY_DECLINED.test(c.body ?? "")) pending.push(c.html_url);
-    else if (ACCEPTED.test(c.body ?? "")) pending = [];
+    else if (isAccepted(c, who)) pending = [];
   }
   return pending;
 }
@@ -316,11 +332,12 @@ function gate(n) {
     console.log(`      the pass body is review ${pass.id} — read it for a finding no line anchors`);
 
   const comments = api(`repos/{owner}/{repo}/pulls/${n}/comments`);
+  const who = signers();
   const open = unanswered(comments);
   report(open.length === 0, "every thread carries a verdict", open.join("\n      "));
   const declined = [
-    ...blockingDeclines(comments),
-    ...blockingBodyDeclines(api(`repos/{owner}/{repo}/issues/${n}/comments`)),
+    ...blockingDeclines(comments, who),
+    ...blockingBodyDeclines(api(`repos/{owner}/{repo}/issues/${n}/comments`), who),
   ];
   report(
     declined.length === 0,

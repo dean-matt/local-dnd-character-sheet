@@ -41,14 +41,18 @@ const BACKTICKED = '`comment` — "It invokes" has a loose antecedent: the neare
 const BOLD = "**critical** — `for id in $red` runs once with both ids as a single word.";
 const DECLINED = "**Declined** — the trade stands as described. Replacing elapsed time";
 
-const finding = (id: number, body: string) => ({
+const OWNER = "dean-matt";
+const SIGNERS = [OWNER];
+
+const finding = (id: number, body: string, login = OWNER) => ({
   id,
   body,
   html_url: `https://example.invalid/#discussion_r${id}`,
+  user: { login },
 });
 
-const reply = (id: number, body: string, inReplyTo: number) => ({
-  ...finding(id, body),
+const reply = (id: number, body: string, inReplyTo: number, login = OWNER) => ({
+  ...finding(id, body, login),
   in_reply_to_id: inReplyTo,
 });
 
@@ -271,13 +275,13 @@ describe("thread verdicts", () => {
 
   it("lets a declined comment through and stops a declined critical", () => {
     const taste = [finding(20, "**comment** — a taste call"), reply(21, DECLINED, 20)];
-    expect(blockingDeclines(taste)).toEqual([]);
-    expect(blockingDeclines([critical, reply(13, DECLINED, 10)])).toHaveLength(1);
+    expect(blockingDeclines(taste, SIGNERS)).toEqual([]);
+    expect(blockingDeclines([critical, reply(13, DECLINED, 10)], SIGNERS)).toHaveLength(1);
   });
 
   it("stops a decline whose finding carries no readable marker", () => {
     const orphan = [finding(30, BACKTICKED), reply(31, DECLINED, 30)];
-    expect(blockingDeclines(orphan)).toHaveLength(1);
+    expect(blockingDeclines(orphan, SIGNERS)).toHaveLength(1);
   });
 
   /**
@@ -291,8 +295,8 @@ describe("thread verdicts", () => {
       reply(40, DECLINED, 10),
       reply(41, "**Accepted** — the trade stands as described", 10),
     ];
-    expect(blockingDeclines(seen)).toEqual([]);
-    expect(blockingDeclines([critical, reply(40, DECLINED, 10)])).toHaveLength(1);
+    expect(blockingDeclines(seen, SIGNERS)).toEqual([]);
+    expect(blockingDeclines([critical, reply(40, DECLINED, 10)], SIGNERS)).toHaveLength(1);
   });
 
   it("only clears the thread the acceptance answers, not every decline", () => {
@@ -305,7 +309,17 @@ describe("thread verdicts", () => {
       other,
       otherDecline,
     ];
-    expect(blockingDeclines(mixed)).toEqual([otherDecline.html_url]);
+    expect(blockingDeclines(mixed, SIGNERS)).toEqual([otherDecline.html_url]);
+  });
+
+  it("leaves a decline blocking where the acceptance comes from a login that is not a signer", () => {
+    const decline = reply(40, DECLINED, 10);
+    const stranger = [
+      critical,
+      decline,
+      reply(41, "**Accepted** — the trade stands as described", 10, "someone-else"),
+    ];
+    expect(blockingDeclines(stranger, SIGNERS)).toEqual([decline.html_url]);
   });
 });
 
@@ -314,21 +328,26 @@ describe("body finding verdicts", () => {
   const accepted = finding(61, "**Accepted** — the user approved the reading");
 
   it("stops a declined critical or warning with no line thread", () => {
-    expect(blockingBodyDeclines([warning])).toEqual([warning.html_url]);
+    expect(blockingBodyDeclines([warning], SIGNERS)).toEqual([warning.html_url]);
     expect(
-      blockingBodyDeclines([finding(62, "**Declined** critical — out of scope")]),
+      blockingBodyDeclines([finding(62, "**Declined** critical — out of scope")], SIGNERS),
     ).toHaveLength(1);
   });
 
   it("lets a declined comment and ordinary discussion through", () => {
     const quiet = [finding(63, "**Declined** comment — a taste call"), finding(64, "looks fine")];
-    expect(blockingBodyDeclines(quiet)).toEqual([]);
+    expect(blockingBodyDeclines(quiet, SIGNERS)).toEqual([]);
   });
 
   it("clears a decline the user accepted afterwards, not one posted after the acceptance", () => {
-    expect(blockingBodyDeclines([warning, accepted])).toEqual([]);
+    expect(blockingBodyDeclines([warning, accepted], SIGNERS)).toEqual([]);
     const later = finding(65, "**Declined** warning — a second finding");
-    expect(blockingBodyDeclines([warning, accepted, later])).toEqual([later.html_url]);
+    expect(blockingBodyDeclines([warning, accepted, later], SIGNERS)).toEqual([later.html_url]);
+  });
+
+  it("leaves a decline blocking where the acceptance comes from a login that is not a signer", () => {
+    const stranger = finding(66, "**Accepted** — the user approved the reading", "someone-else");
+    expect(blockingBodyDeclines([warning, stranger], SIGNERS)).toEqual([warning.html_url]);
   });
 });
 
