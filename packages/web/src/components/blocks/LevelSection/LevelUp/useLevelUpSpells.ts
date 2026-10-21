@@ -53,7 +53,7 @@ export function useLevelUpSpells(
           { after: [target.after, target.subclassAfter], subclass: target.subclassAfter },
           spellbook,
         )
-      : { cantrips: 0, spells: 0 };
+      : { cantrips: 0, spells: 0, either: 0 };
   const offer = catalog &&
     subclass && {
       grantor: "subclass" as const,
@@ -94,13 +94,14 @@ export function useLevelUpSpells(
     spells: gained.spells,
     subclassCantrips: offered.cantrips,
     subclassSpells: offered.spells,
+    subclassEither: offered.either,
   };
   const now = splitPicks(added, current.looked, bySubclass, room);
   const was = splitPicks(held, prior.looked, bySubclass, room);
   // A reopened level whose pick the spell list swapped holds fewer stamped picks in that
   // bucket than its table owes, and the spell learned there fills the gap, so the bucket owes
   // only what the level held. A changed subclass owes its whole offer.
-  const owes = (bucket: keyof typeof room) =>
+  const owes = (bucket: Exclude<keyof typeof room, "subclassEither">) =>
     sameSubclass ? Math.min(room[bucket], was[bucket].length) : room[bucket];
   const { cantrips, subclassCantrips } = now;
   const leveled = now.spells;
@@ -127,6 +128,8 @@ export function useLevelUpSpells(
       spells: owes("spells"),
       subclassCantrips: owes("subclassCantrips"),
       subclassSpells: owes("subclassSpells"),
+      /** How many of `subclassSpells` a cantrip may fill instead. */
+      subclassEither: Math.min(room.subclassEither, owes("subclassSpells")),
     },
     ready:
       now.read === added.length &&
@@ -144,15 +147,23 @@ export function useLevelUpSpells(
   };
 }
 
-type Room = { cantrips: number; spells: number; subclassCantrips: number; subclassSpells: number };
+type Room = {
+  cantrips: number;
+  spells: number;
+  subclassCantrips: number;
+  subclassSpells: number;
+  subclassEither: number;
+};
 
 /**
  * `spells` with their lookups, those still loading left out and counted apart from `read`,
  * split by kind and by whether each was picked under the class or its subclass. A past
  * level's subclass picks hold the class as their origin, since Apply moved them there, so
- * the class's picks past its room fill the subclass's, unlisted ones first. Where both lists
- * hold a pick the split goes by order, so a class pick can land under a narrower offer that
- * lacks it; stamping a subclass pick with its offer at Apply is the way out.
+ * the class's picks past its room fill the subclass's, unlisted ones first. A subclass
+ * cantrip past the subclass's cantrip room fills one of its `subclassEither` spell picks.
+ * Where both lists hold a pick the split goes by order, so a class pick can land under a
+ * narrower offer that lacks it; stamping a subclass pick with its offer at Apply is the way
+ * out.
  */
 function splitPicks(
   spells: readonly Spell[],
@@ -177,9 +188,19 @@ function splitPicks(
     ];
     return ordered.slice(0, Math.max(0, count)).map((pick) => entryKey(pick.ref));
   };
+  const movedCantrips = new Set(
+    surplus(true, room.cantrips, room.subclassCantrips + room.subclassEither),
+  );
+  const underSubclass = (pick: (typeof read)[number]) =>
+    pick.subclass || movedCantrips.has(entryKey(pick.ref));
+  const subclassCantrips = read.filter((pick) => pick.level === 0 && underSubclass(pick));
+  const filling = Math.min(
+    room.subclassEither,
+    Math.max(0, subclassCantrips.length - room.subclassCantrips),
+  );
   const moved = new Set([
-    ...surplus(true, room.cantrips, room.subclassCantrips),
-    ...surplus(false, room.spells, room.subclassSpells),
+    ...movedCantrips,
+    ...surplus(false, room.spells, room.subclassSpells - filling),
   ]);
   const picked = read.map((pick) => ({
     ...pick,
@@ -187,11 +208,12 @@ function splitPicks(
   }));
   const of = (subclass: boolean, cantrip: boolean) =>
     picked.filter((pick) => pick.subclass === subclass && (pick.level === 0) === cantrip);
+  const cantripsKept = of(true, true).length - filling;
   return {
     read: read.length,
     cantrips: of(false, true),
     spells: of(false, false),
-    subclassCantrips: of(true, true),
-    subclassSpells: of(true, false),
+    subclassCantrips: of(true, true).slice(0, cantripsKept),
+    subclassSpells: [...of(true, false), ...of(true, true).slice(cantripsKept)],
   };
 }

@@ -234,6 +234,18 @@ const ROWS: Record<string, unknown> = {
         },
       ],
     }),
+    fighterSubclass("Loresinger", "Loresinger", {
+      additionalSpells: [
+        {
+          known: {
+            "3": [
+              { choose: "level=0;1;2;3|class=Wizard" },
+              { choose: "level=0;1;2;3|class=Wizard" },
+            ],
+          },
+        },
+      ],
+    }),
   ]),
   "/api/classes/Fighter/PHB/at/2": casterGrants(2, {}, []),
   "/api/classes/Fighter/PHB/at/3": casterGrants(3, {}, []),
@@ -245,6 +257,7 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Fighter/PHB/subclasses/Champion/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/4": casterGrants(4, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Loresinger/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/at/4": casterGrants(4, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Battle%20Master/PHB/at/3": {
     ...casterGrants(3, {}, []),
@@ -939,6 +952,56 @@ describe("LevelUp", () => {
       ]);
     });
 
+    it("offers a cantrip or a spell to a subclass pick whose filter admits both, and writes either under the class", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          spells: [],
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Loresinger");
+      const picks = await within(dialog()).findByRole("region", {
+        name: "Spells from Loresinger",
+      });
+      expect(picks).toHaveTextContent("Choose 2 — 0 selected");
+      expect(
+        within(dialog()).queryByRole("region", { name: "Cantrips from Loresinger" }),
+      ).toBeNull();
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+
+      await pickSpell("Add a spell", "Prestidigitation");
+      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({
+        offer: "Loresinger|PHB",
+        minLevel: "0",
+        maxLevel: "9",
+      });
+      await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 1 selected"));
+      expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+      await pickSpell("Add a spell", "Magic Missile");
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().spells).toEqual([
+        {
+          ref: { name: "Prestidigitation", source: "PHB" },
+          prepared: false,
+          origin: KNIGHT_FIGHTER,
+          pickedAt: 3,
+        },
+        {
+          ref: { name: "Magic Missile", source: "PHB" },
+          prepared: false,
+          origin: KNIGHT_FIGHTER,
+          pickedAt: 3,
+        },
+      ]);
+    });
+
     it("takes back the spells picked when the subclass changes", async () => {
       const base = sorcerer(2);
       renderSeeded({
@@ -1469,6 +1532,35 @@ describe("LevelUp", () => {
 
       const picks = await within(dialog()).findByRole("region", {
         name: "Cantrips from Lorekeeper",
+      });
+      await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 2 selected"));
+      expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();
+      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("re-offers a cantrip a subclass's cantrip-or-spell pick took as one of those picks", async () => {
+      const sung = (name: string) => ({ ...picked(name), origin: KNIGHT_FIGHTER, pickedAt: 3 });
+      const base = sorcerer(4);
+      renderSeeded(
+        {
+          ...base,
+          definition: {
+            ...base.definition,
+            levels: [
+              { class: KNIGHT_FIGHTER },
+              { class: KNIGHT_FIGHTER },
+              { class: KNIGHT_FIGHTER, subclass: { name: "Loresinger", source: "PHB" } },
+              { class: KNIGHT_FIGHTER },
+            ],
+            spells: [sung("Prestidigitation"), sung("Magic Missile")],
+          },
+        },
+        { history: true },
+      );
+      await reopen(3);
+
+      const picks = await within(dialog()).findByRole("region", {
+        name: "Spells from Loresinger",
       });
       await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 2 selected"));
       expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();

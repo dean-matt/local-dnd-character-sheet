@@ -17,7 +17,8 @@ export interface LevelUpSpellsProps {
  * The cantrips and spells the level adds, each picked from the class's list at the levels
  * its slots cast after the level. A section shows only where the level adds to its count.
  * A subclass's features that let the character choose spells add a section of their own,
- * narrowed to the list and spell levels the feature names. The escape offers every spell of
+ * narrowed to the list and spell levels the feature names, cantrips among them where a pick
+ * admits one. The escape offers every spell of
  * every level, for a pick the class's own list cannot hold, as a bard's Magical Secrets.
  */
 export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps) {
@@ -82,7 +83,11 @@ export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps)
           noun="spell"
           count={owed.subclassSpells}
           picked={picks.subclassSpells}
-          filters={{ minLevel: "1", maxLevel: "9", ...offerFilters }}
+          filters={{
+            minLevel: owed.subclassEither > 0 ? "0" : "1",
+            maxLevel: "9",
+            ...offerFilters,
+          }}
         />
       )}
       <label className="flex items-center gap-2 text-body">
