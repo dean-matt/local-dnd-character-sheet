@@ -26,7 +26,7 @@ const ALLOWED_SLEEPS = new Map<string, { count: number; why: string }>([
   ],
   [
     "packages/web/src/components/Field/Field.test.tsx",
-    { count: 2, why: "a save that must not fire inside the debounce window has no signal" },
+    { count: 2, why: "a save that must not fire, past the debounce window, has no signal" },
   ],
   [
     "packages/web/src/hooks/useCharacterPages.test.tsx",
@@ -76,11 +76,13 @@ const setupFiles = (viteConfig.test?.projects ?? []).flatMap((project) => {
   return (files === undefined ? [] : [files].flat()).map((file) => file.replace(/^\.\//, ""));
 });
 
-/** The tests and the helpers under `src/test/` they import, where a shared sleep would sit. */
-const webTests = globSync(
-  ["packages/web/src/**/*.test.{ts,tsx}", "packages/web/src/test/**/*.{ts,tsx}"],
-  { cwd: ROOT },
-).map((path) => path.replaceAll("\\", "/"));
+/** The tests, the helpers under `src/test/` they import, and the setup files every test runs. */
+const webTests = [
+  ...globSync(["packages/web/src/**/*.test.{ts,tsx}", "packages/web/src/test/**/*.{ts,tsx}"], {
+    cwd: ROOT,
+  }).map((path) => path.replaceAll("\\", "/")),
+  ...setupFiles,
+];
 
 describe("the wait detectors", () => {
   it("count a sleep however it is spelled", () => {

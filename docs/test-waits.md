@@ -36,5 +36,5 @@ review holds these:
   whole app, is a cheap query's job.
 - A `timeout` option wider than the default names its size and its reason.
 - A new allowlisted sleep proves a negative and says what is not coming.
-- A sleep helper counts once where it is written, so each test calling it proves a negative
-  too.
+- The fence counts a sleep helper once, where it is written, so review checks that every
+  test calling it proves a negative.
