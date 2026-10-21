@@ -17,8 +17,8 @@ version meanwhile*, which merges locally so the conflict can be resolved or hand
 
 ## Wait out the stale window
 
-The call answers 202 and queues the merge; until the head carries `main`, the checks
-describe the old commit.
+The call answers 202 and queues the merge. The local branch, whose tip `wait-checks` and
+the gate judge, carries it only after the version step's pull.
 
 ```bash
 for _ in $(seq 8); do

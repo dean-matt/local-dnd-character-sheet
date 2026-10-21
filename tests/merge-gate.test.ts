@@ -12,6 +12,7 @@ import {
   dependenciesDiffer,
   FENCE,
   fenceNote,
+  headBlocked,
   linkNote,
   mergeBlocked,
   notGreen,
@@ -420,6 +421,11 @@ describe("the other three conditions", () => {
     expect(checksBlocked(checks, ["check (ubuntu-latest)", "check (windows-latest)"])).toBe(
       "test (windows-latest, 3/4), check (windows-latest)",
     );
+  });
+
+  it("blocks where GitHub does not yet show the judged commit as the head", () => {
+    expect(headBlocked("new", "new")).toBeNull();
+    expect(headBlocked("old", "new")).toMatch(/GitHub shows old as the head, not new/);
   });
 
   it("blocks where the ruleset names no required check", () => {
