@@ -21,9 +21,9 @@ export interface LevelChoicesFormProps {
 }
 
 /**
- * A past level's picks inside the level-up form, and the Apply that writes them once every
- * one is made and nothing that depends on a changed pick would be left behind; each such
- * dependency is named instead. The class and hit points are not offered here.
+ * A past level's picks inside the level-up form, and the Apply that writes them once one
+ * changed, every one is made, and nothing that depends on a changed pick would be left
+ * behind; each such dependency is named instead. The class and hit points are not offered.
  */
 export function LevelChoicesForm({
   before,
@@ -33,14 +33,14 @@ export function LevelChoicesForm({
   error,
   cancel,
 }: LevelChoicesFormProps) {
-  const { getValues } = useFormContext<CharacterDefinition>();
+  const { getValues, formState } = useFormContext<CharacterDefinition>();
   const plan = useLevelUpPlan(before, undefined);
   const refusals = levelChoiceRefusals(
     definition,
     withReopenedLevel(definition, level, getValues()),
     level,
   );
-  const blocked = !plan.picksReady || saving || refusals.length > 0;
+  const blocked = !formState.isDirty || !plan.picksReady || saving || refusals.length > 0;
   const { gained, offered } = plan.spellPicks;
   const asksNothing =
     plan.target.read &&

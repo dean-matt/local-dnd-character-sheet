@@ -1259,7 +1259,7 @@ describe("LevelUp", () => {
 
     async function reopen(level: number) {
       fireEvent.click(
-        await within(history()).findByRole("button", { name: `Change level ${level} choices` }),
+        await within(history()).findByRole("button", { name: `Change choices, level ${level}` }),
       );
       await within(dialog()).findByText(/Hit points change from the level's row/);
     }
@@ -1353,7 +1353,7 @@ describe("LevelUp", () => {
       expect(undoEntry()).toBe("own");
     });
 
-    it("re-offers a subclass's spell picks as its own, though Apply moved them under the class", async () => {
+    it("re-offers a subclass's spell picks as its own, and holds Apply until one changes", async () => {
       const lore = (name: string) => ({ ...picked(name), origin: KNIGHT_FIGHTER, pickedAt: 3 });
       const base = sorcerer(4);
       renderSeeded(
@@ -1379,14 +1379,14 @@ describe("LevelUp", () => {
       });
       await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 2 selected"));
       expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();
-      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
     });
 
     it("offers no change to the first level, whose choices creation made", async () => {
       renderSeeded(sorcererOfFive(), { history: true });
-      await within(history()).findByRole("button", { name: "Change level 2 choices" });
+      await within(history()).findByRole("button", { name: "Change choices, level 2" });
       expect(
-        within(history()).queryByRole("button", { name: "Change level 1 choices" }),
+        within(history()).queryByRole("button", { name: "Change choices, level 1" }),
       ).toBeNull();
     });
   });

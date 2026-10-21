@@ -80,6 +80,8 @@ export function useLevelUpSpells(
   });
   // A past level's subclass picks hold the class as their origin, since Apply moved them
   // there, so the class's picks past its count fill the subclass's offer, unlisted ones first.
+  // Where both lists hold a pick the split goes by order, so a class pick can land under a
+  // narrower offer that lacks it; stamping a subclass pick with its offer at Apply is the way out.
   const surplus = (cantrip: boolean, room: number, owed: number) => {
     const kind = read.filter((pick) => (pick.level === 0) === cantrip);
     const own = kind.filter((pick) => !pick.subclass);

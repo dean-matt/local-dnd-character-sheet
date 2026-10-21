@@ -8,7 +8,7 @@ import { LevelUpDialog } from "./LevelUpDialog.tsx";
  * character levels by experience, once the total reaches the next level's threshold.
  * `describedBy` names the experience caption that says why it waits, which the button
  * cites in place of a caption of its own. With `reopen`, a past character level past the
- * first, it is instead the link that reopens the choices that level made.
+ * first, it is instead the button that reopens the choices that level made.
  */
 export function LevelUp({
   character,
@@ -26,7 +26,7 @@ export function LevelUp({
       <>
         <button
           type="button"
-          aria-label={`Change level ${reopen} choices`}
+          aria-label={`Change choices, level ${reopen}`}
           onClick={() => setOpen(true)}
           className="mt-1 text-label text-muted underline"
         >
