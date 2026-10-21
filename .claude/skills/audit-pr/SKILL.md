@@ -57,7 +57,8 @@ Four run on every pull request:
   Package boundaries, and the root cause over the path the issue named.
 - **Tester** — non-trivial logic leaves a check that fails if it breaks, tests ride with
   their code, fixtures widen through their declaration. A test asserting the implementation
-  back to itself counts as none.
+  back to itself counts as none. A web test's waits meet the review list in
+  [`docs/test-waits.md`](../../../docs/test-waits.md#for-review).
 - **QA** — acceptance criteria met, **Out of scope** respected, edges exercised: empty,
   absent, zero, negative, multiclass, a homebrew row shadowing a catalog one.
 - **Editor** — the prose the change writes: commit message, pull request body, `docs/`, a
