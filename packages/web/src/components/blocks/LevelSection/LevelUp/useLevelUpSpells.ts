@@ -15,7 +15,8 @@ const SPELLBOOK_SOURCES = ["PHB", "XPHB"];
  * `definition`'s, split by the level each lookup found. A pick still loading is left out and
  * keeps `ready` false. A pick lands unprepared, as a known spell or a cantrip is, with the
  * class as its origin; a subclass pick holds the subclass there until `spellsUnderClass`
- * moves it at Apply, which is what tells the two apart. A Wizard's spells go to its spellbook, which `spellbook`
+ * moves it at Apply, which is what tells the two apart. Each pick states the character level it
+ * was `pickedAt`. A Wizard's spells go to its spellbook, which `spellbook`
  * reports.
  */
 export function useLevelUpSpells(
@@ -83,6 +84,7 @@ export function useLevelUpSpells(
   const leveled = classPicked.filter((pick) => pick.level !== 0);
   const subclassCantrips = subclassPicked.filter((pick) => pick.level === 0);
   const subclassLeveled = subclassPicked.filter((pick) => pick.level !== 0);
+  const pickedAt = definition.levels.length + 1;
   const write = (next: Spell[]) => setRefValue(setValue, "spells", next, { shouldDirty: true });
   return {
     gained,
@@ -104,9 +106,9 @@ export function useLevelUpSpells(
       subclassCantrips.length === offered.cantrips &&
       subclassLeveled.length === offered.spells,
     add: (ref: EntryRef) =>
-      write([...spells, { ref, prepared: false, ...(catalog && { origin: catalog }) }]),
+      write([...spells, { ref, prepared: false, ...(catalog && { origin: catalog }), pickedAt }]),
     addSubclass: (ref: EntryRef) =>
-      write([...spells, { ref, prepared: false, ...(subclass && { origin: subclass }) }]),
+      write([...spells, { ref, prepared: false, ...(subclass && { origin: subclass }), pickedAt }]),
     remove: (ref: EntryRef) =>
       write(spells.filter((spell) => entryKey(spell.ref) !== entryKey(ref))),
   };

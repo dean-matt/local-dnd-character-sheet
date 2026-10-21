@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
+import { LevelHistory } from "../LevelHistory.tsx";
 import { LevelUp } from "./LevelUp.tsx";
 
 vi.mock("@dnd/dice", () => ({ rollDice: () => ({ total: 5 }) }));
@@ -275,9 +276,30 @@ function warlock(count: number, edit: Partial<CharacterDefinition> = {}): Charac
   };
 }
 
-function Seeded({ id }: { id: string }) {
+/** Vex as a 2014 Sorcerer of `count` levels, who knows Shield. */
+function sorcerer(count: number): CharacterRecord {
+  const base = warlock(count);
+  return {
+    ...base,
+    edition: "classic",
+    definition: {
+      ...base.definition,
+      edition: "classic",
+      levels: Array.from({ length: count }, () => ({ class: SORCERER })),
+      spells: [{ ref: { name: "Shield", source: "PHB" }, prepared: false }],
+    },
+  };
+}
+
+function Seeded({ id, history }: { id: string; history: boolean }) {
   const { data } = useQuery<CharacterRecord>({ queryKey: characterKey(id), queryFn: skipToken });
-  return data ? <LevelUp character={data} /> : null;
+  if (!data) return null;
+  return (
+    <>
+      <LevelUp character={data} />
+      {history && <LevelHistory character={data} />}
+    </>
+  );
 }
 
 let writes: Mock;
@@ -327,7 +349,7 @@ function searchResponse(path: string) {
   return new Response(JSON.stringify({ ...page(items), limit: 200, offset: 0 }));
 }
 
-function renderSeeded(character: CharacterRecord) {
+function renderSeeded(character: CharacterRecord, { history = false } = {}) {
   server = character;
   readable = true;
   searchable = true;
@@ -359,7 +381,7 @@ function renderSeeded(character: CharacterRecord) {
   client.setQueryData(characterKey(character.id), character);
   render(
     <QueryClientProvider client={client}>
-      <Seeded id={character.id} />
+      <Seeded id={character.id} history={history} />
     </QueryClientProvider>,
   );
   return client;
@@ -771,21 +793,6 @@ describe("LevelUp", () => {
   });
 
   describe("spells", () => {
-    /** Vex as a 2014 Sorcerer of `count` levels, who knows Shield. */
-    function sorcerer(count: number): CharacterRecord {
-      const base = warlock(count);
-      return {
-        ...base,
-        edition: "classic",
-        definition: {
-          ...base.definition,
-          edition: "classic",
-          levels: Array.from({ length: count }, () => ({ class: SORCERER })),
-          spells: [{ ref: { name: "Shield", source: "PHB" }, prepared: false }],
-        },
-      };
-    }
-
     it("asks for the cantrips and spells a level adds from the class's list, and writes them with the level", async () => {
       renderSeeded(sorcerer(3));
       await open();
@@ -823,8 +830,18 @@ describe("LevelUp", () => {
       expect(sent().levels).toHaveLength(4);
       expect(sent().spells).toEqual([
         { ref: { name: "Shield", source: "PHB" }, prepared: false },
-        { ref: { name: "Fire Bolt", source: "PHB" }, prepared: false, origin: SORCERER },
-        { ref: { name: "Misty Step", source: "PHB" }, prepared: false, origin: SORCERER },
+        {
+          ref: { name: "Fire Bolt", source: "PHB" },
+          prepared: false,
+          origin: SORCERER,
+          pickedAt: 4,
+        },
+        {
+          ref: { name: "Misty Step", source: "PHB" },
+          prepared: false,
+          origin: SORCERER,
+          pickedAt: 4,
+        },
       ]);
     });
 
@@ -879,11 +896,17 @@ describe("LevelUp", () => {
       fireEvent.click(applyButton());
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       expect(sent().spells).toEqual([
-        { ref: { name: "Fire Bolt", source: "PHB" }, prepared: false, origin: KNIGHT_FIGHTER },
+        {
+          ref: { name: "Fire Bolt", source: "PHB" },
+          prepared: false,
+          origin: KNIGHT_FIGHTER,
+          pickedAt: 3,
+        },
         {
           ref: { name: "Prestidigitation", source: "PHB" },
           prepared: false,
           origin: KNIGHT_FIGHTER,
+          pickedAt: 3,
         },
       ]);
     });
@@ -953,6 +976,7 @@ describe("LevelUp", () => {
           ref: { name, source: "PHB" },
           featureType: "MV:B",
           grantedBy,
+          level: 3,
         })),
       );
       expect(
@@ -1045,8 +1069,12 @@ describe("LevelUp", () => {
         await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
         expect(sent().levels).toHaveLength(4);
         expect(sent().spells).toEqual([
-          { ref: { name: "Magic Missile", source: "PHB" }, prepared: false, origin: wizard },
-          { ref: { name: "Mage Armor", source: "PHB" }, prepared: false, origin: wizard },
+          ...["Magic Missile", "Mage Armor"].map((name) => ({
+            ref: { name, source: "PHB" },
+            prepared: false,
+            origin: wizard,
+            pickedAt: 4,
+          })),
         ]);
       },
     );
@@ -1086,6 +1114,89 @@ describe("LevelUp", () => {
       await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
       expect(within(dialog()).queryByRole("region", { name: "New spells" })).toBeNull();
       expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();
+    });
+  });
+
+  describe("removing the newest level", () => {
+    const history = () => screen.getByRole("region", { name: "Level History" });
+    const undoEntry = () => new Headers(writes.mock.calls.at(-1)?.[1]?.headers).get("Undo-Entry");
+
+    /** Applies the level-up the dialog holds, closes it, then removes the level it added. */
+    async function applyThenRemove(named: string) {
+      await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Done" }));
+      fireEvent.click(within(history()).getByRole("button", { name: "Remove newest level" }));
+      fireEvent.click(within(history()).getByRole("button", { name: `Remove ${named}` }));
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(2));
+    }
+
+    it("takes back the improvement and feature choice a level brought, as one undo entry", async () => {
+      const base = warlock(3);
+      const before = {
+        ...base.definition,
+        levels: [
+          { class: WARLOCK },
+          { class: WARLOCK },
+          { class: WARLOCK, subclass: XPHB("Fiend Patron") },
+        ],
+        experience: 900,
+      };
+      renderSeeded({ ...base, definition: before }, { history: true });
+      await open();
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      await within(dialog()).findByRole("combobox", { name: "Level 4 choice" });
+      choose("Level 4 choice", "Alert");
+      choose("Pact Choice", "Pact of the Tome");
+      await applyThenRemove("level 4 (Warlock 4)");
+
+      expect(sent()).toEqual(before);
+      expect(undoEntry()).toBe("own");
+      await waitFor(() =>
+        expect(within(history()).queryByRole("rowheader", { name: "4" })).toBeNull(),
+      );
+    });
+
+    it("takes back the subclass a level chose and the options picked under it", async () => {
+      const base = sorcerer(2);
+      const before = {
+        ...base.definition,
+        levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+      };
+      renderSeeded({ ...base, definition: before }, { history: true });
+      await open();
+      choose("Fighter subclass", "Battle Master");
+      await within(dialog()).findByRole("region", { name: "New Maneuver (Battle Master)" });
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      for (const name of ["Parry", "Riposte", "Feint"]) {
+        await pickSpell("Add a maneuver", name);
+        await within(dialog()).findByRole("button", { name: `Remove ${name}` });
+      }
+      await applyThenRemove("level 3 (Fighter 3)");
+
+      expect(sent()).toEqual(before);
+    });
+
+    it("takes back the cantrip and spell a level picked, keeping one known before", async () => {
+      const before = sorcerer(3);
+      renderSeeded(before, { history: true });
+      await open();
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (4)" }));
+      await within(dialog()).findByRole("region", { name: "New cantrips" });
+      await pickSpell("Add a cantrip", "Fire Bolt");
+      await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" });
+      await pickSpell("Add a spell", "Misty Step");
+      await within(dialog()).findByRole("button", { name: "Remove Misty Step" });
+      await applyThenRemove("level 4 (Sorcerer 4)");
+
+      expect(sent()).toEqual(before.definition);
+    });
+
+    it("offers no removal to a character of one level", async () => {
+      renderSeeded(warlock(1), { history: true });
+      await within(history()).findByRole("rowheader", { name: "1" });
+      expect(within(history()).queryByRole("button", { name: "Remove newest level" })).toBeNull();
     });
   });
 });
