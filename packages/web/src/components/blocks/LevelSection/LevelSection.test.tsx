@@ -47,11 +47,16 @@ function applyXp(amount: string) {
 
 const FIGHTER = { name: "Fighter", source: "XPHB" };
 const NO_GRANTS = { level: 1, resources: [], spellSlots: [], optionalFeatures: [], features: [] };
+const CLASS_ROW = /^\/api\/classes\/[^/]+\/[^/]+$/;
+const classRow = (path: string) => {
+  const [name = "", source = ""] = path.split("/").slice(3);
+  return { name, source, edition: "one", hitDie: 8, json: { name, source } };
+};
 let classGrants: unknown;
 let writes: Mock;
 
 /**
- * Answers the class and feat reads `Improvements` makes, refuses the derived read the
+ * Answers the class and feat reads `Improvements` and the history's hit dice make, refuses the derived read the
  * history's hit points wait on, and hands every other call to `writes`.
  */
 beforeEach(() => {
@@ -59,6 +64,7 @@ beforeEach(() => {
   writes = vi.fn();
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
     const path = String(url);
+    if (CLASS_ROW.test(path)) return new Response(JSON.stringify(classRow(path)));
     if (path.startsWith("/api/classes/")) return new Response(JSON.stringify(classGrants));
     if (path.startsWith("/api/feats?"))
       return new Response(JSON.stringify({ items: [], total: 0 }));
@@ -225,6 +231,29 @@ describe("LevelSection", () => {
   });
 });
 
+/** A server that keeps the definition it is sent and derives the hit points from it; returns the definitions it was sent. */
+function stubServer(character: CharacterRecord): CharacterDefinition[] {
+  let stored = character;
+  const puts: CharacterDefinition[] = [];
+  const answer = (path: string, init?: RequestInit): unknown => {
+    if (init?.method === "PUT") {
+      const definition = JSON.parse(String(init.body)) as CharacterDefinition;
+      puts.push(definition);
+      stored = { ...stored, definition };
+      return stored;
+    }
+    if (path.endsWith("/derived")) return derivedRecord(stored.definition);
+    if (CLASS_ROW.test(path)) return classRow(path);
+    return path.startsWith("/api/classes/") ? NO_GRANTS : { items: [], total: 0 };
+  };
+  vi.stubGlobal(
+    "fetch",
+    async (url: RequestInfo | URL, init?: RequestInit) =>
+      new Response(JSON.stringify(answer(String(url), init))),
+  );
+  return puts;
+}
+
 describe("LevelHistory", () => {
   const WARLOCK = { name: "Warlock", source: "XPHB" };
   const FIEND = { name: "Fiend Patron", source: "XPHB" };
@@ -366,5 +395,93 @@ describe("LevelHistory", () => {
 
     await waitFor(() => expect(rows()[0]?.[2]).toBe("unavailable"));
     expect(within(history()).getByText("Some class features could not load.")).toBeVisible();
+  });
+
+  describe("changing a level's hit point gain", () => {
+    let puts: CharacterDefinition[];
+    const serve = (character: CharacterRecord) => {
+      puts = stubServer(character);
+    };
+
+    const hp = (level: number) => String(rows()[level - 1]?.[2]).split("Change")[0];
+    const gains = () =>
+      puts.map((each) =>
+        each.levels.map(({ rolled, typed }) => ({
+          ...(rolled && { rolled }),
+          ...(typed && { typed }),
+        })),
+      );
+    const changeLevel2 = async () =>
+      fireEvent.click(
+        await within(history()).findByRole("button", { name: "Change level 2 hit points" }),
+      );
+    const type = (text: string) => {
+      fireEvent.change(within(history()).getByRole("spinbutton", { name: "Level 2 typed gain" }), {
+        target: { value: text },
+      });
+      fireEvent.click(within(history()).getByRole("button", { name: "Set" }));
+    };
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it("sets, changes and restores a gain through the card, one write each", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.99);
+      serve(warlock(3));
+      renderSeeded(warlock(3));
+      await waitFor(() => expect(hp(2)).toBe("+7 (Level 2: d8 average 5 +2 Con)"));
+      await changeLevel2();
+
+      fireEvent.click(within(history()).getByRole("button", { name: "Roll (d8)" }));
+      await waitFor(() => expect(hp(2)).toBe("+10 (Level 2: d8 rolled 8 +2 Con)"));
+      expect(gains()).toEqual([[{}, { rolled: 8 }, {}]]);
+
+      expect(within(history()).getByRole("spinbutton", { name: "Level 2 typed gain" })).toHaveValue(
+        8,
+      );
+      type("12");
+      await waitFor(() => expect(hp(2)).toBe("+14 (Level 2: d8 typed 12 +2 Con)"));
+      expect(gains().at(-1)?.[1]).toEqual({ rolled: 12, typed: true });
+      expect(puts.at(-1)?.departures).toEqual([
+        { field: "levels.1.rolled", note: "Level 2 gains 12 hit points, outside the d8's 1 to 8." },
+      ]);
+
+      fireEvent.click(within(history()).getByRole("button", { name: "Average (5)" }));
+      await waitFor(() => expect(hp(2)).toBe("+7 (Level 2: d8 average 5 +2 Con)"));
+      expect(gains().at(-1)).toEqual([{}, {}, {}]);
+      expect(puts.at(-1)?.departures).toEqual([]);
+      expect(puts).toHaveLength(3);
+    });
+
+    it("refuses a typed gain below 1 or not whole, with a message and no write", async () => {
+      serve(warlock(3));
+      renderSeeded(warlock(3));
+      await changeLevel2();
+
+      for (const text of ["0", "-3", "2.5"]) {
+        type(text);
+        expect(
+          within(history()).getByRole("spinbutton", { name: "Level 2 typed gain" }),
+        ).toBeInvalid();
+        expect(
+          within(history()).getByText("A typed gain is a whole number from 1 to 999."),
+        ).toBeVisible();
+      }
+      expect(puts).toEqual([]);
+    });
+
+    it("says the first level takes the die's highest face instead of offering a change", async () => {
+      serve(warlock(3));
+      renderSeeded(warlock(3));
+
+      expect(
+        await within(history()).findByText("Highest face of the d8; a roll cannot change it."),
+      ).toBeVisible();
+      expect(
+        within(history()).queryByRole("button", { name: "Change level 1 hit points" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(history()).getByRole("button", { name: "Change level 3 hit points" }),
+      ).toBeVisible();
+    });
   });
 });

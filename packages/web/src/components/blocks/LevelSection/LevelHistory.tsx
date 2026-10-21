@@ -1,12 +1,18 @@
 import { rowEntries } from "@dnd/catalog";
-import { type CharacterRecord, displayName, improvementAt } from "@dnd/character";
+import { type CharacterRecord, displayName, type HitDie, improvementAt } from "@dnd/character";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
 import { useClassFeatures } from "../../../hooks/useClassFeatures.ts";
+import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
+import { useLevelDice } from "../../../hooks/useLevelDice.ts";
+import { useSaveToast } from "../../../hooks/useSaveToast.ts";
+import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { improvementText } from "../../../lib/improvementChoice.ts";
+import { type GainEdit, withLevelGain } from "../../../lib/levelGain.ts";
 import { type HistoryFeature, levelHistory } from "../../../lib/levelHistory.ts";
 import { Card } from "../../Card.tsx";
 import { DetailTrigger } from "../../DetailTrigger.tsx";
 import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
+import { LevelGainEdit } from "./LevelGainEdit.tsx";
 
 const HEAD = "px-1 pb-0.5 text-left";
 const CELL = "px-1 py-1 text-left align-top";
@@ -22,7 +28,9 @@ function featureLabel(feature: HistoryFeature, row: readonly HistoryFeature[]): 
  * What the character gained at each level, oldest first: the class level taken, the hit
  * points it added, the subclass chosen there, the features it granted and the improvement
  * taken. Hit points show the derived maximum's own per-level term, and wait while a write
- * recomputes it rather than show a gain the sheet no longer holds.
+ * recomputes it rather than show a gain the sheet no longer holds. Each level's gain can be
+ * changed in place, each change one write; the API merges writes made within 30 seconds
+ * into one undo entry.
  */
 export function LevelHistory({ character }: { character: CharacterRecord }) {
   const { definition } = character;
@@ -31,6 +39,20 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
   const terms = derived.data?.hitPointMaximum.terms;
   const hitPoints = terms?.length === definition.levels.length ? terms : undefined;
   const rows = levelHistory(definition.levels, features.featuresOf);
+  const dice = useLevelDice(definition.levels);
+  const writes = useHeldWrites(useUpdateCharacterDefinition(character.id));
+  const failure = writes.latest;
+  useSaveToast(
+    `Level ${failure?.key} hit points`,
+    failure ? `Couldn't save: ${failure.error.message}` : undefined,
+    writes.retry,
+    failure?.error,
+  );
+
+  function edit(level: number, change: GainEdit) {
+    if (dice)
+      writes.write(String(level), (latest) => withLevelGain(latest, level - 1, change, dice));
+  }
 
   return (
     <Card title="Level History">
@@ -78,6 +100,15 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
                       "unavailable"
                     ) : (
                       "…"
+                    )}
+                    {dice && (
+                      <LevelGainEdit
+                        level={row.level}
+                        die={dice[row.level - 1] as HitDie}
+                        entry={definition.levels[row.level - 1] ?? {}}
+                        onEdit={(change) => edit(row.level, change)}
+                        invalid={writes.failed.has(String(row.level))}
+                      />
                     )}
                   </td>
                   <td className={CELL}>
