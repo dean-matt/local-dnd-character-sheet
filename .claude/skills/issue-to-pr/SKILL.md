@@ -1,6 +1,6 @@
 ---
 name: issue-to-pr
-description: Take one local-dnd-character-sheet issue from open to a reviewed pull request — gh issue develop, implement, pnpm check, prose pass, pull request, then review it and re-review while a pass still turns up a defect. Use when asked to work, build, implement or pick up an issue in this repository, or to decide which issue here is next. Follows this repository's CONTRIBUTING.md and stops before merging.
+description: Take one local-dnd-character-sheet issue from open to a reviewed pull request — claim it, implement, pnpm check, prose pass, pull request, then review it and re-review while a pass still turns up a defect. Use when asked to work, build, implement or pick up an issue in this repository, or to decide which issue here is next. Follows this repository's CONTRIBUTING.md and stops before merging.
 ---
 
 # Issue to pull request
@@ -14,19 +14,26 @@ this session can just as easily lose track of what it already sent and repeat it
 
 ## Choosing, when no issue is named
 
-Invoke [`pick-issue`](../pick-issue/SKILL.md). It returns the issue to take, or the reason
-it took none — stop there.
+Invoke [`pick-issue`](../pick-issue/SKILL.md). It returns the issues to take in order, or
+the reason it took none — stop there. Step 1 claims the first; where the claim refuses,
+try the next.
+
+Where `pick-issue` returns an issue with an open pull request, the run that built it
+stopped there. Claim nothing and open no worktree: run step 12 on that pull request and
+report as step 13 says.
 
 ## The sequence
 
-1. **Invoke [`board-status`](../board-status/SKILL.md) to set `In Progress`.** Its own
-   workflow waits for the pull request.
+1. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to claim the issue and open
+   its worktree**, then `cd` into it, before any other work. A named issue someone else
+   holds stops here with the holder's login. Run every later step from inside; step 13
+   closes it.
 2. **Read the issue in full**, acceptance criteria and **Out of scope** both. Out of scope
    is a fence.
 3. **Verify every count and shape the issue states against `vendor/`** before designing
    against it. Say which are wrong, or that `vendor/` was not there to ask.
-4. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to open the worktree**, then
-   `cd` into it. Run every later step from inside; step 13 closes it.
+4. **Invoke [`board-status`](../board-status/SKILL.md) to set `In Progress`.** Its own
+   workflow waits for the pull request.
 5. **Invoke the skill the change needs**, where `CLAUDE.md` indexes one.
 6. **Implement**, stopping at the first rung of `CLAUDE.md`'s ladder that holds. Tests ride
    with the code they cover, and every command written into a skill is run before it lands.
@@ -66,7 +73,8 @@ it took none — stop there.
     and skip the gate. On any other exit, run the gate and note its exit, each `FAIL` and
     `warn` line, and any failed check. Both paths go on to step 13.
 13. **Invoke [`issue-worktree`](../issue-worktree/SKILL.md) to close the worktree.** The
-    branch and the pull request stand. Report the pull request, the label and what step 12
+    branch and the pull request stand. A run that stops after step 1 and before step 10
+    closes it the same way, then releases the claim as that skill says. Report the pull request, the label and what step 12
     noted. Under "waiting on the user", list what needs the user, such as each changed
     mockup file, a declined `critical` or `warning`, or an issue this run filed. With none,
     say "nothing". Never list the merge: `merge-gate` decides it.
