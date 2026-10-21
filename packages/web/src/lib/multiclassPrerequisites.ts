@@ -7,7 +7,7 @@ type Departures = CharacterDefinition["departures"];
 type Judged = { name: string; firstIndex: number; prerequisite: ScoreMinimums[] | undefined };
 
 /** Whether `departures` notes an unmet multiclass prerequisite at `field`, such as `levels.3.class`. */
-const isPrerequisiteField = (field: string) => /^levels\.\d+\.class$/.test(field);
+export const isPrerequisiteField = (field: string) => /^levels\.\d+\.class$/.test(field);
 
 export const prerequisiteField = (firstIndex: number) => `levels.${firstIndex}.class`;
 

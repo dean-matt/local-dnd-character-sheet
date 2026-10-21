@@ -294,6 +294,11 @@ const spellEntrySchema = z.strictObject({
   /** The class that granted it, for save DC and slot bookkeeping when multiclassed. */
   origin: contentRefSchema.optional(),
   pickedFor: spellPickGrantorSchema.optional(),
+  /**
+   * The character level whose level-up picked it, so removing that level takes it back. Not
+   * `level`, which a reader takes for the spell's own. A pick made anywhere else states none.
+   */
+  pickedAt: z.int().min(1).max(MAX_LEVEL).optional(),
 });
 
 const pickedNamesSchema = z
@@ -372,6 +377,11 @@ const optionalFeatureEntrySchema = z.strictObject({
    */
   featureType: z.string().min(1),
   grantedBy: optionalFeatureGrantorSchema,
+  /**
+   * The character level whose level-up picked it, as a feat's `level` is, so removing that
+   * level takes it back. A pick made anywhere else states none.
+   */
+  level: z.int().min(1).max(MAX_LEVEL).optional(),
 });
 
 /**

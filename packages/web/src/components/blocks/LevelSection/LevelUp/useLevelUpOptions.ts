@@ -19,7 +19,8 @@ const pickKey = (pick: Pick) => `${pick.featureType}|${entryKey(pick.ref)}`;
 
 /**
  * The options the level adds under `cls` and its subclass, and the picks the draft's
- * `optionalFeatures` holds past `definition`'s for each. A homebrew class counts none.
+ * `optionalFeatures` holds past `definition`'s for each, each stating the character level it
+ * was picked at. A homebrew class counts none.
  *
  * A feat taken at this level that grants options, as `Martial Adept` (PHB) does, asks
  * nothing here: the Chosen Features card offers its picks once the level is applied.
@@ -64,7 +65,12 @@ export function useLevelUpOptions(
     gains: gains.map((gain) => ({ ...gain, picked: picked(gain) })),
     ready: gains.every((gain) => picked(gain).length === gain.count),
     add: (gain: OptionGain, ref: EntryRef) => {
-      const pick = { ref, featureType: gain.featureType, grantedBy: gain.grantedBy };
+      const pick = {
+        ref,
+        featureType: gain.featureType,
+        grantedBy: gain.grantedBy,
+        level: definition.levels.length + 1,
+      };
       if (optionalFeatures.some((each) => pickKey(each) === pickKey(pick))) return;
       write([...optionalFeatures, pick]);
     },
