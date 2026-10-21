@@ -25,8 +25,6 @@ project 1". The board is user-owned, so repository access does not reach it. The
 `gh auth refresh -s project` for the scope, and `dean-matt` adding the login under the
 project's **Manage access** for the rest.
 
-"The user" in these skills names any collaborator on the repository.
-
 `item-add` returns the item an issue already has, so calling this again on the same issue
 changes nothing but the status.
 

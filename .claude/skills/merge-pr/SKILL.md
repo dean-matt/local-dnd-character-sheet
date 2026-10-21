@@ -125,13 +125,13 @@ node scripts/unblock-issues.mjs "$issue"
 
 `unblock-issues.mjs` clears `$issue` from every open issue's `## Blocked by` section, drops
 the section and the `blocked` label where nothing else it names is open, and prints each
-issue it unblocks or skips because its body changed twice mid-write.
+issue it unblocks or skips. A skip means the body changed between reads twice; rerun it once.
 
 Invoke [`board-status`](../board-status/SKILL.md) to set `Done` on `$issue`'s card. Setting
 a board item already `Done` changes nothing. A failure here, rate limit included, does not
 undo the merge: report the card as still not `Done` and carry on.
 
-Then report the merge commit, the issue it closed, which issues it unblocked and that the checkout is on `main`.
+Then report the merge commit, the issue it closed, which issues it unblocked or skipped and that the checkout is on `main`.
 
 ## Rate limits
 

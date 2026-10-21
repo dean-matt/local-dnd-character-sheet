@@ -108,8 +108,8 @@ A second collaborator needs three things before the skills work for them: write 
 the repository, access to the `D&D Character Sheet` project board, and the `project` scope
 on their `gh` token (`gh auth refresh -s project`). The board is a project owned by
 `dean-matt`, so repository access does not grant it; its owner adds them under the
-project's **Manage access**. The collaborators together own the rank order, the milestones
-and every sign-off.
+project's **Manage access**. The collaborators together own the rank order and the
+milestones.
 
 Issues carry an **Out of scope** field. Fill it in. It is the cheapest bloat prevention
 available, because it is the only one that operates before the code exists — the
