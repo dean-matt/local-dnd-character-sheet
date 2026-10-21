@@ -153,6 +153,42 @@ function openIssueNumbers() {
   );
 }
 
+/**
+ * Clears `closed` from one issue, re-reading its body just before the write so an edit made
+ * since `listed` was read is not overwritten. A changed body is recomputed from the fresh
+ * copy and re-read once more; a second change skips the issue and returns `"changed"`.
+ *
+ * GitHub has no conditional write on an issue body, so an edit landing between the last
+ * read and the write still loses. Closing that window needs a lock held outside GitHub.
+ *
+ * @param {{ read: (n: number) => string, write: (n: number, body: string, unblock: boolean) => void }} io
+ * @returns {"unblocked" | "kept" | "untouched" | "changed"}
+ */
+export function settleIssue(number, listed, closed, open, { read, write }) {
+  let body = listed;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const current = read(number);
+    if (current !== body) {
+      body = current;
+      continue;
+    }
+    if (!referencedIssues(blockedBySection(body)).includes(closed)) return "untouched";
+    const keepSection = stillBlocked(body, closed, open);
+    write(number, clearBlocker(body, closed, keepSection), !keepSection);
+    return keepSection ? "kept" : "unblocked";
+  }
+  return "changed";
+}
+
+const io = {
+  read: (n) => gh(["issue", "view", String(n), "--json", "body"]).body,
+  write: (n, body, unblock) => {
+    const args = ["issue", "edit", String(n), "--body", body];
+    if (unblock) args.push("--remove-label", "blocked");
+    capture("gh", args);
+  },
+};
+
 function run(closed) {
   const open = openIssueNumbers();
   const candidates = gh([
@@ -167,18 +203,15 @@ function run(closed) {
     "--limit",
     "500",
   ]);
-  const unblocked = [];
+  const outcomes = [];
   for (const issue of candidates) {
-    const refs = referencedIssues(blockedBySection(issue.body));
-    if (!refs.includes(closed)) continue;
-    const keepSection = stillBlocked(issue.body, closed, open);
-    const body = clearBlocker(issue.body, closed, keepSection);
-    const args = ["issue", "edit", String(issue.number), "--body", body];
-    if (!keepSection) args.push("--remove-label", "blocked");
-    capture("gh", args);
-    if (!keepSection) unblocked.push(issue.number);
+    if (!referencedIssues(blockedBySection(issue.body)).includes(closed)) continue;
+    outcomes.push({
+      number: issue.number,
+      outcome: settleIssue(issue.number, issue.body, closed, open, io),
+    });
   }
-  return unblocked;
+  return outcomes;
 }
 
 if (process.argv[1] !== undefined && import.meta.filename === realpathSync(process.argv[1])) {
@@ -187,7 +220,11 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
     console.error("usage: node scripts/unblock-issues.mjs <closed-issue>");
     process.exit(2);
   }
-  const unblocked = run(closed);
+  const outcomes = run(closed);
+  const unblocked = outcomes.filter((o) => o.outcome === "unblocked");
   if (unblocked.length === 0) console.log("unblocked nothing");
-  else for (const n of unblocked) console.log(`unblocked #${n}`);
+  for (const { number } of unblocked) console.log(`unblocked #${number}`);
+  for (const { number } of outcomes.filter((o) => o.outcome === "changed")) {
+    console.log(`skipped #${number}: its body changed twice while clearing #${closed}`);
+  }
 }

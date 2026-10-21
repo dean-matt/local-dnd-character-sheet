@@ -5,6 +5,7 @@ import {
   referencedIssues,
   removeBlockerTerm,
   removeSection,
+  settleIssue,
   stillBlocked,
 } from "../scripts/unblock-issues.mjs";
 
@@ -342,5 +343,46 @@ describe("stillBlocked", () => {
 
   it("stays true for an unnumbered blocker sitting beside a numbered one", () => {
     expect(stillBlocked(BARE_TAIL, 222, new Set())).toBe(true);
+  });
+});
+
+describe("settleIssue", () => {
+  const recorder = (reads: string[]) => {
+    const writes: { body: string; unblock: boolean }[] = [];
+    let i = 0;
+    return {
+      writes,
+      io: {
+        read: () => reads[Math.min(i++, reads.length - 1)] ?? "",
+        write: (_: number, body: string, unblock: boolean) => writes.push({ body, unblock }),
+      },
+    };
+  };
+
+  it("writes over the body it listed where nobody edited it since", () => {
+    const { writes, io } = recorder([SINGLE_BLOCKER]);
+    expect(settleIssue(1, SINGLE_BLOCKER, 276, new Set(), io)).toBe("unblocked");
+    expect(writes).toEqual([{ body: removeSection(SINGLE_BLOCKER), unblock: true }]);
+  });
+
+  it("keeps a second writer's edit, recomputing from the body it left", () => {
+    const edited = removeBlockerTerm(BARE_PAIR, 215).replace("Nothing.", "Shared spell lists.");
+    const { writes, io } = recorder([edited, edited]);
+    expect(settleIssue(1, BARE_PAIR, 214, new Set([215]), io)).toBe("unblocked");
+    expect(writes).toEqual([{ body: removeSection(edited), unblock: true }]);
+    expect(removeSection(edited)).toContain("Shared spell lists.");
+  });
+
+  it("skips the issue where the body changes again on the retry", () => {
+    const { writes, io } = recorder([`${BARE_PAIR}\nfirst`, `${BARE_PAIR}\nsecond`]);
+    expect(settleIssue(1, BARE_PAIR, 214, new Set([215]), io)).toBe("changed");
+    expect(writes).toEqual([]);
+  });
+
+  it("writes nothing where the fresh body no longer names the closed issue", () => {
+    const cleared = removeSection(SINGLE_BLOCKER);
+    const { writes, io } = recorder([cleared, cleared]);
+    expect(settleIssue(1, SINGLE_BLOCKER, 276, new Set(), io)).toBe("untouched");
+    expect(writes).toEqual([]);
   });
 });

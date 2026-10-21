@@ -102,7 +102,8 @@ merge-gate condition are each the user's to weigh, and the board is ordered — 
 next issue buries that decision under a second pull request. Step 3's `user-signoff` is
 not skipping past it: the user weighed the stop, and the run goes on only on their word.
 
-**Rerank the board.** The order is the user's.
+**Rerank the board.** The order belongs to the repository's collaborators, any of whom may
+rerank or re-milestone an issue; "the user" in this skill names a collaborator.
 
 **Start itself.** No cron, no workflow trigger, nothing that begins a run without a person
 asking. Nobody reads an unwatched run, and it merges to `main` all the same.
