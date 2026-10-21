@@ -225,7 +225,7 @@ export function offeredPicks(json: unknown, level: number, block?: number): Offe
  * How many of `offeredPicks`' `spells` a cantrip may fill instead, and how many of those a
  * `known` key offers, as its `learned` counts.
  */
-export function eitherPicks(json: unknown, level: number, block?: number) {
-  const { either, eitherLearned } = largestBlock(json, level, block);
+export function eitherPicks(json: unknown, level: number) {
+  const { either, eitherLearned } = largestBlock(json, level);
   return { either, learned: eitherLearned };
 }

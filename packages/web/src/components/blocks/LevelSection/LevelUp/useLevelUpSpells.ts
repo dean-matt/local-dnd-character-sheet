@@ -103,6 +103,7 @@ export function useLevelUpSpells(
   // only what the level held. A changed subclass owes its whole offer.
   const owes = (bucket: Exclude<keyof typeof room, "subclassEither">) =>
     sameSubclass ? Math.min(room[bucket], was[bucket].length) : room[bucket];
+  const subclassEither = Math.min(room.subclassEither, owes("subclassSpells"));
   const { cantrips, subclassCantrips } = now;
   const leveled = now.spells;
   const subclassLeveled = now.subclassSpells;
@@ -122,6 +123,7 @@ export function useLevelUpSpells(
     subclassName: subclass?.name ?? "the subclass",
     subclassCantrips,
     subclassSpells: subclassLeveled,
+    eitherFilled: now.eitherFilled,
     /** How many of each kind the level owes, short of `gained` and `offered` on a reopened level. */
     owed: {
       cantrips: owes("cantrips"),
@@ -129,7 +131,7 @@ export function useLevelUpSpells(
       subclassCantrips: owes("subclassCantrips"),
       subclassSpells: owes("subclassSpells"),
       /** How many of `subclassSpells` a cantrip may fill instead. */
-      subclassEither: Math.min(room.subclassEither, owes("subclassSpells")),
+      subclassEither,
     },
     ready:
       now.read === added.length &&
@@ -137,7 +139,8 @@ export function useLevelUpSpells(
       cantrips.length === owes("cantrips") &&
       leveled.length === owes("spells") &&
       subclassCantrips.length === owes("subclassCantrips") &&
-      subclassLeveled.length === owes("subclassSpells"),
+      subclassLeveled.length === owes("subclassSpells") &&
+      now.eitherFilled <= subclassEither,
     add: (ref: EntryRef) =>
       write([...spells, { ref, prepared: false, ...(catalog && { origin: catalog }), pickedAt }]),
     addSubclass: (ref: EntryRef) =>
@@ -159,8 +162,9 @@ type Room = {
  * `spells` with their lookups, those still loading left out and counted apart from `read`,
  * split by kind and by whether each was picked under the class or its subclass. A past
  * level's subclass picks hold the class as their origin, since Apply moved them there, so
- * the class's picks past its room fill the subclass's, unlisted ones first. A subclass
- * cantrip past the subclass's cantrip room fills one of its `subclassEither` spell picks.
+ * the class's picks past its room fill the subclass's, unlisted ones first. Where the
+ * subclass has `subclassEither` picks, each subclass cantrip past its cantrip room fills a
+ * spell pick, so one past `subclassEither` still shows where the player can remove it.
  * Where both lists hold a pick the split goes by order, so a class pick can land under a
  * narrower offer that lacks it; stamping a subclass pick with its offer at Apply is the way
  * out.
@@ -208,12 +212,15 @@ function splitPicks(
   }));
   const of = (subclass: boolean, cantrip: boolean) =>
     picked.filter((pick) => pick.subclass === subclass && (pick.level === 0) === cantrip);
-  const cantripsKept = of(true, true).length - filling;
+  const cantripsKept = room.subclassEither > 0 ? room.subclassCantrips : Number.POSITIVE_INFINITY;
+  const filled = of(true, true).slice(cantripsKept);
   return {
     read: read.length,
     cantrips: of(false, true),
     spells: of(false, false),
     subclassCantrips: of(true, true).slice(0, cantripsKept),
-    subclassSpells: [...of(true, false), ...of(true, true).slice(cantripsKept)],
+    subclassSpells: [...of(true, false), ...filled],
+    /** How many subclass spell picks hold a cantrip, past `subclassEither` where too many do. */
+    eitherFilled: filled.length,
   };
 }

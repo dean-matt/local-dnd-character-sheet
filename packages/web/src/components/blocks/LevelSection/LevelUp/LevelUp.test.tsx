@@ -246,6 +246,15 @@ const ROWS: Record<string, unknown> = {
         },
       ],
     }),
+    fighterSubclass("Halfsinger", "Halfsinger", {
+      additionalSpells: [
+        {
+          known: {
+            "3": [{ choose: "level=0;1;2|class=Wizard" }, { choose: "level=1;2|class=Wizard" }],
+          },
+        },
+      ],
+    }),
   ]),
   "/api/classes/Fighter/PHB/at/2": casterGrants(2, {}, []),
   "/api/classes/Fighter/PHB/at/3": casterGrants(3, {}, []),
@@ -258,6 +267,7 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/4": casterGrants(4, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Loresinger/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Halfsinger/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/at/4": casterGrants(4, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Battle%20Master/PHB/at/3": {
     ...casterGrants(3, {}, []),
@@ -1000,6 +1010,26 @@ describe("LevelUp", () => {
           pickedAt: 3,
         },
       ]);
+    });
+
+    it("stops offering cantrips once each pick that admits one holds one", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          spells: [],
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Halfsinger");
+      const picks = await within(dialog()).findByRole("region", { name: "Spells from Halfsinger" });
+      await pickSpell("Add a spell", "Prestidigitation");
+      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({ minLevel: "0" });
+      await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 1 selected"));
+      await pickSpell("Add a spell", "Magic Missile");
+      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({ minLevel: "1" });
     });
 
     it("takes back the spells picked when the subclass changes", async () => {

@@ -84,7 +84,7 @@ export function LevelUpSpells({ edition, className, picks }: LevelUpSpellsProps)
           count={owed.subclassSpells}
           picked={picks.subclassSpells}
           filters={{
-            minLevel: owed.subclassEither > 0 ? "0" : "1",
+            minLevel: owed.subclassEither > picks.eitherFilled ? "0" : "1",
             maxLevel: "9",
             ...offerFilters,
           }}
