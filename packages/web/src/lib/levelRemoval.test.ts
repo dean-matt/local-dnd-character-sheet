@@ -79,6 +79,45 @@ describe("withoutNewestLevel", () => {
     expect(after.experience).toBe(300);
   });
 
+  it("takes the picks made for a feat or an option the level took, unless another copy stays", () => {
+    const adept = PHB("Martial Adept");
+    const style = PHB("Superior Technique");
+    const byFeat = { kind: "feat", ref: adept } as const;
+    const byStyle = { kind: "optionalFeature", ref: style } as const;
+    const fighter = { kind: "class", ref: FIGHTER } as const;
+    const maneuver = (
+      name: string,
+      grantedBy: CharacterDefinition["optionalFeatures"][number]["grantedBy"],
+    ) => ({
+      ref: PHB(name),
+      featureType: "MV:B",
+      grantedBy,
+    });
+    const keptPicks = [maneuver("Parry", { kind: "feat", ref: PHB("Alert") })];
+    const before = definition({
+      levels: [{ class: FIGHTER }, { class: FIGHTER }],
+      feats: [{ ref: adept, grantedBy: fighter, level: 2 }],
+      optionalFeatures: [
+        ...keptPicks,
+        { ref: style, featureType: "FS:F", grantedBy: fighter, level: 2 },
+        maneuver("Riposte", byFeat),
+        maneuver("Feint", byStyle),
+      ],
+      spells: [{ ref: PHB("Light"), prepared: false, pickedFor: byFeat }],
+    });
+
+    const after = withoutNewestLevel(before);
+
+    expect(after.optionalFeatures).toEqual(keptPicks);
+    expect(after.spells).toEqual([]);
+
+    const twice = definition({
+      ...before,
+      feats: [{ ref: adept, grantedBy: fighter, level: 1 }, ...before.feats],
+    });
+    expect(withoutNewestLevel(twice).optionalFeatures).toContainEqual(maneuver("Riposte", byFeat));
+  });
+
   it("drops the level's own departures, and every prerequisite note once one class is left", () => {
     const gain = { field: "levels.1.rolled", note: "Level 2 gains 12 hit points." };
     const before = definition({

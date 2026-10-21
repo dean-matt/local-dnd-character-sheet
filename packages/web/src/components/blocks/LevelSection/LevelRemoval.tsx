@@ -1,4 +1,4 @@
-import { type CharacterRecord, displayName } from "@dnd/character";
+import { type CharacterRecord, displayName, entryKey } from "@dnd/character";
 import { useId, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import type { LevelHistoryRow } from "../../../lib/levelHistory.ts";
@@ -8,7 +8,7 @@ const BUTTON = "rounded-control border border-border bg-surface px-2 py-1 font-s
 
 /**
  * Removes the newest level and what it brought, once the player confirms the level it
- * names, as one write and one undo entry. The write leaves the definition alone where its
+ * names, as one write and one undo entry. The write is refused, and says so, where the
  * newest level is no longer `row`, as after a level-up from another tab.
  */
 export function LevelRemoval({
@@ -26,8 +26,16 @@ export function LevelRemoval({
   function remove() {
     update.mutate(
       {
-        edit: (latest) =>
-          latest.levels.length === row.level ? withoutNewestLevel(latest) : latest,
+        edit: (latest) => {
+          const newest = latest.levels.at(-1);
+          if (
+            latest.levels.length !== row.level ||
+            !newest ||
+            entryKey(newest.class) !== entryKey(row.cls)
+          )
+            throw new Error(`the newest level changed before ${named} could be removed.`);
+          return withoutNewestLevel(latest);
+        },
         ownUndoEntry: true,
       },
       { onSuccess: () => setOpen(false) },
