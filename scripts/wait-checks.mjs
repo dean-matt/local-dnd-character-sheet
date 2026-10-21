@@ -1,17 +1,21 @@
 /**
- * Waits for the head of a pull request to finish its required checks.
+ * Waits for one commit of a pull request to finish its required checks.
  *
- * Input: a pull request number. Polls every `INTERVAL_MS` for up to nine minutes, counted from
+ * Input: a pull request number, then optionally the full SHA to judge; without one it judges
+ * the commit `headCommit` names. Polls every `INTERVAL_MS` for up to nine minutes, counted from
  * the start, inside the longest tool call. Exits 0 once two consecutive polls both show every
  * required check green, 1 when a check failed and none is pending (a required check that has
  * not reported does not delay that exit), and 2 when the time ran out with a required check
- * unreported, pending or unconfirmed, or when no required name could be read. Prints the
+ * unreported, pending or unconfirmed, or when no required name or commit could be read. Prints the
  * names it was waiting on before it exits.
  */
 import { realpathSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
+import { capture } from "./capture.mjs";
 import {
   expectedChecks,
+  GH_TIMEOUT_MS,
+  headCommit,
   isGreen,
   missingChecks,
   noRequiredChecks,
@@ -83,22 +87,30 @@ export async function waitChecks({
 }
 
 if (process.argv[1] !== undefined && import.meta.filename === realpathSync(process.argv[1])) {
-  const pr = process.argv[2];
+  const [pr, given] = process.argv.slice(2);
   if (pr === undefined) {
-    console.error("usage: node scripts/wait-checks.mjs <pr>");
+    console.error("usage: node scripts/wait-checks.mjs <pr> [sha]");
     process.exit(2);
   }
   const started = Date.now();
   let expected;
+  let sha;
   try {
     expected = await readExpected(expectedChecks);
+    const branch = capture(
+      "gh",
+      ["pr", "view", pr, "--json", "headRefName", "--jq", ".headRefName"],
+      { timeout: GH_TIMEOUT_MS },
+    );
+    sha = headCommit(branch.trim(), given);
   } catch (error) {
-    console.error(`could not read the required checks: ${error.message}`);
+    console.error(`could not read the required checks or the commit: ${error.message}`);
     process.exit(2);
   }
+  console.log(`waiting on the checks of ${sha}`);
   const { code, failed, waiting } = await waitChecks({
     expected,
-    read: () => readChecks(pr),
+    read: () => readChecks(sha),
     timeoutMs: TIMEOUT_MS - (Date.now() - started),
   });
   if (code === 1) console.error(`failed: ${failed.join(", ")}`);

@@ -52,9 +52,9 @@ and commit again. A rerun after the bump is pushed prints `no bump`.
 node scripts/wait-checks.mjs "$n"
 ```
 
-Run it with a 600000 ms tool timeout, straight after a push: a new head has no check yet, so
-`wait-checks` waits on each required name, and its two green polls 15 s apart outlast GitHub
-still showing the old head. On exit 2, name what it printed and hand back. On exit 1, read
+Run it with a 600000 ms tool timeout, straight after a push. It judges the local branch's
+tip, never the head GitHub shows, so it waits until CI reports on the commit just pushed.
+On exit 2, name what it printed and hand back. On exit 1, read
 the failed step with `gh run view <id> --log-failed` and rerun the failed runs once.
 
 ```bash
@@ -106,7 +106,7 @@ does not open with `Closes #<issue>` needs that line.
 Branch protection requires a head carrying the tip of `main`, so `gh pr merge` refuses a
 pull request that sat while another merged, whatever the rest of the gate said.
 [`behind-branch-recovery.md`](behind-branch-recovery.md) updates the branch from `main` on
-the server and waits out the window where the checks describe the old commit. On its
+the server and waits until GitHub has landed that merge. On its
 `ready`, run its version step, *Block on the checks* and the gate again; a gate still saying GitHub is
 computing mergeability is the queued merge landing, so ask again. Two round trips is the
 ceiling — a third `BEHIND` means `main` moves faster than the checks run, and sequencing

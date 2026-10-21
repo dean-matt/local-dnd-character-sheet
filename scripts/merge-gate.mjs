@@ -5,13 +5,15 @@
  * it named. Every decision is a pure function over the shapes GitHub returns, which is
  * what lets `tests/merge-gate.test.ts` call them on payloads copied from real reviews.
  *
- * Running the file gathers the inputs with `gh` and `git`, prints a line per condition,
- * and exits 1 where any of them blocks.
+ * Input: a pull request number, then optionally the full SHA whose checks count; without one
+ * the checks are those of the commit `headCommit` names. Running the file gathers the
+ * inputs with `gh` and `git`, prints a line per condition, and exits 1 where any blocks.
  */
 import { realpathSync } from "node:fs";
 import { capture } from "./capture.mjs";
 import {
   expectedChecks,
+  headCommit,
   isGreen,
   missingChecks,
   noRequiredChecks,
@@ -58,6 +60,16 @@ export function checksBlocked(checks, expected) {
   const missing = missingChecks(expected, checks).map((name) => `${name} (not reported)`);
   const blocked = [...notGreen(checks), ...missing];
   return blocked.length === 0 ? null : blocked.join(", ");
+}
+
+/**
+ * GitHub merges the head it shows, so a judged commit it does not show yet is not the one
+ * that would land: the push is still propagating, or the local branch and origin differ.
+ */
+export function headBlocked(shown, sha) {
+  return shown === sha
+    ? null
+    : `GitHub shows ${shown} as the head, not ${sha} — wait, then ask again`;
 }
 
 /** The line `converge-review` step 2 opens a pass body with. It renders as nothing on GitHub. */
@@ -298,7 +310,7 @@ export function sinceLastPass(sha, head, cwd) {
   return Number(count.trim());
 }
 
-function gate(n) {
+function gate(n, given) {
   const api = (path) => gh(["api", "--paginate", path]);
   const failures = [];
   const report = (ok, condition, detail) => {
@@ -306,15 +318,22 @@ function gate(n) {
     if (!ok) failures.push(condition);
   };
 
+  const { headRefOid: head, headRefName } = gh([
+    "pr",
+    "view",
+    n,
+    "--json",
+    "headRefOid,headRefName",
+  ]);
   let checkFailure;
   try {
-    checkFailure = checksBlocked(readChecks(n), expectedChecks());
+    const sha = headCommit(headRefName, given);
+    checkFailure = headBlocked(head, sha) ?? checksBlocked(readChecks(sha), expectedChecks());
   } catch (error) {
-    checkFailure = `could not read the required checks: ${error.message}`;
+    checkFailure = `could not read the required checks or the commit: ${error.message}`;
   }
   report(checkFailure === null, "every check is green", checkFailure);
 
-  const head = gh(["pr", "view", n, "--json", "headRefOid"]).headRefOid;
   capture("git", ["fetch", "--quiet", "origin", "main", head]);
 
   const reviews = api(`repos/{owner}/{repo}/pulls/${n}/reviews`);
@@ -377,12 +396,12 @@ function gate(n) {
 }
 
 if (process.argv[1] !== undefined && import.meta.filename === realpathSync(process.argv[1])) {
-  const n = process.argv[2];
+  const [n, given] = process.argv.slice(2);
   if (n === undefined) {
-    console.error("usage: node scripts/merge-gate.mjs <pr>");
+    console.error("usage: node scripts/merge-gate.mjs <pr> [sha]");
     process.exit(2);
   }
-  const failures = gate(n);
+  const failures = gate(n, given);
   if (failures.length > 0) {
     console.error(`\n${failures.length} condition(s) block the merge. Hand each to the user.`);
     process.exit(1);

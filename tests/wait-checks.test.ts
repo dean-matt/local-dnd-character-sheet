@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { expectedChecks, missingChecks, readChecks } from "../scripts/required-checks.mjs";
+import {
+  expectedChecks,
+  headCommit,
+  missingChecks,
+  readChecks,
+} from "../scripts/required-checks.mjs";
 import { readExpected, settle, waitChecks } from "../scripts/wait-checks.mjs";
 
 const EXPECTED = ["check", "e2e"];
@@ -152,14 +157,70 @@ describe("an unjudgeable head", () => {
   });
 });
 
-describe("gh readers", () => {
-  it("reads the rollup gh prints while exiting non-zero, and nothing when it prints nothing", () => {
-    const rollup = [{ name: "e2e", bucket: "pending" }];
-    const exits = (stdout: string) => () => {
-      throw Object.assign(new Error("exit 8"), { stdout });
+describe("a push GitHub has not caught up with", () => {
+  const green = (name: string) => ({ name, status: "completed", conclusion: "success" });
+  const gh = (_file: string, args: string[]) =>
+    JSON.stringify([
+      { check_runs: args.at(-1)?.includes("/commits/old/") ? [green("check"), green("e2e")] : [] },
+    ]);
+
+  it("waits on the pushed commit while the old head shows every check green", async () => {
+    expect(readChecks("old", gh)).toHaveLength(2);
+    const r = await waitChecks({
+      expected: EXPECTED,
+      read: async () => readChecks("new", gh),
+      wait: async () => {},
+      timeoutMs: 0,
+    });
+    expect(r).toMatchObject({ code: 2, waiting: EXPECTED });
+  });
+
+  it("judges the local branch's tip, falling back to origin's, never GitHub's head", () => {
+    const calls: string[][] = [];
+    const local = (file: string, args: string[]) => {
+      calls.push([file, ...args]);
+      return "abc\n";
     };
-    expect(readChecks("1", exits(JSON.stringify(rollup)))).toEqual(rollup);
-    expect(readChecks("1", exits(""))).toEqual([]);
+    expect(headCommit("fix/1-x", undefined, local)).toBe("abc");
+    expect(calls).toEqual([["git", "rev-parse", "--verify", "--quiet", "refs/heads/fix/1-x"]]);
+    const remote = (_file: string, args: string[]) => {
+      if (args[0] === "rev-parse") throw new Error("exit 1");
+      return "def\trefs/heads/fix/1-x\n";
+    };
+    expect(headCommit("fix/1-x", undefined, remote)).toBe("def");
+    expect(headCommit("fix/1-x", "given", remote)).toBe("given");
+  });
+});
+
+describe("gh readers", () => {
+  it("reads the latest run of each check on every page, bucketed as gh pr checks prints", () => {
+    const pages = [
+      {
+        check_runs: [
+          { name: "check", status: "completed", conclusion: "success" },
+          { name: "corpus", status: "completed", conclusion: "skipped" },
+          { name: "e2e", status: "in_progress", conclusion: null },
+        ],
+      },
+      {
+        check_runs: [
+          { name: "spellcheck", status: "completed", conclusion: "startup_failure" },
+          { name: "static", status: "completed", conclusion: "cancelled" },
+        ],
+      },
+    ];
+    expect(readChecks("abc", () => JSON.stringify(pages))).toEqual([
+      { name: "check", bucket: "pass" },
+      { name: "corpus", bucket: "skipping" },
+      { name: "e2e", bucket: "pending" },
+      { name: "spellcheck", bucket: "fail" },
+      { name: "static", bucket: "cancel" },
+    ]);
+    expect(
+      readChecks("abc", () => {
+        throw new Error("HTTP 502");
+      }),
+    ).toEqual([]);
   });
 
   it("bounds every gh call and reads a timeout as no rollup", () => {
@@ -168,16 +229,13 @@ describe("gh readers", () => {
       timeouts.push(options.timeout);
       return "[]";
     };
-    readChecks("1", run);
+    readChecks("abc", run);
     expectedChecks(run);
     expect(timeouts).toEqual([30_000, 30_000]);
     const timedOut = () => {
-      throw Object.assign(new Error("spawnSync gh ETIMEDOUT"), {
-        code: "ETIMEDOUT",
-        stdout: JSON.stringify([{ name: "e2e", bucket: "pass" }]),
-      });
+      throw Object.assign(new Error("spawnSync gh ETIMEDOUT"), { code: "ETIMEDOUT" });
     };
-    expect(readChecks("1", timedOut)).toEqual([]);
+    expect(readChecks("abc", timedOut)).toEqual([]);
   });
 
   it("takes the required names from the ruleset's status-check rule alone", () => {
