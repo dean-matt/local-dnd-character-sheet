@@ -108,6 +108,8 @@ export const undoLog = sqliteTable(
     previousState: text("previous_state", { mode: "json" }).notNull(),
     describedAs: text("described_as").notNull(),
     changedAt: integer("changed_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+    /** Set where its write asked to be its own entry, so no later write merges into it. */
+    sealed: integer("sealed", { mode: "boolean" }).notNull().default(false),
   },
   (t) => [index("undo_log_by_character").on(t.characterId, t.id)],
 );

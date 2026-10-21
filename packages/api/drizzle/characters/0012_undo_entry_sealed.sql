@@ -1,0 +1,1 @@
+ALTER TABLE `undo_log` ADD `sealed` integer DEFAULT false NOT NULL;

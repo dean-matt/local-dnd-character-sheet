@@ -189,7 +189,9 @@ const update = createRoute({
   description:
     "With `If-Unmodified-Since` set to the `updatedAt` the client last read, refuses " +
     "with 412 where the character was written since. `updatedAt` holds whole seconds, " +
-    "so a write within the same second passes.",
+    "so a write within the same second passes. A write landing within 30 seconds of the " +
+    "newest undo entry, on the same fields, merges into it; `Undo-Entry: own` makes the " +
+    "write an entry of its own that no later write merges into.",
   request: {
     params: idParam,
     headers: z.object({
@@ -199,6 +201,7 @@ const update = createRoute({
         .string()
         .refine((value) => !Number.isNaN(Date.parse(value)), "not an HTTP date")
         .optional(),
+      "undo-entry": z.literal("own").optional(),
     }),
     body: { content: { "application/json": { schema: characterDefinitionSchema } } },
   },
@@ -363,12 +366,14 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
 
   routes.openapi(update, (c) => {
     const { id } = c.req.valid("param");
-    const since = c.req.valid("header")["if-unmodified-since"];
+    const header = c.req.valid("header");
+    const since = header["if-unmodified-since"];
     const row = updateCharacterDefinition(
       db,
       id,
       c.req.valid("json"),
       since === undefined ? undefined : new Date(since),
+      header["undo-entry"] === "own",
     );
     if (!row) return c.json({ error: NOT_FOUND }, 404);
     if (row === "stale") {

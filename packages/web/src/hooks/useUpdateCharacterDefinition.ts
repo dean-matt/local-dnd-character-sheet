@@ -15,10 +15,13 @@ import {
 export type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
 
 /**
- * An edit alone, or an edit the API refuses with a 412 where the character was written
- * after `readAt`, the `updatedAt` the caller read.
+ * An edit alone, or an edit with options: `readAt`, the `updatedAt` the caller read, has
+ * the API refuse with a 412 where the character was written since; `ownUndoEntry` keeps
+ * the write out of the 30-second undo merge, so each button press undoes on its own.
  */
-export type DefinitionWrite = DefinitionEdit | { edit: DefinitionEdit; readAt: string };
+export type DefinitionWrite =
+  | DefinitionEdit
+  | { edit: DefinitionEdit; readAt?: string; ownUndoEntry?: boolean };
 
 /**
  * Applies an edit to a character's definition and writes the result. The edit runs when
@@ -40,17 +43,11 @@ export function useUpdateCharacterDefinition(id: string) {
     mutationFn: (write) => {
       const record = queryClient.getQueryData<CharacterRecord>(characterKey(id));
       if (!record) throw new Error("The character has not loaded yet.");
-      const { edit, readAt } =
-        typeof write === "function" ? { edit: write, readAt: undefined } : write;
-      return apiMutate(
-        "PUT",
-        `/characters/${id}`,
-        characterRecordSchema,
-        edit(record.definition),
-        readAt === undefined
-          ? undefined
-          : { "If-Unmodified-Since": new Date(readAt).toUTCString() },
-      );
+      const { edit, readAt, ownUndoEntry } = typeof write === "function" ? { edit: write } : write;
+      return apiMutate("PUT", `/characters/${id}`, characterRecordSchema, edit(record.definition), {
+        ...(readAt !== undefined && { "If-Unmodified-Since": new Date(readAt).toUTCString() }),
+        ...(ownUndoEntry && { "Undo-Entry": "own" }),
+      });
     },
     onSuccess: (record) => {
       queryClient.setQueryData(characterKey(id), record);

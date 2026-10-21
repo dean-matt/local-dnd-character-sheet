@@ -231,14 +231,19 @@ describe("LevelSection", () => {
   });
 });
 
-/** A server that keeps the definition it is sent and derives the hit points from it; returns the definitions it was sent. */
-function stubServer(character: CharacterRecord): CharacterDefinition[] {
+/**
+ * A server that keeps the definition it is sent and derives the hit points from it;
+ * returns the definitions it was sent and each write's `Undo-Entry` header.
+ */
+function stubServer(character: CharacterRecord) {
   let stored = character;
   const puts: CharacterDefinition[] = [];
+  const undoEntries: (string | undefined)[] = [];
   const answer = (path: string, init?: RequestInit): unknown => {
     if (init?.method === "PUT") {
       const definition = JSON.parse(String(init.body)) as CharacterDefinition;
       puts.push(definition);
+      undoEntries.push((init.headers as Record<string, string>)["Undo-Entry"]);
       stored = { ...stored, definition };
       return stored;
     }
@@ -251,7 +256,7 @@ function stubServer(character: CharacterRecord): CharacterDefinition[] {
     async (url: RequestInfo | URL, init?: RequestInit) =>
       new Response(JSON.stringify(answer(String(url), init))),
   );
-  return puts;
+  return { puts, undoEntries };
 }
 
 describe("LevelHistory", () => {
@@ -399,8 +404,9 @@ describe("LevelHistory", () => {
 
   describe("changing a level's hit point gain", () => {
     let puts: CharacterDefinition[];
+    let undoEntries: (string | undefined)[];
     const serve = (character: CharacterRecord) => {
-      puts = stubServer(character);
+      ({ puts, undoEntries } = stubServer(character));
     };
 
     const hp = (level: number) => String(rows()[level - 1]?.[2]).split("Change")[0];
@@ -424,7 +430,7 @@ describe("LevelHistory", () => {
 
     afterEach(() => vi.restoreAllMocks());
 
-    it("sets, changes and restores a gain through the card, one write each", async () => {
+    it("sets, changes and restores a gain through the card, one write and undo entry each", async () => {
       vi.spyOn(Math, "random").mockReturnValue(0.99);
       serve(warlock(3));
       renderSeeded(warlock(3));
@@ -450,6 +456,7 @@ describe("LevelHistory", () => {
       expect(gains().at(-1)).toEqual([{}, {}, {}]);
       expect(puts.at(-1)?.departures).toEqual([]);
       expect(puts).toHaveLength(3);
+      expect(undoEntries).toEqual(["own", "own", "own"]);
     });
 
     it("refuses a typed gain below 1 or not whole, with a message and no write", async () => {

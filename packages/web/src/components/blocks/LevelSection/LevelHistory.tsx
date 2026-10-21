@@ -29,8 +29,7 @@ function featureLabel(feature: HistoryFeature, row: readonly HistoryFeature[]): 
  * points it added, the subclass chosen there, the features it granted and the improvement
  * taken. Hit points show the derived maximum's own per-level term, and wait while a write
  * recomputes it rather than show a gain the sheet no longer holds. Each level's gain can be
- * changed in place, each change one write; the API merges writes made within 30 seconds
- * into one undo entry.
+ * changed in place, each change one write and one undo entry.
  */
 export function LevelHistory({ character }: { character: CharacterRecord }) {
   const { definition } = character;
@@ -40,7 +39,9 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
   const hitPoints = terms?.length === definition.levels.length ? terms : undefined;
   const rows = levelHistory(definition.levels, features.featuresOf);
   const dice = useLevelDice(definition.levels);
-  const writes = useHeldWrites(useUpdateCharacterDefinition(character.id));
+  const writes = useHeldWrites(useUpdateCharacterDefinition(character.id), {
+    ownUndoEntry: true,
+  });
   const failure = writes.latest;
   useSaveToast(
     `Level ${failure?.key} hit points`,
