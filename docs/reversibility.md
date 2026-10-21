@@ -9,7 +9,7 @@ Every decision the app stores, where it is written, and the way back from it. Pa
 
 Undo (`routes/CharacterLayout/UndoButton.tsx`) restores the definition before the newest
 change, one entry per press, back through the last 50. Saves to the same fields within 30
-seconds merge into one entry. It does not reach:
+seconds merge into one entry, except a Level History change, which is always its own. It does not reach:
 
 | Not reached | Reversed instead by |
 |---|---|
@@ -72,7 +72,7 @@ Undo restores only the newest entry; stepping back to an earlier one: #978.
 | Feats and optional features | `components/blocks/FeaturesSection/FeatPicks.tsx`, `OptionalFeaturePicks.tsx` | Undo, a direct edit |
 | A feature's choice | `components/blocks/FeaturesSection/FeatureChoiceField.tsx` | Undo, a direct edit |
 | Appearance, backstory, notes | `IdentitySection/IdentitySection.tsx`, `components/blocks/BackstorySection.tsx`, `components/blocks/NotesSection.tsx` | Undo, a direct edit |
-| An "Off the rules" note | Written beside the pick, as in `RaceCard.tsx` | Undo of the write that added it; removing one: #986 |
+| An "Off the rules" note | `lib/departures.ts`, beside the pick that departs | Undo of the write that added it; removing one: #986 |
 | A row added from search | `hooks/useAddToCharacter.ts` | Undo, removing it from its list |
 | A page's layout and blocks | `routes/CharacterLayout/ManagePages/ManagePages.tsx`, `routes/CharacterPage/PageEditor.tsx` | Page undo, a direct edit |
 | Restoring the default pages | `hooks/useRestoreDefaultPages.ts` | Page undo |
