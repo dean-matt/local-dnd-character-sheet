@@ -1637,7 +1637,7 @@ describe("LevelUp", () => {
       });
       await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 2 selected"));
       expect(within(dialog()).queryByRole("region", { name: "New cantrips" })).toBeNull();
-      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+      expect(within(picks).getByRole("button", { name: "Remove Prestidigitation" })).toBeVisible();
     });
 
     it("offers no change to the first level, whose choices creation made", async () => {
