@@ -134,7 +134,7 @@ arithmetic — since `rules` knows a term's meaning but never what supplied its 
 Both logs are bounded and pruned on insert — 200 rolls and 50 undo entries per
 character. They are session affordances, not audit trails. A definition write records
 the definition it replaced, and saves on one field in quick succession merge into one
-entry. Undo restores through that same write, so it reaches the definition alone — not
+entry, except a write sent with `Undo-Entry: own`, which stays its own. Undo restores through that same write, so it reaches the definition alone — not
 play state, pages or a deleted character.
 
 **One field contract, two modes.** `packages/web/src/components/Field/Field.tsx` is the only
