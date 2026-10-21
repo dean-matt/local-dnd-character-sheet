@@ -10,8 +10,10 @@ import { ROOT, read } from "./lib/doc-helpers.ts";
  */
 
 /**
- * Each web test file still sleeping, how many sleeps it holds, and why. Counts are exact,
- * so a sleep removed lowers its count and a new one needs an entry naming its reason.
+ * Each web test file still sleeping, how many sleeps it defines, and why. A sleep counts
+ * where it is written, so a helper called ten times counts once and review weighs its
+ * callers. Counts are exact: a sleep removed lowers its count, and a new one needs an entry
+ * naming its reason.
  */
 const ALLOWED_SLEEPS = new Map<string, { count: number; why: string }>([
   [
@@ -40,13 +42,28 @@ const ALLOWED_SLEEPS = new Map<string, { count: number; why: string }>([
   ],
 ]);
 
-/** A `setTimeout` handed the resolver of the promise around it, across any line wrap. */
-const SLEEP =
-  /new\s+Promise\s*(?:<[^>]*>)?\(\s*\(?\s*(\w+)\s*\)?\s*=>\s*\{?\s*setTimeout\(\s*\1\b/g;
+const PROMISE = /\bnew\s+Promise\s*(?:<.*?>)?\(/g;
 const TIMER_PROMISES = /from\s+["'](?:node:)?timers\/promises["']/g;
 
+/**
+ * A `new Promise(...)` whose argument calls `setTimeout` anywhere, however the executor and
+ * the timer are spelled, plus each `timers/promises` import. Parentheses are balanced
+ * without reading strings, so a paren inside a string literal in the executor can end the
+ * scan early; reading the file with the TypeScript compiler is the way out.
+ */
 function sleeps(source: string): number {
-  return [...source.matchAll(SLEEP)].length + [...source.matchAll(TIMER_PROMISES)].length;
+  let count = [...source.matchAll(TIMER_PROMISES)].length;
+  for (const match of source.matchAll(PROMISE)) {
+    const open = match.index + match[0].length - 1;
+    let depth = 0;
+    let end = open;
+    for (; end < source.length; end++) {
+      if (source[end] === "(") depth++;
+      else if (source[end] === ")" && --depth === 0) break;
+    }
+    if (/\bsetTimeout\s*\(/.test(source.slice(open, end))) count++;
+  }
+  return count;
 }
 
 function setsGlobalWait(source: string): boolean {
@@ -59,9 +76,11 @@ const setupFiles = (viteConfig.test?.projects ?? []).flatMap((project) => {
   return (files === undefined ? [] : [files].flat()).map((file) => file.replace(/^\.\//, ""));
 });
 
-const webTests = globSync("packages/web/src/**/*.test.{ts,tsx}", { cwd: ROOT }).map((path) =>
-  path.replaceAll("\\", "/"),
-);
+/** The tests and the helpers under `src/test/` they import, where a shared sleep would sit. */
+const webTests = globSync(
+  ["packages/web/src/**/*.test.{ts,tsx}", "packages/web/src/test/**/*.{ts,tsx}"],
+  { cwd: ROOT },
+).map((path) => path.replaceAll("\\", "/"));
 
 describe("the wait detectors", () => {
   it("count a sleep however it is spelled", () => {
@@ -69,11 +88,18 @@ describe("the wait detectors", () => {
     expect(sleeps("await new Promise<void>(r =>\n  setTimeout(r, 20));")).toBe(1);
     expect(sleeps("await new Promise((done) => { setTimeout(done, 0); });")).toBe(1);
     expect(sleeps('import { setTimeout as sleep } from "node:timers/promises";')).toBe(1);
+    expect(sleeps("new Promise((r) => setTimeout(() => r(undefined), 50))")).toBe(1);
+    expect(sleeps("new Promise((r) => window.setTimeout(r, 50))")).toBe(1);
+    expect(sleeps("new Promise((r: () => void) => setTimeout(r, 5))")).toBe(1);
+    expect(sleeps("new Promise(function (r) { setTimeout(r, 5); })")).toBe(1);
+    expect(sleeps("new Promise<() => void>((r) => setTimeout(r, 5))")).toBe(1);
+    expect(sleeps("const sleep = (ms) => new Promise((r) => setTimeout(r, ms));")).toBe(1);
   });
 
   it("leave a timer that is not a wait alone", () => {
     expect(sleeps("setTimeout(() => setOpen(false), 100);")).toBe(0);
     expect(sleeps('vi.useFakeTimers({ toFake: ["setTimeout"] });')).toBe(0);
+    expect(sleeps("new Promise((resolve) => { first = resolve; }); setTimeout(tick, 5);")).toBe(0);
   });
 
   it("see a global wait in either spelling", () => {

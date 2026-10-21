@@ -22,13 +22,8 @@ and it passes locally for months before a slow Windows runner fails it.
 
 ## What the fence asserts
 
-`tests/test-waits-shape.test.ts` fails:
-
-- an `asyncUtilTimeout` in any Vitest setup file, which widens every wait in a project to fix
-  one test;
-- a `setTimeout` sleep in a web test, or an import of `timers/promises`, beyond the count its
-  file is allowed. The allowlist in that test names each file still sleeping and why. Its
-  counts are exact, so a removed sleep lowers the count in the same commit.
+`tests/test-waits-shape.test.ts` holds the checks a parser can make, and the allowlist of
+sleeps still standing with the reason for each.
 
 ## For review
 
@@ -41,3 +36,5 @@ review holds these:
   whole app, is a cheap query's job.
 - A `timeout` option wider than the default names its size and its reason.
 - A new allowlisted sleep proves a negative and says what is not coming.
+- A sleep helper counts once where it is written, so each test calling it proves a negative
+  too.
