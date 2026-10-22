@@ -103,7 +103,7 @@ describe("BackgroundCard", () => {
     expect(
       await screen.findByText(/\+2 Strength is kept from before and does not match Charlatan's/),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Remove them" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove it" }));
 
     await waitFor(() => expect(written()).not.toBeNull());
     expect(written().abilityIncreases).toEqual([{ ability: "dex", amount: 2, grantedBy: "race" }]);

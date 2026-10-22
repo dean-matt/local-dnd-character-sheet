@@ -47,7 +47,11 @@ export function OriginIncreases({ definition, source, write }: OriginIncreasesPr
               : `${name}'s increases are not applied.`}
           </p>
           <button type="button" onClick={() => save(reset)} className="text-muted underline">
-            {reset.length > 0 ? `Apply ${name}'s increases` : "Remove them"}
+            {reset.length > 0
+              ? `Apply ${name}'s increases`
+              : mine.length === 1
+                ? "Remove it"
+                : "Remove them"}
           </button>
         </div>
       )}

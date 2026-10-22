@@ -32,7 +32,7 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
   const write = useHeldSave(character.id, "Race");
   const { race, subrace, size, raceResistance } = definition;
   const { catalogRace, raceRow, subraces, json } = useRaceRows(race, subrace, definition.edition);
-  // The read `json` comes from has landed, or none was needed.
+  // True once the row `json` is read from has loaded, or where no catalog row is read.
   const ready = catalogRace === undefined || (subrace ? subraces.isSuccess : raceRow.isSuccess);
   const rows = subraces.data?.items ?? [];
   const plain = rows.some((row) => row.name === "");
@@ -109,7 +109,7 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
             source={increaseSource(
               "race",
               raceSummary(definition),
-              catalogRace && json,
+              json,
               houseRule(definition, "customOrigin"),
             )}
             write={write}
