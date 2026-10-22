@@ -39,7 +39,7 @@ const posts = (fetchMock: ReturnType<typeof stub>) =>
 
 const row = (name: RegExp) => {
   const found = [...document.querySelectorAll<HTMLElement>("ol > li")].find((li) =>
-    name.test(li.querySelector("p")?.textContent ?? ""),
+    name.test(li.querySelector("button span")?.textContent ?? ""),
   );
   if (!found) throw new Error(`no entry ${name}`);
   return found;
@@ -70,7 +70,7 @@ describe("UndoHistory", () => {
     const rows = screen
       .getAllByRole("listitem")
       .filter((item) => item.parentElement?.tagName === "OL");
-    expect(rows.map((row) => row.querySelector("p")?.textContent)).toEqual(
+    expect(rows.map((row) => row.querySelector("button span")?.textContent)).toEqual(
       LOG.map((each) => each.describedAs),
     );
     expect(rows[0]?.querySelector("time")).toHaveAttribute("datetime", LOG[0]?.changedAt);
@@ -83,7 +83,7 @@ describe("UndoHistory", () => {
     stub();
     await rendered();
     const marked = () =>
-      [...document.querySelectorAll("ol > li[data-marked=true] > div > p")].map(
+      [...document.querySelectorAll("ol > li[data-marked=true] > button span")].map(
         (p) => p.textContent,
       );
 
@@ -94,7 +94,9 @@ describe("UndoHistory", () => {
 
     fireEvent.focus(undoTo(/^Charisma/));
     expect(marked()).toHaveLength(3);
-    expect(undoTo(/^Charisma/)).toHaveAccessibleName("Undo to here, undoing 6 changes");
+    expect(undoTo(/^Charisma/)).toHaveAccessibleName(
+      "Undo to here: Charisma 17 to 18, undoing 6 changes",
+    );
   });
 
   it("asks to undo back to an entry clicked anywhere outside its disclosure", async () => {
