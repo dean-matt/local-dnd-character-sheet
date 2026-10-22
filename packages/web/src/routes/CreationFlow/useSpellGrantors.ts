@@ -1,7 +1,7 @@
 import { type CharacterDefinition, type ContentRef, spellBlockKey } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import type { SpellGrantorRef } from "../../hooks/useGrantedSpells.ts";
-import { blockGrantorOf } from "./spellPicks.ts";
+import { blockGrantorOf } from "../../lib/spellGrantors.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 import { CUSTOM_RACE_SOURCE } from "./useIdentityCatalog.ts";
 

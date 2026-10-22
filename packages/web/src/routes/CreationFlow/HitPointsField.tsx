@@ -8,6 +8,7 @@ import {
 } from "@dnd/character";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { ChoicePills } from "../../components/ChoicePills.tsx";
 import {
   type HitPointMethod,
   hitPointMethodOf,
@@ -15,7 +16,6 @@ import {
   outsideDie,
   withGainDepartures,
 } from "../../lib/hitPointGains.ts";
-import { ChoicePills } from "./ChoicePills.tsx";
 import { rerolled, rollHitDie } from "./classLevels.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { FirstLevel } from "./FirstLevel.tsx";

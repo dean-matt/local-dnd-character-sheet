@@ -1,6 +1,6 @@
 import type { CharacterDefinition, ContentRef } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
-import { ChoicePills } from "./ChoicePills.tsx";
+import { ChoicePills } from "../../components/ChoicePills.tsx";
 import { withSubclass } from "./classLevels.ts";
 import type { ClassEntry } from "./useClassEntries.ts";
 

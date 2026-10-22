@@ -1,8 +1,8 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { resetIncreases, withIncreases } from "../../lib/grantorIncreases.ts";
 import { readPicks } from "../../lib/increasePicks.ts";
-import { increasesOf, withIncreases } from "./grantorIncreases.ts";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";
 
 /**
@@ -21,14 +21,10 @@ export function CreationIncreases() {
   useEffect(() => {
     if (sources === undefined) return;
     let next = getValues("abilityIncreases") ?? [];
-    for (const { grantedBy, alternatives } of sources) {
-      const mine = next.filter((increase) => increase.grantedBy === grantedBy);
-      if (readPicks(alternatives, mine)) continue;
-      const fixed =
-        alternatives.length === 1
-          ? increasesOf(alternatives, { alternative: 0, slots: [] }, grantedBy)
-          : [];
-      next = withIncreases(next, grantedBy, fixed);
+    for (const source of sources) {
+      const mine = next.filter((increase) => increase.grantedBy === source.grantedBy);
+      if (readPicks(source.alternatives, mine)) continue;
+      next = withIncreases(next, source.grantedBy, resetIncreases(source));
     }
     if (JSON.stringify(next) !== JSON.stringify(getValues("abilityIncreases") ?? []))
       setValue("abilityIncreases", next, { shouldDirty: true });
