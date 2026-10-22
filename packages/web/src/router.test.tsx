@@ -143,7 +143,7 @@ describe("routing", () => {
     expect(within(nav).queryByRole("link", { name: /settings/i })).not.toBeInTheDocument();
   });
 
-  it("docks the undo history beside the sheet, and returns focus to its button on collapse", async () => {
+  it("docks the undo history beside the sheet, and returns focus to its button on close", async () => {
     renderAt("/characters/abc/p/stats");
     await pageShown("Stats");
     const toggle = screen.getByRole("button", { name: "Undo history" });
@@ -153,7 +153,7 @@ describe("routing", () => {
     expect(toggle).toHaveAttribute("aria-controls", dock.id);
     expect(within(dock).getByRole("heading", { name: "Undo history" })).toHaveFocus();
 
-    fireEvent.click(within(dock).getByRole("button", { name: "Collapse" }));
+    fireEvent.click(within(dock).getByRole("button", { name: "Close side panel" }));
     expect(screen.queryByRole("complementary", { name: "Side panel" })).toBeNull();
     expect(toggle).toHaveFocus();
   });
