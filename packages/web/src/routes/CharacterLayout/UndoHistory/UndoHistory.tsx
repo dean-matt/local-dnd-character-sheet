@@ -16,8 +16,8 @@ const SCOPE =
 
 /**
  * The character's undo log, newest first, each entry able to undo back to itself after a
- * confirmation. The heading takes focus when the panel opens, and again after an undo
- * removes the entry that held it.
+ * confirmation, which stays open until the undo it sent settles. The heading takes focus
+ * when the panel opens, and again after an undo removes the entry that held it.
  */
 export function UndoHistory({ characterId }: { characterId: string }) {
   const log = useCharacterUndoLog(characterId);
@@ -33,9 +33,14 @@ export function UndoHistory({ characterId }: { characterId: string }) {
   useEffect(() => heading.current?.focus(), []);
 
   const entries = log.data ?? [];
-  const undoes = confirming ? entries.findIndex((entry) => entry.id === confirming.id) + 1 : 0;
+  // Every entry back to and including `at`, counted in the field changes each holds.
+  const undoneBy = (at: number) =>
+    entries.slice(0, at + 1).reduce((sum, entry) => sum + entry.changes.length, 0);
+  const confirmingAt = confirming ? entries.findIndex((entry) => entry.id === confirming.id) : -1;
+  const undoes = confirmingAt < 0 ? 0 : undoneBy(confirmingAt);
 
   function close() {
+    if (undo.isPending) return;
     setConfirming(null);
     undo.reset();
     setTimeout(() => trigger.current?.focus(), 0);
@@ -76,7 +81,7 @@ export function UndoHistory({ characterId }: { characterId: string }) {
           <UndoHistoryEntry
             key={entry.id}
             entry={entry}
-            undoes={at + 1}
+            undoes={undoneBy(at)}
             marked={marked !== null && at <= marked}
             disabled={writing || !character.data}
             onMark={(on) => setMarked((current) => (on ? at : current === at ? null : current))}
@@ -90,6 +95,7 @@ export function UndoHistory({ characterId }: { characterId: string }) {
       {confirming && (
         <UndoToHereDialog
           describedAs={confirming.describedAs}
+          newer={Math.max(confirmingAt, 0)}
           undoes={undoes}
           pending={undo.isPending}
           error={undo.error}

@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 /**
  * The column docked at the sheet's right edge, the counterpart to the rail on its left:
  * sticky under the top bar, out of print, holding `children` above a collapse button that
- * calls `onCollapse`. Each panel it holds names itself, so another can join this one.
+ * calls `onCollapse`. `label` names the dock rather than a panel; each panel names itself
+ * with its heading, so another can join this one.
  */
 export function Dock({
   id,

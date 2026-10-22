@@ -13,7 +13,8 @@ const when = new Intl.DateTimeFormat(undefined, {
 /**
  * One undo entry: what it changed, when, every change it holds behind a disclosure, and
  * "Undo to here". Hovering or focusing that button calls `onMark`, so the panel can mark
- * this entry and every newer one as what it would undo; `undoes` counts them.
+ * this entry and every newer one as what it would undo; `undoes` counts the changes they
+ * hold.
  */
 export function UndoHistoryEntry({
   entry,

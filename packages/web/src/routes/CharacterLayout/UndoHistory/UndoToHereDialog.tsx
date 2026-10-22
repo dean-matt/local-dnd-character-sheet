@@ -6,12 +6,13 @@ const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
 const changes = (count: number) => `${count} ${count === 1 ? "change" : "changes"}`;
 
 /**
- * Asks before an undo back to `describedAs`, naming how many changes it undoes, `undoes`,
- * and that there is no redo. `undoes` is `0` where the entry has left the log since the
+ * Asks before an undo back to `describedAs` and the `newer` entries after it, naming how
+ * many changes they hold, `undoes`, and that there is no redo. `undoes` is `0` where the entry has left the log since the
  * dialog opened, and confirming is then refused.
  */
 export function UndoToHereDialog({
   describedAs,
+  newer,
   undoes,
   pending,
   error,
@@ -19,6 +20,7 @@ export function UndoToHereDialog({
   onClose,
 }: {
   describedAs: string;
+  newer: number;
   undoes: number;
   pending: boolean;
   error: Error | null;
@@ -55,8 +57,9 @@ export function UndoToHereDialog({
       >
         {undoes > 0 ? (
           <p>
-            This undoes “{describedAs}”{undoes > 1 && ` and the ${changes(undoes - 1)} after it`},
-            restoring the character as it was before. There is no redo.
+            This undoes “{describedAs}”
+            {newer > 0 && ` and the ${newer} ${newer === 1 ? "entry" : "entries"} after it`},{" "}
+            {changes(undoes)} in all, restoring the character as it was before. There is no redo.
           </p>
         ) : (
           <p>The history changed since this opened. Close this and pick again.</p>

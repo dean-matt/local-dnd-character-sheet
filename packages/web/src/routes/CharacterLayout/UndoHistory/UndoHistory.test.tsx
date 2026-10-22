@@ -55,6 +55,12 @@ afterEach(() => {
 });
 
 describe("UndoHistory", () => {
+  it("takes focus on its heading when it opens", async () => {
+    stub();
+    await rendered();
+    expect(screen.getByRole("heading", { name: "Undo history" })).toHaveFocus();
+  });
+
   it("lists every entry newest first, with when and every change it holds", async () => {
     stub();
     await rendered();
@@ -84,7 +90,7 @@ describe("UndoHistory", () => {
 
     fireEvent.focus(undoTo(/^Charisma/));
     expect(marked()).toHaveLength(3);
-    expect(undoTo(/^Charisma/)).toHaveAccessibleName("Undo to here, undoing 3 changes");
+    expect(undoTo(/^Charisma/)).toHaveAccessibleName("Undo to here, undoing 6 changes");
   });
 
   it("asks first, then undoes back to the entry in one write and announces it", async () => {
@@ -92,13 +98,13 @@ describe("UndoHistory", () => {
     await rendered();
 
     fireEvent.click(undoTo(/^Strength/));
-    const dialog = screen.getByRole("dialog", { name: "Undo 2 changes?" });
-    expect(dialog).toHaveTextContent("and the 1 change after it");
+    const dialog = screen.getByRole("dialog", { name: "Undo 5 changes?" });
+    expect(dialog).toHaveTextContent("and the 1 entry after it, 5 changes in all");
     expect(dialog).toHaveTextContent("There is no redo.");
     expect(posts(fetchMock)).toHaveLength(0);
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "Undo 2 changes" }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Undid 2 changes"));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Undo 5 changes" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Undid 5 changes"));
 
     const [[url, init]] = posts(fetchMock) as [[string, RequestInit]];
     expect(url).toBe("/api/characters/1/undo");
@@ -109,8 +115,8 @@ describe("UndoHistory", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("keeps the dialog open naming the refusal where the character moved on", async () => {
-    stub(
+  it("keeps the dialog open naming the refusal where the character moved on, and rereads both", async () => {
+    const fetchMock = stub(
       () =>
         new Response(
           JSON.stringify({ error: "The character changed since its undo history was read" }),
@@ -120,12 +126,20 @@ describe("UndoHistory", () => {
     await rendered();
 
     fireEvent.click(undoTo(/^Name/));
+    const reads = (path: string) =>
+      fetchMock.mock.calls.filter(([url, init]) => !init?.method && String(url) === path).length;
+    const before = [reads("/api/characters/1"), reads("/api/characters/1/undo")];
     const dialog = screen.getByRole("dialog", { name: "Undo 1 change?" });
     fireEvent.click(within(dialog).getByRole("button", { name: "Undo 1 change" }));
 
     await waitFor(() =>
       expect(within(dialog).getByRole("alert")).toHaveTextContent(
         "Undo failed: The character changed since its undo history was read",
+      ),
+    );
+    await waitFor(() =>
+      expect([reads("/api/characters/1"), reads("/api/characters/1/undo")]).toEqual(
+        before.map((count) => count + 1),
       ),
     );
   });

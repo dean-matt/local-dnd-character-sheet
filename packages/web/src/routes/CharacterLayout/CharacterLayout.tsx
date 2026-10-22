@@ -73,7 +73,7 @@ export function CharacterLayout() {
           </div>
         </div>
         {historyOpen && (
-          <Dock id={dockId} label="Undo history" onCollapse={() => setHistoryOpen(false)}>
+          <Dock id={dockId} label="Side panel" onCollapse={() => setHistoryOpen(false)}>
             <UndoHistory characterId={id} />
           </Dock>
         )}
