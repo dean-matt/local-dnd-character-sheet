@@ -38,7 +38,7 @@ describe("UndoHistoryButton", () => {
     const onToggle = vi.fn();
     renderWithClient(button(onToggle));
 
-    const toggle = screen.getByRole("button", { name: "Undo history" });
+    const toggle = screen.getByRole("button", { name: "Undo Changes" });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(toggle);
     expect(onToggle).toHaveBeenCalledOnce();
@@ -48,7 +48,7 @@ describe("UndoHistoryButton", () => {
     const fetchMock = stubUndo([ENTRY]);
     renderWithClient(button());
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Undo history" })).toHaveAccessibleDescription(
+      expect(screen.getByRole("button", { name: "Undo Changes" })).toHaveAccessibleDescription(
         "Control+Z or Command+Z undoes Charisma 17 to 18",
       ),
     );
@@ -71,7 +71,7 @@ describe("UndoHistoryButton", () => {
       </>,
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Undo history" })).toHaveAccessibleDescription(
+      expect(screen.getByRole("button", { name: "Undo Changes" })).toHaveAccessibleDescription(
         /Charisma 17 to 18/,
       ),
     );
@@ -94,7 +94,7 @@ describe("UndoHistoryButton", () => {
       </>,
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Undo history" })).toHaveAccessibleDescription(
+      expect(screen.getByRole("button", { name: "Undo Changes" })).toHaveAccessibleDescription(
         /Charisma 17 to 18/,
       ),
     );
@@ -108,7 +108,7 @@ describe("UndoHistoryButton", () => {
     renderWithClient(button());
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
-    const toggle = screen.getByRole("button", { name: "Undo history" });
+    const toggle = screen.getByRole("button", { name: "Undo Changes" });
     await waitFor(() => expect(toggle).toHaveAccessibleDescription("Nothing to undo"));
     fireEvent.keyDown(document.body, { key: "z", ctrlKey: true });
     expect(posts(fetchMock)).toHaveLength(0);

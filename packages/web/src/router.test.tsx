@@ -146,7 +146,7 @@ describe("routing", () => {
   it("docks the undo history beside the sheet, and returns focus to its button on close", async () => {
     renderAt("/characters/abc/p/stats");
     await pageShown("Stats");
-    const toggle = screen.getByRole("button", { name: "Undo history" });
+    const toggle = screen.getByRole("button", { name: "Undo Changes" });
 
     fireEvent.click(toggle);
     const dock = screen.getByRole("complementary", { name: "Side panel" });

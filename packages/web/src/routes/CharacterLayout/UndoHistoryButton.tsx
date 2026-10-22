@@ -87,11 +87,11 @@ export function UndoHistoryButton({
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-describedby={shortcutId}
-        title={`Undo history\n${shortcut}`}
+        title={`Undo Changes\n${shortcut}`}
         className="flex size-8 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-expanded:bg-accent-tint aria-expanded:text-ink"
       >
         <History size={16} aria-hidden="true" />
-        <span className="sr-only">Undo history</span>
+        <span className="sr-only">Undo Changes</span>
       </button>
       <span id={shortcutId} hidden>
         {shortcut}
