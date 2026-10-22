@@ -97,6 +97,11 @@ const SEARCH: Record<string, object[]> = {
 };
 
 const ROWS: Record<string, unknown> = {
+  "/api/races/Half-Elf/XPHB": {
+    ...XPHB("Half-Elf"),
+    edition: "one",
+    json: { ...XPHB("Half-Elf"), weaponProficiencies: [{ simple: true }] },
+  },
   "/api/classes/Fighter/XPHB": { ...FIGHTER, edition: "one", hitDie: 10, json: FIGHTER },
   "/api/classes/Fighter/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Fighter/XPHB/at/1": grants(1, 0, [feature("Second Wind", 1)]),
@@ -1764,7 +1769,25 @@ describe("LevelUp", () => {
 
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       expect(sent().levels).toEqual([{ class: ROGUE }, { class: PALADIN }]);
-      expect(sent().proficiencies.weapons).toEqual(["Martial"]);
+      expect(sent().proficiencies.weapons).toEqual(["Simple", "Martial"]);
+    });
+
+    it("keeps what the race still grants when the starting class changes", async () => {
+      const base = warlock(1);
+      renderSeeded(
+        warlock(1, {
+          proficiencies: { ...base.definition.proficiencies, weapons: ["Simple", "Martial"] },
+        }),
+        { history: true },
+      );
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().proficiencies.weapons).toEqual(["Simple"]);
     });
 
     it("refuses a new starting class while a later level takes the old one", async () => {

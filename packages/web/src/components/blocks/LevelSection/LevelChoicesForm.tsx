@@ -164,7 +164,7 @@ export function LevelChoicesForm({
         </div>
         <p className="text-muted text-row">
           {level === 1
-            ? "Hit points change from the level's Edit dialog. A new class leaves the skills and spells the old one let you pick; change them from their lists."
+            ? "Hit points change from the level's Edit dialog. A new class leaves the skills, tools and spells the old one let you pick; change them from their lists."
             : "Hit points change from the level's Edit dialog; the class a level was taken in stays."}
         </p>
       </ModalEntry>
