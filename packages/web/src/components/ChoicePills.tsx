@@ -1,4 +1,4 @@
-import { PRESS_PILL } from "../../lib/chipStyles.ts";
+import { PRESS_PILL } from "../lib/chipStyles.ts";
 
 export interface ChoicePillsProps {
   legend: string;

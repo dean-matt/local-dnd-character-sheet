@@ -1,12 +1,10 @@
 import type { IncreaseAlternative } from "@dnd/catalog";
 import { ABILITY_LABEL, type Ability, type CharacterDefinition } from "@dnd/character";
 import { useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
-import { signed } from "../../components/blocks/signed.ts";
-import { type Picks, readPicks } from "../../lib/increasePicks.ts";
+import { type IncreaseSource, increasesOf } from "../lib/grantorIncreases.ts";
+import { type Picks, readPicks } from "../lib/increasePicks.ts";
+import { signed } from "./blocks/signed.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
-import { increasesOf, withIncreases } from "./grantorIncreases.ts";
-import type { IncreaseSource } from "./useIncreaseOptions.ts";
 
 type Increase = CharacterDefinition["abilityIncreases"][number];
 
@@ -26,16 +24,28 @@ const fixedText = (alternative: IncreaseAlternative) =>
     .map(([ability, amount]) => `${signed(amount ?? 0)} ${ABILITY_LABEL[ability as Ability]}`)
     .join(", ");
 
+export interface SourceIncreasesProps {
+  source: IncreaseSource;
+  /** The increases stored for `source`'s grantor alone. */
+  mine: readonly Increase[];
+  /** Replaces the grantor's stored increases with `next`. */
+  onChange: (next: Increase[]) => void;
+  /** Hides the heading, where the card around it already names the row. */
+  headingHidden?: boolean;
+}
+
 /**
  * One race's or background's increases: what it fixes, which way to take them where it
  * offers more than one, and the ability each remaining increase goes to, never one
  * another slot already holds.
  */
-export function SourceIncreases({ source }: { source: IncreaseSource }) {
-  const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const increases = useWatch<CharacterDefinition, "abilityIncreases">({ name: "abilityIncreases" });
+export function SourceIncreases({
+  source,
+  mine,
+  onChange,
+  headingHidden = false,
+}: SourceIncreasesProps) {
   const { grantedBy, name, alternatives } = source;
-  const mine = (increases ?? []).filter((increase) => increase.grantedBy === grantedBy);
   // Stored increases say what was placed but not in which slot or which way, so an
   // alternative with nothing placed reads as the first and a slot filled out of order as
   // the earlier one. What the player placed is held here while it still matches the store.
@@ -49,24 +59,18 @@ export function SourceIncreases({ source }: { source: IncreaseSource }) {
 
   const store = (next: Picks) => {
     setPlaced(next);
-    setValue(
-      "abilityIncreases",
-      withIncreases(
-        getValues("abilityIncreases"),
-        grantedBy,
-        increasesOf(alternatives, next, grantedBy),
-      ),
-      { shouldDirty: true },
-    );
+    onChange(increasesOf(alternatives, next, grantedBy));
   };
   const label = grantedBy === "race" ? "Race" : "Background";
   const fixed = fixedText(alternative);
 
   return (
     <div className="flex flex-col gap-1">
-      <h3 className="font-semibold text-body">
-        {label}: {name}
-      </h3>
+      {!headingHidden && (
+        <h3 className="font-semibold text-body">
+          {label}: {name}
+        </h3>
+      )}
       {fixed && <p className="text-body">{fixed}</p>}
       {alternatives.length > 1 && (
         <ChoicePills

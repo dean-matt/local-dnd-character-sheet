@@ -12,6 +12,7 @@ import { rollDice } from "@dnd/dice";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { signed } from "../../components/blocks/signed.ts";
+import { ChoicePills } from "../../components/ChoicePills.tsx";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
@@ -31,7 +32,6 @@ import {
   type Scores,
   STANDARD_ARRAY,
 } from "./abilityMethods.ts";
-import { ChoicePills } from "./ChoicePills.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { ImprovementsField } from "./ImprovementsField.tsx";
 import { useIncreaseOptions } from "./useIncreaseOptions.ts";

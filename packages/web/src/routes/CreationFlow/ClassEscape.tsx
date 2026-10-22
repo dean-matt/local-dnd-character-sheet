@@ -1,6 +1,6 @@
 import { HIT_DICE } from "@dnd/character";
 import { useState } from "react";
-import { ChoicePills } from "./ChoicePills.tsx";
+import { ChoicePills } from "../../components/ChoicePills.tsx";
 import { TypedEscape } from "./TypedEscape.tsx";
 
 export interface ClassEscapeProps {

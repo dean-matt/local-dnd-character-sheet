@@ -1,9 +1,9 @@
 import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+import { ChoicePills } from "../../components/ChoicePills.tsx";
 import { setRefValue } from "../../lib/setRefValue.ts";
 import { heldFromBackground, withBackgroundPick, withFeatBlock } from "./backgroundFeats.ts";
-import { ChoicePills } from "./ChoicePills.tsx";
 import { useBackgroundFeats } from "./useBackgroundFeats.ts";
 
 /**

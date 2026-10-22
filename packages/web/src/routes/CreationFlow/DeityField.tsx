@@ -2,6 +2,7 @@ import type { CharacterDefinition, DeityRef } from "@dnd/character";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
+import { deityOf, deityUnavailable } from "../../lib/deityPick.ts";
 import { ChosenChip } from "./ChosenChip.tsx";
 
 /**
@@ -27,12 +28,10 @@ export function DeityField() {
         type="deity"
         placeholder="Choose a deity…"
         focusOnMount={moved}
-        unavailableReason={(hit) =>
-          "qualifier" in hit && hit.qualifier ? undefined : "names no pantheon"
-        }
+        unavailableReason={deityUnavailable}
         onPick={(ref, hit) => {
-          if ("name" in ref && "qualifier" in hit && hit.qualifier)
-            choose({ ...ref, pantheon: hit.qualifier });
+          const deity = deityOf(ref, hit);
+          if (deity) choose(deity);
         }}
       />
     );

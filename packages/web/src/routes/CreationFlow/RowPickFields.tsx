@@ -1,7 +1,8 @@
 import type { EntryRef } from "@dnd/character";
 import { PickField, type PickFieldProps } from "../../components/PickField.tsx";
+import type { PickGrantor } from "../../lib/spellGrantors.ts";
 import { spellOfferFilters } from "../../lib/spellOfferFilters.ts";
-import { cantripsOf, type PickGrantor, type RowPicks, spellsOf } from "./spellPicks.ts";
+import { cantripsOf, type RowPicks, spellsOf } from "./spellPicks.ts";
 
 /**
  * The picks one row offers apart from the class's, each kind it offers or already holds a

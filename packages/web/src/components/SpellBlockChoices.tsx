@@ -1,26 +1,20 @@
-import { type CharacterDefinition, spellBlockKey } from "@dnd/character";
-import { useFormContext } from "react-hook-form";
+import { spellBlockKey } from "@dnd/character";
+import type { SpellGrantorRef } from "../hooks/useGrantedSpells.ts";
+import { type BlockGrantor, blockGrantorOf } from "../lib/spellGrantors.ts";
 import { ChoicePills } from "./ChoicePills.tsx";
-import { blockGrantorOf, type Offer } from "./spellPicks.ts";
+
+export interface SpellBlockChoicesProps {
+  /** Each row and the labels of the alternative blocks it offers, none where it offers one. */
+  offers: readonly { row: SpellGrantorRef; blocks: readonly string[] }[];
+  onChoose: (grantor: BlockGrantor, block: number) => void;
+}
 
 /**
  * One choice for each row whose spells come as alternative blocks, such as the 2024 elf's
  * lineage: which block applies. The row's spells and picks follow the choice, and until it
  * is made the row's counts are the largest block's.
  */
-export function SpellBlockChoices({ offers }: { offers: readonly Offer[] }) {
-  const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const choose = (grantor: NonNullable<ReturnType<typeof blockGrantorOf>>, block: number) =>
-    setValue(
-      "spellBlocks",
-      [
-        ...(getValues("spellBlocks") ?? []).filter(
-          (choice) => spellBlockKey(choice.grantor) !== spellBlockKey(grantor),
-        ),
-        { grantor, block },
-      ],
-      { shouldDirty: true },
-    );
+export function SpellBlockChoices({ offers, onChoose }: SpellBlockChoicesProps) {
   const seen = new Set<string>();
   return offers.map(({ row, blocks }) => {
     const grantor = blockGrantorOf(row);
@@ -33,7 +27,7 @@ export function SpellBlockChoices({ offers }: { offers: readonly Offer[] }) {
         prompting={row.block === undefined}
         options={blocks.map((label, index) => ({ value: String(index), label }))}
         value={row.block === undefined ? undefined : String(row.block)}
-        onChange={(value) => choose(grantor, Number(value))}
+        onChange={(value) => onChoose(grantor, Number(value))}
       />
     );
   });

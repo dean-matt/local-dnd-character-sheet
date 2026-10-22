@@ -1,8 +1,8 @@
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { useWatch } from "react-hook-form";
+import { raceChoices } from "../../lib/raceChoices.ts";
 import { heldFromBackground } from "./backgroundFeats.ts";
 import { stepOf } from "./creationSteps.ts";
-import { raceChoices } from "./raceChoices.ts";
 import { useBackgroundFeats } from "./useBackgroundFeats.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 

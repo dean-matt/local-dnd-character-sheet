@@ -1,12 +1,10 @@
-import { type CharacterDefinition, type EntryRef, refKey } from "@dnd/character";
+import { type EntryRef, refKey } from "@dnd/character";
 import type { SpellGrantorRef } from "../../hooks/useGrantedSpells.ts";
 import type { CasterFacts } from "../../lib/casterFacts.ts";
+import { type PickGrantor, pickedForOf } from "../../lib/spellGrantors.ts";
 
 /** Where `departures` notes the spells picked against the class's list and counts. */
 export const SPELLS_FIELD = "spells";
-
-/** The row a pick was made for, where a row other than the class offered it. */
-export type PickGrantor = NonNullable<CharacterDefinition["spells"][number]["pickedFor"]>;
 
 /**
  * A spell picked, with what the lookup found: no level where no row answers, and `listed`
@@ -46,9 +44,6 @@ type Counts = { cantrips: number; spells: number };
  */
 export type SubclassPicks = Counts & { owed: Counts };
 
-/** The row a choice of alternative spell block is stored under. */
-export type BlockGrantor = CharacterDefinition["spellBlocks"][number]["grantor"];
-
 /** One row's offer, as `GET /spells/granted` counts it, and the row making it. */
 export type Offer = {
   row: SpellGrantorRef;
@@ -61,22 +56,6 @@ const grantorKey = (kind: string, ref: { name: string; source: string }) =>
   `${kind}|${refKey(ref)}`;
 
 const pickKey = (pickedFor: PickGrantor) => grantorKey(pickedFor.kind, pickedFor.ref);
-
-/** What a pick made for `row` stores, or `undefined` for the class and subclass, whose picks name none. */
-function pickedForOf({ grantor, ref, parent }: SpellGrantorRef): PickGrantor | undefined {
-  if (grantor === "class" || grantor === "subclass") return undefined;
-  if (grantor === "subrace") return parent ? { kind: grantor, ref, race: parent } : undefined;
-  return { kind: grantor, ref };
-}
-
-/** The row a block choice for `row` is stored under, or `undefined` for a class, which offers none. */
-export function blockGrantorOf(row: SpellGrantorRef): BlockGrantor | undefined {
-  if (row.grantor === "class") return undefined;
-  if (row.grantor === "subclass") {
-    return row.parent ? { kind: "subclass", ref: row.ref, class: row.parent } : undefined;
-  }
-  return pickedForOf(row);
-}
 
 /**
  * The picks a race, subrace, background, feat or optional feature offers, apart from the

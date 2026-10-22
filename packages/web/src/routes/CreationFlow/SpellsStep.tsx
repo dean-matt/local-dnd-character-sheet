@@ -5,23 +5,23 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogUnavailable } from "../../CatalogUnavailable.tsx";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
 import { PickField } from "../../components/PickField.tsx";
+import { SpellBlockChoices } from "../../components/SpellBlockChoices.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCatalogOutOfDate } from "../../hooks/useCatalogOutOfDate.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import type { CasterFacts } from "../../lib/casterFacts.ts";
 import { searchHitKey } from "../../lib/searchHitKey.ts";
+import { type BlockGrantor, type PickGrantor, withSpellBlock } from "../../lib/spellGrantors.ts";
 import { spellListFilters } from "../../lib/spellListFilters.ts";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { GrantedSpells } from "./GrantedSpells.tsx";
 import { NoCastingNote } from "./NoCastingNote.tsx";
 import { OwnSpells } from "./OwnSpells.tsx";
 import { RowPickList } from "./RowPickList.tsx";
-import { SpellBlockChoices } from "./SpellBlockChoices.tsx";
 import { StrayPicks } from "./StrayPicks.tsx";
 import {
   cantripsOf,
   classPicksOf,
-  type PickGrantor,
   SPELLS_FIELD,
   type SubclassPicks,
   spellsOf,
@@ -50,11 +50,18 @@ function sectionsShown(
 const countOf = (own: number | undefined, subclass: number, casts: boolean) =>
   casts ? (own === undefined ? undefined : own + subclass) : subclass;
 
-/** Adds a pick to the draft's spells, takes one out, and prepares or unprepares one. */
+/**
+ * Adds a pick to the draft's spells, takes one out, prepares or unprepares one, and chooses
+ * which of a row's alternative blocks applies.
+ */
 function useSpellEdits() {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const held = () => getValues("spells") ?? [];
   return {
+    chooseBlock: (grantor: BlockGrantor, block: number) =>
+      setValue("spellBlocks", withSpellBlock(getValues("spellBlocks") ?? [], grantor, block), {
+        shouldDirty: true,
+      }),
     add: (ref: EntryRef, prepared: boolean, pickedFor?: PickGrantor) =>
       setValue("spells", [...held(), { ref, prepared, ...(pickedFor && { pickedFor }) }], {
         shouldDirty: true,
@@ -95,7 +102,7 @@ function escapeLabel(casts: boolean, className: string, rows: boolean) {
  * held to its count and offer rather than the class's.
  */
 export function SpellsStep() {
-  const { add, remove, toggle } = useSpellEdits();
+  const { add, remove, toggle, chooseBlock } = useSpellEdits();
   const edition = useWatch<CharacterDefinition, "edition">({ name: "edition" }) ?? "one";
   const {
     tablesReady,
@@ -169,7 +176,7 @@ export function SpellsStep() {
           />
         )}
       </div>
-      <SpellBlockChoices offers={offers} />
+      <SpellBlockChoices offers={offers} onChoose={chooseBlock} />
       <StrayPicks strays={strayPicks(picked, rows)} onRemove={remove} />
       <RowPickList
         rows={rows}

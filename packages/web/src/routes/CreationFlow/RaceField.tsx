@@ -3,15 +3,16 @@ import { type CharacterDefinition, displayName, type EntryRef } from "@dnd/chara
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
+import { ChoicePills } from "../../components/ChoicePills.tsx";
+import { CUSTOM_RACE_SOURCE } from "../../lib/customRace.ts";
 import { RACE_FIELD, withDeparture } from "../../lib/departures.ts";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
-import { ChoicePills } from "./ChoicePills.tsx";
+import { raceChoices } from "../../lib/raceChoices.ts";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { RaceGrants } from "./RaceGrants.tsx";
-import { raceChoices } from "./raceChoices.ts";
 import { TypedEscape } from "./TypedEscape.tsx";
-import { CUSTOM_RACE_SOURCE, useIdentityCatalog } from "./useIdentityCatalog.ts";
+import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 const OPTS = { shouldDirty: true } as const;
 

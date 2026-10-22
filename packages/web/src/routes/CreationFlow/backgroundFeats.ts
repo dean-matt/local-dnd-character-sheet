@@ -1,6 +1,7 @@
 import type { FeatRecord } from "@dnd/catalog";
-import { type CharacterDefinition, type EntryRef, entryKey, spellBlockKey } from "@dnd/character";
+import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
 import { z } from "zod";
+import { withSpellBlock } from "../../lib/spellGrantors.ts";
 
 type Feats = CharacterDefinition["feats"];
 type Blocks = CharacterDefinition["spellBlocks"];
@@ -137,9 +138,5 @@ export function withBackgroundPick(feats: Feats, background: EntryRef, pick: Row
  * `blocks` with the spell list `block` chosen for `feat`, or `blocks` itself where it
  * already is.
  */
-export function withFeatBlock(blocks: Blocks, feat: Row, block: number): Blocks {
-  const grantor = { kind: "feat" as const, ref: { name: feat.name, source: feat.source } };
-  const held = blocks.find((choice) => spellBlockKey(choice.grantor) === spellBlockKey(grantor));
-  if (held?.block === block) return blocks;
-  return [...blocks.filter((choice) => choice !== held), { grantor, block }];
-}
+export const withFeatBlock = (blocks: Blocks, feat: Row, block: number): Blocks =>
+  withSpellBlock(blocks, { kind: "feat", ref: { name: feat.name, source: feat.source } }, block);
