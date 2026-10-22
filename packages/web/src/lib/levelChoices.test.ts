@@ -61,6 +61,25 @@ describe("levelChoiceRefusals", () => {
     expect(levelChoiceRefusals(newest, changed(3), 3, NO_ROWS)).toEqual([]);
   });
 
+  it("names the later levels in the old or new starting class, and allows the rest", () => {
+    const WIZARD = PHB("Wizard");
+    const ROGUE = PHB("Rogue");
+    const started = (cls: typeof FIGHTER, ...later: (typeof FIGHTER)[]) =>
+      definition({ levels: [cls, ...later].map((each) => ({ class: each })) });
+
+    expect(
+      levelChoiceRefusals(
+        started(FIGHTER, FIGHTER, WIZARD),
+        started(WIZARD, FIGHTER, WIZARD),
+        1,
+        NO_ROWS,
+      ),
+    ).toEqual(["Levels 2 and 3 take Fighter or Wizard; remove them to change the starting class."]);
+    expect(
+      levelChoiceRefusals(started(FIGHTER, ROGUE), started(WIZARD, ROGUE), 1, NO_ROWS),
+    ).toEqual([]);
+  });
+
   it("names a pick made for a feat the level no longer takes", () => {
     const initiate = {
       ref: PHB("Magic Initiate"),

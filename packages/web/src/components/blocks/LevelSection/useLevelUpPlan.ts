@@ -9,15 +9,15 @@ import {
   withImprovement,
 } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useFeats } from "../../../../hooks/useFeats.ts";
-import { useImprovementGrants } from "../../../../hooks/useImprovementGrants.ts";
-import { takenOption, withFeatureChoice } from "../../../../lib/featureChoices.ts";
-import { type FeatureOffering, featureOfferings } from "../../../../lib/featureOfferings.ts";
-import { isMade } from "../../../../lib/improvementChoice.ts";
-import { candidateAt } from "../../../../lib/improvementFeats.ts";
-import { withPrerequisiteDepartures } from "../../../../lib/multiclassPrerequisites.ts";
-import { NO_GRANTS, swapGrants } from "../../../../lib/proficiencyGrants.ts";
-import { setRefValue } from "../../../../lib/setRefValue.ts";
+import { useFeats } from "../../../hooks/useFeats.ts";
+import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
+import { takenOption, withFeatureChoice } from "../../../lib/featureChoices.ts";
+import { type FeatureOffering, featureOfferings } from "../../../lib/featureOfferings.ts";
+import { isMade } from "../../../lib/improvementChoice.ts";
+import { candidateAt } from "../../../lib/improvementFeats.ts";
+import { withPrerequisiteDepartures } from "../../../lib/multiclassPrerequisites.ts";
+import { NO_GRANTS, swapGrants } from "../../../lib/proficiencyGrants.ts";
+import { setRefValue } from "../../../lib/setRefValue.ts";
 import type { HitPointMethod } from "./hitPointPick.ts";
 import { featuresAt, tableChanges } from "./levelUpChanges.ts";
 import { useLevelUpClass } from "./useLevelUpClass.ts";

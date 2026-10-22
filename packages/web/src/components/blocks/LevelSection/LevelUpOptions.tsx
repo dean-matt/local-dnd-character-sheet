@@ -1,10 +1,10 @@
 import { displayName, entryKey, grantorKey } from "@dnd/character";
-import { featureTypeLabel, featureTypeNoun } from "../../../../lib/featureTypeLabel.ts";
+import { featureTypeLabel, featureTypeNoun } from "../../../lib/featureTypeLabel.ts";
 import {
   optionalFeatureJudge,
   prerequisiteFacts,
-} from "../../../../lib/optionalFeaturePrerequisites.ts";
-import { PickField } from "../../../PickField.tsx";
+} from "../../../lib/optionalFeaturePrerequisites.ts";
+import { PickField } from "../../PickField.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 
 /**

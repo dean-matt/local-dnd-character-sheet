@@ -2,9 +2,9 @@ import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
-import { characterKey } from "../../../../hooks/characterKeys.ts";
-import { characterRecord, derivedRecord } from "../../../../test/records.ts";
-import { LevelHistory } from "../LevelHistory.tsx";
+import { characterKey } from "../../../hooks/characterKeys.ts";
+import { characterRecord, derivedRecord } from "../../../test/records.ts";
+import { LevelHistory } from "./LevelHistory.tsx";
 import { LevelUp } from "./LevelUp.tsx";
 
 vi.mock("@dnd/dice", () => ({ rollDice: () => ({ total: 5 }) }));
@@ -97,6 +97,18 @@ const SEARCH: Record<string, object[]> = {
 };
 
 const ROWS: Record<string, unknown> = {
+  "/api/backgrounds?edition=one&limit=200": page([
+    {
+      ...XPHB("Charlatan"),
+      edition: "one",
+      json: { ...XPHB("Charlatan"), armorProficiencies: [{ medium: true }] },
+    },
+  ]),
+  "/api/races/Half-Elf/XPHB": {
+    ...XPHB("Half-Elf"),
+    edition: "one",
+    json: { ...XPHB("Half-Elf"), weaponProficiencies: [{ simple: true }] },
+  },
   "/api/classes/Fighter/XPHB": { ...FIGHTER, edition: "one", hitDie: 10, json: FIGHTER },
   "/api/classes/Fighter/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Fighter/XPHB/at/1": grants(1, 0, [feature("Second Wind", 1)]),
@@ -107,6 +119,11 @@ const ROWS: Record<string, unknown> = {
     hitDie: 8,
     json: {
       ...WARLOCK,
+      proficiency: ["wis", "cha"],
+      startingProficiencies: {
+        armorProficiencies: [{ light: true, medium: true }],
+        weapons: ["simple", "martial"],
+      },
       classFeatures: [
         { classFeature: "Warlock Subclass|Warlock|XPHB|3", gainSubclassFeature: true },
       ],
@@ -162,6 +179,11 @@ const ROWS: Record<string, unknown> = {
   ),
   "/api/classes/Rogue/XPHB": entryRow(ROGUE, 8, {
     primaryAbility: [{ dex: true }],
+    proficiency: ["dex", "int"],
+    startingProficiencies: {
+      armorProficiencies: [{ light: true }],
+      toolProficiencies: [{ "thieves' tools": true }],
+    },
     multiclassing: {
       proficienciesGained: {
         skills: [{ choose: { from: ["acrobatics", "stealth"], count: 1 } }],
@@ -1284,18 +1306,21 @@ describe("LevelUp", () => {
     });
   });
 
-  describe("removing the newest level", () => {
+  describe("removing a level", () => {
     const history = () => screen.getByRole("region", { name: "Level History" });
     const undoEntry = () => new Headers(writes.mock.calls.at(-1)?.[1]?.headers).get("Undo-Entry");
 
     /** Applies the level-up the dialog holds, closes it, then removes the level it added. */
-    async function applyThenRemove(named: string) {
+    async function applyThenRemove(level: number, named: string) {
       await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(applyButton());
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       fireEvent.click(await within(dialog()).findByRole("button", { name: "Done" }));
-      fireEvent.click(within(history()).getByRole("button", { name: "Remove newest level" }));
-      fireEvent.click(within(history()).getByRole("button", { name: `Remove ${named}` }));
+      fireEvent.click(
+        await within(history()).findByRole("button", { name: `Edit level ${level}` }),
+      );
+      fireEvent.click(within(dialog()).getByRole("button", { name: `Remove level ${level}` }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: `Remove ${named}` }));
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(2));
     }
 
@@ -1316,14 +1341,16 @@ describe("LevelUp", () => {
       await within(dialog()).findByRole("combobox", { name: "Level 4 choice" });
       choose("Level 4 choice", "Alert");
       choose("Pact Choice", "Pact of the Tome");
-      await applyThenRemove("level 4 (Warlock 4)");
+      await applyThenRemove(4, "level 4 (Warlock 4)");
 
       expect(sent()).toEqual(before);
       expect(undoEntry()).toBe("own");
       await waitFor(() =>
         expect(within(history()).queryByRole("rowheader", { name: "4" })).toBeNull(),
       );
-      expect(within(history()).getByRole("button", { name: "Remove newest level" })).toHaveFocus();
+      await waitFor(() =>
+        expect(within(history()).getByRole("button", { name: "Edit level 3" })).toHaveFocus(),
+      );
     });
 
     it("takes back the subclass a level chose and the options picked under it", async () => {
@@ -1341,7 +1368,7 @@ describe("LevelUp", () => {
         await pickSpell("Add a maneuver", name);
         await within(dialog()).findByRole("button", { name: `Remove ${name}` });
       }
-      await applyThenRemove("level 3 (Fighter 3)");
+      await applyThenRemove(3, "level 3 (Fighter 3)");
 
       expect(sent()).toEqual(before);
     });
@@ -1356,15 +1383,46 @@ describe("LevelUp", () => {
       await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" });
       await pickSpell("Add a spell", "Misty Step");
       await within(dialog()).findByRole("button", { name: "Remove Misty Step" });
-      await applyThenRemove("level 4 (Sorcerer 4)");
+      await applyThenRemove(4, "level 4 (Sorcerer 4)");
 
       expect(sent()).toEqual(before.definition);
     });
 
-    it("offers no removal to a character of one level", async () => {
-      renderSeeded(warlock(1), { history: true });
-      await within(history()).findByRole("rowheader", { name: "1" });
-      expect(within(history()).queryByRole("button", { name: "Remove newest level" })).toBeNull();
+    it("removes a middle level with every level after it, naming each, as one undo entry", async () => {
+      const before = warlock(4);
+      renderSeeded(before, { history: true });
+      fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 3" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Remove level 3" }));
+      expect(within(dialog()).getByRole("heading", { name: "Remove levels 3 to 4" })).toBeVisible();
+      expect(
+        within(dialog()).getByText(/Remove level 3 \(Warlock 3\) and level 4 \(Warlock 4\), with/),
+      ).toBeVisible();
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Remove 2 levels" }));
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
+      expect(undoEntry()).toBe("own");
+      await waitFor(() =>
+        expect(within(history()).getByRole("button", { name: "Edit level 2" })).toHaveFocus(),
+      );
+    });
+
+    it("goes back to the Edit dialog from the confirmation, writing nothing", async () => {
+      renderSeeded(warlock(3), { history: true });
+      fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 3" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Remove level 3" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Cancel" }));
+
+      expect(within(dialog()).getByRole("heading", { name: "Edit level 3" })).toBeVisible();
+      expect(within(dialog()).getByRole("button", { name: "Apply changes" })).toBeVisible();
+      expect(writes).not.toHaveBeenCalled();
+    });
+
+    it("offers no removal to the first level", async () => {
+      renderSeeded(warlock(2), { history: true });
+      fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 1" }));
+      expect(within(dialog()).queryByRole("button", { name: /^Remove level/ })).toBeNull();
+      expect(within(dialog()).getByRole("combobox", { name: "Starting class" })).toBeVisible();
     });
   });
 
@@ -1399,9 +1457,9 @@ describe("LevelUp", () => {
 
     async function reopen(level: number) {
       fireEvent.click(
-        await within(history()).findByRole("button", { name: `Change choices, level ${level}` }),
+        await within(history()).findByRole("button", { name: `Edit level ${level}` }),
       );
-      await within(dialog()).findByText(/Hit points change from the level's row/);
+      await within(dialog()).findByRole("heading", { name: `Edit level ${level}` });
     }
 
     it("swaps a spell an earlier level picked, as one write and one undo entry", async () => {
@@ -1433,6 +1491,24 @@ describe("LevelUp", () => {
       });
       expect(undoEntry()).toBe("own");
       await waitFor(() => expect(document.querySelector("dialog[open]")).toBeNull());
+    });
+
+    it("writes a new hit point gain with a changed pick, as one write and one undo entry", async () => {
+      const character = sorcererOfFive();
+      renderSeeded(character, { history: true });
+      await reopen(4);
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      await pickSpell("Add a spell", "Burning Hands");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d6)" }));
+      expect(within(dialog()).getByText("Rolled 5 on the d6")).toBeInTheDocument();
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels[3]).toEqual({ class: SORCERER, rolled: 5 });
+      expect(sent().spells).toContainEqual(picked("Burning Hands"));
+      expect(sent().spells).not.toContainEqual(picked("Misty Step"));
+      expect(undoEntry()).toBe("own");
     });
 
     it("refuses to drop a prepared spell, naming it, and writes nothing on Cancel", async () => {
@@ -1675,12 +1751,101 @@ describe("LevelUp", () => {
       expect(within(picks).getByRole("button", { name: "Remove Prestidigitation" })).toBeVisible();
     });
 
-    it("offers no change to the first level, whose choices creation made", async () => {
-      renderSeeded(sorcererOfFive(), { history: true });
-      await within(history()).findByRole("button", { name: "Change choices, level 2" });
+    it("changes the starting class, swapping what each grants outright, as one undo entry", async () => {
+      const base = warlock(1);
+      const { proficiencies } = base.definition;
+      renderSeeded(
+        warlock(1, {
+          proficiencies: {
+            ...proficiencies,
+            savingThrows: ["wis", "cha"],
+            armor: ["Light", "Shield"],
+          },
+        }),
+        { history: true },
+      );
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels).toEqual([{ class: ROGUE }]);
+      expect(sent().proficiencies).toMatchObject({
+        savingThrows: ["dex", "int"],
+        armor: ["Light", "Shield"],
+        tools: [{ name: "Thieves' Tools", level: "proficient" }],
+      });
+      expect(undoEntry()).toBe("own");
+    });
+
+    it("names the new starting class's die in the first level's hit points", async () => {
+      renderSeeded(warlock(1), { history: true });
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Paladin" }));
+
       expect(
-        within(history()).queryByRole("button", { name: "Change choices, level 1" }),
-      ).toBeNull();
+        await within(dialog()).findByText("Highest face of the d10; a roll cannot change it."),
+      ).toBeVisible();
+    });
+
+    it("keeps what a later class still grants when the starting class changes", async () => {
+      const base = warlock(2);
+      renderSeeded(
+        warlock(2, {
+          levels: [{ class: WARLOCK }, { class: PALADIN }],
+          proficiencies: { ...base.definition.proficiencies, weapons: ["Simple", "Martial"] },
+        }),
+        { history: true },
+      );
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels).toEqual([{ class: ROGUE }, { class: PALADIN }]);
+      expect(sent().proficiencies.weapons).toEqual(["Simple", "Martial"]);
+    });
+
+    it("keeps what the race and the background still grant when the starting class changes", async () => {
+      const base = warlock(1);
+      renderSeeded(
+        warlock(1, {
+          proficiencies: {
+            ...base.definition.proficiencies,
+            weapons: ["Simple", "Martial"],
+            armor: ["Light", "Medium"],
+          },
+        }),
+        { history: true },
+      );
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().proficiencies.weapons).toEqual(["Simple"]);
+      expect(sent().proficiencies.armor).toEqual(["Light", "Medium"]);
+    });
+
+    it("refuses a new starting class while a later level takes the old one", async () => {
+      renderSeeded(warlock(2), { history: true });
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+
+      expect(
+        await within(dialog()).findByText(
+          "Level 2 takes Warlock or Rogue; remove it to change the starting class.",
+        ),
+      ).toBeVisible();
+      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
     });
   });
 });

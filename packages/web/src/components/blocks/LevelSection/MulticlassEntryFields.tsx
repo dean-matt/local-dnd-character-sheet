@@ -1,6 +1,6 @@
 import { refKey } from "@dnd/character";
 import { useId } from "react";
-import { prerequisiteText } from "../../../../lib/multiclassPrerequisites.ts";
+import { prerequisiteText } from "../../../lib/multiclassPrerequisites.ts";
 import { EntryPickField } from "./EntryPickField.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 

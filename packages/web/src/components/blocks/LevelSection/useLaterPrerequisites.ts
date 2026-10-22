@@ -1,19 +1,19 @@
 import { catalogRowRecordSchema, optionalFeaturePrerequisitesSchema } from "@dnd/catalog";
 import { type CharacterDefinition, classLevels, displayName, entryKey } from "@dnd/character";
 import { useQueries } from "@tanstack/react-query";
-import { classQuery } from "../../../../hooks/classQuery.ts";
-import { useFeats } from "../../../../hooks/useFeats.ts";
-import { ApiError, apiGet } from "../../../../lib/api.ts";
-import { levelChoiceDepartures, type PrerequisiteRows } from "../../../../lib/levelChoices.ts";
-import { retryUnlessClientError } from "../../../../lib/retryUnlessClientError.ts";
+import { classQuery } from "../../../hooks/classQuery.ts";
+import { useFeats } from "../../../hooks/useFeats.ts";
+import { ApiError, apiGet } from "../../../lib/api.ts";
+import { levelChoiceDepartures, type PrerequisiteRows } from "../../../lib/levelChoices.ts";
+import { retryUnlessClientError } from "../../../lib/retryUnlessClientError.ts";
 import { prerequisiteOf } from "./useMulticlassEntry.ts";
 
 /**
  * The catalog rows the prerequisites of `definition`'s picks live on: each held option's
- * row, the edition's feats, and each held class's row, and the multiclass departures a changed
- * definition carries. A homebrew option or class needs nothing.
+ * row, the edition's feats, and the row of each class `after` holds, and the multiclass
+ * departures `after`, `definition` changed, carries. A homebrew option or class needs nothing.
  */
-export function useLaterPrerequisites(definition: CharacterDefinition) {
+export function useLaterPrerequisites(definition: CharacterDefinition, after: CharacterDefinition) {
   const options = definition.optionalFeatures.flatMap(({ ref }) => ("name" in ref ? [ref] : []));
   const optionRows = useQueries({
     queries: options.map((ref) => ({
@@ -27,7 +27,7 @@ export function useLaterPrerequisites(definition: CharacterDefinition) {
     })),
   });
   const feats = useFeats(definition.edition);
-  const groups = classLevels(definition);
+  const groups = classLevels(after);
   const classRows = useQueries({
     queries: groups.map((group) => classQuery("name" in group.class ? group.class : undefined)),
   });
@@ -43,9 +43,7 @@ export function useLaterPrerequisites(definition: CharacterDefinition) {
   };
   const judged = groups.map((group, index) => ({
     name: displayName(group.class),
-    firstIndex: definition.levels.findIndex(
-      (level) => entryKey(level.class) === entryKey(group.class),
-    ),
+    firstIndex: after.levels.findIndex((level) => entryKey(level.class) === entryKey(group.class)),
     prerequisite: prerequisiteOf(group.class, classRows[index]?.data?.json),
   }));
   /** An option whose row is gone, renamed upstream since, needs nothing rather than locking Apply. */
@@ -53,7 +51,7 @@ export function useLaterPrerequisites(definition: CharacterDefinition) {
     row.error instanceof ApiError && row.error.status === 404;
   return {
     rows,
-    departures: (after: CharacterDefinition) => levelChoiceDepartures(definition, after, judged),
+    departures: levelChoiceDepartures(definition, after, judged),
     read:
       (feats.isSuccess || !definition.feats.some((feat) => feat.level !== undefined)) &&
       optionRows.every((row) => row.isSuccess || gone(row)) &&

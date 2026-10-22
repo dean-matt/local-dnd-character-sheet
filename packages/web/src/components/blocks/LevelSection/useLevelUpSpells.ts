@@ -7,8 +7,8 @@ import {
   entryKey,
 } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
-import { useSpellLookup } from "../../../../hooks/useSpellLookup.ts";
-import { setRefValue } from "../../../../lib/setRefValue.ts";
+import { useSpellLookup } from "../../../hooks/useSpellLookup.ts";
+import { setRefValue } from "../../../lib/setRefValue.ts";
 import { spellsGained, subclassSpellsGained } from "./spellsGained.ts";
 import type { useLevelUpClass } from "./useLevelUpClass.ts";
 

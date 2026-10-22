@@ -1,8 +1,8 @@
 import { averageHitPoints, type HitDie } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 import { useId, useState } from "react";
-import { InputField } from "../../../InputField.tsx";
-import { signed } from "../../signed.ts";
+import { InputField } from "../../InputField.tsx";
+import { signed } from "../signed.ts";
 import { type HitPointMethod, typedFace } from "./hitPointPick.ts";
 
 const BUTTON =

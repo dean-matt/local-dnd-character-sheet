@@ -1,7 +1,7 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../test/records.ts";
-import { withoutNewestLevel } from "./levelRemoval.ts";
+import { withoutLevelsFrom, withoutNewestLevel } from "./levelRemoval.ts";
 
 const PHB = (name: string) => ({ name, source: "PHB" });
 const FIGHTER = PHB("Fighter");
@@ -141,5 +141,24 @@ describe("withoutNewestLevel", () => {
     const before = definition({ levels: [{ class: FIGHTER }] });
 
     expect(withoutNewestLevel(before)).toBe(before);
+  });
+});
+
+describe("withoutLevelsFrom", () => {
+  it("takes the level and every level after it, with what each brought", () => {
+    const before = definition({
+      levels: [{ class: FIGHTER }, { class: FIGHTER }, { class: FIGHTER, subclass: CHAMPION }],
+      featureChoices: [choice("Fighting Style", 1), choice("Action Surge", 2)],
+    });
+
+    expect(withoutLevelsFrom(before, 2)).toEqual(
+      definition({ levels: [{ class: FIGHTER }], featureChoices: [choice("Fighting Style", 1)] }),
+    );
+  });
+
+  it("keeps level 1, which a character cannot be without", () => {
+    const before = definition({ levels: [{ class: FIGHTER }, { class: WIZARD }] });
+
+    expect(withoutLevelsFrom(before, 1).levels).toEqual([{ class: FIGHTER }]);
   });
 });

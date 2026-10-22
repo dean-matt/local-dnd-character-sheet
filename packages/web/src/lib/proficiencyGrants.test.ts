@@ -47,6 +47,16 @@ describe("swapGrants", () => {
     });
   });
 
+  it("keeps what a source the change leaves in place still grants", () => {
+    const before = { ...NO_GRANTS, weapons: ["Dagger"], savingThrows: ["int" as const] };
+    const still = { ...NO_GRANTS, weapons: ["Dagger"] };
+
+    expect(swapGrants(held, before, NO_GRANTS, still)).toEqual({
+      ...held,
+      savingThrows: [],
+    });
+  });
+
   it("swaps the saving throws a replaced class granted", () => {
     const before = { ...NO_GRANTS, savingThrows: ["int" as const, "wis" as const] };
     const after = { ...NO_GRANTS, savingThrows: ["str" as const, "con" as const] };

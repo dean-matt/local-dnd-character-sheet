@@ -14,6 +14,19 @@ export function typedGain(text: string): number | undefined {
   return /^\d+$/.test(trimmed) && gain >= 1 && gain <= MAX_HIT_POINT_GAIN ? gain : undefined;
 }
 
+/** A gain the Edit dialog holds until Apply: a `GainEdit`, or typed text Apply checks. */
+export type GainDraft =
+  | { kind: "average" }
+  | { kind: "roll"; face: number }
+  | { kind: "typed"; text: string };
+
+/** The edit `draft` makes, or `undefined` for typed text that is no gain. */
+export function draftedGain(draft: GainDraft): GainEdit | undefined {
+  if (draft.kind !== "typed") return draft;
+  const gain = typedGain(draft.text);
+  return gain === undefined ? undefined : { kind: "typed", gain };
+}
+
 export const typedGainMessage = `A typed gain is a whole number from 1 to ${MAX_HIT_POINT_GAIN}.`;
 
 /**

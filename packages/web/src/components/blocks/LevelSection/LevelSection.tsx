@@ -8,7 +8,7 @@ import { ExperienceTracker } from "./ExperienceTracker.tsx";
 import { Improvements } from "./Improvements.tsx";
 import { LevelHistory } from "./LevelHistory.tsx";
 import { LevelingField } from "./LevelingField.tsx";
-import { LevelUp } from "./LevelUp/LevelUp.tsx";
+import { LevelUp } from "./LevelUp.tsx";
 
 export function LevelSection({ character }: { character: CharacterRecord | undefined }) {
   const captionId = useId();

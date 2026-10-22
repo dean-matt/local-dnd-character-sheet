@@ -15,10 +15,10 @@ import {
   entryKey,
 } from "@dnd/character";
 import { useQueries } from "@tanstack/react-query";
-import { classQuery } from "../../../../hooks/classQuery.ts";
-import { useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
-import { meetsPrerequisite } from "../../../../lib/multiclassPrerequisites.ts";
-import { type Granted, NO_GRANTS, resolveGrants } from "../../../../lib/proficiencyGrants.ts";
+import { classQuery } from "../../../hooks/classQuery.ts";
+import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
+import { meetsPrerequisite } from "../../../lib/multiclassPrerequisites.ts";
+import { type Granted, NO_GRANTS, resolveGrants } from "../../../lib/proficiencyGrants.ts";
 import { skillPickOf, toolPicksOf } from "./entryPicks.ts";
 
 const catalogOf = (cls: EntryRef) => ("name" in cls ? cls : undefined);

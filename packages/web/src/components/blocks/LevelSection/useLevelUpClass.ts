@@ -7,11 +7,11 @@ import {
   entryKey,
 } from "@dnd/character";
 import { useQuery } from "@tanstack/react-query";
-import { classGrantsQuery } from "../../../../hooks/classGrantsQuery.ts";
-import { classQuery } from "../../../../hooks/classQuery.ts";
-import { homebrewClassQuery } from "../../../../hooks/homebrewClassQuery.ts";
-import { subclassesQuery } from "../../../../hooks/subclassesQuery.ts";
-import { subclassGrantsQuery } from "../../../../hooks/subclassGrantsQuery.ts";
+import { classGrantsQuery } from "../../../hooks/classGrantsQuery.ts";
+import { classQuery } from "../../../hooks/classQuery.ts";
+import { homebrewClassQuery } from "../../../hooks/homebrewClassQuery.ts";
+import { subclassesQuery } from "../../../hooks/subclassesQuery.ts";
+import { subclassGrantsQuery } from "../../../hooks/subclassGrantsQuery.ts";
 
 const sameRef = (row: ContentRef, ref: ContentRef | undefined) =>
   ref !== undefined && row.name === ref.name && row.source === ref.source;

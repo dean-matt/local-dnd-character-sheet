@@ -1,12 +1,12 @@
 import type { SubclassRecord } from "@dnd/catalog";
 import { type CharacterDefinition, entryKey, featureKey, refKey } from "@dnd/character";
 import { useId } from "react";
-import { useDisabledSources } from "../../../../hooks/useDisabledSources.ts";
-import { shownOptions } from "../../../../lib/featureChoices.ts";
-import { grantTitle } from "../../../../lib/improvementGrants.ts";
-import { FormField } from "../../../FormField.tsx";
-import { ImprovementField } from "../../../ImprovementField.tsx";
-import { Select } from "../../../Select.tsx";
+import { useDisabledSources } from "../../../hooks/useDisabledSources.ts";
+import { shownOptions } from "../../../lib/featureChoices.ts";
+import { grantTitle } from "../../../lib/improvementGrants.ts";
+import { FormField } from "../../FormField.tsx";
+import { ImprovementField } from "../../ImprovementField.tsx";
+import { Select } from "../../Select.tsx";
 import { LevelUpOptions } from "./LevelUpOptions.tsx";
 import { LevelUpSpells } from "./LevelUpSpells.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";

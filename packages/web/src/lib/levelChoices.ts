@@ -96,6 +96,26 @@ const subclassBuiltOn: Refusal = (before, after, level) => {
   ];
 };
 
+/**
+ * A later level in the old starting class or the new one, whose class level the change would
+ * shift: the old class's would start over as a multiclass entry, and the new class's would
+ * take a second first level.
+ */
+const startingClassBuiltOn: Refusal = (before, after, level) => {
+  const was = before.levels[0]?.class;
+  const now = after.levels[0]?.class;
+  if (level !== 1 || !was || !now || entryKey(was) === entryKey(now)) return [];
+  const shared = new Set([entryKey(was), entryKey(now)]);
+  const later = before.levels.flatMap((each, index) =>
+    index > 0 && shared.has(entryKey(each.class)) ? [String(index + 1)] : [],
+  );
+  if (later.length === 0) return [];
+  const many = later.length > 1;
+  return [
+    `${many ? "Levels" : "Level"} ${listed(later)} ${many ? "take" : "takes"} ${displayName(was)} or ${displayName(now)}; remove ${many ? "them" : "it"} to change the starting class.`,
+  ];
+};
+
 const preparedDropped: Refusal = (before, after) => {
   const kept = new Set(after.spells.map((spell) => entryKey(spell.ref)));
   return before.spells
@@ -166,8 +186,9 @@ const featShort =
 /**
  * Why `after`, `before` with `level`'s choices made again, cannot be written, one line per
  * dependency, naming it: a later level in the class building on a subclass the level
- * changes, a prepared spell the level no longer picks, a pick made for a feat or option it
- * no longer takes, an option whose prerequisite the level's picks met, and a feat from
+ * changes, a later level in the class level 1 gives up or in the one it takes up, a prepared
+ * spell the level no longer picks, a pick made for a feat or option it no longer takes, an
+ * option whose prerequisite the level's picks met, and a feat from
  * another level whose ability prerequisite the level's increases met. A prerequisite met
  * before the change and unmet after it refuses; one unmet already is the user's to keep.
  */
@@ -177,9 +198,14 @@ export const levelChoiceRefusals = (
   level: number,
   rows: PrerequisiteRows,
 ) =>
-  [subclassBuiltOn, preparedDropped, grantorDropped, optionShort(rows), featShort(rows)].flatMap(
-    (refusal) => refusal(before, after, level),
-  );
+  [
+    subclassBuiltOn,
+    startingClassBuiltOn,
+    preparedDropped,
+    grantorDropped,
+    optionShort(rows),
+    featShort(rows),
+  ].flatMap((refusal) => refusal(before, after, level));
 
 /**
  * `after`'s departures with every multiclass prerequisite its scores leave unmet noted, as the
