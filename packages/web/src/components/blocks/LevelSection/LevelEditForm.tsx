@@ -174,11 +174,12 @@ export function LevelEditForm({
             </>
           )}
         </div>
-        <p className="text-muted text-row">
-          {level === 1
-            ? "A new class leaves the skills, tools and spells the old one let you pick; change them from their lists."
-            : "The class a level was taken in stays."}
-        </p>
+        {level === 1 && (
+          <p className="text-muted text-row">
+            A new class leaves the skills, tools and spells the old one let you pick; change them
+            from their lists.
+          </p>
+        )}
       </ModalEntry>
     </Modal>
   );
