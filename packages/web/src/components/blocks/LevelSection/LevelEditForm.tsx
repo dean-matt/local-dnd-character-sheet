@@ -1,8 +1,10 @@
 import { type CharacterDefinition, entryKey } from "@dnd/character";
+import { type ReactNode, useId } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { levelChoiceRefusals } from "../../../lib/levelChoices.ts";
 import { Modal } from "../../Modal.tsx";
 import { ModalEntry } from "../../ModalEntry.tsx";
+import { LevelEditAlert } from "./LevelEditAlert.tsx";
 import { LevelUpPicks } from "./LevelUpPicks.tsx";
 import { type StartingSwap, withReopenedLevel } from "./reopenedLevel.ts";
 import { StartingClassField } from "./StartingClassField.tsx";
@@ -12,7 +14,7 @@ import { useStartingClassGrants } from "./useStartingClassGrants.ts";
 
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
 
-export interface LevelChoicesFormProps {
+export interface LevelEditFormProps {
   /** The definition before `level` chose anything, which the pickers read. */
   before: CharacterDefinition;
   /** The definition as the dialog opened on it. */
@@ -24,19 +26,26 @@ export interface LevelChoicesFormProps {
   onReload?: () => void;
   /** Runs as Apply submits, with what a new starting class trades, which the write applies to the latest record. */
   onSwap: (swap: StartingSwap | undefined) => void;
+  /** The control that drafts this level's hit point gain. */
+  hitPoints: ReactNode;
+  /** Set while `hitPoints` holds a gain Apply would write. */
+  gainChanged: boolean;
+  /** Offered for a level past the first, to remove it and every level after it. */
+  onRemove?: () => void;
   cancel: () => void;
 }
 
 /**
- * A past level's picks inside the level-up form, and the Apply that writes them once one
- * changed, every one is made, and nothing that depends on a changed pick would be left
- * behind; each such dependency is named instead. A multiclass prerequisite the change leaves
- * unmet is named and noted as a departure, as the level-up notes one, and never refuses.
+ * A past level's hit point gain and picks inside the level-up form, and the Apply that writes
+ * them once the gain or a pick changed, every pick is made, and nothing that depends on a
+ * changed pick would be left behind; each such dependency is named instead. A multiclass
+ * prerequisite the change leaves unmet is named and noted as a departure, as the level-up
+ * notes one, and never refuses.
  * Level 1 also offers its class: a new one takes back the old one's level 1 choices and asks
  * the new one's, and Apply hands `onSwap` what the old one granted outright and what the new
- * one grants. Hit points, and a later level's class, are not offered.
+ * one grants. A later level's class is not offered.
  */
-export function LevelChoicesForm({
+export function LevelEditForm({
   before,
   definition,
   level,
@@ -44,8 +53,12 @@ export function LevelChoicesForm({
   error,
   onReload,
   onSwap,
+  hitPoints,
+  gainChanged,
+  onRemove,
   cancel,
-}: LevelChoicesFormProps) {
+}: LevelEditFormProps) {
+  const id = useId();
   const { getValues, setValue, formState } = useFormContext<CharacterDefinition>();
   const cls = definition.levels[level - 1]?.class;
   const drafted = useWatch<CharacterDefinition, "levels">({ name: "levels" }).at(-1)?.class;
@@ -69,7 +82,7 @@ export function LevelChoicesForm({
     ? later.departures
     : { departures: after.departures, added: [] };
   const blocked =
-    !formState.isDirty ||
+    (!formState.isDirty && !gainChanged) ||
     !plan.picksReady ||
     !later.read ||
     !starting.read ||
@@ -86,32 +99,31 @@ export function LevelChoicesForm({
   return (
     <Modal onClose={cancel}>
       <ModalEntry
-        title={`Level ${level} choices`}
+        title={`Edit level ${level}`}
         footer={
-          <div className="flex items-center gap-2">
-            <div role="alert" className="text-error text-row">
-              {error && (
-                <p>
-                  Couldn't save the choices: {error}
-                  {onReload && (
-                    <button
-                      type="button"
-                      onClick={onReload}
-                      className="ml-2 font-semibold text-accent underline hover:text-accent-hover"
-                    >
-                      Reload
-                    </button>
-                  )}
-                </p>
-              )}
-              {later.failed && <p>Couldn't read the prerequisites of the other levels' picks.</p>}
-              {starting.failed && (
-                <p>Couldn't read what the starting classes and the other sources grant.</p>
-              )}
-              {refusals.map((refusal) => (
-                <p key={refusal}>{refusal}</p>
-              ))}
-            </div>
+          <div className="flex w-full items-center gap-2">
+            {onRemove && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className={`${BUTTON} border border-border bg-surface text-error hover:bg-subtle`}
+              >
+                Remove level {level}
+              </button>
+            )}
+            <LevelEditAlert
+              error={error}
+              onReload={onReload}
+              lines={[
+                ...(later.failed
+                  ? ["Couldn't read the prerequisites of the other levels' picks."]
+                  : []),
+                ...(starting.failed
+                  ? ["Couldn't read what the starting classes and the other sources grant."]
+                  : []),
+                ...refusals,
+              ]}
+            />
             <button
               type="button"
               onClick={cancel}
@@ -136,6 +148,12 @@ export function LevelChoicesForm({
           </div>
         }
       >
+        <section aria-labelledby={`${id}-hp`} className="flex flex-col gap-1.5">
+          <h3 id={`${id}-hp`} className="font-semibold text-label text-muted uppercase">
+            Hit points
+          </h3>
+          {hitPoints}
+        </section>
         {level === 1 && drafted && (
           <StartingClassField
             edition={definition.edition}
@@ -158,8 +176,8 @@ export function LevelChoicesForm({
         </div>
         <p className="text-muted text-row">
           {level === 1
-            ? "Hit points change from the level's Edit dialog. A new class leaves the skills, tools and spells the old one let you pick; change them from their lists."
-            : "Hit points change from the level's Edit dialog; the class a level was taken in stays."}
+            ? "A new class leaves the skills, tools and spells the old one let you pick; change them from their lists."
+            : "The class a level was taken in stays."}
         </p>
       </ModalEntry>
     </Modal>

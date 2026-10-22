@@ -1,7 +1,7 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../test/records.ts";
-import { typedGain, withLevelGain } from "./levelGain.ts";
+import { draftedGain, typedGain, withLevelGain } from "./levelGain.ts";
 
 const warlock = { name: "Warlock", source: "XPHB" };
 
@@ -50,4 +50,15 @@ describe("typedGain", () => {
   it.each(["", "0", "-3", "1.5", "1e2", "abc", "1000"])("refuses %j", (text) =>
     expect(typedGain(text)).toBeUndefined(),
   );
+});
+
+describe("draftedGain", () => {
+  it("passes the average and a roll through, and reads typed text as a typed gain", () => {
+    expect(draftedGain({ kind: "average" })).toEqual({ kind: "average" });
+    expect(draftedGain({ kind: "roll", face: 3 })).toEqual({ kind: "roll", face: 3 });
+    expect(draftedGain({ kind: "typed", text: "12" })).toEqual({ kind: "typed", gain: 12 });
+  });
+
+  it("finds no gain in typed text that is none", () =>
+    expect(draftedGain({ kind: "typed", text: "0" })).toBeUndefined());
 });

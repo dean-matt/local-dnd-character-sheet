@@ -249,7 +249,9 @@ function stubServer(character: CharacterRecord) {
     }
     if (path.endsWith("/derived")) return derivedRecord(stored.definition);
     if (CLASS_ROW.test(path)) return classRow(path);
-    return path.startsWith("/api/classes/") ? NO_GRANTS : { items: [], total: 0 };
+    return path.startsWith("/api/classes/") && !path.includes("/subclasses?")
+      ? NO_GRANTS
+      : { items: [], total: 0 };
   };
   vi.stubGlobal(
     "fetch",
@@ -428,16 +430,20 @@ describe("LevelHistory", () => {
       fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 2" }));
       await within(dialog()).findByRole("spinbutton", { name: "Level 2 typed gain" });
     };
-    const type = (text: string) => {
+    const type = (text: string) =>
       fireEvent.change(within(dialog()).getByRole("spinbutton", { name: "Level 2 typed gain" }), {
         target: { value: text },
       });
-      fireEvent.click(within(dialog()).getByRole("button", { name: "Set" }));
+    const apply = async () => {
+      const button = within(dialog()).getByRole("button", { name: "Apply changes" });
+      await waitFor(() => expect(button).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(button);
     };
+    const closed = () => expect(document.querySelector("dialog[open]")).toBeNull();
 
     afterEach(() => vi.restoreAllMocks());
 
-    it("sets, changes and restores a gain through the card, one write and undo entry each", async () => {
+    it("drafts a gain in the dialog and writes it on Apply, one write and undo entry each", async () => {
       vi.spyOn(Math, "random").mockReturnValue(0.99);
       serve(warlock(3));
       renderSeeded(warlock(3));
@@ -445,20 +451,31 @@ describe("LevelHistory", () => {
       await changeLevel2();
 
       fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d8)" }));
-      await waitFor(() => expect(hp(2)).toBe("+10 (Level 2: d8 rolled 8 +2 Con)"));
-      expect(gains()).toEqual([[{}, { rolled: 8 }, {}]]);
-
+      expect(within(dialog()).getByText("Rolled 8 on the d8; Apply saves it.")).toBeVisible();
       expect(within(dialog()).getByRole("spinbutton", { name: "Level 2 typed gain" })).toHaveValue(
         8,
       );
+      expect(puts).toEqual([]);
+      await apply();
+      await waitFor(closed);
+      await waitFor(() => expect(hp(2)).toBe("+10 (Level 2: d8 rolled 8 +2 Con)"));
+      expect(gains()).toEqual([[{}, { rolled: 8 }, {}]]);
+      await waitFor(() =>
+        expect(within(history()).getByRole("button", { name: "Edit level 2" })).toHaveFocus(),
+      );
+
+      await changeLevel2();
       type("12");
+      await apply();
       await waitFor(() => expect(hp(2)).toBe("+14 (Level 2: d8 typed 12 +2 Con)"));
       expect(gains().at(-1)?.[1]).toEqual({ rolled: 12, typed: true });
       expect(puts.at(-1)?.departures).toEqual([
         { field: "levels.1.rolled", note: "Level 2 gains 12 hit points, outside the d8's 1 to 8." },
       ]);
 
+      await changeLevel2();
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      await apply();
       await waitFor(() => expect(hp(2)).toBe("+7 (Level 2: d8 average 5 +2 Con)"));
       expect(gains().at(-1)).toEqual([{}, {}, {}]);
       expect(puts.at(-1)?.departures).toEqual([]);
@@ -466,19 +483,37 @@ describe("LevelHistory", () => {
       expect(undoEntries).toEqual(["own", "own", "own"]);
     });
 
-    it("refuses a typed gain below 1 or not whole, with a message and no write", async () => {
+    it("holds Apply until the gain or a choice changes, and discards a drafted gain on Cancel", async () => {
+      serve(warlock(3));
+      renderSeeded(warlock(3));
+      await changeLevel2();
+      const button = within(dialog()).getByRole("button", { name: "Apply changes" });
+      expect(button).toHaveAttribute("aria-disabled", "true");
+
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d8)" }));
+      await waitFor(() => expect(button).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Cancel" }));
+      closed();
+
+      await changeLevel2();
+      expect(within(dialog()).queryByText(/Apply saves it/)).toBeNull();
+      expect(puts).toEqual([]);
+    });
+
+    it("refuses a typed gain below 1 or not whole on Apply, with a message and no write", async () => {
       serve(warlock(3));
       renderSeeded(warlock(3));
       await changeLevel2();
 
       for (const text of ["0", "-3", "2.5"]) {
         type(text);
+        await apply();
+        expect(
+          await within(dialog()).findByText("A typed gain is a whole number from 1 to 999."),
+        ).toBeVisible();
         expect(
           within(dialog()).getByRole("spinbutton", { name: "Level 2 typed gain" }),
         ).toBeInvalid();
-        expect(
-          within(dialog()).getByText("A typed gain is a whole number from 1 to 999."),
-        ).toBeVisible();
       }
       expect(puts).toEqual([]);
     });

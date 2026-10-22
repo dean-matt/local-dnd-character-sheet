@@ -1392,9 +1392,8 @@ describe("LevelUp", () => {
       const before = warlock(4);
       renderSeeded(before, { history: true });
       fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 3" }));
-      fireEvent.click(
-        within(dialog()).getByRole("button", { name: "Remove level 3 and the levels after it" }),
-      );
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Remove level 3" }));
+      expect(within(dialog()).getByRole("heading", { name: "Remove levels 3 to 4" })).toBeVisible();
       expect(
         within(dialog()).getByText(/Remove level 3 \(Warlock 3\) and level 4 \(Warlock 4\), with/),
       ).toBeVisible();
@@ -1408,13 +1407,22 @@ describe("LevelUp", () => {
       );
     });
 
+    it("goes back to the Edit dialog from the confirmation, writing nothing", async () => {
+      renderSeeded(warlock(3), { history: true });
+      fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 3" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Remove level 3" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Cancel" }));
+
+      expect(within(dialog()).getByRole("heading", { name: "Edit level 3" })).toBeVisible();
+      expect(within(dialog()).getByRole("button", { name: "Apply changes" })).toBeVisible();
+      expect(writes).not.toHaveBeenCalled();
+    });
+
     it("offers no removal to the first level", async () => {
       renderSeeded(warlock(2), { history: true });
       fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 1" }));
       expect(within(dialog()).queryByRole("button", { name: /^Remove level/ })).toBeNull();
-      expect(
-        within(dialog()).getByRole("button", { name: "Change the class and choices" }),
-      ).toBeVisible();
+      expect(within(dialog()).getByRole("combobox", { name: "Starting class" })).toBeVisible();
     });
   });
 
@@ -1451,12 +1459,7 @@ describe("LevelUp", () => {
       fireEvent.click(
         await within(history()).findByRole("button", { name: `Edit level ${level}` }),
       );
-      fireEvent.click(
-        within(dialog()).getByRole("button", {
-          name: level === 1 ? "Change the class and choices" : "Change the choices",
-        }),
-      );
-      await within(dialog()).findByText(/Hit points change from the level's Edit dialog/);
+      await within(dialog()).findByRole("heading", { name: `Edit level ${level}` });
     }
 
     it("swaps a spell an earlier level picked, as one write and one undo entry", async () => {
@@ -1488,6 +1491,24 @@ describe("LevelUp", () => {
       });
       expect(undoEntry()).toBe("own");
       await waitFor(() => expect(document.querySelector("dialog[open]")).toBeNull());
+    });
+
+    it("writes a new hit point gain with a changed pick, as one write and one undo entry", async () => {
+      const character = sorcererOfFive();
+      renderSeeded(character, { history: true });
+      await reopen(4);
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      await pickSpell("Add a spell", "Burning Hands");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d6)" }));
+      expect(within(dialog()).getByText("Rolled 5 on the d6; Apply saves it.")).toBeVisible();
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels[3]).toEqual({ class: SORCERER, rolled: 5 });
+      expect(sent().spells).toContainEqual(picked("Burning Hands"));
+      expect(sent().spells).not.toContainEqual(picked("Misty Step"));
+      expect(undoEntry()).toBe("own");
     });
 
     it("refuses to drop a prepared spell, naming it, and writes nothing on Cancel", async () => {
