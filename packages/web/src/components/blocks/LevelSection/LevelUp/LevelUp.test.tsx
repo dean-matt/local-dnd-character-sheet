@@ -486,7 +486,7 @@ beforeEach(() => localStorage.clear());
 afterEach(() => vi.unstubAllGlobals());
 
 describe("LevelUp", () => {
-  it("writes the level at the average as one edit, keeps an override, and lists what moved", async () => {
+  it("writes the level at the average as its own undo entry, keeps an override, and lists what moved", async () => {
     renderSeeded(warlock(1));
     await open();
     expect(applyButton()).toHaveAttribute("aria-disabled", "true");
@@ -499,6 +499,7 @@ describe("LevelUp", () => {
     await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
     await within(dialog()).findByText("Hit point maximum");
     expect(writes).toHaveBeenCalledTimes(1);
+    expect(new Headers(writes.mock.calls[0]?.[1]?.headers).get("Undo-Entry")).toBe("own");
     expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
     expect(sent().overrides).toEqual({ armorClass: 17 });
     expect(within(dialog()).getByText("10 → 17")).toBeVisible();
