@@ -84,6 +84,7 @@ export function LevelUpDialog({
       onSubmit={async (values) => {
         await update.mutateAsync({
           readAt: opened.updatedAt,
+          ownUndoEntry: true,
           edit: (latest) => ({
             ...latest,
             levels: values.levels,

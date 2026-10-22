@@ -9,7 +9,7 @@ Every decision the app stores, where it is written, and the way back from it. Pa
 
 Undo (`routes/CharacterLayout/UndoButton.tsx`) restores the definition before the newest
 change, one entry per press, back through the last 50. Saves to the same fields within 30
-seconds merge into one entry, except a Level History change, which is always its own. It does not reach:
+seconds merge into one entry, except a level-up or a Level History change, each always its own. It does not reach:
 
 | Not reached | Reversed instead by |
 |---|---|
@@ -55,7 +55,7 @@ Undo restores only the newest entry; stepping back to an earlier one: #978.
 
 | Decision | Written in | Reversed by |
 |---|---|---|
-| Taking a level | `components/blocks/LevelSection/LevelUp/LevelUpDialog.tsx` | Removing the newest level (`LevelSection/LevelRemoval.tsx`), or Undo, which merges it with a save to the same fields inside 30 seconds |
+| Taking a level | `components/blocks/LevelSection/LevelUp/LevelUpDialog.tsx` | Removing the newest level (`LevelSection/LevelRemoval.tsx`), or Undo, one level-up per press |
 | A level's hit point gain | `components/blocks/LevelSection/LevelGainEdit.tsx` | Undo, a direct edit |
 | A past level's choices | `components/blocks/LevelSection/LevelUp/LevelChoicesDialog.tsx` | Undo, reopening again; prerequisites: #980 |
 | An improvement or Epic Boon | `components/blocks/LevelSection/Improvements.tsx` | Undo, a direct edit |
