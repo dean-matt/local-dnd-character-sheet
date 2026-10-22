@@ -32,3 +32,17 @@ export function withoutNewestLevel(definition: CharacterDefinition): CharacterDe
       classes < 2 ? departures.filter(({ field }) => !isPrerequisiteField(field)) : departures,
   };
 }
+
+/**
+ * `definition` without `level` and every level after it, each removed newest first as
+ * `withoutNewestLevel` removes one, so a pick a later level made for an earlier one's grantor
+ * goes before that grantor does. Level 1 stays: a character holds at least one level.
+ */
+export function withoutLevelsFrom(
+  definition: CharacterDefinition,
+  level: number,
+): CharacterDefinition {
+  let left = definition;
+  while (left.levels.length >= Math.max(level, 2)) left = withoutNewestLevel(left);
+  return left;
+}

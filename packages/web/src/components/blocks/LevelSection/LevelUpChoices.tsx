@@ -9,7 +9,7 @@ import {
 } from "@dnd/character";
 import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
-import { searchHitKey } from "../../../lib/searchHitKey.ts";
+import { searchHitKey, searchHitRef } from "../../../lib/searchHitKey.ts";
 import { FormField } from "../../FormField.tsx";
 import { Select } from "../../Select.tsx";
 import { HitPointChoice } from "./HitPointChoice.tsx";
@@ -19,8 +19,6 @@ import { LevelUpSummary } from "./LevelUpSummary.tsx";
 import { MulticlassEntryFields } from "./MulticlassEntryFields.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 
-const toRef = (hit: SearchHit): EntryRef =>
-  "id" in hit ? { homebrewId: hit.id } : { name: hit.name, source: hit.source };
 const hitSource = (hit: SearchHit) => ("id" in hit ? "homebrew" : hit.source);
 // Above every class one edition and the homebrew hold together; past it, the classes
 // beyond go unoffered until this pages.
@@ -86,7 +84,7 @@ export function LevelUpChoices({
               const group = groups.find((each) => entryKey(each.class) === value);
               const hit = fresh.find((each) => searchHitKey(each) === value);
               if (group) pickClass(group.class);
-              else if (hit) pickClass(toRef(hit));
+              else if (hit) pickClass(searchHitRef(hit));
             }}
           />
         )}

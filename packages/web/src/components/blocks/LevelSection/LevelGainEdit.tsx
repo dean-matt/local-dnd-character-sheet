@@ -5,7 +5,7 @@ import {
   hitPointSource,
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { type GainEdit, typedGain, typedGainMessage } from "../../../lib/levelGain.ts";
 import { InputField } from "../../InputField.tsx";
 
@@ -17,7 +17,7 @@ const BUTTON =
 /**
  * Changes one level's hit point gain after the first: the average, a roll of the level's
  * die, or a number typed in, which may pass the die. The first level takes the die's highest
- * face whatever is stored, so its row says so rather than offer a change that does nothing.
+ * face whatever is stored, so it says so rather than offer a change that does nothing.
  */
 export function LevelGainEdit({
   level,
@@ -33,8 +33,6 @@ export function LevelGainEdit({
   onEdit: (edit: GainEdit) => void;
   invalid: boolean;
 }) {
-  const panel = useId();
-  const [open, setOpen] = useState(false);
   // Follows the stored gain until the player types, so a roll or an undo never leaves a stale number to Set.
   const [draft, setDraft] = useState<string>();
   const text = draft ?? (entry.rolled === undefined ? "" : String(entry.rolled));
@@ -56,69 +54,55 @@ export function LevelGainEdit({
   }
 
   return (
-    <div className="mt-1">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={panel}
-        aria-label={`Change level ${level} hit points`}
-        onClick={() => setOpen(!open)}
-        className="text-label text-muted underline"
-      >
-        Change
-      </button>
-      {open && (
-        <fieldset id={panel} className="mt-1 flex min-w-0 flex-col gap-1.5 border-0 p-0">
-          <legend className="sr-only">
-            Level {level} hit points, d{die}
-          </legend>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              aria-pressed={source === "average"}
-              onClick={() => {
-                setDraft(undefined);
-                onEdit({ kind: "average" });
-              }}
-              className={BUTTON}
-            >
-              Average ({average})
-            </button>
-            <button
-              type="button"
-              aria-pressed={source === "rolled"}
-              onClick={() => {
-                setDraft(undefined);
-                onEdit({ kind: "roll", face: rollDice(`1d${die}`).total });
-              }}
-              className={BUTTON}
-            >
-              {source === "rolled" ? "Reroll" : "Roll"} (d{die})
-            </button>
-          </div>
-          <form noValidate onSubmit={submit} className="flex items-start gap-1.5">
-            <InputField
-              label={`Level ${level} typed gain`}
-              labelHidden
-              type="number"
-              min={1}
-              step={1}
-              placeholder="Type a gain"
-              value={text}
-              onChange={(event) => {
-                setDraft(event.target.value);
-                setRefused(false);
-              }}
-              error={refused && typedGainMessage}
-              invalid={invalid}
-              className="w-24 text-row"
-            />
-            <button type="submit" className={BUTTON}>
-              Set
-            </button>
-          </form>
-        </fieldset>
-      )}
-    </div>
+    <fieldset className="flex min-w-0 flex-col gap-1.5 border-0 p-0">
+      <legend className="sr-only">
+        Level {level} hit points, d{die}
+      </legend>
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          aria-pressed={source === "average"}
+          onClick={() => {
+            setDraft(undefined);
+            onEdit({ kind: "average" });
+          }}
+          className={BUTTON}
+        >
+          Average ({average})
+        </button>
+        <button
+          type="button"
+          aria-pressed={source === "rolled"}
+          onClick={() => {
+            setDraft(undefined);
+            onEdit({ kind: "roll", face: rollDice(`1d${die}`).total });
+          }}
+          className={BUTTON}
+        >
+          {source === "rolled" ? "Reroll" : "Roll"} (d{die})
+        </button>
+      </div>
+      <form noValidate onSubmit={submit} className="flex items-start gap-1.5">
+        <InputField
+          label={`Level ${level} typed gain`}
+          labelHidden
+          type="number"
+          min={1}
+          step={1}
+          placeholder="Type a gain"
+          value={text}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setRefused(false);
+          }}
+          error={refused && typedGainMessage}
+          invalid={invalid}
+          className="w-24 text-row"
+        />
+        <button type="submit" className={BUTTON}>
+          Set
+        </button>
+      </form>
+    </fieldset>
   );
 }

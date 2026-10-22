@@ -10,4 +10,13 @@ describe("withReopenedLevel", () => {
 
     expect(withReopenedLevel(latest, 1, values).departures).toEqual([departure]);
   });
+
+  it("writes the proficiencies Apply swapped, so a new starting class's grants reach the character", () => {
+    const latest = characterRecord("1", "Vex").definition;
+    const proficiencies = { ...latest.proficiencies, armor: ["Heavy"] };
+
+    expect(withReopenedLevel(latest, 1, { ...latest, proficiencies }).proficiencies).toEqual(
+      proficiencies,
+    );
+  });
 });

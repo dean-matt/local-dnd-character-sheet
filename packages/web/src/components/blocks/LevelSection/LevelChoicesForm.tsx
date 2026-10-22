@@ -1,12 +1,16 @@
 import { type CharacterDefinition, entryKey } from "@dnd/character";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { levelChoiceRefusals } from "../../../lib/levelChoices.ts";
+import { swapGrants } from "../../../lib/proficiencyGrants.ts";
+import { setRefValue } from "../../../lib/setRefValue.ts";
 import { Modal } from "../../Modal.tsx";
 import { ModalEntry } from "../../ModalEntry.tsx";
 import { LevelUpPicks } from "./LevelUpPicks.tsx";
 import { withReopenedLevel } from "./reopenedLevel.ts";
+import { StartingClassField } from "./StartingClassField.tsx";
 import { useLaterPrerequisites } from "./useLaterPrerequisites.ts";
 import { useLevelUpPlan } from "./useLevelUpPlan.ts";
+import { useStartingClassGrants } from "./useStartingClassGrants.ts";
 
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
 
@@ -28,7 +32,9 @@ export interface LevelChoicesFormProps {
  * changed, every one is made, and nothing that depends on a changed pick would be left
  * behind; each such dependency is named instead. A multiclass prerequisite the change leaves
  * unmet is named and noted as a departure, as the level-up notes one, and never refuses.
- * The class and hit points are not offered.
+ * Level 1 also offers its class: a new one takes back the old one's level 1 choices and asks
+ * the new one's, and Apply swaps the proficiencies the old one granted outright for the new
+ * one's. Hit points, and a later level's class, are not offered.
  */
 export function LevelChoicesForm({
   before,
@@ -41,21 +47,33 @@ export function LevelChoicesForm({
 }: LevelChoicesFormProps) {
   const { getValues, setValue, formState } = useFormContext<CharacterDefinition>();
   const cls = definition.levels[level - 1]?.class;
-  const saved = {
-    subclass: definition.levels
-      .slice(0, level)
-      .find((each) => cls && entryKey(each.class) === entryKey(cls) && each.subclass)?.subclass,
-    picks: definition.spells.filter((spell) => spell.pickedAt === level),
-  };
+  const drafted = useWatch<CharacterDefinition, "levels">({ name: "levels" }).at(-1)?.class;
+  const sameClass =
+    cls !== undefined && drafted !== undefined && entryKey(cls) === entryKey(drafted);
+  // A new starting class owes its own picks, which nothing stamped for the old one stands for.
+  const saved = sameClass
+    ? {
+        subclass: definition.levels
+          .slice(0, level)
+          .find((each) => entryKey(each.class) === entryKey(cls) && each.subclass)?.subclass,
+        picks: definition.spells.filter((spell) => spell.pickedAt === level),
+      }
+    : undefined;
   const plan = useLevelUpPlan(before, undefined, saved);
-  const later = useLaterPrerequisites(definition);
+  const starting = useStartingClassGrants(definition.edition, cls, drafted);
   const after = withReopenedLevel(definition, level, getValues());
+  const later = useLaterPrerequisites(definition, after);
   const refusals = levelChoiceRefusals(definition, after, level, later.rows);
   const { departures, added: notes } = later.read
-    ? later.departures(after)
+    ? later.departures
     : { departures: after.departures, added: [] };
   const blocked =
-    !formState.isDirty || !plan.picksReady || !later.read || saving || refusals.length > 0;
+    !formState.isDirty ||
+    !plan.picksReady ||
+    !later.read ||
+    !starting.read ||
+    saving ||
+    refusals.length > 0;
   const { owed } = plan.spellPicks;
   const asksNothing =
     plan.target.read &&
@@ -86,6 +104,7 @@ export function LevelChoicesForm({
                 </p>
               )}
               {later.failed && <p>Couldn't read the prerequisites of the other levels' picks.</p>}
+              {starting.failed && <p>Couldn't read what the starting classes grant.</p>}
               {refusals.map((refusal) => (
                 <p key={refusal}>{refusal}</p>
               ))}
@@ -102,7 +121,17 @@ export function LevelChoicesForm({
               aria-disabled={blocked}
               onClick={(event) => {
                 if (blocked) event.preventDefault();
-                else setValue("departures", departures, { shouldDirty: true });
+                else {
+                  setValue("departures", departures, { shouldDirty: true });
+                  const { swap } = starting;
+                  if (swap)
+                    setRefValue(
+                      setValue,
+                      "proficiencies",
+                      swapGrants(getValues("proficiencies"), swap.was, swap.now),
+                      { shouldDirty: true },
+                    );
+                }
               }}
               className={`${BUTTON} bg-accent text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
             >
@@ -111,6 +140,13 @@ export function LevelChoicesForm({
           </div>
         }
       >
+        {level === 1 && drafted && (
+          <StartingClassField
+            edition={definition.edition}
+            value={drafted}
+            onChange={plan.setClass}
+          />
+        )}
         {!plan.target.read && <p className="text-muted">Loading the class…</p>}
         {asksNothing && <p className="text-muted">Level {level} asked for no choices.</p>}
         <LevelUpPicks edition={definition.edition} plan={plan} />
@@ -125,7 +161,9 @@ export function LevelChoicesForm({
           )}
         </div>
         <p className="text-muted text-row">
-          Hit points change from the level's row; the class a level was taken in stays.
+          {level === 1
+            ? "Hit points change from the level's Edit dialog. A new class leaves the skills and spells the old one let you pick; change them from their lists."
+            : "Hit points change from the level's Edit dialog; the class a level was taken in stays."}
         </p>
       </ModalEntry>
     </Modal>

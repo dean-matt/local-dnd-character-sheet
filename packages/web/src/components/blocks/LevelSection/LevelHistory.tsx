@@ -1,5 +1,6 @@
 import { rowEntries } from "@dnd/catalog";
 import { type CharacterRecord, displayName, type HitDie, improvementAt } from "@dnd/character";
+import { useCallback, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
 import { useClassFeatures } from "../../../hooks/useClassFeatures.ts";
 import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
@@ -12,9 +13,8 @@ import { type HistoryFeature, levelHistory } from "../../../lib/levelHistory.ts"
 import { Card } from "../../Card.tsx";
 import { DetailTrigger } from "../../DetailTrigger.tsx";
 import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
+import { LevelEdit } from "./LevelEdit.tsx";
 import { LevelGainEdit } from "./LevelGainEdit.tsx";
-import { LevelRemoval } from "./LevelRemoval.tsx";
-import { LevelUp } from "./LevelUp.tsx";
 
 const HEAD = "px-1 pb-0.5 text-left";
 const CELL = "px-1 py-1 text-left align-top";
@@ -30,9 +30,9 @@ function featureLabel(feature: HistoryFeature, row: readonly HistoryFeature[]): 
  * What the character gained at each level, oldest first: the class level taken, the hit
  * points it added, the subclass chosen there, the features it granted and the improvement
  * taken. Hit points show the derived maximum's own per-level term, and wait while a write
- * recomputes it rather than show a gain the sheet no longer holds. Each level's gain can be
- * changed in place, each change one write and one undo entry, as can the choices each level
- * past the first made, and the newest level, past the first, can be removed.
+ * recomputes it rather than show a gain the sheet no longer holds. Each row ends in its Edit
+ * button, whose dialog changes the level's gain and choices and removes it, each change one
+ * write and one undo entry.
  */
 export function LevelHistory({ character }: { character: CharacterRecord }) {
   const { definition } = character;
@@ -41,7 +41,8 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
   const terms = derived.data?.hitPointMaximum.terms;
   const hitPoints = terms?.length === definition.levels.length ? terms : undefined;
   const rows = levelHistory(definition.levels, features.featuresOf);
-  const newest = rows.at(-1);
+  const [focusLevel, setFocusLevel] = useState<number>();
+  const focused = useCallback(() => setFocusLevel(undefined), []);
   const dice = useLevelDice(definition.levels);
   const writes = useHeldWrites(useUpdateCharacterDefinition(character.id), {
     ownUndoEntry: true,
@@ -80,6 +81,9 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
               <th scope="col" className={HEAD}>
                 Gained
               </th>
+              <th scope="col" className={`${HEAD} w-px`}>
+                <span className="sr-only">Edit</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -106,15 +110,6 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
                     ) : (
                       "…"
                     )}
-                    {dice && (
-                      <LevelGainEdit
-                        level={row.level}
-                        die={dice[row.level - 1] as HitDie}
-                        entry={definition.levels[row.level - 1] ?? {}}
-                        onEdit={(change) => edit(row.level, change)}
-                        invalid={writes.failed.has(String(row.level))}
-                      />
-                    )}
                   </td>
                   <td className={CELL}>
                     {row.subclass && <p>Subclass: {row.subclass.name}</p>}
@@ -134,7 +129,28 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
                       );
                     })}
                     {taken && <p>Improvement: {taken}</p>}
-                    {row.level > 1 && <LevelUp character={character} reopen={row.level} />}
+                  </td>
+                  <td className={CELL}>
+                    <LevelEdit
+                      character={character}
+                      rows={rows.slice(row.level - 1)}
+                      hitPoints={
+                        dice ? (
+                          <LevelGainEdit
+                            level={row.level}
+                            die={dice[row.level - 1] as HitDie}
+                            entry={definition.levels[row.level - 1] ?? {}}
+                            onEdit={(change) => edit(row.level, change)}
+                            invalid={writes.failed.has(String(row.level))}
+                          />
+                        ) : (
+                          <p className="text-muted">Loading the hit die…</p>
+                        )
+                      }
+                      focusRequest={focusLevel === row.level}
+                      onFocused={focused}
+                      onRemoved={() => setFocusLevel(row.level - 1)}
+                    />
                   </td>
                 </tr>
               );
@@ -142,7 +158,6 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
           </tbody>
         </table>
       </div>
-      {newest && rows.length > 1 && <LevelRemoval character={character} row={newest} />}
     </Card>
   );
 }

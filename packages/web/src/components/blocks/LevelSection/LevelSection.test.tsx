@@ -322,19 +322,21 @@ describe("LevelHistory", () => {
 
     await waitFor(() =>
       expect(rows()).toEqual([
-        ["1", "Warlock 1", "+10 (Level 1: d8 highest 8 +2 Con)", ["Pact Magic"]],
-        ["2", "Warlock 2", "+7 (Level 2: d8 average 5 +2 Con)", ["Magical Cunning"]],
+        ["1", "Warlock 1", "+10 (Level 1: d8 highest 8 +2 Con)", ["Pact Magic"], ""],
+        ["2", "Warlock 2", "+7 (Level 2: d8 average 5 +2 Con)", ["Magical Cunning"], ""],
         [
           "3",
           "Warlock 3",
           "+7 (Level 3: d8 average 5 +2 Con)",
           ["Subclass: Fiend Patron", "Dark One's Blessing"],
+          "",
         ],
         [
           "4",
           "Warlock 4",
           "+7 (Level 4: d8 average 5 +2 Con)",
           ["Ability Score Improvement", "Improvement: +2 Charisma"],
+          "",
         ],
       ]),
     );
@@ -342,7 +344,7 @@ describe("LevelHistory", () => {
       within(history())
         .getAllByRole("columnheader")
         .map((cell) => cell.textContent),
-    ).toEqual(["Lvl", "Class", "HP", "Gained"]);
+    ).toEqual(["Lvl", "Class", "HP", "Gained", "Edit"]);
     expect(within(history()).getByRole("rowheader", { name: "3" })).toBeVisible();
   });
 
@@ -409,7 +411,12 @@ describe("LevelHistory", () => {
       ({ puts, undoEntries } = stubServer(character));
     };
 
-    const hp = (level: number) => String(rows()[level - 1]?.[2]).split("Change")[0];
+    const hp = (level: number) => rows()[level - 1]?.[2];
+    const dialog = () => {
+      const open = document.querySelector<HTMLElement>("dialog[open]");
+      if (!open) throw new Error("no dialog is open");
+      return open;
+    };
     const gains = () =>
       puts.map((each) =>
         each.levels.map(({ rolled, typed }) => ({
@@ -417,15 +424,15 @@ describe("LevelHistory", () => {
           ...(typed && { typed }),
         })),
       );
-    const changeLevel2 = async () =>
-      fireEvent.click(
-        await within(history()).findByRole("button", { name: "Change level 2 hit points" }),
-      );
+    const changeLevel2 = async () => {
+      fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 2" }));
+      await within(dialog()).findByRole("spinbutton", { name: "Level 2 typed gain" });
+    };
     const type = (text: string) => {
-      fireEvent.change(within(history()).getByRole("spinbutton", { name: "Level 2 typed gain" }), {
+      fireEvent.change(within(dialog()).getByRole("spinbutton", { name: "Level 2 typed gain" }), {
         target: { value: text },
       });
-      fireEvent.click(within(history()).getByRole("button", { name: "Set" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Set" }));
     };
 
     afterEach(() => vi.restoreAllMocks());
@@ -437,11 +444,11 @@ describe("LevelHistory", () => {
       await waitFor(() => expect(hp(2)).toBe("+7 (Level 2: d8 average 5 +2 Con)"));
       await changeLevel2();
 
-      fireEvent.click(within(history()).getByRole("button", { name: "Roll (d8)" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d8)" }));
       await waitFor(() => expect(hp(2)).toBe("+10 (Level 2: d8 rolled 8 +2 Con)"));
       expect(gains()).toEqual([[{}, { rolled: 8 }, {}]]);
 
-      expect(within(history()).getByRole("spinbutton", { name: "Level 2 typed gain" })).toHaveValue(
+      expect(within(dialog()).getByRole("spinbutton", { name: "Level 2 typed gain" })).toHaveValue(
         8,
       );
       type("12");
@@ -451,7 +458,7 @@ describe("LevelHistory", () => {
         { field: "levels.1.rolled", note: "Level 2 gains 12 hit points, outside the d8's 1 to 8." },
       ]);
 
-      fireEvent.click(within(history()).getByRole("button", { name: "Average (5)" }));
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
       await waitFor(() => expect(hp(2)).toBe("+7 (Level 2: d8 average 5 +2 Con)"));
       expect(gains().at(-1)).toEqual([{}, {}, {}]);
       expect(puts.at(-1)?.departures).toEqual([]);
@@ -467,10 +474,10 @@ describe("LevelHistory", () => {
       for (const text of ["0", "-3", "2.5"]) {
         type(text);
         expect(
-          within(history()).getByRole("spinbutton", { name: "Level 2 typed gain" }),
+          within(dialog()).getByRole("spinbutton", { name: "Level 2 typed gain" }),
         ).toBeInvalid();
         expect(
-          within(history()).getByText("A typed gain is a whole number from 1 to 999."),
+          within(dialog()).getByText("A typed gain is a whole number from 1 to 999."),
         ).toBeVisible();
       }
       expect(puts).toEqual([]);
@@ -480,15 +487,12 @@ describe("LevelHistory", () => {
       serve(warlock(3));
       renderSeeded(warlock(3));
 
+      fireEvent.click(await within(history()).findByRole("button", { name: "Edit level 1" }));
+
       expect(
-        await within(history()).findByText("Highest face of the d8; a roll cannot change it."),
+        await within(dialog()).findByText("Highest face of the d8; a roll cannot change it."),
       ).toBeVisible();
-      expect(
-        within(history()).queryByRole("button", { name: "Change level 1 hit points" }),
-      ).not.toBeInTheDocument();
-      expect(
-        within(history()).getByRole("button", { name: "Change level 3 hit points" }),
-      ).toBeVisible();
+      expect(within(dialog()).queryByRole("button", { name: /^Roll/ })).not.toBeInTheDocument();
     });
   });
 });

@@ -1,81 +1,94 @@
 import { type CharacterRecord, displayName, entryKey } from "@dnd/character";
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import type { LevelHistoryRow } from "../../../lib/levelHistory.ts";
-import { withoutNewestLevel } from "../../../lib/levelRemoval.ts";
+import { withoutLevelsFrom } from "../../../lib/levelRemoval.ts";
 
 const BUTTON = "rounded-control border border-border bg-surface px-2 py-1 font-semibold text-row";
 
+const named = (row: LevelHistoryRow) =>
+  `level ${row.level} (${displayName(row.cls)} ${row.classLevel})`;
+
 /**
- * Removes the newest level and what it brought, once the player confirms the level it
- * names, as one write and one undo entry. The write is refused, and says so, where the
- * newest level is no longer `row` or the server holds an edit since the record was read, as
- * after a level-up from another tab.
+ * Removes a level past the first and every level after it, with what each brought, once the
+ * player confirms the levels it names, as one write and one undo entry. `rows` are the levels
+ * that go, oldest first. The write is refused, and says so, where the levels no longer match
+ * `rows` or the server holds an edit since the record was read, as after a level-up from
+ * another tab.
  */
 export function LevelRemoval({
   character,
-  row,
+  rows,
+  onRemoved,
 }: {
   character: CharacterRecord;
-  row: LevelHistoryRow;
+  rows: readonly LevelHistoryRow[];
+  onRemoved: () => void;
 }) {
   const panel = useId();
   const [open, setOpen] = useState(false);
-  const toggle = useRef<HTMLButtonElement>(null);
   const update = useUpdateCharacterDefinition(character.id);
-  const named = `level ${row.level} (${displayName(row.cls)} ${row.classLevel})`;
+  const first = rows[0];
+  const newest = rows.at(-1);
+  if (!first || !newest) return null;
+  const many = rows.length > 1;
+  const listed = rows.map(named);
+  const names = many ? `${listed.slice(0, -1).join(", ")} and ${listed.at(-1)}` : listed[0];
+  const entered = rows.some((row) => row.classLevel === 1);
 
   function remove() {
     update.mutate(
       {
         edit: (latest) => {
-          const newest = latest.levels.at(-1);
-          if (
-            latest.levels.length !== row.level ||
-            !newest ||
-            entryKey(newest.class) !== entryKey(row.cls)
-          )
-            throw new Error(`the newest level changed before ${named} could be removed.`);
-          return withoutNewestLevel(latest);
+          const same =
+            latest.levels.length === newest?.level &&
+            rows.every((row) => {
+              const held = latest.levels[row.level - 1];
+              return held !== undefined && entryKey(held.class) === entryKey(row.cls);
+            });
+          if (!same) throw new Error(`the levels changed before ${names} could be removed.`);
+          return withoutLevelsFrom(latest, first?.level ?? latest.levels.length);
         },
         readAt: character.updatedAt,
         ownUndoEntry: true,
       },
-      {
-        onSuccess: () => {
-          setOpen(false);
-          toggle.current?.focus();
-        },
-      },
+      { onSuccess: onRemoved },
     );
   }
 
   return (
-    <div className="mt-2">
+    <section aria-labelledby={`${panel}-title`} className="flex flex-col gap-1.5">
+      <h3 id={`${panel}-title`} className="font-semibold text-label text-muted uppercase">
+        Remove
+      </h3>
       <button
         type="button"
         aria-expanded={open}
         aria-controls={panel}
-        ref={toggle}
         onClick={() => {
           update.reset();
           setOpen(!open);
         }}
-        className="text-label text-muted underline"
+        className="w-fit text-label text-muted underline"
       >
-        Remove newest level
+        {many
+          ? `Remove level ${first.level} and the levels after it`
+          : `Remove level ${first.level}`}
       </button>
       {open && (
-        <div id={panel} className="mt-1 flex flex-col gap-1.5">
+        <div id={panel} className="flex flex-col gap-1.5">
           <p className="text-body">
-            Remove {named} with its hit points and what was chosen for it: the subclass,
-            improvement, feature choices, spells and options. Experience points stay
-            {row.classLevel === 1 ? ", as do the proficiencies the class brought" : ""}.
+            Remove {names}, with {many ? "their" : "its"} hit points and what was chosen for{" "}
+            {many ? "them" : "it"}: the subclass, improvement, feature choices, spells and options.
+            Experience points stay
+            {entered ? ", as do the proficiencies a class brought" : ""}.
           </p>
-          <p className="text-label text-muted">
-            Only the newest level can be removed: an earlier one would change the class level of
-            every level after it, and what each of them was entitled to choose.
-          </p>
+          {many && (
+            <p className="text-label text-muted">
+              The levels after level {first.level} go too: each one's class level, and what it was
+              entitled to choose, rests on the levels before it.
+            </p>
+          )}
           <div className="flex gap-1.5">
             <button
               type="button"
@@ -85,27 +98,26 @@ export function LevelRemoval({
               }}
               className={`${BUTTON} text-error aria-disabled:cursor-wait aria-disabled:opacity-60`}
             >
-              Remove {named}
+              {many ? `Remove ${rows.length} levels` : `Remove ${named(first)}`}
             </button>
             <button
               type="button"
               onClick={() => {
                 update.reset();
                 setOpen(false);
-                toggle.current?.focus();
               }}
               className={BUTTON}
             >
-              Keep it
+              Keep {many ? "them" : "it"}
             </button>
           </div>
           {update.isError && (
             <p role="alert" className="text-error text-row">
-              Couldn't remove the level: {update.error.message}
+              Couldn't remove the {many ? "levels" : "level"}: {update.error.message}
             </p>
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }

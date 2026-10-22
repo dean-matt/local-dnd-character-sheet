@@ -46,21 +46,21 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Deity | Nothing | Cannot be: #983 |
 | Alignment | `components/blocks/IdentitySection/AlignmentCard.tsx` | Undo, a direct edit |
 | Base ability scores | `components/blocks/AbilitiesSection/AbilityScores.tsx` | Undo, a direct edit |
-| Starting class | Nothing | Cannot be: #982 |
-| Level 1's choices | Each list's own control below; Level History cannot reopen level 1 | Undo, a direct edit; reopening: #982 |
+| Starting class | Level 1's Edit dialog in Level History, `components/blocks/LevelSection/LevelEdit.tsx` | Undo, changing it again |
+| Level 1's choices | Each list's own control below, or level 1's Edit dialog in Level History | Undo, a direct edit, reopening again |
 | Levels past 1 at creation | Level History, as for a level-up | As for a level-up |
 | Skills, tools, languages | `components/blocks/AbilitiesSection/CatalogSkills.tsx`, `IdentitySection/ProficienciesCard.tsx`, `IdentitySection/LanguagesCard.tsx` | Undo, a direct edit |
 | Spells | `components/blocks/SpellsSection/SpellList/SpellList.tsx` | Undo, a direct edit |
 | Starting equipment and gold | The inventory rows below | Undo, a direct edit |
-| A homebrew class written inline | `hooks/useEnsureHomebrewClass.ts`, from `routes/CreationFlow/ClassField.tsx` | Deleting it under Homebrew once no character holds it, which for the character it was made for means deleting that character: #982 |
+| A homebrew class written inline | `hooks/useEnsureHomebrewClass.ts`, from `routes/CreationFlow/ClassField.tsx` | Changing the starting class away from it, then deleting it under Homebrew once no character holds it |
 
 ## Level-up
 
 | Decision | Written in | Reversed by |
 |---|---|---|
-| Taking a level | `components/blocks/LevelSection/LevelUpDialog.tsx` | Removing the newest level (`LevelSection/LevelRemoval.tsx`), or Undo, one level-up per press |
-| A level's hit point gain | `components/blocks/LevelSection/LevelGainEdit.tsx` | Undo, a direct edit |
-| A past level's choices | `components/blocks/LevelSection/LevelChoicesDialog.tsx` | Undo, reopening again |
+| Taking a level | `components/blocks/LevelSection/LevelUpDialog.tsx` | Removing it, with every level after it, from its Edit dialog in Level History (`LevelSection/LevelRemoval.tsx`), or Undo, one level-up per press |
+| A level's hit point gain | `components/blocks/LevelSection/LevelGainEdit.tsx`, in the level's Edit dialog | Undo, a direct edit |
+| A past level's choices | `components/blocks/LevelSection/LevelChoicesDialog.tsx`, from the level's Edit dialog | Undo, reopening again |
 | An improvement or Epic Boon | `components/blocks/LevelSection/Improvements.tsx` | Undo, a direct edit |
 | Experience and leveling mode | `LevelSection/ExperienceTracker.tsx`, `LevelSection/LevelingField.tsx` | Undo, a direct edit |
 
