@@ -31,7 +31,7 @@ import {
   importCharacter,
   insertCharacter,
   listCharacters,
-  undoLastChange,
+  undoChanges,
   updateCharacterDefinition,
   updateCharacterState,
 } from "../db/queries/characters.ts";
@@ -181,6 +181,13 @@ function describeIssues(error: z.ZodError): string {
   return `Not a character file this build can read. ${issues.join("; ")}`;
 }
 
+// RFC 9110 has a server ignore a date it cannot parse; a 400 instead keeps a malformed
+// precondition from writing unguarded.
+const ifUnmodifiedSince = z
+  .string()
+  .refine((value) => !Number.isNaN(Date.parse(value)), "not an HTTP date")
+  .optional();
+
 const update = createRoute({
   method: "put",
   path: "/characters/{id}",
@@ -195,12 +202,7 @@ const update = createRoute({
   request: {
     params: idParam,
     headers: z.object({
-      // RFC 9110 has a server ignore a date it cannot parse; a 400 instead keeps a
-      // malformed precondition from writing unguarded.
-      "if-unmodified-since": z
-        .string()
-        .refine((value) => !Number.isNaN(Date.parse(value)), "not an HTTP date")
-        .optional(),
+      "if-unmodified-since": ifUnmodifiedSince,
       "undo-entry": z.literal("own").optional(),
     }),
     body: { content: { "application/json": { schema: characterDefinitionSchema } } },
@@ -294,8 +296,23 @@ const undo = createRoute({
   method: "post",
   path: "/characters/{id}/undo",
   tags: ["characters"],
-  summary: "Restore the definition the newest undo entry holds, and drop the entry",
-  request: { params: idParam },
+  summary: "Restore the definition an undo entry holds, and drop it and every newer entry",
+  description:
+    "Undoes back to `to`, or the newest entry alone where the body names none, in one " +
+    "write. `newest` is the head of the log the client read, and `If-Unmodified-Since` " +
+    "the character's `updatedAt`: where either has moved on, nothing is written.",
+  request: {
+    params: idParam,
+    headers: z.object({ "if-unmodified-since": ifUnmodifiedSince }),
+    body: {
+      required: false,
+      content: {
+        "application/json": {
+          schema: z.strictObject({ to: z.int().optional(), newest: z.int().optional() }),
+        },
+      },
+    },
+  },
   responses: {
     200: {
       description: "The character as restored",
@@ -303,7 +320,11 @@ const undo = createRoute({
     },
     404: notFound("character"),
     409: {
-      description: "Nothing left to undo",
+      description: "Nothing left to undo, or no entry `to` names",
+      content: { "application/json": { schema: errorSchema } },
+    },
+    412: {
+      description: "The character or its undo log changed since the client read them",
       content: { "application/json": { schema: errorSchema } },
     },
     422: {
@@ -413,8 +434,9 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
 
   routes.openapi(readUndo, (c) => {
     const { id } = c.req.valid("param");
-    if (!getCharacter(db, id)) return c.json({ error: NOT_FOUND }, 404);
-    const entries = listUndoEntries(db, id).map((entry) => ({
+    const row = getCharacter(db, id);
+    if (!row) return c.json({ error: NOT_FOUND }, 404);
+    const entries = listUndoEntries(db, id, row.definition).map((entry) => ({
       ...entry,
       changedAt: entry.changedAt.toISOString(),
     }));
@@ -422,9 +444,17 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
   });
 
   routes.openapi(undo, (c) => {
-    const result = undoLastChange(db, c.req.valid("param").id);
+    const since = c.req.valid("header")["if-unmodified-since"];
+    const result = undoChanges(db, c.req.valid("param").id, {
+      ...c.req.valid("json"),
+      unmodifiedSince: since === undefined ? undefined : new Date(since),
+    });
     if (!result) return c.json({ error: NOT_FOUND }, 404);
     if (result.kind === "empty") return c.json({ error: "Nothing to undo" }, 409);
+    if (result.kind === "missing") return c.json({ error: "No such undo entry" }, 409);
+    if (result.kind === "stale") {
+      return c.json({ error: "The character changed since its undo history was read" }, 412);
+    }
     if (result.kind === "invalid") return c.json({ error: result.message }, 422);
     return c.json(toRecord(result.row), 200);
   });

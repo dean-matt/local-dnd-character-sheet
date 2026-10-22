@@ -21,7 +21,13 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as charactersSchema from "../characters.ts";
 import { characterPages, characterState, characters } from "../characters.ts";
 import { writePages } from "./pages.ts";
-import { deleteUndoEntry, newestUndoEntry, recordChange } from "./undo.ts";
+import {
+  deleteUndoEntriesFrom,
+  deleteUndoEntry,
+  newestUndoEntry,
+  recordChange,
+  undoEntry,
+} from "./undo.ts";
 
 export type CharactersDb = BetterSQLite3Database<typeof charactersSchema>;
 
@@ -166,32 +172,70 @@ export function updateCharacterDefinition(
 export type UndoResult =
   | { kind: "restored"; row: NonNullable<ReturnType<typeof writeDefinition>> }
   | { kind: "empty" }
+  | { kind: "missing" }
+  | { kind: "stale" }
   | { kind: "invalid"; message: string };
 
 /**
- * Restores the definition the newest `undo_log` row holds and drops that row, recording
- * nothing, since there is no redo. `undefined` where `id` names no character. A snapshot
- * the schema now refuses restores nothing and is dropped all the same, so the next undo
- * reaches the entry behind it; the current definition is never touched.
+ * Where to undo back to. `to` names the oldest entry to undo, the newest where absent.
+ * `newest` and `unmodifiedSince` are what the caller last read: the log's head and the
+ * character's `updatedAt`. Either one differing refuses as `"stale"`. `updated_at` holds
+ * whole seconds, so `newest` is what catches an entry added or undone in the same second;
+ * a burst merging into the head within that second still passes.
  */
-export function undoLastChange(db: CharactersDb, id: string): UndoResult | undefined {
+export interface UndoTarget {
+  to?: number;
+  newest?: number;
+  unmodifiedSince?: Date;
+}
+
+/** The entry `target` names, or why there is none to undo; `undefined` where `id` names no character. */
+function findUndoTarget(
+  tx: CharactersWriter,
+  id: string,
+  { to, newest: readNewest, unmodifiedSince }: UndoTarget,
+) {
+  const current = tx
+    .select({ updatedAt: characters.updatedAt })
+    .from(characters)
+    .where(eq(characters.id, id))
+    .get();
+  if (!current) return undefined;
+  if (unmodifiedSince && current.updatedAt.getTime() > unmodifiedSince.getTime()) {
+    return { kind: "stale" } as const;
+  }
+  const newest = newestUndoEntry(tx, id);
+  if (readNewest !== undefined && newest?.id !== readNewest) return { kind: "stale" } as const;
+  if (!newest) return { kind: "empty" } as const;
+  const entry = to === undefined ? newest : undoEntry(tx, id, to);
+  return entry ? ({ kind: "found", entry } as const) : ({ kind: "missing" } as const);
+}
+
+/**
+ * Restores the definition the target `undo_log` row holds, in one write, and drops that
+ * row and every newer one, recording nothing, since there is no redo. `undefined` where
+ * `id` names no character. A snapshot the schema now refuses restores nothing and drops
+ * that row alone, so the next undo reaches the entry behind it; the current definition
+ * and the newer entries are never touched.
+ */
+export function undoChanges(
+  db: CharactersDb,
+  id: string,
+  target: UndoTarget = {},
+): UndoResult | undefined {
   return db.transaction((tx) => {
-    const exists = tx
-      .select({ id: characters.id })
-      .from(characters)
-      .where(eq(characters.id, id))
-      .get();
-    if (!exists) return undefined;
-    const newest = newestUndoEntry(tx, id);
-    if (!newest) return { kind: "empty" };
-    deleteUndoEntry(tx, newest.id);
-    const previous = characterDefinitionSchema.safeParse(newest.previousState);
+    const found = findUndoTarget(tx, id, target);
+    if (found?.kind !== "found") return found;
+    const { entry } = found;
+    const previous = characterDefinitionSchema.safeParse(entry.previousState);
     if (!previous.success) {
+      deleteUndoEntry(tx, entry.id);
       return {
         kind: "invalid",
-        message: `Cannot restore "${newest.describedAs}", so it was dropped`,
+        message: `Cannot restore "${entry.describedAs}", so it was dropped`,
       };
     }
+    deleteUndoEntriesFrom(tx, id, entry.id);
     const row = writeDefinition(tx, id, previous.data, new Date());
     if (!row) return undefined;
     return { kind: "restored", row };

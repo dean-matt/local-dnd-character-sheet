@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type CharacterDefinition, describeChange } from "./index.ts";
+import { type CharacterDefinition, changePhrases, describeChange } from "./index.ts";
 import { definition } from "./test/vex.ts";
 
 const edit = (change: Partial<CharacterDefinition>): CharacterDefinition => ({
@@ -108,5 +108,11 @@ describe("describeChange", () => {
     expect(describeChange(definition, after)?.describedAs).toBe(
       "Name Vex to Nyx, Strength 8 to 9 and 2 more changes",
     );
+    expect(changePhrases(definition, after)).toEqual([
+      "Name Vex to Nyx",
+      "Strength 8 to 9",
+      "Dexterity 16 to 17",
+      "Constitution 14 to 15",
+    ]);
   });
 });

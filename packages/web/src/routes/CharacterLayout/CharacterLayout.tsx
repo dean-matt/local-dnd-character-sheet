@@ -1,14 +1,17 @@
 import { Settings } from "lucide-react";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
 import { useCharacter } from "../../hooks/useCharacter.ts";
 import { useCharacterPages } from "../../hooks/useCharacterPages.ts";
+import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { CharacterHeader } from "./CharacterHeader.tsx";
 import { CharacterSidebar } from "./CharacterSidebar.tsx";
+import { Dock } from "./Dock.tsx";
 import { ManagePages } from "./ManagePages/ManagePages.tsx";
 import { PrintSheet } from "./PrintSheet/PrintSheet.tsx";
-import { UndoButton } from "./UndoButton.tsx";
+import { UndoHistory } from "./UndoHistory/UndoHistory.tsx";
+import { UndoHistoryButton } from "./UndoHistoryButton.tsx";
 
 export function CharacterLayout() {
   const { id = "" } = useParams();
@@ -17,6 +20,9 @@ export function CharacterLayout() {
   const character = useCharacter(id);
   const [managing, setManaging] = useState(false);
   const manageButtonRef = useRef<HTMLButtonElement>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const historyButtonRef = useReturnFocus<HTMLButtonElement>(historyOpen);
+  const dockId = useId();
 
   const openManage = () => setManaging(true);
   const closeManage = () => {
@@ -43,7 +49,13 @@ export function CharacterLayout() {
               character={character.data}
               actions={
                 <>
-                  <UndoButton characterId={id} />
+                  <UndoHistoryButton
+                    ref={historyButtonRef}
+                    characterId={id}
+                    panelId={dockId}
+                    open={historyOpen}
+                    onToggle={() => setHistoryOpen((open) => !open)}
+                  />
                   <NavLink
                     to={`/characters/${id}/settings`}
                     title="Character settings"
@@ -60,6 +72,11 @@ export function CharacterLayout() {
             <Outlet />
           </div>
         </div>
+        {historyOpen && (
+          <Dock id={dockId} label="Undo history" onCollapse={() => setHistoryOpen(false)}>
+            <UndoHistory characterId={id} />
+          </Dock>
+        )}
       </SidebarFrame>
 
       {managing && <ManagePages id={id} onClose={closeManage} />}

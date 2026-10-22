@@ -4,6 +4,7 @@ import {
   defaultCharacterState,
   PRESET_PAGES,
 } from "@dnd/character";
+import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { characters, undoLog } from "../db/characters.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
@@ -381,7 +382,11 @@ describe("the undo log", () => {
   const withCha = (cha: number) =>
     baseDefinition({ abilityScores: { ...baseDefinition().abilityScores, cha } });
   const entries = async () =>
-    (await (await routes.request(`/characters/${id}/undo`)).json()) as { describedAs: string }[];
+    (await (await routes.request(`/characters/${id}/undo`)).json()) as {
+      id: number;
+      describedAs: string;
+      changes: string[];
+    }[];
   const undo = () => routes.request(`/characters/${id}/undo`, { method: "POST" });
 
   beforeEach(async () => {
@@ -400,8 +405,29 @@ describe("the undo log", () => {
     expect(await entries()).toEqual([]);
     await put(withCha(18));
     expect(await entries()).toEqual([
-      { id: expect.any(Number), describedAs: "Charisma 17 to 18", changedAt: expect.any(String) },
+      {
+        id: expect.any(Number),
+        describedAs: "Charisma 17 to 18",
+        changes: ["Charisma 17 to 18"],
+        changedAt: expect.any(String),
+      },
     ]);
+  });
+
+  it("lists every change an entry holds, measured to the entry after it", async () => {
+    const scores = { ...baseDefinition().abilityScores, str: 9, dex: 17, con: 15 };
+    await put(baseDefinition({ name: "Nyx", abilityScores: scores }), own);
+    await put(withCha(18), own);
+    const [newest, older] = await entries();
+
+    expect(older?.describedAs).toBe("Name Vex to Nyx, Strength 8 to 9 and 2 more changes");
+    expect(older?.changes).toEqual([
+      "Name Vex to Nyx",
+      "Strength 8 to 9",
+      "Dexterity 16 to 17",
+      "Constitution 14 to 15",
+    ]);
+    expect(newest?.changes).toHaveLength(5);
   });
 
   it("merges a burst on one field into one entry, and splits on another field", async () => {
@@ -529,6 +555,67 @@ describe("the undo log", () => {
       .run();
     expect((await put(withCha(18))).status).toBe(200);
     expect(await entries()).toEqual([]);
+  });
+
+  describe("back to an earlier entry", () => {
+    const undoTo = (body: object, headers: Record<string, string> = {}) => {
+      const request = json(body);
+      return routes.request(`/characters/${id}/undo`, {
+        ...request,
+        headers: { ...request.headers, ...headers },
+      });
+    };
+    const read = async () => (await (await routes.request(`/characters/${id}`)).json()).definition;
+
+    beforeEach(async () => {
+      for (const cha of [18, 19, 20]) await put(withCha(cha), own);
+    });
+
+    it("restores that entry's snapshot in one write and drops it and every newer one", async () => {
+      const [newest, middle] = await entries();
+      const res = await undoTo({ to: middle?.id, newest: newest?.id });
+      expect(res.status).toBe(200);
+      expect(await read()).toEqual(withCha(18));
+      expect((await entries()).map((e) => e.describedAs)).toEqual(["Charisma 17 to 18"]);
+    });
+
+    it("refuses where the log or the character moved on since the client read them", async () => {
+      const [newest, , oldest] = await entries();
+      await put(withCha(16), own);
+      expect((await undoTo({ to: oldest?.id, newest: newest?.id })).status).toBe(412);
+
+      const record = await (await routes.request(`/characters/${id}`)).json();
+      const since = new Date(new Date(record.updatedAt).getTime() - 1000).toUTCString();
+      const res = await undoTo({ to: oldest?.id }, { "If-Unmodified-Since": since });
+      expect(res.status).toBe(412);
+      expect(await res.json()).toEqual({
+        error: "The character changed since its undo history was read",
+      });
+      expect(await read()).toEqual(withCha(16));
+      expect(await entries()).toHaveLength(4);
+    });
+
+    it("409s an entry the log does not hold", async () => {
+      const res = await undoTo({ to: 9999 });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: "No such undo entry" });
+      expect(await entries()).toHaveLength(3);
+    });
+
+    it("drops a snapshot its schema rejects alone, keeping the entries after it", async () => {
+      const [, middle] = await entries();
+      opened.charactersDb
+        .update(undoLog)
+        .set({ previousState: { name: "" } })
+        .where(eq(undoLog.id, middle?.id ?? 0))
+        .run();
+      expect((await undoTo({ to: middle?.id })).status).toBe(422);
+      expect(await read()).toEqual(withCha(20));
+      expect((await entries()).map((e) => e.describedAs)).toEqual([
+        "Charisma 19 to 20",
+        "Charisma 17 to 18",
+      ]);
+    });
   });
 
   it("404s listing or undoing for an id that does not exist", async () => {

@@ -7,8 +7,10 @@ Every decision the app stores, where it is written, and the way back from it. Pa
 
 ## What Undo reaches
 
-Undo (`routes/CharacterLayout/UndoButton.tsx`) restores the definition before the newest
-change, one entry per press, back through the last 50. Saves to the same fields within 30
+Control+Z (`routes/CharacterLayout/UndoHistoryButton.tsx`) restores the definition before the
+newest change, one entry per press, back through the last 50. The undo history panel
+(`routes/CharacterLayout/UndoHistory/UndoHistory.tsx`) lists them and undoes back to any one
+in a single write, after a confirmation. Saves to the same fields within 30
 seconds merge into one entry, except a level-up or a Level History change, which is always its own entry. It does not reach:
 
 | Not reached | Reversed instead by |
@@ -23,7 +25,8 @@ seconds merge into one entry, except a level-up or a Level History change, which
 | An undo itself | Making the edit again by hand. Deliberate: #967 leaves redo out |
 | A change older than the 50 newest | A direct edit, where one exists. The bound is deliberate: `undo_log` is a session affordance |
 
-Undo restores only the newest entry; stepping back to an earlier one: #978.
+Undo back to an entry takes every newer entry with it; undoing one older entry alone, keeping the
+newer ones, would need a merge of whole-definition snapshots, and nothing offers it.
 
 ## Creation
 
