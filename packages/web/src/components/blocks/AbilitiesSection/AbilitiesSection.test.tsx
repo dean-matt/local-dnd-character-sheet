@@ -3,9 +3,10 @@ import {
   type CharacterRecord,
   deriveCharacter,
   entryKey,
+  type ItemAbilityTrait,
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
@@ -42,7 +43,10 @@ function warlock(): CharacterRecord {
   };
 }
 
-function derivedFor(record: CharacterRecord): CharacterDerived {
+function derivedFor(
+  record: CharacterRecord,
+  itemAbilities = new Map<string, ItemAbilityTrait>(),
+): CharacterDerived {
   return deriveCharacter(record.definition, {
     hitDice: new Map([[entryKey(WARLOCK), 8]]),
     spellcastingAbilities: new Map([[entryKey(WARLOCK), "cha"]]),
@@ -56,14 +60,14 @@ function derivedFor(record: CharacterRecord): CharacterDerived {
     sizes: ["medium"],
     speed: { walk: 30, fly: 40 },
     armor: new Map(),
-    weights: new Map(),
+    weights: new Map([...itemAbilities.keys()].map((key) => [key, 0])),
     weapons: new Map(),
     raceDefenses: { resist: [], resistChoice: [], immune: [], conditionImmune: [], vulnerable: [] },
     raceSenses: [],
     itemSenses: new Map(),
     itemSkills: new Map(),
     itemDefenses: new Map(),
-    itemAbilities: new Map(),
+    itemAbilities,
     itemBonuses: new Map(),
     itemAdvantages: new Map(),
     armorBurdens: new Map(),
@@ -256,28 +260,56 @@ describe("AbilitiesSection", () => {
     expect(within(tile("Ability Scores", "Dexterity")).getByText("+3")).toBeVisible();
   });
 
-  it("shows a score an item sets without an input to edit it", () => {
-    const record = warlock();
-    const derived = derivedFor(record);
-    renderSection(record, {
-      ...derived,
-      abilityScores: {
-        ...derived.abilityScores,
-        str: {
-          computed: 21,
-          manual: null,
-          terms: [
-            { label: "Base", value: 8 },
-            { label: "Belt", value: 13 },
-          ],
+  const AMULET = { name: "Amulet of Health", source: "DMG" };
+  it.each([
+    ["a static score", { static: { con: 19 } }, {}, "set by Amulet of Health"],
+    ["a capped bonus", { bonus: { con: 2 }, max: 20 }, {}, "set by Amulet of Health"],
+    ["a plain bonus", { bonus: { con: 2 } }, {}, "set by Amulet of Health"],
+    ["an override", {}, { "abilityScores.con": 18 }, "overridden"],
+  ])(
+    "draws a read-only box naming the reason where %s holds the score, and never saves from it",
+    async (_, trait, overrides, reason) => {
+      const base = warlock();
+      const record: CharacterRecord = {
+        ...base,
+        definition: {
+          ...base.definition,
+          overrides,
+          inventory: [{ ref: AMULET, quantity: 1, carried: true, equipped: true, attuned: true }],
         },
-      },
-    });
+      };
+      const items = new Map<string, ItemAbilityTrait>([
+        [
+          entryKey(AMULET),
+          { name: AMULET.name, requiresAttunement: true, static: {}, bonus: {}, ...trait },
+        ],
+      ]);
+      const put = vi.fn();
+      renderSection(record, derivedFor(record, items));
+      const reads = fetch;
+      vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "PUT") put();
+        return reads(url, init);
+      });
 
-    const strength = within(tile("Ability Scores", "Strength"));
-    expect(strength.getByText("21")).toBeVisible();
-    expect(strength.queryByRole("textbox", { name: "Strength score" })).toBeNull();
-  });
+      const box = screen.getByRole("textbox", { name: "Constitution score" });
+      expect(box).toHaveAttribute("readonly");
+      expect(box).toHaveAccessibleDescription(
+        `${reason}; change it with Score override in the details`,
+      );
+      expect(within(tile("Ability Scores", "Constitution")).getByText(reason)).toBeVisible();
+      box.focus();
+      expect(box).toHaveFocus();
+      fireEvent.change(box, { target: { value: "12" } });
+      fireEvent.blur(box);
+      await act(async () => {});
+      expect(put).not.toHaveBeenCalled();
+      expect(screen.getAllByRole("textbox", { name: / score$/ })).toHaveLength(6);
+      expect(screen.getByRole("textbox", { name: "Strength score" })).not.toHaveAttribute(
+        "readonly",
+      );
+    },
+  );
 
   it("names a save by its abbreviation, and a screen reader by its full name and proficiency", () => {
     renderSection();

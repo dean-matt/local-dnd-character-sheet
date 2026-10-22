@@ -1,16 +1,20 @@
 import {
   ABILITIES,
   ABILITY_LABEL,
+  type Ability,
   abilityScore,
+  abilityScoreBreakdown,
   abilityScoresSchema,
   type CharacterDerived,
   type CharacterRecord,
   derivedValue,
 } from "@dnd/character";
+import { useId } from "react";
 import { z } from "zod";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
+import { InputField } from "../../InputField.tsx";
 import { DerivedBreakdown } from "../DerivedBreakdown.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { signed } from "../signed.ts";
@@ -18,6 +22,7 @@ import { ABILITY_RULES, editionRules } from "./abilityRules.ts";
 import { StatTile } from "./StatTile.tsx";
 
 const ABILITY_LABEL_CLASS = "text-[10px] tracking-[0.06em]";
+const SCORE_BOX = "w-12 py-1 text-center text-number";
 
 /**
  * The scores the player may type where increases move the base by `raised`:
@@ -34,6 +39,22 @@ function scoreSchema(raised: number) {
     .max(30 + raised, { error });
 }
 
+/**
+ * Why typing cannot move this score, or null where it can. Any item term locks it, a plain
+ * bonus too: the save sets the base from the score without item grants, so a typed score
+ * would land off by the bonus.
+ */
+function lockReason(
+  definition: CharacterRecord["definition"],
+  field: CharacterDerived["abilityScores"][Ability],
+  ability: Ability,
+): string | null {
+  if (field.manual !== null) return "overridden";
+  const own = abilityScoreBreakdown(definition, ability).terms.length;
+  if (field.terms.length === own) return null;
+  return `set by ${[...new Set(field.terms.slice(own).map((term) => term.label))].join(", ")}`;
+}
+
 /** Digits only: `Number` reads "1e1" and "0x1E" as scores the user never typed. */
 const parseScore = (raw: string) => (/^\d+$/.test(raw.trim()) ? Number(raw.trim()) : Number.NaN);
 
@@ -46,6 +67,7 @@ export function AbilityScores({
 }) {
   const { definition } = character;
   const update = useUpdateCharacterDefinition(character.id);
+  const reasonId = useId();
   return (
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -53,11 +75,7 @@ export function AbilityScores({
           const { terms } = derived.abilityScores[ability];
           const score = derivedValue(derived.abilityScores[ability]);
           const raised = score - definition.abilityScores[ability];
-          // A static or capped item is not a fixed offset, so no base the player types can
-          // reach a score it sets; the tile reads only until the item comes off.
-          const editable =
-            derived.abilityScores[ability].manual === null &&
-            derived.abilityScores[ability].computed === abilityScore(definition, ability);
+          const locked = lockReason(definition, derived.abilityScores[ability], ability);
           const increases = terms
             .slice(1)
             .map((term) => `${signed(term.value)} ${term.label.toLowerCase()}`);
@@ -94,7 +112,7 @@ export function AbilityScores({
                 ),
               }}
             >
-              {editable ? (
+              {locked === null ? (
                 <Field
                   mode="edit"
                   label={`${ABILITY_LABEL[ability]} score`}
@@ -103,7 +121,7 @@ export function AbilityScores({
                   format={String}
                   parse={parseScore}
                   schema={scoreSchema(raised)}
-                  inputClassName="w-12 py-1 text-center text-number"
+                  inputClassName={SCORE_BOX}
                   inputMode="numeric"
                   onSave={async (typed: number) => {
                     // The player edits the score they see; the base takes the difference, so
@@ -119,13 +137,25 @@ export function AbilityScores({
                   }}
                 />
               ) : (
-                <Field
-                  mode="read"
-                  label={`${ABILITY_LABEL[ability]} score`}
-                  labelHidden
-                  value={derived.abilityScores[ability]}
-                  format={String}
-                />
+                <>
+                  <InputField
+                    label={`${ABILITY_LABEL[ability]} score`}
+                    labelHidden
+                    type="text"
+                    readOnly
+                    title={`${locked}; change it with Score override in the details`}
+                    value={String(score)}
+                    describedBy={`${reasonId}-${ability}`}
+                    className={`${SCORE_BOX} border-dashed bg-subtle text-muted`}
+                  />
+                  <span
+                    id={`${reasonId}-${ability}`}
+                    className="max-w-full text-center font-normal text-[10px] text-muted leading-tight"
+                  >
+                    {locked}
+                    <span className="sr-only">; change it with Score override in the details</span>
+                  </span>
+                </>
               )}
               <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent-text]:text-white">
                 <DerivedValue
