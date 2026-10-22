@@ -2,7 +2,12 @@ import type { FeatRecord } from "@dnd/catalog";
 import { type CharacterDefinition, displayName, entryKey } from "@dnd/character";
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../test/records.ts";
-import { levelChoiceRefusals, type PrerequisiteRows, withoutLevelChoices } from "./levelChoices.ts";
+import {
+  levelChoiceDepartures,
+  levelChoiceRefusals,
+  type PrerequisiteRows,
+  withoutLevelChoices,
+} from "./levelChoices.ts";
 
 const PHB = (name: string) => ({ name, source: "PHB" });
 const NO_ROWS: PrerequisiteRows = { options: new Map(), feats: [] };
@@ -132,5 +137,34 @@ describe("levelChoiceRefusals", () => {
       "Ritual Caster, taken at level 8, needs Intelligence 13 or Wisdom 13; remove it to make this change.",
     ]);
     expect(levelChoiceRefusals(before, before, 4, rows)).toEqual([]);
+  });
+});
+
+describe("levelChoiceDepartures", () => {
+  it("notes a multiclass prerequisite a lowered improvement leaves unmet, without refusing", () => {
+    const increase = (ability: "int" | "str") => ({
+      ability,
+      amount: 2,
+      grantedBy: "class" as const,
+      level: 4,
+    });
+    const before = definition({
+      levels: [...fighter(4), { class: PHB("Wizard") }],
+      abilityScores: { str: 13, dex: 16, con: 14, int: 11, wis: 12, cha: 10 },
+      abilityIncreases: [increase("int")],
+    });
+    const after = { ...before, abilityIncreases: [increase("str")] };
+    const classes = [
+      { name: "Fighter", firstIndex: 0, prerequisite: [{ str: 13 }, { dex: 13 }] },
+      { name: "Wizard", firstIndex: 4, prerequisite: [{ int: 13 }] },
+    ];
+    const note = "Multiclassing in or out of Wizard needs Intelligence 13.";
+
+    expect(levelChoiceDepartures(before, after, classes)).toEqual({
+      departures: [{ field: "levels.4.class", note }],
+      added: [note],
+    });
+    expect(levelChoiceDepartures(before, before, classes).departures).toEqual([]);
+    expect(levelChoiceRefusals(before, after, 4, NO_ROWS)).toEqual([]);
   });
 });

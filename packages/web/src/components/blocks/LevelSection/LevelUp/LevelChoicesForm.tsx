@@ -51,7 +51,9 @@ export function LevelChoicesForm({
   const later = useLaterPrerequisites(definition);
   const after = withReopenedLevel(definition, level, getValues());
   const refusals = levelChoiceRefusals(definition, after, level, later.rows);
-  const notes = later.read ? later.addedNotes(after) : [];
+  const { departures, added: notes } = later.read
+    ? later.departures(after)
+    : { departures: after.departures, added: [] };
   const blocked =
     !formState.isDirty || !plan.picksReady || !later.read || saving || refusals.length > 0;
   const { owed } = plan.spellPicks;
@@ -100,7 +102,7 @@ export function LevelChoicesForm({
               aria-disabled={blocked}
               onClick={(event) => {
                 if (blocked) event.preventDefault();
-                else setValue("departures", later.departures(after), { shouldDirty: true });
+                else setValue("departures", departures, { shouldDirty: true });
               }}
               className={`${BUTTON} bg-accent text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
             >

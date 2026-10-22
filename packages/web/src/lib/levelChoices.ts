@@ -7,6 +7,7 @@
  */
 import { type FeatRecord, featTermsSchema, type OptionalFeaturePrerequisite } from "@dnd/catalog";
 import {
+  abilityScore,
   type CharacterDefinition,
   displayName,
   type EntryRef,
@@ -15,7 +16,12 @@ import {
   refKey,
 } from "@dnd/character";
 import { candidateAt } from "./improvementFeats.ts";
-import { meetsPrerequisite, prerequisiteText } from "./multiclassPrerequisites.ts";
+import {
+  isPrerequisiteField,
+  meetsPrerequisite,
+  prerequisiteText,
+  withPrerequisiteDepartures,
+} from "./multiclassPrerequisites.ts";
 import { prerequisiteFacts, unmetNeeds } from "./optionalFeaturePrerequisites.ts";
 
 type Grantor = { kind: string; ref: EntryRef };
@@ -174,3 +180,24 @@ export const levelChoiceRefusals = (
   [subclassBuiltOn, preparedDropped, grantorDropped, optionShort(rows), featShort(rows)].flatMap(
     (refusal) => refusal(before, after, level),
   );
+
+/**
+ * `after`'s departures with every multiclass prerequisite its scores leave unmet noted, as the
+ * level-up notes one: recorded, never refused. `added` names each note `before` lacked.
+ */
+export function levelChoiceDepartures(
+  before: CharacterDefinition,
+  after: CharacterDefinition,
+  classes: Parameters<typeof withPrerequisiteDepartures>[1],
+) {
+  const departures = withPrerequisiteDepartures(after.departures, classes, (ability) =>
+    abilityScore(after, ability),
+  );
+  const noted = new Set(before.departures.map((each) => each.note));
+  return {
+    departures,
+    added: departures
+      .filter((each) => isPrerequisiteField(each.field) && !noted.has(each.note))
+      .map((each) => each.note),
+  };
+}

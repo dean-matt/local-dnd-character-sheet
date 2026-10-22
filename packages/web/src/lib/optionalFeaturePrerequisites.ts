@@ -94,9 +94,8 @@ export function prerequisiteNotes(
   const met = missing.findIndex((each) => each.length === 0);
   const shown = prerequisites[met === -1 ? 0 : met];
   const unchecked = shown?.unjudged ?? [];
-  const needs = unmetNeeds(prerequisites, facts);
   return {
-    unmet: needs && `Needs ${needs}`,
+    unmet: met === -1 && missing[0] ? `Needs ${missing[0].join(", ")}` : undefined,
     unchecked: unchecked.length > 0 ? `Not checked: ${unchecked.join(", ")}` : undefined,
   };
 }
