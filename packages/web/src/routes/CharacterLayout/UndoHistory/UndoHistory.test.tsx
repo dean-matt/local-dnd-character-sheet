@@ -37,13 +37,15 @@ function stub(post: () => Response = () => new Response(JSON.stringify(RECORD)))
 const posts = (fetchMock: ReturnType<typeof stub>) =>
   fetchMock.mock.calls.filter(([, init]) => init?.method === "POST");
 
-const undoTo = (name: RegExp) => {
-  const row = [...document.querySelectorAll<HTMLElement>("ol > li")].find((li) =>
+const row = (name: RegExp) => {
+  const found = [...document.querySelectorAll<HTMLElement>("ol > li")].find((li) =>
     name.test(li.querySelector("p")?.textContent ?? ""),
   );
-  if (!row) throw new Error(`no entry ${name}`);
-  return within(row).getByRole("button", { name: /^Undo to here/ });
+  if (!found) throw new Error(`no entry ${name}`);
+  return found;
 };
+
+const undoTo = (name: RegExp) => within(row(name)).getByRole("button", { name: /^Undo to here/ });
 
 async function rendered() {
   renderWithClient(<UndoHistory characterId="1" />);
@@ -58,7 +60,7 @@ describe("UndoHistory", () => {
   it("takes focus on its heading when it opens", async () => {
     stub();
     await rendered();
-    expect(screen.getByRole("heading", { name: "Undo history" })).toHaveFocus();
+    expect(screen.getByRole("heading", { name: "Undo Changes" })).toHaveFocus();
   });
 
   it("lists every entry newest first, with when and every change it holds", async () => {
@@ -77,7 +79,7 @@ describe("UndoHistory", () => {
     expect(within(rows[0] as HTMLElement).queryByText(/changes$/)).toBeNull();
   });
 
-  it("marks the entry and every newer one while its Undo to here is hovered or focused", async () => {
+  it("marks the entry and every newer one while it is hovered or its Undo to here focused", async () => {
     stub();
     await rendered();
     const marked = () =>
@@ -85,14 +87,25 @@ describe("UndoHistory", () => {
         (p) => p.textContent,
       );
 
-    fireEvent.mouseEnter(undoTo(/^Strength/));
+    fireEvent.mouseEnter(row(/^Strength/));
     expect(marked()).toEqual([LOG[0]?.describedAs, LOG[1]?.describedAs]);
-    fireEvent.mouseLeave(undoTo(/^Strength/));
+    fireEvent.mouseLeave(row(/^Strength/));
     expect(marked()).toEqual([]);
 
     fireEvent.focus(undoTo(/^Charisma/));
     expect(marked()).toHaveLength(3);
     expect(undoTo(/^Charisma/)).toHaveAccessibleName("Undo to here, undoing 6 changes");
+  });
+
+  it("asks to undo back to an entry clicked anywhere outside its disclosure", async () => {
+    stub();
+    await rendered();
+
+    fireEvent.click(within(row(/^Strength/)).getByText("4 changes"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    fireEvent.click(row(/^Strength/).querySelector("time") as HTMLElement);
+    expect(screen.getByRole("dialog", { name: "Undo 5 changes?" })).toBeInTheDocument();
   });
 
   it("asks first, then undoes back to the entry in one write and announces it", async () => {

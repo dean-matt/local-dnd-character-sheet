@@ -151,7 +151,7 @@ describe("routing", () => {
     fireEvent.click(toggle);
     const dock = screen.getByRole("complementary", { name: "Side panel" });
     expect(toggle).toHaveAttribute("aria-controls", dock.id);
-    expect(within(dock).getByRole("heading", { name: "Undo history" })).toHaveFocus();
+    expect(within(dock).getByRole("heading", { name: "Undo Changes" })).toHaveFocus();
 
     fireEvent.click(within(dock).getByRole("button", { name: "Close side panel" }));
     expect(screen.queryByRole("complementary", { name: "Side panel" })).toBeNull();

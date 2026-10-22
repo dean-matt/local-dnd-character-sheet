@@ -1,5 +1,6 @@
 import type { undoLogSchema } from "@dnd/character";
 import { Undo2 } from "lucide-react";
+import { useRef } from "react";
 import type { z } from "zod";
 
 type Entry = z.infer<typeof undoLogSchema>[number];
@@ -13,7 +14,8 @@ const when = new Intl.DateTimeFormat(undefined, {
 
 /**
  * One undo entry: what it changed, when, every change it holds behind a disclosure, and
- * "Undo to here". Hovering or focusing that button calls `onMark`, so the panel can mark
+ * "Undo to here", which a click anywhere on the entry outside the disclosure also presses.
+ * Hovering the entry or focusing that button calls `onMark`, so the panel can mark
  * this entry and every newer one as what it would undo; `undoes` counts the changes they
  * hold.
  */
@@ -32,10 +34,20 @@ export function UndoHistoryEntry({
   onMark: (marked: boolean) => void;
   onUndo: (trigger: HTMLButtonElement) => void;
 }) {
+  const button = useRef<HTMLButtonElement>(null);
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noNoninteractiveElementInteractions: a pointer shortcut to the entry's own button, which keyboard and screen reader users reach.
     <li
       data-marked={marked}
-      className="flex items-start gap-2 rounded-control border border-border px-3 py-2 data-[marked=true]:border-error data-[marked=true]:bg-subtle"
+      onMouseEnter={() => onMark(true)}
+      onMouseLeave={() => onMark(false)}
+      onClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (!disabled && button.current && !target.closest("details, button")) {
+          onUndo(button.current);
+        }
+      }}
+      className="flex cursor-pointer items-start gap-2 rounded-control border border-border px-3 py-2 data-[marked=true]:border-error data-[marked=true]:bg-subtle"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="font-medium text-body in-data-[marked=true]:line-through">
@@ -59,13 +71,12 @@ export function UndoHistoryEntry({
         )}
       </div>
       <button
+        ref={button}
         type="button"
         aria-disabled={disabled}
         aria-haspopup="dialog"
         aria-label={`Undo to here, undoing ${undoes} ${undoes === 1 ? "change" : "changes"}`}
         title="Undo to here"
-        onMouseEnter={() => onMark(true)}
-        onMouseLeave={() => onMark(false)}
         onFocus={() => onMark(true)}
         onBlur={() => onMark(false)}
         onClick={(event) => {

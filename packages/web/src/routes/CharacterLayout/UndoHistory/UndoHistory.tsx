@@ -65,7 +65,7 @@ export function UndoHistory({ characterId }: { characterId: string }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2.5">
       <h2 ref={heading} tabIndex={-1} className="font-bold text-title">
-        Undo history
+        Undo Changes
       </h2>
       <p className="text-muted text-row">{SCOPE}</p>
       <p role="status" aria-live="polite" className="text-row">
