@@ -218,6 +218,7 @@ const ROWS: Record<string, unknown> = {
     hitDie: 10,
     json: {
       ...KNIGHT_FIGHTER,
+      multiclassing: { requirements: { str: 13 } },
       classFeatures: [
         { classFeature: "Martial Archetype|Fighter|PHB|3", gainSubclassFeature: true },
       ],
@@ -320,6 +321,7 @@ const ROWS: Record<string, unknown> = {
     { cantrips_known: "3", prepared_spells: "7" },
     [4, 3],
   ),
+  "/api/feats?edition=classic&limit=200": page([]),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
   ]),
@@ -1515,6 +1517,38 @@ describe("LevelUp", () => {
           pickedAt: 3,
         })),
       );
+    });
+
+    it("notes a multiclass prerequisite left unmet without refusing, past an option whose row is gone", async () => {
+      const base = sorcererOfFive();
+      renderSeeded(
+        {
+          ...base,
+          definition: {
+            ...base.definition,
+            levels: [...base.definition.levels, { class: KNIGHT_FIGHTER }],
+            optionalFeatures: [
+              {
+                ref: { name: "Retired Option", source: "PHB" },
+                featureType: "EI",
+                grantedBy: { kind: "class", ref: SORCERER },
+                level: 5,
+              },
+            ],
+          },
+        },
+        { history: true },
+      );
+      await reopen(4);
+      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      await pickSpell("Add a spell", "Burning Hands");
+      const note = "Multiclassing in or out of Fighter needs Strength 13.";
+      expect(await within(dialog()).findByText(note)).toBeVisible();
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().departures).toEqual([{ field: "levels.5.class", note }]);
     });
 
     it("offers Reload where the character changed since the dialog opened, and writes on the fresh read", async () => {

@@ -3,8 +3,9 @@ import { spellsUnderClass } from "./spellsGained.ts";
 
 /**
  * `latest` with `level`'s choices made again as `values` holds them: the level-up form's
- * draft, whose levels end at `level`. The levels after it stay as `latest` holds them, and
- * so does every field a level's picks never write.
+ * draft, whose levels end at `level`, and its departures, which Apply sets to note each
+ * multiclass prerequisite the picks leave unmet. The levels after it stay as `latest` holds
+ * them, and so does every other field a level's picks never write.
  */
 export function withReopenedLevel(
   latest: CharacterDefinition,
@@ -21,5 +22,6 @@ export function withReopenedLevel(
     featureChoices: values.featureChoices,
     spells: spellsUnderClass(values.spells, values.levels, chosen),
     optionalFeatures: values.optionalFeatures,
+    departures: values.departures,
   };
 }

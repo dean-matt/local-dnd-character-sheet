@@ -60,7 +60,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 |---|---|---|
 | Taking a level | `components/blocks/LevelSection/LevelUp/LevelUpDialog.tsx` | Removing the newest level (`LevelSection/LevelRemoval.tsx`), or Undo, one level-up per press |
 | A level's hit point gain | `components/blocks/LevelSection/LevelGainEdit.tsx` | Undo, a direct edit |
-| A past level's choices | `components/blocks/LevelSection/LevelUp/LevelChoicesDialog.tsx` | Undo, reopening again; prerequisites: #980 |
+| A past level's choices | `components/blocks/LevelSection/LevelUp/LevelChoicesDialog.tsx` | Undo, reopening again |
 | An improvement or Epic Boon | `components/blocks/LevelSection/Improvements.tsx` | Undo, a direct edit |
 | Experience and leveling mode | `LevelSection/ExperienceTracker.tsx`, `LevelSection/LevelingField.tsx` | Undo, a direct edit |
 
