@@ -117,7 +117,7 @@ export function LevelChoicesForm({
         <div aria-live="polite" className="text-row">
           {notes.length > 0 && (
             <>
-              <p>Applying leaves a multiclass prerequisite unmet, which Notes will list:</p>
+              <p>A multiclass prerequisite is unmet, which Notes will list:</p>
               {notes.map((note) => (
                 <p key={note}>{note}</p>
               ))}
