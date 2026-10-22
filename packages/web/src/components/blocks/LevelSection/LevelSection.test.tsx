@@ -451,7 +451,7 @@ describe("LevelHistory", () => {
       await changeLevel2();
 
       fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d8)" }));
-      expect(within(dialog()).getByText("Rolled 8 on the d8; Apply saves it.")).toBeVisible();
+      expect(within(dialog()).getByText("Rolled 8 on the d8")).toBeVisible();
       expect(within(dialog()).getByRole("spinbutton", { name: "Level 2 typed gain" })).toHaveValue(
         8,
       );
@@ -496,7 +496,7 @@ describe("LevelHistory", () => {
       closed();
 
       await changeLevel2();
-      expect(within(dialog()).queryByText(/Apply saves it/)).toBeNull();
+      expect(within(dialog()).queryByText(/^Rolled/)).toBeNull();
       expect(puts).toEqual([]);
     });
 

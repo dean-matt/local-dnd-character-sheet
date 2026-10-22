@@ -5,12 +5,7 @@ import {
   hitPointSource,
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
-import {
-  draftedGain,
-  type GainDraft,
-  type GainEdit,
-  typedGainMessage,
-} from "../../../lib/levelGain.ts";
+import { draftedGain, type GainDraft, typedGainMessage } from "../../../lib/levelGain.ts";
 import { InputField } from "../../InputField.tsx";
 
 type Level = CharacterDefinition["levels"][number];
@@ -28,11 +23,6 @@ function stored(entry: Pick<Level, "rolled" | "typed">, die: HitDie) {
     source: hitPointSource({ die, ...entry }, false),
     text: entry.rolled === undefined ? "" : String(entry.rolled),
   };
-}
-
-function pending(edit: GainEdit, average: number, die: HitDie): string {
-  if (edit.kind === "average") return `Average ${average}`;
-  return edit.kind === "roll" ? `Rolled ${edit.face} on the d${die}` : `Typed ${edit.gain}`;
 }
 
 const BUTTON =
@@ -106,7 +96,7 @@ export function LevelGainEdit({
         />
       </div>
       <p aria-live="polite" className="text-muted text-row">
-        {edit && `${pending(edit, average, die)}; Apply saves it.`}
+        {edit?.kind === "roll" && `Rolled ${edit.face} on the d${die}`}
       </p>
     </fieldset>
   );

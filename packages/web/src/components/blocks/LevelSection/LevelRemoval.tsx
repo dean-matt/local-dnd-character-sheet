@@ -88,17 +88,10 @@ export function LevelRemoval({
         }
       >
         <p>
-          Remove {names}, with {many ? "their" : "its"} hit points and what was chosen for{" "}
-          {many ? "them" : "it"}: the subclass, improvement, feature choices, spells and options.
+          Remove {names}, with everything chosen at {many ? "those levels" : "that level"}.
           Experience points stay
           {entered ? ", as do the proficiencies a class brought" : ""}.
         </p>
-        {many && (
-          <p className="text-muted">
-            The levels after level {from} go too: each one's class level, and what it was entitled
-            to choose, rests on the levels before it.
-          </p>
-        )}
       </ModalEntry>
     </Modal>
   );

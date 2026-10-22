@@ -1500,7 +1500,7 @@ describe("LevelUp", () => {
       fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
       await pickSpell("Add a spell", "Burning Hands");
       fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d6)" }));
-      expect(within(dialog()).getByText("Rolled 5 on the d6; Apply saves it.")).toBeVisible();
+      expect(within(dialog()).getByText("Rolled 5 on the d6")).toBeVisible();
       await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(applyChanges());
 
