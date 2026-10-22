@@ -9,10 +9,7 @@ import { useUndoCharacterChange } from "../../../hooks/useUndoCharacterChange.ts
 import { UndoHistoryEntry } from "./UndoHistoryEntry.tsx";
 import { UndoToHereDialog } from "./UndoToHereDialog.tsx";
 
-const SCOPE =
-  `Undo reaches back through the last ${UNDO_LOG_LIMIT} changes to this character's ` +
-  "details. It does not reach play state, page layout or a deleted character, and there " +
-  "is no redo. Control+Z or Command+Z undoes the newest change.";
+const SCOPE = `Your last ${UNDO_LOG_LIMIT} changes.`;
 
 /**
  * The character's undo log, newest first, each entry able to undo back to itself after a
