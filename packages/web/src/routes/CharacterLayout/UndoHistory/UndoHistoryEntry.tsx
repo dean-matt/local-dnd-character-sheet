@@ -1,4 +1,5 @@
 import type { undoLogSchema } from "@dnd/character";
+import { Undo2 } from "lucide-react";
 import type { z } from "zod";
 
 type Entry = z.infer<typeof undoLogSchema>[number];
@@ -34,32 +35,35 @@ export function UndoHistoryEntry({
   return (
     <li
       data-marked={marked}
-      className="flex flex-col gap-1 rounded-control border border-border px-3 py-2 data-[marked=true]:border-error data-[marked=true]:bg-subtle"
+      className="flex items-start gap-2 rounded-control border border-border px-3 py-2 data-[marked=true]:border-error data-[marked=true]:bg-subtle"
     >
-      <p className="font-medium text-body in-data-[marked=true]:line-through">
-        {entry.describedAs}
-      </p>
-      <time dateTime={entry.changedAt} className="text-muted text-row">
-        {when.format(new Date(entry.changedAt))}
-      </time>
-      {entry.changes.length > 1 && (
-        <details className="text-row">
-          <summary className="cursor-pointer text-secondary">
-            {entry.changes.length} changes
-          </summary>
-          <ul className="mt-1 list-disc pl-5">
-            {entry.changes.map((change, at) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: two changes can read alike, and the list never reorders.
-              <li key={at}>{change}</li>
-            ))}
-          </ul>
-        </details>
-      )}
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <p className="font-medium text-body in-data-[marked=true]:line-through">
+          {entry.describedAs}
+        </p>
+        <time dateTime={entry.changedAt} className="text-muted text-row">
+          {when.format(new Date(entry.changedAt))}
+        </time>
+        {entry.changes.length > 1 && (
+          <details className="text-row">
+            <summary className="cursor-pointer text-secondary">
+              {entry.changes.length} changes
+            </summary>
+            <ul className="mt-1 list-disc pl-5">
+              {entry.changes.map((change, at) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: two changes can read alike, and the list never reorders.
+                <li key={at}>{change}</li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </div>
       <button
         type="button"
         aria-disabled={disabled}
         aria-haspopup="dialog"
         aria-label={`Undo to here, undoing ${undoes} ${undoes === 1 ? "change" : "changes"}`}
+        title="Undo to here"
         onMouseEnter={() => onMark(true)}
         onMouseLeave={() => onMark(false)}
         onFocus={() => onMark(true)}
@@ -67,9 +71,9 @@ export function UndoHistoryEntry({
         onClick={(event) => {
           if (!disabled) onUndo(event.currentTarget);
         }}
-        className="self-start rounded-control border border-border px-2.5 py-1 font-medium text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        className="flex size-7 shrink-0 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle hover:text-ink aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
       >
-        Undo to here
+        <Undo2 aria-hidden="true" size={14} />
       </button>
     </li>
   );

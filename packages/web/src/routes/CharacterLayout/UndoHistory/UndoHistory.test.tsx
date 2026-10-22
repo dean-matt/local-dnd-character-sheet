@@ -81,7 +81,9 @@ describe("UndoHistory", () => {
     stub();
     await rendered();
     const marked = () =>
-      [...document.querySelectorAll("ol > li[data-marked=true] > p")].map((p) => p.textContent);
+      [...document.querySelectorAll("ol > li[data-marked=true] > div > p")].map(
+        (p) => p.textContent,
+      );
 
     fireEvent.mouseEnter(undoTo(/^Strength/));
     expect(marked()).toEqual([LOG[0]?.describedAs, LOG[1]?.describedAs]);
