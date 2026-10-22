@@ -12,6 +12,7 @@ import { SectionUnavailable } from "../SectionUnavailable.tsx";
 import { AlignmentCard } from "./AlignmentCard.tsx";
 import { AppearanceCard } from "./AppearanceCard.tsx";
 import { BackgroundCard } from "./BackgroundCard.tsx";
+import { DeityCard } from "./DeityCard.tsx";
 import { LanguagesCard } from "./LanguagesCard.tsx";
 import { ProficienciesCard } from "./ProficienciesCard.tsx";
 import { RaceCard } from "./RaceCard.tsx";
@@ -44,6 +45,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
       </Card>
       <BackgroundCard character={character} />
       <AlignmentCard character={character} />
+      <DeityCard character={character} />
       <LanguagesCard character={character} />
       <div className="lg:row-span-2">
         <ProficienciesCard character={character} />

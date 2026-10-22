@@ -37,13 +37,13 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Decision | Changed on the sheet by | Reversed by |
 |---|---|---|
 | Name | `components/blocks/IdentitySection/IdentitySection.tsx` | Undo, a direct edit |
-| Edition | Nothing | Cannot be: #983 |
+| Edition | Nothing | Cannot be, deliberately: the edition decides every catalog row the character names, so a switch would leave most of its picks outside the new rules. Build the character again under the other rules |
 | Race and subrace | `components/blocks/IdentitySection/RaceCard.tsx` | Undo, a direct edit |
-| Size, damage resistance a race offers | Nothing | Cannot be: #983 |
-| Race and background ability increases | Nothing | Cannot be: #983 |
-| A race or background spell block choice | Nothing | Cannot be: #983 |
+| Size, damage resistance a race offers | `components/blocks/IdentitySection/RaceCard.tsx` | Undo, a direct edit |
+| Race and background ability increases | `IdentitySection/RaceCard.tsx`, `IdentitySection/BackgroundCard.tsx`, through `IdentitySection/OriginIncreases.tsx`, which names increases the row does not offer | Undo, a direct edit |
+| A race or background spell block choice | The same cards, through `IdentitySection/OriginSpellBlocks.tsx`, which names a choice kept from another row | Undo, a direct edit |
 | Background | `components/blocks/IdentitySection/BackgroundCard.tsx` | Undo, a direct edit |
-| Deity | Nothing | Cannot be: #983 |
+| Deity | `IdentitySection/DeityCard.tsx` | Undo, a direct edit, clearing it |
 | Alignment | `components/blocks/IdentitySection/AlignmentCard.tsx` | Undo, a direct edit |
 | Base ability scores | `components/blocks/AbilitiesSection/AbilityScores.tsx` | Undo, a direct edit |
 | Starting class | Level 1's Edit dialog in Level History, `components/blocks/LevelSection/LevelEditDialog.tsx` | Undo, changing it again |
