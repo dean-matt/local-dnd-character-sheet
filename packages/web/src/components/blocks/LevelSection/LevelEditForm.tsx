@@ -106,7 +106,7 @@ export function LevelEditForm({
               <button
                 type="button"
                 onClick={onRemove}
-                className={`${BUTTON} border border-border bg-surface text-error hover:bg-subtle`}
+                className={`${BUTTON} border border-error bg-surface text-error hover:bg-subtle`}
               >
                 Remove level {level}
               </button>
