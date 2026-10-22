@@ -9,7 +9,7 @@ Every decision the app stores, where it is written, and the way back from it. Pa
 
 Undo (`routes/CharacterLayout/UndoButton.tsx`) restores the definition before the newest
 change, one entry per press, back through the last 50. Saves to the same fields within 30
-seconds merge into one entry, except a level-up or a Level History change, each always its own. It does not reach:
+seconds merge into one entry, except a level-up or a Level History change, which is always its own entry. It does not reach:
 
 | Not reached | Reversed instead by |
 |---|---|
