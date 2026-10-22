@@ -5,11 +5,12 @@
  */
 import {
   type CharacterDefinition,
+  changePhrases,
   characterDefinitionSchema,
   describeChange,
   UNDO_LOG_LIMIT,
 } from "@dnd/character";
-import { and, desc, eq, notInArray } from "drizzle-orm";
+import { and, desc, eq, gte, notInArray } from "drizzle-orm";
 import { undoLog } from "../characters.ts";
 import type { CharactersDb, CharactersWriter as Db } from "./characters.ts";
 
@@ -36,17 +37,49 @@ export function newestUndoEntry(db: Db, characterId: string) {
     .get();
 }
 
-export function listUndoEntries(db: CharactersDb, characterId: string) {
-  return db
-    .select({ id: undoLog.id, describedAs: undoLog.describedAs, changedAt: undoLog.changedAt })
+/**
+ * Newest first, each with every change undoing it reverses: from its snapshot to the next
+ * newer one's, or to `current` for the newest. Where either side no longer passes the
+ * schema, the entry's stored description stands in.
+ */
+export function listUndoEntries(db: CharactersDb, characterId: string, current: unknown) {
+  const rows = db
+    .select({
+      id: undoLog.id,
+      describedAs: undoLog.describedAs,
+      changedAt: undoLog.changedAt,
+      previousState: undoLog.previousState,
+    })
     .from(undoLog)
     .where(eq(undoLog.characterId, characterId))
     .orderBy(desc(undoLog.id))
     .all();
+  let after = characterDefinitionSchema.safeParse(current);
+  return rows.map(({ previousState, ...entry }) => {
+    const before = characterDefinitionSchema.safeParse(previousState);
+    const phrases = before.success && after.success ? changePhrases(before.data, after.data) : [];
+    after = before;
+    return { ...entry, changes: phrases.length > 0 ? phrases : [entry.describedAs] };
+  });
+}
+
+export function undoEntry(db: Db, characterId: string, id: number) {
+  return db
+    .select()
+    .from(undoLog)
+    .where(and(eq(undoLog.characterId, characterId), eq(undoLog.id, id)))
+    .get();
 }
 
 export function deleteUndoEntry(db: Db, id: number) {
   db.delete(undoLog).where(eq(undoLog.id, id)).run();
+}
+
+/** Drops the entry `id` and every newer one, which an undo back to `id` reverses. */
+export function deleteUndoEntriesFrom(db: Db, characterId: string, id: number) {
+  db.delete(undoLog)
+    .where(and(eq(undoLog.characterId, characterId), gte(undoLog.id, id)))
+    .run();
 }
 
 /**

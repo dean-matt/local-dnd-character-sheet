@@ -45,10 +45,34 @@ describe("useUndoCharacterChange", () => {
     expect(queryClient.getQueryState(characterUndoKey("1"))?.isInvalidated).toBe(true);
   });
 
-  it("refetches the undo log on a failure, since the server may have dropped its head", async () => {
+  it("drops every entry back to the target, and sends what the caller last read", async () => {
+    const restored = characterRecord("1", "Vex");
+    const fetchMock = stubFetch(new Response(JSON.stringify(restored), { status: 200 }));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const entry = (id: number) => ({ id, describedAs: `Change ${id}` });
+    queryClient.setQueryData(characterUndoKey("1"), [entry(3), entry(2), entry(1)]);
+
+    const { result } = renderHook(() => useUndoCharacterChange("1"), {
+      wrapper: wrapper(queryClient),
+    });
+
+    const readAt = "2026-01-01T00:00:00.000Z";
+    result.current.mutate({ to: 2, newest: 3, readAt });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({ to: 2, newest: 3 });
+    expect(new Headers(init.headers).get("If-Unmodified-Since")).toBe(
+      new Date(readAt).toUTCString(),
+    );
+    expect(queryClient.getQueryData(characterUndoKey("1"))).toEqual([entry(1)]);
+  });
+
+  it("refetches the character and its undo log on a failure, since either may have moved on", async () => {
     stubFetch(new Response(JSON.stringify({ error: "Cannot restore" }), { status: 422 }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(characterUndoKey("1"), []);
+    queryClient.setQueryData(characterKey("1"), characterRecord("1", "Vex"));
 
     const { result } = renderHook(() => useUndoCharacterChange("1"), {
       wrapper: wrapper(queryClient),
@@ -57,5 +81,6 @@ describe("useUndoCharacterChange", () => {
     result.current.mutate();
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(queryClient.getQueryState(characterUndoKey("1"))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(characterKey("1"))?.isInvalidated).toBe(true);
   });
 });

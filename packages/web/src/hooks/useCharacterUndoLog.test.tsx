@@ -16,7 +16,12 @@ afterEach(() => {
 describe("useCharacterUndoLog", () => {
   it("resolves the entries the API lists for the character", async () => {
     const entries = [
-      { id: 2, describedAs: "Charisma 17 to 18", changedAt: "2026-01-01T00:00:00.000Z" },
+      {
+        id: 2,
+        describedAs: "Charisma 17 to 18",
+        changes: ["Charisma 17 to 18"],
+        changedAt: "2026-01-01T00:00:00.000Z",
+      },
     ];
     const fetchMock = stubFetch(new Response(JSON.stringify(entries), { status: 200 }));
 

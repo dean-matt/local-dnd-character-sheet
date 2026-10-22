@@ -2,9 +2,18 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../test/records.ts";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
-import { UndoButton } from "./UndoButton.tsx";
+import { UndoHistoryButton } from "./UndoHistoryButton.tsx";
 
-const ENTRY = { id: 1, describedAs: "Charisma 17 to 18", changedAt: "2026-01-01T00:00:00.000Z" };
+const ENTRY = {
+  id: 1,
+  describedAs: "Charisma 17 to 18",
+  changes: ["Charisma 17 to 18"],
+  changedAt: "2026-01-01T00:00:00.000Z",
+};
+
+const button = (onToggle = () => {}) => (
+  <UndoHistoryButton characterId="1" panelId="dock" open={false} onToggle={onToggle} />
+);
 
 function stubUndo(entries: unknown[]) {
   const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) =>
@@ -23,23 +32,28 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("UndoButton", () => {
-  it("names the change it would undo and says what undo does not reach", async () => {
+describe("UndoHistoryButton", () => {
+  it("toggles the undo history panel", async () => {
     stubUndo([ENTRY]);
-    renderWithClient(<UndoButton characterId="1" />);
+    const onToggle = vi.fn();
+    renderWithClient(button(onToggle));
 
-    const button = await screen.findByRole("button", { name: "Undo Charisma 17 to 18" });
-    expect(button).toHaveAccessibleDescription(
-      /does not reach play state, page layout or a deleted character/,
-    );
-    expect(button).toHaveAttribute("aria-keyshortcuts", "Control+Z Meta+Z");
+    const toggle = screen.getByRole("button", { name: "Undo Changes" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(onToggle).toHaveBeenCalledOnce();
   });
 
-  it("restores on click and announces what it undid", async () => {
+  it("restores the newest entry on Control+Z and announces what it undid", async () => {
     const fetchMock = stubUndo([ENTRY]);
-    renderWithClient(<UndoButton characterId="1" />);
+    renderWithClient(button());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Undo Changes" })).toHaveAccessibleDescription(
+        "Control+Z or Command+Z undoes Charisma 17 to 18",
+      ),
+    );
 
-    fireEvent.click(await screen.findByRole("button", { name: "Undo Charisma 17 to 18" }));
+    fireEvent.keyDown(document.body, { key: "z", ctrlKey: true });
 
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent("Undid Charisma 17 to 18"),
@@ -53,10 +67,14 @@ describe("UndoButton", () => {
       <>
         <input aria-label="Notes" />
         <input type="checkbox" aria-label="Prepared" />
-        <UndoButton characterId="1" />
+        {button()}
       </>,
     );
-    await screen.findByRole("button", { name: "Undo Charisma 17 to 18" });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Undo Changes" })).toHaveAccessibleDescription(
+        /Charisma 17 to 18/,
+      ),
+    );
 
     fireEvent.keyDown(screen.getByLabelText("Notes"), { key: "z", ctrlKey: true });
     expect(posts(fetchMock)).toHaveLength(0);
@@ -72,10 +90,14 @@ describe("UndoButton", () => {
         <dialog open>
           <button type="button">Close</button>
         </dialog>
-        <UndoButton characterId="1" />
+        {button()}
       </>,
     );
-    await screen.findByRole("button", { name: "Undo Charisma 17 to 18" });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Undo Changes" })).toHaveAccessibleDescription(
+        /Charisma 17 to 18/,
+      ),
+    );
 
     fireEvent.keyDown(screen.getByRole("button", { name: "Close" }), { key: "z", ctrlKey: true });
     expect(posts(fetchMock)).toHaveLength(0);
@@ -83,11 +105,11 @@ describe("UndoButton", () => {
 
   it("does nothing with an empty log", async () => {
     const fetchMock = stubUndo([]);
-    renderWithClient(<UndoButton characterId="1" />);
+    renderWithClient(button());
 
-    const button = await screen.findByRole("button", { name: "Nothing to undo" });
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    fireEvent.click(button);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const toggle = screen.getByRole("button", { name: "Undo Changes" });
+    await waitFor(() => expect(toggle).toHaveAccessibleDescription("Nothing to undo"));
     fireEvent.keyDown(document.body, { key: "z", ctrlKey: true });
     expect(posts(fetchMock)).toHaveLength(0);
   });

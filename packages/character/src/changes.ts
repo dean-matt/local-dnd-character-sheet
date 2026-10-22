@@ -7,18 +7,20 @@ import { z } from "zod";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Ability, EntryRef } from "./refs.ts";
 
-/**
- * A character's `undo_log` rows as an endpoint lists them, newest first, so the head is
- * what the next undo restores. Each row's snapshot stays on the server.
- */
 /** Newest kept per character; the insert that passes it prunes the oldest. */
 export const UNDO_LOG_LIMIT = 50;
 
+/**
+ * A character's `undo_log` rows as an endpoint lists them, newest first, so the head is
+ * what the next undo restores. Each row's snapshot stays on the server; `changes` names
+ * every change undoing the row reverses, where `describedAs` stops at three.
+ */
 export const undoLogSchema = z
   .array(
     z.strictObject({
       id: z.int(),
       describedAs: z.string().min(1),
+      changes: z.array(z.string().min(1)).min(1),
       changedAt: z.iso.datetime(),
     }),
   )
@@ -236,6 +238,10 @@ function phrase({ label, before, after }: Change): string {
   if (blank(after)) return `${label} cleared`;
   return `${label} ${quote(before)} to ${quote(after)}`;
 }
+
+/** Every change from `before` to `after`, one phrase each, none where they are the same. */
+export const changePhrases = (before: CharacterDefinition, after: CharacterDefinition) =>
+  changes(before, after).map(phrase);
 
 /**
  * `null` where the two definitions hold the same character. Past three changes the

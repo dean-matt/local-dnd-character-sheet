@@ -1,15 +1,9 @@
-import { UNDO_LOG_LIMIT } from "@dnd/character";
 import { useIsMutating } from "@tanstack/react-query";
-import { Undo2 } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { History } from "lucide-react";
+import { type Ref, useEffect, useId, useRef, useState } from "react";
 import { characterDefinitionWriteKey } from "../../hooks/characterKeys.ts";
 import { useCharacterUndoLog } from "../../hooks/useCharacterUndoLog.ts";
 import { useUndoCharacterChange } from "../../hooks/useUndoCharacterChange.ts";
-
-const SCOPE =
-  `Undo reaches back through the last ${UNDO_LOG_LIMIT} changes to this character's ` +
-  "details. It does not reach play state, page layout or a deleted character, and there " +
-  "is no redo.";
 
 const TEXT_ENTRY =
   "textarea, input:not([type]), input[type='text'], input[type='search'], " +
@@ -28,28 +22,40 @@ function shortcutIgnoredIn(target: EventTarget | null): boolean {
 }
 
 /**
- * Restores the character's newest undo entry, named in the button's label. Control+Z or
- * Command+Z does the same from anywhere on the page outside a text control.
+ * Opens and closes the undo history panel `panelId` names. Control+Z or Command+Z
+ * restores the newest entry, which the button's description names, from anywhere on the
+ * page outside a text control, and the status beside the button announces what it undid.
  */
-export function UndoButton({ characterId }: { characterId: string }) {
+export function UndoHistoryButton({
+  characterId,
+  panelId,
+  open,
+  onToggle,
+  ref,
+}: {
+  characterId: string;
+  panelId: string;
+  open: boolean;
+  onToggle: () => void;
+  ref?: Ref<HTMLButtonElement>;
+}) {
   const log = useCharacterUndoLog(characterId);
   const undo = useUndoCharacterChange(characterId);
   const [announced, setAnnounced] = useState("");
-  const scopeId = useId();
   const writing = useIsMutating({ mutationKey: characterDefinitionWriteKey(characterId) }) > 0;
   const next = log.data?.[0];
-  const ready = next !== undefined && !undo.isPending && !writing;
-  const label = next ? `Undo ${next.describedAs}` : "Nothing to undo";
+  const shortcutId = useId();
+  const shortcut = next ? `Control+Z or Command+Z undoes ${next.describedAs}` : "Nothing to undo";
 
-  function run() {
-    if (!next || !ready) return;
+  function undoNewest() {
+    if (!next || undo.isPending || writing) return;
     setAnnounced("");
     undo.mutate(undefined, { onSuccess: () => setAnnounced(`Undid ${next.describedAs}`) });
   }
 
-  // The listener outlives a render, so it reads the latest `run` through a ref.
-  const runRef = useRef(run);
-  runRef.current = run;
+  // The listener outlives a render, so it reads the latest `undoNewest` through a ref.
+  const undoRef = useRef(undoNewest);
+  undoRef.current = undoNewest;
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -58,7 +64,7 @@ export function UndoButton({ characterId }: { characterId: string }) {
       }
       if (shortcutIgnoredIn(e.target)) return;
       e.preventDefault();
-      runRef.current();
+      undoRef.current();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -75,19 +81,20 @@ export function UndoButton({ characterId }: { characterId: string }) {
         {undo.isError ? `Undo failed: ${undo.error.message}` : announced}
       </span>
       <button
+        ref={ref}
         type="button"
-        onClick={run}
-        aria-disabled={!ready}
-        aria-keyshortcuts="Control+Z Meta+Z"
-        aria-describedby={scopeId}
-        title={`${label}\n${SCOPE}`}
-        className="flex size-8 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        onClick={onToggle}
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        aria-describedby={shortcutId}
+        title={`Undo Changes\n${shortcut}`}
+        className="flex size-8 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-expanded:bg-accent-tint aria-expanded:text-ink"
       >
-        <Undo2 size={16} aria-hidden="true" />
-        <span className="sr-only">{label}</span>
+        <History size={16} aria-hidden="true" />
+        <span className="sr-only">Undo Changes</span>
       </button>
-      <span id={scopeId} hidden>
-        {SCOPE}
+      <span id={shortcutId} hidden>
+        {shortcut}
       </span>
     </div>
   );

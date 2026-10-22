@@ -39,6 +39,7 @@ describe("routing", () => {
       "/api/characters": [],
       "/api/characters/abc": characterRecord("abc", "Vex"),
       "/api/characters/abc/pages": presetPageRecords(),
+      "/api/characters/abc/undo": [],
     });
   });
 
@@ -140,6 +141,21 @@ describe("routing", () => {
     const nav = screen.getByRole("navigation", { name: "Character pages" });
     expect(nav.querySelectorAll("a")).toHaveLength(presetPageRecords().length);
     expect(within(nav).queryByRole("link", { name: /settings/i })).not.toBeInTheDocument();
+  });
+
+  it("docks the undo history beside the sheet, and returns focus to its button on close", async () => {
+    renderAt("/characters/abc/p/stats");
+    await pageShown("Stats");
+    const toggle = screen.getByRole("button", { name: "Undo Changes" });
+
+    fireEvent.click(toggle);
+    const dock = screen.getByRole("complementary", { name: "Side panel" });
+    expect(toggle).toHaveAttribute("aria-controls", dock.id);
+    expect(within(dock).getByRole("heading", { name: "Undo Changes" })).toHaveFocus();
+
+    fireEvent.click(within(dock).getByRole("button", { name: "Close side panel" }));
+    expect(screen.queryByRole("complementary", { name: "Side panel" })).toBeNull();
+    expect(toggle).toHaveFocus();
   });
 
   it("prints why the pages could not load", async () => {

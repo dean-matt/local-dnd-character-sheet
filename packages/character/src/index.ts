@@ -51,7 +51,13 @@ export type {
   SkillTrait,
   WeaponTrait,
 } from "./catalog.ts";
-export { describeChange, SECTION_LABEL, UNDO_LOG_LIMIT, undoLogSchema } from "./changes.ts";
+export {
+  changePhrases,
+  describeChange,
+  SECTION_LABEL,
+  UNDO_LOG_LIMIT,
+  undoLogSchema,
+} from "./changes.ts";
 export {
   type CharacterDerived,
   characterDerivedSchema,
