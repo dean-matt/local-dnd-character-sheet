@@ -24,7 +24,7 @@ import { skillPickOf, toolPicksOf } from "./entryPicks.ts";
 const catalogOf = (cls: EntryRef) => ("name" in cls ? cls : undefined);
 
 /** A catalog class's prerequisite once its row loads; a homebrew class needs no score. */
-const prerequisiteOf = (cls: EntryRef, json: unknown) =>
+export const prerequisiteOf = (cls: EntryRef, json: unknown) =>
   !catalogOf(cls) ? [] : json ? multiclassPrerequisiteSchema.parse(json) : undefined;
 
 /**

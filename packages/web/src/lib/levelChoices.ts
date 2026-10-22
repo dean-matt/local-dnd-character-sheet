@@ -5,6 +5,7 @@
  * its class at the class level it reached, and on its subclass's earlier levels too where the
  * level chose the subclass.
  */
+import { type FeatRecord, featTermsSchema, type OptionalFeaturePrerequisite } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   displayName,
@@ -13,6 +14,9 @@ import {
   type FeatureKey,
   refKey,
 } from "@dnd/character";
+import { candidateAt } from "./improvementFeats.ts";
+import { meetsPrerequisite, prerequisiteText } from "./multiclassPrerequisites.ts";
+import { prerequisiteFacts, unmetNeeds } from "./optionalFeaturePrerequisites.ts";
 
 type Grantor = { kind: string; ref: EntryRef };
 
@@ -107,15 +111,66 @@ const grantorDropped: Refusal = (before, after) => {
   ];
 };
 
+/** The catalog rows a later pick's prerequisite lives on: each held option's, by `entryKey`, and the feats. */
+export type PrerequisiteRows = {
+  options: ReadonlyMap<string, readonly OptionalFeaturePrerequisite[]>;
+  feats: readonly FeatRecord[];
+};
+
+const optionShort =
+  (rows: PrerequisiteRows): Refusal =>
+  (before, after) => {
+    const was = prerequisiteFacts(before);
+    const now = prerequisiteFacts(after);
+    const held = new Set(before.optionalFeatures.map((pick) => entryKey(pick.ref)));
+    return after.optionalFeatures.flatMap((pick) => {
+      const needs = rows.options.get(entryKey(pick.ref));
+      if (!needs || !held.has(entryKey(pick.ref)) || unmetNeeds(needs, was)) return [];
+      const missing = unmetNeeds(needs, now);
+      return missing
+        ? [
+            `${displayName(pick.ref)}, picked at level ${pick.level}, needs ${missing}; remove it to make this change.`,
+          ]
+        : [];
+    });
+  };
+
+const featShort =
+  (rows: PrerequisiteRows): Refusal =>
+  (before, after, level) =>
+    after.feats.flatMap(({ ref, level: at }) => {
+      const row = rows.feats.find((feat) => entryKey(feat) === entryKey(ref));
+      if (at === undefined || at === level || !row) return [];
+      const { prerequisites } = featTermsSchema.parse(row.json);
+      const needs = prerequisites.flatMap((part) => part.scores);
+      const met = (definition: CharacterDefinition) => {
+        const scores = candidateAt(definition, { level: at, features: [] }).scores;
+        return (
+          scores === undefined ||
+          prerequisites.some((part) => meetsPrerequisite(part.scores, (ability) => scores[ability]))
+        );
+      };
+      return needs.length > 0 && met(before) && !met(after)
+        ? [
+            `${displayName(ref)}, taken at level ${at}, needs ${prerequisiteText(needs)}; remove it to make this change.`,
+          ]
+        : [];
+    });
+
 /**
  * Why `after`, `before` with `level`'s choices made again, cannot be written, one line per
  * dependency, naming it: a later level in the class building on a subclass the level
- * changes, a prepared spell the level no longer picks, and a pick made for a feat or option
- * it no longer takes. Not judged, since each prerequisite lives on a catalog row: a later
- * option whose prerequisite a changed pick met, and a later feat or multiclass entry whose
- * ability prerequisite a lowered increase met.
+ * changes, a prepared spell the level no longer picks, a pick made for a feat or option it
+ * no longer takes, an option whose prerequisite the level's picks met, and a feat from
+ * another level whose ability prerequisite the level's increases met. A prerequisite met
+ * before the change and unmet after it refuses; one unmet already is the user's to keep.
  */
-export const levelChoiceRefusals: Refusal = (before, after, level) =>
-  [subclassBuiltOn, preparedDropped, grantorDropped].flatMap((refusal) =>
-    refusal(before, after, level),
+export const levelChoiceRefusals = (
+  before: CharacterDefinition,
+  after: CharacterDefinition,
+  level: number,
+  rows: PrerequisiteRows,
+) =>
+  [subclassBuiltOn, preparedDropped, grantorDropped, optionShort(rows), featShort(rows)].flatMap(
+    (refusal) => refusal(before, after, level),
   );

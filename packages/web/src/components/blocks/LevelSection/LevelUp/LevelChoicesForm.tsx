@@ -5,6 +5,7 @@ import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
 import { LevelUpPicks } from "./LevelUpPicks.tsx";
 import { withReopenedLevel } from "./reopenedLevel.ts";
+import { useLaterPrerequisites } from "./useLaterPrerequisites.ts";
 import { useLevelUpPlan } from "./useLevelUpPlan.ts";
 
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
@@ -25,7 +26,9 @@ export interface LevelChoicesFormProps {
 /**
  * A past level's picks inside the level-up form, and the Apply that writes them once one
  * changed, every one is made, and nothing that depends on a changed pick would be left
- * behind; each such dependency is named instead. The class and hit points are not offered.
+ * behind; each such dependency is named instead. A multiclass prerequisite the change leaves
+ * unmet is named and noted as a departure, as the level-up notes one, and never refuses.
+ * The class and hit points are not offered.
  */
 export function LevelChoicesForm({
   before,
@@ -36,7 +39,7 @@ export function LevelChoicesForm({
   onReload,
   cancel,
 }: LevelChoicesFormProps) {
-  const { getValues, formState } = useFormContext<CharacterDefinition>();
+  const { getValues, setValue, formState } = useFormContext<CharacterDefinition>();
   const cls = definition.levels[level - 1]?.class;
   const saved = {
     subclass: definition.levels
@@ -45,12 +48,12 @@ export function LevelChoicesForm({
     picks: definition.spells.filter((spell) => spell.pickedAt === level),
   };
   const plan = useLevelUpPlan(before, undefined, saved);
-  const refusals = levelChoiceRefusals(
-    definition,
-    withReopenedLevel(definition, level, getValues()),
-    level,
-  );
-  const blocked = !formState.isDirty || !plan.picksReady || saving || refusals.length > 0;
+  const later = useLaterPrerequisites(definition);
+  const after = withReopenedLevel(definition, level, getValues());
+  const refusals = levelChoiceRefusals(definition, after, level, later.rows);
+  const notes = later.read ? later.addedNotes(after) : [];
+  const blocked =
+    !formState.isDirty || !plan.picksReady || !later.read || saving || refusals.length > 0;
   const { owed } = plan.spellPicks;
   const asksNothing =
     plan.target.read &&
@@ -80,6 +83,7 @@ export function LevelChoicesForm({
                   )}
                 </p>
               )}
+              {later.failed && <p>Couldn't read the prerequisites of the other levels' picks.</p>}
               {refusals.map((refusal) => (
                 <p key={refusal}>{refusal}</p>
               ))}
@@ -96,6 +100,7 @@ export function LevelChoicesForm({
               aria-disabled={blocked}
               onClick={(event) => {
                 if (blocked) event.preventDefault();
+                else setValue("departures", later.departures(after), { shouldDirty: true });
               }}
               className={`${BUTTON} bg-accent text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
             >
@@ -107,6 +112,14 @@ export function LevelChoicesForm({
         {!plan.target.read && <p className="text-muted">Loading the class…</p>}
         {asksNothing && <p className="text-muted">Level {level} asked for no choices.</p>}
         <LevelUpPicks edition={definition.edition} plan={plan} />
+        {notes.length > 0 && (
+          <div className="text-row">
+            <p>Applying leaves a multiclass prerequisite unmet, which Notes will list:</p>
+            {notes.map((note) => (
+              <p key={note}>{note}</p>
+            ))}
+          </div>
+        )}
         <p className="text-muted text-row">
           Hit points change from the level's row; the class a level was taken in stays.
         </p>

@@ -320,6 +320,7 @@ const ROWS: Record<string, unknown> = {
     { cantrips_known: "3", prepared_spells: "7" },
     [4, 3],
   ),
+  "/api/feats?edition=classic&limit=200": page([]),
   "/api/feats?edition=one&limit=200": page([
     { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
   ]),
