@@ -23,8 +23,8 @@ export interface OriginIncreasesProps {
 /**
  * The increases a race or background grants, placed as creation places them. A row
  * changed on the sheet leaves its grants for the player to apply, so increases stored
- * under the grantor that the row does not offer are named, since they still count, and so
- * is a row's fixed increase not yet stored, each with a way to take the row's own.
+ * under the grantor that do not match the row are named, since they still count, and so is
+ * a row's fixed increase not yet stored, each with a way to take the row's own.
  */
 export function OriginIncreases({ definition, source, write }: OriginIncreasesProps) {
   const { grantedBy, name, alternatives } = source;
@@ -43,7 +43,7 @@ export function OriginIncreases({ definition, source, write }: OriginIncreasesPr
         <div role="status" className="mt-2 flex flex-col items-start gap-1 text-row">
           <p className="text-secondary">
             {mine.length > 0
-              ? `${listed(mine)} ${mine.length === 1 ? "is" : "are"} kept from before, and ${name} does not offer ${mine.length === 1 ? "it" : "them"}. Kept increases still count.`
+              ? `${listed(mine)} ${mine.length === 1 ? "is" : "are"} kept from before and ${mine.length === 1 ? "does" : "do"} not match ${name}'s increases. Kept increases still count.`
               : `${name}'s increases are not applied.`}
           </p>
           <button type="button" onClick={() => save(reset)} className="text-muted underline">

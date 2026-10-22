@@ -6,6 +6,7 @@ import {
   raceSummary,
 } from "@dnd/character";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
+import { useRaceRows } from "../../../hooks/useRaceRows.ts";
 import { RACE_FIELD, withDeparture } from "../../../lib/departures.ts";
 import { increaseSource } from "../../../lib/grantorIncreases.ts";
 import { titleCase } from "../../../lib/proficiencyGrants.ts";
@@ -17,7 +18,6 @@ import { Select } from "../../Select.tsx";
 import { ChangeablePick } from "./ChangeablePick.tsx";
 import { OriginIncreases } from "./OriginIncreases.tsx";
 import { OriginSpellBlocks } from "./OriginSpellBlocks.tsx";
-import { useRaceRow } from "./useRaceRow.ts";
 
 const subraceKey = (row: { name: string; source: string }) => `${row.name}|${row.source}`;
 
@@ -31,9 +31,12 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
   const { definition } = character;
   const write = useHeldSave(character.id, "Race");
   const { race, subrace, size, raceResistance } = definition;
-  const { catalogRace, subraces, ready, json } = useRaceRow(definition);
-  const plain = subraces.some((row) => row.name === "");
-  const named = subraces.filter((row) => row.name !== "");
+  const { catalogRace, raceRow, subraces, json } = useRaceRows(race, subrace, definition.edition);
+  // The read `json` comes from has landed, or none was needed.
+  const ready = catalogRace === undefined || (subrace ? subraces.isSuccess : raceRow.isSuccess);
+  const rows = subraces.data?.items ?? [];
+  const plain = rows.some((row) => row.name === "");
+  const named = rows.filter((row) => row.name !== "");
   const { sizes, resistances } = raceChoices(json);
 
   return (
@@ -78,6 +81,7 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
         {sizes.length > 0 && (
           <ChoicePills
             legend="Size"
+            prompting={!sizes.some((each) => each === size)}
             options={sizes.map((each) => ({ value: each, label: titleCase(each) }))}
             value={size}
             onChange={(value) =>
@@ -91,6 +95,7 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
         {resistances.length > 0 && (
           <ChoicePills
             legend="Damage resistance"
+            prompting={!resistances.includes(raceResistance ?? "")}
             options={resistances.map((each) => ({ value: each, label: titleCase(each) }))}
             value={raceResistance}
             onChange={(value) =>

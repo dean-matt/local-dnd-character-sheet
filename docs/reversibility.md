@@ -40,10 +40,10 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Edition | Nothing | Cannot be, deliberately: the edition decides every catalog row the character names, so a switch would leave most of its picks outside the new rules. Build the character again under the other rules |
 | Race and subrace | `components/blocks/IdentitySection/RaceCard.tsx` | Undo, a direct edit |
 | Size, damage resistance a race offers | `components/blocks/IdentitySection/RaceCard.tsx` | Undo, a direct edit |
-| Race and background ability increases | `IdentitySection/RaceCard.tsx`, `IdentitySection/BackgroundCard.tsx`, through `IdentitySection/OriginIncreases.tsx`, which names increases the row does not offer | Undo, a direct edit |
-| A race or background spell block choice | The same cards, through `IdentitySection/OriginSpellBlocks.tsx`, which names a choice kept from another row | Undo, a direct edit |
+| Race and background ability increases | `components/blocks/IdentitySection/RaceCard.tsx`, `components/blocks/IdentitySection/BackgroundCard.tsx`, through `components/blocks/IdentitySection/OriginIncreases.tsx`, which names increases that do not match the row | Undo, a direct edit |
+| A race or background spell block choice | The same cards, through `components/blocks/IdentitySection/OriginSpellBlocks.tsx`, which names a choice kept from another row | Undo, a direct edit |
 | Background | `components/blocks/IdentitySection/BackgroundCard.tsx` | Undo, a direct edit |
-| Deity | `IdentitySection/DeityCard.tsx` | Undo, a direct edit, clearing it |
+| Deity | `components/blocks/IdentitySection/DeityCard.tsx` | Undo, a direct edit, clearing it |
 | Alignment | `components/blocks/IdentitySection/AlignmentCard.tsx` | Undo, a direct edit |
 | Base ability scores | `components/blocks/AbilitiesSection/AbilityScores.tsx` | Undo, a direct edit |
 | Starting class | Level 1's Edit dialog in Level History, `components/blocks/LevelSection/LevelEditDialog.tsx` | Undo, changing it again |

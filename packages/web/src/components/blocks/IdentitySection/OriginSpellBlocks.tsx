@@ -50,8 +50,9 @@ export function OriginSpellBlocks({ definition, row, kinds, write }: OriginSpell
       {kept.length > 0 && (
         <div role="status" className="mt-2 flex flex-col items-start gap-1 text-row">
           <p className="text-secondary">
-            The spell choice for {kept.map((choice) => choice.grantor.ref.name).join(", ")} is kept
-            from before and applies nothing.
+            {kept.length === 1
+              ? `The spell choice for ${kept[0]?.grantor.ref.name} is kept from before and applies nothing.`
+              : `The spell choices for ${kept.map((choice) => choice.grantor.ref.name).join(", ")} are kept from before and apply nothing.`}
           </p>
           <button
             type="button"
@@ -65,7 +66,7 @@ export function OriginSpellBlocks({ definition, row, kinds, write }: OriginSpell
             }
             className="text-muted underline"
           >
-            Remove it
+            {kept.length === 1 ? "Remove it" : "Remove them"}
           </button>
         </div>
       )}

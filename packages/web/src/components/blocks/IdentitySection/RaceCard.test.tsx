@@ -129,19 +129,28 @@ describe("RaceCard's open choices", () => {
       return undefined;
     };
 
-  it("saves the size and the resistance the race leaves open", async () => {
+  it("saves the size and the resistance the race leaves open, prompting for each", async () => {
     const fetchMock = stubServer(
       identityRecord(),
       highElf({ size: ["S", "M"], resist: [{ choose: { from: ["fire", "cold"] } }] }),
     );
     renderCard(identityRecord());
 
-    const size = await screen.findByRole("group", { name: "Size" });
+    expect(await screen.findByRole("group", { name: "Size — choose one" })).toBeInTheDocument();
+    const resistance = screen.getByRole("group", { name: "Damage resistance — choose one" });
+    fireEvent.click(within(resistance).getByRole("button", { name: "Cold" }));
+
+    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+    expect(written(fetchMock).raceResistance).toBe("cold");
+  });
+
+  it("saves a size pick", async () => {
+    const fetchMock = stubServer(identityRecord(), highElf({ size: ["S", "M"] }));
+    renderCard(identityRecord());
+
+    const size = await screen.findByRole("group", { name: /^Size/ });
     fireEvent.click(within(size).getByRole("button", { name: "Small" }));
     await waitFor(() => expect(written(fetchMock)?.size).toBe("small"));
-
-    const resistance = screen.getByRole("group", { name: "Damage resistance" });
-    expect(within(resistance).getByRole("button", { name: "Cold" })).toBeInTheDocument();
   });
 
   it("names race increases the row does not offer and replaces them with the row's", async () => {
@@ -155,7 +164,7 @@ describe("RaceCard's open choices", () => {
 
     expect(
       await screen.findByText(
-        /\+2 Strength is kept from before, and Elf \(High\) does not offer it/,
+        /\+2 Strength is kept from before and does not match Elf \(High\)'s increases/,
       ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Apply Elf (High)'s increases" }));
@@ -163,6 +172,19 @@ describe("RaceCard's open choices", () => {
     await waitFor(() => expect(written(fetchMock)).not.toBeNull());
     expect(written(fetchMock).abilityIncreases).toEqual([
       { ability: "wis", amount: 1, grantedBy: "background" },
+      { ability: "dex", amount: 2, grantedBy: "race" },
+    ]);
+  });
+
+  it("names a fixed increase the row grants that is not stored, and applies it", async () => {
+    const fetchMock = stubServer(identityRecord(), highElf({ ability: [{ dex: 2 }] }));
+    renderCard(identityRecord());
+
+    expect(await screen.findByText("Elf (High)'s increases are not applied.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Apply Elf (High)'s increases" }));
+
+    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+    expect(written(fetchMock).abilityIncreases).toEqual([
       { ability: "dex", amount: 2, grantedBy: "race" },
     ]);
   });
