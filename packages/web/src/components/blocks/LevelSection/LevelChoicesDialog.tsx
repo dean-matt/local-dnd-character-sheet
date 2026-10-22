@@ -1,13 +1,13 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { characterQuery } from "../../../hooks/useCharacter.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { ApiError } from "../../../lib/api.ts";
 import { withoutLevelChoices } from "../../../lib/levelChoices.ts";
 import { LevelChoicesForm } from "./LevelChoicesForm.tsx";
 import { levelUpForm } from "./levelUpForm.ts";
-import { withReopenedLevel } from "./reopenedLevel.ts";
+import { type StartingSwap, withReopenedLevel } from "./reopenedLevel.ts";
 
 /**
  * A past level's choices reopened in the level-up's own pickers, which read the character
@@ -15,6 +15,7 @@ import { withReopenedLevel } from "./reopenedLevel.ts";
  * them as one edit and one undo entry; closing first writes nothing. Apply sends the
  * `updatedAt` the dialog opened on, so the API refuses it where the character changed
  * since, and the alert line then offers Reload, which restarts the choices on a fresh read.
+ * A new starting class's proficiency swap is applied to the record the write reads.
  */
 export function LevelChoicesDialog({
   character,
@@ -32,6 +33,7 @@ export function LevelChoicesDialog({
   const update = useUpdateCharacterDefinition(character.id);
   const { definition } = opened;
   const stale = update.error instanceof ApiError && update.error.status === 412;
+  const swap = useRef<StartingSwap>(undefined);
   return (
     <levelUpForm.FormShell
       draftScope={`${opened.id}:${opened.updatedAt}:level-${level}`}
@@ -40,7 +42,7 @@ export function LevelChoicesDialog({
         await update.mutateAsync({
           readAt: opened.updatedAt,
           ownUndoEntry: true,
-          edit: (latest) => withReopenedLevel(latest, level, values),
+          edit: (latest) => withReopenedLevel(latest, level, values, swap.current),
         });
         onClose();
       }}
@@ -70,6 +72,9 @@ export function LevelChoicesDialog({
                   )
               : undefined
           }
+          onSwap={(next) => {
+            swap.current = next;
+          }}
           cancel={cancel}
         />
       )}

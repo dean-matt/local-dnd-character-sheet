@@ -97,6 +97,13 @@ const SEARCH: Record<string, object[]> = {
 };
 
 const ROWS: Record<string, unknown> = {
+  "/api/backgrounds?edition=one&limit=200": page([
+    {
+      ...XPHB("Charlatan"),
+      edition: "one",
+      json: { ...XPHB("Charlatan"), armorProficiencies: [{ medium: true }] },
+    },
+  ]),
   "/api/races/Half-Elf/XPHB": {
     ...XPHB("Half-Elf"),
     edition: "one",
@@ -114,7 +121,7 @@ const ROWS: Record<string, unknown> = {
       ...WARLOCK,
       proficiency: ["wis", "cha"],
       startingProficiencies: {
-        armorProficiencies: [{ light: true }],
+        armorProficiencies: [{ light: true, medium: true }],
         weapons: ["simple", "martial"],
       },
       classFeatures: [
@@ -1772,11 +1779,15 @@ describe("LevelUp", () => {
       expect(sent().proficiencies.weapons).toEqual(["Simple", "Martial"]);
     });
 
-    it("keeps what the race still grants when the starting class changes", async () => {
+    it("keeps what the race and the background still grant when the starting class changes", async () => {
       const base = warlock(1);
       renderSeeded(
         warlock(1, {
-          proficiencies: { ...base.definition.proficiencies, weapons: ["Simple", "Martial"] },
+          proficiencies: {
+            ...base.definition.proficiencies,
+            weapons: ["Simple", "Martial"],
+            armor: ["Light", "Medium"],
+          },
         }),
         { history: true },
       );
@@ -1788,6 +1799,7 @@ describe("LevelUp", () => {
 
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       expect(sent().proficiencies.weapons).toEqual(["Simple"]);
+      expect(sent().proficiencies.armor).toEqual(["Light", "Medium"]);
     });
 
     it("refuses a new starting class while a later level takes the old one", async () => {

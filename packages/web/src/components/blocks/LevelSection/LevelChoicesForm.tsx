@@ -1,12 +1,10 @@
 import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
 import { levelChoiceRefusals } from "../../../lib/levelChoices.ts";
-import { swapGrants } from "../../../lib/proficiencyGrants.ts";
-import { setRefValue } from "../../../lib/setRefValue.ts";
 import { Modal } from "../../Modal.tsx";
 import { ModalEntry } from "../../ModalEntry.tsx";
 import { LevelUpPicks } from "./LevelUpPicks.tsx";
-import { withReopenedLevel } from "./reopenedLevel.ts";
+import { type StartingSwap, withReopenedLevel } from "./reopenedLevel.ts";
 import { StartingClassField } from "./StartingClassField.tsx";
 import { useLaterPrerequisites } from "./useLaterPrerequisites.ts";
 import { useLevelUpPlan } from "./useLevelUpPlan.ts";
@@ -24,6 +22,8 @@ export interface LevelChoicesFormProps {
   error: string | undefined;
   /** Offered beside `error` where reading the character again is the way past it. */
   onReload?: () => void;
+  /** Runs as Apply submits, with what a new starting class trades, which the write applies to the latest record. */
+  onSwap: (swap: StartingSwap | undefined) => void;
   cancel: () => void;
 }
 
@@ -33,8 +33,8 @@ export interface LevelChoicesFormProps {
  * behind; each such dependency is named instead. A multiclass prerequisite the change leaves
  * unmet is named and noted as a departure, as the level-up notes one, and never refuses.
  * Level 1 also offers its class: a new one takes back the old one's level 1 choices and asks
- * the new one's, and Apply swaps the proficiencies the old one granted outright for the new
- * one's. Hit points, and a later level's class, are not offered.
+ * the new one's, and Apply hands `onSwap` what the old one granted outright and what the new
+ * one grants. Hit points, and a later level's class, are not offered.
  */
 export function LevelChoicesForm({
   before,
@@ -43,6 +43,7 @@ export function LevelChoicesForm({
   saving,
   error,
   onReload,
+  onSwap,
   cancel,
 }: LevelChoicesFormProps) {
   const { getValues, setValue, formState } = useFormContext<CharacterDefinition>();
@@ -125,14 +126,7 @@ export function LevelChoicesForm({
                 if (blocked) event.preventDefault();
                 else {
                   setValue("departures", departures, { shouldDirty: true });
-                  const { swap } = starting;
-                  if (swap)
-                    setRefValue(
-                      setValue,
-                      "proficiencies",
-                      swapGrants(getValues("proficiencies"), swap.was, swap.now, swap.still),
-                      { shouldDirty: true },
-                    );
+                  onSwap(starting.swap);
                 }
               }}
               className={`${BUTTON} bg-accent text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
