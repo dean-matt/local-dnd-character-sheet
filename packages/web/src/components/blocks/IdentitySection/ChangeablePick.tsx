@@ -87,7 +87,8 @@ export function ChangeablePick({
           title={`Clear ${noun}`}
           onClick={() => {
             onClear();
-            setMoved(true);
+            // The clear button leaves with the pick, so focus goes to the one beside it.
+            change.current?.focus();
           }}
           className="relative flex size-4.5 shrink-0 items-center justify-center text-muted before:absolute before:-inset-1 hover:text-ink"
         >

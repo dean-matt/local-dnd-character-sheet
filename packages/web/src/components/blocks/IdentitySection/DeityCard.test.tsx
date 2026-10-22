@@ -40,11 +40,13 @@ const written = (fetchMock: ReturnType<typeof stubServer>) =>
 function renderCard(character: CharacterRecord) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   client.setQueryData(characterKey(character.id), character);
-  render(
+  const tree = (shown: CharacterRecord) => (
     <QueryClientProvider client={client}>
-      <DeityCard character={character} />
-    </QueryClientProvider>,
+      <DeityCard character={shown} />
+    </QueryClientProvider>
   );
+  const { rerender } = render(tree(character));
+  return { rerender: (shown: CharacterRecord) => rerender(tree(shown)) };
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -68,10 +70,31 @@ describe("DeityCard", () => {
     renderCard(record);
 
     fireEvent.click(screen.getByRole("button", { name: "Clear deity, Oghma · Celtic" }));
+    expect(screen.getByRole("button", { name: "Change deity, Oghma · Celtic" })).toHaveFocus();
 
     await waitFor(() => expect(written(fetchMock)).not.toBeNull());
     const { deity: _cleared, ...rest } = record.definition;
     expect(written(fetchMock)).toEqual(rest);
+  });
+
+  it("moves focus to Change once a pick made in place is cleared", async () => {
+    stubServer();
+    const record = identityRecord();
+    const { rerender } = renderCard(record);
+
+    fireEvent.click(screen.getByRole("button", { name: "Change deity, None" }));
+    fireEvent.click(await screen.findByRole("option", { name: /Oghma · Celtic/ }));
+    const held = {
+      ...record,
+      definition: {
+        ...record.definition,
+        deity: { name: "Oghma", source: "PHB", pantheon: "Celtic" },
+      },
+    };
+    rerender(held);
+    fireEvent.click(screen.getByRole("button", { name: "Clear deity, Oghma · Celtic" }));
+
+    expect(screen.getByRole("button", { name: /Change deity/ })).toHaveFocus();
   });
 
   it("offers no clear button where no deity is held", () => {

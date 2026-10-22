@@ -1,5 +1,6 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
+import { deityOf, deityUnavailable } from "../../../lib/deityPick.ts";
 import { Card } from "../../Card.tsx";
 import { ChangeablePick } from "./ChangeablePick.tsx";
 
@@ -17,13 +18,10 @@ export function DeityCard({ character }: { character: CharacterRecord }) {
         value={deity ? `${deity.name} · ${deity.pantheon}` : "None"}
         edition={edition}
         type="deity"
-        unavailableReason={(hit) =>
-          "qualifier" in hit && hit.qualifier ? undefined : "names no pantheon"
-        }
+        unavailableReason={deityUnavailable}
         onPick={(ref, hit) => {
-          if (!("name" in ref) || !("qualifier" in hit) || !hit.qualifier) return;
-          const picked = { ...ref, pantheon: hit.qualifier };
-          write("deity", (latest) => ({ ...latest, deity: picked }));
+          const picked = deityOf(ref, hit);
+          if (picked) write("deity", (latest) => ({ ...latest, deity: picked }));
         }}
         onClear={deity && (() => write("deity", ({ deity: _cleared, ...latest }) => latest))}
       />

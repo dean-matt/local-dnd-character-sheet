@@ -153,7 +153,7 @@ describe("RaceCard's open choices", () => {
     await waitFor(() => expect(written(fetchMock)?.size).toBe("small"));
   });
 
-  it("names race increases the row does not offer and replaces them with the row's", async () => {
+  it("names race increases that do not match the row and replaces them with the row's", async () => {
     const fetchMock = stubServer(identityRecord(), highElf({ ability: [{ dex: 2 }] }));
     const record = identityRecord();
     record.definition.abilityIncreases = [
