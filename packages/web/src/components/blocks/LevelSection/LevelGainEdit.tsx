@@ -95,7 +95,7 @@ export function LevelGainEdit({
           className="w-24 text-row"
         />
       </div>
-      <p aria-live="polite" className="text-muted text-row">
+      <p aria-live="polite" className="sr-only">
         {edit?.kind === "roll" && `Rolled ${edit.face} on the d${die}`}
       </p>
     </fieldset>
