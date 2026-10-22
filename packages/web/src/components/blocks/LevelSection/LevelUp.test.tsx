@@ -1780,6 +1780,17 @@ describe("LevelUp", () => {
       expect(undoEntry()).toBe("own");
     });
 
+    it("names the new starting class's die in the first level's hit points", async () => {
+      renderSeeded(warlock(1), { history: true });
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Paladin" }));
+
+      expect(
+        await within(dialog()).findByText("Highest face of the d10; a roll cannot change it."),
+      ).toBeVisible();
+    });
+
     it("keeps what a later class still grants when the starting class changes", async () => {
       const base = warlock(2);
       renderSeeded(

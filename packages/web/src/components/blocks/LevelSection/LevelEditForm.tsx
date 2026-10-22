@@ -1,4 +1,4 @@
-import { type CharacterDefinition, entryKey } from "@dnd/character";
+import { type CharacterDefinition, entryKey, type HitDie } from "@dnd/character";
 import { type ReactNode, useId } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { levelChoiceRefusals } from "../../../lib/levelChoices.ts";
@@ -26,8 +26,8 @@ export interface LevelEditFormProps {
   onReload?: () => void;
   /** Runs as Apply submits, with what a new starting class trades, which the write applies to the latest record. */
   onSwap: (swap: StartingSwap | undefined) => void;
-  /** The control that drafts this level's hit point gain. */
-  hitPoints: ReactNode;
+  /** The control that drafts this level's hit point gain, given the drafted class's die once it loads. */
+  hitPoints: (die: HitDie | undefined) => ReactNode;
   /** Set while `hitPoints` holds a gain Apply would write. */
   gainChanged: boolean;
   /** Offered for a level past the first, to remove it and every level after it. */
@@ -35,10 +35,22 @@ export interface LevelEditFormProps {
   cancel: () => void;
 }
 
+function asksNothing(plan: ReturnType<typeof useLevelUpPlan>) {
+  const { owed } = plan.spellPicks;
+  return (
+    plan.target.read &&
+    !plan.target.asksSubclass &&
+    plan.grant === undefined &&
+    plan.offerings.length === 0 &&
+    plan.optionPicks.gains.length === 0 &&
+    owed.cantrips + owed.spells + owed.subclassCantrips + owed.subclassSpells === 0
+  );
+}
+
 /**
  * A past level's hit point gain and picks inside the level-up form, and the Apply that writes
- * them once the gain or a pick changed, every pick is made, and nothing that depends on a
- * changed pick would be left behind; each such dependency is named instead. A multiclass
+ * them once the gain or a pick changed. A changed pick also waits until every pick is made and
+ * nothing that depends on it would be left behind; each such dependency is named instead. A multiclass
  * prerequisite the change leaves unmet is named and noted as a departure, as the level-up
  * notes one, and never refuses.
  * Level 1 also offers its class: a new one takes back the old one's level 1 choices and asks
@@ -81,21 +93,10 @@ export function LevelEditForm({
   const { departures, added: notes } = later.read
     ? later.departures
     : { departures: after.departures, added: [] };
-  const blocked =
-    (!formState.isDirty && !gainChanged) ||
-    !plan.picksReady ||
-    !later.read ||
-    !starting.read ||
-    saving ||
-    refusals.length > 0;
-  const { owed } = plan.spellPicks;
-  const asksNothing =
-    plan.target.read &&
-    !plan.target.asksSubclass &&
-    plan.grant === undefined &&
-    plan.offerings.length === 0 &&
-    plan.optionPicks.gains.length === 0 &&
-    owed.cantrips + owed.spells + owed.subclassCantrips + owed.subclassSpells === 0;
+  // A gain alone writes the choices as they stood, so it never waits on reading them.
+  const choicesRead = [plan.picksReady, later.read, starting.read].every(Boolean);
+  const waiting = formState.isDirty ? !choicesRead : !gainChanged;
+  const blocked = waiting || saving || refusals.length > 0;
   return (
     <Modal onClose={cancel}>
       <ModalEntry
@@ -152,7 +153,7 @@ export function LevelEditForm({
           <h3 id={`${id}-hp`} className="font-semibold text-label text-muted uppercase">
             Hit points
           </h3>
-          {hitPoints}
+          {hitPoints(plan.die)}
         </section>
         {level === 1 && drafted && (
           <StartingClassField
@@ -162,7 +163,7 @@ export function LevelEditForm({
           />
         )}
         {!plan.target.read && <p className="text-muted">Loading the class…</p>}
-        {asksNothing && <p className="text-muted">Level {level} asked for no choices.</p>}
+        {asksNothing(plan) && <p className="text-muted">Level {level} asked for no choices.</p>}
         <LevelUpPicks edition={definition.edition} plan={plan} />
         <div aria-live="polite" className="text-row">
           {notes.length > 0 && (

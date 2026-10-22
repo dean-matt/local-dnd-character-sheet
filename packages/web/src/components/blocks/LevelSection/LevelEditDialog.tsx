@@ -1,4 +1,4 @@
-import type { CharacterRecord, HitDie } from "@dnd/character";
+import type { CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { characterQuery } from "../../../hooks/useCharacter.ts";
@@ -110,11 +110,11 @@ export function LevelEditDialog({
             onSwap={(next) => {
               swap.current = next;
             }}
-            hitPoints={
-              dice ? (
+            hitPoints={(die) =>
+              dice && die ? (
                 <LevelGainEdit
                   level={level}
-                  die={dice[level - 1] as HitDie}
+                  die={die}
                   entry={character.definition.levels[level - 1] ?? {}}
                   draft={gain}
                   onDraft={(next) => {

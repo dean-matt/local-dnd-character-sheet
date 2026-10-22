@@ -483,6 +483,23 @@ describe("LevelHistory", () => {
       expect(undoEntries).toEqual(["own", "own", "own"]);
     });
 
+    it("writes a gain alone where a read the choices need fails", async () => {
+      serve(warlock(3));
+      const served = globalThis.fetch;
+      vi.stubGlobal("fetch", (url: RequestInfo | URL, init?: RequestInit) =>
+        String(url) === "/api/classes/Warlock/XPHB/at/2"
+          ? Promise.resolve(new Response("{}", { status: 500 }))
+          : served(url, init),
+      );
+      renderSeeded(warlock(3));
+      await changeLevel2();
+
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+      await apply();
+      await waitFor(closed);
+      expect(puts).toHaveLength(1);
+    });
+
     it("holds Apply until the gain or a choice changes, and discards a drafted gain on Cancel", async () => {
       serve(warlock(3));
       renderSeeded(warlock(3));
