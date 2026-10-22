@@ -39,8 +39,9 @@ export function UndoToHereDialog({
             </p>
             <button
               type="button"
+              aria-disabled={pending}
               onClick={onClose}
-              className={`${BUTTON} border border-border bg-surface text-ink hover:bg-subtle`}
+              className={`${BUTTON} border border-border bg-surface text-ink hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
             >
               Cancel
             </button>

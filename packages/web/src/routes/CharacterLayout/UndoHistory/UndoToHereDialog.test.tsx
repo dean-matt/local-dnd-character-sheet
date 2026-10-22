@@ -2,13 +2,13 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { UndoToHereDialog } from "./UndoToHereDialog.tsx";
 
-const dialog = (undoes: number, onConfirm = vi.fn()) =>
+const dialog = (undoes: number, onConfirm = vi.fn(), pending = false) =>
   render(
     <UndoToHereDialog
       describedAs="Name Vex to Nyx"
       newer={0}
       undoes={undoes}
-      pending={false}
+      pending={pending}
       error={null}
       onConfirm={onConfirm}
       onClose={() => {}}
@@ -31,5 +31,10 @@ describe("UndoToHereDialog", () => {
     expect(undo).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(undo);
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("marks Cancel unavailable while the undo it sent is in flight", () => {
+    dialog(1, vi.fn(), true);
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveAttribute("aria-disabled", "true");
   });
 });
