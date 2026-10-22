@@ -1,7 +1,7 @@
 import type { ClassGrants } from "@dnd/catalog";
 import type { CharacterDerived } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { derivedRecord } from "../../../../test/records.ts";
+import { derivedRecord } from "../../../test/records.ts";
 import { derivedChanges, featuresAt, tableChanges } from "./levelUpChanges.ts";
 
 const field = (computed: number, manual: number | null = null) => ({

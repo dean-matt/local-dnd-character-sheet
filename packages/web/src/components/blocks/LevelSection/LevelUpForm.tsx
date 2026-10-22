@@ -1,8 +1,8 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { Modal } from "../../../Modal.tsx";
-import { ModalEntry } from "../../../ModalEntry.tsx";
+import { Modal } from "../../Modal.tsx";
+import { ModalEntry } from "../../ModalEntry.tsx";
 import type { HitPointMethod } from "./hitPointPick.ts";
 import { LevelUpChoices } from "./LevelUpChoices.tsx";
 import type { LevelChange } from "./levelUpChanges.ts";

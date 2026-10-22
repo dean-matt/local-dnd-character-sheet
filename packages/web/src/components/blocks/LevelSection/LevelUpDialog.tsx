@@ -1,12 +1,12 @@
 import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { characterQuery } from "../../../../hooks/useCharacter.ts";
-import { useCharacterDerived } from "../../../../hooks/useCharacterDerived.ts";
-import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
-import { ApiError } from "../../../../lib/api.ts";
-import { Modal } from "../../../Modal.tsx";
-import { ModalEntry } from "../../../ModalEntry.tsx";
+import { characterQuery } from "../../../hooks/useCharacter.ts";
+import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
+import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
+import { ApiError } from "../../../lib/api.ts";
+import { Modal } from "../../Modal.tsx";
+import { ModalEntry } from "../../ModalEntry.tsx";
 import { LevelUpForm } from "./LevelUpForm.tsx";
 import { LevelUpSummary } from "./LevelUpSummary.tsx";
 import { derivedChanges, type LevelChange } from "./levelUpChanges.ts";

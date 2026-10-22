@@ -1,10 +1,10 @@
 import type { SearchHit } from "@dnd/catalog";
 import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useState } from "react";
-import { searchHitKey } from "../../../../lib/searchHitKey.ts";
-import { spellListFilters } from "../../../../lib/spellListFilters.ts";
-import { spellOfferFilters } from "../../../../lib/spellOfferFilters.ts";
-import { PickField } from "../../../PickField.tsx";
+import { searchHitKey } from "../../../lib/searchHitKey.ts";
+import { spellListFilters } from "../../../lib/spellListFilters.ts";
+import { spellOfferFilters } from "../../../lib/spellOfferFilters.ts";
+import { PickField } from "../../PickField.tsx";
 import type { useLevelUpSpells } from "./useLevelUpSpells.ts";
 
 export interface LevelUpSpellsProps {

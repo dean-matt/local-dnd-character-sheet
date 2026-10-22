@@ -1,6 +1,6 @@
 import { type ClassGrants, eitherPicks, offeredPicks } from "@dnd/catalog";
 import { type CharacterDefinition, classLevels, entryKey } from "@dnd/character";
-import { casterFacts } from "../../../../lib/casterFacts.ts";
+import { casterFacts } from "../../../lib/casterFacts.ts";
 
 type Table = Pick<ClassGrants, "resources" | "spellSlots">;
 

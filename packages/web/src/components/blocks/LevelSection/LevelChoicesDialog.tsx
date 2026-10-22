@@ -1,10 +1,10 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { characterQuery } from "../../../../hooks/useCharacter.ts";
-import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
-import { ApiError } from "../../../../lib/api.ts";
-import { withoutLevelChoices } from "../../../../lib/levelChoices.ts";
+import { characterQuery } from "../../../hooks/useCharacter.ts";
+import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
+import { ApiError } from "../../../lib/api.ts";
+import { withoutLevelChoices } from "../../../lib/levelChoices.ts";
 import { LevelChoicesForm } from "./LevelChoicesForm.tsx";
 import { levelUpForm } from "./levelUpForm.ts";
 import { withReopenedLevel } from "./reopenedLevel.ts";

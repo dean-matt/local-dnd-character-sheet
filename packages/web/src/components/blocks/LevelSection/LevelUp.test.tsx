@@ -2,9 +2,9 @@ import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
-import { characterKey } from "../../../../hooks/characterKeys.ts";
-import { characterRecord, derivedRecord } from "../../../../test/records.ts";
-import { LevelHistory } from "../LevelHistory.tsx";
+import { characterKey } from "../../../hooks/characterKeys.ts";
+import { characterRecord, derivedRecord } from "../../../test/records.ts";
+import { LevelHistory } from "./LevelHistory.tsx";
 import { LevelUp } from "./LevelUp.tsx";
 
 vi.mock("@dnd/dice", () => ({ rollDice: () => ({ total: 5 }) }));

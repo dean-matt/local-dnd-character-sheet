@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { characterRecord } from "../../../../test/records.ts";
+import { characterRecord } from "../../../test/records.ts";
 import { withReopenedLevel } from "./reopenedLevel.ts";
 
 describe("withReopenedLevel", () => {

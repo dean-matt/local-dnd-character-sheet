@@ -4,9 +4,9 @@
  */
 import type { ClassGrants } from "@dnd/catalog";
 import type { CharacterDerived, Derived } from "@dnd/character";
-import { featureTypeLabel } from "../../../../lib/featureTypeLabel.ts";
-import { ORDINAL } from "../../../../lib/spellLevel.ts";
-import { signed } from "../../signed.ts";
+import { featureTypeLabel } from "../../../lib/featureTypeLabel.ts";
+import { ORDINAL } from "../../../lib/spellLevel.ts";
+import { signed } from "../signed.ts";
 
 export type LevelChange = { label: string; before: string; after: string };
 

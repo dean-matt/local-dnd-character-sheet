@@ -1,8 +1,8 @@
 import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
-import { levelChoiceRefusals } from "../../../../lib/levelChoices.ts";
-import { Modal } from "../../../Modal.tsx";
-import { ModalEntry } from "../../../ModalEntry.tsx";
+import { levelChoiceRefusals } from "../../../lib/levelChoices.ts";
+import { Modal } from "../../Modal.tsx";
+import { ModalEntry } from "../../ModalEntry.tsx";
 import { LevelUpPicks } from "./LevelUpPicks.tsx";
 import { withReopenedLevel } from "./reopenedLevel.ts";
 import { useLaterPrerequisites } from "./useLaterPrerequisites.ts";

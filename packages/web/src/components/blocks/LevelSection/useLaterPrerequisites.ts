@@ -1,11 +1,11 @@
 import { catalogRowRecordSchema, optionalFeaturePrerequisitesSchema } from "@dnd/catalog";
 import { type CharacterDefinition, classLevels, displayName, entryKey } from "@dnd/character";
 import { useQueries } from "@tanstack/react-query";
-import { classQuery } from "../../../../hooks/classQuery.ts";
-import { useFeats } from "../../../../hooks/useFeats.ts";
-import { ApiError, apiGet } from "../../../../lib/api.ts";
-import { levelChoiceDepartures, type PrerequisiteRows } from "../../../../lib/levelChoices.ts";
-import { retryUnlessClientError } from "../../../../lib/retryUnlessClientError.ts";
+import { classQuery } from "../../../hooks/classQuery.ts";
+import { useFeats } from "../../../hooks/useFeats.ts";
+import { ApiError, apiGet } from "../../../lib/api.ts";
+import { levelChoiceDepartures, type PrerequisiteRows } from "../../../lib/levelChoices.ts";
+import { retryUnlessClientError } from "../../../lib/retryUnlessClientError.ts";
 import { prerequisiteOf } from "./useMulticlassEntry.ts";
 
 /**

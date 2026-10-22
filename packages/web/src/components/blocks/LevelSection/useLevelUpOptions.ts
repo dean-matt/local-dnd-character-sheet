@@ -6,7 +6,7 @@ import {
   type OptionalFeatureEntitlement,
 } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
-import { setRefValue } from "../../../../lib/setRefValue.ts";
+import { setRefValue } from "../../../lib/setRefValue.ts";
 import { optionsGained } from "./optionsGained.ts";
 import type { useLevelUpClass } from "./useLevelUpClass.ts";
 

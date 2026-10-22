@@ -7,11 +7,11 @@ import {
   type EntryRef,
   entryKey,
 } from "@dnd/character";
-import { useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
-import { useCharacterDerived } from "../../../../hooks/useCharacterDerived.ts";
-import { searchHitKey } from "../../../../lib/searchHitKey.ts";
-import { FormField } from "../../../FormField.tsx";
-import { Select } from "../../../Select.tsx";
+import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
+import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
+import { searchHitKey } from "../../../lib/searchHitKey.ts";
+import { FormField } from "../../FormField.tsx";
+import { Select } from "../../Select.tsx";
 import { HitPointChoice } from "./HitPointChoice.tsx";
 import type { HitPointMethod } from "./hitPointPick.ts";
 import { LevelUpPicks } from "./LevelUpPicks.tsx";

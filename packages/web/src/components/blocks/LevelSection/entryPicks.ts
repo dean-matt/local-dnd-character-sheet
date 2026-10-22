@@ -6,7 +6,7 @@
  */
 import type { SearchHit, SkillChoice, ToolChoice } from "@dnd/catalog";
 import { type CharacterDefinition, type ContentRef, refKey } from "@dnd/character";
-import { catalogRow, titleCase } from "../../../../lib/proficiencyGrants.ts";
+import { catalogRow, titleCase } from "../../../lib/proficiencyGrants.ts";
 
 /** A pick the class offers on entry: `count` of `options`. */
 export type EntryPick<T> = { count: number; options: T[] };

@@ -14,7 +14,7 @@ import { DetailTrigger } from "../../DetailTrigger.tsx";
 import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
 import { LevelGainEdit } from "./LevelGainEdit.tsx";
 import { LevelRemoval } from "./LevelRemoval.tsx";
-import { LevelUp } from "./LevelUp/LevelUp.tsx";
+import { LevelUp } from "./LevelUp.tsx";
 
 const HEAD = "px-1 pb-0.5 text-left";
 const CELL = "px-1 py-1 text-left align-top";

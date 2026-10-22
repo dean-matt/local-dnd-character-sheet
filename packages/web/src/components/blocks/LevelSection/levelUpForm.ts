@@ -1,5 +1,5 @@
 import { characterDefinitionSchema } from "@dnd/character";
-import { createForm } from "../../../../lib/createForm.ts";
+import { createForm } from "../../../lib/createForm.ts";
 
 /**
  * The level-up's form: the whole definition with the new level last, validated by the
