@@ -186,8 +186,9 @@ const featShort =
 /**
  * Why `after`, `before` with `level`'s choices made again, cannot be written, one line per
  * dependency, naming it: a later level in the class building on a subclass the level
- * changes, a later level in the starting class level 1 leaves or the one it takes, a prepared spell the level no longer picks, a pick made for a feat or option it
- * no longer takes, an option whose prerequisite the level's picks met, and a feat from
+ * changes, a later level in the class level 1 gives up or in the one it takes up, a prepared
+ * spell the level no longer picks, a pick made for a feat or option it no longer takes, an
+ * option whose prerequisite the level's picks met, and a feat from
  * another level whose ability prerequisite the level's increases met. A prerequisite met
  * before the change and unmet after it refuses; one unmet already is the user's to keep.
  */

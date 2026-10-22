@@ -60,7 +60,7 @@ export function LevelChoicesForm({
       }
     : undefined;
   const plan = useLevelUpPlan(before, undefined, saved);
-  const starting = useStartingClassGrants(definition.edition, cls, drafted);
+  const starting = useStartingClassGrants(definition, drafted);
   const after = withReopenedLevel(definition, level, getValues());
   const later = useLaterPrerequisites(definition, after);
   const refusals = levelChoiceRefusals(definition, after, level, later.rows);
@@ -104,7 +104,9 @@ export function LevelChoicesForm({
                 </p>
               )}
               {later.failed && <p>Couldn't read the prerequisites of the other levels' picks.</p>}
-              {starting.failed && <p>Couldn't read what the starting classes grant.</p>}
+              {starting.failed && (
+                <p>Couldn't read what the starting classes and the other sources grant.</p>
+              )}
               {refusals.map((refusal) => (
                 <p key={refusal}>{refusal}</p>
               ))}
@@ -128,7 +130,7 @@ export function LevelChoicesForm({
                     setRefValue(
                       setValue,
                       "proficiencies",
-                      swapGrants(getValues("proficiencies"), swap.was, swap.now),
+                      swapGrants(getValues("proficiencies"), swap.was, swap.now, swap.still),
                       { shouldDirty: true },
                     );
                 }

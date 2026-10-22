@@ -10,12 +10,14 @@ const backgroundListSchema = z.object({ items: z.array(backgroundRecordSchema), 
 /**
  * Every catalog background in one edition, whole, so a picker can say what each grants
  * before one is chosen. 200 is the route's ceiling, about twice the 101 the larger
- * edition holds; past it, the rows beyond show no grants until this pages.
+ * edition holds; past it, the rows beyond show no grants until this pages. Nothing is
+ * fetched while `enabled` is off.
  */
-export function useBackgrounds(edition: CharacterRecord["edition"]) {
+export function useBackgrounds(edition: CharacterRecord["edition"], enabled = true) {
   return useQuery({
     queryKey: ["backgrounds", edition],
     queryFn: () => apiGet(`/backgrounds?edition=${edition}&limit=200`, backgroundListSchema),
     retry: retryUnlessClientError,
+    enabled,
   });
 }

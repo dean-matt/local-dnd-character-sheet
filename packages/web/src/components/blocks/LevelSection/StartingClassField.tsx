@@ -1,13 +1,8 @@
-import type { SearchHit } from "@dnd/catalog";
 import { type CharacterDefinition, displayName, type EntryRef, entryKey } from "@dnd/character";
-import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
 import { searchHitKey, searchHitRef } from "../../../lib/searchHitKey.ts";
 import { FormField } from "../../FormField.tsx";
 import { Select } from "../../Select.tsx";
-
-const hitSource = (hit: SearchHit) => ("id" in hit ? "homebrew" : hit.source);
-// Above every class one edition and the homebrew hold together, as the level-up's list is.
-const CLASS_LIMIT = 200;
+import { useClassList } from "./useClassList.ts";
 
 export interface StartingClassFieldProps {
   edition: CharacterDefinition["edition"];
@@ -18,16 +13,7 @@ export interface StartingClassFieldProps {
 
 /** Level 1's class, from every class the edition and the homebrew offer. */
 export function StartingClassField({ edition, value, onChange }: StartingClassFieldProps) {
-  const classes = useCatalogSearch({
-    edition,
-    type: "class",
-    query: "",
-    limit: CLASS_LIMIT,
-    listAll: true,
-  });
-  const hits = classes.data?.items ?? [];
-  const names = hits.map((hit) => hit.name);
-  const shared = new Set(names.filter((name, index) => names.indexOf(name) !== index));
+  const { hits, failed, label } = useClassList(edition);
   const current = entryKey(value);
   const listed = hits.some((hit) => searchHitKey(hit) === current);
   return (
@@ -40,7 +26,7 @@ export function StartingClassField({ edition, value, onChange }: StartingClassFi
               ...(listed ? [] : [{ value: current, label: displayName(value) }]),
               ...hits.map((hit) => ({
                 value: searchHitKey(hit),
-                label: shared.has(hit.name) ? `${hit.name} (${hitSource(hit)})` : hit.name,
+                label: label(hit),
               })),
             ]}
             value={current}
@@ -51,7 +37,7 @@ export function StartingClassField({ edition, value, onChange }: StartingClassFi
           />
         )}
       </FormField>
-      {classes.isError && <p className="text-error">Couldn't load the classes.</p>}
+      {failed && <p className="text-error">Couldn't load the classes.</p>}
     </>
   );
 }

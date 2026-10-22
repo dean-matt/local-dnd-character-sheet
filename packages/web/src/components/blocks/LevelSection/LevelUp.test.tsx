@@ -108,7 +108,10 @@ const ROWS: Record<string, unknown> = {
     json: {
       ...WARLOCK,
       proficiency: ["wis", "cha"],
-      startingProficiencies: { armorProficiencies: [{ light: true }] },
+      startingProficiencies: {
+        armorProficiencies: [{ light: true }],
+        weapons: ["simple", "martial"],
+      },
       classFeatures: [
         { classFeature: "Warlock Subclass|Warlock|XPHB|3", gainSubclassFeature: true },
       ],
@@ -1742,6 +1745,26 @@ describe("LevelUp", () => {
         tools: [{ name: "Thieves' Tools", level: "proficient" }],
       });
       expect(undoEntry()).toBe("own");
+    });
+
+    it("keeps what a later class still grants when the starting class changes", async () => {
+      const base = warlock(2);
+      renderSeeded(
+        warlock(2, {
+          levels: [{ class: WARLOCK }, { class: PALADIN }],
+          proficiencies: { ...base.definition.proficiencies, weapons: ["Simple", "Martial"] },
+        }),
+        { history: true },
+      );
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels).toEqual([{ class: ROGUE }, { class: PALADIN }]);
+      expect(sent().proficiencies.weapons).toEqual(["Martial"]);
     });
 
     it("refuses a new starting class while a later level takes the old one", async () => {

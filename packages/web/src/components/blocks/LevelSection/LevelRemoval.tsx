@@ -31,6 +31,8 @@ export function LevelRemoval({
   const first = rows[0];
   const newest = rows.at(-1);
   if (!first || !newest) return null;
+  const from = first.level;
+  const last = newest.level;
   const many = rows.length > 1;
   const listed = rows.map(named);
   const names = many ? `${listed.slice(0, -1).join(", ")} and ${listed.at(-1)}` : listed[0];
@@ -41,13 +43,13 @@ export function LevelRemoval({
       {
         edit: (latest) => {
           const same =
-            latest.levels.length === newest?.level &&
+            latest.levels.length === last &&
             rows.every((row) => {
               const held = latest.levels[row.level - 1];
               return held !== undefined && entryKey(held.class) === entryKey(row.cls);
             });
           if (!same) throw new Error(`the levels changed before ${names} could be removed.`);
-          return withoutLevelsFrom(latest, first?.level ?? latest.levels.length);
+          return withoutLevelsFrom(latest, from);
         },
         readAt: character.updatedAt,
         ownUndoEntry: true,
