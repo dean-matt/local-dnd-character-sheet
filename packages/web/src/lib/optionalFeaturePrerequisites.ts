@@ -70,32 +70,25 @@ function shortfalls(part: OptionalFeaturePrerequisite, facts: PrerequisiteFacts)
   return missing;
 }
 
-/** What an option needs that the character lacks, as `Pact of the Tome`, or `undefined` once met. */
-export function unmetNeeds(
-  prerequisites: readonly OptionalFeaturePrerequisite[],
-  facts: PrerequisiteFacts,
-): string | undefined {
-  const missing = prerequisites.map((part) => shortfalls(part, facts));
-  if (missing.some((each) => each.length === 0)) return undefined;
-  return missing[0]?.join(", ");
-}
-
 /**
  * What an option needs that the character lacks, and what it needs that the sheet cannot
- * check, each a line to print or `undefined` for none. An option is met by any alternative
+ * check, each a line to print or `undefined` for none; `needs` is the first unprefixed, as
+ * `Pact of the Tome`. An option is met by any alternative
  * whose judged parts all hold; where none does, the first alternative's shortfall is the one
  * named. What cannot be checked never refuses a pick.
  */
 export function prerequisiteNotes(
   prerequisites: readonly OptionalFeaturePrerequisite[],
   facts: PrerequisiteFacts,
-): { unmet: string | undefined; unchecked: string | undefined } {
+): { needs: string | undefined; unmet: string | undefined; unchecked: string | undefined } {
   const missing = prerequisites.map((part) => shortfalls(part, facts));
   const met = missing.findIndex((each) => each.length === 0);
   const shown = prerequisites[met === -1 ? 0 : met];
   const unchecked = shown?.unjudged ?? [];
+  const needs = met === -1 ? missing[0]?.join(", ") : undefined;
   return {
-    unmet: met === -1 && missing[0] ? `Needs ${missing[0].join(", ")}` : undefined,
+    needs,
+    unmet: needs && `Needs ${needs}`,
     unchecked: unchecked.length > 0 ? `Not checked: ${unchecked.join(", ")}` : undefined,
   };
 }

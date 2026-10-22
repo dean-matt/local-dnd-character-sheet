@@ -22,7 +22,7 @@ import {
   prerequisiteText,
   withPrerequisiteDepartures,
 } from "./multiclassPrerequisites.ts";
-import { prerequisiteFacts, unmetNeeds } from "./optionalFeaturePrerequisites.ts";
+import { prerequisiteFacts, prerequisiteNotes } from "./optionalFeaturePrerequisites.ts";
 
 type Grantor = { kind: string; ref: EntryRef };
 
@@ -131,8 +131,8 @@ const optionShort =
     const held = new Set(before.optionalFeatures.map((pick) => entryKey(pick.ref)));
     return after.optionalFeatures.flatMap((pick) => {
       const needs = rows.options.get(entryKey(pick.ref));
-      if (!needs || !held.has(entryKey(pick.ref)) || unmetNeeds(needs, was)) return [];
-      const missing = unmetNeeds(needs, now);
+      if (!needs || !held.has(entryKey(pick.ref)) || prerequisiteNotes(needs, was).needs) return [];
+      const missing = prerequisiteNotes(needs, now).needs;
       return missing
         ? [
             `${displayName(pick.ref)}, picked at level ${pick.level}, needs ${missing}; remove it to make this change.`,

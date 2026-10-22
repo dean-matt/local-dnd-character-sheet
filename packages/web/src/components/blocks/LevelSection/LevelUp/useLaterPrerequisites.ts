@@ -55,11 +55,12 @@ export function useLaterPrerequisites(definition: CharacterDefinition) {
     rows,
     departures: (after: CharacterDefinition) => levelChoiceDepartures(definition, after, judged),
     read:
-      feats.isSuccess &&
+      (feats.isSuccess || !definition.feats.some((feat) => feat.level !== undefined)) &&
       optionRows.every((row) => row.isSuccess || gone(row)) &&
       groups.every((group, index) => !("name" in group.class) || classRows[index]?.isSuccess),
     failed:
       optionRows.some((row) => row.isError && !gone(row)) ||
-      [feats, ...classRows].some((query) => query.isError),
+      (feats.isError && definition.feats.some((feat) => feat.level !== undefined)) ||
+      classRows.some((query) => query.isError),
   };
 }

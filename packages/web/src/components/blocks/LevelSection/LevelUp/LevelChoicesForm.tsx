@@ -114,14 +114,16 @@ export function LevelChoicesForm({
         {!plan.target.read && <p className="text-muted">Loading the class…</p>}
         {asksNothing && <p className="text-muted">Level {level} asked for no choices.</p>}
         <LevelUpPicks edition={definition.edition} plan={plan} />
-        {notes.length > 0 && (
-          <div className="text-row">
-            <p>Applying leaves a multiclass prerequisite unmet, which Notes will list:</p>
-            {notes.map((note) => (
-              <p key={note}>{note}</p>
-            ))}
-          </div>
-        )}
+        <div aria-live="polite" className="text-row">
+          {notes.length > 0 && (
+            <>
+              <p>Applying leaves a multiclass prerequisite unmet, which Notes will list:</p>
+              {notes.map((note) => (
+                <p key={note}>{note}</p>
+              ))}
+            </>
+          )}
+        </div>
         <p className="text-muted text-row">
           Hit points change from the level's row; the class a level was taken in stays.
         </p>
