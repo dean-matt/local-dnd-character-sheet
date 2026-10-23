@@ -141,6 +141,7 @@ export { classSkillChoiceSchema, skillProficienciesChoiceSchema } from "./skill-
 export type { CatalogSource } from "./source.ts";
 export {
   catalogSourcesResponseSchema,
+  HOMEBREW_SOURCE,
   searchSourcesResponseSchema,
   searchTypesResponseSchema,
 } from "./source.ts";

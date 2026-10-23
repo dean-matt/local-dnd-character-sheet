@@ -17,6 +17,9 @@ export const catalogSourcesResponseSchema = z.object({ sources: z.array(catalogS
 
 export type CatalogSource = z.infer<typeof catalogSourceSchema>;
 
+/** The source every homebrew row cites, which the server stamps and Settings groups on. */
+export const HOMEBREW_SOURCE = "HB";
+
 /** Every source `/search` can return a row from, one abbreviation each, sorted. */
 export const searchSourcesResponseSchema = z.object({ sources: z.array(z.string().min(1)) });
 

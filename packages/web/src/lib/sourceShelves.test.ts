@@ -14,7 +14,18 @@ const catalog = new Map<string, CatalogSource>(
   ].map((row) => [row.source, row]),
 );
 
-const ALL = ["CoS", "HF", "MaBJoV", "PHB", "PSZ", "Screen", "TftYP", "UATheMysticClass", "XGE"];
+const ALL = [
+  "CoS",
+  "HF",
+  "MaBJoV",
+  "PHB",
+  "HB",
+  "PSZ",
+  "Screen",
+  "TftYP",
+  "UATheMysticClass",
+  "XGE",
+];
 
 const labelsAndSources = (query: string) =>
   shelveSources(ALL, catalog, query).map(({ label, sources }) => [
@@ -23,7 +34,7 @@ const labelsAndSources = (query: string) =>
   ]);
 
 describe("shelveSources", () => {
-  it("files each source under its group, playtest by prefix, and the rest under Other", () => {
+  it("files each source under its group, playtest by prefix, homebrew apart, and the rest under Other", () => {
     expect(labelsAndSources("")).toEqual([
       ["Core rulebooks", ["PHB"]],
       ["Supplements", ["MaBJoV", "XGE"]],
@@ -31,6 +42,7 @@ describe("shelveSources", () => {
       ["Adventures", ["CoS"]],
       ["Screens", ["Screen"]],
       ["Playtest", ["UATheMysticClass"]],
+      ["Homebrew", ["HB"]],
       ["Other", ["HF", "TftYP"]],
     ]);
   });
