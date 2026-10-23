@@ -15,8 +15,11 @@ const lower = (name: string) => name.toLowerCase();
 /**
  * The skills and tools the old starting class's picks spent: the held ones its lists offer
  * that nothing else accounts for. What `granted` holds, the old class's and the sources left
- * in place, takes a proficiency first, and the class's lists then take the rest before the race's and background's
- * lists do. A held skill both the class and the background offer goes to the class.
+ * in place, takes a proficiency first, and the class's lists then take the rest before the
+ * race's and background's lists do. A held skill both the class and the background offer goes to the class.
+ * Held proficiencies carry no record of where they came from, so a skill the player added
+ * by hand that the class's list offers goes back too; a per-pick origin on the definition
+ * is the way out.
  */
 export function takenPicks({
   edition,
