@@ -1884,5 +1884,137 @@ describe("LevelUp", () => {
       ).toBeVisible();
       expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
     });
+
+    describe("a level past the first takes another class", () => {
+      const classField = () => within(dialog()).getByRole("combobox", { name: "Class" });
+
+      it("asks the new class's picks and starts the gain over, as one write and one undo entry", async () => {
+        const vex = warlock(3);
+        renderSeeded(
+          warlock(3, {
+            levels: [{ class: WARLOCK }, { class: WARLOCK, rolled: 6 }, { class: WARLOCK }],
+            departures: vex.definition.departures,
+          }),
+          { history: true },
+        );
+        await reopen(2);
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+
+        const skills = await within(dialog()).findByRole("group", { name: "Skills from Rogue" });
+        expect(within(dialog()).getByRole("button", { name: "Average (5)" })).toHaveAttribute(
+          "aria-pressed",
+          "true",
+        );
+        await waitFor(() => expect(skills).toHaveTextContent("Choose 1 — 0 selected"));
+        expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+
+        fireEvent.click(within(skills).getByRole("checkbox", { name: "Stealth" }));
+        await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+        fireEvent.click(applyChanges());
+
+        await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+        expect(sent().levels).toEqual([{ class: WARLOCK }, { class: ROGUE }, { class: WARLOCK }]);
+        expect(sent().proficiencies).toMatchObject({
+          skills: [{ ref: XPHB("Stealth"), level: "proficient" }],
+          armor: ["Light"],
+          tools: [{ name: "Thieves' Tools", level: "proficient" }],
+        });
+        expect(undoEntry()).toBe("own");
+      });
+
+      it("takes back the proficiencies of a class whose only level goes, keeping what the starting class grants", async () => {
+        const vex = warlock(2);
+        renderSeeded(
+          warlock(2, {
+            levels: [{ class: WARLOCK }, { class: ROGUE }],
+            proficiencies: {
+              ...vex.definition.proficiencies,
+              skills: [{ ref: XPHB("Acrobatics"), level: "proficient" }],
+              armor: ["Light"],
+              tools: [{ name: "Thieves' Tools", level: "proficient" }],
+            },
+          }),
+          { history: true },
+        );
+        await reopen(2);
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Warlock" }));
+        await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+        fireEvent.click(applyChanges());
+
+        await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+        expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
+        expect(sent().proficiencies).toMatchObject({ skills: [], armor: ["Light"], tools: [] });
+      });
+
+      it("judges the new die and notes an unmet prerequisite without refusing", async () => {
+        renderSeeded(warlock(2), { history: true });
+        await reopen(2);
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Paladin" }));
+        fireEvent.change(
+          await within(dialog()).findByRole("spinbutton", { name: "Level 2 typed gain" }),
+          { target: { value: "9" } },
+        );
+        expect(
+          await within(dialog()).findByText(/Paladin needs Strength 13 and Charisma 13/),
+        ).toBeVisible();
+        await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+        fireEvent.click(applyChanges());
+
+        await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+        expect(sent().levels).toEqual([
+          { class: WARLOCK },
+          { class: PALADIN, rolled: 9, typed: true },
+        ]);
+        expect(sent().departures).toEqual([
+          {
+            field: "levels.1.class",
+            note: "Multiclassing in or out of Paladin needs Strength 13 and Charisma 13.",
+          },
+        ]);
+      });
+
+      it("keeps the stored level when the class goes back to the one it held", async () => {
+        renderSeeded(warlock(2, { levels: [{ class: WARLOCK }, { class: WARLOCK, rolled: 6 }] }), {
+          history: true,
+        });
+        await reopen(2);
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+        await within(dialog()).findByRole("group", { name: "Skills from Rogue" });
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Warlock" }));
+
+        expect(within(dialog()).queryByRole("group", { name: /Skills from/ })).toBeNull();
+        expect(
+          await within(dialog()).findByRole("button", { name: "Reroll (d8)" }),
+        ).toHaveAttribute("aria-pressed", "true");
+      });
+
+      it("refuses a new class while a later level in the old class holds a subclass, naming it", async () => {
+        renderSeeded(
+          warlock(3, {
+            levels: [
+              { class: WARLOCK },
+              { class: WARLOCK },
+              { class: WARLOCK, subclass: XPHB("Fiend Patron") },
+            ],
+          }),
+          { history: true },
+        );
+        await reopen(2);
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
+
+        expect(
+          await within(dialog()).findByText(
+            "Level 3 takes Warlock and holds a subclass; remove it to change level 2's class.",
+          ),
+        ).toBeVisible();
+        expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+      });
+    });
   });
 });

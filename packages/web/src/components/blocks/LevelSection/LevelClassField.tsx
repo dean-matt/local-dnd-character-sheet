@@ -4,21 +4,23 @@ import { FormField } from "../../FormField.tsx";
 import { Select } from "../../Select.tsx";
 import { useClassList } from "./useClassList.ts";
 
-export interface StartingClassFieldProps {
+export interface LevelClassFieldProps {
   edition: CharacterDefinition["edition"];
-  /** The class level 1 holds in the draft. */
+  /** The character level whose class this is, counting from 1. */
+  level: number;
+  /** The class the level holds in the draft. */
   value: EntryRef;
   onChange: (cls: EntryRef) => void;
 }
 
-/** Level 1's class, from every class the edition and the homebrew offer. */
-export function StartingClassField({ edition, value, onChange }: StartingClassFieldProps) {
+/** A level's class, from every class the edition and the homebrew offer. */
+export function LevelClassField({ edition, level, value, onChange }: LevelClassFieldProps) {
   const { hits, failed, label } = useClassList(edition);
   const current = entryKey(value);
   const listed = hits.some((hit) => searchHitKey(hit) === current);
   return (
     <>
-      <FormField label="Starting class">
+      <FormField label={level === 1 ? "Starting class" : "Class"}>
         {(control) => (
           <Select
             {...control}

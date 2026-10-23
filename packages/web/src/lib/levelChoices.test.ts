@@ -80,6 +80,27 @@ describe("levelChoiceRefusals", () => {
     ).toEqual([]);
   });
 
+  it("names each later level in the old or new class whose picks rest on its class level", () => {
+    const ROGUE = PHB("Rogue");
+    const levels = (...classes: (typeof FIGHTER)[]) => classes.map((each) => ({ class: each }));
+    const retaken = (before: CharacterDefinition) => ({
+      ...before,
+      levels: before.levels.map((each, index) => (index === 1 ? { class: ROGUE } : each)),
+    });
+    const bare = definition({ levels: levels(FIGHTER, FIGHTER, FIGHTER, ROGUE) });
+    expect(levelChoiceRefusals(bare, retaken(bare), 2, NO_ROWS)).toEqual([]);
+
+    const built = definition({
+      levels: [{ class: FIGHTER }, { class: FIGHTER }, { class: FIGHTER, subclass: CHAMPION }],
+      abilityIncreases: [{ ability: "str", amount: 2, grantedBy: "class", level: 3 }],
+      featureChoices: [choice("Fighting Style", 3)],
+    });
+    expect(levelChoiceRefusals(built, retaken(built), 2, NO_ROWS)).toEqual([
+      "Level 3 takes Fighter and holds a subclass, an improvement and a feature choice; remove it to change level 2's class.",
+    ]);
+    expect(levelChoiceRefusals(built, built, 2, NO_ROWS)).toEqual([]);
+  });
+
   it("names a pick made for a feat the level no longer takes", () => {
     const initiate = {
       ref: PHB("Magic Initiate"),
