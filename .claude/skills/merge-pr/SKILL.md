@@ -87,9 +87,9 @@ The gate reads no label, so the second line does. Six conditions, each named whe
 Merge where it exits 0 and the label reads `review:approved`; otherwise name what failed
 and stop. "The branch merges cleanly" goes to *Where the branch is behind* when its detail
 line says behind. A fenced path, a blocking decline and any other label wait on the user:
-name each and hand back, since only [`user-signoff`](../user-signoff/SKILL.md) clears them.
-Read the pass body the script points at too — a finding no line anchors lives there, not on
-a comment.
+name each and hand back, since only [`user-signoff`](../user-signoff/SKILL.md) clears them
+(a fenced path by an `**Accepted fenced**` record). Read the pass body the script
+points at too — a finding no line anchors lives there, not on a comment.
 
 Two lines print beside *the review converged* and stop nothing: the distance line (how far
 behind the tip the last pass sits, and the `git log` range that counted it — run that range

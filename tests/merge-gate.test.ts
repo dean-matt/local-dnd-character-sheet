@@ -25,6 +25,7 @@ import {
   staleNote,
   UNLINKED,
   unanswered,
+  unsignedPaths,
 } from "../scripts/merge-gate.mjs";
 import { ROOT, read } from "./lib/doc-helpers.ts";
 
@@ -364,6 +365,59 @@ describe("body finding verdicts", () => {
   it("clears a decline a collaborator who is not the owner accepted", () => {
     const collaborator = finding(67, "**Accepted** — the user approved the reading", COLLABORATOR);
     expect(blockingBodyDeclines([warning, collaborator], SIGNERS)).toEqual([]);
+  });
+});
+
+describe("a fenced path's sign-off", () => {
+  const HEAD = "a".repeat(40);
+  const HEAD_DATE = "2026-10-01T12:00:00Z";
+  const PATHS = ["CLAUDE.md", ".claude/skills/user-signoff/SKILL.md"];
+  const record = (over: { body?: string; created_at?: string; user?: { login: string } } = {}) => ({
+    ...finding(80, `**Accepted fenced** ${HEAD} — ${PATHS.join(", ")}: approved`, OWNER),
+    created_at: "2026-10-01T13:00:00Z",
+    ...over,
+  });
+
+  it("clears the paths a signer's later record names", () => {
+    expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [record()], SIGNERS)).toEqual([]);
+    expect(
+      unsignedPaths(PATHS, HEAD, HEAD_DATE, [record({ user: { login: COLLABORATOR } })], SIGNERS),
+    ).toEqual([]);
+  });
+
+  it("leaves every path blocking with no record", () => {
+    expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [], SIGNERS)).toEqual(PATHS);
+  });
+
+  it("leaves the paths blocking where the record comes from a login that is not a signer", () => {
+    const stranger = record({ user: { login: "someone-else" } });
+    expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [stranger], SIGNERS)).toEqual(PATHS);
+  });
+
+  it("leaves the paths blocking where the record predates the head", () => {
+    const older = record({ created_at: "2026-10-01T11:00:00Z" });
+    expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [older], SIGNERS)).toEqual(PATHS);
+  });
+
+  it("leaves the paths blocking where the record names another head", () => {
+    const other = record({ body: `**Accepted fenced** ${"b".repeat(40)} — ${PATHS.join(", ")}` });
+    expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [other], SIGNERS)).toEqual(PATHS);
+  });
+
+  it("takes a path as named only as a whole token, and accepts an abbreviated sha", () => {
+    const web = record({
+      body: `**Accepted fenced** ${HEAD.slice(0, 7)} — packages/web/package.json`,
+    });
+    expect(
+      unsignedPaths(["package.json", "packages/web/package.json"], HEAD, HEAD_DATE, [web], SIGNERS),
+    ).toEqual(["package.json"]);
+  });
+
+  it("leaves a path the record does not name, and ignores a plain acceptance", () => {
+    const partial = record({ body: `**Accepted fenced** ${HEAD} — CLAUDE.md: approved` });
+    expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [partial], SIGNERS)).toEqual([PATHS[1]]);
+    const plain = record({ body: `**Accepted** — ${PATHS.join(", ")}` });
+    expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [plain], SIGNERS)).toEqual(PATHS);
   });
 });
 
