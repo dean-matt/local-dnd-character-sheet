@@ -2258,6 +2258,42 @@ describe("deriveCharacter", () => {
       expect(withFeats({ name: "Speedy", source: "XPHB" }).speed.computed).toEqual({ walk: 40 });
     });
 
+    describe("a Monk's Unarmored Movement", () => {
+      const monkOf = (count: number, source: string, inventory = definition.inventory) =>
+        deriveCharacter(
+          {
+            ...definition,
+            inventory,
+            levels: Array.from({ length: count }, () => ({ class: { name: "Monk", source } })),
+          },
+          {
+            ...catalog,
+            hitDice: new Map([
+              ...catalog.hitDice,
+              [entryKey({ name: "Monk", source: "PHB" }), 8 as const],
+              [entryKey({ name: "Monk", source: "XPHB" }), 8 as const],
+            ]),
+          },
+        );
+
+      it.each(["PHB", "XPHB"])("adds 10 feet at level 2 and grows at level 6 (%s)", (source) => {
+        expect(monkOf(1, source).speed.computed).toEqual({ walk: 30 });
+        const level2 = monkOf(2, source).speed;
+        expect(level2.computed).toEqual({ walk: 40 });
+        expect(level2.terms).toEqual([{ label: "Unarmored Movement", value: 10 }]);
+        expect(monkOf(6, source).speed.computed).toEqual({ walk: 45 });
+      });
+
+      it("adds nothing while wearing armor or carrying a shield", () => {
+        const wear = (ref: EntryRef) => [
+          ...definition.inventory,
+          { ref, quantity: 1, carried: true, equipped: true, attuned: false },
+        ];
+        expect(monkOf(2, "XPHB", wear(STUDDED_LEATHER)).speed.computed).toEqual({ walk: 30 });
+        expect(monkOf(2, "XPHB", wear(SHIELD)).speed.computed).toEqual({ walk: 30 });
+      });
+    });
+
     it("counts a feat listed twice once, and ignores a homebrew feat", () => {
       expect(withFeats(ALERT_2014, ALERT_2014).initiative.computed).toBe(8);
       expect(withFeats({ homebrewId: "hb_alert" }).initiative.computed).toBe(3);

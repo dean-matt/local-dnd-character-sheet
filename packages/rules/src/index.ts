@@ -44,7 +44,7 @@ export { magicItemValue, spellScrollValue } from "./itemvalue.ts";
 export { RESET_TRIGGERS, resetsOn } from "./rest.ts";
 export type { Sense } from "./senses.ts";
 export { SENSES } from "./senses.ts";
-export { reducedSpeed } from "./speed.ts";
+export { reducedSpeed, unarmoredMovementBonus } from "./speed.ts";
 export type {
   CasterClassLevel,
   CasterProgression,

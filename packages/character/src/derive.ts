@@ -64,6 +64,7 @@ import { houseRule } from "./resolve.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
 import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
+import { speedWithUnarmoredMovement } from "./unarmoredMovement.ts";
 
 /**
  * The hit point maximum for a stored character.
@@ -882,11 +883,17 @@ export function deriveCharacter(
 
   const worn = wornBurdens(definition, catalog);
   const featSpeed = speedWithFeats(catalog.speed, definition);
-  const itemSpeed = speedWithItems(featSpeed.speed, bonuses);
+  const { worn: bodyArmor, shield: heldShield } = equippedArmor(definition, catalog.armor);
+  const movement = speedWithUnarmoredMovement(
+    featSpeed.speed,
+    definition,
+    bodyArmor !== undefined || heldShield !== undefined,
+  );
+  const itemSpeed = speedWithItems(movement.speed, bonuses);
   const armorSpeed = speedUnderArmor(itemSpeed.speed, worn, scoreOf(definition, catalog, "str"));
   const speed = {
     speed: armorSpeed.speed,
-    terms: [...featSpeed.terms, ...itemSpeed.terms, ...armorSpeed.terms],
+    terms: [...featSpeed.terms, ...movement.terms, ...itemSpeed.terms, ...armorSpeed.terms],
   };
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
