@@ -13,11 +13,10 @@
  * survives a rename; a tag holds the name, so a renamed or deleted row leaves it
  * unresolved.
  */
-import { catalogRowEntries, type RefQuery } from "@dnd/catalog";
+import { catalogRowEntries, HOMEBREW_SOURCE, type RefQuery } from "@dnd/catalog";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
 import {
-  HOMEBREW_SOURCE,
   homebrewBackgrounds,
   homebrewClasses,
   homebrewFeats,

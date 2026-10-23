@@ -46,6 +46,27 @@ describe("SourcesSettings", () => {
     expect(getDisabledSources()).toEqual(["PHB"]);
   });
 
+  it("lists homebrew as a group whose switch hides its rows like a sourcebook's", async () => {
+    stubFetchByUrl({
+      "/api/search/sources": { sources: ["HB", "PHB"] },
+      "/api/catalog/sources": {
+        sources: [{ source: "PHB", name: "Player's Handbook", group: "core" }],
+      },
+    });
+    renderWithClient(<SourcesSettings />);
+
+    const hb = await screen.findByRole("switch", { name: /^HB/ });
+    expect(
+      within(screen.getByRole("region", { name: "Homebrew" })).getAllByRole("switch"),
+    ).toHaveLength(1);
+    expect(hb).toBeChecked();
+
+    fireEvent.click(hb);
+
+    expect(hb).not.toBeChecked();
+    expect(getDisabledSources()).toEqual(["HB"]);
+  });
+
   it("puts each source under a group heading", async () => {
     stubSources();
     renderWithClient(<SourcesSettings />);

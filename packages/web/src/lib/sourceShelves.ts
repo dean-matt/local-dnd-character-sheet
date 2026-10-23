@@ -1,9 +1,10 @@
 /**
  * Sorts sources onto the shelves Settings › Sources shows them under, from the group
- * `/catalog/sources` reports. Upstream's `-alt` groups, such as `supplement-alt`, hold the
- * smaller and partner releases of the same kind, so each shares its plain group's shelf.
+ * `/catalog/sources` reports, and homebrew's source onto a shelf of its own. Upstream's
+ * `-alt` groups, such as `supplement-alt`, hold the smaller and partner releases of the same
+ * kind, so each shares its plain group's shelf.
  */
-import type { CatalogSource } from "@dnd/catalog";
+import { type CatalogSource, HOMEBREW_SOURCE } from "@dnd/catalog";
 
 const SHELVES = [
   "Core rulebooks",
@@ -12,6 +13,7 @@ const SHELVES = [
   "Adventures",
   "Screens",
   "Playtest",
+  "Homebrew",
   "Other",
 ] as const;
 
@@ -30,11 +32,14 @@ const SHELF_OF_GROUP: Record<string, Shelf> = {
 /** Upstream's prefix for Unearthed Arcana, which no book or adventure index lists. */
 const PLAYTEST = /^X?UA/;
 
+const HOMEBREW_TITLE = "Your own items and spells";
+
 type ShelvedSource = { source: string; title: string | undefined };
 
 export type SourceShelf = { label: Shelf; sources: ShelvedSource[] };
 
 function shelfOf(source: string, row: CatalogSource | undefined): Shelf {
+  if (source === HOMEBREW_SOURCE) return "Homebrew";
   if (PLAYTEST.test(source)) return "Playtest";
   return (row?.group && SHELF_OF_GROUP[row.group]) || "Other";
 }
@@ -54,7 +59,7 @@ export function shelveSources(
   const shelves = new Map<Shelf, ShelvedSource[]>(SHELVES.map((label) => [label, []]));
   for (const source of sources) {
     const row = catalog?.get(source);
-    const shelved = { source, title: row?.name };
+    const shelved = { source, title: source === HOMEBREW_SOURCE ? HOMEBREW_TITLE : row?.name };
     if (matches(shelved, query)) shelves.get(shelfOf(source, row))?.push(shelved);
   }
   return [...shelves]

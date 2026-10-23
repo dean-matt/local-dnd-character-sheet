@@ -238,7 +238,24 @@ describe("searchRoutes", () => {
     expect(res.status).toBe(400);
   });
 
-  it("narrows to the named sources and leaves homebrew out", async () => {
+  it("leaves out homebrew when its source is excluded", async () => {
+    insertHomebrewItem(opened.homebrewDb, "1", {
+      name: "Firebrand Axe",
+      edition: "classic",
+      type: "M",
+    });
+
+    const res = await routes.request("/search?edition=classic&q=fire&exclude=HB");
+    const body = await res.json();
+
+    expect(body.items).toEqual([
+      { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
+      { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
+      { type: "monster", name: "Azer", source: "MM", edition: null },
+    ]);
+  });
+
+  it("narrows to the named sources and leaves homebrew out unless HB is named", async () => {
     insertHomebrewItem(opened.homebrewDb, "1", {
       name: "Firebrand Axe",
       edition: "classic",
@@ -251,6 +268,15 @@ describe("searchRoutes", () => {
     expect(body.items).toEqual([
       { type: "spell", name: "Fireball", source: "PHB", edition: "classic" },
     ]);
+
+    const withHomebrew = await routes.request("/search?edition=classic&q=fire&source=PHB,HB");
+    expect((await withHomebrew.json()).items).toContainEqual({
+      type: "item",
+      id: "1",
+      name: "Firebrand Axe",
+      edition: "classic",
+      item: axe,
+    });
   });
 
   it("lists every type a search can return", async () => {
@@ -265,6 +291,18 @@ describe("searchRoutes", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ sources: ["MM", "PHB"] });
+  });
+
+  it("lists HB among the sources once homebrew holds an item or a spell", async () => {
+    insertHomebrewItem(opened.homebrewDb, "1", {
+      name: "Firebrand Axe",
+      edition: "classic",
+      type: "M",
+    });
+
+    const res = await routes.request("/search/sources");
+
+    expect(await res.json()).toEqual({ sources: ["HB", "MM", "PHB"] });
   });
 });
 

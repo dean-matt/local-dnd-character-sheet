@@ -11,6 +11,7 @@
 import {
   catalogSearchHitSchema,
   compareSearchHits,
+  HOMEBREW_SOURCE,
   homebrewSearchHitSchema,
   ITEM_KINDS,
   itemHitFacts,
@@ -31,7 +32,11 @@ import {
   searchCatalog,
 } from "../db/queries/catalog-search.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
-import { searchHomebrewItems, searchHomebrewSpells } from "../db/queries/homebrew.ts";
+import {
+  listHomebrewSearchSources,
+  searchHomebrewItems,
+  searchHomebrewSpells,
+} from "../db/queries/homebrew.ts";
 import { catalogOutOfDate } from "./errors.ts";
 
 const DEFAULT_LIMIT = 50;
@@ -94,7 +99,7 @@ const listQuery = z.object({
     description: "A name to search for; absent or blank lists every row the filters admit",
   }),
   type: csv("Comma-separated kinds of row to read; absent reads every kind", "spell,item"),
-  source: csv("Comma-separated source abbreviations to narrow catalog rows to", "PHB,XGE"),
+  source: csv("Comma-separated source abbreviations to narrow rows to, HB for homebrew", "PHB,XGE"),
   minLevel: spellLevel.openapi({ description: "The lowest spell level to read" }),
   maxLevel: spellLevel.openapi({ description: "The highest spell level to read" }),
   school: csv("Comma-separated spell school codes to narrow spells to", "V,A"),
@@ -141,7 +146,10 @@ const listQuery = z.object({
   ),
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).optional(),
   offset: z.coerce.number().int().min(0).optional(),
-  exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
+  exclude: csv(
+    "Comma-separated source abbreviations whose rows to leave out, HB for homebrew",
+    "VGM,SCAG",
+  ),
 });
 
 function classListOf(query: z.infer<typeof listQuery>) {
@@ -174,7 +182,7 @@ const search = createRoute({
   summary: "Search the catalog and homebrew together, one ranked list",
   description:
     "minLevel, maxLevel and school narrow spells alone, rarity and kind items alone, and featureType optional features alone, passing every other kind through. " +
-    "A source narrows to catalog rows, so it leaves homebrew out.",
+    "A source narrows rows to those citing it, homebrew's HB among them.",
   request: { query: listQuery },
   responses: {
     200: {
@@ -190,7 +198,7 @@ const sources = createRoute({
   method: "get",
   path: "/search/sources",
   tags: ["search"],
-  summary: "Every source a search can return a catalog row from",
+  summary: "Every source a search can return a row from, homebrew included",
   responses: {
     200: {
       description: "Each source abbreviation, sorted",
@@ -243,15 +251,18 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
     const reads = (type: string) => typeList === undefined || typeList.includes(type);
 
     const excluded = new Set(list(query.exclude));
+    const shown = (source: string) =>
+      !excluded.has(source) && (!narrowTo || narrowTo.includes(source));
     const catalogHits = searchCatalog(dataDir, filter)
-      .filter((row) => !excluded.has(row.source) && (!narrowTo || narrowTo.includes(row.source)))
+      .filter((row) => shown(row.source))
       .map(toHit);
+    const homebrewShown = shown(HOMEBREW_SOURCE);
     const homebrewItemHits =
-      !narrowTo && reads("item")
+      homebrewShown && reads("item")
         ? searchHomebrewItems(homebrewDb, filter).map(toHomebrewItemHit)
         : [];
     const homebrewSpellHits =
-      !narrowTo && !classList && !offer && reads("spell")
+      homebrewShown && !classList && !offer && reads("spell")
         ? searchHomebrewSpells(homebrewDb, filter).map(toHomebrewSpellHit)
         : [];
 
@@ -270,7 +281,10 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
     );
   });
 
-  routes.openapi(sources, (c) => c.json({ sources: listSearchSources(dataDir) }, 200));
+  routes.openapi(sources, (c) => {
+    const merged = [...listSearchSources(dataDir), ...listHomebrewSearchSources(homebrewDb)];
+    return c.json({ sources: merged.sort((a, b) => a.localeCompare(b)) }, 200);
+  });
 
   routes.openapi(types, (c) => c.json({ types: listSearchTypes(dataDir) }, 200));
 

@@ -17,6 +17,7 @@ import type {
 } from "@dnd/catalog";
 import {
   characterOptionEntrySchema,
+  HOMEBREW_SOURCE,
   homebrewClassSchema,
   homebrewItemSchema,
   itemKinds,
@@ -30,7 +31,6 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type * as homebrewSchema from "../homebrew.ts";
 import {
-  HOMEBREW_SOURCE,
   homebrewBackgrounds,
   homebrewClasses,
   homebrewFeats,
@@ -63,6 +63,14 @@ export function searchHomebrewItems(db: HomebrewDb, filter: SearchFilter) {
     )
     .all()
     .filter((row) => ofWantedKind(itemKinds(row.json), filter.itemKinds));
+}
+
+/** The sources a homebrew row `/search` can return cites: `HOMEBREW_SOURCE` once any item or spell exists. */
+export function listHomebrewSearchSources(db: HomebrewDb): string[] {
+  const held =
+    db.select({ id: homebrewItems.id }).from(homebrewItems).limit(1).get() ??
+    db.select({ id: homebrewSpells.id }).from(homebrewSpells).limit(1).get();
+  return held ? [HOMEBREW_SOURCE] : [];
 }
 
 /** A homebrew table whose rows a `{@tag}` names, each name unique within its edition. */
