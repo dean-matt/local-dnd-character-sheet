@@ -1,4 +1,4 @@
-/** Whether the drafted class is still loading, and why it cannot take the level where it has no usable die. */
+/** The drafted class's loading note, and `noDie`, the reason it cannot take the level. */
 export function ClassStatus({ loading, noDie }: { loading: boolean; noDie: string | undefined }) {
   return (
     <>

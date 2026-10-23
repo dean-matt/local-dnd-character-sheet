@@ -94,9 +94,13 @@ describe("levelChoiceRefusals", () => {
       levels: [{ class: FIGHTER }, { class: FIGHTER }, { class: FIGHTER, subclass: CHAMPION }],
       abilityIncreases: [{ ability: "str", amount: 2, grantedBy: "class", level: 3 }],
       featureChoices: [choice("Fighting Style", 3)],
+      spells: [{ ref: PHB("Shield"), prepared: false, pickedAt: 3 }],
+      optionalFeatures: [
+        { ref: PHB("Feint"), level: 3, grantedBy: { kind: "class", ref: FIGHTER } },
+      ] as CharacterDefinition["optionalFeatures"],
     });
     expect(levelChoiceRefusals(built, retaken(built), 2, NO_ROWS)).toEqual([
-      "Level 3 takes Fighter and holds a subclass, an improvement and a feature choice; remove it to change level 2's class.",
+      "Level 3 takes Fighter and holds a subclass, an improvement, a feature choice, a spell pick and an option pick; remove it to change level 2's class.",
     ]);
     expect(levelChoiceRefusals(built, built, 2, NO_ROWS)).toEqual([]);
   });

@@ -234,7 +234,7 @@ const featShort =
  * Why `after`, `before` with `level`'s choices made again, cannot be written, one line per
  * dependency, naming it: a later level in the class building on a subclass the level
  * changes, a later level in the class level 1 gives up or in the one it takes up, a later
- * level in the class a later level gives up or takes up whose picks rest on its class level, a prepared
+ * level in the old or new class of a level past the first, whose picks rest on its class level, a prepared
  * spell the level no longer picks, a pick made for a feat or option it no longer takes, an
  * option whose prerequisite the level's picks met, and a feat from
  * another level whose ability prerequisite the level's increases met. A prerequisite met
