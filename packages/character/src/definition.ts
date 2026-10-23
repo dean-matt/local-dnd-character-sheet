@@ -670,6 +670,8 @@ export const characterRecordSchema = z.strictObject({
   definition: characterDefinitionSchema,
   /** When the uploaded portrait last changed, null where the character has none. */
   portraitUpdatedAt: z.iso.datetime().nullable(),
+  /** Whether the portrait an upload or removal displaced can be restored. */
+  hasPreviousPortrait: z.boolean(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

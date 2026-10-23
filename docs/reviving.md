@@ -91,6 +91,7 @@ INSERT INTO characters SELECT * FROM backup.characters WHERE id = '$id';
 INSERT INTO character_state SELECT * FROM backup.character_state WHERE character_id = '$id';
 INSERT INTO character_pages SELECT * FROM backup.character_pages WHERE character_id = '$id';
 INSERT INTO character_portraits SELECT * FROM backup.character_portraits WHERE character_id = '$id';
+INSERT INTO character_portraits_previous SELECT * FROM backup.character_portraits_previous WHERE character_id = '$id';
 INSERT INTO roll_log SELECT * FROM backup.roll_log WHERE character_id = '$id';
 INSERT INTO undo_log SELECT * FROM backup.undo_log WHERE character_id = '$id';
 COMMIT;

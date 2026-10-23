@@ -1,5 +1,5 @@
 /**
- * Read, replace and remove for the image behind a character's avatar. A write carries the
+ * Read, replace, remove and restore for the image behind a character's avatar. A write carries the
  * raw image as its body. The type is read from the image's own leading bytes, never from
  * the `Content-Type` alone, and must match it, so nothing but a PNG, JPEG, GIF or WebP is
  * ever stored or served back.
@@ -7,7 +7,12 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
 import type { CharactersDb } from "../db/queries/characters.ts";
-import { getPortrait, removePortrait, setPortrait } from "../db/queries/portraits.ts";
+import {
+  getPortrait,
+  removePortrait,
+  restorePortrait,
+  setPortrait,
+} from "../db/queries/portraits.ts";
 import { errorSchema, notFound } from "./errors.ts";
 
 /**
@@ -96,6 +101,23 @@ const remove = createRoute({
   },
 });
 
+const restore = createRoute({
+  method: "post",
+  path: "/characters/{id}/portrait/restore",
+  tags: ["characters"],
+  summary: "Bring back the portrait an upload or removal displaced",
+  description:
+    "Swaps the current portrait with the previous one, so a second call undoes the first.",
+  request: { params: idParam },
+  responses: {
+    204: { description: "The previous portrait is the current one" },
+    404: {
+      description: "No character with that id, or nothing to restore",
+      content: { "application/json": { schema: errorSchema } },
+    },
+  },
+});
+
 export function characterPortraitRoutes(db: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -125,6 +147,13 @@ export function characterPortraitRoutes(db: CharactersDb) {
 
   routes.openapi(remove, (c) => {
     if (!removePortrait(db, c.req.valid("param").id)) return c.json({ error: NOT_FOUND }, 404);
+    return c.body(null, 204);
+  });
+
+  routes.openapi(restore, (c) => {
+    const result = restorePortrait(db, c.req.valid("param").id);
+    if (result === "missing") return c.json({ error: NOT_FOUND }, 404);
+    if (result === "none") return c.json({ error: "No earlier portrait to restore" }, 404);
     return c.body(null, 204);
   });
 

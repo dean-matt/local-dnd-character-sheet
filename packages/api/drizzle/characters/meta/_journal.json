@@ -92,6 +92,13 @@
       "when": 1792591207206,
       "tag": "0012_undo_entry_sealed",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1792763426012,
+      "tag": "0013_character_portraits_previous",
+      "breakpoints": true
     }
   ]
 }

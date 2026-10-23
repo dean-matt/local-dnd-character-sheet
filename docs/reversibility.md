@@ -18,7 +18,7 @@ seconds merge into one entry, except a level-up or a Level History change, which
 | Creating, duplicating or importing a character | Deleting it; none of the three writes an undo entry |
 | Play state (`character_state`) | A direct edit, once the controls in the play state rows below exist |
 | Pages | Their own undo, `components/PagesUndoButton.tsx`, held in the session and lost on reload |
-| The portrait | Nothing: #985 |
+| The portrait | Restore previous portrait in Settings, which holds one displaced image until the next upload or removal |
 | A deleted character | A snapshot in `data/backups/`, by hand, as `docs/reviving.md` says |
 | Homebrew rows | Nothing: #987 |
 | Browser settings: theme, accent, sources, the rail | A direct edit |
@@ -101,7 +101,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Decision | Written in | Reversed by |
 |---|---|---|
 | House rules | `routes/CharacterSettings/HouseRulesCard.tsx` | Undo, toggling back |
-| Uploading or removing the portrait | `routes/CharacterLayout/PortraitUpload.tsx`, `routes/CharacterSettings/PortraitCard.tsx` | Cannot be: #985 |
+| Uploading or removing the portrait | `routes/CharacterLayout/PortraitUpload.tsx`, `routes/CharacterSettings/PortraitCard.tsx` | Restore previous portrait in Settings, one image deep |
 | Duplicating a character | `routes/CharacterSettings/CharacterSettings.tsx` | Deleting the copy |
 | Importing a character | `components/CharacterActions.tsx` | Deleting it |
 | Deleting a character | `routes/CharacterSettings/DeleteCharacterDialog.tsx` | A snapshot in `data/backups/`, by hand: `docs/reviving.md` |

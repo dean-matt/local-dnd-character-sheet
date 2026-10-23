@@ -91,3 +91,8 @@ export async function apiUpload(path: string, file: Blob): Promise<void> {
 export async function apiDelete(path: string): Promise<void> {
   await request(path, { method: "DELETE" });
 }
+
+/** A body-less `POST` for a route that answers `204`. */
+export async function apiPost(path: string): Promise<void> {
+  await request(path, { method: "POST" });
+}

@@ -35,6 +35,7 @@ describe("round trips", () => {
       classSummary: classSummary(definition),
       definition,
       portraitUpdatedAt: null,
+      hasPreviousPortrait: false,
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
     };
