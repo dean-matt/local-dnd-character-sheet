@@ -645,6 +645,18 @@ export const characterDefinitionSchema = z.strictObject({
     )
     .default([]),
   houseRules: houseRulesSchema,
+  /**
+   * The sources this character's pickers and searches leave out, on top of the ones
+   * Settings turned off. Absent follows Settings alone; a source it adds later is on,
+   * since the list names what is off. A row the character already references still
+   * resolves.
+   */
+  excludedSources: z
+    .array(z.string().min(1))
+    .refine((sources) => isUnique(sources, (source) => source), {
+      error: "the same source is excluded twice",
+    })
+    .optional(),
   departures: z.array(departureSchema).default([]),
   /**
    * What the user typed over a derived field, keyed by the field's path through the

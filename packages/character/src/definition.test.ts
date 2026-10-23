@@ -255,6 +255,22 @@ describe("houseRules", () => {
   });
 });
 
+describe("excludedSources", () => {
+  it("stores nothing for a character that follows Settings", () => {
+    expect(characterDefinitionSchema.parse(definition)).not.toHaveProperty("excludedSources");
+  });
+
+  it("keeps the sources a character turned off", () => {
+    const parsed = characterDefinitionSchema.parse({ ...definition, excludedSources: ["UA2020"] });
+    expect(parsed.excludedSources).toEqual(["UA2020"]);
+  });
+
+  it("rejects a source listed twice", () => {
+    const twice = { ...definition, excludedSources: ["PHB", "PHB"] };
+    expect(characterDefinitionSchema.safeParse(twice).success).toBe(false);
+  });
+});
+
 describe("notes", () => {
   const section = (id: string, notes: { id: string; text: string }[]) => ({
     id,

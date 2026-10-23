@@ -161,7 +161,9 @@ subclass hit names its class in `parent`; a subrace, keyed within its race the s
 is not searchable yet. A source
 turned off in Settings rides every `/search` as `exclude`, so the picker, the global
 search and the search page all drop its rows. The list lives in `localStorage`, since it is neither catalog
-data nor a character's; `packages/web/src/lib/disabledSources.ts` holds it.
+data nor a character's; `packages/web/src/lib/disabledSources.ts` holds it. A character
+narrows that list with `excludedSources` in its definition, which `useDisabledSources` adds to
+Settings' for the open sheet and a search opened from it; it never turns a source back on.
 
 **Creation and level-up are forms, not fields.** They present many fields at once, their
 choices depend on each other, and they are validated as a whole, so they run through

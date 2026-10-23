@@ -57,6 +57,7 @@ export const SECTION_LABEL: Record<keyof CharacterDefinition, string> = {
   backstory: "Backstory",
   notes: "Notes",
   houseRules: "House rules",
+  excludedSources: "Sources",
   departures: "Departures from the rules",
   overrides: "Overrides",
 };
