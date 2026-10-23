@@ -109,6 +109,31 @@ describe("homebrewSkillsRoutes", () => {
       expect((await routes.request(`/homebrew/skills/${created.id}`)).status).toBe(200);
     });
 
+    it("refuses to move a held skill to another edition, and ignores a holder of the other edition", async () => {
+      const created = await (await routes.request("/homebrew/skills", json(sailing()))).json();
+      insertCharacter(opened.charactersDb, {
+        id: "1",
+        definition: baseDefinition({
+          proficiencies: {
+            ...baseDefinition().proficiencies,
+            skills: [{ ref: { name: "Sailing", source: "HB" }, level: "none" }],
+          },
+        }),
+      });
+
+      const moved = await routes.request(`/homebrew/skills/${created.id}`, {
+        ...json(sailing({ edition: "classic" })),
+        method: "PUT",
+      });
+      expect(moved.status).toBe(409);
+
+      const other = await (
+        await routes.request("/homebrew/skills", json(sailing({ edition: "classic" })))
+      ).json();
+      const res = await routes.request(`/homebrew/skills/${other.id}`, { method: "DELETE" });
+      expect(res.status).toBe(204);
+    });
+
     it("renames a skill nothing cites, keeping its id", async () => {
       const created = await (await routes.request("/homebrew/skills", json(sailing()))).json();
 

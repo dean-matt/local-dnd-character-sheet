@@ -139,11 +139,11 @@ export function homebrewSkillsRoutes(db: HomebrewDb, charactersDb: CharactersDb)
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const current = getHomebrewSkill(db, id);
-    if (current && current.name !== input.name) {
-      const characters = charactersReferencingHomebrewSkill(charactersDb, current.name);
-      const items = itemsAdvantagedOnSkill(db, current.name);
+    if (current && (current.name !== input.name || current.edition !== input.edition)) {
+      const characters = charactersReferencingHomebrewSkill(charactersDb, current);
+      const items = itemsAdvantagedOnSkill(db, current);
       if (characters.length + items.length > 0)
-        return c.json(skillReferencedError("renamed", characters, items), 409);
+        return c.json(skillReferencedError("changed", characters, items), 409);
     }
     const result = claimName(
       () => updateHomebrewSkill(db, id, input),
@@ -158,8 +158,8 @@ export function homebrewSkillsRoutes(db: HomebrewDb, charactersDb: CharactersDb)
     const { id } = c.req.valid("param");
     const current = getHomebrewSkill(db, id);
     if (!current) return c.json({ error: SKILL_NOT_FOUND }, 404);
-    const characters = charactersReferencingHomebrewSkill(charactersDb, current.name);
-    const items = itemsAdvantagedOnSkill(db, current.name);
+    const characters = charactersReferencingHomebrewSkill(charactersDb, current);
+    const items = itemsAdvantagedOnSkill(db, current);
     if (characters.length + items.length > 0)
       return c.json(skillReferencedError("deleted", characters, items), 409);
     deleteHomebrewSkill(db, id);

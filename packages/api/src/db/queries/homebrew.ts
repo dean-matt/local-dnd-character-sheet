@@ -422,16 +422,19 @@ export function deleteHomebrewSkill(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewSkills).where(eq(homebrewSkills.id, id)).run().changes > 0;
 }
 
-/** The homebrew items whose advantage effects name the skill `name`, ignoring case. */
+/** The homebrew items of the skill's edition whose advantage effects name it, ignoring case. */
 export function itemsAdvantagedOnSkill(
   db: HomebrewDb,
-  name: string,
+  skill: { name: string; edition: Edition },
 ): { id: string; name: string }[] {
+  const wanted = skill.name.toLowerCase();
   return listHomebrewItems(db)
-    .filter(({ json }) =>
-      json.advantage?.some(
-        ({ roll, target }) => roll === "skill" && target?.toLowerCase() === name.toLowerCase(),
-      ),
+    .filter(
+      ({ edition, json }) =>
+        edition === skill.edition &&
+        json.advantage?.some(
+          ({ roll, target }) => roll === "skill" && target?.toLowerCase() === wanted,
+        ),
     )
     .map(({ id, name }) => ({ id, name }));
 }
