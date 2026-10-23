@@ -59,3 +59,10 @@ export function reducedSpeed({
   const remaining = Math.max(0, base - reduction);
   return halved ? Math.floor(remaining / 2) : remaining;
 }
+
+/** Feet a Monk of this level adds to walking speed; both editions print the same table. */
+export function unarmoredMovementBonus(monkLevel: number): number {
+  assertInteger("A Monk level", monkLevel);
+  if (monkLevel < 2) return 0;
+  return Math.min(30, 10 + 5 * Math.floor((monkLevel - 2) / 4));
+}

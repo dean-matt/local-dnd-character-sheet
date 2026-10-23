@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { type Edition, encumbranceAt, exhaustionEffects, reducedSpeed } from "./index.ts";
+import {
+  type Edition,
+  encumbranceAt,
+  exhaustionEffects,
+  reducedSpeed,
+  unarmoredMovementBonus,
+} from "./index.ts";
 
 const WOOD_ELF_SPEED = 35;
 const DWARF_SPEED = 25;
@@ -102,5 +108,20 @@ describe("reducedSpeed against the two tables", () => {
         zeroed: exhaustion.zeroed,
       }),
     ).toBe(0);
+  });
+});
+
+describe("unarmoredMovementBonus", () => {
+  it.each([
+    [1, 0],
+    [2, 10],
+    [5, 10],
+    [6, 15],
+    [10, 20],
+    [14, 25],
+    [18, 30],
+    [20, 30],
+  ])("gives a level %i Monk %i feet", (level, feet) => {
+    expect(unarmoredMovementBonus(level)).toBe(feet);
   });
 });
