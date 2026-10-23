@@ -101,7 +101,7 @@ afterEach(() => {
 });
 
 describe("CharacterSettings", () => {
-  it("titles the page and lays out house rules, the portrait, the character file and the danger zone in order", () => {
+  it("titles the page and lays out house rules, sources, the portrait, the character file and the danger zone in order", () => {
     stubFetch(204);
     renderSettings();
 
@@ -115,6 +115,7 @@ describe("CharacterSettings", () => {
     expect(titles).toEqual([
       "Character settings",
       "House rules",
+      "Sources",
       "Portrait",
       "Character file",
       "Danger zone",
@@ -225,7 +226,9 @@ describe("CharacterSettings", () => {
 
     press("Duplicate character");
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Duplicate failed: disk full");
+    expect(
+      await screen.findByText("Duplicate failed: disk full", { selector: "[role=alert]" }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/characters/1/settings");
   });
 
@@ -262,9 +265,11 @@ describe("CharacterSettings", () => {
 
     press("Export character");
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Export failed: characters.db is locked",
-    );
+    expect(
+      await screen.findByText("Export failed: characters.db is locked", {
+        selector: "[role=alert]",
+      }),
+    ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/characters/1/settings");
   });
 

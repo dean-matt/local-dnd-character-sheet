@@ -1,7 +1,8 @@
 import { useId, useState } from "react";
+import { SourceSwitch } from "../../components/SourceSwitch.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCatalogSources } from "../../hooks/useCatalogSources.ts";
-import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
+import { useGlobalDisabledSources } from "../../hooks/useGlobalDisabledSources.ts";
 import { useSearchSources } from "../../hooks/useSearchSources.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import { isCatalogOutOfDate } from "../../lib/api.ts";
@@ -19,7 +20,7 @@ export function SourcesSettings() {
   const { data, isPending, isError, error } = useSearchSources();
   const catalogSources = useCatalogSources();
   const catalog = catalogSources.data;
-  const disabled = useDisabledSources();
+  const disabled = useGlobalDisabledSources();
   const [query, setQuery] = useState("");
   const [chosen, setChosen] = useState<SourceShelf["label"][]>([]);
   const id = useId();
@@ -131,19 +132,11 @@ export function SourcesSettings() {
                       <p className="font-semibold text-row">{source}</p>
                       {title && <p className="truncate text-label text-muted">{title}</p>}
                     </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={!disabled.includes(source)}
-                      aria-labelledby={`${id}-${source}`}
-                      onClick={() => toggle(source)}
-                      className="group relative h-5 w-9 shrink-0 rounded-full border border-border bg-muted aria-checked:bg-accent"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="absolute top-px left-px size-4 rounded-full bg-surface forced-colors:bg-[CanvasText] transition-transform group-aria-checked:translate-x-4"
-                      />
-                    </button>
+                    <SourceSwitch
+                      labelledBy={`${id}-${source}`}
+                      checked={!disabled.includes(source)}
+                      onToggle={() => toggle(source)}
+                    />
                   </li>
                 ))}
               </ul>

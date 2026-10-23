@@ -60,6 +60,7 @@ const OWNER: Record<keyof CharacterDefinition, CreationStep["slug"] | null> = {
   backstory: null,
   notes: null,
   houseRules: "identity",
+  excludedSources: null,
   overrides: null,
   departures: null,
 };

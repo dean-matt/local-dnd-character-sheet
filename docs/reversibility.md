@@ -108,6 +108,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Deleting a character | `routes/CharacterSettings/DeleteCharacterDialog.tsx` | A snapshot in `data/backups/`, by hand: `docs/reviving.md` |
 | Theme and accent | `theme.ts`, `accent.ts`, from `routes/DisplaySettings.tsx` | A direct edit |
 | The rail collapsed or open | `routes/Rail.tsx` | Toggling it |
+| A character's sources turned off | `routes/CharacterSettings/SourcesCard.tsx` | Undo, toggling back |
 | Sources turned off | `lib/disabledSources.ts`, from `routes/SourcesSettings/SourcesSettings.tsx` | A direct edit |
 
 ## Play state

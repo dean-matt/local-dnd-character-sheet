@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 import { SaveToasts } from "../../components/SaveToasts.tsx";
+import { SheetSourcesProvider } from "../../components/SheetSourcesProvider.tsx";
 import { CatalogOutOfDateBanner } from "./CatalogOutOfDateBanner.tsx";
 import { ScrollMemory } from "./ScrollMemory.tsx";
 import { TopBar } from "./TopBar/TopBar.tsx";
@@ -27,22 +28,24 @@ export function RootLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-card focus:bg-surface focus:px-3 focus:py-2 focus:text-row"
-      >
-        Skip to main content
-      </a>
-      <header className="sticky top-0 z-30 h-topbar shrink-0 print:hidden">
-        <TopBar />
-      </header>
-      <CatalogOutOfDateBanner />
-      <main id="main-content" ref={mainRef} tabIndex={-1} className="print:p-0">
-        <Outlet />
-      </main>
-      <ScrollMemory />
-      <SaveToasts />
-    </div>
+    <SheetSourcesProvider>
+      <div className="min-h-screen bg-canvas text-ink">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-card focus:bg-surface focus:px-3 focus:py-2 focus:text-row"
+        >
+          Skip to main content
+        </a>
+        <header className="sticky top-0 z-30 h-topbar shrink-0 print:hidden">
+          <TopBar />
+        </header>
+        <CatalogOutOfDateBanner />
+        <main id="main-content" ref={mainRef} tabIndex={-1} className="print:p-0">
+          <Outlet />
+        </main>
+        <ScrollMemory />
+        <SaveToasts />
+      </div>
+    </SheetSourcesProvider>
   );
 }
