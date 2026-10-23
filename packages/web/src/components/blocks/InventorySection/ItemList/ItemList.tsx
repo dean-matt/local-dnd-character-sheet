@@ -1,3 +1,4 @@
+import type { SheetItem } from "@dnd/catalog";
 import { type CharacterDerived, type CharacterRecord, houseRule } from "@dnd/character";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
@@ -15,6 +16,7 @@ import {
   type InventoryEntry,
   placeInventoryEntry,
 } from "./editInventoryEntry.ts";
+import { ItemPicks } from "./ItemPicks.tsx";
 import { GROUPS, groupOf } from "./itemGroups.ts";
 import { PlaceField } from "./PlaceField.tsx";
 import { QuantityField } from "./QuantityField.tsx";
@@ -66,6 +68,14 @@ export function ItemList({
       .filter((container) => container.entry !== index && !drawn[container.entry]?.inside)
       .map(({ entry: at, name }) => ({ index: at, name }));
   };
+  const saveEntry = async (index: number, change: EntryChange) => {
+    const entry = drawn[index];
+    if (!entry) return;
+    if (!settled()) throw new Error("wait for the last change to save, then retry");
+    await hold(() =>
+      counts.mutateAsync((latest) => editInventoryEntry(latest, index, entry, change)),
+    );
+  };
   const add = (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) =>
     write(`add:${JSON.stringify([entry.ref, entry.variant])}`, (latest) => withItem(latest, entry));
 
@@ -83,6 +93,29 @@ export function ItemList({
         current={current < 0 ? null : current}
         onChange={(holder) => place(index, holder)}
         busy={busy}
+      />
+    );
+  };
+  const picksFor = (index: number, item: Extract<SheetItem, { resolved: true }>) => {
+    const entry = drawn[index];
+    const { abilities, proficiency, language } = item.offers;
+    if (!entry || !(abilities || proficiency || language)) return null;
+    return (
+      <ItemPicks
+        item={item}
+        entry={entry}
+        edition={character.edition}
+        busy={busy}
+        onAbilities={(abilityPicks) =>
+          edit(index, (at) => ({
+            ...at,
+            abilityPicks: abilityPicks.length ? abilityPicks : undefined,
+          }))
+        }
+        onProficiency={(pick) =>
+          saveEntry(index, (at) => ({ ...at, proficiencyPick: pick || undefined }))
+        }
+        onLanguage={(languagePick) => edit(index, (at) => ({ ...at, languagePick }))}
       />
     );
   };
@@ -116,21 +149,11 @@ export function ItemList({
                     <QuantityField
                       name={item.name}
                       quantity={item.quantity}
-                      onSave={async (quantity) => {
-                        const entry = drawn[index];
-                        if (!entry) return;
-                        if (!settled()) {
-                          throw new Error("wait for the last change to save, then retry");
-                        }
-                        await hold(() =>
-                          counts.mutateAsync((latest) =>
-                            editInventoryEntry(latest, index, entry, (at) => ({ ...at, quantity })),
-                          ),
-                        );
-                      }}
+                      onSave={(quantity) => saveEntry(index, (entry) => ({ ...entry, quantity }))}
                     />
                   }
                   placement={placementField(index, item.name)}
+                  picks={picksFor(index, item)}
                   busy={busy}
                   equipRequires={equipRequires(index)}
                   onGrip={(grip) => edit(index, (entry) => ({ ...entry, grip }))}
