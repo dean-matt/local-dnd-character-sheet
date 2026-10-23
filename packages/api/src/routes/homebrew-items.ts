@@ -1,4 +1,3 @@
-/** List, read, create, update and delete for homebrew items. */
 import { randomUUID } from "node:crypto";
 import { homebrewItemInputSchema, homebrewItemRecordSchema } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";

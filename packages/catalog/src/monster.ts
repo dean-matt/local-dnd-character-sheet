@@ -196,7 +196,6 @@ function speed(speed: unknown): string | undefined {
 
 const abilityLabel = (ability: string) => ability.charAt(0).toUpperCase() + ability.slice(1);
 
-/** The six scores, each with its modifier; absent where the monster prints none. */
 function abilityTable(json: Json): Entries {
   if (!ABILITIES.some((ability) => typeof json[ability] === "number")) return [];
   const cell = (score: unknown) =>

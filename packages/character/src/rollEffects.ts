@@ -1,4 +1,3 @@
-/** Which advantage and disadvantage marks a given roll on the sheet. */
 import type { AdvantageMode } from "@dnd/rules";
 import type { RollEffectEntry } from "./characterDerived.ts";
 import type { Ability } from "./refs.ts";

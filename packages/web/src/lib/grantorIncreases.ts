@@ -28,14 +28,12 @@ export function increaseSource(
   return { grantedBy, name, alternatives: freed ? customOrigin(alternatives) : alternatives };
 }
 
-/** The increases `picks` stores for `grantedBy`. */
 export const increasesOf = (
   alternatives: readonly IncreaseAlternative[],
   picks: Picks,
   grantedBy: Grantor,
 ): Increase[] => raisesOf(alternatives, picks).map((raise) => ({ ...raise, grantedBy }));
 
-/** `increases` with `grantedBy`'s replaced by `mine`. */
 export const withIncreases = (
   increases: readonly Increase[] | undefined,
   grantedBy: Grantor,

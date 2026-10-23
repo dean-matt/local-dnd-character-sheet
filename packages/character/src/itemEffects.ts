@@ -8,7 +8,6 @@ import type { ArmorBurdenTrait, ItemBonusTrait, SpeedMode, SpeedModifier } from 
 import type { Speed } from "./characterDerived.ts";
 import type { TermReference } from "./derivedField.ts";
 
-/** The part of an item that raises the proficiency bonus. */
 export type ProficiencyItem = Pick<ItemBonusTrait, "name" | "proficiencyBonus">;
 
 /**

@@ -8,7 +8,6 @@ export interface LevelClassFieldProps {
   edition: CharacterDefinition["edition"];
   /** The character level whose class this is, counting from 1. */
   level: number;
-  /** The class the level holds in the draft. */
   value: EntryRef;
   onChange: (cls: EntryRef) => void;
 }

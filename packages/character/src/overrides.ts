@@ -17,10 +17,10 @@ type Lists = {
  * A container, an unproficient item and an armor that stops casting hold no overridable
  * field, so a name or an index stands in for a key nothing reads.
  *
- * An inventory entry carries an id only once it holds something, so a weapon is named by its item and which copy of
- * that item it is. Removing another item leaves the override on its weapon. Reordering
- * two copies of one item swaps theirs, and removing an earlier copy hands its override
- * to the next; only an id per entry fixes that.
+ * An inventory entry carries an id only once it holds something, so a weapon is named by
+ * its item and which copy of that item it is. Removing another item leaves the override on
+ * its weapon. Reordering two copies of one item swaps theirs, and removing an earlier copy
+ * hands its override to the next; only an id per entry fixes that.
  */
 const ELEMENT_KEY: {
   [K in keyof Lists]: (element: Lists[K][number], definition: CharacterDefinition) => string;

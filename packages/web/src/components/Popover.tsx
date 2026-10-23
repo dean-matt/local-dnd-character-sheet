@@ -1,7 +1,7 @@
 /**
  * The one component behind every inline explanation on the sheet: the breakdown
- * behind a derived value, and the catalog reference popover a later change
- * builds on top of it. Both need the same interaction — reachable by pointer,
+ * behind a derived value, and the catalog reference popover built on top of
+ * it. Both need the same interaction — reachable by pointer,
  * keyboard and touch, dismissible without losing the reader's place — so it
  * lives here rather than in either consumer.
  *

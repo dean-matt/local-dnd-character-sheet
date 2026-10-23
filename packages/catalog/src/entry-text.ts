@@ -1,4 +1,3 @@
-/** Helpers a catalog detail uses to read upstream fields and print them as entries. */
 import type { Entries } from "./entry.ts";
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>

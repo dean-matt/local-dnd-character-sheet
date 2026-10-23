@@ -2,7 +2,6 @@ import { refKey } from "@dnd/character";
 import { EntryPickField } from "./EntryPickField.tsx";
 import type { useClassChangeGrants } from "./useClassChangeGrants.ts";
 
-/** The skill and tool picks a new class asks for. */
 export function ClassPicksFields({
   name,
   picks,

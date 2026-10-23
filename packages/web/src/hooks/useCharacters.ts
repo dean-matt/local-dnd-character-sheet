@@ -1,5 +1,5 @@
 /**
- * The worked example the next domain's hook copies: a list, a read and a write against
+ * The worked example a new domain's hook copies: a list, a read and a write against
  * `/characters`, each in its own file and parsed with the schema `@dnd/character` already
  * exports.
  */

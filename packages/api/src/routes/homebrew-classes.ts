@@ -1,4 +1,3 @@
-/** List, read, create, update and delete for homebrew classes. */
 import { randomUUID } from "node:crypto";
 import { homebrewClassInputSchema, homebrewClassRecordSchema } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";

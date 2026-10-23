@@ -3,7 +3,6 @@ import { useGrantedSpells } from "../../hooks/useGrantedSpells.ts";
 import type { Offer } from "./spellPicks.ts";
 import { useSpellGrantors } from "./useSpellGrantors.ts";
 
-/** A spell given outright, and the name of the row that gives it. */
 export type GrantedSpell = { ref: ContentRef; by: string };
 
 /**

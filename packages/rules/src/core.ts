@@ -60,7 +60,6 @@ const EXPERIENCE_THRESHOLDS = [
   195000, 225000, 265000, 305000, 355000,
 ];
 
-/** The experience points a character needs to reach a total level. */
 export function experienceThreshold(totalLevel: number): number {
   const threshold = EXPERIENCE_THRESHOLDS[totalLevel - 1];
   if (threshold === undefined) {

@@ -9,7 +9,6 @@ export interface EquipmentSlotFieldProps {
   types: string[];
   /** Which copy this slot fills where the option asks for more than one, such as two martial weapons. */
   copy?: { at: number; of: number };
-  /** The picked item's name, or `undefined` while the slot is empty. */
   picked: string | undefined;
   onPick: (ref: EntryRef, hit: SearchHit) => void;
   onClear: () => void;

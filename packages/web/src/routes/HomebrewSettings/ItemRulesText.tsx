@@ -1,7 +1,6 @@
 import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
 import { entriesOf, type HomebrewFormProps, paragraphsOf, withField } from "./homebrewEntry.ts";
 
-/** A homebrew item's rules text. */
 export function ItemRulesText({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
 

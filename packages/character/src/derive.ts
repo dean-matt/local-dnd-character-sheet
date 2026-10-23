@@ -399,7 +399,6 @@ function weaponMastery(definition: CharacterDefinition, weapon: WeaponTrait): Co
   return chosen ? [...(weapon.mastery ?? [])] : [];
 }
 
-/** One term per class whose Weapon Mastery allows kinds at the character's level in it. */
 function weaponMasteryLimit(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
@@ -704,7 +703,6 @@ function derivedItemGrants(
   return computed(grants);
 }
 
-/** The equipped armor, attuned where it must be, that states a Stealth penalty or a Strength requirement. */
 function wornBurdens(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
@@ -869,7 +867,7 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
  * The whole derived block for one character: every value `characterDerivedSchema`
  * holds, assembled from the definition and the catalog facts the caller resolved for
  * it, with the definition's `overrides` folded into each `manual`. Every number reads the
- * proficiencies with what feats grant added.
+ * proficiencies together with what feats grant.
  */
 export function deriveCharacter(
   stored: CharacterDefinition,

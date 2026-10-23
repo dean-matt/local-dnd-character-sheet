@@ -12,7 +12,6 @@ export const SHEET_SECTIONS = [
   "notes",
 ] as const;
 
-/** The whole sheet section a `section` block renders. */
 const sectionBlockSchema = z.strictObject({
   kind: z.literal("section"),
   section: z.enum(SHEET_SECTIONS),
@@ -64,7 +63,6 @@ const LIST_FACET_SOURCE = {
   equipped: "inventory",
 } as const satisfies Partial<Record<keyof ListFilter, ListBlockSource>>;
 
-/** Whether a list of `source` has `facet` to narrow by. */
 export function facetApplies(facet: string, source: ListBlockSource): boolean {
   const only = LIST_FACET_SOURCE[facet as keyof typeof LIST_FACET_SOURCE];
   return only === undefined || only === source;

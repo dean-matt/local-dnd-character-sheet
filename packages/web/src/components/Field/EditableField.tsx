@@ -6,8 +6,10 @@ import { raiseSaveToast } from "../../lib/saveToasts.ts";
 import { FormField } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
 
-/** `invalid` is text the parse or schema refused, which a retry would refuse again;
- * `failed` is a write that did not land, which a retry can. */
+/**
+ * `invalid` is text the parse or schema refused, which a retry would refuse again;
+ * `failed` is a write that did not land, which a retry can.
+ */
 type SaveStatus = "idle" | "invalid" | "failed";
 
 /**
@@ -28,8 +30,10 @@ export type EditableFieldProps<T> = {
   inputClassName?: string;
   inputMode?: ComponentProps<"input">["inputMode"];
   placeholder?: string;
-  /** A text area rather than a one-line input, for prose whose line breaks the value keeps.
-   * On paper it grows to its text, which a fixed box would cut off. */
+  /**
+   * A text area rather than a one-line input, for prose whose line breaks the value keeps.
+   * On paper it grows to its text, which a fixed box would cut off.
+   */
   multiline?: boolean;
 } & (
   | { value: Derived<T>; onSave: (next: T | null) => Promise<void> }

@@ -120,7 +120,6 @@ export function classListClause(list: ClassList): {
   };
 }
 
-/** The table `spell_grants` names each kind of grantor by. */
 const GRANTOR_TABLES: Record<SpellGrantor, string> = {
   class: "classes",
   subclass: "subclasses",

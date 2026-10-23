@@ -33,7 +33,6 @@ interface Change {
 }
 
 export interface ItemSpeedFieldsProps {
-  /** The entry's `modifySpeed`. */
   speed: unknown;
   onChange: (next: Record<string, unknown> | undefined) => void;
   error?: ReactNode;

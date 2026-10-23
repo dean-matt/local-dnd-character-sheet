@@ -30,7 +30,6 @@ const FIELDS: readonly FeatPickField[] = [
   "resist",
 ];
 
-/** One pick an offer took: the field it lands in, and the name. */
 export type FeatPick = { field: FeatPickField; name: string };
 
 /**

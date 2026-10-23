@@ -104,7 +104,6 @@ const goldAlternativeSchema = z
     return match?.[1] ? { dice: match[1], multiplier: Number(match[2] ?? 1) } : undefined;
   });
 
-/** What a class row hands a character who starts in it. */
 export const classStartingEquipmentSchema = z
   .looseObject({
     startingEquipment: z

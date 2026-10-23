@@ -24,8 +24,10 @@ interface ReadFieldProps<T> {
   label: string;
   value: Derived<T>;
   format: (value: T) => string;
-  /** Keeps `label` for a screen reader while dropping it from the layout — a list row
-   * whose surrounding context already says what the value is. */
+  /**
+   * Keeps `label` for a screen reader while dropping it from the layout — a list row
+   * whose surrounding context already says what the value is.
+   */
   labelHidden?: boolean;
 }
 

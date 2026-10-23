@@ -111,7 +111,6 @@ export type SearchFilter = {
 
 const placeholders = (values: readonly unknown[]) => values.map(() => "?").join(", ");
 
-/** SQL conditions and the parameters they bind, joined into one `WHERE`. */
 class Conditions {
   readonly params: unknown[] = [];
   private readonly clauses: string[] = [];
@@ -177,7 +176,6 @@ function narrowKind(conditions: Conditions, type: string, filter: SearchFilter) 
   }
 }
 
-/** An optional feature row's `prerequisite` json as the hit carries it. */
 const optionFacts = (prerequisite: string | null | undefined) => ({
   prerequisites: optionalFeaturePrerequisitesSchema.parse(
     prerequisite ? JSON.parse(prerequisite) : undefined,
@@ -359,7 +357,6 @@ export function listSearchTypes(dataDir: string): string[] {
   }
 }
 
-/** Each source cited by a row `searchCatalog` reads, listed once. */
 export function listSearchSources(dataDir: string): string[] {
   const cited = [
     ...CATALOG_SEARCH_TABLES.map(

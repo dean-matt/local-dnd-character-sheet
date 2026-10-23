@@ -42,7 +42,6 @@ function admittingClauses(baseFields: Entry, variantFields: Entry): Entry[] {
   return requires.filter((req): req is Entry => isRecord(req) && isMatch(baseFields, req, "every"));
 }
 
-/** Whether `baseFields` is one this variant's `requires`/`excludes` allows expanding. */
 export function baseItemMatchesVariant(baseFields: Entry, variantFields: Entry): boolean {
   return admittingClauses(baseFields, variantFields).length > 0;
 }
@@ -260,7 +259,6 @@ function neutralValue(field: string): string {
   return inWords(field);
 }
 
-/** `bulletSling` as "bullet sling". */
 function inWords(camelCase: string): string {
   return camelCase.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
 }

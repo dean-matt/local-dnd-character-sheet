@@ -10,14 +10,12 @@ import type { ClassFeatures } from "./classFeatures.ts";
 
 type Level = CharacterDefinition["levels"][number];
 
-/** One character level as the level history lists it. */
 export type LevelHistoryRow = {
   /** The character level, a position in `levels`. */
   level: number;
   cls: EntryRef;
   /** The class's own level this character level reached. */
   classLevel: number;
-  /** The subclass chosen at this level, if any. */
   subclass?: ContentRef;
   features: readonly HistoryFeature[];
 };

@@ -13,7 +13,6 @@ function itemLabel(item: OfferedItem): string {
   return item.quantity > 1 ? `${item.quantity} × ${name}` : name;
 }
 
-/** Everything an option hands over, as one line. */
 export const optionLabel = (option: OfferedOption): string =>
   option.items.map(itemLabel).join(", ") || "nothing";
 

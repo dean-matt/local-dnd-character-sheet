@@ -29,8 +29,9 @@ export type ArmorTrait = {
 
 /**
  * What one weapon row attacks with: the fields `weaponAttack` reads, and the category and
- * name a weapon proficiency and a weapon mastery match. `bonus` is a magic weapon's, each roll's summed from
- * every field upstream states it in; `reference` is the row that granted it.
+ * name a weapon proficiency and a weapon mastery match. `bonus` is a magic weapon's, each
+ * roll's bonus summed from every field upstream states it in; `reference` is the row that
+ * granted it.
  */
 export type WeaponTrait = Weapon & {
   name: string;
@@ -57,7 +58,6 @@ export type DefenseTrait = {
 /** A race's grant, and the damage types a `choose` offers, from which the definition picks one. */
 type RaceDefenseTrait = DefenseTrait & { resistChoice: readonly string[] };
 
-/** A sense a race, feat or item grants, and the range in feet. */
 export type SenseGrant = { name: Sense; range: number };
 
 /** A definition field a feat's pick lands in, as `feats[].picks` keys it. */
@@ -123,7 +123,6 @@ export type ItemSkillTrait = {
 /** An item's effect on scores, and whether it waits on attunement. */
 export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
 
-/** A movement mode, as `Speed` names it. */
 export type SpeedMode = keyof Speed;
 
 /**

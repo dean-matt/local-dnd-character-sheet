@@ -179,7 +179,6 @@ export function encumberedSpeed(
   };
 }
 
-/** A character's speeds under the encumbrance variant. */
 export type EncumberedSpeed = {
   speed: Speed;
   /**
