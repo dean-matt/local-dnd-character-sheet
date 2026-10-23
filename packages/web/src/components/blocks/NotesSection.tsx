@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useHeldSave } from "../../hooks/useHeldSave.ts";
 import { useUpdateCharacterDefinition } from "../../hooks/useUpdateCharacterDefinition.ts";
+import { withDeparture } from "../../lib/departures.ts";
 import { Card } from "../Card.tsx";
 import { EmptyNote } from "../EmptyNote.tsx";
 import { Field } from "../Field/Field.tsx";
@@ -186,14 +187,30 @@ export function NotesSection({ character }: { character: CharacterRecord | undef
       {departures.length > 0 && (
         <Card title="Off the rules">
           <ul className="flex flex-col gap-1 text-body">
-            {departures.map(({ field, note }) => (
-              <li key={`${field}|${note}`}>
-                <span className="font-semibold">
-                  {SECTION_LABEL[field.split(".")[0] as keyof CharacterDefinition] ?? field}
-                </span>{" "}
-                — {note}
-              </li>
-            ))}
+            {departures.map(({ field, note }) => {
+              const label =
+                SECTION_LABEL[field.split(".")[0] as keyof CharacterDefinition] ?? field;
+              return (
+                <li key={`${field}|${note}`} className="flex items-center gap-1.5">
+                  <span>
+                    <span className="font-semibold">{label}</span> — {note}
+                  </span>
+                  <span className="flex print:hidden">
+                    <RemoveButton
+                      name={`off the rules note ${label} — ${note}`}
+                      busy={false}
+                      onRemove={() => {
+                        setFocus("[data-add-section]");
+                        write(`departure|${field}`, (latest) => ({
+                          ...latest,
+                          departures: withDeparture(latest.departures, field),
+                        }));
+                      }}
+                    />
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </Card>
       )}

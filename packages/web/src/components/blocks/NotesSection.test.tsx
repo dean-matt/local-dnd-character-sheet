@@ -13,9 +13,10 @@ type Notes = CharacterDefinition["notes"];
  * Renders the section over a stand-in API that keeps what each write sends, so a write
  * lands on the sheet as it would, and returns every definition written.
  */
-function renderLive(notes: Notes) {
+function renderLive(notes: Notes, departures: CharacterDefinition["departures"] = []) {
   let stored: CharacterRecord = characterRecord("1", "Vex");
   stored.definition.notes = notes;
+  stored.definition.departures = departures;
   const writes: CharacterDefinition[] = [];
   vi.stubGlobal(
     "fetch",
@@ -164,5 +165,20 @@ describe("NotesSection", () => {
 
     renderStatic(record);
     expect(screen.queryByRole("region", { name: "Off the rules" })).not.toBeInTheDocument();
+  });
+
+  it("removes an Off the rules note as one write, leaving the others", async () => {
+    const keep = { field: "race", note: "Not in the catalog" };
+    const drop = { field: "abilityScores.str", note: "20 at level 1" };
+    const sibling = { field: "abilityScores.dex", note: "19 at level 1" };
+    const writes = renderLive([], [keep, drop, sibling]);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Remove off the rules note Ability scores — 20 at level 1",
+      }),
+    );
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.departures).toEqual([keep, sibling]);
   });
 });

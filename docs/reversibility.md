@@ -74,7 +74,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Feats and optional features | `components/blocks/FeaturesSection/FeatPicks.tsx`, `OptionalFeaturePicks.tsx` | Undo, a direct edit |
 | A feature's choice | `components/blocks/FeaturesSection/FeatureChoiceField.tsx` | Undo, a direct edit |
 | Appearance, backstory, notes | `IdentitySection/IdentitySection.tsx`, `components/blocks/BackstorySection.tsx`, `components/blocks/NotesSection.tsx` | Undo, a direct edit |
-| An "Off the rules" note | `lib/departures.ts`, beside the pick that departs | Undo of the write that added it; removing one: #986 |
+| An "Off the rules" note | `lib/departures.ts`, beside the pick that departs | Undo, or the remove button beside the note in the Off the rules card |
 | A row added from search | `hooks/useAddToCharacter.ts` | Undo, removing it from its list |
 | A page's layout and blocks | `routes/CharacterLayout/ManagePages/ManagePages.tsx`, `routes/CharacterPage/PageEditor.tsx` | Page undo, a direct edit |
 | Restoring the default pages | `hooks/useRestoreDefaultPages.ts` | Page undo |
