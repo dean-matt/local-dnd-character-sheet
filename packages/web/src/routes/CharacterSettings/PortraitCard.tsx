@@ -48,11 +48,13 @@ export function PortraitCard({
           </button>
         )}
       </div>
-      <p className="mt-2 text-muted text-row">
-        {hasPortrait
-          ? "Restore previous portrait brings back the image the last upload or removal replaced, until the next one."
-          : "Upload one from the camera badge beside the character's name."}
-      </p>
+      {(character.hasPreviousPortrait || !hasPortrait) && (
+        <p className="mt-2 text-muted text-row">
+          {character.hasPreviousPortrait
+            ? "Restore previous portrait brings back the image the last upload or removal replaced, until the next one."
+            : "Upload one from the camera badge beside the character's name."}
+        </p>
+      )}
       {remove.isError && (
         <p role="alert" className="mt-2 text-error text-row">
           Remove failed: {remove.error.message}

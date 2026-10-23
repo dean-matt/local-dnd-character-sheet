@@ -149,6 +149,12 @@ describe("CharacterSettings", () => {
   it("offers Restore only where a displaced portrait exists", () => {
     renderSettings("Vex", "2026-10-19T12:00:00.000Z");
     expect(screen.queryByRole("button", { name: "Restore previous portrait" })).toBeNull();
+    expect(screen.queryByText(/Restore previous portrait brings back/)).toBeNull();
+  });
+
+  it("says how to restore once a portrait is removed", () => {
+    renderSettings("Vex", null, true);
+    expect(screen.getByText(/Restore previous portrait brings back/)).toBeInTheDocument();
   });
 
   it("restores a removed portrait", async () => {
