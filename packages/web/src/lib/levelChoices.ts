@@ -116,6 +116,53 @@ const startingClassBuiltOn: Refusal = (before, after, level) => {
   ];
 };
 
+/** What the level at `index` holds that rests on its class level, which the class change shifts. */
+function restingOnClassLevel(definition: CharacterDefinition, index: number) {
+  const { class: cls, subclass } = definition.levels[index] ?? {};
+  if (!cls) return [];
+  const level = index + 1;
+  const classLevel = definition.levels
+    .slice(0, level)
+    .filter((each) => entryKey(each.class) === entryKey(cls)).length;
+  return [
+    subclass && "a subclass",
+    (definition.feats.some((feat) => feat.level === level) ||
+      definition.abilityIncreases.some((increase) => increase.level === level)) &&
+      "an improvement",
+    "name" in cls &&
+      definition.featureChoices.some(
+        ({ feature }) =>
+          feature.className === cls.name &&
+          feature.classSource === cls.source &&
+          feature.level === classLevel,
+      ) &&
+      "a feature choice",
+    definition.spells.some((spell) => spell.pickedAt === level) && "a spell pick",
+    definition.optionalFeatures.some((pick) => pick.level === level) && "an option pick",
+  ].filter((each) => typeof each === "string");
+}
+
+/**
+ * A later level in the old class or the new one that holds a subclass, improvement, feature
+ * choice, spell pick or option pick: each rests on the class level the level takes, which the
+ * change shifts by one. A later level holding none has nothing to leave behind.
+ */
+const classLevelBuiltOn: Refusal = (before, after, level) => {
+  const was = before.levels[level - 1]?.class;
+  const now = after.levels[level - 1]?.class;
+  if (level === 1 || !was || !now || entryKey(was) === entryKey(now)) return [];
+  const shared = new Set([entryKey(was), entryKey(now)]);
+  return before.levels.flatMap((each, index) => {
+    const rests =
+      index >= level && shared.has(entryKey(each.class)) ? restingOnClassLevel(before, index) : [];
+    return rests.length === 0
+      ? []
+      : [
+          `Level ${index + 1} takes ${displayName(each.class)} and holds ${listed(rests)}; remove it to change level ${level}'s class.`,
+        ];
+  });
+};
+
 const preparedDropped: Refusal = (before, after) => {
   const kept = new Set(after.spells.map((spell) => entryKey(spell.ref)));
   return before.spells
@@ -186,7 +233,8 @@ const featShort =
 /**
  * Why `after`, `before` with `level`'s choices made again, cannot be written, one line per
  * dependency, naming it: a later level in the class building on a subclass the level
- * changes, a later level in the class level 1 gives up or in the one it takes up, a prepared
+ * changes, a later level in the class level 1 gives up or in the one it takes up, a later
+ * level in the old or new class of a level past the first, whose picks rest on its class level, a prepared
  * spell the level no longer picks, a pick made for a feat or option it no longer takes, an
  * option whose prerequisite the level's picks met, and a feat from
  * another level whose ability prerequisite the level's increases met. A prerequisite met
@@ -201,6 +249,7 @@ export const levelChoiceRefusals = (
   [
     subclassBuiltOn,
     startingClassBuiltOn,
+    classLevelBuiltOn,
     preparedDropped,
     grantorDropped,
     optionShort(rows),

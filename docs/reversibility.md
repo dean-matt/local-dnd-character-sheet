@@ -60,6 +60,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 |---|---|---|
 | Taking a level | `components/blocks/LevelSection/LevelUpDialog.tsx` | Removing it, with every level after it, from its Edit dialog in Level History (`LevelSection/LevelRemoval.tsx`), or Undo, one level-up per press |
 | A past level's hit point gain and choices | `components/blocks/LevelSection/LevelEditDialog.tsx`, the level's Edit dialog | Undo, editing it again |
+| A past level's class, past the first | The same dialog. The gain starts over on the new class's die; a class the character did not hold lands its multiclass gains and asks its picks, and a class left at its only level takes them back | Undo, changing it again |
 | An improvement or Epic Boon | `components/blocks/LevelSection/Improvements.tsx` | Undo, a direct edit |
 | Experience and leveling mode | `LevelSection/ExperienceTracker.tsx`, `LevelSection/LevelingField.tsx` | Undo, a direct edit |
 

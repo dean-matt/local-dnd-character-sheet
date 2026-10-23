@@ -1,14 +1,14 @@
 import { refKey } from "@dnd/character";
 import { EntryPickField } from "./EntryPickField.tsx";
-import type { useStartingClassGrants } from "./useStartingClassGrants.ts";
+import type { useClassChangeGrants } from "./useClassChangeGrants.ts";
 
-/** The skill and tool picks a new starting class asks for. */
-export function StartingPicksFields({
+/** The skill and tool picks a new class asks for. */
+export function ClassPicksFields({
   name,
   picks,
 }: {
   name: string;
-  picks: NonNullable<ReturnType<typeof useStartingClassGrants>["picks"]>;
+  picks: NonNullable<ReturnType<typeof useClassChangeGrants>["picks"]>;
 }) {
   const { skillPick, toolPicks, pickedSkills, pickedTools } = picks;
   return (
