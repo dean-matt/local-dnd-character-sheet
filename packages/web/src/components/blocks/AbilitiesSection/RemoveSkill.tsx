@@ -1,22 +1,28 @@
+import type { CharacterDefinition } from "@dnd/character";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 
 /**
- * Removes a custom skill and its overrides in one write, so a new skill taking its name
- * starts computed. It mounts with the skill's detail modal, so a failure shown there
- * clears when the modal closes. `onRemoved` runs once the write lands; the row, and the
- * modal with it, unmount as the saved character drops the skill.
+ * Removes a skill and its overrides in one write, so a new skill taking its name starts
+ * computed. `without` drops the skill from the lists that hold it; `overridePrefix` is the
+ * key every override of it starts with. It mounts with the skill's detail modal, so a
+ * failure shown there clears when the modal closes. `onRemoved`, where given, runs once
+ * the write lands; the row, and the modal with it, unmount as the saved character drops
+ * the skill.
  */
-export function RemoveCustomSkill({
+export function RemoveSkill({
   characterId,
   name,
+  overridePrefix,
+  without,
   onRemoved,
 }: {
   characterId: string;
   name: string;
-  onRemoved: () => void;
+  overridePrefix: string;
+  without: (definition: CharacterDefinition) => CharacterDefinition;
+  onRemoved?: () => void;
 }) {
   const update = useUpdateCharacterDefinition(characterId);
-  const prefix = `customSkills.${name}.`;
 
   // The modal shows a failure from the mutation's state; the empty handler only keeps the
   // rejection from going unhandled.
@@ -24,10 +30,9 @@ export function RemoveCustomSkill({
     if (update.isPending) return;
     update
       .mutateAsync((latest) => ({
-        ...latest,
-        customSkills: latest.customSkills.filter((each) => each.name !== name),
+        ...without(latest),
         overrides: Object.fromEntries(
-          Object.entries(latest.overrides).filter(([key]) => !key.startsWith(prefix)),
+          Object.entries(latest.overrides).filter(([key]) => !key.startsWith(overridePrefix)),
         ),
       }))
       .then(onRemoved, () => {});

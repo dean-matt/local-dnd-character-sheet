@@ -19,6 +19,7 @@ import {
   containerTraitSchema,
   defenseTraitSchema,
   featGrantsSchema,
+  HOMEBREW_SOURCE,
   itemAdvantageSchema,
   itemAdvantagesOf,
   itemBonusSchema,
@@ -65,7 +66,13 @@ import {
   getWeaponMasteryCount,
 } from "./classes.ts";
 import { getFeat } from "./feats.ts";
-import { getHomebrewClass, getHomebrewFeat, getHomebrewRace, type HomebrewDb } from "./homebrew.ts";
+import {
+  getHomebrewClass,
+  getHomebrewFeat,
+  getHomebrewRace,
+  type HomebrewDb,
+  listHomebrewSkills,
+} from "./homebrew.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
 import { getBaseItemMasteries } from "./items.ts";
 import { getRace, getSubrace } from "./races.ts";
@@ -352,6 +359,24 @@ function itemSenses(
   return senses;
 }
 
+/**
+ * The homebrew skills of the character's edition that its proficiencies cite, so a skill
+ * joins the sheet's list only on the characters that added it.
+ */
+function homebrewSkills(homebrewDb: HomebrewDb, definition: CharacterDefinition): SkillTrait[] {
+  const cited = new Set(
+    definition.proficiencies.skills
+      .filter(({ ref }) => ref.source === HOMEBREW_SOURCE)
+      .map(({ ref }) => ref.name.toLowerCase()),
+  );
+  return listHomebrewSkills(homebrewDb)
+    .filter((row) => row.edition === definition.edition && cited.has(row.name.toLowerCase()))
+    .map((row) => ({
+      ref: { name: row.name, source: HOMEBREW_SOURCE },
+      ability: row.json.ability,
+    }));
+}
+
 /** Every entry whose row grants a skill proficiency or expertise, keyed by `itemKey`. */
 function itemSkills(
   definition: CharacterDefinition,
@@ -540,11 +565,14 @@ export function resolveCharacterCatalog(
       `Race ${describe(definition.subrace ?? definition.race)} states no size or speed`,
     );
 
-  const skills: SkillTrait[] = listSkills(dataDir, definition.edition).flatMap((row) =>
-    isAbility(row.ability)
-      ? [{ ref: { name: row.name, source: row.source }, ability: row.ability }]
-      : [],
-  );
+  const skills: SkillTrait[] = [
+    ...listSkills(dataDir, definition.edition).flatMap((row) =>
+      isAbility(row.ability)
+        ? [{ ref: { name: row.name, source: row.source }, ability: row.ability }]
+        : [],
+    ),
+    ...homebrewSkills(homebrewDb, definition),
+  ];
 
   const items = resolveItemRows(dataDir, homebrewDb, definition.inventory);
   return {

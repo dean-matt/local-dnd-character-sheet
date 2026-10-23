@@ -14,6 +14,7 @@ import {
   insertHomebrewClass,
   insertHomebrewItem,
   insertHomebrewRace,
+  insertHomebrewSkill,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { derivedRoutes } from "./derived.ts";
@@ -871,6 +872,42 @@ describe("derivedRoutes", () => {
       { source: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
       { source: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
     ]);
+  });
+
+  it("lists a homebrew skill only on a character that cites it, and marks an item's advantage on its row", async () => {
+    insertHomebrewSkill(opened.homebrewDb, "sailing", {
+      name: "Sailing",
+      edition: "classic",
+      ability: "wis",
+    });
+    insertHomebrewItem(opened.homebrewDb, "compass", {
+      name: "Compass",
+      edition: "classic",
+      advantage: [{ mode: "advantage", roll: "skill", target: "Sailing" }],
+    });
+    store(definitionWith());
+    expect((await derived()).skills.map((entry) => entry.ref.name)).not.toContain("Sailing");
+
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        proficiencies: {
+          ...definitionWith().proficiencies,
+          skills: [{ ref: { name: "Sailing", source: "HB" }, level: "proficient" }],
+        },
+        inventory: [{ ref: { homebrewId: "compass" }, equipped: true }],
+      }),
+    );
+    const block = await derived();
+    const row = block.skills.find((entry) => entry.ref.name === "Sailing");
+    expect(row).toMatchObject({ ref: { name: "Sailing", source: "HB" }, ability: "wis" });
+    expect(block.rollEffects.computed).toContainEqual({
+      source: "Compass",
+      mode: "advantage",
+      roll: "skill",
+      target: "Sailing",
+    });
   });
 
   it("lists the senses of the race, a feat and a homebrew item, the longest range standing", async () => {

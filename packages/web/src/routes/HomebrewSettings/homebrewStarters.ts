@@ -173,3 +173,14 @@ export const FEAT_STARTERS: HomebrewStarters = [
     },
   },
 ];
+
+export const SKILL_STARTERS: HomebrewStarters = [
+  {
+    label: "Skill",
+    entry: {
+      name: "Sailing",
+      ability: "wis",
+      entries: ["Reading wind, tide and sail to bring a ship where you mean it to go."],
+    },
+  },
+];

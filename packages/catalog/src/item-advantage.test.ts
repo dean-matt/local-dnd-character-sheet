@@ -12,6 +12,12 @@ describe("itemAdvantageSchema", () => {
     ).toEqual({ mode: "advantage", roll: "save", condition: "against spells" });
   });
 
+  it("takes any skill's name, so an item can name a homebrew skill", () => {
+    expect(
+      itemAdvantageSchema.parse({ mode: "advantage", roll: "skill", target: "Sailing" }),
+    ).toEqual({ mode: "advantage", roll: "skill", target: "Sailing" });
+  });
+
   it("requires a skill to name its skill, and an attack to name nothing", () => {
     expect(itemAdvantageSchema.safeParse({ mode: "advantage", roll: "skill" }).success).toBe(false);
     expect(

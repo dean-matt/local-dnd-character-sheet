@@ -1,10 +1,10 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
- * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races` and
- * `homebrew_classes` tables. `source` never arrives as an argument — every write stamps
- * `HOMEBREW_SOURCE` into `json` here, the one place that builds it, and `id` is chosen by
- * the caller once at creation and never reassigned, so a rename keeps the id a character
- * already references.
+ * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
+ * `homebrew_classes` and `homebrew_skills` tables. `source` never arrives as an argument —
+ * every write stamps `HOMEBREW_SOURCE` into `json` here, the one place that builds it, and
+ * `id` is chosen by the caller once at creation and never reassigned, so a rename keeps the
+ * id a character already references.
  */
 import type {
   HomebrewBackgroundInput,
@@ -13,6 +13,7 @@ import type {
   HomebrewItem,
   HomebrewItemInput,
   HomebrewRaceInput,
+  HomebrewSkillInput,
   HomebrewSpellInput,
 } from "@dnd/catalog";
 import {
@@ -23,6 +24,7 @@ import {
   itemKinds,
   ofWantedKind,
   raceEntrySchema,
+  skillEntrySchema,
   spellEntrySchema,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
@@ -36,6 +38,7 @@ import {
   homebrewFeats,
   homebrewItems,
   homebrewRaces,
+  homebrewSkills,
   homebrewSpells,
 } from "../homebrew.ts";
 import type { SearchFilter } from "./catalog-search.ts";
@@ -80,7 +83,8 @@ export type NamedHomebrewTable =
   | typeof homebrewBackgrounds
   | typeof homebrewFeats
   | typeof homebrewRaces
-  | typeof homebrewClasses;
+  | typeof homebrewClasses
+  | typeof homebrewSkills;
 
 /** Classic before the 2024 edition, stated rather than left to how the two values sort. */
 const classicFirst = (table: NamedHomebrewTable) =>
@@ -379,4 +383,58 @@ export function updateHomebrewClass(db: HomebrewDb, id: string, input: HomebrewC
 
 export function deleteHomebrewClass(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewClasses).where(eq(homebrewClasses.id, id)).run().changes > 0;
+}
+
+export function listHomebrewSkills(db: HomebrewDb) {
+  return db.select().from(homebrewSkills).all();
+}
+
+export function getHomebrewSkill(db: HomebrewDb, id: string) {
+  return db.select().from(homebrewSkills).where(eq(homebrewSkills.id, id)).get();
+}
+
+function skillJson(input: HomebrewSkillInput) {
+  const { edition: _edition, ...entry } = input;
+  return skillEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+}
+
+export function insertHomebrewSkill(db: HomebrewDb, id: string, input: HomebrewSkillInput) {
+  const json = skillJson(input);
+  return db
+    .insert(homebrewSkills)
+    .values({ id, edition: input.edition, name: json.name, json })
+    .returning()
+    .get();
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewSkill` reads a miss. */
+export function updateHomebrewSkill(db: HomebrewDb, id: string, input: HomebrewSkillInput) {
+  const json = skillJson(input);
+  return db
+    .update(homebrewSkills)
+    .set({ edition: input.edition, name: json.name, json })
+    .where(eq(homebrewSkills.id, id))
+    .returning()
+    .get();
+}
+
+export function deleteHomebrewSkill(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewSkills).where(eq(homebrewSkills.id, id)).run().changes > 0;
+}
+
+/** The homebrew items of the skill's edition whose advantage effects name it, ignoring case. */
+export function itemsAdvantagedOnSkill(
+  db: HomebrewDb,
+  skill: { name: string; edition: Edition },
+): { id: string; name: string }[] {
+  const wanted = skill.name.toLowerCase();
+  return listHomebrewItems(db)
+    .filter(
+      ({ edition, json }) =>
+        edition === skill.edition &&
+        json.advantage?.some(
+          ({ roll, target }) => roll === "skill" && target?.toLowerCase() === wanted,
+        ),
+    )
+    .map(({ id, name }) => ({ id, name }));
 }

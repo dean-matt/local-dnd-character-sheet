@@ -5,6 +5,8 @@
  * upstream's redirect map sends to a row of the same table carries that row as
  * `renamedTo`; nothing is written back.
  */
+
+import { HOMEBREW_SOURCE } from "@dnd/catalog";
 import {
   type CatalogKind,
   type CatalogReference,
@@ -51,7 +53,10 @@ export function checkCharacterReferences(
   definition: CharacterDefinition,
   state: CharacterState,
 ): CharacterReferences {
-  const references = catalogReferences(definition, state);
+  // A homebrew skill is cited by `(name, source)` yet lives in homebrew.db, not content.db.
+  const references = catalogReferences(definition, state).filter(
+    ({ kind, ref }) => !(kind === "skill" && ref.source === HOMEBREW_SOURCE),
+  );
   if (references.length === 0) return { unresolved: [] };
   const db = openContentDb(dataDir);
   try {

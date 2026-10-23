@@ -12,6 +12,8 @@ import {
   homebrewItemRecordSchema,
   homebrewRaceInputSchema,
   homebrewRaceRecordSchema,
+  homebrewSkillInputSchema,
+  homebrewSkillRecordSchema,
   homebrewSpellInputSchema,
   homebrewSpellRecordSchema,
   itemEntries,
@@ -27,7 +29,13 @@ import { schoolName } from "../../lib/spellSchool.ts";
 import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { type Fact, itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
-import { backgroundFacts, classFacts, featFacts, raceFacts } from "./homebrewOptionFacts.ts";
+import {
+  backgroundFacts,
+  classFacts,
+  featFacts,
+  raceFacts,
+  skillFacts,
+} from "./homebrewOptionFacts.ts";
 import {
   BACKGROUND_STARTERS,
   CLASS_STARTERS,
@@ -35,6 +43,7 @@ import {
   type HomebrewStarters,
   ITEM_STARTERS,
   RACE_STARTERS,
+  SKILL_STARTERS,
   SPELL_STARTERS,
 } from "./homebrewStarters.ts";
 import { isVersatile, itemGroup } from "./homebrewVocabulary.ts";
@@ -47,6 +56,7 @@ import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
 import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
 import type { JsonEditorProps } from "./JsonEditor.tsx";
+import { SkillBasics } from "./SkillBasics.tsx";
 import { SpellBasics } from "./SpellBasics.tsx";
 import { SpellCasting } from "./SpellCasting.tsx";
 import { SpellEffect } from "./SpellEffect.tsx";
@@ -291,8 +301,28 @@ const feat = pasted(
   featFacts,
 );
 
+const skill: HomebrewKind<
+  z.infer<typeof homebrewSkillRecordSchema>,
+  z.infer<typeof homebrewSkillInputSchema>
+> = {
+  collection: "skills",
+  noun: "skill",
+  heading: "Skills",
+  recordSchema: homebrewSkillRecordSchema,
+  inputSchema: homebrewSkillInputSchema,
+  chips: (record) => skillFacts(record.json).map(([, value]) => value),
+  facts: skillFacts,
+  entries: rowEntries,
+  starters: SKILL_STARTERS,
+  sections: [
+    { title: "Basics", Fields: SkillBasics, keys: ["name", "ability"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+  ],
+  shownKeys: () => ["name", "ability", "entries"],
+};
+
 /** The kinds in the order the page lists them. */
-export const HOMEBREW_KINDS: HomebrewKind[] = [item, spell, race, klass, background, feat];
+export const HOMEBREW_KINDS: HomebrewKind[] = [item, spell, race, klass, background, feat, skill];
 
 /** How many sections a step sets side by side, which the wide modal holds two of. */
 const PER_STEP = 2;

@@ -1,3 +1,4 @@
+import { HOMEBREW_SOURCE } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
@@ -12,6 +13,7 @@ import {
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
+import { RemoveSkill } from "./RemoveSkill.tsx";
 
 /**
  * The edition's skills, alphabetically, each ring stepping its skill's proficiency and
@@ -20,6 +22,8 @@ import { nextLevel } from "./proficiencyMark.ts";
  * higher of the stored level and what feats and worn items grant, and steps on from what it
  * shows, so a granted skill never reads lower than its grant makes it. Expertise stepped up
  * from a granted proficiency is stored `onGrant`, and stops counting if the grant goes.
+ * A homebrew skill is listed only while the character holds it, so stepping it to none keeps
+ * it; its row removes it instead.
  */
 export function CatalogSkills({
   character,
@@ -34,7 +38,9 @@ export function CatalogSkills({
     character.definition.proficiencies.skills.find((skill) => refKey(skill.ref) === key);
   const shown = (key: string) => heldSkillLevel(stored(key), granted.get(key));
   const rollEffects = derivedValue(derived.rollEffects);
-  const skills = [...derived.skills].sort((a, b) => a.ref.name.localeCompare(b.ref.name));
+  const skills = derived.skills
+    .filter((skill) => skill.ref.source !== HOMEBREW_SOURCE || stored(refKey(skill.ref)))
+    .sort((a, b) => a.ref.name.localeCompare(b.ref.name));
 
   function cycle(ref: ContentRef) {
     const key = refKey(ref);
@@ -51,7 +57,7 @@ export function CatalogSkills({
       const onGrant = level === "expertise" && grant !== undefined && ownBelow;
       const others = held.filter((skill) => skill !== current);
       const kept =
-        level === "none"
+        level === "none" && ref.source !== HOMEBREW_SOURCE
           ? others
           : [...others, { ref, level, ...(onGrant && { onGrant: true as const }) }];
       return { ...latest, proficiencies: { ...latest.proficiencies, skills: kept } };
@@ -62,6 +68,7 @@ export function CatalogSkills({
     <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
       {skills.map((skill) => {
         const key = refKey(skill.ref);
+        const homebrew = skill.ref.source === HOMEBREW_SOURCE;
         return (
           <ProficiencyRow
             key={key}
@@ -71,13 +78,35 @@ export function CatalogSkills({
             modifier={skill.modifier}
             overrideKey={`${overrideKey("skills", skill, character.definition)}.modifier`}
             title={skill.ref.name}
-            rules={{ tag: "skill", name: skill.ref.name, source: skill.ref.source }}
+            rules={
+              homebrew
+                ? undefined
+                : { tag: "skill", name: skill.ref.name, source: skill.ref.source }
+            }
             effects={effectsOnRoll(rollEffects, {
               roll: "skill",
               skill: skill.ref.name,
               ability: skill.ability,
             })}
             onCycleLevel={() => cycle(skill.ref)}
+            detailFooter={
+              homebrew && (
+                <RemoveSkill
+                  characterId={character.id}
+                  name={skill.ref.name}
+                  overridePrefix={`skills.${key}.`}
+                  without={(latest) => ({
+                    ...latest,
+                    proficiencies: {
+                      ...latest.proficiencies,
+                      skills: latest.proficiencies.skills.filter(
+                        (each) => refKey(each.ref) !== key,
+                      ),
+                    },
+                  })}
+                />
+              )
+            }
           />
         );
       })}

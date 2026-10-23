@@ -5,6 +5,7 @@
  * set adrift. An edit and an undo share that statement, so a restore passes the schema
  * and the projections an edit does.
  */
+import { HOMEBREW_SOURCE } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type CharacterFile,
@@ -16,6 +17,7 @@ import {
   raceSummary,
   totalLevel,
 } from "@dnd/character";
+import type { Edition } from "@dnd/rules";
 import { eq } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as charactersSchema from "../characters.ts";
@@ -271,6 +273,29 @@ export function charactersReferencingHomebrew(
 ): { id: string; name: string }[] {
   return listCharacters(db)
     .filter((row) => referencesHomebrewId(row.definition, homebrewId))
+    .map((row) => ({ id: row.id, name: row.name }));
+}
+
+/**
+ * The characters of the skill's edition holding it in their skill proficiencies, which
+ * cite it by `(name, source)` and not by id, so a rename, a move to another edition or a
+ * delete must find them by name.
+ */
+export function charactersReferencingHomebrewSkill(
+  db: CharactersDb,
+  { name, edition }: { name: string; edition: Edition },
+): { id: string; name: string }[] {
+  const wanted = name.toLowerCase();
+  return listCharacters(db)
+    .filter(({ definition }) => {
+      const held = characterDefinitionSchema.safeParse(definition).data;
+      return (
+        held?.edition === edition &&
+        held.proficiencies.skills.some(
+          ({ ref }) => ref.source === HOMEBREW_SOURCE && ref.name.toLowerCase() === wanted,
+        )
+      );
+    })
     .map((row) => ({ id: row.id, name: row.name }));
 }
 

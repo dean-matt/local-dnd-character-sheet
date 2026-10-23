@@ -128,6 +128,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/optional-features.md`](docs/optional-features.md) | Optional-feature counts per level, and how the three tables sum |
 | [`docs/items.md`](docs/items.md) | The four item arrays, magic variants, and attunement |
 | [`docs/item-skills.md`](docs/item-skills.md) | The skill proficiencies and expertise a homebrew item grants, and when they count |
+| [`docs/homebrew-skills.md`](docs/homebrew-skills.md) | How a character and an item cite a homebrew skill, and why a rename or delete is refused |
 | [`docs/item-ability-picks.md`](docs/item-ability-picks.md) | How an item stores what the wearer picks: an ability score, a proficiency or a language, and when it grants |
 | [`docs/fluff.md`](docs/fluff.md) | `fluff-*.json`, the `hasFluff` promise, and how a subrace or a subclass is keyed |
 | [`docs/reversibility.md`](docs/reversibility.md) | Every decision the app stores, where it is written, and how it is reversed |
