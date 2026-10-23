@@ -1,10 +1,10 @@
 import type { SearchHit } from "@dnd/catalog";
-import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
+import { type CharacterDefinition, type EntryRef, entryKey, MAX_LEVEL } from "@dnd/character";
 import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
-import { HIGHEST_LEVEL, withClassCount } from "./classLevels.ts";
+import { withClassCount } from "./classLevels.ts";
 
 export interface AddClassFieldProps {
   edition: CharacterDefinition["edition"];
@@ -36,10 +36,10 @@ export function AddClassField({ edition, focusRequest, onAdded }: AddClassFieldP
     setReturning(false);
   }, [returning, adding]);
 
-  if (levels.length >= HIGHEST_LEVEL) {
+  if (levels.length >= MAX_LEVEL) {
     return (
       <p className="text-muted text-row">
-        The character is at level {HIGHEST_LEVEL}, so takes no further class.
+        The character is at level {MAX_LEVEL}, so takes no further class.
       </p>
     );
   }

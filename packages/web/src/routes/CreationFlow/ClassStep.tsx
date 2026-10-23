@@ -1,11 +1,11 @@
-import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
+import { type CharacterDefinition, type EntryRef, entryKey, MAX_LEVEL } from "@dnd/character";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { CLASS_FIELD, withDeparture } from "../../lib/departures.ts";
 import { AddClassField } from "./AddClassField.tsx";
 import { ClassField } from "./ClassField.tsx";
 import { ClassRow } from "./ClassRow.tsx";
-import { HIGHEST_LEVEL, withClassCount } from "./classLevels.ts";
+import { withClassCount } from "./classLevels.ts";
 import { HitPointsField, type HitPointsFieldProps } from "./HitPointsField.tsx";
 import { useClassEntries } from "./useClassEntries.ts";
 import { useFeatureOfferings } from "./useFeatureOfferings.ts";
@@ -59,7 +59,7 @@ export function ClassStep(hitPoints: HitPointsFieldProps) {
                 offerings={offerings[index] ?? []}
                 first={index === 0}
                 multiclassed={multiclassed}
-                max={HIGHEST_LEVEL - (levels.length - entry.level)}
+                max={MAX_LEVEL - (levels.length - entry.level)}
                 focusOnMount={focus === entryKey(entry.cls)}
                 onRemove={() => remove(entry.cls, entry.level, index === 0)}
               />
