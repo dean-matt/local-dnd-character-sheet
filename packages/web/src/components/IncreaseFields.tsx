@@ -15,7 +15,6 @@ export interface IncreaseFieldsProps {
   /** Names what grants the increases, such as `Level 4`, in each control's label. */
   name: string;
   alternatives: readonly IncreaseAlternative[];
-  /** What is placed now. */
   increases: readonly Raise[];
   onChange: (next: Raise[]) => void;
   invalid?: boolean;

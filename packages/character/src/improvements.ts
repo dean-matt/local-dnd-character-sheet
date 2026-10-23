@@ -18,7 +18,6 @@ type Feat = CharacterDefinition["feats"][number];
 /** The feat a 2024 character takes to raise scores at an improvement. */
 export const IMPROVEMENT_FEAT: ContentRef = { name: "Ability Score Improvement", source: "XPHB" };
 
-/** One increase an improvement places. */
 export type Raise = { ability: Ability; amount: number };
 
 /**
@@ -42,7 +41,6 @@ export function improvementAt(definition: Held, level: number): Improvement | un
   return increases.length > 0 ? { increases } : undefined;
 }
 
-/** `definition`'s feats and increases with the improvement at `level` cleared. */
 export function withoutImprovement(definition: Held, level: number): Held {
   return {
     feats: definition.feats.filter((feat) => !takenAt(level)(feat)),

@@ -14,7 +14,6 @@ export type SkillOffer = {
   options: ContentRef[];
 };
 
-/** A skill granted outright, and what grants it. */
 export type SkillGrant = { ref: ContentRef; by: string };
 
 /** Where `departures` notes the skills taken against what the race, class, and background offer. */

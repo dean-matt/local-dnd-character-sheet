@@ -93,7 +93,6 @@ const pick = async (name: string | RegExp, option: string) => {
   fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: option }));
 };
 
-/** The options a control lists. */
 const options = (name: string) => {
   const control = screen.getByRole("combobox", { name });
   fireEvent.click(control);

@@ -11,7 +11,6 @@ export interface ExtraItemsFieldProps {
   extras: InventoryEntry[];
   names: Record<string, string>;
   onAdd: (ref: EntryRef, name: string) => void;
-  /** Takes out the entry at `index` in `extras`. */
   onRemove: (index: number) => void;
 }
 

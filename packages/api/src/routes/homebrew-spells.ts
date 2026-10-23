@@ -1,4 +1,3 @@
-/** List, read, create, update and delete for homebrew spells. */
 import { randomUUID } from "node:crypto";
 import { homebrewSpellInputSchema, homebrewSpellRecordSchema } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";

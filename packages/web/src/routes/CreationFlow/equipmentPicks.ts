@@ -25,7 +25,6 @@ export type EquipmentSource = {
   goldAlternative?: { dice: string; multiplier: number };
 };
 
-/** What the player picked from one source. */
 export type SourcePicks = {
   row: string;
   /** Each group's chosen option key, by the group's index. */

@@ -50,7 +50,6 @@ export function listHomebrewItems(db: HomebrewDb) {
 const nameHolds = (column: SQLiteColumn, term: string) =>
   sql`${column} LIKE ${`%${escapeLikeTerm(term)}%`} ESCAPE '!'`;
 
-/** Homebrew items `filter` admits, for `/search`; see `SearchFilter`. */
 export function searchHomebrewItems(db: HomebrewDb, filter: SearchFilter) {
   return db
     .select()
@@ -154,7 +153,6 @@ export function listHomebrewSpells(db: HomebrewDb) {
   return db.select().from(homebrewSpells).all();
 }
 
-/** Homebrew spells `filter` admits, for `/search`; see `SearchFilter`. */
 export function searchHomebrewSpells(db: HomebrewDb, filter: SearchFilter) {
   const { edition, term, spellLevels, schools } = filter;
   return db

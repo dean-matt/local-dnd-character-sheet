@@ -78,7 +78,6 @@ export function backgroundFeatOffers(
 const grantedBy = (entry: Feats[number]) =>
   entry.grantedBy?.kind === "background" ? entry.grantedBy.ref : undefined;
 
-/** The feat entries this background granted, in `feats`. */
 export const heldFromBackground = (feats: Feats) =>
   feats.filter((entry) => grantedBy(entry) !== undefined);
 

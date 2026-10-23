@@ -30,7 +30,6 @@ export function DerivedBreakdown({
   schema = z.int(),
 }: {
   name: string;
-  /** The field's visible name. */
   label?: string;
   value: Derived<number>;
   format: (value: number) => string;

@@ -28,7 +28,6 @@ export interface SourceIncreasesProps {
   source: IncreaseSource;
   /** The increases stored for `source`'s grantor alone. */
   mine: readonly Increase[];
-  /** Replaces the grantor's stored increases with `next`. */
   onChange: (next: Increase[]) => void;
   /** Hides the heading, where the card around it already names the row. */
   headingHidden?: boolean;

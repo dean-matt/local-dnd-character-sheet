@@ -399,7 +399,6 @@ function weaponMastery(definition: CharacterDefinition, weapon: WeaponTrait): Co
   return chosen ? [...(weapon.mastery ?? [])] : [];
 }
 
-/** One term per class whose Weapon Mastery allows kinds at the character's level in it. */
 function weaponMasteryLimit(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
@@ -704,7 +703,6 @@ function derivedItemGrants(
   return computed(grants);
 }
 
-/** The equipped armor, attuned where it must be, that states a Stealth penalty or a Strength requirement. */
 function wornBurdens(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,

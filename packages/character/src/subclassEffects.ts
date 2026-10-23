@@ -8,7 +8,6 @@ import { classLevels } from "./summaries.ts";
 type InitiativeBonus = {
   feature: ContentRef;
   addend: Ability | "proficiency";
-  /** The class level the feature arrives at. */
   level: number;
 };
 
@@ -75,7 +74,6 @@ register(
   7,
 );
 
-/** One term for each subclass feature the character's levels have reached. */
 export function subclassInitiativeTerms(
   definition: CharacterDefinition,
   modifierOf: (ability: Ability) => number,

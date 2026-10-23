@@ -29,7 +29,6 @@ const RAISE_ALTERNATIVES: IncreaseAlternative[] = [
   },
 ];
 
-/** Whether `improvement` raises scores rather than taking a feat of its own. */
 export const raisesScores = (improvement: Improvement): boolean =>
   improvement.feat === undefined ||
   ("name" in improvement.feat && refKey(improvement.feat) === refKey(IMPROVEMENT_FEAT));

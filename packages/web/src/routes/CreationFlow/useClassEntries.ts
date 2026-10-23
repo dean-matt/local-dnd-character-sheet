@@ -29,7 +29,6 @@ export interface ClassEntry {
   catalogClass: ContentRef | undefined;
   /** The class's name as a sheet prints it, a homebrew class's once its row loads. */
   name: string;
-  /** How many levels the draft holds in the class. */
   level: number;
   /** The position in `levels` of the class's first level. */
   firstIndex: number;

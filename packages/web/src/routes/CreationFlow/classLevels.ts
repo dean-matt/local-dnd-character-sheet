@@ -86,6 +86,5 @@ export function rerolled(levels: readonly Level[], roll?: (index: number) => num
   });
 }
 
-/** The subclass a level in `cls` names. */
 export const subclassOf = (levels: readonly Level[], cls: EntryRef): ContentRef | undefined =>
   levels.find((level) => level.subclass && entryKey(level.class) === entryKey(cls))?.subclass;

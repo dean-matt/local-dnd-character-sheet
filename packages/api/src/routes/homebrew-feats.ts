@@ -1,4 +1,3 @@
-/** List, read, create, update and delete for homebrew feats. */
 import { randomUUID } from "node:crypto";
 import { homebrewFeatInputSchema, homebrewFeatRecordSchema } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";

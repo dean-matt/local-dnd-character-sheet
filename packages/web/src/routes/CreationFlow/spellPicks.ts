@@ -109,7 +109,6 @@ export function rowPicks(offers: readonly Offer[], picked: readonly PickedSpell[
 export const rowFor = (rows: readonly RowPicks[], pickedFor: PickGrantor) =>
   rows.find((row) => pickKey(row.pickedFor) === pickKey(pickedFor));
 
-/** The picks made for the class rather than for a row. */
 export const classPicksOf = (picked: readonly PickedSpell[]) =>
   picked.filter((spell) => !spell.pickedFor);
 

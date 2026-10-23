@@ -86,7 +86,6 @@ const choicesSchema = z
         ];
   });
 
-/** The tool picks a class row offers a character who starts in it. */
 export const classToolChoicesSchema = z
   .looseObject({
     startingProficiencies: z

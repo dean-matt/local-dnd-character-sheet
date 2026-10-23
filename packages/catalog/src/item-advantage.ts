@@ -545,7 +545,6 @@ export const ITEM_ADVANTAGES: readonly ItemAdvantageRow[] = (() => {
 
 const BY_KEY = new Map(ITEM_ADVANTAGES.map((row) => [`${row.name}|${row.source}`, row.effects]));
 
-/** The effects the mapping gives the catalog item `(name, source)`, or none. */
 export function itemAdvantagesOf(name: string, source: string): readonly ItemAdvantage[] {
   return BY_KEY.get(`${name}|${source}`) ?? [];
 }

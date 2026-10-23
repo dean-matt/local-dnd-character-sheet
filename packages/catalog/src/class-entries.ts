@@ -37,7 +37,6 @@ function proficiency(value: unknown): string[] {
   return [value.optional === true ? `${name} (optional)` : name];
 }
 
-/** The armor, weapons, tools and skills a row's `startingProficiencies` lists. */
 function proficiencyLines(json: Json): Entries {
   const profs = isRecord(json.startingProficiencies) ? json.startingProficiencies : {};
   const skills = classSkillChoiceSchema.parse(json);

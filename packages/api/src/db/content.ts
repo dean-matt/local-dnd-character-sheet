@@ -43,7 +43,6 @@ function stampMatches(db: Database.Database): boolean {
   );
 }
 
-/** Throws `CatalogOutOfDateError` where the database `current` names was built from another schema. */
 export function openContentDb(dataDir: string): Database.Database {
   const contentDir = join(dataDir, "content");
   const current = readFileSync(join(contentDir, "current"), "utf8").trim();

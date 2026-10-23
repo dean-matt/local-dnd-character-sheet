@@ -25,7 +25,6 @@ const PAGE_ICONS: Record<string, LucideIcon> = {
   notes: NotebookText,
 };
 
-/** The character sheet's rail: one row per visible page, and the Manage pages button. */
 export function CharacterSidebar({
   characterId,
   pages,

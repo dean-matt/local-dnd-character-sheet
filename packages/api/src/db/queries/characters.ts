@@ -39,7 +39,6 @@ export function getCharacter(db: CharactersDb, id: string) {
   return db.select().from(characters).where(eq(characters.id, id)).get();
 }
 
-/** The `characters` row and the `character_state` row every character starts with. */
 function insertCharacterRows(
   tx: Pick<CharactersDb, "insert">,
   id: string,

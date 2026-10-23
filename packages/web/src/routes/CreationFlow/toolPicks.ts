@@ -14,7 +14,6 @@ export type ToolOffer = Offer<string> & {
   options: string[];
 };
 
-/** A tool granted outright, and what grants it. */
 export type ToolGrant = { name: string; by: "Race" | "Background" | "Class" };
 
 /** Where `departures` notes the tools taken against what the class and background offer. */
@@ -63,7 +62,6 @@ export const toolsSpent = (
   toolTally: Tally<string>,
 ): boolean => spent(offers, grantedKeys(granted), toolTally, toolKey);
 
-/** Whether `name` is among `names`, ignoring case. */
 export const holdsTool = (names: readonly string[], name: string) =>
   names.some((each) => toolKey(each) === toolKey(name));
 

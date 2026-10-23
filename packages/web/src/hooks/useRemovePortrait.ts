@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiDelete } from "../lib/api.ts";
 import { characterKey, charactersKey } from "./characterKeys.ts";
 
-/** Removes the character's portrait, so its avatar falls back to the initial circle. */
 export function useRemovePortrait(id: string) {
   const queryClient = useQueryClient();
 

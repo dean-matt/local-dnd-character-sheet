@@ -14,7 +14,6 @@ type Formula = {
   addend: { ability: Ability } | { flat: number };
   /** Whether wielding a shield leaves the formula standing. */
   shield: "keeps" | "removes";
-  /** The class level the feature arrives at. */
   level: number;
 };
 
@@ -45,7 +44,6 @@ function draconic(addend: Formula["addend"], level: number): Formula {
   return { feature: "Draconic Resilience", addend, shield: "keeps", level };
 }
 
-/** Every formula the character's classes and subclasses have reached. */
 function reachedFormulas(definition: CharacterDefinition): Formula[] {
   const reached: Formula[] = [];
   for (const group of classLevels(definition)) {

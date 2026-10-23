@@ -34,7 +34,6 @@ export function ProficiencyRow({
   overrideKey: string;
   title: string;
   rules: Rules | undefined;
-  /** What equipped items grant on this roll. */
   effects?: readonly RollEffectEntry[];
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;

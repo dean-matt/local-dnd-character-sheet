@@ -34,7 +34,6 @@ const choiceSchema = z
     return rest.length > 0 ? undefined : offerSchema.safeParse(only).data;
   });
 
-/** The skills a class row lets a character who starts in it pick. */
 export const classSkillChoiceSchema = z
   .looseObject({
     startingProficiencies: z.looseObject({ skills: choiceSchema }).optional().catch(undefined),

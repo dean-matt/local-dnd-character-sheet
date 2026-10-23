@@ -57,7 +57,6 @@ export type DefenseTrait = {
 /** A race's grant, and the damage types a `choose` offers, from which the definition picks one. */
 type RaceDefenseTrait = DefenseTrait & { resistChoice: readonly string[] };
 
-/** A sense a race, feat or item grants, and the range in feet. */
 export type SenseGrant = { name: Sense; range: number };
 
 /** A definition field a feat's pick lands in, as `feats[].picks` keys it. */
@@ -123,7 +122,6 @@ export type ItemSkillTrait = {
 /** An item's effect on scores, and whether it waits on attunement. */
 export type ItemAbilityTrait = AbilityGrant & { requiresAttunement: boolean };
 
-/** A movement mode, as `Speed` names it. */
 export type SpeedMode = keyof Speed;
 
 /**

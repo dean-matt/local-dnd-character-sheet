@@ -6,7 +6,6 @@ import { senseGrantsSchema } from "./sense.ts";
 import { skillProficienciesChoiceSchema } from "./skill-choice.ts";
 import { backgroundToolChoicesSchema } from "./tool-choice.ts";
 
-/** A definition field a feat's pick lands in. */
 type FeatPickField = "savingThrows" | "skills" | "expertise" | "tools" | "languages" | "resist";
 
 /**

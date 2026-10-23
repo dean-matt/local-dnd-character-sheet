@@ -68,7 +68,6 @@ const csv = (description: string, example: string) =>
 
 const spellLevel = z.coerce.number().int().min(0).max(9).optional();
 
-/** A `Name|Source` parameter as the reference it spells, `undefined` where absent. */
 function nameSource(param: string | undefined) {
   if (param === undefined) return undefined;
   const at = param.lastIndexOf("|");
@@ -82,7 +81,6 @@ const refParam = (description: string, example: string) =>
     .optional()
     .openapi({ description, example });
 
-/** A comma-separated parameter's values, or `undefined` where it names none. */
 function list(param: string | undefined): string[] | undefined {
   const values = param?.split(",").filter((value) => value !== "");
   return values?.length ? values : undefined;
@@ -146,7 +144,6 @@ const listQuery = z.object({
   exclude: csv("Comma-separated source abbreviations whose catalog rows to leave out", "VGM,SCAG"),
 });
 
-/** The class list the query narrows spells to, `undefined` where it names no class. */
 function classListOf(query: z.infer<typeof listQuery>) {
   const cls = nameSource(query.class);
   const subclass = nameSource(query.subclass);

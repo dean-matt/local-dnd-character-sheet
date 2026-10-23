@@ -20,7 +20,6 @@ type Portrait = { mediaType: string; image: Buffer };
 
 type Tx = Parameters<Parameters<CharactersDb["transaction"]>[0]>[0];
 
-/** Moves the character's current image, if it has one, into the single previous slot. */
 function shelveCurrent(tx: Tx, characterId: string) {
   const current = tx
     .select({ mediaType: characterPortraits.mediaType, image: characterPortraits.image })
