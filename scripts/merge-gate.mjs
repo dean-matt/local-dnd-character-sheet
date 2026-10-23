@@ -217,9 +217,8 @@ const FENCED_RECORD = /^\*\*Accepted fenced\*\* ([0-9a-f]{7,40})\b/;
  * The fenced paths no signer has cleared. A signer clears them with a pull request comment
  * opening `**Accepted fenced** <head sha> —` and naming each path. The sha ties the record
  * to the head it read and the timestamp rules out a record dated before that head's commit.
- * The opener differs from `**Accepted**` so it never clears a body decline. Each path is
- * matched as a substring of the body, which a path that is a prefix of another would
- * satisfy; the fence holds no such pair.
+ * The opener differs from `**Accepted**` so it never clears a body decline. A path counts
+ * as named only as a whole token, so `packages/web/package.json` never names the root one.
  *
  * @param {string[]} paths
  * @param {string} head
@@ -237,7 +236,10 @@ export function unsignedPaths(paths, head, headDate, comments, who) {
       Date.parse(c.created_at ?? "") > Date.parse(headDate)
     );
   });
-  return paths.filter((p) => !records.some((c) => c.body?.includes(p)));
+  const named = new Set(
+    records.flatMap((c) => (c.body ?? "").split(/[\s,:]+/).map((t) => t.replace(/^`|`$/g, ""))),
+  );
+  return paths.filter((p) => !named.has(p));
 }
 
 const BODY_DECLINED = /^\*\*Declined\*\* (critical|warning)\b/;

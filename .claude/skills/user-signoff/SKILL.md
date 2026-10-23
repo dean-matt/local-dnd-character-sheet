@@ -38,7 +38,7 @@ pull request comment naming the head you read and every fenced path, as `scripts
 `unsignedPaths` reads it:
 
 ```bash
-gh pr comment "$n" --body "**Accepted fenced** $(git rev-parse HEAD) — <each fenced path>: <what was approved>"
+gh pr comment "$n" --body "**Accepted fenced** $(gh pr view "$n" --json headRefOid --jq .headRefOid) — <each fenced path, comma-separated>: <what was approved>"
 ```
 
 A record from a login that is not a signer, one naming another head, or one posted before

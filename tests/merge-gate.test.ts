@@ -404,6 +404,15 @@ describe("a fenced path's sign-off", () => {
     expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [other], SIGNERS)).toEqual(PATHS);
   });
 
+  it("takes a path as named only as a whole token, and accepts an abbreviated sha", () => {
+    const web = record({
+      body: `**Accepted fenced** ${HEAD.slice(0, 7)} — packages/web/package.json`,
+    });
+    expect(
+      unsignedPaths(["package.json", "packages/web/package.json"], HEAD, HEAD_DATE, [web], SIGNERS),
+    ).toEqual(["package.json"]);
+  });
+
   it("leaves a path the record does not name, and ignores a plain acceptance", () => {
     const partial = record({ body: `**Accepted fenced** ${HEAD} — CLAUDE.md: approved` });
     expect(unsignedPaths(PATHS, HEAD, HEAD_DATE, [partial], SIGNERS)).toEqual([PATHS[1]]);
