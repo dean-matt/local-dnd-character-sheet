@@ -197,7 +197,7 @@ export function NotesSection({ character }: { character: CharacterRecord | undef
                   </span>
                   <span className="flex print:hidden">
                     <RemoveButton
-                      name={`off the rules note ${label}`}
+                      name={`off the rules note ${label} — ${note}`}
                       busy={false}
                       onRemove={() => {
                         setFocus("[data-add-section]");
