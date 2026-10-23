@@ -23,7 +23,7 @@ import { useDebounce } from "../../../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { SEARCHED_FROM, useSheetCharacter } from "../../../../hooks/useSheetCharacter.ts";
 import { addableHit } from "../../../../lib/addable.ts";
-import { searchHitAddress, searchHitKey } from "../../../../lib/searchHits.ts";
+import { searchHitAddress, searchHitId } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
 import type { SearchResult } from "./searchResult.ts";
 
@@ -63,7 +63,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
         .map((c) => ({ key: `character:${c.id}`, character: c }))
     : [];
   const compendiumResults: SearchResult[] = (compendium.data?.items ?? []).map((hit) => ({
-    key: searchHitKey(hit),
+    key: searchHitId(hit),
     address: searchHitAddress(hit),
     hit,
   }));

@@ -36,8 +36,11 @@ export function searchHitAddress(hit: SearchHit): string | undefined {
   return `/catalog/${segments(hit.type, ...key)}`;
 }
 
-/** A hit's identity: its type and key, or its homebrew id. */
-export function searchHitKey(hit: SearchHit): string {
+/**
+ * A hit's identity among a result list. Unlike `searchHitKey`, it keeps the type, qualifier
+ * and parent that tell same-named rows apart.
+ */
+export function searchHitId(hit: SearchHit): string {
   return "id" in hit
     ? `homebrew:${hit.type}:${hit.id}`
     : JSON.stringify([hit.type, hit.name, hit.source, hit.qualifier, hit.parent]);

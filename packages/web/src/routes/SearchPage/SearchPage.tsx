@@ -15,7 +15,7 @@ import { useCharacters } from "../../hooks/useCharacters.ts";
 import { useDebounce } from "../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
 import { SEARCHED_FROM } from "../../hooks/useSheetCharacter.ts";
-import { searchHitKey } from "../../lib/searchHits.ts";
+import { searchHitId } from "../../lib/searchHits.ts";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { CharacterResultRow } from "./CharacterResultRow.tsx";
 import { SearchedFrom } from "./SearchedFrom.tsx";
@@ -188,7 +188,7 @@ export function SearchPage() {
             ))}
             {hits.map((hit) => (
               <SearchHitRow
-                key={searchHitKey(hit)}
+                key={searchHitId(hit)}
                 hit={hit}
                 onAdded={setAdded}
                 onOpen={(address) => {

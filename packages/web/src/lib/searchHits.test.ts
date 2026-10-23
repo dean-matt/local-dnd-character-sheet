@@ -3,6 +3,7 @@ import { matchCatalogTarget } from "./catalogRows.ts";
 import {
   HIT_COLLECTIONS,
   searchHitAddress,
+  searchHitId,
   searchHitTypeLabel,
   searchHitTypePlural,
 } from "./searchHits.ts";
@@ -96,5 +97,14 @@ describe("searchHitTypePlural", () => {
     ["legendaryGroup", "Legendary groups"],
   ])("names %s as %s", (type, label) => {
     expect(searchHitTypePlural(type)).toBe(label);
+  });
+});
+
+describe("searchHitId", () => {
+  it("tells same-named rows of different types apart", () => {
+    const base = { name: "Fire Bolt", source: "XPHB", edition: "one" as const };
+    expect(searchHitId({ ...base, type: "spell" })).not.toBe(
+      searchHitId({ ...base, type: "item" }),
+    );
   });
 });
