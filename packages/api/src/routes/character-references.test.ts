@@ -151,6 +151,23 @@ describe("characterReferencesRoutes", () => {
     expect(await unresolved()).toEqual([]);
   });
 
+  it("leaves a homebrew skill to homebrew.db, which content.db cannot answer for", async () => {
+    publishReferencesFixture(dataDir, CATALOG);
+    const base = definitionWith();
+    store(
+      definitionWith({
+        proficiencies: {
+          ...base.proficiencies,
+          skills: [
+            ...base.proficiencies.skills,
+            { ref: { name: "Sailing", source: "HB" }, level: "none" },
+          ],
+        },
+      }),
+    );
+    expect(await unresolved()).toEqual([]);
+  });
+
   it("renders a spell the catalog dropped and reports it by field", async () => {
     publishReferencesFixture(dataDir, { ...CATALOG, spells: [] });
     store(definitionWith());

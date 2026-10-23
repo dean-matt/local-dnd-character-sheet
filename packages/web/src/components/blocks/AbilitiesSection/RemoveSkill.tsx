@@ -5,8 +5,9 @@ import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterD
  * Removes a skill and its overrides in one write, so a new skill taking its name starts
  * computed. `without` drops the skill from the lists that hold it; `overridePrefix` is the
  * key every override of it starts with. It mounts with the skill's detail modal, so a
- * failure shown there clears when the modal closes. `onRemoved`, where given, runs once the write lands;
- * the row, and the modal with it, unmount as the saved character drops the skill.
+ * failure shown there clears when the modal closes. `onRemoved`, where given, runs once
+ * the write lands; the row, and the modal with it, unmount as the saved character drops
+ * the skill.
  */
 export function RemoveSkill({
   characterId,

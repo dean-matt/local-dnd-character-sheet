@@ -26,6 +26,7 @@ An item's advantage effect names the skill in `target`, the way it names a built
 
 Both citations are by name, so the skill routes refuse a rename, a move to another edition
 or a delete while a character or an item of that edition holds the skill, and the 409 names
-each. Nothing checks a homebrew
-name against the built-in skills, so a homebrew skill named for one gives both rows the
-same effects.
+each.
+
+Nothing checks a homebrew name against the built-in skills, so a homebrew skill named for
+one gives both rows the same effects.
