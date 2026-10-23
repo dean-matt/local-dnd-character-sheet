@@ -123,6 +123,68 @@ describe("characterPortraitRoutes", () => {
     expect((await portraits.request(`/characters/${id}/portrait`)).status).toBe(404);
   });
 
+  describe("restore", () => {
+    const put = (body: Uint8Array<ArrayBuffer>, type: string) =>
+      portraits.request(`/characters/${id}/portrait`, upload(body, type));
+    const restore = () =>
+      portraits.request(`/characters/${id}/portrait/restore`, { method: "POST" });
+    const served = async () =>
+      new Uint8Array(await (await portraits.request(`/characters/${id}/portrait`)).arrayBuffer());
+
+    it("brings back a removed portrait", async () => {
+      await put(PNG, "image/png");
+      expect((await record()).hasPreviousPortrait).toBe(false);
+      await portraits.request(`/characters/${id}/portrait`, { method: "DELETE" });
+      expect((await record()).hasPreviousPortrait).toBe(true);
+
+      expect((await restore()).status).toBe(204);
+      const after = await record();
+      expect(after.portraitUpdatedAt).toEqual(expect.any(String));
+      expect(after.hasPreviousPortrait).toBe(false);
+      expect(await served()).toEqual(PNG);
+    });
+
+    it("brings back a replaced portrait and swaps on a second restore", async () => {
+      await put(PNG, "image/png");
+      await put(WEBP, "image/webp");
+      expect((await restore()).status).toBe(204);
+      expect(await served()).toEqual(PNG);
+      expect((await restore()).status).toBe(204);
+      expect(await served()).toEqual(WEBP);
+    });
+
+    it("keeps only the newest displaced image", async () => {
+      await put(PNG, "image/png");
+      await put(WEBP, "image/webp");
+      await portraits.request(`/characters/${id}/portrait`, { method: "DELETE" });
+      await restore();
+      expect(await served()).toEqual(WEBP);
+    });
+
+    it("answers 404 where there is nothing to restore", async () => {
+      await put(PNG, "image/png");
+      expect((await restore()).status).toBe(404);
+      expect(await served()).toEqual(PNG);
+    });
+
+    it("answers 404 for a character that does not exist", async () => {
+      const res = await portraits.request("/characters/missing/portrait/restore", {
+        method: "POST",
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it("goes with its character on delete", async () => {
+      await put(PNG, "image/png");
+      await put(WEBP, "image/webp");
+      await characters.request(`/characters/${id}`, { method: "DELETE" });
+      const left = opened.charactersDb.$client
+        .prepare("SELECT count(*) AS n FROM character_portraits_previous")
+        .get() as { n: number };
+      expect(left.n).toBe(0);
+    });
+  });
+
   it("answers 404 for a character that does not exist", async () => {
     const missing = "/characters/missing/portrait";
     expect((await portraits.request(missing, upload(PNG, "image/png"))).status).toBe(404);

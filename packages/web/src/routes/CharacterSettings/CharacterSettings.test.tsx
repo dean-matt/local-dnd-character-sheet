@@ -40,6 +40,19 @@ function stubFetch(status: number) {
   return fetchMock;
 }
 
+function stubRestore(status: number) {
+  const reads = stubFetch(200).getMockImplementation();
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+    init?.method === "POST"
+      ? status === 204
+        ? new Response(null, { status })
+        : new Response(JSON.stringify({ error: "No earlier portrait to restore" }), { status })
+      : reads?.(input, init),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
+
 const characterFile = () => ({
   format: "local-dnd-character-sheet/character",
   version: 2,
@@ -55,10 +68,18 @@ const press = (name: string) => fireEvent.click(screen.getByRole("button", { nam
 
 const openDelete = () => press("Delete character");
 
-function renderSettings(name = "Vex", portraitUpdatedAt: string | null = null) {
+function renderSettings(
+  name = "Vex",
+  portraitUpdatedAt: string | null = null,
+  hasPreviousPortrait = false,
+) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(["characters"], [characterRecord("1", name)]);
-  queryClient.setQueryData(characterKey("1"), { ...characterRecord("1", name), portraitUpdatedAt });
+  queryClient.setQueryData(characterKey("1"), {
+    ...characterRecord("1", name),
+    portraitUpdatedAt,
+    hasPreviousPortrait,
+  });
   const router = createMemoryRouter(
     [
       { path: "/characters/:id/settings", element: <CharacterSettings /> },
@@ -123,6 +144,42 @@ describe("CharacterSettings", () => {
       "/api/characters/1/portrait",
     ]);
     expect(screen.getByRole("region", { name: "Portrait" }).querySelector("img")).toBeNull();
+  });
+
+  it("offers Restore only where a displaced portrait exists", () => {
+    renderSettings("Vex", "2026-10-19T12:00:00.000Z");
+    expect(screen.queryByRole("button", { name: "Restore previous portrait" })).toBeNull();
+    expect(screen.queryByText(/Restore previous portrait brings back/)).toBeNull();
+  });
+
+  it("says how to restore once a portrait is removed", () => {
+    renderSettings("Vex", null, true);
+    expect(screen.getByText(/Restore previous portrait brings back/)).toBeInTheDocument();
+  });
+
+  it("restores a removed portrait", async () => {
+    const fetchMock = stubRestore(204);
+    renderSettings("Vex", null, true);
+    expect(screen.queryByRole("button", { name: "Remove portrait" })).toBeNull();
+
+    press("Restore previous portrait");
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.map(([input, init]) => `${init?.method} ${String(input)}`),
+      ).toContain("POST /api/characters/1/portrait/restore"),
+    );
+  });
+
+  it("says why restoring the portrait fails", async () => {
+    stubRestore(404);
+    renderSettings("Vex", null, true);
+
+    press("Restore previous portrait");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Restore failed: No earlier portrait to restore",
+    );
   });
 
   it("says why when removing the portrait fails", async () => {

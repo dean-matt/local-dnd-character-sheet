@@ -34,6 +34,10 @@ export const characters = sqliteTable("characters", {
    * `If-Unmodified-Since` reads, alone.
    */
   portraitUpdatedAt: integer("portrait_updated_at", { mode: "timestamp_ms" }),
+  /** Whether `character_portraits_previous` holds an image to restore. */
+  hasPreviousPortrait: integer("has_previous_portrait", { mode: "boolean" })
+    .notNull()
+    .default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
@@ -48,6 +52,15 @@ export const characterState = sqliteTable("character_state", {
 
 /** The uploaded image behind a character's avatar, kept apart so a list read never loads it. */
 export const characterPortraits = sqliteTable("character_portraits", {
+  characterId: text("character_id")
+    .primaryKey()
+    .references(() => characters.id, { onDelete: "cascade" }),
+  mediaType: text("media_type").notNull(),
+  image: blob("image", { mode: "buffer" }).notNull(),
+});
+
+/** The one portrait the last upload or removal displaced, kept so the user can restore it. */
+export const characterPortraitsPrevious = sqliteTable("character_portraits_previous", {
   characterId: text("character_id")
     .primaryKey()
     .references(() => characters.id, { onDelete: "cascade" }),

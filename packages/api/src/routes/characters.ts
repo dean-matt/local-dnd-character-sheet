@@ -54,6 +54,7 @@ function toRecord(row: CharacterRow): CharacterRecord {
     classSummary: row.classSummary,
     definition: withExperienceFloor(characterDefinitionSchema.parse(row.definition)),
     portraitUpdatedAt: row.portraitUpdatedAt?.toISOString() ?? null,
+    hasPreviousPortrait: row.hasPreviousPortrait,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   });
