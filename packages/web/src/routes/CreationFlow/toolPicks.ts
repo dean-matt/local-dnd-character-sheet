@@ -1,4 +1,4 @@
-import { duplicates, needed, type Offer, spent, type Tally, tally } from "./pickTally.ts";
+import { duplicates, needed, type Offer, spent, type Tally, tally } from "../../lib/pickTally.ts";
 
 /**
  * The tools a class or a background lets the player pick, named as a sheet prints them. A
