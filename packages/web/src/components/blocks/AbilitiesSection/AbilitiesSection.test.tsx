@@ -267,7 +267,7 @@ describe("AbilitiesSection", () => {
     ["a plain bonus", { bonus: { con: 2 } }, {}, "set by Amulet of Health"],
     ["an override", {}, { "abilityScores.con": 18 }, "overridden"],
   ])(
-    "draws a read-only box naming the reason where %s holds the score, and never saves from it",
+    "draws a read-only box with an info icon naming the reason where %s holds the score, and never saves from it",
     async (_, trait, overrides, reason) => {
       const base = warlock();
       const record: CharacterRecord = {
@@ -297,7 +297,16 @@ describe("AbilitiesSection", () => {
       expect(box).toHaveAccessibleDescription(
         `${reason}; change it with Score override in the details`,
       );
-      expect(within(tile("Ability Scores", "Constitution")).getByText(reason)).toBeVisible();
+      const constitution = within(tile("Ability Scores", "Constitution"));
+      expect(constitution.queryByText(reason)).not.toBeInTheDocument();
+      const info = constitution.getByRole("button", {
+        name: "Why the Constitution score is locked",
+      });
+      expect(info).toBeVisible();
+      fireEvent.click(info);
+      expect(constitution.getByRole("group", { name: "Constitution score" })).toHaveTextContent(
+        reason,
+      );
       box.focus();
       expect(box).toHaveFocus();
       fireEvent.change(box, { target: { value: "12" } });

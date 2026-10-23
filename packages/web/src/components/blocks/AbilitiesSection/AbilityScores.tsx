@@ -9,12 +9,14 @@ import {
   type CharacterRecord,
   derivedValue,
 } from "@dnd/character";
+import { Info } from "lucide-react";
 import { useId } from "react";
 import { z } from "zod";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
 import { InputField } from "../../InputField.tsx";
+import { Popover } from "../../Popover.tsx";
 import { DerivedBreakdown } from "../DerivedBreakdown.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { signed } from "../signed.ts";
@@ -137,25 +139,29 @@ export function AbilityScores({
                   }}
                 />
               ) : (
-                <>
+                <span className="relative">
                   <InputField
                     label={`${ABILITY_LABEL[ability]} score`}
                     labelHidden
                     type="text"
                     readOnly
-                    title={`${locked}; change it with Score override in the details`}
                     value={String(score)}
                     describedBy={`${reasonId}-${ability}`}
                     className={`${SCORE_BOX} border-dashed bg-subtle text-muted`}
                   />
-                  <span
-                    id={`${reasonId}-${ability}`}
-                    className="max-w-full text-center font-normal text-[10px] text-muted leading-tight"
-                  >
-                    {locked}
-                    <span className="sr-only">; change it with Score override in the details</span>
+                  <span id={`${reasonId}-${ability}`} className="sr-only">
+                    {locked}; change it with Score override in the details
                   </span>
-                </>
+                  <span className="-translate-y-1/2 absolute top-1/2 left-full ml-0.5 font-normal text-muted">
+                    <Popover
+                      trigger={<Info aria-hidden="true" size={14} />}
+                      triggerLabel={`Why the ${ABILITY_LABEL[ability]} score is locked`}
+                      label={`${ABILITY_LABEL[ability]} score`}
+                    >
+                      <span className="text-row">{locked}</span>
+                    </Popover>
+                  </span>
+                </span>
               )}
               <span className="rounded-pill bg-accent px-2 font-semibold text-label text-white [&_.text-accent-text]:text-white">
                 <DerivedValue
