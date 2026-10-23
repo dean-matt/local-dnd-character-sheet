@@ -7,12 +7,12 @@
  *
  * Passthrough rather than strict, departing from the schemas in `packages/character`:
  * a character definition is read, edited field by field and written back whole, so an
- * open object silently drops an edit on save. The homebrew editor holds the entry it was
- * given rather than a parsed copy, and writes every field it shows no control for back as
- * it found it, bar a weapon's or armor's own on a type change — `packages/character` itself only ever *references* a homebrew row by id —
- * so the risk strict guards against does not apply, and it would
- * instead reject an item pasted straight out of a 5etools-shaped source for carrying a
- * field this schema has not modeled yet.
+ * open object silently drops an edit on save. An item entry carries no such risk.
+ * `packages/character` only ever *references* a homebrew row by id, and the homebrew
+ * editor holds the entry it was given rather than a parsed copy, writing every field it
+ * shows no control for back as it found it, bar a weapon's or armor's own on a type
+ * change. A strict schema would instead reject an item pasted straight out of a
+ * 5etools-shaped source for carrying a field this schema has not modeled yet.
  */
 import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";

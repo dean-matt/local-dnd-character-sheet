@@ -867,7 +867,7 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
  * The whole derived block for one character: every value `characterDerivedSchema`
  * holds, assembled from the definition and the catalog facts the caller resolved for
  * it, with the definition's `overrides` folded into each `manual`. Every number reads the
- * proficiencies with what feats grant added.
+ * proficiencies together with what feats grant.
  */
 export function deriveCharacter(
   stored: CharacterDefinition,

@@ -75,8 +75,9 @@ const SPELL_FIELDS = [
 ];
 
 /**
- * The items `ITEM_ADVANTAGES` names, kept to a name and a source: an item with `hasFluffImages`
- * would need a fluff entry for nothing the test reads. `item-advantage.test.ts` holds this list and the mapping in step.
+ * The items `ITEM_ADVANTAGES` names, kept to a name and a source: an item with
+ * `hasFluffImages` would need a fluff entry for nothing the test reads.
+ * `item-advantage.test.ts` holds this list and the mapping in step.
  */
 const ADVANTAGE_ITEMS = [
   "Mantle of Spell Resistance|DMG",
@@ -239,8 +240,8 @@ const ADVANTAGE_COPIES = [
 ].map((id) => ({ id, fields: ["name", "source", "_copy"] }));
 
 /**
- * The magic variants \`ITEM_ADVANTAGES\` names, with two entries sharing each of the names listed
- * twice. Their \`hasFluffImages\` stays out for the reason \`ADVANTAGE_ITEMS\`' does.
+ * The magic variants `ITEM_ADVANTAGES` names, with two entries sharing each of the names
+ * listed twice. Their `hasFluffImages` stays out for the reason `ADVANTAGE_ITEMS`' does.
  */
 const ADVANTAGE_VARIANTS = [
   "Feywrought Armor",

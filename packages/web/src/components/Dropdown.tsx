@@ -35,8 +35,8 @@ export interface DropdownProps {
 
 /**
  * The shell `MultiSelect` and `Select` share: a button naming the value with a chevron, and
- * a panel floating below it, or above where the viewport has more room. Escape closes the panel and returns focus to
- * the button; focus leaving the whole closes it.
+ * a panel floating below it, or above where the viewport has more room. Escape closes the
+ * panel and returns focus to the button; focus leaving the whole closes it.
  */
 export function Dropdown({
   open,

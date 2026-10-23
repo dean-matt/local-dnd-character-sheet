@@ -29,8 +29,9 @@ export type ArmorTrait = {
 
 /**
  * What one weapon row attacks with: the fields `weaponAttack` reads, and the category and
- * name a weapon proficiency and a weapon mastery match. `bonus` is a magic weapon's, each roll's summed from
- * every field upstream states it in; `reference` is the row that granted it.
+ * name a weapon proficiency and a weapon mastery match. `bonus` is a magic weapon's, each
+ * roll's bonus summed from every field upstream states it in; `reference` is the row that
+ * granted it.
  */
 export type WeaponTrait = Weapon & {
   name: string;
