@@ -1,6 +1,6 @@
 /**
- * Schema for `homebrew.db` — your custom items, spells, backgrounds, feats, races and
- * classes.
+ * Schema for `homebrew.db` — your custom items, spells, backgrounds, feats, races,
+ * classes and skills.
  *
  * Kept apart from `content.db` so the catalog stays disposable: rebuilding the
  * official content can never touch your homebrew. Rows carry source "HB" and are
@@ -14,6 +14,7 @@ import type {
   HomebrewClass,
   HomebrewItem,
   RaceEntry,
+  SkillEntry,
   SpellEntry,
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
@@ -100,4 +101,16 @@ export const homebrewSpells = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [uniqueIndex("homebrew_spells_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
+);
+
+export const homebrewSkills = sqliteTable(
+  "homebrew_skills",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
+    json: text("json", { mode: "json" }).$type<SkillEntry>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("homebrew_skills_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
 );

@@ -25,6 +25,7 @@ import { homebrewClassesRoutes } from "./routes/homebrew-classes.ts";
 import { homebrewFeatsRoutes } from "./routes/homebrew-feats.ts";
 import { homebrewItemsRoutes } from "./routes/homebrew-items.ts";
 import { homebrewRacesRoutes } from "./routes/homebrew-races.ts";
+import { homebrewSkillsRoutes } from "./routes/homebrew-skills.ts";
 import { homebrewSpellsRoutes } from "./routes/homebrew-spells.ts";
 import { pagesRoutes } from "./routes/pages.ts";
 import { spellsRoutes } from "./routes/spells.ts";
@@ -69,6 +70,7 @@ describe("/openapi.json", () => {
       homebrewFeatsRoutes,
       homebrewRacesRoutes,
       homebrewClassesRoutes,
+      homebrewSkillsRoutes,
     ]) {
       app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
     }
@@ -104,6 +106,8 @@ describe("/openapi.json", () => {
       "/homebrew/items/{id}",
       "/homebrew/races",
       "/homebrew/races/{id}",
+      "/homebrew/skills",
+      "/homebrew/skills/{id}",
       "/homebrew/spells",
       "/homebrew/spells/{id}",
       "/spells",

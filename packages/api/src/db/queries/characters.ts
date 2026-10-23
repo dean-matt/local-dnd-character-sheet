@@ -5,6 +5,7 @@
  * set adrift. An edit and an undo share that statement, so a restore passes the schema
  * and the projections an edit does.
  */
+import { HOMEBREW_SOURCE } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type CharacterFile,
@@ -271,6 +272,27 @@ export function charactersReferencingHomebrew(
 ): { id: string; name: string }[] {
   return listCharacters(db)
     .filter((row) => referencesHomebrewId(row.definition, homebrewId))
+    .map((row) => ({ id: row.id, name: row.name }));
+}
+
+/**
+ * The characters holding the homebrew skill `name` in their skill proficiencies, which
+ * cite it by `(name, source)` and not by id, so a rename or delete must find them by name.
+ */
+export function charactersReferencingHomebrewSkill(
+  db: CharactersDb,
+  name: string,
+): { id: string; name: string }[] {
+  const wanted = name.toLowerCase();
+  return listCharacters(db)
+    .filter(
+      ({ definition }) =>
+        characterDefinitionSchema
+          .safeParse(definition)
+          .data?.proficiencies.skills.some(
+            ({ ref }) => ref.source === HOMEBREW_SOURCE && ref.name.toLowerCase() === wanted,
+          ) ?? false,
+    )
     .map((row) => ({ id: row.id, name: row.name }));
 }
 

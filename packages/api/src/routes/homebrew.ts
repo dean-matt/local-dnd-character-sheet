@@ -16,12 +16,14 @@ import {
   type HomebrewFeatRecord,
   type HomebrewItemRecord,
   type HomebrewRaceRecord,
+  type HomebrewSkillRecord,
   type HomebrewSpellRecord,
   homebrewBackgroundRecordSchema,
   homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
   homebrewRaceRecordSchema,
+  homebrewSkillRecordSchema,
   homebrewSpellRecordSchema,
 } from "@dnd/catalog";
 import { EDITIONS, type Edition } from "@dnd/rules";
@@ -33,6 +35,7 @@ import {
   type getHomebrewFeat,
   type getHomebrewItem,
   type getHomebrewRace,
+  type getHomebrewSkill,
   type getHomebrewSpell,
   type HomebrewDb,
   homebrewNamed,
@@ -45,6 +48,7 @@ type BackgroundRow = NonNullable<ReturnType<typeof getHomebrewBackground>>;
 type FeatRow = NonNullable<ReturnType<typeof getHomebrewFeat>>;
 type RaceRow = NonNullable<ReturnType<typeof getHomebrewRace>>;
 type ClassRow = NonNullable<ReturnType<typeof getHomebrewClass>>;
+type SkillRow = NonNullable<ReturnType<typeof getHomebrewSkill>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
 export function toItemRecord(row: ItemRow): HomebrewItemRecord {
@@ -76,6 +80,11 @@ export function toClassRecord(row: ClassRow): HomebrewClassRecord {
   return homebrewClassRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
+/** Validates a row read back from SQLite against the same schema its write went through. */
+export function toSkillRecord(row: SkillRow): HomebrewSkillRecord {
+  return homebrewSkillRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
+}
+
 export const idParam = z.object({ id: z.string() });
 
 const referencingCharacterSchema = z.object({ id: z.string(), name: z.string() });
@@ -92,6 +101,32 @@ export const referenced = (resource: string) => ({
 export const referencedError = (resource: string, characters: { id: string; name: string }[]) => ({
   error: `${resource} is referenced by ${characters.length === 1 ? "a character" : "characters"} and cannot be deleted`,
   characters,
+});
+
+const namedSchema = z.object({ id: z.string(), name: z.string() });
+
+/** A skill is cited by name, from a character's proficiencies and an item's advantage effect. */
+export const skillReferenced = {
+  description: "A character or an item still cites this skill",
+  content: {
+    "application/json": {
+      schema: z.object({
+        error: z.string(),
+        characters: z.array(namedSchema),
+        items: z.array(namedSchema),
+      }),
+    },
+  },
+};
+
+export const skillReferencedError = (
+  action: string,
+  characters: { id: string; name: string }[],
+  items: { id: string; name: string }[],
+) => ({
+  error: `This skill is cited by ${[...characters, ...items].map(({ name }) => name).join(", ")} and cannot be ${action}`,
+  characters,
+  items,
 });
 
 const nameHolderSchema = z.object({ id: z.string(), name: z.string(), edition: z.enum(EDITIONS) });

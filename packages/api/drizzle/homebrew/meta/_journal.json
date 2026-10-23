@@ -50,6 +50,13 @@
       "when": 1790601368657,
       "tag": "0006_unique_homebrew_option_names",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792780916600,
+      "tag": "0007_homebrew_skills",
+      "breakpoints": true
     }
   ]
 }
