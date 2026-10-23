@@ -1,5 +1,5 @@
 /**
- * What a homebrew race, class, background or feat row's chips and preview name, read off
+ * What a homebrew race, class, background, feat or skill row's chips and preview name, read off
  * its 5etools-shaped entry by the same schemas the sheet reads it with. A fact the entry
  * leaves out is left out.
  */
@@ -101,4 +101,8 @@ export function featFacts(json: Json): Fact[] {
   // An alternative naming nothing the schema reads, such as a background, reads as met.
   if (alternatives.includes("")) return [];
   return stated([["Prerequisite", alternatives.join("; or ")]]);
+}
+
+export function skillFacts(json: Json): Fact[] {
+  return stated([["Ability", typeof json.ability === "string" ? abbreviated(json.ability) : ""]]);
 }

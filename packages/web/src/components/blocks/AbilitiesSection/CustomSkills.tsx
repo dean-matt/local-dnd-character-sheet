@@ -18,7 +18,7 @@ import { InputField } from "../../InputField.tsx";
 import { Select } from "../../Select.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
-import { RemoveCustomSkill } from "./RemoveCustomSkill.tsx";
+import { RemoveSkill } from "./RemoveSkill.tsx";
 
 type CustomSkill = CharacterDefinition["customSkills"][number];
 
@@ -144,9 +144,16 @@ export function CustomSkills({
                         />
                       </div>
                     )}
-                    <RemoveCustomSkill
+                    <RemoveSkill
                       characterId={character.id}
                       name={skill.name}
+                      overridePrefix={`customSkills.${skill.name}.`}
+                      without={(latest) => ({
+                        ...latest,
+                        customSkills: latest.customSkills.filter(
+                          (each) => each.name !== skill.name,
+                        ),
+                      })}
                       onRemoved={() => setRemoved(skill.name)}
                     />
                   </div>

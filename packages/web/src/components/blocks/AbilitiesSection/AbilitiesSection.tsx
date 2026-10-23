@@ -17,6 +17,7 @@ import {
 import { EmptyState } from "../../../EmptyState.tsx";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
+import { AddHomebrewSkill } from "./AddHomebrewSkill.tsx";
 import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CatalogSkills } from "./CatalogSkills.tsx";
@@ -87,6 +88,7 @@ export function AbilitiesSection({
         </Card>
         <Card title="Skills">
           <CatalogSkills character={character} derived={derived} />
+          <AddHomebrewSkill character={character} />
           <CustomSkills character={character} derived={derived} />
           <PassiveScores character={character} derived={derived} />
         </Card>

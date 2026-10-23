@@ -1,8 +1,10 @@
+import { homebrewSkillRecordSchema } from "@dnd/catalog";
 import { ABILITIES, ABILITY_LABEL } from "@dnd/character";
 import type { ReactNode } from "react";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Select } from "../../components/Select.tsx";
+import { useHomebrew } from "../../hooks/useHomebrew.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { textAt } from "./homebrewEntry.ts";
@@ -20,13 +22,14 @@ const ABILITY_OPTIONS = [
   ...ABILITIES.map((ability) => ({ value: ability, label: ABILITY_LABEL[ability] })),
 ];
 
-const SKILL_OPTIONS = SKILL_NAMES.map((name) => ({ value: name, label: name }));
+const BUILT_IN_SKILL_OPTIONS = SKILL_NAMES.map((name) => ({ value: name, label: name }));
 
 type Effect = Record<string, unknown>;
 
 /**
  * The advantage or disadvantage an item grants on a roll, one row per effect. Changing a
  * row's roll drops its target, since an ability and a skill name are not interchangeable.
+ * A skill row offers the built-in skills, then the homebrew skills by name.
  */
 export function AdvantageFields({
   effects,
@@ -37,6 +40,14 @@ export function AdvantageFields({
   onChange: (next: unknown[]) => void;
   error?: ReactNode;
 }) {
+  const homebrewSkills = useHomebrew("skills", homebrewSkillRecordSchema).list.data;
+  const skillOptions = [
+    ...BUILT_IN_SKILL_OPTIONS,
+    ...[...new Set(homebrewSkills?.map(({ name }) => name))].map((name) => ({
+      value: name,
+      label: name,
+    })),
+  ];
   const rows: Effect[] = effects.map((effect) => (isRecord(effect) ? effect : {}));
   const replace = (index: number, change: Effect) =>
     onChange(
@@ -88,7 +99,7 @@ export function AdvantageFields({
                 {(control) => (
                   <Select
                     {...control}
-                    options={roll === "skill" ? SKILL_OPTIONS : ABILITY_OPTIONS}
+                    options={roll === "skill" ? skillOptions : ABILITY_OPTIONS}
                     value={textAt(row, "target")}
                     onChange={(target) => replace(index, { target: target || undefined })}
                   />

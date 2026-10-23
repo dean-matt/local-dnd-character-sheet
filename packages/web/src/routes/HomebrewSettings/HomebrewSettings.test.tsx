@@ -33,6 +33,14 @@ const sunblade = {
   createdAt: CREATED_AT,
 };
 
+const sailing = {
+  id: "k1",
+  name: "Sailing",
+  edition: "one",
+  json: { name: "Sailing", source: "HB", ability: "wis" },
+  createdAt: CREATED_AT,
+};
+
 const ward = {
   name: "Coastal Ward",
   level: 2,
@@ -503,6 +511,20 @@ describe("HomebrewSettings", () => {
 
     click("Remove effect 1");
     expect(entry()).not.toHaveProperty("advantage");
+  });
+
+  it("lists a homebrew skill after the built-in skills in an item's advantage picker", async () => {
+    stubApi({ skills: [sailing] });
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    stepTo("Effects");
+    click("Add an effect");
+    pick("Effect 1 roll", "Skill");
+    fireEvent.click(field("combobox", "Effect 1 skill"));
+    await screen.findByRole("option", { name: "Sailing" });
+    const options = screen.getAllByRole("option").map((option) => option.textContent);
+    expect(options.slice(-2)).toEqual(["Survival", "Sailing"]);
   });
 
   it("states an item's senses through the form, one range each, and drops the field when none is left", async () => {
@@ -1025,6 +1047,59 @@ describe("HomebrewSettings", () => {
     expect(writesOf(fetchMock)).toEqual([
       { url: "/api/homebrew/items/i1", method: "DELETE", body: undefined },
     ]);
+  });
+
+  it("creates a skill from its name and ability, and chips the ability", async () => {
+    const fetchMock = stubApi({}, [{ status: 201, body: sailing }]);
+    renderPage();
+
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Skills" })).getByRole("button", {
+        name: "Add skill",
+      }),
+    );
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Sailing" } });
+    pick("Ability", "Wisdom");
+    click("Save");
+
+    await waitFor(() =>
+      expect(writesOf(fetchMock)).toEqual([
+        {
+          url: "/api/homebrew/skills",
+          method: "POST",
+          body: expect.objectContaining({ name: "Sailing", ability: "wis", edition: "one" }),
+        },
+      ]),
+    );
+  });
+
+  it("refuses to delete a skill an item names, naming the item beside any character", async () => {
+    stubApi({ skills: [sailing] }, [
+      {
+        status: 409,
+        body: {
+          error: "This skill is cited by Vex, Compass and cannot be deleted",
+          characters: [{ id: "c1", name: "Vex" }],
+          items: [{ id: "i2", name: "Compass" }],
+        },
+      },
+    ]);
+    renderPage();
+
+    fireEvent.click(
+      await within(screen.getByRole("region", { name: "Skills" })).findByRole("button", {
+        name: "Delete Sailing",
+      }),
+    );
+    const dialog = screen.getByRole("dialog", { name: "Delete Sailing?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(await within(dialog).findByRole("link", { name: "Vex" })).toBeVisible();
+    expect(within(dialog).getByText("Compass")).toBeVisible();
+    expect(within(dialog).getByRole("button", { name: "Delete" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
   });
 
   it("deletes a row nothing holds once asked to", async () => {
