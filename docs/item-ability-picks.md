@@ -12,7 +12,8 @@ An inventory entry stores its pick as `abilityPicks`, a list of scores, on the e
 rather than the item, so two copies pick separately. Only picks the item offers count,
 each once and no more than `count`. Each earns `amount`, or 1 where the row states none,
 and changes the score as any item grant does, equipped and attuned where required. A
-re-pick replaces the list.
+re-pick replaces the list. The inventory row beside the entry makes, changes and clears it;
+the item's `offers` in the inventory read says which picks the row shows.
 
 Until the picks are made the item grants nothing, and `pendingAbilityPicks` in the derived
 block names the entry, the scores it offers and `count`, the total to pick. An unequipped item

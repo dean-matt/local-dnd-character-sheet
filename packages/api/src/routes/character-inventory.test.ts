@@ -24,6 +24,8 @@ const ORB = { name: "Orb of Dragonkind", source: "DMG" };
 const HALF_PLATE = { name: "Half Plate Armor", source: "XPHB" };
 const MIND_CARAPACE = { name: "Mind Carapace Armor", source: "VGM" };
 const MAP = { name: "Map of Nowhere", source: "DMG" };
+const DECK = { name: "Deck of Many Things", source: "DMG" };
+const TOME = { name: "Tome of Tongues", source: "DMG" };
 
 const row = (
   ref: { name: string; source: string },
@@ -130,6 +132,8 @@ describe("characterInventoryRoutes", () => {
       ),
       row(ORB, "item", { type: "OTH" }, { rarity: "artifact" }),
       row(MAP, "item", {}, { rarity: "varies" }),
+      row(DECK, "item", { ability: { from: ["str", "dex"], count: 2, amount: 2 } }),
+      row(TOME, "item", { grantsProficiency: true, grantsLanguage: true }),
     ];
     publishDerivedFixture(dataDir, {
       items,
@@ -187,6 +191,7 @@ describe("characterInventoryRoutes", () => {
         },
         weapon: null,
         armor: null,
+        offers: { abilities: null, proficiency: false, language: false },
         entries: ["A +1 bonus to AC."],
       },
       expect.objectContaining({ name: "Longsword", weight: 3, attuned: false }),
@@ -207,6 +212,24 @@ describe("characterInventoryRoutes", () => {
       value: 7500,
       weapon: null,
       armor: { category: "heavy", armorClass: 16 },
+    });
+  });
+
+  it("names the picks an item offers the wearer, and none for an item that offers none", async () => {
+    store(withInventory([{ ref: DECK }, { ref: TOME }, { ref: LONGSWORD }]));
+    const [deck, tome, sword] = await items();
+    expect(deck).toMatchObject({
+      offers: {
+        abilities: { from: ["str", "dex"], count: 2 },
+        proficiency: false,
+        language: false,
+      },
+    });
+    expect(tome).toMatchObject({
+      offers: { abilities: null, proficiency: true, language: true },
+    });
+    expect(sword).toMatchObject({
+      offers: { abilities: null, proficiency: false, language: false },
     });
   });
 

@@ -1,3 +1,4 @@
+import { ABILITIES } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
 
@@ -55,6 +56,18 @@ const valueEstimateSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("priceless"), table: z.string().min(1) }),
 ]);
 
+/**
+ * What the wearer picks on the item: `abilities` the scores it offers and how many to choose,
+ * and whether it grants a proficiency or a language that upstream flags without naming.
+ */
+const itemOffersSchema = z.strictObject({
+  abilities: z
+    .strictObject({ from: z.array(z.enum(ABILITIES)).min(1), count: z.int().min(1) })
+    .nullable(),
+  proficiency: z.boolean(),
+  language: z.boolean(),
+});
+
 const sheetItemSchema = z.discriminatedUnion("resolved", [
   z.strictObject({
     resolved: z.literal(true),
@@ -70,6 +83,7 @@ const sheetItemSchema = z.discriminatedUnion("resolved", [
     estimate: valueEstimateSchema.nullable(),
     weapon: weaponFactsSchema.nullable(),
     armor: armorFactsSchema.nullable(),
+    offers: itemOffersSchema,
     entries: entriesSchema,
     /** The refusal a table overrode to hold this variant on this base item. */
     overridden: z.string().min(1).optional(),

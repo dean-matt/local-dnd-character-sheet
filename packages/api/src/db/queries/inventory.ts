@@ -5,8 +5,10 @@
  * for the reason `features.ts` gives.
  */
 import {
+  abilityGrantSchema,
   armorTraitSchema,
   type CharacterInventory,
+  itemBonusSchema,
   itemEntries,
   type SheetItem,
   weaponTraitSchema,
@@ -120,6 +122,16 @@ function weaponFacts(row: ItemFacts): Extract<SheetItem, { resolved: true }>["we
   return weapon ? { category: weapon.category, damage: weapon.damage } : null;
 }
 
+function itemOffers(row: ItemFacts): Extract<SheetItem, { resolved: true }>["offers"] {
+  const choose = abilityGrantSchema.safeParse(row.json).data?.choose;
+  const bonus = itemBonusSchema.safeParse(row.json).data;
+  return {
+    abilities: choose ? { from: choose.from, count: choose.count } : null,
+    proficiency: bonus?.grantsProficiency ?? false,
+    language: bonus?.grantsLanguage ?? false,
+  };
+}
+
 const OVERRIDE_REASONS = {
   requirements: "This base item does not meet the variant's requirements.",
 } satisfies Record<Exclude<NonNullable<InventoryEntry["variantOverride"]>, string>["code"], string>;
@@ -156,6 +168,7 @@ function sheetItem(
     estimate: estimateOf(row),
     weapon: weaponFacts(row),
     armor: armorTraitSchema.safeParse(row.json).data ?? null,
+    offers: itemOffers(row),
     entries: itemEntries(row.json),
     ...(variantOverride && {
       overridden:

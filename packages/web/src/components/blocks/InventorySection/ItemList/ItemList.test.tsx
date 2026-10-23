@@ -10,6 +10,7 @@ import { saveToasts } from "../../../../test/saveToasts.ts";
 import { SaveToasts } from "../../../SaveToasts.tsx";
 import { ItemList } from "./ItemList.tsx";
 
+type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 const flags = { quantity: 1, carried: true, equipped: false, attuned: false };
 const plain = {
   type: null,
@@ -18,6 +19,7 @@ const plain = {
   estimate: null,
   weapon: null,
   armor: null,
+  offers: { abilities: null, proficiency: false, language: false },
   entries: [],
 };
 
@@ -55,13 +57,13 @@ const ITEMS: SheetItem[] = [
   },
 ];
 
-function vex(houseRules: Record<string, boolean> = {}) {
+function vex(houseRules: Record<string, boolean> = {}, firstEntry: object = {}) {
   const record = characterRecord("1", "Vex");
   const definition = characterDefinitionSchema.parse({
     ...record.definition,
     houseRules,
     inventory: [
-      { ref: { name: "Longsword", source: "PHB" } },
+      { ref: { name: "Longsword", source: "PHB" }, ...firstEntry },
       { ref: { name: "Cloak of Protection", source: "DMG" }, attuned: true },
       { ref: { name: "Ring of Warmth", source: "DMG" }, carried: false },
     ],
@@ -88,7 +90,12 @@ const homebrew = {
 };
 
 function searchPage(url: string) {
-  const kind = new URL(url, "http://local").searchParams.get("kind");
+  const params = new URL(url, "http://local").searchParams;
+  if (params.get("type") === "language") {
+    const items = [{ type: "language", name: "Elvish", source: "XPHB", edition: "one" }];
+    return json({ items, total: 1, limit: 20, offset: 0 });
+  }
+  const kind = params.get("kind");
   const items =
     kind === "melee,ranged,ammunition"
       ? [hit("Dagger", "XPHB"), hit("+1 Armor", "XDMG", { variant: true })]
@@ -138,6 +145,7 @@ function stubApi({
   refetch = true,
   holdFirstPut = false,
   houseRules,
+  firstEntry,
 }: {
   inventory?: SheetItem[];
   variantStatus?: number;
@@ -146,9 +154,10 @@ function stubApi({
   refetch?: boolean;
   holdFirstPut?: boolean;
   houseRules?: Record<string, boolean>;
+  firstEntry?: object;
 } = {}) {
   let reads = 0;
-  let record = vex(houseRules);
+  let record = vex(houseRules, firstEntry);
   let held = holdFirstPut
     ? new Promise<void>((resolve) => {
         releasePut = resolve;
@@ -184,7 +193,7 @@ function renderList(
 ) {
   const fetchMock = stubApi({ inventory, ...stub });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const character = vex(stub.houseRules);
+  const character = vex(stub.houseRules, stub.firstEntry);
   client.setQueryData(characterKey(character.id), character);
   render(
     <QueryClientProvider client={client}>
@@ -723,6 +732,101 @@ describe("ItemList", () => {
     fireEvent.click(within(row("Ring of Warmth")).getByLabelText("Attuned, Ring of Warmth"));
 
     expect((await written(fetchMock)).inventory[2].attuned).toBe(true);
+  });
+
+  describe("picks the wearer makes", () => {
+    const offering = (offers: Partial<ResolvedItem["offers"]> = {}): SheetItem[] =>
+      [
+        {
+          ...ITEMS[0],
+          offers: { abilities: null, proficiency: false, language: false, ...offers },
+        },
+        ...ITEMS.slice(1),
+      ] as SheetItem[];
+    const scores: Partial<ResolvedItem["offers"]> = {
+      abilities: { from: ["str", "dex"], count: 1 },
+    };
+
+    it("offers nothing on an item that offers no pick", async () => {
+      renderList();
+
+      await screen.findByText("Longsword");
+      expect(within(row("Longsword")).queryByLabelText(/^Proficiency, /)).toBeNull();
+      expect(within(row("Longsword")).queryByRole("button", { name: /^Raises/ })).toBeNull();
+    });
+
+    it("replaces a score pick past the count", async () => {
+      const fetchMock = renderList(derivedRecord(), offering(scores), {
+        firstEntry: { abilityPicks: ["str"] },
+      });
+
+      await screen.findByText("Longsword");
+      fireEvent.click(within(row("Longsword")).getByRole("button", { name: /Raises, Longsword/ }));
+      fireEvent.click(screen.getByRole("checkbox", { name: "Dexterity" }));
+      await waitFor(async () =>
+        expect((await written(fetchMock)).inventory[0].abilityPicks).toEqual(["dex"]),
+      );
+    });
+
+    it("clears a score pick", async () => {
+      const fetchMock = renderList(derivedRecord(), offering(scores), {
+        firstEntry: { abilityPicks: ["str"] },
+      });
+
+      await screen.findByText("Longsword");
+      fireEvent.click(within(row("Longsword")).getByRole("button", { name: /Raises, Longsword/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Clear scores" }));
+      await waitFor(async () =>
+        expect((await written(fetchMock)).inventory[0]).not.toHaveProperty("abilityPicks"),
+      );
+    });
+
+    it("stores a proficiency pick, and an emptied field clears it", async () => {
+      const fetchMock = renderList(derivedRecord(), offering({ proficiency: true }));
+
+      const field = await screen.findByLabelText("Proficiency, Longsword");
+      fireEvent.change(field, { target: { value: "Longbow" } });
+      fireEvent.blur(field);
+      expect((await written(fetchMock)).inventory[0].proficiencyPick).toBe("Longbow");
+    });
+
+    it("clears a proficiency pick", async () => {
+      const fetchMock = renderList(derivedRecord(), offering({ proficiency: true }), {
+        firstEntry: { proficiencyPick: "Longbow" },
+      });
+
+      const field = await screen.findByLabelText("Proficiency, Longsword");
+      expect(field).toHaveValue("Longbow");
+      fireEvent.change(field, { target: { value: "" } });
+      fireEvent.blur(field);
+      await waitFor(async () =>
+        expect((await written(fetchMock)).inventory[0]).not.toHaveProperty("proficiencyPick"),
+      );
+    });
+
+    it("stores a language pick from the catalog", async () => {
+      const fetchMock = renderList(derivedRecord(), offering({ language: true }));
+
+      await screen.findByText("Longsword");
+      await pick("Language, Longsword", "elv", /^Elvish/);
+
+      expect((await written(fetchMock)).inventory[0].languagePick).toEqual({
+        name: "Elvish",
+        source: "XPHB",
+      });
+    });
+
+    it("removes a language pick", async () => {
+      const fetchMock = renderList(derivedRecord(), offering({ language: true }), {
+        firstEntry: { languagePick: { name: "Elvish", source: "XPHB" } },
+      });
+
+      fireEvent.click(await screen.findByLabelText("Remove Elvish"));
+
+      await waitFor(async () =>
+        expect((await written(fetchMock)).inventory[0]).not.toHaveProperty("languagePick"),
+      );
+    });
   });
 
   it("toasts a change that failed to save, with Retry", async () => {
