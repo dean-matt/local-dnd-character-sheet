@@ -20,7 +20,7 @@ describe("RulesText", () => {
     expect(screen.getByText("Bold").tagName).toBe("STRONG");
     // a computed text token
     expect(container).toHaveTextContent("DC 15");
-    // ref: unlinked display text, its name and source carried for a later tier
+    // ref: unlinked display text, its name and source carried as data attributes
     const ref = screen.getByText("fireball");
     expect(ref.tagName).toBe("SPAN");
     expect(ref).toHaveAttribute("data-tag", "spell");

@@ -47,6 +47,8 @@ const RULES: { pattern: RegExp; why: string }[] = [
   { pattern: /\bpreviously\b/i, why: "narrates a past state" },
   { pattern: /\bwas\s+\w+\s+before\b/i, why: "narrates a past state" },
   { pattern: /\b(?:TODO|FIXME|XXX|HACK)\b/, why: "a task marker — file an issue instead" },
+  { pattern: /\ba later (?:change|tier)\b/i, why: "narrates planned work — file an issue instead" },
+  { pattern: /\\`/, why: "an escaped backtick — a comment is not a template literal" },
   {
     // Matching the one label this repository has seen rather than any `word:` —
     // the general form flags wrapped prose, and a false positive here costs
