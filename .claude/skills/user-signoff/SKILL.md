@@ -25,18 +25,26 @@ gh api "repos/{owner}/{repo}/collaborators/$me" --silent 2>/dev/null || {
 
 Ask the user about each stop by name, with what the change does, and wait for an answer to
 that stop. An answer to a different question does not clear it. Once every stop is
-cleared, run `merge-pr`'s *Block on the checks* and *The gate* again. A cleared fenced
-path is the only `FAIL` that may remain, and a cleared label the only label other than
-`review:approved`; a decline still `FAIL` after its `**Accepted**` reply means the reply
-did not take. Merge past those two and nothing else, through *Merge, then clean up*.
+cleared, run `merge-pr`'s *Block on the checks* and *The gate* again. A cleared label is
+the only label other than `review:approved` that may remain; a decline or fenced path still
+`FAIL` after its record means the record did not take. Merge past the label and nothing else,
+through *Merge, then clean up*.
 Report each sign-off taken: what was approved, heard directly.
 
 ## A fenced path
 
-"the diff reaches no fenced path" never gets easier to fail — `scripts/merge-gate.mjs`
-prints `FAIL` for every caller, unchanged, so it stays the one `FAIL` the merge goes past.
-A path under `docs/mockup/components/` waits on the user's approval of the mockup on the
-canvas, never a canvas comment.
+"the diff reaches no fenced path" stays `FAIL` until a signer records the sign-off. Post a
+pull request comment naming the head you read and every fenced path, as `scripts/merge-gate.mjs`
+`unsignedPaths` reads it:
+
+```bash
+gh pr comment "$n" --body "**Accepted fenced** $(git rev-parse HEAD) — <each fenced path>: <what was approved>"
+```
+
+A record from a login that is not a signer, one naming another head, or one posted before
+the head's commit leaves the paths `FAIL`; a push after it needs a new record. A path under
+`docs/mockup/components/` waits on the user's approval of the mockup on the canvas, never a
+canvas comment.
 
 ## A declined critical or warning
 

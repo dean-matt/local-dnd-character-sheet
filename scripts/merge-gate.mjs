@@ -211,6 +211,35 @@ export function blockingDeclines(comments, who) {
     .map((c) => c.html_url);
 }
 
+const FENCED_RECORD = /^\*\*Accepted fenced\*\* ([0-9a-f]{7,40})\b/;
+
+/**
+ * The fenced paths no signer has cleared. A signer clears them with a pull request comment
+ * opening `**Accepted fenced** <head sha> —` and naming each path. The sha ties the record
+ * to the head it read and the timestamp rules out a record dated before that head's commit.
+ * The opener differs from `**Accepted**` so it never clears a body decline. Each path is
+ * matched as a substring of the body, which a path that is a prefix of another would
+ * satisfy; the fence holds no such pair.
+ *
+ * @param {string[]} paths
+ * @param {string} head
+ * @param {string} headDate ISO date of the head commit
+ * @param {{ body?: string, created_at?: string, user?: { login: string } }[]} comments
+ * @param {string[]} who the signers
+ */
+export function unsignedPaths(paths, head, headDate, comments, who) {
+  const records = comments.filter((c) => {
+    const sha = FENCED_RECORD.exec(c.body ?? "")?.[1];
+    return (
+      sha !== undefined &&
+      head.startsWith(sha) &&
+      who.includes(c.user?.login ?? "") &&
+      Date.parse(c.created_at ?? "") > Date.parse(headDate)
+    );
+  });
+  return paths.filter((p) => !records.some((c) => c.body?.includes(p)));
+}
+
 const BODY_DECLINED = /^\*\*Declined\*\* (critical|warning)\b/;
 
 /**
@@ -370,10 +399,18 @@ function gate(n, given) {
   const bumped = changed
     .filter((p) => /(^|\/)package\.json$/.test(p))
     .filter((p) => dependenciesDiffer(show(base, p), show(head, p)));
+  const reached = [...fenced, ...bumped];
+  const unsigned = unsignedPaths(
+    reached,
+    head,
+    git(["show", "-s", "--format=%cI", head]),
+    api(`repos/{owner}/{repo}/issues/${n}/comments`),
+    who,
+  );
   report(
-    fenced.length === 0 && bumped.length === 0,
+    unsigned.length === 0,
     "the diff reaches no fenced path",
-    [...fenced.map(fenceNote), ...bumped].join("\n      "),
+    unsigned.map(fenceNote).join("\n      "),
   );
 
   const pr = gh([
