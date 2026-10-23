@@ -3,9 +3,6 @@ import { rollDice } from "@dnd/dice";
 
 type Level = CharacterDefinition["levels"][number];
 
-/** The most levels a character holds, across every class. */
-export const HIGHEST_LEVEL = 20;
-
 export const rollHitDie = (faces: number): number => rollDice(`1d${faces}`).total;
 
 /** One class the levels hold, with its own levels in the order they were taken. */
