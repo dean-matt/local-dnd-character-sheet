@@ -1,4 +1,4 @@
-import { type CharacterDefinition, entryKey, type HitDie } from "@dnd/character";
+import { type CharacterDefinition, displayName, entryKey, type HitDie } from "@dnd/character";
 import { type ReactNode, useId } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { levelChoiceRefusals } from "../../../lib/levelChoices.ts";
@@ -8,6 +8,7 @@ import { LevelEditAlert } from "./LevelEditAlert.tsx";
 import { LevelUpPicks } from "./LevelUpPicks.tsx";
 import { type StartingSwap, withReopenedLevel } from "./reopenedLevel.ts";
 import { StartingClassField } from "./StartingClassField.tsx";
+import { StartingPicksFields } from "./StartingPicksFields.tsx";
 import { useLaterPrerequisites } from "./useLaterPrerequisites.ts";
 import { useLevelUpPlan } from "./useLevelUpPlan.ts";
 import { useStartingClassGrants } from "./useStartingClassGrants.ts";
@@ -53,9 +54,9 @@ function asksNothing(plan: ReturnType<typeof useLevelUpPlan>) {
  * nothing that depends on it would be left behind; each such dependency is named instead. A multiclass
  * prerequisite the change leaves unmet is named and noted as a departure, as the level-up
  * notes one, and never refuses.
- * Level 1 also offers its class: a new one takes back the old one's level 1 choices and asks
- * the new one's, and Apply hands `onSwap` what the old one granted outright and what the new
- * one grants. A later level's class is not offered.
+ * Level 1 also offers its class: a new one takes back the old one's level 1 skill and tool
+ * picks and asks the new one's, and Apply waits until they are made, then hands `onSwap` what
+ * the old one granted and what the new one grants. A later level's class is not offered.
  */
 export function LevelEditForm({
   before,
@@ -96,7 +97,7 @@ export function LevelEditForm({
   // A gain alone writes the choices as they stood, so it never waits on reading them.
   const choicesRead = [plan.picksReady, later.read, starting.read].every(Boolean);
   const waiting = formState.isDirty ? !choicesRead : !gainChanged;
-  const blocked = waiting || saving || refusals.length > 0;
+  const blocked = waiting || saving || refusals.length > 0 || !starting.ready;
   return (
     <Modal onClose={cancel}>
       <ModalEntry
@@ -175,10 +176,12 @@ export function LevelEditForm({
             </>
           )}
         </div>
+        {level === 1 && starting.picks && drafted && (
+          <StartingPicksFields name={displayName(drafted)} picks={starting.picks} />
+        )}
         {level === 1 && (
           <p className="text-muted text-row">
-            A new class leaves the skills, tools and spells the old one let you pick; change them
-            from their lists.
+            A new class leaves the spells the old one let you pick; change them from their list.
           </p>
         )}
       </ModalEntry>

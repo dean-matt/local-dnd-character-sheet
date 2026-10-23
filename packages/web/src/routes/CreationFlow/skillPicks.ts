@@ -1,5 +1,5 @@
 import { type ContentRef, refKey } from "@dnd/character";
-import { duplicates, needed as neededOf, spent, type Tally, tally } from "./pickTally.ts";
+import { duplicates, needed as neededOf, spent, type Tally, tally } from "../../lib/pickTally.ts";
 
 /**
  * The skills a class, a background or a race lets the player pick, and how many. A `Replacement`

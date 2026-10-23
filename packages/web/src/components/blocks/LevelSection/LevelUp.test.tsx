@@ -121,6 +121,7 @@ const ROWS: Record<string, unknown> = {
       ...WARLOCK,
       proficiency: ["wis", "cha"],
       startingProficiencies: {
+        skills: [{ choose: { from: ["acrobatics"], count: 1 } }],
         armorProficiencies: [{ light: true, medium: true }],
         weapons: ["simple", "martial"],
       },
@@ -206,6 +207,10 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Paladin/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Bard/XPHB": entryRow(BARD, 8, {
     primaryAbility: [{ cha: true }],
+    startingProficiencies: {
+      skills: [{ choose: { from: ["acrobatics", "stealth"], count: 1 } }],
+      toolProficiencies: [{ anyMusicalInstrument: 1 }],
+    },
     multiclassing: {
       proficienciesGained: {
         skills: [{ choose: { from: ["acrobatics", "stealth"], count: 1 } }],
@@ -1777,6 +1782,38 @@ describe("LevelUp", () => {
         armor: ["Light", "Shield"],
         tools: [{ name: "Thieves' Tools", level: "proficient" }],
       });
+      expect(undoEntry()).toBe("own");
+    });
+
+    it("asks a new starting class for its picks and takes back the old one's, as one write", async () => {
+      const base = warlock(1);
+      renderSeeded(
+        warlock(1, {
+          proficiencies: {
+            ...base.definition.proficiencies,
+            skills: [{ ref: XPHB("Acrobatics"), level: "proficient" }],
+          },
+        }),
+        { history: true },
+      );
+      await reopen(1);
+      fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
+      fireEvent.click(await within(dialog()).findByRole("option", { name: "Bard" }));
+
+      const skills = await within(dialog()).findByRole("group", { name: "Skills from Bard" });
+      await waitFor(() => expect(skills).toHaveTextContent("Choose 1 — 0 selected"));
+      const instruments = within(dialog()).getByRole("group", { name: "Tools from Bard" });
+      expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
+
+      fireEvent.click(within(skills).getByRole("checkbox", { name: "Stealth" }));
+      fireEvent.click(within(instruments).getByRole("checkbox", { name: "Lute" }));
+      await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(applyChanges());
+
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().levels).toEqual([{ class: BARD }]);
+      expect(sent().proficiencies.skills).toEqual([{ ref: XPHB("Stealth"), level: "proficient" }]);
+      expect(sent().proficiencies.tools).toEqual([{ name: "Lute", level: "proficient" }]);
       expect(undoEntry()).toBe("own");
     });
 
