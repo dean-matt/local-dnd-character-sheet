@@ -1,5 +1,6 @@
 /**
- * Rejects a commit on a branch that is not named `<type>/<issue>-<slug>`.
+ * Rejects a commit on a branch that is not named `<type>/<issue>-<slug>`, or
+ * `chore/<slug>` for work that has no issue.
  *
  * The name is the only place the work carries its reason once the shell scrollback
  * is gone, and renaming a branch is free right up until the first commit — so this
@@ -26,7 +27,7 @@ const TYPES = [
   "style",
 ];
 
-const PATTERN = new RegExp(`^(${TYPES.join("|")})/[0-9]+-[a-z0-9-]+$`);
+const PATTERN = new RegExp(`^(${TYPES.join("|")})/[0-9]+-[a-z0-9-]+$|^chore/[a-z0-9-]+$`);
 
 /** Returns an error message, or null when the branch is fine. */
 export function checkBranchName(branch) {
@@ -36,7 +37,7 @@ export function checkBranchName(branch) {
     return "Commit on a branch, not on main — pushes to main are rejected by the repository ruleset.";
   }
   if (PATTERN.test(branch)) return null;
-  return `Branch "${branch}" is not named <type>/<issue>-<slug>.`;
+  return `Branch "${branch}" is not named <type>/<issue>-<slug> or chore/<slug>.`;
 }
 
 function currentBranch() {
