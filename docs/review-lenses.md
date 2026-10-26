@@ -1,22 +1,15 @@
 # Review lenses
 
-What a review of a pull request here weighs, beyond what `pnpm check` and the `tests/*-shape`
-suites already assert. The reviewer skips formatting, import order, annotations, line length
-and a file over a cap, and judges the subject.
+What a review here adds to the plugin's general lenses. The reviewer skips what `pnpm check`
+and the `tests/*-shape` suites already assert.
 
-## On every pull request
+## Added to the general lenses
 
-- **Senior engineer** — the ladder in `CLAUDE.md`: need it, exists here already, one line.
-  Package boundaries, and the root cause over the path the issue named.
-- **Tester** — non-trivial logic leaves a check that fails if it breaks, tests ride with
-  their code, fixtures widen through their declaration. A test asserting the implementation
-  back to itself counts as none. A web test's waits meet the review list in
-  [`test-waits.md`](test-waits.md#for-review).
-- **QA** — acceptance criteria met, **Out of scope** respected, edges exercised: empty,
-  absent, zero, negative, multiclass, a homebrew row shadowing a catalog one.
-- **Editor** — the prose the change writes: commit message, pull request body, `docs/`, a
-  skill, a comment. A comment restating the code is a finding, and history and markers
-  belong in the commit message and the pull request body alone.
+The plugin's reviewer runs engineer, tester, QA and editor on every pull request. Here:
+
+- **Tester** also applies the review list in [`test-waits.md`](test-waits.md#for-review) to
+  a web test's waits, and treats fixtures that widen outside their declaration as no test.
+- **QA** adds these edges: multiclass, and a homebrew row shadowing a catalog one.
 
 ## Where the diff reaches them
 

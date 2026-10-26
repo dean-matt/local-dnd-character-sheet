@@ -133,7 +133,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/fluff.md`](docs/fluff.md) | `fluff-*.json`, the `hasFluff` promise, and how a subrace or a subclass is keyed |
 | [`docs/reversibility.md`](docs/reversibility.md) | Every decision the app stores, where it is written, and how it is reversed |
 | [`docs/test-waits.md`](docs/test-waits.md) | How a web test waits for the app to settle, and what review checks that no test can |
-| [`docs/review-lenses.md`](docs/review-lenses.md) | What a review of a pull request here weighs, and the invariants no test asserts |
+| [`docs/review-lenses.md`](docs/review-lenses.md) | What a review here adds to the plugin's lenses, and the invariants no test asserts |
 | [`docs/workflow.md`](docs/workflow.md) | What is true of working an issue here: `vendor/` checks, worktree links, the version, protected paths |
 | [`docs/reviving.md`](docs/reviving.md) | Getting back to a running app after a long gap |
 | [`docs/mockup/README.md`](docs/mockup/README.md) | The interactive UI mockup explored ahead of `packages/web`, and its live link |
