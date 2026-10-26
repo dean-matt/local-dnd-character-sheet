@@ -142,42 +142,29 @@ out of reach and reward denser, worse prose.
 
 ## Maintaining CLAUDE.md
 
-`CLAUDE.md` is capped at 150 lines by `tests/claude-md-shape.test.ts`, and the reason it
-has a cap when the README does not is that it is read at the start of *every* task. Its
-length is a tax on all future work rather than a one-time read.
+`CLAUDE.md` is read at the start of *every* task, so its length is a tax on all future work
+rather than a one-time read. Nothing caps it. A line count rewards denser, worse prose, so
+the file's own maintenance rules and review hold it down: tighten a bullet before adding one.
 
-When it overflows, extract to a skill — do not raise the cap. A skill loads on demand, so
-detail that only some tasks need costs nothing on the tasks that do not need it.
-
-The corollary matters just as much: anything that must apply on *every* task cannot be a
-skill. That is why the coding disposition lives in `CLAUDE.md` rather than
-`.claude/skills/`, kept to the handful of rules that change what gets written, and why it
-is written inline rather than imported from a vendored file — an import puts every-task
-instruction outside the cap that exists to bound it. Adapted from
+Detail that only some tasks need belongs in a skill or `docs/`, which load on demand. The
+corollary matters just as much: anything that must apply on *every* task cannot be a skill.
+That is why the coding disposition lives in `CLAUDE.md` rather than `.claude/skills/`, kept
+to the handful of rules that change what gets written, and why it is written inline rather
+than imported from a vendored file. Adapted from
 [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
 
-A skill is named for the job rather than the obvious verb, checked against what is
-installed on the machine. Namespacing keeps an explicit invocation unambiguous, but a
-request in prose picks between two similar descriptions, so a skill here called
-`work-issue` would compete with any plugin that owns the name. This repository's is
-`issue-to-pr` for that reason.
+The issue-to-merge workflow is the `github-sdlc` plugin's, not this repository's: its
+skills are not here, and `CLAUDE.md` points at what is true here alone. A skill is named
+for the job rather than the obvious verb, checked against what is installed on the machine,
+since a request in prose picks between two similar descriptions.
 
 A skill says what to do. It is instructions an agent executes, not an essay a human reads
 once, so a sentence explaining a decision nobody will revisit is one every future run pays
 for. Keep a reason where losing it lets the next agent delete a fence or walk into a
-failure that passes silently — those are the ones that cost a review pass to find. Nothing
-asserts this: the cap catches the symptom, and the register is a judgment on the pull
-request.
+failure that passes silently. Nothing asserts this; it is a judgment on the pull request.
 
-Editing one earns a `writing-clearly-and-concisely` pass before it is committed, which an
-ordinary file does not. A skill is the prose read at the start of every task it governs,
-so an ambiguous sentence misroutes the work rather than merely reading badly.
-
-Skills are indexed in `CLAUDE.md`, which is the only limit on how many exist. Capping the
-count would punish a project that legitimately grows; making skills compete for a budget
-you can see does not. `tests/skill-shape.test.ts` caps each `SKILL.md` at 150 lines, which
-is where skill bloat shows up. The cap matches `CLAUDE.md`'s, because a skill that drives
-a whole workflow carries about as much as the file that indexes it.
+Skills are indexed in `CLAUDE.md`. Nothing caps a `SKILL.md`, a reference document or the
+number of skills; a skill that has two subjects is split by review, not by a line count.
 
 That test parses the frontmatter rather than matching the file text, because a regex
 proves nothing about the mapping a loader reads: a description holding an unquoted
@@ -266,12 +253,12 @@ arithmetic and schemas whose readers are milestones away. It earns its place onc
 and the sheet are those readers.
 
 A dispatched agent drifts the same way prose does. Handed a narrow job, a fresh agent that
-recognizes a pull request mid-review, or a fork that inherits a dispatch prompt, carries on
-into the steps after its own — posting, labeling, pushing, closing the worktree. A prompt
-naming what it must not do holds most of the time; a tool the agent lacks holds every time.
-So the review pass runs as `.claude/agents/pr-auditor.md`, which carries no edit or dispatch
-tool, and `scripts/read-only-bash.mjs` refuses its commands that write to git or GitHub.
-That hook matches words rather than parsing the shell, so it stops drift and not evasion.
+recognizes a pull request mid-review carries on into the steps after its own — posting,
+labeling, pushing. A prompt naming what it must not do holds most of the time; a tool the
+agent lacks holds every time. So the `github-sdlc` plugin runs the review pass as an agent
+with no edit or dispatch tool, behind a hook that refuses its commands that write to git or
+GitHub. That hook matches words rather than parsing the shell, so it stops drift and not
+evasion.
 
 CI splits by what a check needs to read. Everything that reads only committed data runs
 on every pull request; the tests run on Linux and Windows, the rest on Linux alone. The
@@ -300,9 +287,8 @@ before it merges.
 
 The `schedule:` costs one thing beyond bandwidth: it makes the whole workflow subject to
 GitHub's 60-day inactivity disable, which the pin-only trigger was not. A disabled
-workflow does not fire on a tag bump either, and `notGreen` in `scripts/merge-gate.mjs`
-filters checks that report — so the bump merges with no corpus check and nothing red to
-show for it. `docs/reviving.md` carries the commands that turn it back on, because
+workflow does not fire on a tag bump either, and the merge gate judges only checks that
+report — so the bump merges with no corpus check and nothing red to show for it. `docs/reviving.md` carries the commands that turn it back on, because
 returning after a year is when it bites.
 
 What is deliberately *not* mechanized: whether an abstraction is warranted, and how many

@@ -188,9 +188,9 @@ changes `docs/mockup/components/` waits on their approval there.
    body, with the version the publish returned, then `gh pr ready <pr>`. A later push
    that changes a mockup file publishes again and replaces the line, so the version the
    user approves is the head that merges.
-5. **Merge only on the user's approval.** `scripts/merge-gate.mjs` fences the directory,
-   so the gate fails until the user approves the mockup on the canvas and the session
-   holding the conversation merges on that sign-off, as `user-signoff` describes.
+5. **Merge only on the user's approval.** `.github/protected-paths` fences the directory,
+   so the merge gate fails until the user approves the mockup on the canvas and the session
+   holding the conversation merges on that sign-off, as the plugin's `signoff` skill describes.
 
 No skill closes a pull request, so whoever closes one without merging puts the canvas back
 in the same turn: publish `main`'s version of each file it published, writing

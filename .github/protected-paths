@@ -1,0 +1,10 @@
+# A merge touching one of these waits on the user.
+CLAUDE.md
+CONTRIBUTING.md
+content.lock.json
+content.manifest.json
+.github/
+.claude/skills/
+packages/api/drizzle/
+# A mockup renders only on the canvas; the user approves it there (docs/mockup/README.md).
+docs/mockup/components/

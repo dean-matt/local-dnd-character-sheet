@@ -3,10 +3,25 @@ description: A unit of work — a feature, a change, or a chore
 labels: ["type:feat"]
 body:
   - type: textarea
-    id: what
+    id: summary
     attributes:
-      label: What
-      description: One or two sentences. What should be true when this is done?
+      label: Summary
+      description: The problem first, in one or two sentences.
+    validations:
+      required: true
+
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions
+      description: Anything unresolved that blocks starting. Leave empty if none.
+      placeholder: "- [ ] Which edition wins when both define the row?"
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What should NOT be touched.
     validations:
       required: true
 
@@ -14,10 +29,10 @@ body:
     id: acceptance
     attributes:
       label: Acceptance criteria
-      description: Observable, checkable outcomes.
+      description: Observable, checkable outcomes, numbered AC1, AC2 and so on.
       value: |
-        - [ ]
-        - [ ]
+        AC1.
+        AC2.
     validations:
       required: true
 
@@ -35,20 +50,5 @@ body:
         - web
         - repo
         - docs
-    validations:
-      required: true
-
-  - type: textarea
-    id: context
-    attributes:
-      label: Relevant docs and files
-      description: Point at the docs or code that carry the context, so it is not re-derived.
-      placeholder: docs/5etools-data.md — tag markup; packages/tags/src/
-
-  - type: textarea
-    id: out-of-scope
-    attributes:
-      label: Out of scope
-      description: What should NOT be touched. The single most useful field here.
     validations:
       required: true

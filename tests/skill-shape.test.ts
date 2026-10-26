@@ -2,27 +2,14 @@ import { existsSync, readdirSync } from "node:fs";
 import { basename, join, relative, resolve, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { deepHeadings, findForbidden, lineCount, links, ROOT, read } from "./lib/doc-helpers.ts";
+import { deepHeadings, findForbidden, links, ROOT, read } from "./lib/doc-helpers.ts";
 
 /**
- * Fence for .claude/skills/. A skill is written by an agent, read by an agent, and
- * reviewed by nobody on a schedule, which is how one grows into a thousand lines of
- * prose. SKILL.md keeps a hard cap: past it the skill is two skills.
- *
- * A skill may carry reference documents beside it: detail only one skill needs has no
- * business in docs/, where a human reads reference and every file takes a README row.
- * A thousand lines comes from a file with no subject, so the fence sits on the names
- * and the links rather than the count — each document is named for what it holds,
- * SKILL.md cites it at the step that needs it, and a second skill citing it sends it
- * to docs/.
- *
- * There is deliberately no cap on the NUMBER of skills, or of documents inside one —
- * that would punish real growth. Every skill is indexed in CLAUDE.md, so they compete
- * for that file's budget.
+ * Fence for .claude/skills/. A skill is written by an agent and read by an agent, so the
+ * fence sits on structure rather than size: every file is named for what it holds,
+ * SKILL.md cites each document beside it at the step that needs it, and a second skill
+ * citing one sends it to docs/. There is no cap on lines, on documents, or on skills.
  */
-const MAX_SKILL_LINES = 150;
-const MAX_REFERENCE_LINES = 200;
-
 const SKILLS_DIR = join(ROOT, ".claude/skills");
 
 const KEBAB_MARKDOWN = /^[a-z0-9]+(?:-[a-z0-9]+)*\.md$/;
@@ -172,24 +159,6 @@ describe(".claude/skills/", () => {
         FORBIDDEN_NAMES.has(subject),
         `${skill}/${name} is named for its position, not its subject. Name it for what it holds, so it has somewhere to stop.`,
       ).toBe(false);
-    }
-  });
-
-  it.each(skills)("%s SKILL.md is at most 150 lines", (skill) => {
-    const actual = lineCount(read(`.claude/skills/${skill}/SKILL.md`));
-    expect(
-      actual,
-      `${skill}/SKILL.md is ${actual} lines. Split the skill, or move detail into a reference document beside it.`,
-    ).toBeLessThanOrEqual(MAX_SKILL_LINES);
-  });
-
-  it.each(skills)("%s documents are at most 200 lines", (skill) => {
-    for (const name of references(skill)) {
-      const actual = lineCount(read(`.claude/skills/${skill}/${name}`));
-      expect(
-        actual,
-        `${skill}/${name} is ${actual} lines — it covers two subjects, so split it rather than raising the cap.`,
-      ).toBeLessThanOrEqual(MAX_REFERENCE_LINES);
     }
   });
 

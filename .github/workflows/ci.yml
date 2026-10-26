@@ -76,7 +76,7 @@ jobs:
 
   # The ruleset requires these two names, so each stands for its OS's shards. always()
   # makes a red or cancelled shard report here as a failure, where a skipped job would
-  # read as green to the ruleset and to merge-gate alike.
+  # read as green to the ruleset and to the merge gate alike.
   check-ubuntu:
     name: check (ubuntu-latest)
     needs: [static, test-ubuntu]
