@@ -188,7 +188,7 @@ changes `docs/mockup/components/` waits on their approval there.
    body, with the version the publish returned, then `gh pr ready <pr>`. A later push
    that changes a mockup file publishes again and replaces the line, so the version the
    user approves is the head that merges.
-5. **Merge only on the user's approval.** `.github/protected-paths` fences the directory,
+5. **Merge only on the user's approval.** `.github/protected-paths.txt` fences the directory,
    so the merge gate fails until the user approves the mockup on the canvas and the session
    holding the conversation merges on that sign-off, as the plugin's `signoff` skill describes.
 

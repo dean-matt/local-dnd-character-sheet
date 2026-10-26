@@ -76,7 +76,7 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
 Issues, pull requests, review and merge run through the `github-sdlc` plugin, enabled in
 `.claude/settings.json`. What is true here alone is in
 [`docs/workflow.md`](docs/workflow.md); a reviewer takes its lenses from
-[`docs/review-lenses.md`](docs/review-lenses.md). `.github/protected-paths` lists what a
+[`docs/review-lenses.md`](docs/review-lenses.md). `.github/protected-paths.txt` lists what a
 merge waits on the user for.
 
 ## Skills

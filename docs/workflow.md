@@ -32,5 +32,5 @@ that edits it conflicts with every other.
 
 ## Protected paths
 
-`.github/protected-paths` lists what a merge waits on the user for. A change under one is
+`.github/protected-paths.txt` lists what a merge waits on the user for. A change under one is
 the user's to approve, however green the checks.
