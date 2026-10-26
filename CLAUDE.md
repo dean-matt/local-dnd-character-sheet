@@ -115,8 +115,6 @@ duplicate a source of truth:
 **Write the edit** by verifying against the code first, replacing the stale sentence
 rather than appending a correction beside it, and tightening a bullet over adding one.
 
-Detail only some tasks need goes to a skill or `docs/`, which load on demand.
-
 ## Code comments
 
 Default to no comment. Add one only when it explains *why*. No history, no ticket or
