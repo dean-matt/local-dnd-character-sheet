@@ -1,13 +1,5 @@
 {
   "includeCoAuthoredBy": false,
-  "extraKnownMarketplaces": {
-    "dean-matt": {
-      "source": { "source": "github", "repo": "dean-matt/claude-skills" }
-    }
-  },
-  "enabledPlugins": {
-    "github-sdlc@dean-matt": true
-  },
   "permissions": {
     "allow": [
       "Agent(general-purpose)",
@@ -20,5 +12,17 @@
       "Bash(gh pr review:*)",
       "Bash(gh pr comment:*)"
     ]
+  },
+  "enabledPlugins": {
+    "github-sdlc@dean-matt": true
+  },
+  "extraKnownMarketplaces": {
+    "dean-matt": {
+      "source": {
+        "source": "github",
+        "repo": "dean-matt/claude-skills"
+      },
+      "autoUpdate": true
+    }
   }
 }
