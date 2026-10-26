@@ -1,9 +1,18 @@
 {
   "includeCoAuthoredBy": false,
+  "extraKnownMarketplaces": {
+    "dean-matt": {
+      "source": { "source": "github", "repo": "dean-matt/claude-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "github-sdlc@dean-matt": true
+  },
   "permissions": {
     "allow": [
       "Agent(general-purpose)",
-      "Agent(pr-auditor)",
+      "Agent(github-sdlc:pr-auditor)",
+      "Agent(github-sdlc:design-auditor)",
       "Bash(gh:*)",
       "Bash(gh pr merge:*)",
       "Bash(gh api repos/dean-matt/local-dnd-character-sheet/pulls/:*)",

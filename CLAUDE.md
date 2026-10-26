@@ -64,32 +64,31 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
 - **A pushed commit is never rewritten.** No amend, rebase or force push — add a commit.
   `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the current branch.
-- **The merge raises the root `package.json` version**, never the pull request, by `merge-pr`.
+- **The merge raises the root `package.json` version**, never the pull request: a feature
+  raises the minor, anything else the patch, and prose-only changes none.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — a leaf package exports a schema or a type the day something reads it,
   and a test import counts as a reader. `knip` reports an orphaned file and an export
   nothing imports, but the commit should not have created it.
+
+## Workflow
+
+Issues, pull requests, review and merge run through the `github-sdlc` plugin, enabled in
+`.claude/settings.json`. What is true here alone is in
+[`docs/workflow.md`](docs/workflow.md). A reviewer reads
+[`docs/review-lenses.md`](docs/review-lenses.md) and applies each lens whose packages the
+diff reaches. `.github/protected-paths.txt` lists what a
+merge waits on the user for.
 
 ## Skills
 
 | Skill | Use when |
 |---|---|
 | `add-endpoint` | Adding an API route, end to end |
-| `audit-pr` | Reviewing a pull request in this repository |
-| `auto-dev` | Working the board issue after issue, from open to merged |
-| `board-status` | Moving an issue's card to a named status on the project board |
 | `content-import` | Adding or changing an entity type in the 5etools ETL |
-| `converge-review` | Running the review-and-fix loop on an open pull request |
-| `issue-to-pr` | Taking any issue from open to a reviewed pull request |
-| `issue-worktree` | Claiming an issue and opening, releasing or closing its worktree |
-| `merge-pr` | Carrying a reviewed pull request to main |
-| `open-pr` | Opening a pull request and writing its body |
-| `pick-issue` | Choosing which issue to take, when `issue-to-pr` names none |
 | `tag-render` | Adding or fixing support for a `{@tag}` |
-| `user-signoff` | Clearing a merge that waits on the user, from the session they talk to |
 
-Indexed skills compete for this file's budget, which is capped; their number is not. A
-skill never restates what code and tests assert — no test runs on prose, so the copy drifts.
+A skill never restates what code and tests assert — no test runs on prose, so the copy drifts.
 
 ## Maintaining this document
 
@@ -115,9 +114,6 @@ duplicate a source of truth:
 
 **Write the edit** by verifying against the code first, replacing the stale sentence
 rather than appending a correction beside it, and tightening a bullet over adding one.
-
-`tests/claude-md-shape.test.ts` caps this file at 150 lines. Past the cap, extract to a
-skill — do not raise the cap.
 
 ## Code comments
 

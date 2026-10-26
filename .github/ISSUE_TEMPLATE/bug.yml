@@ -5,7 +5,8 @@ body:
   - type: textarea
     id: expected
     attributes:
-      label: Expected vs actual
+      label: Summary
+      description: Expected vs actual, the problem first.
     validations:
       required: true
 
@@ -14,6 +15,28 @@ body:
     attributes:
       label: Reproduction
       description: The shortest path to seeing it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions
+      description: Anything unresolved that blocks starting. Leave empty if none.
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What should NOT be touched.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable outcomes once fixed, numbered AC1, AC2 and so on.
     validations:
       required: true
 
