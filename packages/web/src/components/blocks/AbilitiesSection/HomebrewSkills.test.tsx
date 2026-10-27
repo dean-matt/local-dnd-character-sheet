@@ -118,6 +118,7 @@ describe("a homebrew skill on the sheet", () => {
 
     const row = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
     expect(row("Sailing")).toHaveTextContent(", homebrew");
+    expect(within(row("Sailing")).getByTitle("Homebrew")).toBeInTheDocument();
     expect(row("Stealth")).not.toHaveTextContent("homebrew");
   });
 

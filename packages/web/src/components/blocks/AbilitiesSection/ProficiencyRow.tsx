@@ -90,7 +90,9 @@ export function ProficiencyRow({
           </span>
           {homebrew && (
             <>
-              <FlaskConical aria-hidden="true" size={12} />
+              <span aria-hidden="true" title="Homebrew" className="flex">
+                <FlaskConical size={12} />
+              </span>
               <span className="sr-only">, homebrew</span>
             </>
           )}
