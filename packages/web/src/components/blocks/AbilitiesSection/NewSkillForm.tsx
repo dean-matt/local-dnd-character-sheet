@@ -87,15 +87,7 @@ export function NewSkillForm({
     return [...sheet, ...defined].find((each) => each.toLowerCase() === wanted);
   }
 
-  async function add(event: FormEvent) {
-    event.preventDefault();
-    const typed = name.trim();
-    if (typed === "") return;
-    const existing = known(typed);
-    if (existing) return setRefusal(`${existing} is already a skill.`);
-    setRefusal(undefined);
-    setName("");
-    nameField.current?.focus();
+  async function create(typed: string) {
     try {
       const record = await skills.save.mutateAsync({
         id: undefined,
@@ -104,10 +96,23 @@ export function NewSkillForm({
       hold(record);
     } catch (error) {
       const message = refusedName(error);
-      if (message === undefined) return setFailure({ error: error as Error, retry: () => {} });
+      if (message === undefined)
+        return setFailure({ error: error as Error, retry: () => create(typed) });
       setName(typed);
       setRefusal(message);
     }
+  }
+
+  function add(event: FormEvent) {
+    event.preventDefault();
+    const typed = name.trim();
+    if (typed === "") return;
+    const existing = known(typed);
+    if (existing) return setRefusal(`${existing} is already a skill.`);
+    setRefusal(undefined);
+    setName("");
+    nameField.current?.focus();
+    create(typed);
   }
 
   return (

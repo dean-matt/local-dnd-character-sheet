@@ -198,6 +198,26 @@ describe("NewSkillForm", () => {
     expect(screen.getByRole("combobox", { name: "New skill base" })).toHaveTextContent("DEX");
   });
 
+  it("retries the create with the typed name when it fails", async () => {
+    let creates = 0;
+    const fetchMock = stubServer(characterRecord("1", "Vex"), {
+      create: () => {
+        creates += 1;
+        return creates === 1
+          ? new Response(JSON.stringify({ error: "disk full" }), { status: 500 })
+          : new Response(JSON.stringify(record("Juggling", "dex")), { status: 201 });
+      },
+    });
+    renderSeeded(characterRecord("1", "Vex"));
+
+    addSkill("Juggling", "DEX");
+
+    fireEvent.click(await saveToasts().findByRole("button", { name: "Retry Skills" }));
+    await waitFor(() => expect(added).toHaveBeenCalledWith("Juggling"));
+    expect(callsTo(fetchMock, "/api/homebrew/skills", "POST")).toHaveLength(2);
+    expect(body(callsTo(fetchMock, "/api/homebrew/skills", "POST")[1]).name).toBe("Juggling");
+  });
+
   it("retries only the definition write when it fails after the skill was created", async () => {
     const fetchMock = stubServer(characterRecord("1", "Vex"), {
       create: new Response(JSON.stringify(record("Juggling", "dex")), { status: 201 }),
