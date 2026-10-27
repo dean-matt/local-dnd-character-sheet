@@ -1109,68 +1109,56 @@ describe("HomebrewSettings", () => {
       );
       return field("combobox", "Ability");
     };
-    const reasonFor = async (text: string) => {
+    const holdersNote = async () => {
       fireEvent.click(
-        await within(editor()).findByRole("button", { name: "Why the ability is locked" }),
+        await within(editor()).findByRole("button", { name: "Who holds this skill" }),
       );
-      return within(editor()).findByText(text);
+      return within(editor());
     };
 
-    it("is locked with the holders named while characters hold the skill", async () => {
+    it("stays open, and the info icon lists the holders as links with the reset warning", async () => {
       stubApi({ skills: [sailing] }, [], {
         status: 200,
         body: [
           { id: "a", name: "Vex" },
           { id: "b", name: "Ash" },
-          { id: "c", name: "Rue" },
         ],
       });
       renderPage();
 
       const select = await openSailing();
+      const note = await holdersNote();
 
-      await waitFor(() => expect(select).toBeDisabled());
-      expect(await reasonFor("Held by Vex, Ash and Rue; remove it from them first")).toBeVisible();
+      expect(select).toBeEnabled();
+      expect(
+        note.getByText("Held by the following characters, changing will reset custom values"),
+      ).toBeVisible();
+      expect(note.getByRole("link", { name: "Vex" })).toHaveAttribute("href", "/characters/a");
+      expect(note.getByRole("link", { name: "Ash" })).toHaveAttribute("href", "/characters/b");
     });
 
-    it("names one or two holders as written", async () => {
-      stubApi({ skills: [sailing] }, [], {
-        status: 200,
-        body: [
-          { id: "a", name: "Vex" },
-          { id: "b", name: "Ash" },
-        ],
-      });
-      renderPage();
-
-      await openSailing();
-
-      expect(await reasonFor("Held by Vex and Ash; remove it from them first")).toBeVisible();
-    });
-
-    it("switches freely with no holder", async () => {
+    it("shows no icon with no holder", async () => {
       stubApi({ skills: [sailing] }, [], { status: 200, body: [] });
       renderPage();
 
       const select = await openSailing();
 
       await waitFor(() => expect(select).toBeEnabled());
-      expect(
-        within(editor()).queryByRole("button", { name: "Why the ability is locked" }),
-      ).toBeNull();
+      expect(within(editor()).queryByRole("button", { name: "Who holds this skill" })).toBeNull();
     });
 
-    it("stays locked, saying so, when the holders cannot be read", async () => {
+    it("says so, with the select still open, when the holders cannot be read", async () => {
       stubApi({ skills: [sailing] }, [], { status: 500, body: { error: "down" } });
       renderPage();
 
       const select = await openSailing();
+      const note = await holdersNote();
 
-      expect(await reasonFor("Couldn't check which characters hold this skill.")).toBeVisible();
-      expect(select).toBeDisabled();
+      expect(note.getByText(/Couldn't check which characters hold this skill/)).toBeVisible();
+      expect(select).toBeEnabled();
     });
 
-    it("is open for a skill not yet saved", () => {
+    it("shows no icon for a skill not yet saved", () => {
       stubApi({});
       renderPage();
 
@@ -1181,6 +1169,7 @@ describe("HomebrewSettings", () => {
       );
 
       expect(field("combobox", "Ability")).toBeEnabled();
+      expect(within(editor()).queryByRole("button", { name: "Who holds this skill" })).toBeNull();
     });
   });
 

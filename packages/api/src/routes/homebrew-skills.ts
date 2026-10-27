@@ -7,7 +7,11 @@ import {
 import type { Edition } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { homebrewSkills } from "../db/homebrew.ts";
-import { type CharactersDb, charactersReferencingHomebrewSkill } from "../db/queries/characters.ts";
+import {
+  type CharactersDb,
+  charactersReferencingHomebrewSkill,
+  resetHomebrewSkillValues,
+} from "../db/queries/characters.ts";
 import {
   deleteHomebrewSkill,
   getHomebrewSkill,
@@ -92,6 +96,8 @@ const updateSkill = createRoute({
   path: "/homebrew/skills/{id}",
   tags: ["homebrew"],
   summary: "Replace a homebrew skill",
+  description:
+    "Switching a held skill between an ability and a flat bonus resets, on each character holding it, the flat number and any override of its modifier.",
   request: {
     params: idParam,
     body: { content: { "application/json": { schema: homebrewSkillInputSchema } } },
@@ -104,7 +110,7 @@ const updateSkill = createRoute({
     404: notFound("homebrew skill"),
     409: {
       description:
-        "Another skill of that edition has this name, a rename would orphan a citation, or a held skill would switch between an ability and a flat bonus",
+        "Another skill of that edition has this name, or a rename would orphan a citation",
       content: {
         "application/json": {
           schema: z.union([
@@ -147,7 +153,7 @@ const removeSkill = createRoute({
   },
 });
 
-const sameForm = (a: string, b: string) => (a === "flat") === (b === "flat");
+const isFlat = (ability: string) => ability === "flat";
 
 /** The catalog skill of `edition` named `name`, in the catalog's spelling, compared without regard to case. */
 function catalogSkillNamed(dataDir: string, edition: Edition, name: string) {
@@ -158,7 +164,7 @@ function catalogSkillNamed(dataDir: string, edition: Edition, name: string) {
 export function homebrewSkillsRoutes(db: HomebrewDb, charactersDb: CharactersDb, dataDir: string) {
   const routes = new OpenAPIHono();
 
-  /** Why `input` may not replace `current`, if it may not: a taken name, a citation, or a held skill switching form. */
+  /** Why `input` may not replace `current`, if it may not: a taken name or a citation. */
   function updateRefusal(
     current: NonNullable<ReturnType<typeof getHomebrewSkill>>,
     input: HomebrewSkillInput,
@@ -171,11 +177,7 @@ export function homebrewSkillsRoutes(db: HomebrewDb, charactersDb: CharactersDb,
       if (characters.length + items.length > 0)
         return skillReferencedError("changed", characters, items);
     }
-    if (sameForm(current.json.ability, input.ability)) return undefined;
-    const characters = charactersReferencingHomebrewSkill(charactersDb, current);
-    return characters.length > 0
-      ? skillReferencedError("switched between an ability and a flat bonus", characters, [])
-      : undefined;
+    return undefined;
   }
 
   routes.openapi(listSkills, (c) => c.json(listHomebrewSkills(db).map(toSkillRecord)));
@@ -210,6 +212,8 @@ export function homebrewSkillsRoutes(db: HomebrewDb, charactersDb: CharactersDb,
     );
     if ("taken" in result) return c.json(nameTakenError("homebrew skill", result.taken), 409);
     if (!result.row) return c.json({ error: SKILL_NOT_FOUND }, 404);
+    if (current && isFlat(current.json.ability) !== isFlat(input.ability))
+      resetHomebrewSkillValues(charactersDb, result.row, isFlat(input.ability));
     return c.json(toSkillRecord(result.row), 200);
   });
 

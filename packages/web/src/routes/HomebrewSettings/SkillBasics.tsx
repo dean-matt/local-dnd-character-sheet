@@ -1,5 +1,6 @@
 import { ABILITIES, ABILITY_LABEL } from "@dnd/character";
 import { Info } from "lucide-react";
+import { Link } from "react-router";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
 import { Popover } from "../../components/Popover.tsx";
@@ -13,31 +14,41 @@ const ABILITY_OPTIONS = [
   { value: "flat", label: "Flat bonus" },
 ];
 
-/** "A", "A and B", "A, B and C". */
-function listed(names: readonly string[]) {
-  return names.length < 2
-    ? names.join("")
-    : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-}
-
 /**
  * A homebrew skill's first step: its name and the ability it uses, or a flat bonus whose number
- * each character holding the skill keeps. The ability stays fixed while any character holds the
- * skill, since switching it would change what their sheets show. The select is disabled and an info icon
- * beside its label gives the reason.
+ * each character holding the skill keeps. Switching between an ability and a flat bonus resets
+ * each holder's flat number and override of the skill, so while any character holds it an info
+ * icon beside the label lists them, linked, and says so.
  */
 export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const holders = useSkillHolders(recordId);
-  const held = (holders.data?.length ?? 0) > 0;
-  const loading = recordId !== undefined && holders.isPending;
-  const reason = holders.isError
-    ? "Couldn't check which characters hold this skill."
-    : loading
-      ? "Checking which characters hold this skill."
-      : held
-        ? `Held by ${listed((holders.data ?? []).map(({ name }) => name))}; remove it from them first`
-        : undefined;
+  const held = holders.data ?? [];
+  const note =
+    holders.isError || held.length > 0 ? (
+      <Popover
+        trigger={<Info aria-hidden="true" size={14} className="block text-accent-text" />}
+        triggerLabel="Who holds this skill"
+        label="Who holds this skill"
+      >
+        {holders.isError ? (
+          "Couldn't check which characters hold this skill. Changing it may reset their custom values."
+        ) : (
+          <>
+            <p>Held by the following characters, changing will reset custom values</p>
+            <ul className="mt-1 flex flex-col gap-0.5">
+              {held.map(({ id, name }) => (
+                <li key={id}>
+                  <Link to={`/characters/${id}`} className="text-accent-text underline">
+                    {name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </Popover>
+    ) : undefined;
 
   return (
     <div className={FORM_GRID}>
@@ -54,21 +65,13 @@ export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFor
           label="Ability"
           error={errorFor("ability")}
           labelAddon={
-            reason && (
-              <Popover
-                trigger={<Info size={14} aria-hidden />}
-                triggerLabel="Why the ability is locked"
-                label="Why the ability is locked"
-              >
-                {reason}
-              </Popover>
-            )
+            // No font size, so the popover's inline box adds no line-height strut around the icon.
+            note && <span className="flex text-[0px]">{note}</span>
           }
         >
           {(control) => (
             <Select
               {...control}
-              disabled={reason !== undefined}
               options={ABILITY_OPTIONS}
               value={textAt(entry, "ability")}
               onChange={(next) => set("ability", next)}

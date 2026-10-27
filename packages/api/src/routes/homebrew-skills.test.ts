@@ -1,9 +1,10 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { characterDefinitionSchema } from "@dnd/character";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { insertCharacter } from "../db/queries/characters.ts";
+import { getCharacter, insertCharacter } from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import { insertHomebrewItem } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
@@ -231,27 +232,50 @@ describe("homebrewSkillsRoutes", () => {
       expect(opened.homebrewDb.$client.prepare("SELECT 1 FROM homebrew_skills").all()).toEqual([]);
     });
 
-    it("refuses to switch a held skill between an ability and a flat bonus, naming its holders", async () => {
+    it("switches a held skill between an ability and a flat bonus, resetting each holder's values", async () => {
       const created = await (await routes.request("/homebrew/skills", json(sailing()))).json();
-      const holder = insertCharacter(opened.charactersDb, {
-        id: "1",
-        definition: holding("Sailing"),
-      });
+      const definition = holding("Sailing");
+      definition.overrides = { "skills.Sailing|HB.modifier": 9, armorClass: 20 };
+      const holder = insertCharacter(opened.charactersDb, { id: "1", definition });
+      const read = () =>
+        characterDefinitionSchema.parse(getCharacter(opened.charactersDb, holder.id)?.definition);
 
       const flat = await routes.request(`/homebrew/skills/${created.id}`, {
         ...json(sailing({ ability: "flat" })),
         method: "PUT",
       });
-      expect(flat.status).toBe(409);
-      expect(await flat.json()).toMatchObject({
-        characters: [{ id: holder.id, name: holder.name }],
+      expect(flat.status).toBe(200);
+      expect(read().proficiencies.skills).toEqual([
+        { ref: { name: "Sailing", source: "HB" }, level: "none", flat: 0 },
+      ]);
+      expect(read().overrides).toEqual({ armorClass: 20 });
+
+      const back = await routes.request(`/homebrew/skills/${created.id}`, {
+        ...json(sailing({ ability: "int" })),
+        method: "PUT",
       });
+      expect(back.status).toBe(200);
+      expect(read().proficiencies.skills).toEqual([
+        { ref: { name: "Sailing", source: "HB" }, level: "none" },
+      ]);
+    });
+
+    it("keeps a holder's values when the ability changes but the form does not", async () => {
+      const created = await (await routes.request("/homebrew/skills", json(sailing()))).json();
+      const definition = holding("Sailing");
+      definition.overrides = { "skills.Sailing|HB.modifier": 9 };
+      const holder = insertCharacter(opened.charactersDb, { id: "1", definition });
 
       const same = await routes.request(`/homebrew/skills/${created.id}`, {
         ...json(sailing({ ability: "int" })),
         method: "PUT",
       });
+
       expect(same.status).toBe(200);
+      expect(
+        characterDefinitionSchema.parse(getCharacter(opened.charactersDb, holder.id)?.definition)
+          .overrides,
+      ).toEqual({ "skills.Sailing|HB.modifier": 9 });
     });
 
     it("switches an unheld skill freely, keeping its name and settings", async () => {

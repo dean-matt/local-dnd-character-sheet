@@ -26,8 +26,9 @@ A character picks its homebrew skills from the Skills card's Add skill button, w
 skills of its edition it does not hold yet. The card never makes one, so a table's skill list holds
 only what Settings defined. There is no second kind of skill.
 
-While any character holds a skill, its form cannot switch between an ability and `flat`;
-Settings disables the select and names the holders.
+A skill may switch between an ability and `flat` while characters hold it. The switch resets, on
+each holder, the flat number and any override of the skill's modifier, as its own undo entry; an
+info icon beside Ability in Settings lists the holders, linked, and says so.
 
 ## One name per skill
 

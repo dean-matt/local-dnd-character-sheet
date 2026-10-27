@@ -21,7 +21,7 @@ function Harness({
       <label htmlFor="coin">Coin</label>
       <Select
         id="coin"
-        disabled={disabled}
+        aria-disabled={disabled}
         options={OPTIONS}
         value={value}
         onChange={(next) => {
@@ -40,10 +40,11 @@ const active = () =>
 const key = (name: string) => fireEvent.keyDown(combobox(), { key: name });
 
 describe("Select", () => {
-  it("keeps the list shut while disabled, by click or key", () => {
+  it("keeps the list shut while aria-disabled, by click or key", () => {
     const onChange = vi.fn();
     render(<Harness onChange={onChange} disabled />);
-    expect(combobox()).toBeDisabled();
+    expect(combobox()).toHaveAttribute("aria-disabled", "true");
+    act(() => combobox().focus());
     for (const open of [
       () => fireEvent.click(combobox()),
       () => key("ArrowDown"),
@@ -144,7 +145,7 @@ describe("Select", () => {
           <label htmlFor="weapon">Weapon</label>
           <Select
             id="weapon"
-            disabled={disabled}
+            aria-disabled={disabled}
             options={WEAPONS}
             value={value}
             onChange={setValue}
