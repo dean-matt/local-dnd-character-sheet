@@ -5,9 +5,10 @@
  * key, so a second start finds nothing and changes nothing. The catalog is read only when a
  * definition holds an entry, so a start with nothing but empty keys needs no `content.db`.
  * Both databases are written in one transaction on the characters connection with
- * `homebrew.db` attached, so a throw rolls both back; SQLite in WAL mode still commits each
- * attached file separately, so a process killed inside that commit can leave one converted.
- * The copies taken before the attempt are the way back from that.
+ * `homebrew.db` attached, so a throw rolls both back. WAL mode commits each attached file
+ * separately, so for the write both files leave it for rollback-journal mode, where SQLite
+ * commits the pair atomically, and return to WAL after. The copies taken before the attempt
+ * remain the way back from anything else.
  */
 import { randomUUID } from "node:crypto";
 import {
@@ -39,11 +40,20 @@ function writeAcross<T>(
   { charactersDb, homebrew }: Pick<Handles, "charactersDb" | "homebrew">,
   write: (tx: Tx) => T,
 ): T {
-  charactersDb.$client.prepare("ATTACH DATABASE ? AS hb").run(homebrew.name);
+  const files = [charactersDb.$client, homebrew];
+  const modes = files.map((file) => file.pragma("journal_mode = DELETE", { simple: true }));
   try {
-    return charactersDb.transaction(write);
+    if (modes.some((mode) => mode !== "delete")) {
+      throw new Error("could not leave WAL mode, so the two files could not commit together");
+    }
+    charactersDb.$client.prepare("ATTACH DATABASE ? AS hb").run(homebrew.name);
+    try {
+      return charactersDb.transaction(write);
+    } finally {
+      charactersDb.$client.exec("DETACH DATABASE hb");
+    }
   } finally {
-    charactersDb.$client.exec("DETACH DATABASE hb");
+    for (const file of files) file.pragma("journal_mode = WAL");
   }
 }
 

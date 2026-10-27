@@ -117,6 +117,16 @@ describe("convertStoredCustomSkills", () => {
     expect(snapshot()).toEqual(first);
   });
 
+  it("leaves both databases in WAL mode after converting", () => {
+    publishDerivedFixture(dataDir, { lookups: [] });
+    store("a", legacy([{ name: "Juggling", ability: "dex", level: "none" }]));
+
+    const opened = open();
+
+    expect(opened.charactersDb.$client.pragma("journal_mode", { simple: true })).toBe("wal");
+    expect(opened.homebrewDb.$client.pragma("journal_mode", { simple: true })).toBe("wal");
+  });
+
   it("strips empty keys without a catalog and keeps the undo history", () => {
     store("a", legacy([]), [legacy([]), { ...definition }]);
 
@@ -152,7 +162,7 @@ describe("convertStoredCustomSkills", () => {
     sqlite.close();
 
     expect(() => openDatabases(dataDir)).toThrow(
-      /refused.*backups\/characters-.*\.db and .*backups\/homebrew-.*\.db/s,
+      /refused.*backups[\\/]characters-.*\.db and .*backups[\\/]homebrew-.*\.db/s,
     );
 
     const check = new Database(join(dataDir, "characters.db"));
