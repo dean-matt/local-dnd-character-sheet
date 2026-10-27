@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Field } from "../../Field/Field.tsx";
+import { signed } from "../signed.ts";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
 import { RemoveSkill } from "./RemoveSkill.tsx";
@@ -118,8 +119,8 @@ export function CatalogSkills({
             })}
             onCycleLevel={() => cycle(skill.ref)}
             detailFooter={
-              homebrew && (
-                <div className="flex flex-1 items-center gap-3">
+              <div className="flex flex-1 items-center gap-3">
+                {homebrew && (
                   <RemoveSkill
                     characterId={character.id}
                     name={skill.ref.name}
@@ -135,8 +136,10 @@ export function CatalogSkills({
                     })}
                     onRemoved={() => setRemoved(skill.ref)}
                   />
-                  {skill.ability === null && (
-                    <div className="ms-auto flex items-center gap-2">
+                )}
+                <div className="ms-auto flex items-center gap-4">
+                  {homebrew && skill.ability === null && (
+                    <div className="flex items-center gap-2">
                       <span aria-hidden="true" className="text-muted text-row">
                         Flat bonus
                       </span>
@@ -163,8 +166,12 @@ export function CatalogSkills({
                       />
                     </div>
                   )}
+                  <span className="flex items-baseline gap-2 text-row">
+                    <span className="text-muted">Total</span>
+                    <span className="font-semibold">{signed(derivedValue(skill.modifier))}</span>
+                  </span>
                 </div>
-              )
+              </div>
             }
           />
         );

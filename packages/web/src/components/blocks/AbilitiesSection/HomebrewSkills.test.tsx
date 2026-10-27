@@ -181,6 +181,7 @@ describe("a flat homebrew skill on the sheet", () => {
     expect(field).toHaveValue("3");
     const remove = modal.getByRole("button", { name: "Remove Cartography" });
     expect(field.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+    expect(modal.getByText("Total").nextElementSibling).toHaveTextContent("+5");
   });
 
   it("saves an edited number onto the held entry, and refuses a value that is not a whole number", async () => {

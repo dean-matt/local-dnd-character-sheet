@@ -626,7 +626,8 @@ describe("AbilitiesSection", () => {
 
       const modal = within(screen.getByRole("dialog", { name: "Stealth" }));
       expect(modal.getByText("Expertise")).toBeVisible();
-      expect(modal.getByText("+7")).toBeVisible();
+      expect(modal.getAllByText("+7")).toHaveLength(2);
+      expect(modal.getByText("Total")).toBeVisible();
       expect(await modal.findByText("Stealth covers hiding.")).toBeVisible();
       expect(modal.queryByRole("button", { name: /^Remove/ })).toBeNull();
       const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
