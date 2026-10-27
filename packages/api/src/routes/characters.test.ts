@@ -770,6 +770,16 @@ describe("importing a file that still carries custom skills", () => {
     expect(homebrewRows()).toEqual([]);
   });
 
+  it("refuses a file whose customSkills is not a list, naming the field", async () => {
+    const file = await legacyFile([]);
+    file.definition.customSkills = "Juggling";
+
+    const res = await importFile(file);
+
+    expect(res.status).toBe(422);
+    expect(homebrewRows()).toEqual([]);
+  });
+
   it("exports a file without customSkills, which imports unconverted", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
     const file = await (await routes.request(`/characters/${created.id}/export`)).json();

@@ -175,9 +175,11 @@ describe("a flat homebrew skill on the sheet", () => {
       name: "Cartography flat bonus",
     });
 
-    fireEvent.change(field, { target: { value: "1.5" } });
-    fireEvent.blur(field);
-    expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+    for (const refused of ["1.5", "abc", "1e3", "0x10", "1_000", "9007199254740992"]) {
+      fireEvent.change(field, { target: { value: refused } });
+      fireEvent.blur(field);
+      expect(fetchMock, refused).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+    }
 
     fireEvent.change(field, { target: { value: "-4" } });
     fireEvent.blur(field);

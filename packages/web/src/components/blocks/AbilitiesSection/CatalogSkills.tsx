@@ -19,6 +19,10 @@ import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
 import { RemoveSkill } from "./RemoveSkill.tsx";
 
+/** A signed run of digits, with an optional `.0`; `Number` alone would also take `1e3` and `0x10`. */
+const wholeNumber = (raw: string) =>
+  /^[+-]?\d+(\.0+)?$/.test(raw.trim()) ? Number(raw.trim()) : Number.NaN;
+
 /**
  * The edition's skills, alphabetically, each ring stepping its skill's proficiency and
  * saving it at once as an undo entry. A skill stepped to none leaves
@@ -128,7 +132,7 @@ export function CatalogSkills({
                         inputClassName="w-12 text-right"
                         current={stored(key)?.flat ?? 0}
                         format={String}
-                        parse={(raw) => Number(raw.trim())}
+                        parse={wholeNumber}
                         schema={flatSkillBonusSchema}
                         onSave={async (flat: number) => {
                           await flats.mutateAsync((latest) => ({
