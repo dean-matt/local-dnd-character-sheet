@@ -117,9 +117,12 @@ describe("a homebrew skill on the sheet", () => {
     ));
 
     const row = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
-    expect(row("Sailing")).toHaveTextContent(", homebrew");
-    expect(within(row("Sailing")).getByTitle("Homebrew")).toBeInTheDocument();
-    expect(row("Stealth")).not.toHaveTextContent("homebrew");
+    const mark = within(row("Sailing")).getByRole("button", { name: "Homebrew skill" });
+    fireEvent.mouseEnter(mark);
+    expect(within(row("Sailing")).getByText(/defined in Settings/)).toBeVisible();
+    expect(
+      within(row("Stealth")).queryByRole("button", { name: "Homebrew skill" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the skill when its ring steps past expertise to none", async () => {

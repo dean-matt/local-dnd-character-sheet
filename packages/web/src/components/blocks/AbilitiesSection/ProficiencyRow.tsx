@@ -1,6 +1,7 @@
 import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
 import { FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
+import { Popover } from "../../Popover.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import type { Rules } from "./abilityRules.ts";
 import { DetailName } from "./DetailName/DetailName.tsx";
@@ -83,18 +84,21 @@ export function ProficiencyRow({
         )}
       </span>
       {ability && (
-        <span className="flex items-center gap-1 text-label text-muted uppercase">
-          <span aria-hidden="true">{ability}</span>
-          <span className="sr-only">
-            {ability === "flat" ? "Flat bonus" : ABILITY_LABEL[ability]}
+        <span className="flex items-center gap-1">
+          <span className="text-label text-muted uppercase">
+            <span aria-hidden="true">{ability}</span>
+            <span className="sr-only">
+              {ability === "flat" ? "Flat bonus" : ABILITY_LABEL[ability]}
+            </span>
           </span>
           {homebrew && (
-            <>
-              <span aria-hidden="true" title="Homebrew" className="flex">
-                <FlaskConical size={12} />
-              </span>
-              <span className="sr-only">, homebrew</span>
-            </>
+            <Popover
+              trigger={<FlaskConical aria-hidden="true" size={12} className="text-accent-text" />}
+              triggerLabel="Homebrew skill"
+              label="Homebrew skill"
+            >
+              Homebrew skill, defined in Settings › Homebrew.
+            </Popover>
           )}
         </span>
       )}
