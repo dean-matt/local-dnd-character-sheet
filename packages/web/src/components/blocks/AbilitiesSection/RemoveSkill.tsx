@@ -10,7 +10,7 @@ export function RemoveSkill(props: ComponentProps<typeof ConfirmRemoveSkill>) {
       type="button"
       aria-haspopup="dialog"
       onClick={() => modal?.open(<ConfirmRemoveSkill {...props} />)}
-      className="shrink-0 rounded-control bg-accent px-3.5 py-2 font-semibold text-row text-white hover:bg-accent-hover"
+      className="shrink-0 rounded-control border border-error bg-surface px-3.5 py-2 font-semibold text-error text-row hover:bg-subtle"
     >
       Remove {props.name}
     </button>
