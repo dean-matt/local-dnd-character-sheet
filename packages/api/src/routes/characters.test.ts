@@ -770,7 +770,7 @@ describe("importing a file that still carries custom skills", () => {
     expect(homebrewRows()).toEqual([]);
   });
 
-  it("refuses a file whose customSkills is not a list, naming the field", async () => {
+  it("refuses a file whose customSkills is not a list", async () => {
     const file = await legacyFile([]);
     file.definition.customSkills = "Juggling";
 
