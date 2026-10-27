@@ -302,12 +302,15 @@ export function convertCustomSkills(
       : [],
   );
 
+  const seen = new Set<string>();
   const renames = entries.flatMap((entry) => {
     const to = finalName.get(entry);
     const characterId = characters[entry.character]?.id;
-    return to !== undefined && to !== entry.name && characterId !== undefined
-      ? [{ characterId, from: entry.name, to }]
-      : [];
+    const key = `${characterId}\0${entry.name}`;
+    if (to === undefined || to === entry.name || characterId === undefined || seen.has(key))
+      return [];
+    seen.add(key);
+    return [{ characterId, from: entry.name, to }];
   });
 
   return { homebrewToAdd, characters: converted, snapshots: convertSnapshots(characters), renames };

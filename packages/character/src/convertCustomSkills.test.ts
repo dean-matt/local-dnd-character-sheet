@@ -263,6 +263,19 @@ describe("convertCustomSkills", () => {
     ]);
   });
 
+  it("reports one rename per old name on a character, the first form's", () => {
+    const result = convert([
+      character("a", [
+        { name: "Perception", ability: "str" },
+        { name: "Perception", ability: "dex" },
+      ]),
+    ]);
+
+    expect(result.renames).toEqual([
+      { characterId: "a", from: "Perception", to: "Perception (2)" },
+    ]);
+  });
+
   it("reads the catalog only for an edition holding an entry", () => {
     const asked: Edition[] = [];
     convertCustomSkills(
