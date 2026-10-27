@@ -41,10 +41,11 @@ function writeAcross<T>(
   write: (tx: Tx) => T,
 ): T {
   const files = [charactersDb.$client, homebrew];
-  const modes = files.map((file) => file.pragma("journal_mode = DELETE", { simple: true }));
   try {
-    if (modes.some((mode) => mode !== "delete")) {
-      throw new Error("could not leave WAL mode, so the two files could not commit together");
+    for (const file of files) {
+      if (file.pragma("journal_mode = DELETE", { simple: true }) !== "delete") {
+        throw new Error("could not leave WAL mode, so the two files could not commit together");
+      }
     }
     charactersDb.$client.prepare("ATTACH DATABASE ? AS hb").run(homebrew.name);
     try {
@@ -53,7 +54,13 @@ function writeAcross<T>(
       charactersDb.$client.exec("DETACH DATABASE hb");
     }
   } finally {
-    for (const file of files) file.pragma("journal_mode = WAL");
+    // Each file on its own, so one that will not restore neither hides the failure above
+    // nor leaves the other in rollback-journal mode; the next open sets WAL again.
+    for (const file of files) {
+      try {
+        file.pragma("journal_mode = WAL");
+      } catch {}
+    }
   }
 }
 
