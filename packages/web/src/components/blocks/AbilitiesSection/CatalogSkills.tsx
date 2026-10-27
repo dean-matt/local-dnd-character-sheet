@@ -118,6 +118,7 @@ export function CatalogSkills({
               ability: skill.ability,
             })}
             onCycleLevel={() => cycle(skill.ref)}
+            homebrew={homebrew}
             detailFooter={
               <div className="flex flex-1 items-center gap-3">
                 {homebrew && (

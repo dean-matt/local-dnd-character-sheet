@@ -100,6 +100,27 @@ describe("a homebrew skill on the sheet", () => {
     expect(within(row).getByRole("button", { name: "Sailing check: Advantage" })).toBeVisible();
   });
 
+  it("marks a homebrew row beside its ability, and a catalog row not", () => {
+    const record = holding([{ ref: SAILING, level: "none" }]);
+    const derived = derivedFor(record);
+    const stealth = { ref: { name: "Stealth", source: "XPHB" }, ability: "dex" as const };
+    const modifier = { computed: 3, manual: null, terms: [] };
+    renderSeeded(record, (held) => (
+      <CatalogSkills
+        character={held}
+        derived={{
+          ...derived,
+          skills: [...derived.skills, { ...stealth, modifier, passive: modifier }],
+        }}
+        onRemoved={() => {}}
+      />
+    ));
+
+    const row = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
+    expect(row("Sailing")).toHaveTextContent(", homebrew");
+    expect(row("Stealth")).not.toHaveTextContent("homebrew");
+  });
+
   it("keeps the skill when its ring steps past expertise to none", async () => {
     const fetchMock = stubServer(holding([]));
     renderSeeded(holding([{ ref: SAILING, level: "expertise" }]), catalogSkills);
