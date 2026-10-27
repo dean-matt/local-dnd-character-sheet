@@ -119,6 +119,11 @@ function apply(handles: Handles, stored: StoredCharacter[]) {
         sql`UPDATE characters SET definition = ${JSON.stringify(definition)} WHERE id = ${id}`,
       );
     }
+    for (const { characterId, from, to } of conversion.renames) {
+      tx.run(
+        sql`UPDATE roll_log SET label = ${`${to} check`} WHERE character_id = ${characterId} AND label = ${`${from} check`}`,
+      );
+    }
     for (const row of conversion.snapshots) {
       if (row.keep) {
         tx.run(

@@ -127,6 +127,34 @@ describe("convertStoredCustomSkills", () => {
     expect(opened.homebrewDb.$client.pragma("journal_mode", { simple: true })).toBe("wal");
   });
 
+  it("rewrites the roll-log labels that cited a renamed skill, on that character only", () => {
+    publishDerivedFixture(dataDir, { lookups: [skill("Perception", "PHB", "classic", "wis")] });
+    store("a", legacy([{ name: "Perception", ability: "str", level: "none" }]));
+    const sqlite = new Database(join(dataDir, "characters.db"));
+    sqlite
+      .prepare(
+        "INSERT INTO characters (id, name, edition, level, race_summary, class_summary, definition, created_at) VALUES ('b', 'Vex', 'classic', 1, '', '', ?, 2)",
+      )
+      .run(JSON.stringify(legacy([])));
+    for (const id of ["a", "b"]) {
+      sqlite
+        .prepare(
+          "INSERT INTO roll_log (character_id, label, notation, result, detail) VALUES (?, 'Perception check', '1d20', 10, '{}')",
+        )
+        .run(id);
+    }
+    sqlite.close();
+
+    const labels = open()
+      .charactersDb.$client.prepare("SELECT character_id AS id, label FROM roll_log ORDER BY id")
+      .all();
+
+    expect(labels).toEqual([
+      { id: "a", label: "Perception (2) check" },
+      { id: "b", label: "Perception check" },
+    ]);
+  });
+
   it("strips empty keys without a catalog and keeps the undo history", () => {
     store("a", legacy([]), [legacy([]), { ...definition }]);
 

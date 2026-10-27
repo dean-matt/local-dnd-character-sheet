@@ -248,6 +248,21 @@ describe("convertCustomSkills", () => {
     });
   });
 
+  it("reports each skill that took a new name, on the character that held it", () => {
+    const result = convert([
+      character("a", [
+        { name: "Perception", ability: "str" },
+        { name: "Juggling", ability: "dex" },
+      ]),
+      character("b", [{ name: "Perception", ability: "str" }]),
+    ]);
+
+    expect(result.renames).toEqual([
+      { characterId: "a", from: "Perception", to: "Perception (2)" },
+      { characterId: "b", from: "Perception", to: "Perception (2)" },
+    ]);
+  });
+
   it("reads the catalog only for an edition holding an entry", () => {
     const asked: Edition[] = [];
     convertCustomSkills(

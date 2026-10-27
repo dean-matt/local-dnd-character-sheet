@@ -41,7 +41,7 @@ edition and without regard to case. Skills of one name and form merge into one r
 carries different forms, an existing homebrew skill of that name keeps the plain name; otherwise
 the first form (STR to CHA, then flat) does, and each other form takes ` (2)`, ` (3)` on,
 passing over a name already taken. A name a catalog skill holds is suffixed in every form. The
-rules live in `packages/character/src/convertCustomSkills.ts`. The API runs them at start and on
+rules live in `packages/character/src/convertCustomSkills.ts`. A roll-log label citing a renamed skill, "<name> check", follows the rename on that character. The API runs them at start and on
 importing a character file exported before the change.
 
 ## How an item names one
