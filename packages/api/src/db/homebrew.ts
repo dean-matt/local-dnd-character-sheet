@@ -13,8 +13,8 @@ import type {
   CharacterOptionEntry,
   HomebrewClass,
   HomebrewItem,
+  HomebrewSkillEntry,
   RaceEntry,
-  SkillEntry,
   SpellEntry,
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
@@ -109,7 +109,7 @@ export const homebrewSkills = sqliteTable(
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     edition: text("edition", { enum: EDITIONS }).notNull(),
-    json: text("json", { mode: "json" }).$type<SkillEntry>().notNull(),
+    json: text("json", { mode: "json" }).$type<HomebrewSkillEntry>().notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [uniqueIndex("homebrew_skills_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],

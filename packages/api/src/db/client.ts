@@ -22,6 +22,7 @@ import Database from "better-sqlite3";
 import { type BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
 import { backupDatabase, backupDirFor } from "./backup.ts";
 import * as charactersSchema from "./characters.ts";
+import { convertStoredCustomSkills } from "./convertCustomSkills.ts";
 import * as homebrewSchema from "./homebrew.ts";
 import { migrateCharacters, migrateHomebrew } from "./migrate.ts";
 
@@ -77,6 +78,7 @@ export function openDatabases(dataDir: string) {
       opened,
     );
 
+    convertStoredCustomSkills({ charactersDb, homebrew: homebrewDb.$client, dataDir });
     return { charactersDb, homebrewDb };
   } catch (error) {
     for (const sqlite of opened) sqlite.close();

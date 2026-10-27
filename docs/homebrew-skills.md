@@ -13,9 +13,36 @@ holds the skill. The derived block lists a homebrew skill only for a character h
 in the character's edition, so the sheet's skill list is the built-in skills plus the
 character's own.
 
-A character's `customSkills` stay a per-character option beside these. They suit a skill
-one character plays, and moving them would rewrite every stored definition for no change in
-what a sheet shows.
+## Ability and flat forms
+
+A skill's `ability` is one of the six abilities, or `flat`, a skill with no ability whose
+number each holding character sets itself. A flat skill's number lives on the character's
+`proficiencies.skills` entry as `flat`, beside its level; a missing number reads as 0, and
+the modifier is that number plus the proficiency bonus the level gives. Only homebrew carries
+`flat`, so `skillEntrySchema` keeps the ability enum 5etools prints and
+`homebrewSkillEntrySchema` adds it.
+
+A skill made from a character's skills block is this same kind of row: the sheet creates the
+homebrew skill, then the character holds it. There is no second kind of skill.
+
+While any character holds a skill, its form cannot switch between an ability and `flat`;
+Settings disables the select and names the holders.
+
+## One name per skill
+
+A skill's name is unique within an edition, compared without regard to case, across the
+catalog's skills and the homebrew skills. The sheet and the API refuse a name either holds. A
+homebrew skill that already carries a catalog name keeps it and is not refused on edit.
+
+## Numbered renames
+
+Custom skills an older sheet stored per character were converted to homebrew skills on the first
+start after they were removed. Skills of one name and form merge; where one name carried
+different forms, the existing homebrew skill or else the first form (STR to CHA, then flat)
+kept the plain name and each other took ` (2)`, ` (3)` on, passing over a name already taken.
+A name a catalog skill holds was suffixed in every form. The conversion lives in
+`packages/character/src/convertCustomSkills.ts` and runs from `packages/api/src/db/`; it also
+converts a character file exported before the change when it is imported.
 
 ## How an item names one
 

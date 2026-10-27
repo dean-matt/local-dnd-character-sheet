@@ -910,6 +910,35 @@ describe("derivedRoutes", () => {
     });
   });
 
+  it("derives a held flat homebrew skill from the character's number and level", async () => {
+    insertHomebrewSkill(opened.homebrewDb, "cartography", {
+      name: "Cartography",
+      edition: "classic",
+      ability: "flat",
+    });
+    store(
+      definitionWith({
+        proficiencies: {
+          ...definitionWith().proficiencies,
+          skills: [{ ref: { name: "Cartography", source: "HB" }, level: "proficient", flat: 2 }],
+        },
+      }),
+    );
+
+    const row = (await derived()).skills.find((entry) => entry.ref.name === "Cartography");
+
+    expect(row).toMatchObject({
+      ability: null,
+      modifier: {
+        computed: 4,
+        terms: [
+          { label: "Flat bonus", value: 2 },
+          { label: "Proficiency", value: 2 },
+        ],
+      },
+    });
+  });
+
   it("lists the senses of the race, a feat and a homebrew item, the longest range standing", async () => {
     insertHomebrewItem(opened.homebrewDb, "helm", {
       name: "Helm of Devil's Sight",

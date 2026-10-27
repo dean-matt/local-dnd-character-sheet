@@ -1,3 +1,4 @@
+import { tmpdir } from "node:os";
 import {
   type CharacterPage,
   type CharacterPageRecord,
@@ -62,7 +63,7 @@ describe("pagesRoutes", () => {
 
   beforeEach(() => {
     opened = openTestDatabases();
-    characters = charactersRoutes(opened.charactersDb, () => {});
+    characters = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
     pages = pagesRoutes(opened.charactersDb);
   });
 

@@ -55,10 +55,13 @@ type Answer = { status: number; body?: unknown };
  * A fake API: a `GET` of a homebrew list answers from `lists`, and any other request under
  * `/api/homebrew` takes the next answer in `writes`.
  */
-function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = []) {
+function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = [], holders?: Answer) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? "GET";
+    if (holders && /^\/api\/homebrew\/skills\/[^/]+\/holders$/.test(url)) {
+      return json(holders.status, holders.body);
+    }
     const listed = /^\/api\/homebrew\/(\w+)$/.exec(url)?.[1];
     if (method === "GET" && listed) return json(200, lists[listed] ?? []);
     const answer = url.startsWith("/api/homebrew") ? writes.shift() : undefined;
@@ -1071,6 +1074,113 @@ describe("HomebrewSettings", () => {
         },
       ]),
     );
+  });
+
+  it("creates a flat skill from its name and Flat bonus", async () => {
+    const fetchMock = stubApi({}, [{ status: 201, body: sailing }]);
+    renderPage();
+
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Skills" })).getByRole("button", {
+        name: "Add skill",
+      }),
+    );
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Cartography" } });
+    pick("Ability", "Flat bonus");
+    click("Save");
+
+    await waitFor(() =>
+      expect(writesOf(fetchMock)).toEqual([
+        {
+          url: "/api/homebrew/skills",
+          method: "POST",
+          body: expect.objectContaining({ name: "Cartography", ability: "flat" }),
+        },
+      ]),
+    );
+  });
+
+  describe("a skill's Ability select", () => {
+    const openSailing = async () => {
+      fireEvent.click(
+        await within(screen.getByRole("region", { name: "Skills" })).findByRole("button", {
+          name: "Edit Sailing",
+        }),
+      );
+      return field("combobox", "Ability");
+    };
+
+    it("is locked with the holders named while characters hold the skill", async () => {
+      stubApi({ skills: [sailing] }, [], {
+        status: 200,
+        body: [
+          { id: "a", name: "Vex" },
+          { id: "b", name: "Ash" },
+          { id: "c", name: "Rue" },
+        ],
+      });
+      renderPage();
+
+      const select = await openSailing();
+
+      const reason = await within(editor()).findByText(
+        "Held by Vex, Ash and Rue; remove it from them first",
+      );
+      expect(select).toHaveAttribute("aria-disabled", "true");
+      expect(select).toHaveAttribute("aria-describedby", reason.id);
+    });
+
+    it("names one or two holders as written", async () => {
+      stubApi({ skills: [sailing] }, [], {
+        status: 200,
+        body: [
+          { id: "a", name: "Vex" },
+          { id: "b", name: "Ash" },
+        ],
+      });
+      renderPage();
+
+      await openSailing();
+
+      expect(
+        await within(editor()).findByText("Held by Vex and Ash; remove it from them first"),
+      ).toBeVisible();
+    });
+
+    it("switches freely with no holder", async () => {
+      stubApi({ skills: [sailing] }, [], { status: 200, body: [] });
+      renderPage();
+
+      const select = await openSailing();
+
+      await waitFor(() => expect(select).not.toHaveAttribute("aria-disabled", "true"));
+      expect(within(editor()).queryByText(/Held by/)).toBeNull();
+    });
+
+    it("stays locked, saying so, when the holders cannot be read", async () => {
+      stubApi({ skills: [sailing] }, [], { status: 500, body: { error: "down" } });
+      renderPage();
+
+      const select = await openSailing();
+
+      expect(
+        await within(editor()).findByText("Couldn't check which characters hold this skill."),
+      ).toBeVisible();
+      expect(select).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("is open for a skill not yet saved", () => {
+      stubApi({});
+      renderPage();
+
+      fireEvent.click(
+        within(screen.getByRole("region", { name: "Skills" })).getByRole("button", {
+          name: "Add skill",
+        }),
+      );
+
+      expect(field("combobox", "Ability")).not.toHaveAttribute("aria-disabled", "true");
+    });
   });
 
   it("refuses to delete a skill an item names, naming the item beside any character", async () => {

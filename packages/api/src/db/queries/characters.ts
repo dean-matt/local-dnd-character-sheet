@@ -104,13 +104,20 @@ export function duplicateCharacter(db: CharactersDb, sourceId: string, id: strin
   });
 }
 
+/** Writes `file` as a new character under `id` inside a transaction the caller opened. */
+export function importCharacterRows(
+  tx: Parameters<Parameters<CharactersDb["transaction"]>[0]>[0],
+  id: string,
+  file: CharacterFile,
+) {
+  const row = insertCharacterRows(tx, id, file.definition, file.state);
+  writePages(tx, id, file.pages);
+  return row;
+}
+
 /** Writes `file` as a new character under `id`, never over an existing one. */
 export function importCharacter(db: CharactersDb, id: string, file: CharacterFile) {
-  return db.transaction((tx) => {
-    const row = insertCharacterRows(tx, id, file.definition, file.state);
-    writePages(tx, id, file.pages);
-    return row;
-  });
+  return db.transaction((tx) => importCharacterRows(tx, id, file));
 }
 
 /** What a transaction and the database both offer, so a helper serves either. */

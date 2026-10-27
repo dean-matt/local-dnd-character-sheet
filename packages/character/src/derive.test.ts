@@ -826,102 +826,98 @@ describe("deriveCharacter", () => {
     });
   });
 
-  describe("custom skills", () => {
-    const withCustom = (
-      customSkills: CharacterDefinition["customSkills"],
+  describe("homebrew skills", () => {
+    const JUGGLING = { name: "Juggling", source: "HB" };
+    const CARTOGRAPHY = { name: "Cartography", source: "HB" };
+    const withHeld = (
+      held: CharacterDefinition["proficiencies"]["skills"],
+      traits: { ref: typeof JUGGLING; ability: "dex" | "wis" | "flat" }[],
       overrides: CharacterDefinition["overrides"] = {},
-    ) => deriveCharacter({ ...equipped, customSkills, overrides }, catalog);
+    ) =>
+      deriveCharacter(
+        { ...equipped, proficiencies: { ...equipped.proficiencies, skills: held }, overrides },
+        { ...catalog, skills: [...catalog.skills, ...traits] },
+      );
 
-    it("derives each from its ability and proficiency as a catalog skill is derived", () => {
-      const block = withCustom([
-        { name: "Juggling", ability: "dex", level: "expertise" },
-        { name: "Cooking", ability: "wis", level: "none" },
-      ]);
+    it("derives an ability-based skill as a catalog skill is derived", () => {
+      const block = withHeld(
+        [{ ref: JUGGLING, level: "expertise" }],
+        [{ ref: JUGGLING, ability: "dex" }],
+      );
 
-      expect(block.customSkills).toEqual([
-        {
-          name: "Juggling",
-          ability: "dex",
-          modifier: {
-            computed: 9,
-            manual: null,
-            terms: [
-              { label: "Dexterity", value: 3 },
-              { label: "Proficiency", value: 6 },
-            ],
-          },
+      expect(block.skills.find((skill) => skill.ref.name === "Juggling")).toMatchObject({
+        ability: "dex",
+        modifier: {
+          computed: 9,
+          terms: [
+            { label: "Dexterity", value: 3 },
+            { label: "Proficiency", value: 6 },
+          ],
         },
-        {
-          name: "Cooking",
-          ability: "wis",
-          modifier: { computed: 1, manual: null, terms: [{ label: "Wisdom", value: 1 }] },
-        },
-      ]);
-    });
-
-    it("derives a flat skill from its value and proficiency, naming the value", () => {
-      const block = withCustom([
-        { name: "Cartography", flat: 3, level: "proficient" },
-        { name: "Gambling", flat: -1, level: "none" },
-      ]);
-
-      expect(block.customSkills).toEqual([
-        {
-          name: "Cartography",
-          ability: null,
-          modifier: {
-            computed: 6,
-            manual: null,
-            terms: [
-              { label: "Flat bonus", value: 3 },
-              { label: "Proficiency", value: 3 },
-            ],
-          },
-        },
-        {
-          name: "Gambling",
-          ability: null,
-          modifier: { computed: -1, manual: null, terms: [{ label: "Flat bonus", value: -1 }] },
-        },
-      ]);
-    });
-
-    it("refuses a skill holding both an ability and a flat value", () => {
-      const both = {
-        ...definition,
-        customSkills: [{ name: "Juggling", ability: "dex", flat: 2, level: "none" }],
-      };
-
-      expect(characterDefinitionSchema.safeParse(both).success).toBe(false);
-    });
-
-    it("reads a stored skill without a flat value as an ability skill", () => {
-      const stored = {
-        ...definition,
-        customSkills: [{ name: "Juggling", ability: "dex", level: "none" }],
-      };
-
-      expect(characterDefinitionSchema.parse(stored).customSkills).toEqual(stored.customSkills);
-    });
-
-    it("folds an override keyed by the skill's name", () => {
-      const block = withCustom([{ name: "Juggling", ability: "dex", level: "none" }], {
-        "customSkills.Juggling.modifier": 7,
       });
-
-      expect(block.customSkills[0]?.modifier).toMatchObject({ computed: 3, manual: 7 });
     });
 
-    it("refuses two that differ only in case, since a name keys its override", () => {
-      const twice = {
-        ...definition,
-        customSkills: [
-          { name: "Juggling", ability: "dex", level: "none" },
-          { name: "juggling", ability: "str", level: "none" },
+    it("derives a flat skill from the character's number and level, naming the number", () => {
+      const block = withHeld(
+        [
+          { ref: CARTOGRAPHY, level: "proficient", flat: 3 },
+          { ref: JUGGLING, level: "none", flat: -1 },
         ],
-      };
+        [
+          { ref: CARTOGRAPHY, ability: "flat" },
+          { ref: JUGGLING, ability: "flat" },
+        ],
+      );
+      const named = (name: string) => block.skills.find((skill) => skill.ref.name === name);
 
-      expect(characterDefinitionSchema.safeParse(twice).success).toBe(false);
+      expect(named("Cartography")).toMatchObject({
+        ability: null,
+        modifier: {
+          computed: 6,
+          terms: [
+            { label: "Flat bonus", value: 3 },
+            { label: "Proficiency", value: 3 },
+          ],
+        },
+        passive: { computed: 16 },
+      });
+      expect(named("Juggling")?.modifier.computed).toBe(-1);
+    });
+
+    it("reads a flat skill with no stored number as 0 and ignores a stray number on an ability skill", () => {
+      const block = withHeld(
+        [
+          { ref: CARTOGRAPHY, level: "none" },
+          { ref: JUGGLING, level: "none", flat: 9 },
+        ],
+        [
+          { ref: CARTOGRAPHY, ability: "flat" },
+          { ref: JUGGLING, ability: "dex" },
+        ],
+      );
+      const named = (name: string) => block.skills.find((skill) => skill.ref.name === name);
+
+      expect(named("Cartography")?.modifier.computed).toBe(0);
+      expect(named("Juggling")?.modifier.computed).toBe(3);
+    });
+
+    it("folds an override keyed by the skill's reference", () => {
+      const block = withHeld(
+        [{ ref: JUGGLING, level: "none" }],
+        [{ ref: JUGGLING, ability: "dex" }],
+        { "skills.Juggling|HB.modifier": 7 },
+      );
+
+      expect(block.skills.find((skill) => skill.ref.name === "Juggling")?.modifier).toMatchObject({
+        computed: 3,
+        manual: 7,
+      });
+    });
+
+    it("refuses a definition that still carries customSkills", () => {
+      expect(characterDefinitionSchema.safeParse({ ...definition, customSkills: [] }).success).toBe(
+        false,
+      );
     });
   });
 
@@ -1508,11 +1504,22 @@ describe("deriveCharacter", () => {
         {
           ...equipped,
           inventory: [...equipped.inventory, worn(LUCK)],
-          customSkills: [{ name: "Juggling", ability: "dex", level: "none" }],
+          proficiencies: {
+            ...equipped.proficiencies,
+            skills: [{ ref: { name: "Juggling", source: "HB" }, level: "none" }],
+          },
         },
-        itemCatalog,
+        {
+          ...itemCatalog,
+          skills: [
+            ...itemCatalog.skills,
+            { ref: { name: "Juggling", source: "HB" }, ability: "dex" as const },
+          ],
+        },
       );
-      expect(juggler.customSkills[0]?.modifier.terms.at(-1)).toEqual({
+      expect(
+        juggler.skills.find((skill) => skill.ref.name === "Juggling")?.modifier.terms.at(-1),
+      ).toEqual({
         label: LUCK.name,
         value: 1,
       });
@@ -2605,17 +2612,13 @@ describe("deriveCharacter", () => {
     });
 
     it("folds every key shape the sheet writes into the field it names", () => {
-      const definition = {
-        ...equipped,
-        customSkills: [{ name: "Juggling", ability: "dex" as const, level: "none" as const }],
-      };
+      const definition = equipped;
       const base = deriveCharacter(definition, catalog);
       const [skill] = base.skills;
-      const [custom] = base.customSkills;
       const [caster] = base.spellcasting;
       const [pool] = base.hitDice;
       const [attack] = base.attacks;
-      if (!skill || !custom || !caster || !pool || !attack || !base.pactSlots) {
+      if (!skill || !caster || !pool || !attack || !base.pactSlots) {
         throw new Error("expected every list the sheet overrides to hold an element");
       }
       const at = (list: Parameters<typeof overrideKey>[0], element: unknown, field: string) =>
@@ -2631,7 +2634,7 @@ describe("deriveCharacter", () => {
         ["weaponMasteryLimit", (block) => block.weaponMasteryLimit.manual],
         ["pactSlots.total", (block) => block.pactSlots?.total.manual],
         [at("skills", skill, "passive"), (block) => block.skills[0]?.passive.manual],
-        [at("customSkills", custom, "modifier"), (block) => block.customSkills[0]?.modifier.manual],
+        [at("skills", skill, "modifier"), (block) => block.skills[0]?.modifier.manual],
         [at("spellcasting", caster, "saveDc"), (block) => block.spellcasting[0]?.saveDc.manual],
         [at("hitDice", pool, "total"), (block) => block.hitDice[0]?.total.manual],
         [at("attacks", attack, "critThreshold"), (block) => block.attacks[0]?.critThreshold.manual],

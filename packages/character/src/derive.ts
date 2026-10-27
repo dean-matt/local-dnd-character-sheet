@@ -105,7 +105,7 @@ export function hitPointMaximum(
 export function passiveSkill(
   definition: CharacterDefinition,
   skill: ContentRef,
-  ability: Ability,
+  ability: Ability | "flat",
   grants: readonly AbilityGrant[] = [],
   bonuses: readonly Term<TermReference>[] = [],
   proficiencyItems: readonly ProficiencyItem[] = [],
@@ -131,16 +131,17 @@ type Scored = Pick<
 export function skillModifier(
   definition: Scored,
   skill: ContentRef,
-  ability: Ability,
+  ability: Ability | "flat",
   grants: readonly AbilityGrant[] = [],
   bonuses: readonly Term<TermReference>[] = [],
   proficiencyItems: readonly ProficiencyItem[] = [],
 ): Breakdown<TermReference> {
   const key = refKey(skill);
   const entry = definition.proficiencies.skills.find((held) => refKey(held.ref) === key);
+  const level = entry?.level ?? "none";
   return checkModifier(
     definition,
-    { ability, level: entry?.level ?? "none", reference: skill },
+    ability === "flat" ? { flat: entry?.flat ?? 0, level } : { ability, level, reference: skill },
     grants,
     bonuses,
     proficiencyItems,
@@ -929,7 +930,7 @@ export function deriveCharacter(
     );
     return {
       ref: skill.ref,
-      ability: skill.ability,
+      ability: skill.ability === "flat" ? null : skill.ability,
       modifier: { computed: total, manual: null, terms },
       passive: {
         computed: passiveSkill(definition, skill.ref, skill.ability, grants, checkBonus, bonuses),
@@ -938,12 +939,6 @@ export function deriveCharacter(
       },
     };
   });
-
-  const customSkills = definition.customSkills.map((skill) => ({
-    name: skill.name,
-    ability: "ability" in skill ? skill.ability : null,
-    modifier: fromBreakdown(checkModifier(definition, skill, grants, checkBonus, bonuses)),
-  }));
 
   const scores = Object.fromEntries(
     ABILITIES.map((ability) => [ability, abilityScoreBreakdown(definition, ability, grants)]),
@@ -972,7 +967,6 @@ export function deriveCharacter(
     savingThrows,
     concentrationSave,
     skills,
-    customSkills,
     armorClass: derivedArmorClass(definition, catalog),
     initiative: fromBreakdown(
       breakdown([

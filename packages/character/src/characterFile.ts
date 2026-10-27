@@ -69,6 +69,18 @@ function fromVersionOne(file: unknown): unknown {
   return { ...file, version: 2, pages: withBackstoryPage(withoutAlignmentPage(pages)) };
 }
 
+const fileSchema = <Definition extends z.ZodType>(definition: Definition) =>
+  z.preprocess(
+    fromVersionOne,
+    z.strictObject({
+      format: z.literal("local-dnd-character-sheet/character"),
+      version: z.literal(2),
+      definition,
+      state: characterStateSchema,
+      pages: characterPagesSchema,
+    }),
+  );
+
 /**
  * A character as one file: what an export writes and an import reads. Catalog and
  * homebrew references stay as the definition holds them, so a file names rows rather
@@ -76,15 +88,12 @@ function fromVersionOne(file: unknown): unknown {
  * `version`, so a later shape can tell an older file apart rather than misread it.
  * `preset` is left out, since an import marks a page preset by its slug.
  */
-export const characterFileSchema = z.preprocess(
-  fromVersionOne,
-  z.strictObject({
-    format: z.literal("local-dnd-character-sheet/character"),
-    version: z.literal(2),
-    definition: characterDefinitionSchema,
-    state: characterStateSchema,
-    pages: characterPagesSchema,
-  }),
+export const characterFileSchema = fileSchema(characterDefinitionSchema);
+
+/** A file exported while a character kept `customSkills`, which only an import still reads. */
+export const legacyCharacterFileSchema = fileSchema(
+  z.record(z.string(), z.unknown()).refine((definition) => Array.isArray(definition.customSkills)),
 );
 
 export type CharacterFile = z.infer<typeof characterFileSchema>;
+export type LegacyCharacterFile = z.infer<typeof legacyCharacterFileSchema>;

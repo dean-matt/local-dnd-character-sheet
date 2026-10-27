@@ -27,7 +27,6 @@ const ELEMENT_KEY: {
 } = {
   hitDice: (pool) => String(pool.die),
   skills: (skill) => refKey(skill.ref),
-  customSkills: (skill) => skill.name,
   spellcasting: (caster) => entryKey(caster.class),
   spellSlots: (slot) => String(slot.level),
   containers: (container) => container.name,

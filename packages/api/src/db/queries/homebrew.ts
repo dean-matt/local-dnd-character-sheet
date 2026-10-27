@@ -21,10 +21,10 @@ import {
   HOMEBREW_SOURCE,
   homebrewClassSchema,
   homebrewItemSchema,
+  homebrewSkillEntrySchema,
   itemKinds,
   ofWantedKind,
   raceEntrySchema,
-  skillEntrySchema,
   spellEntrySchema,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
@@ -395,7 +395,7 @@ export function getHomebrewSkill(db: HomebrewDb, id: string) {
 
 function skillJson(input: HomebrewSkillInput) {
   const { edition: _edition, ...entry } = input;
-  return skillEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+  return homebrewSkillEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
 }
 
 export function insertHomebrewSkill(db: HomebrewDb, id: string, input: HomebrewSkillInput) {

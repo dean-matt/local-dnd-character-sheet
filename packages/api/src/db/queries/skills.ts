@@ -1,5 +1,5 @@
 import type { Edition } from "@dnd/rules";
-import { openContentDb } from "../content.ts";
+import { CatalogOutOfDateError, openContentDb } from "../content.ts";
 
 export type SkillRow = { name: string; source: string; ability: string | null };
 
@@ -15,5 +15,18 @@ export function listSkills(dataDir: string, edition: Edition): SkillRow[] {
       .all(edition) as SkillRow[];
   } finally {
     db.close();
+  }
+}
+
+/**
+ * The names of one edition's catalog skills, for a check that has no sheet to ask. A missing
+ * catalog answers as an out-of-date one, whose message names `pnpm content:build`.
+ */
+export function catalogSkillNames(dataDir: string, edition: Edition): string[] {
+  try {
+    return listSkills(dataDir, edition).map(({ name }) => name);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") throw new CatalogOutOfDateError();
+    throw error;
   }
 }

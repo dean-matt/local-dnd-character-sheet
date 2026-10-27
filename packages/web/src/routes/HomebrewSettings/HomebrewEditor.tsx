@@ -195,6 +195,7 @@ export function HomebrewEditor({
                     kind={kind}
                     step={step}
                     draft={draft}
+                    recordId={record?.id}
                     shownProblems={shownProblems}
                     onStep={goTo}
                   />

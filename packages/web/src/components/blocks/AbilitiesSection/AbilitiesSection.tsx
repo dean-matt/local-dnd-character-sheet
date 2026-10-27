@@ -14,6 +14,7 @@ import {
   derivedValue,
   effectsOnRoll,
 } from "@dnd/character";
+import { useRef, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
@@ -22,10 +23,10 @@ import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CatalogSkills } from "./CatalogSkills.tsx";
 import { CombatStats } from "./CombatStats.tsx";
-import { CustomSkills } from "./CustomSkills.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
 import { FeatGrants } from "./FeatGrants.tsx";
 import { ItemGrants } from "./ItemGrants.tsx";
+import { NewSkillForm } from "./NewSkillForm.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
@@ -39,6 +40,8 @@ export function AbilitiesSection({
   character: CharacterRecord | undefined;
   derived: CharacterDerived | undefined;
 }) {
+  const nameField = useRef<HTMLInputElement>(null);
+  const [announcement, setAnnouncement] = useState("");
   if (!character || !derived) return <EmptyState>Abilities isn't available yet.</EmptyState>;
   const { definition } = character;
 
@@ -87,9 +90,28 @@ export function AbilitiesSection({
           </ul>
         </Card>
         <Card title="Skills">
-          <CatalogSkills character={character} derived={derived} />
-          <AddHomebrewSkill character={character} />
-          <CustomSkills character={character} derived={derived} />
+          <CatalogSkills
+            character={character}
+            derived={derived}
+            onRemoved={(name) => {
+              setAnnouncement(`Removed ${name}.`);
+              nameField.current?.focus();
+            }}
+          />
+          <AddHomebrewSkill
+            character={character}
+            nameField={nameField}
+            onAdded={(name) => setAnnouncement(`Added ${name}.`)}
+          />
+          <NewSkillForm
+            character={character}
+            derived={derived}
+            nameField={nameField}
+            onAdded={(name) => setAnnouncement(`Added ${name}.`)}
+          />
+          <p role="status" className="sr-only">
+            {announcement}
+          </p>
           <PassiveScores character={character} derived={derived} />
         </Card>
       </div>

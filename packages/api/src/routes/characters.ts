@@ -12,16 +12,21 @@ import {
   type CharacterFile,
   type CharacterRecord,
   type CharacterStateRecord,
+  carriesCustomSkills,
   characterDefinitionSchema,
   characterFileSchema,
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
+  type LegacyCharacterFile,
+  legacyCharacterFileSchema,
   UNDO_LOG_LIMIT,
   undoLogSchema,
   withExperienceFloor,
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import type Database from "better-sqlite3";
+import { importWithCustomSkills } from "../db/convertCustomSkills.ts";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import {
   deleteCharacter,
@@ -153,6 +158,12 @@ const exportFile = createRoute({
   },
 });
 
+/** A file exported while characters kept `customSkills` still imports, converted as the startup conversion does. */
+const importSchema = z.union([characterFileSchema, legacyCharacterFileSchema]);
+
+const isLegacy = (file: z.infer<typeof importSchema>): file is LegacyCharacterFile =>
+  carriesCustomSkills(file.definition);
+
 const importFile = createRoute({
   method: "post",
   path: "/characters/import",
@@ -162,7 +173,7 @@ const importFile = createRoute({
     "Always creates a character under a new id. A reference that resolves to nothing " +
     "here imports as written.",
   request: {
-    body: { content: { "application/json": { schema: characterFileSchema } } },
+    body: { content: { "application/json": { schema: importSchema } } },
   },
   responses: {
     201: {
@@ -176,9 +187,20 @@ const importFile = createRoute({
   },
 });
 
+/** A union fails with one issue per branch; the branch nearest to matching is the one worth naming. */
+function flattenIssues(issues: readonly z.core.$ZodIssue[]): z.core.$ZodIssue[] {
+  return issues.flatMap((issue) => {
+    if (issue.code !== "invalid_union") return [issue];
+    const nearest = issue.errors.reduce((best, each) => (each.length < best.length ? each : best));
+    return flattenIssues(nearest);
+  });
+}
+
 /** Names each field a file fails on, so the person importing it can find the field. */
 function describeIssues(error: z.ZodError): string {
-  const issues = error.issues.map((issue) => `${issue.path.join(".") || "file"}: ${issue.message}`);
+  const issues = flattenIssues(error.issues).map(
+    (issue) => `${issue.path.join(".") || "file"}: ${issue.message}`,
+  );
   return `Not a character file this build can read. ${issues.join("; ")}`;
 }
 
@@ -337,7 +359,12 @@ const undo = createRoute({
   },
 });
 
-export function charactersRoutes(db: CharactersDb, backup: () => void) {
+export function charactersRoutes(
+  db: CharactersDb & { $client: Database.Database },
+  backup: () => void,
+  homebrewDb: { $client: Database.Database },
+  dataDir: string,
+) {
   const routes = new OpenAPIHono();
 
   routes.openapi(list, (c) => c.json(listCharacters(db).map(toRecord)));
@@ -378,8 +405,21 @@ export function charactersRoutes(db: CharactersDb, backup: () => void) {
   routes.openapi(
     importFile,
     (c) => {
-      const row = importCharacter(db, randomUUID(), c.req.valid("json"));
-      return c.json(toRecord(row), 201);
+      const file = c.req.valid("json");
+      const id = randomUUID();
+      try {
+        const row = isLegacy(file)
+          ? importWithCustomSkills(
+              { charactersDb: db, homebrew: homebrewDb.$client, dataDir },
+              id,
+              file,
+            )
+          : importCharacter(db, id, file);
+        return c.json(toRecord(row), 201);
+      } catch (error) {
+        if (error instanceof z.ZodError) return c.json({ error: describeIssues(error) }, 422);
+        throw error;
+      }
     },
     (result, c) => {
       if (!result.success) return c.json({ error: describeIssues(result.error) }, 422);

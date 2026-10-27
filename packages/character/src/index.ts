@@ -63,7 +63,19 @@ export {
   characterDerivedSchema,
   type RollEffectEntry,
 } from "./characterDerived.ts";
-export { type CharacterFile, characterFileSchema } from "./characterFile.ts";
+export {
+  type CharacterFile,
+  characterFileSchema,
+  type LegacyCharacterFile,
+  legacyCharacterFileSchema,
+} from "./characterFile.ts";
+export {
+  carriesCustomSkills,
+  convertCustomSkills,
+  type ExistingHomebrewSkill,
+  type SkillConversion,
+  type StoredCharacter,
+} from "./convertCustomSkills.ts";
 export {
   abilityScoresSchema,
   type CharacterDefinition,

@@ -22,6 +22,8 @@ const stated = (facts: [string, string][]): Fact[] => facts.filter(([, value]) =
 
 const abbreviated = (ability: string) => ability.toUpperCase();
 
+const skillBase = (ability: string) => (ability === "flat" ? "Flat bonus" : abbreviated(ability));
+
 /**
  * `{ dex: 2, cha: 1 }` as `+2 DEX +1 CHA`, the increases a race fixes. A choice, or a
  * second alternative, is left to its rules text.
@@ -104,5 +106,5 @@ export function featFacts(json: Json): Fact[] {
 }
 
 export function skillFacts(json: Json): Fact[] {
-  return stated([["Ability", typeof json.ability === "string" ? abbreviated(json.ability) : ""]]);
+  return stated([["Ability", typeof json.ability === "string" ? skillBase(json.ability) : ""]]);
 }

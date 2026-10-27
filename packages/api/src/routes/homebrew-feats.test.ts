@@ -1,3 +1,4 @@
+import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
@@ -101,7 +102,7 @@ describe("homebrewFeatsRoutes", () => {
 
       expect((await routes.request(`/homebrew/feats/${created.id}`)).status).toBe(200);
 
-      const sheet = charactersRoutes(opened.charactersDb, () => {});
+      const sheet = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
       expect((await sheet.request(`/characters/${character.id}`)).status).toBe(200);
     });
   });

@@ -32,7 +32,7 @@ export const app = new OpenAPIHono();
 
 app.onError(onAppError);
 
-app.route("/", charactersRoutes(charactersDb, backupCharactersDb));
+app.route("/", charactersRoutes(charactersDb, backupCharactersDb, homebrewDb, DATA_DIR));
 app.route("/", characterPortraitRoutes(charactersDb));
 app.route("/", pagesRoutes(charactersDb));
 app.route("/", derivedRoutes(charactersDb, DATA_DIR, homebrewDb));
@@ -47,7 +47,7 @@ app.route("/", homebrewBackgroundsRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewFeatsRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewRacesRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewClassesRoutes(homebrewDb, charactersDb));
-app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb));
+app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb, DATA_DIR));
 app.route("/", spellsRoutes(DATA_DIR, homebrewDb));
 app.route("/", itemsRoutes(DATA_DIR, homebrewDb));
 app.route("/", racesRoutes(DATA_DIR));

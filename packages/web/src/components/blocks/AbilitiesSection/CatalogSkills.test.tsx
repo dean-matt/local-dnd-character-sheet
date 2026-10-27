@@ -55,7 +55,11 @@ const derivedFor = (
 function Seeded({ granted, fromItems }: { granted: Granted; fromItems: Granted }) {
   const { data } = useQuery<CharacterRecord>({ queryKey: characterKey("1"), queryFn: skipToken });
   return data ? (
-    <CatalogSkills character={data} derived={derivedFor(data, granted, fromItems)} />
+    <CatalogSkills
+      character={data}
+      derived={derivedFor(data, granted, fromItems)}
+      onRemoved={() => {}}
+    />
   ) : null;
 }
 

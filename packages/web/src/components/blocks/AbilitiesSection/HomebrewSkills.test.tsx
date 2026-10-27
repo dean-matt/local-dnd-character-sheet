@@ -85,7 +85,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("a homebrew skill on the sheet", () => {
   const catalogSkills = (record: CharacterRecord) => (
-    <CatalogSkills character={record} derived={derivedFor(record)} />
+    <CatalogSkills character={record} derived={derivedFor(record)} onRemoved={() => {}} />
   );
 
   it("lists only on a character that holds it, and marks an item's advantage on its row", () => {
@@ -134,8 +134,78 @@ describe("a homebrew skill on the sheet", () => {
   });
 });
 
+describe("a flat homebrew skill on the sheet", () => {
+  const CARTOGRAPHY = { name: "Cartography", source: "HB" };
+  const flatDerived = (record: CharacterRecord): CharacterDerived => {
+    const modifier = { computed: 5, manual: null, terms: [] };
+    return {
+      ...derivedFor(record),
+      skills: [
+        { ref: CARTOGRAPHY, ability: null, modifier, passive: { ...modifier, computed: 15 } },
+      ],
+    };
+  };
+  const catalogSkills = (record: CharacterRecord) => (
+    <CatalogSkills character={record} derived={flatDerived(record)} onRemoved={() => {}} />
+  );
+  const flatHolding = () => holding([{ ref: CARTOGRAPHY, level: "proficient", flat: 3 }]);
+
+  it("shows FLAT on its row and the number in its modal's footer beside Remove", () => {
+    stubServer(flatHolding());
+    renderSeeded(flatHolding(), catalogSkills);
+
+    const row = screen.getByText("Cartography").closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("flat");
+    expect(row).toHaveTextContent("+5");
+    expect(within(row).queryByRole("textbox")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const modal = within(screen.getByRole("dialog", { name: "Cartography" }));
+    const field = modal.getByRole("textbox", { name: "Cartography flat bonus" });
+    expect(field).toHaveValue("3");
+    const remove = modal.getByRole("button", { name: "Remove Cartography" });
+    expect(field.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("saves an edited number onto the held entry, and refuses a value that is not a whole number", async () => {
+    const fetchMock = stubServer(flatHolding());
+    renderSeeded(flatHolding(), catalogSkills);
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const field = within(screen.getByRole("dialog", { name: "Cartography" })).getByRole("textbox", {
+      name: "Cartography flat bonus",
+    });
+
+    fireEvent.change(field, { target: { value: "1.5" } });
+    fireEvent.blur(field);
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+
+    fireEvent.change(field, { target: { value: "-4" } });
+    fireEvent.blur(field);
+    await waitFor(() =>
+      expect(written(fetchMock).proficiencies.skills).toEqual([
+        { ref: CARTOGRAPHY, level: "proficient", flat: -4 },
+      ]),
+    );
+  });
+
+  it("keeps the number when the ring steps the level", async () => {
+    const fetchMock = stubServer(flatHolding());
+    renderSeeded(flatHolding(), catalogSkills);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography proficiency: Proficient" }));
+
+    await waitFor(() =>
+      expect(written(fetchMock).proficiencies.skills).toEqual([
+        { ref: CARTOGRAPHY, level: "expertise", flat: 3 },
+      ]),
+    );
+  });
+});
+
 describe("AddHomebrewSkill", () => {
-  const add = (record: CharacterRecord) => <AddHomebrewSkill character={record} />;
+  const add = (record: CharacterRecord) => (
+    <AddHomebrewSkill character={record} nameField={{ current: null }} onAdded={() => {}} />
+  );
 
   it("cites a homebrew skill of the character's edition at no proficiency", async () => {
     const fetchMock = stubServer(holding([]), [

@@ -5,12 +5,16 @@ import {
   type ContentRef,
   derivedValue,
   effectsOnRoll,
+  flatSkillBonusSchema,
   grantedSkillLevels,
   heldSkillLevel,
   overrideKey,
   refKey,
 } from "@dnd/character";
+import { useEffect, useState } from "react";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
+import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
+import { Field } from "../../Field/Field.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { nextLevel } from "./proficiencyMark.ts";
 import { RemoveSkill } from "./RemoveSkill.tsx";
@@ -23,16 +27,22 @@ import { RemoveSkill } from "./RemoveSkill.tsx";
  * shows, so a granted skill never reads lower than its grant makes it. Expertise stepped up
  * from a granted proficiency is stored `onGrant`, and stops counting if the grant goes.
  * A homebrew skill is listed only while the character holds it, so stepping it to none keeps
- * it; its row removes it instead.
+ * it; its row removes it instead. A flat one also edits its number there. `onRemoved` runs once
+ * a removed skill's row is gone, since until then its modal holds the page inert.
  */
 export function CatalogSkills({
   character,
   derived,
+  onRemoved,
 }: {
   character: CharacterRecord;
   derived: CharacterDerived;
+  onRemoved: (name: string) => void;
 }) {
   const write = useHeldSave(character.id, "Skill proficiency");
+  // A flat number saves through its own field, which reports its own failure.
+  const flats = useUpdateCharacterDefinition(character.id);
+  const [removed, setRemoved] = useState<ContentRef>();
   const granted = grantedSkillLevels(derived);
   const stored = (key: string) =>
     character.definition.proficiencies.skills.find((skill) => refKey(skill.ref) === key);
@@ -41,6 +51,12 @@ export function CatalogSkills({
   const skills = derived.skills
     .filter((skill) => skill.ref.source !== HOMEBREW_SOURCE || stored(refKey(skill.ref)))
     .sort((a, b) => a.ref.name.localeCompare(b.ref.name));
+
+  useEffect(() => {
+    if (removed === undefined || stored(refKey(removed))) return;
+    setRemoved(undefined);
+    onRemoved(removed.name);
+  });
 
   function cycle(ref: ContentRef) {
     const key = refKey(ref);
@@ -59,7 +75,15 @@ export function CatalogSkills({
       const kept =
         level === "none" && ref.source !== HOMEBREW_SOURCE
           ? others
-          : [...others, { ref, level, ...(onGrant && { onGrant: true as const }) }];
+          : [
+              ...others,
+              {
+                ref,
+                level,
+                ...(current?.flat !== undefined && { flat: current.flat }),
+                ...(onGrant && { onGrant: true as const }),
+              },
+            ];
       return { ...latest, proficiencies: { ...latest.proficiencies, skills: kept } };
     });
   }
@@ -74,7 +98,7 @@ export function CatalogSkills({
             key={key}
             level={shown(key)}
             name={skill.ref.name}
-            ability={skill.ability}
+            ability={skill.ability ?? "flat"}
             modifier={skill.modifier}
             overrideKey={`${overrideKey("skills", skill, character.definition)}.modifier`}
             title={skill.ref.name}
@@ -91,20 +115,51 @@ export function CatalogSkills({
             onCycleLevel={() => cycle(skill.ref)}
             detailFooter={
               homebrew && (
-                <RemoveSkill
-                  characterId={character.id}
-                  name={skill.ref.name}
-                  overridePrefix={`skills.${key}.`}
-                  without={(latest) => ({
-                    ...latest,
-                    proficiencies: {
-                      ...latest.proficiencies,
-                      skills: latest.proficiencies.skills.filter(
-                        (each) => refKey(each.ref) !== key,
-                      ),
-                    },
-                  })}
-                />
+                <div className="flex flex-1 items-start justify-end gap-3">
+                  {skill.ability === null && (
+                    <div className="me-auto flex items-baseline gap-2">
+                      <span aria-hidden="true" className="text-muted text-row">
+                        Flat bonus
+                      </span>
+                      <Field
+                        mode="edit"
+                        label={`${skill.ref.name} flat bonus`}
+                        labelHidden
+                        inputClassName="w-12 text-right"
+                        current={stored(key)?.flat ?? 0}
+                        format={String}
+                        parse={(raw) => Number(raw.trim())}
+                        schema={flatSkillBonusSchema}
+                        onSave={async (flat: number) => {
+                          await flats.mutateAsync((latest) => ({
+                            ...latest,
+                            proficiencies: {
+                              ...latest.proficiencies,
+                              skills: latest.proficiencies.skills.map((each) =>
+                                refKey(each.ref) === key ? { ...each, flat } : each,
+                              ),
+                            },
+                          }));
+                        }}
+                      />
+                    </div>
+                  )}
+                  <RemoveSkill
+                    characterId={character.id}
+                    name={skill.ref.name}
+                    overridePrefix={`skills.${key}.`}
+                    without={(latest) => ({
+                      ...latest,
+                      proficiencies: {
+                        ...latest.proficiencies,
+                        skills: latest.proficiencies.skills.filter(
+                          (each) => refKey(each.ref) !== key,
+                        ),
+                      },
+                    })}
+                    onRemoved={() => setRemoved(skill.ref)}
+                  />
+                </div>
               )
             }
           />

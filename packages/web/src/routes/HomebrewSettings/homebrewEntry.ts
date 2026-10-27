@@ -12,6 +12,8 @@ import type { HomebrewEntry } from "./homebrewDraft.ts";
 export interface HomebrewFormProps {
   entry: HomebrewEntry;
   edition: CharacterRecord["edition"];
+  /** The saved row's id where an existing one is edited; absent for a new one. */
+  recordId?: string;
   onChange: (next: HomebrewEntry) => void;
   /** The problem to show beside the control for the top-level field `key`, if it has one. */
   errorFor: (key: string) => ReactNode;
