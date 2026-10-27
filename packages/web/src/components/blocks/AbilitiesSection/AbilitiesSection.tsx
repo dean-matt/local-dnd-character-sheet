@@ -1,7 +1,7 @@
 /**
  * The numbers a player reads constantly. Every computed number comes off the derived
  * block; the definition supplies only what a player chose — the scores, which saves and
- * skills they are proficient in, and the skills they added — the derived block what feats
+ * skills they are proficient in, and the skills they hold — the derived block what feats
  * grant beside them, and `Vitals` reads what play has spent from state. A number opens its
  * terms and override in a popover; an ability, a save or a skill opens its terms and the
  * catalog's rules text in a modal.
@@ -26,7 +26,6 @@ import { CombatStats } from "./CombatStats.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
 import { FeatGrants } from "./FeatGrants.tsx";
 import { ItemGrants } from "./ItemGrants.tsx";
-import { NewSkillForm } from "./NewSkillForm.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
@@ -40,7 +39,7 @@ export function AbilitiesSection({
   character: CharacterRecord | undefined;
   derived: CharacterDerived | undefined;
 }) {
-  const nameField = useRef<HTMLInputElement>(null);
+  const addButton = useRef<HTMLButtonElement>(null);
   const [announcement, setAnnouncement] = useState("");
   if (!character || !derived) return <EmptyState>Abilities isn't available yet.</EmptyState>;
   const { definition } = character;
@@ -89,25 +88,23 @@ export function AbilitiesSection({
             )}
           </ul>
         </Card>
-        <Card title="Skills">
+        <Card
+          title="Skills"
+          action={
+            <AddHomebrewSkill
+              character={character}
+              buttonRef={addButton}
+              onAdded={(name) => setAnnouncement(`Added ${name}.`)}
+            />
+          }
+        >
           <CatalogSkills
             character={character}
             derived={derived}
             onRemoved={(name) => {
               setAnnouncement(`Removed ${name}.`);
-              nameField.current?.focus();
+              addButton.current?.focus();
             }}
-          />
-          <AddHomebrewSkill
-            character={character}
-            nameField={nameField}
-            onAdded={(name) => setAnnouncement(`Added ${name}.`)}
-          />
-          <NewSkillForm
-            character={character}
-            derived={derived}
-            nameField={nameField}
-            onAdded={(name) => setAnnouncement(`Added ${name}.`)}
           />
           <p role="status" className="sr-only">
             {announcement}

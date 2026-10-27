@@ -2,6 +2,7 @@ import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dn
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
@@ -206,31 +207,61 @@ describe("a flat homebrew skill on the sheet", () => {
 
 describe("AddHomebrewSkill", () => {
   const add = (record: CharacterRecord) => (
-    <AddHomebrewSkill character={record} nameField={{ current: null }} onAdded={() => {}} />
+    <MemoryRouter>
+      <AddHomebrewSkill character={record} buttonRef={{ current: null }} onAdded={() => {}} />
+    </MemoryRouter>
   );
+  const openModal = async () => {
+    fireEvent.click(await screen.findByRole("button", { name: "Add skill" }));
+    return screen.findByRole("dialog", { name: "Add a skill" });
+  };
 
-  it("cites a homebrew skill of the character's edition at no proficiency", async () => {
+  it("cites a homebrew skill of the character's edition at no proficiency, and closes", async () => {
     const fetchMock = stubServer(holding([]), [
       homebrewRow("Sailing", "one"),
       homebrewRow("Survival (Underdark)", "classic"),
     ]);
     renderSeeded(holding([]), add);
 
-    fireEvent.click(await screen.findByRole("combobox", { name: "Homebrew skill" }));
-    expect(screen.queryByRole("option", { name: "Survival (Underdark)" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("option", { name: "Sailing" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add homebrew skill" }));
+    const dialog = await openModal();
+    expect(within(dialog).queryByText("Survival (Underdark)")).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: /Sailing/ }));
 
     await waitFor(() =>
       expect(written(fetchMock).proficiencies.skills).toEqual([{ ref: SAILING, level: "none" }]),
     );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("offers nothing once the character holds every homebrew skill", async () => {
-    const fetchMock = stubServer(holding([]), [homebrewRow("Sailing", "one")]);
+  it("narrows the list to the skills holding what is typed", async () => {
+    stubServer(holding([]), [homebrewRow("Sailing", "one"), homebrewRow("Cartography", "one")]);
+    renderSeeded(holding([]), add);
+
+    const dialog = await openModal();
+    fireEvent.change(within(dialog).getByRole("searchbox"), { target: { value: "cart" } });
+
+    expect(within(dialog).queryByText("Sailing")).not.toBeInTheDocument();
+    expect(within(dialog).getByText("Cartography")).toBeVisible();
+    fireEvent.change(within(dialog).getByRole("searchbox"), { target: { value: "zzz" } });
+    expect(within(dialog).getByText("No matches")).toBeVisible();
+  });
+
+  it("says so, and points to Settings, once the character holds every homebrew skill", async () => {
+    stubServer(holding([]), [homebrewRow("Sailing", "one")]);
     renderSeeded(holding([{ ref: SAILING, level: "none" }]), add);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/homebrew/skills", undefined));
-    expect(screen.queryByRole("combobox", { name: "Homebrew skill" })).not.toBeInTheDocument();
+    const dialog = await openModal();
+    expect(within(dialog).getByText(/holds every homebrew skill/)).toBeVisible();
+    expect(within(dialog).getByRole("link", { name: "Make one in Settings" })).toHaveAttribute(
+      "href",
+      "/settings/homebrew",
+    );
+  });
+
+  it("says there are none where no homebrew skill is defined", async () => {
+    stubServer(holding([]), []);
+    renderSeeded(holding([]), add);
+
+    expect(within(await openModal()).getByText(/No homebrew skills yet/)).toBeVisible();
   });
 });

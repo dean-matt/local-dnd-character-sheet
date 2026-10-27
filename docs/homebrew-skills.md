@@ -22,8 +22,9 @@ the modifier is that number plus the proficiency bonus the level gives. Only hom
 `flat`, so `skillEntrySchema` keeps the ability enum 5etools prints and
 `homebrewSkillEntrySchema` adds it.
 
-A skill made from a character's skills block is this same kind of row: the sheet creates the
-homebrew skill, then the character holds it. There is no second kind of skill.
+A character picks its homebrew skills from the Skills card's Add skill button, which searches the
+skills of its edition it does not hold yet. The card never makes one, so a table's skill list holds
+only what Settings defined. There is no second kind of skill.
 
 While any character holds a skill, its form cannot switch between an ability and `flat`;
 Settings disables the select and names the holders.

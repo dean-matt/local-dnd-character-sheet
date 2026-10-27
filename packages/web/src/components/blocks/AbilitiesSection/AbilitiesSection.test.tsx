@@ -606,10 +606,14 @@ describe("AbilitiesSection", () => {
     );
   });
 
-  it("edits the six scores, offers a new skill, and leaves every derived value read-only", () => {
+  it("edits the six scores, offers Add skill on the Skills card, and leaves every derived value read-only", () => {
     renderSection();
-    expect(screen.getAllByRole("textbox")).toHaveLength(7);
-    expect(screen.getByRole("textbox", { name: "New skill" })).toBeInTheDocument();
+    expect(screen.getAllByRole("textbox")).toHaveLength(6);
+    expect(
+      within(screen.getByRole("region", { name: "Skills" })).getByRole("button", {
+        name: "Add skill",
+      }),
+    ).toBeInTheDocument();
   });
 
   describe("detail modal", () => {
