@@ -36,7 +36,7 @@ export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFor
         ) : (
           <>
             <p>Held by the following characters, changing will reset custom values</p>
-            <ul className="mt-1 flex flex-col gap-0.5">
+            <ul className="mt-1 list-disc pl-5">
               {held.map(({ id, name }) => (
                 <li key={id}>
                   <Link to={`/characters/${id}`} className="text-accent-text underline">
