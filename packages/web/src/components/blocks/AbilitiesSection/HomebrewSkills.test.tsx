@@ -128,10 +128,25 @@ describe("a homebrew skill on the sheet", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Sailing" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove Sailing" }));
+    expect(written(fetchMock)).toBeUndefined();
+    const confirm = within(screen.getByRole("dialog", { name: "Remove Sailing?" }));
+    fireEvent.click(confirm.getByRole("button", { name: "Remove Sailing" }));
 
     await waitFor(() => expect(written(fetchMock)).toBeDefined());
     expect(written(fetchMock).proficiencies.skills).toEqual([]);
     expect(written(fetchMock).overrides).toEqual({ armorClass: 20 });
+  });
+
+  it("keeps the skill when the confirmation is cancelled", () => {
+    const fetchMock = stubServer(holding([{ ref: SAILING, level: "none" }]));
+    renderSeeded(holding([{ ref: SAILING, level: "none" }]), catalogSkills);
+
+    fireEvent.click(screen.getByRole("button", { name: "Sailing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Sailing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByRole("dialog", { name: "Sailing" })).toBeVisible();
+    expect(written(fetchMock)).toBeUndefined();
   });
 });
 
@@ -151,7 +166,7 @@ describe("a flat homebrew skill on the sheet", () => {
   );
   const flatHolding = () => holding([{ ref: CARTOGRAPHY, level: "proficient", flat: 3 }]);
 
-  it("shows FLAT on its row and the number in its modal's footer beside Remove", () => {
+  it("shows FLAT on its row and the number at the right of its modal's footer, Remove at the left", () => {
     stubServer(flatHolding());
     renderSeeded(flatHolding(), catalogSkills);
 
@@ -165,7 +180,7 @@ describe("a flat homebrew skill on the sheet", () => {
     const field = modal.getByRole("textbox", { name: "Cartography flat bonus" });
     expect(field).toHaveValue("3");
     const remove = modal.getByRole("button", { name: "Remove Cartography" });
-    expect(field.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(field.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
   });
 
   it("saves an edited number onto the held entry, and refuses a value that is not a whole number", async () => {

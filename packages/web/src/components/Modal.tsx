@@ -43,6 +43,7 @@ export function Modal({
         // The control that opened the entry goes with the entry it sat in.
         close.current?.focus();
       },
+      back: () => setTrail((current) => current.slice(0, -1)),
     }),
     [titleId],
   );

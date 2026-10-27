@@ -279,7 +279,9 @@ describe("Popover", () => {
     };
     try {
       const { unmount } = render(
-        <InModal.Provider value={inModal ? { titleId: "title", open: () => {} } : null}>
+        <InModal.Provider
+          value={inModal ? { titleId: "title", open: () => {}, back: () => {} } : null}
+        >
           <Popover trigger="+3" label="Strength modifier">
             Base 16, modifier +3
           </Popover>

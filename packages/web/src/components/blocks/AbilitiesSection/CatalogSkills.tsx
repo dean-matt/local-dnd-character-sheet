@@ -119,9 +119,24 @@ export function CatalogSkills({
             onCycleLevel={() => cycle(skill.ref)}
             detailFooter={
               homebrew && (
-                <div className="flex flex-1 items-start justify-end gap-3">
+                <div className="flex flex-1 items-center gap-3">
+                  <RemoveSkill
+                    characterId={character.id}
+                    name={skill.ref.name}
+                    overridePrefix={`skills.${key}.`}
+                    without={(latest) => ({
+                      ...latest,
+                      proficiencies: {
+                        ...latest.proficiencies,
+                        skills: latest.proficiencies.skills.filter(
+                          (each) => refKey(each.ref) !== key,
+                        ),
+                      },
+                    })}
+                    onRemoved={() => setRemoved(skill.ref)}
+                  />
                   {skill.ability === null && (
-                    <div className="me-auto flex items-baseline gap-2">
+                    <div className="ms-auto flex items-center gap-2">
                       <span aria-hidden="true" className="text-muted text-row">
                         Flat bonus
                       </span>
@@ -148,21 +163,6 @@ export function CatalogSkills({
                       />
                     </div>
                   )}
-                  <RemoveSkill
-                    characterId={character.id}
-                    name={skill.ref.name}
-                    overridePrefix={`skills.${key}.`}
-                    without={(latest) => ({
-                      ...latest,
-                      proficiencies: {
-                        ...latest.proficiencies,
-                        skills: latest.proficiencies.skills.filter(
-                          (each) => refKey(each.ref) !== key,
-                        ),
-                      },
-                    })}
-                    onRemoved={() => setRemoved(skill.ref)}
-                  />
                 </div>
               )
             }
