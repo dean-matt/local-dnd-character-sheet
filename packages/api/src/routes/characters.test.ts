@@ -1,12 +1,18 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   type CharacterDefinition,
   characterDefinitionSchema,
   defaultCharacterState,
   PRESET_PAGES,
 } from "@dnd/character";
+import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { characters, undoLog } from "../db/characters.ts";
+import { openDatabases } from "../db/client.ts";
+import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
 import { pagesRoutes } from "./pages.ts";
@@ -46,7 +52,7 @@ describe("charactersRoutes", () => {
 
   beforeEach(() => {
     opened = openTestDatabases();
-    routes = charactersRoutes(opened.charactersDb, () => {});
+    routes = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
   });
 
   afterEach(() => {
@@ -189,9 +195,14 @@ describe("charactersRoutes", () => {
   it("snapshots the database while the character is still in it, and not for a miss", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
     const seen: number[] = [];
-    const backed = charactersRoutes(opened.charactersDb, () => {
-      seen.push(opened.charactersDb.select().from(characters).all().length);
-    });
+    const backed = charactersRoutes(
+      opened.charactersDb,
+      () => {
+        seen.push(opened.charactersDb.select().from(characters).all().length);
+      },
+      opened.homebrewDb,
+      tmpdir(),
+    );
 
     await backed.request("/characters/missing", { method: "DELETE" });
     expect(seen).toEqual([]);
@@ -204,9 +215,14 @@ describe("charactersRoutes", () => {
 
   it("keeps the character when the snapshot fails", async () => {
     const created = await (await routes.request("/characters", json(baseDefinition()))).json();
-    const failing = charactersRoutes(opened.charactersDb, () => {
-      throw new Error("disk full");
-    });
+    const failing = charactersRoutes(
+      opened.charactersDb,
+      () => {
+        throw new Error("disk full");
+      },
+      opened.homebrewDb,
+      tmpdir(),
+    );
 
     const res = await failing.request(`/characters/${created.id}`, { method: "DELETE" });
     expect(res.status).toBe(500);
@@ -263,7 +279,7 @@ describe("the character file", () => {
 
   beforeEach(() => {
     opened = openTestDatabases();
-    routes = charactersRoutes(opened.charactersDb, () => {});
+    routes = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
     pages = pagesRoutes(opened.charactersDb);
   });
 
@@ -391,7 +407,7 @@ describe("the undo log", () => {
 
   beforeEach(async () => {
     opened = openTestDatabases();
-    routes = charactersRoutes(opened.charactersDb, () => {});
+    routes = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
     id = (await (await routes.request("/characters", json(baseDefinition()))).json()).id;
   });
 
@@ -621,5 +637,172 @@ describe("the undo log", () => {
   it("404s listing or undoing for an id that does not exist", async () => {
     expect((await routes.request("/characters/missing/undo")).status).toBe(404);
     expect((await routes.request("/characters/missing/undo", { method: "POST" })).status).toBe(404);
+  });
+});
+
+describe("importing a file that still carries custom skills", () => {
+  let dataDir: string;
+  let opened: ReturnType<typeof openDatabases>;
+  let routes: ReturnType<typeof charactersRoutes>;
+
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), "import-custom-skills-"));
+    publishDerivedFixture(dataDir, {
+      lookups: [
+        {
+          kind: "skill",
+          name: "Perception",
+          source: "XPHB",
+          edition: "one",
+          json: JSON.stringify({ name: "Perception", source: "XPHB", ability: "wis" }),
+        },
+      ],
+    });
+  });
+
+  afterAll(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  // The import attaches homebrew.db by path, which an in-memory database has none of.
+  let databases: string;
+
+  beforeEach(() => {
+    databases = mkdtempSync(join(tmpdir(), "import-databases-"));
+    opened = openDatabases(databases);
+    routes = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, dataDir);
+  });
+
+  afterEach(() => {
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+    rmSync(databases, { recursive: true, force: true });
+  });
+
+  const legacyFile = async (customSkills: unknown[], overrides: Record<string, unknown> = {}) => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+    const file = await (await routes.request(`/characters/${created.id}/export`)).json();
+    return { ...file, definition: { ...file.definition, customSkills, overrides } };
+  };
+  const importFile = (file: unknown) => routes.request("/characters/import", json(file));
+  const homebrewRows = () =>
+    opened.homebrewDb.$client
+      .prepare("SELECT name, edition FROM homebrew_skills ORDER BY name")
+      .all();
+
+  it("holds each custom skill as a homebrew skill, with its level, flat number and override", async () => {
+    const res = await importFile(
+      await legacyFile(
+        [
+          { name: "Juggling", ability: "dex", level: "expertise" },
+          { name: "Perception", flat: 3, level: "proficient" },
+        ],
+        { "customSkills.Perception.modifier": 9 },
+      ),
+    );
+
+    expect(res.status).toBe(201);
+    const { definition } = await res.json();
+    expect(definition).not.toHaveProperty("customSkills");
+    expect(definition.proficiencies.skills).toEqual([
+      { ref: { name: "Juggling", source: "HB" }, level: "expertise" },
+      { ref: { name: "Perception (2)", source: "HB" }, level: "proficient", flat: 3 },
+    ]);
+    expect(definition.overrides).toEqual({ "skills.Perception (2)|HB.modifier": 9 });
+    expect(homebrewRows()).toEqual([
+      { name: "Juggling", edition: "one" },
+      { name: "Perception (2)", edition: "one" },
+    ]);
+  });
+
+  it("numbers around a name live homebrew already holds", async () => {
+    opened.homebrewDb.$client
+      .prepare(
+        "INSERT INTO homebrew_skills (id, name, edition, json) VALUES ('x', 'Perception (2)', 'one', ?)",
+      )
+      .run(JSON.stringify({ name: "Perception (2)", source: "HB", ability: "int" }));
+
+    const res = await importFile(
+      await legacyFile([{ name: "Perception", ability: "str", level: "none" }]),
+    );
+
+    expect((await res.json()).definition.proficiencies.skills).toEqual([
+      { ref: { name: "Perception (3)", source: "HB" }, level: "none" },
+    ]);
+  });
+
+  it("imports a file carrying only an empty customSkills without reading the catalog", async () => {
+    const bare = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
+    const created = await (await bare.request("/characters", json(baseDefinition()))).json();
+    const file = await (await bare.request(`/characters/${created.id}/export`)).json();
+
+    const res = await bare.request(
+      "/characters/import",
+      json({ ...file, definition: { ...file.definition, customSkills: [] } }),
+    );
+
+    expect(res.status).toBe(201);
+    expect((await res.json()).definition).not.toHaveProperty("customSkills");
+  });
+
+  it("writes nothing when entries need a missing catalog, then serves on", async () => {
+    const bare = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
+    const file = await legacyFile([{ name: "Juggling", ability: "dex", level: "none" }]);
+    const before = await (await routes.request("/characters")).json();
+
+    expect((await bare.request("/characters/import", json(file))).status).toBe(500);
+
+    expect(await (await routes.request("/characters")).json()).toEqual(before);
+    expect(homebrewRows()).toEqual([]);
+    expect((await importFile(file)).status).toBe(201);
+    expect(
+      (await importFile(await legacyFile([{ name: "Sailing", ability: "wis", level: "none" }])))
+        .status,
+    ).toBe(201);
+  });
+
+  it("refuses with a 409, writing nothing, while another program holds the databases open", async () => {
+    const file = await legacyFile([{ name: "Sailing", ability: "wis", level: "none" }]);
+    const other = new Database(join(databases, "characters.db"));
+    other.prepare("SELECT count(*) FROM characters").get();
+    try {
+      const res = await importFile(file);
+
+      expect(res.status).toBe(409);
+      expect((await res.json()).error).toMatch(/Another program has the databases open/);
+    } finally {
+      other.close();
+    }
+    expect(homebrewRows()).toEqual([]);
+    expect((await importFile(file)).status).toBe(201);
+  });
+
+  it("refuses a converted definition that fails the schema, writing nothing", async () => {
+    const file = await legacyFile([{ name: "Juggling", ability: "dex", level: "none" }]);
+    file.definition.abilityScores.str = 31;
+
+    const res = await importFile(file);
+
+    expect(res.status).toBe(422);
+    expect(homebrewRows()).toEqual([]);
+  });
+
+  it("refuses a file whose customSkills is not a list", async () => {
+    const file = await legacyFile([]);
+    file.definition.customSkills = "Juggling";
+
+    const res = await importFile(file);
+
+    expect(res.status).toBe(422);
+    expect(homebrewRows()).toEqual([]);
+  });
+
+  it("exports a file without customSkills, which imports unconverted", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+    const file = await (await routes.request(`/characters/${created.id}/export`)).json();
+
+    expect(file.definition).not.toHaveProperty("customSkills");
+    expect((await importFile(file)).status).toBe(201);
+    expect(homebrewRows()).toEqual([]);
   });
 });

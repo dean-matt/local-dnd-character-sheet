@@ -606,10 +606,14 @@ describe("AbilitiesSection", () => {
     );
   });
 
-  it("edits the six scores, adds a custom skill, and leaves every derived value read-only", () => {
+  it("edits the six scores, offers Add skill on the Skills card, and leaves every derived value read-only", () => {
     renderSection();
-    expect(screen.getAllByRole("textbox")).toHaveLength(7);
-    expect(screen.getByRole("textbox", { name: "Custom skill" })).toBeInTheDocument();
+    expect(screen.getAllByRole("textbox")).toHaveLength(6);
+    expect(
+      within(screen.getByRole("region", { name: "Skills" })).getByRole("button", {
+        name: "Add skill",
+      }),
+    ).toBeInTheDocument();
   });
 
   describe("detail modal", () => {
@@ -622,7 +626,8 @@ describe("AbilitiesSection", () => {
 
       const modal = within(screen.getByRole("dialog", { name: "Stealth" }));
       expect(modal.getByText("Expertise")).toBeVisible();
-      expect(modal.getByText("+7")).toBeVisible();
+      expect(modal.getAllByText("+7")).toHaveLength(1);
+      expect(modal.getByText("Total").nextElementSibling).toHaveTextContent("+7");
       expect(await modal.findByText("Stealth covers hiding.")).toBeVisible();
       expect(modal.queryByRole("button", { name: /^Remove/ })).toBeNull();
       const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));

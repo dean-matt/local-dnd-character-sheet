@@ -270,12 +270,15 @@ export function withFeatGrants(
     const held = grants.get(refKey(skill.ref));
     if (!held || rank(skill.level) > rank(held.level)) grants.set(refKey(skill.ref), skill);
   }
-  const skills = new Map<string, { ref: ContentRef; level: ProficiencyLevel }>();
+  const skills = new Map<string, { ref: ContentRef; level: ProficiencyLevel; flat?: number }>();
   for (const skill of [...proficiencies.skills, ...grants.values()]) {
     const key = refKey(skill.ref);
     const stored = proficiencies.skills.find((held) => refKey(held.ref) === key);
     const level = heldSkillLevel(stored, grants.get(key)?.level);
-    if (level !== "none") skills.set(key, { ref: skill.ref, level });
+    const flat = stored?.flat;
+    if (level !== "none" || flat !== undefined) {
+      skills.set(key, { ref: skill.ref, level, ...(flat !== undefined && { flat }) });
+    }
   }
   const names = (list: readonly string[], more: readonly { name: string }[]) => [
     ...list,

@@ -149,18 +149,10 @@ export const characterDerivedSchema = z.strictObject({
   skills: z.array(
     z.strictObject({
       ref: contentRefSchema,
-      ability: abilitySchema,
-      modifier: derivedSchema(z.int()),
-      passive: derivedSchema(z.int()),
-    }),
-  ),
-  /** One entry per custom skill the definition holds, in its order, keyed by name as the definition keys them. */
-  customSkills: z.array(
-    z.strictObject({
-      name: z.string().min(1),
-      /** Null for a skill whose base is a flat value rather than an ability. */
+      /** Null for a homebrew skill whose base is a flat value rather than an ability. */
       ability: abilitySchema.nullable(),
       modifier: derivedSchema(z.int()),
+      passive: derivedSchema(z.int()),
     }),
   ),
   armorClass: derivedSchema(z.int()),

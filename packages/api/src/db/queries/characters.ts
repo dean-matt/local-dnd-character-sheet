@@ -15,6 +15,7 @@ import {
   defaultCharacterState,
   PRESET_PAGES,
   raceSummary,
+  refKey,
   totalLevel,
 } from "@dnd/character";
 import type { Edition } from "@dnd/rules";
@@ -104,13 +105,20 @@ export function duplicateCharacter(db: CharactersDb, sourceId: string, id: strin
   });
 }
 
+/** Writes `file` as a new character under `id` inside a transaction the caller opened. */
+export function importCharacterRows(
+  tx: Parameters<Parameters<CharactersDb["transaction"]>[0]>[0],
+  id: string,
+  file: CharacterFile,
+) {
+  const row = insertCharacterRows(tx, id, file.definition, file.state);
+  writePages(tx, id, file.pages);
+  return row;
+}
+
 /** Writes `file` as a new character under `id`, never over an existing one. */
 export function importCharacter(db: CharactersDb, id: string, file: CharacterFile) {
-  return db.transaction((tx) => {
-    const row = insertCharacterRows(tx, id, file.definition, file.state);
-    writePages(tx, id, file.pages);
-    return row;
-  });
+  return db.transaction((tx) => importCharacterRows(tx, id, file));
 }
 
 /** What a transaction and the database both offer, so a helper serves either. */
@@ -297,6 +305,46 @@ export function charactersReferencingHomebrewSkill(
       );
     })
     .map((row) => ({ id: row.id, name: row.name }));
+}
+
+/**
+ * Resets what each character holding a homebrew skill typed over it, for the skill switching
+ * between an ability and a flat bonus: the flat number (0 for a new flat skill, none for an
+ * ability one) and any override of its modifier. Each reset is that character's own undo
+ * entry.
+ */
+export function resetHomebrewSkillValues(
+  db: CharactersDb,
+  skill: { name: string; edition: Edition },
+  toFlat: boolean,
+) {
+  const wanted = skill.name.toLowerCase();
+  const held = (ref: { name: string; source: string }) =>
+    ref.source === HOMEBREW_SOURCE && ref.name.toLowerCase() === wanted;
+  for (const { id } of charactersReferencingHomebrewSkill(db, skill)) {
+    const row = getCharacter(db, id);
+    const definition = characterDefinitionSchema.safeParse(row?.definition).data;
+    if (!definition) continue;
+    const prefixes = definition.proficiencies.skills
+      .filter(({ ref }) => held(ref))
+      .map(({ ref }) => `skills.${refKey(ref)}.`);
+    updateCharacterDefinition(db, id, {
+      ...definition,
+      proficiencies: {
+        ...definition.proficiencies,
+        skills: definition.proficiencies.skills.map((entry) => {
+          if (!held(entry.ref)) return entry;
+          const { flat: _flat, ...rest } = entry;
+          return toFlat ? { ...rest, flat: 0 } : rest;
+        }),
+      },
+      overrides: Object.fromEntries(
+        Object.entries(definition.overrides).filter(
+          ([key]) => !prefixes.some((prefix) => key.startsWith(prefix)),
+        ),
+      ),
+    });
+  }
 }
 
 export function getCharacterState(db: CharactersDb, characterId: string) {

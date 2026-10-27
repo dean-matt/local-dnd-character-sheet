@@ -47,8 +47,9 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
 
   return (
     <section
+      id={`homebrew-${kind.collection}`}
       aria-labelledby={`${id}-title`}
-      className="flex flex-col gap-2.5 rounded-card border border-border bg-surface p-4"
+      className="flex scroll-mt-20 flex-col gap-2.5 rounded-card border border-border bg-surface p-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2

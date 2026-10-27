@@ -13,9 +13,38 @@ holds the skill. The derived block lists a homebrew skill only for a character h
 in the character's edition, so the sheet's skill list is the built-in skills plus the
 character's own.
 
-A character's `customSkills` stay a per-character option beside these. They suit a skill
-one character plays, and moving them would rewrite every stored definition for no change in
-what a sheet shows.
+## Ability and flat forms
+
+A skill's `ability` is one of the six abilities, or `flat`, a skill with no ability whose
+number each holding character sets itself. A flat skill's number lives on the character's
+`proficiencies.skills` entry as `flat`, beside its level; a missing number reads as 0, and
+the modifier is that number plus the proficiency bonus the level gives. Only homebrew carries
+`flat`, so `skillEntrySchema` keeps the ability enum 5etools prints and
+`homebrewSkillEntrySchema` adds it.
+
+A character picks its homebrew skills from the Skills card's Add skill button, which searches the
+skills of its edition it does not hold yet. The card never makes one, so a table's skill list holds
+only what Settings defined. There is no second kind of skill.
+
+A skill may switch between an ability and `flat` while characters hold it. The switch resets, on
+each holder, the flat number and any override of the skill's modifier, as its own undo entry; an
+info icon beside Ability in Settings lists the holders, linked, and says so.
+
+## One name per skill
+
+A skill's name is unique within an edition, compared without regard to case, across the
+catalog's skills and the homebrew skills. The sheet and the API refuse a name either holds. A
+homebrew skill that already carries a catalog name keeps it and is not refused on edit.
+
+## Numbered renames
+
+Converting a character's older `customSkills` into homebrew skills follows fixed rules, within one
+edition and without regard to case. Skills of one name and form merge into one row. Where one name
+carries different forms, an existing homebrew skill of that name keeps the plain name; otherwise
+the first form (STR to CHA, then flat) does, and each other form takes ` (2)`, ` (3)` on,
+passing over a name already taken. A name a catalog skill holds is suffixed in every form. The
+rules live in `packages/character/src/convertCustomSkills.ts`. The API runs them at start and on
+importing a character file exported before the change.
 
 ## How an item names one
 

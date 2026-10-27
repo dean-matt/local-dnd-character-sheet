@@ -8,6 +8,8 @@ export interface HomebrewStepModeProps {
   kind: HomebrewKind;
   step: number;
   draft: ReturnType<typeof useHomebrewEntryDraft>;
+  /** The id of the row being edited, absent for a new one. */
+  recordId?: string;
   /** The problems to name, which stay empty until a step or a save is tried. */
   shownProblems: HomebrewProblem[];
   onStep: (step: number) => void;
@@ -22,6 +24,7 @@ export function HomebrewStepMode({
   kind,
   step,
   draft,
+  recordId,
   shownProblems,
   onStep,
 }: HomebrewStepModeProps) {
@@ -73,6 +76,7 @@ export function HomebrewStepMode({
                   key={draft.revision}
                   entry={draft.entry}
                   edition={draft.edition}
+                  recordId={recordId}
                   onChange={draft.edit}
                   errorFor={(key) => errorFor(shownProblems, key)}
                 />

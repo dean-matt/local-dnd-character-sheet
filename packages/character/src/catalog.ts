@@ -14,7 +14,8 @@ import type { Speed } from "./characterDerived.ts";
 import type { Ability, ContentRef } from "./refs.ts";
 
 /** One catalog skill row a derived block iterates: its ability, since a character stores none. */
-export type SkillTrait = { ref: ContentRef; ability: Ability };
+/** `flat` marks a homebrew skill whose base is the number the character holds beside its level. */
+export type SkillTrait = { ref: ContentRef; ability: Ability | "flat" };
 
 /**
  * What one suit of armor or shield contributes to armor class once equipped: its own

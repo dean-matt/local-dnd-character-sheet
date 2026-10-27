@@ -1,7 +1,7 @@
 /**
  * The numbers a player reads constantly. Every computed number comes off the derived
  * block; the definition supplies only what a player chose — the scores, which saves and
- * skills they are proficient in, and the skills they added — the derived block what feats
+ * skills they are proficient in, and the skills they hold — the derived block what feats
  * grant beside them, and `Vitals` reads what play has spent from state. A number opens its
  * terms and override in a popover; an ability, a save or a skill opens its terms and the
  * catalog's rules text in a modal.
@@ -14,6 +14,7 @@ import {
   derivedValue,
   effectsOnRoll,
 } from "@dnd/character";
+import { useRef, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
@@ -22,7 +23,6 @@ import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CatalogSkills } from "./CatalogSkills.tsx";
 import { CombatStats } from "./CombatStats.tsx";
-import { CustomSkills } from "./CustomSkills.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
 import { FeatGrants } from "./FeatGrants.tsx";
 import { ItemGrants } from "./ItemGrants.tsx";
@@ -39,6 +39,8 @@ export function AbilitiesSection({
   character: CharacterRecord | undefined;
   derived: CharacterDerived | undefined;
 }) {
+  const addButton = useRef<HTMLButtonElement>(null);
+  const [announcement, setAnnouncement] = useState("");
   if (!character || !derived) return <EmptyState>Abilities isn't available yet.</EmptyState>;
   const { definition } = character;
 
@@ -86,10 +88,27 @@ export function AbilitiesSection({
             )}
           </ul>
         </Card>
-        <Card title="Skills">
-          <CatalogSkills character={character} derived={derived} />
-          <AddHomebrewSkill character={character} />
-          <CustomSkills character={character} derived={derived} />
+        <Card
+          title="Skills"
+          action={
+            <AddHomebrewSkill
+              character={character}
+              buttonRef={addButton}
+              onAdded={(name) => setAnnouncement(`Added ${name}.`)}
+            />
+          }
+        >
+          <CatalogSkills
+            character={character}
+            derived={derived}
+            onRemoved={(name) => {
+              setAnnouncement(`Removed ${name}.`);
+              addButton.current?.focus();
+            }}
+          />
+          <p role="status" className="sr-only">
+            {announcement}
+          </p>
           <PassiveScores character={character} derived={derived} />
         </Card>
       </div>

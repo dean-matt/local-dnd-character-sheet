@@ -45,7 +45,7 @@ describe("characterPortraitRoutes", () => {
 
   beforeEach(async () => {
     opened = openTestDatabases();
-    characters = charactersRoutes(opened.charactersDb, () => {});
+    characters = charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir());
     portraits = characterPortraitRoutes(opened.charactersDb);
     const res = await characters.request("/characters", {
       method: "POST",

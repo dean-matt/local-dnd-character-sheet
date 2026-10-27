@@ -12,6 +12,7 @@ export function DetailName({
   value,
   rules,
   footer,
+  total,
   className,
   children,
 }: {
@@ -20,6 +21,8 @@ export function DetailName({
   value: Derived<number>;
   rules: Rules | undefined;
   footer?: ReactNode;
+  /** Off where the footer shows the total. */
+  total?: boolean;
   className?: string;
   children: ReactNode;
 }) {
@@ -29,7 +32,7 @@ export function DetailName({
       meta={meta}
       detail={
         <>
-          <ValueDetail value={value} />
+          <ValueDetail value={value} total={total} />
           {rules && <CatalogRules {...rules} />}
         </>
       }

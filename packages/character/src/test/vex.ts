@@ -57,7 +57,6 @@ export const derivedInput = (traits: object = {}) => ({
   encumbrance: null,
   attunementSlots: { computed: 3 },
   weaponMasteryLimit: { computed: 0 },
-  customSkills: [],
   attacks: [],
   defenses: {
     computed: {
@@ -152,7 +151,6 @@ export const definition: CharacterDefinition = {
   spellBlocks: [],
   weaponMasteries: [],
   addedDefenses: { resistances: [], damageImmunities: [], conditionImmunities: [] },
-  customSkills: [],
   money: { copper: 7, silver: 0, electrum: 0, gold: 41, platinum: 2 },
   appearance: { age: "24", height: "5'6\"", eyes: "green" },
   backstory: { flaws: "Trusts a pact over a friend." },

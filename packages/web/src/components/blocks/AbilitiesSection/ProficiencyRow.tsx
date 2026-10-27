@@ -1,5 +1,8 @@
 import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
+import { FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
+import { Link } from "react-router";
+import { Popover } from "../../Popover.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import type { Rules } from "./abilityRules.ts";
 import { DetailName } from "./DetailName/DetailName.tsx";
@@ -22,6 +25,7 @@ export function ProficiencyRow({
   effects = [],
   overrideKey,
   onCycleLevel,
+  homebrew = false,
   detailFooter,
 }: {
   level: ProficiencyLevel;
@@ -37,7 +41,9 @@ export function ProficiencyRow({
   effects?: readonly RollEffectEntry[];
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
-  /** The foot of the modal the name opens, for an action on the row itself. */
+  /** Marks a skill the table defined, with the Homebrew page's icon beside its ability. */
+  homebrew?: boolean;
+  /** The foot of the modal the name opens, for an action on the row itself; it shows the total, which the modal's body then leaves out. */
   detailFooter?: ReactNode;
 }) {
   const roll = ability ? `${name} check` : `${name} save`;
@@ -62,6 +68,7 @@ export function ProficiencyRow({
           value={modifier}
           rules={rules}
           footer={detailFooter}
+          total={detailFooter === undefined}
           className="hover:underline"
         >
           {label ? (
@@ -78,11 +85,34 @@ export function ProficiencyRow({
         )}
       </span>
       {ability && (
-        <span className="text-label text-muted uppercase">
-          <span aria-hidden="true">{ability}</span>
-          <span className="sr-only">
-            {ability === "flat" ? "Flat bonus" : ABILITY_LABEL[ability]}
+        <span className="flex items-center gap-1">
+          <span className="text-label text-muted uppercase">
+            <span aria-hidden="true">{ability}</span>
+            <span className="sr-only">
+              {ability === "flat" ? "Flat bonus" : ABILITY_LABEL[ability]}
+            </span>
           </span>
+          {homebrew && (
+            // No font size, so the popover's inline box adds no line-height strut around the icon.
+            <span className="flex text-[0px]">
+              <Popover
+                trigger={
+                  <FlaskConical aria-hidden="true" size={12} className="block text-accent-text" />
+                }
+                triggerLabel="Homebrew skill"
+                label="Homebrew skill"
+              >
+                Homebrew skill, defined in{" "}
+                <Link
+                  to="/settings/homebrew#homebrew-skills"
+                  className="text-accent-text underline"
+                >
+                  Settings › Homebrew
+                </Link>
+                .
+              </Popover>
+            </span>
+          )}
         </span>
       )}
       <span className="ms-auto flex items-center gap-2">

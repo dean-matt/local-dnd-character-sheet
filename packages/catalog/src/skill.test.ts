@@ -8,6 +8,15 @@ describe("homebrewSkillInputSchema", () => {
     ).toEqual({ name: "Sailing", ability: "wis", edition: "one" });
   });
 
+  it("accepts the flat ability, which the catalog shape refuses", () => {
+    expect(
+      homebrewSkillInputSchema.parse({ name: "Cartography", ability: "flat", edition: "one" }),
+    ).toMatchObject({ ability: "flat" });
+    expect(
+      skillEntrySchema.safeParse({ name: "Cartography", source: "HB", ability: "flat" }).success,
+    ).toBe(false);
+  });
+
   it("refuses a skill with no ability or an ability that does not exist", () => {
     expect(homebrewSkillInputSchema.safeParse({ name: "Sailing", edition: "one" }).success).toBe(
       false,

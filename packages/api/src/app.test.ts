@@ -55,7 +55,7 @@ describe("/openapi.json", () => {
     const app = new OpenAPIHono();
     app.route(
       "/",
-      charactersRoutes(opened.charactersDb, () => {}),
+      charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir()),
     );
     app.route("/", pagesRoutes(opened.charactersDb));
     app.route("/", derivedRoutes(opened.charactersDb, dataDir, opened.homebrewDb));
@@ -70,10 +70,10 @@ describe("/openapi.json", () => {
       homebrewFeatsRoutes,
       homebrewRacesRoutes,
       homebrewClassesRoutes,
-      homebrewSkillsRoutes,
     ]) {
       app.route("/", homebrewRoutes(opened.homebrewDb, opened.charactersDb));
     }
+    app.route("/", homebrewSkillsRoutes(opened.homebrewDb, opened.charactersDb, dataDir));
     app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
     app.doc("/openapi.json", { openapi: "3.1.0", info: { title: "t", version: "0" } });
 
@@ -108,6 +108,7 @@ describe("/openapi.json", () => {
       "/homebrew/races/{id}",
       "/homebrew/skills",
       "/homebrew/skills/{id}",
+      "/homebrew/skills/{id}/holders",
       "/homebrew/spells",
       "/homebrew/spells/{id}",
       "/spells",
@@ -163,7 +164,7 @@ describe("a catalog built from another schema", () => {
     app.onError(onAppError);
     app.route(
       "/",
-      charactersRoutes(opened.charactersDb, () => {}),
+      charactersRoutes(opened.charactersDb, () => {}, opened.homebrewDb, tmpdir()),
     );
     app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
 

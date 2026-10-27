@@ -2,6 +2,7 @@ import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dn
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../test/records.ts";
@@ -85,7 +86,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("a homebrew skill on the sheet", () => {
   const catalogSkills = (record: CharacterRecord) => (
-    <CatalogSkills character={record} derived={derivedFor(record)} />
+    <CatalogSkills character={record} derived={derivedFor(record)} onRemoved={() => {}} />
   );
 
   it("lists only on a character that holds it, and marks an item's advantage on its row", () => {
@@ -97,6 +98,35 @@ describe("a homebrew skill on the sheet", () => {
     renderSeeded(holding([{ ref: SAILING, level: "none" }]), catalogSkills);
     const row = screen.getByText("Sailing").closest("li") as HTMLElement;
     expect(within(row).getByRole("button", { name: "Sailing check: Advantage" })).toBeVisible();
+  });
+
+  it("marks a homebrew row beside its ability, and a catalog row not", () => {
+    const record = holding([{ ref: SAILING, level: "none" }]);
+    const derived = derivedFor(record);
+    const stealth = { ref: { name: "Stealth", source: "XPHB" }, ability: "dex" as const };
+    const modifier = { computed: 3, manual: null, terms: [] };
+    renderSeeded(record, (held) => (
+      <MemoryRouter>
+        <CatalogSkills
+          character={held}
+          derived={{
+            ...derived,
+            skills: [...derived.skills, { ...stealth, modifier, passive: modifier }],
+          }}
+          onRemoved={() => {}}
+        />
+      </MemoryRouter>
+    ));
+
+    const row = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
+    const mark = within(row("Sailing")).getByRole("button", { name: "Homebrew skill" });
+    fireEvent.mouseEnter(mark);
+    expect(
+      within(row("Sailing")).getByRole("link", { name: "Settings › Homebrew" }),
+    ).toHaveAttribute("href", "/settings/homebrew#homebrew-skills");
+    expect(
+      within(row("Stealth")).queryByRole("button", { name: "Homebrew skill" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the skill when its ring steps past expertise to none", async () => {
@@ -127,38 +157,181 @@ describe("a homebrew skill on the sheet", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Sailing" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove Sailing" }));
+    expect(written(fetchMock)).toBeUndefined();
+    const confirm = within(screen.getByRole("dialog", { name: "Remove Sailing?" }));
+    fireEvent.click(confirm.getByRole("button", { name: "Remove Sailing" }));
 
     await waitFor(() => expect(written(fetchMock)).toBeDefined());
     expect(written(fetchMock).proficiencies.skills).toEqual([]);
     expect(written(fetchMock).overrides).toEqual({ armorClass: 20 });
   });
+
+  it("keeps the skill when the confirmation is cancelled", () => {
+    const fetchMock = stubServer(holding([{ ref: SAILING, level: "none" }]));
+    renderSeeded(holding([{ ref: SAILING, level: "none" }]), catalogSkills);
+
+    fireEvent.click(screen.getByRole("button", { name: "Sailing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove Sailing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByRole("dialog", { name: "Sailing" })).toBeVisible();
+    expect(written(fetchMock)).toBeUndefined();
+  });
+});
+
+describe("a flat homebrew skill on the sheet", () => {
+  const CARTOGRAPHY = { name: "Cartography", source: "HB" };
+  const flatDerived = (record: CharacterRecord): CharacterDerived => {
+    const modifier = { computed: 5, manual: null, terms: [] };
+    return {
+      ...derivedFor(record),
+      skills: [
+        { ref: CARTOGRAPHY, ability: null, modifier, passive: { ...modifier, computed: 15 } },
+      ],
+    };
+  };
+  const catalogSkills = (record: CharacterRecord) => (
+    <CatalogSkills character={record} derived={flatDerived(record)} onRemoved={() => {}} />
+  );
+  const flatHolding = () => holding([{ ref: CARTOGRAPHY, level: "proficient", flat: 3 }]);
+
+  it("shows FLAT on its row and the number at the right of its modal's footer, Remove at the left", () => {
+    stubServer(flatHolding());
+    renderSeeded(flatHolding(), catalogSkills);
+
+    const row = screen.getByText("Cartography").closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("flat");
+    expect(row).toHaveTextContent("+5");
+    expect(within(row).queryByRole("textbox")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const modal = within(screen.getByRole("dialog", { name: "Cartography" }));
+    const field = modal.getByRole("textbox", { name: "Cartography flat bonus" });
+    expect(field).toHaveValue("3");
+    const remove = modal.getByRole("button", { name: "Remove Cartography" });
+    expect(field.compareDocumentPosition(remove)).toBe(Node.DOCUMENT_POSITION_PRECEDING);
+    expect(modal.getByText("Total").nextElementSibling).toHaveTextContent("+5");
+  });
+
+  it("saves an edited number onto the held entry, and refuses a value that is not a whole number", async () => {
+    const fetchMock = stubServer(flatHolding());
+    renderSeeded(flatHolding(), catalogSkills);
+    fireEvent.click(screen.getByRole("button", { name: "Cartography" }));
+    const field = within(screen.getByRole("dialog", { name: "Cartography" })).getByRole("textbox", {
+      name: "Cartography flat bonus",
+    });
+
+    for (const refused of ["1.5", "abc", "1e3", "0x10", "1_000", "9007199254740992"]) {
+      fireEvent.change(field, { target: { value: refused } });
+      fireEvent.blur(field);
+      expect(fetchMock, refused).not.toHaveBeenCalledWith("/api/characters/1", expect.anything());
+    }
+
+    fireEvent.change(field, { target: { value: "-4" } });
+    fireEvent.blur(field);
+    await waitFor(() =>
+      expect(written(fetchMock).proficiencies.skills).toEqual([
+        { ref: CARTOGRAPHY, level: "proficient", flat: -4 },
+      ]),
+    );
+  });
+
+  it("keeps the number when the ring steps the level", async () => {
+    const fetchMock = stubServer(flatHolding());
+    renderSeeded(flatHolding(), catalogSkills);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cartography proficiency: Proficient" }));
+
+    await waitFor(() =>
+      expect(written(fetchMock).proficiencies.skills).toEqual([
+        { ref: CARTOGRAPHY, level: "expertise", flat: 3 },
+      ]),
+    );
+  });
 });
 
 describe("AddHomebrewSkill", () => {
-  const add = (record: CharacterRecord) => <AddHomebrewSkill character={record} />;
+  const add = (record: CharacterRecord) => (
+    <MemoryRouter>
+      <AddHomebrewSkill character={record} buttonRef={{ current: null }} onAdded={() => {}} />
+    </MemoryRouter>
+  );
+  const openModal = async () => {
+    fireEvent.click(await screen.findByRole("button", { name: "Add skill" }));
+    return screen.findByRole("dialog", { name: "Add a skill" });
+  };
 
-  it("cites a homebrew skill of the character's edition at no proficiency", async () => {
+  it("cites a homebrew skill of the character's edition at no proficiency, and closes", async () => {
     const fetchMock = stubServer(holding([]), [
       homebrewRow("Sailing", "one"),
       homebrewRow("Survival (Underdark)", "classic"),
     ]);
     renderSeeded(holding([]), add);
 
-    fireEvent.click(await screen.findByRole("combobox", { name: "Homebrew skill" }));
-    expect(screen.queryByRole("option", { name: "Survival (Underdark)" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("option", { name: "Sailing" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add homebrew skill" }));
+    const dialog = await openModal();
+    fireEvent.click(within(dialog).getByRole("combobox", { name: "Search homebrew skills" }));
+    expect(within(dialog).queryByText("Survival (Underdark)")).not.toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("option", { name: /Sailing/ }));
+
+    await waitFor(() =>
+      expect(written(fetchMock).proficiencies.skills).toEqual([{ ref: SAILING, level: "none" }]),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("shows no skills until the field is clicked or a term is typed", async () => {
+    stubServer(holding([]), [homebrewRow("Sailing", "one"), homebrewRow("Cartography", "one")]);
+    renderSeeded(holding([]), add);
+
+    const dialog = await openModal();
+    const search = within(dialog).getByRole("combobox", { name: "Search homebrew skills" });
+    expect(search).toHaveAttribute("aria-expanded", "false");
+    expect(within(dialog).queryByRole("option")).not.toBeInTheDocument();
+
+    fireEvent.click(search);
+    expect(within(dialog).getAllByRole("option")).toHaveLength(2);
+
+    fireEvent.keyDown(search, { key: "Escape" });
+    expect(within(dialog).queryByRole("option")).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "cart" } });
+    expect(within(dialog).getAllByRole("option")).toHaveLength(1);
+    expect(within(dialog).getByRole("option", { name: /Cartography/ })).toBeVisible();
+    fireEvent.change(search, { target: { value: "zzz" } });
+    expect(search).toHaveAttribute("aria-expanded", "true");
+    expect(within(within(dialog).getByRole("listbox")).getByText("No matches")).toBeVisible();
+  });
+
+  it("picks the active row with the keyboard", async () => {
+    const fetchMock = stubServer(holding([]), [homebrewRow("Sailing", "one")]);
+    renderSeeded(holding([]), add);
+
+    const search = within(await openModal()).getByRole("combobox", {
+      name: "Search homebrew skills",
+    });
+    fireEvent.keyDown(search, { key: "ArrowDown" });
+    fireEvent.keyDown(search, { key: "Enter" });
 
     await waitFor(() =>
       expect(written(fetchMock).proficiencies.skills).toEqual([{ ref: SAILING, level: "none" }]),
     );
   });
 
-  it("offers nothing once the character holds every homebrew skill", async () => {
-    const fetchMock = stubServer(holding([]), [homebrewRow("Sailing", "one")]);
+  it("says so, and points to Settings, once the character holds every homebrew skill", async () => {
+    stubServer(holding([]), [homebrewRow("Sailing", "one")]);
     renderSeeded(holding([{ ref: SAILING, level: "none" }]), add);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/homebrew/skills", undefined));
-    expect(screen.queryByRole("combobox", { name: "Homebrew skill" })).not.toBeInTheDocument();
+    const dialog = await openModal();
+    expect(within(dialog).getByText(/holds every homebrew skill/)).toBeVisible();
+    expect(within(dialog).getByRole("link", { name: "Make one in Settings" })).toHaveAttribute(
+      "href",
+      "/settings/homebrew#homebrew-skills",
+    );
+  });
+
+  it("says there are none where no homebrew skill is defined", async () => {
+    stubServer(holding([]), []);
+    renderSeeded(holding([]), add);
+
+    expect(within(await openModal()).getByText(/No homebrew skills yet/)).toBeVisible();
   });
 });

@@ -31,6 +31,8 @@ export interface FormFieldProps {
   label: string;
   /** Keeps the label for a screen reader where the surrounding layout already names the control. */
   labelHidden?: boolean;
+  /** Sits beside the label, such as an info icon, so the control keeps its width. */
+  labelAddon?: ReactNode;
   /** Marks the control invalid and describes it. */
   error?: ReactNode;
   invalid?: boolean;
@@ -46,6 +48,7 @@ export interface FormFieldProps {
 export function FormField({
   label,
   labelHidden,
+  labelAddon,
   error,
   invalid: marked = false,
   status,
@@ -88,13 +91,16 @@ export function FormField({
 
   return (
     <div className="flex flex-col">
-      <label
-        id={`${id}-label`}
-        htmlFor={id}
-        className={labelHidden ? "sr-only" : "mb-1 text-muted text-row"}
-      >
-        {label}
-      </label>
+      <div className={labelAddon ? "mb-1 flex items-center gap-1" : undefined}>
+        <label
+          id={`${id}-label`}
+          htmlFor={id}
+          className={labelHidden ? "sr-only" : `${labelAddon ? "" : "mb-1 "}text-muted text-row`}
+        >
+          {label}
+        </label>
+        {labelAddon && <span className="-my-1 flex">{labelAddon}</span>}
+      </div>
       {children({
         id,
         "aria-invalid": invalid || marked,

@@ -69,7 +69,9 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Decision | Written in | Reversed by |
 |---|---|---|
 | A derived field's override | `routes/CharacterPage/CharacterPage.tsx`, through `hooks/useSaveOverride.ts` | Undo, clearing the override |
-| A custom skill | `components/blocks/AbilitiesSection/CustomSkills.tsx`, `RemoveCustomSkill.tsx` | Undo, a direct edit, removing it |
+| Adding a homebrew skill to the character | `components/blocks/AbilitiesSection/AddHomebrewSkill.tsx` | Undo, removing it from its row |
+| Removing a homebrew skill from the character | `components/blocks/AbilitiesSection/CatalogSkills.tsx`, `RemoveSkill.tsx` | Undo, which restores its level, overrides and flat number; the add above gives it back at no proficiency |
+| A flat skill's number | The flat field in the skill's detail, `CatalogSkills.tsx` | Undo, a direct edit |
 | Added resistances and immunities | `components/blocks/AbilitiesSection/Defenses/Defenses.tsx` | Undo, removing it |
 | Weapon masteries | `components/blocks/AbilitiesSection/Attacks/WeaponMasteryChoice.tsx` | Undo, a direct edit |
 | Feats and optional features | `components/blocks/FeaturesSection/FeatPicks.tsx`, `OptionalFeaturePicks.tsx` | Undo, a direct edit |

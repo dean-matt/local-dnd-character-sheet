@@ -15,14 +15,23 @@ export const skillEntrySchema = z.looseObject({
   entries: entriesSchema.optional(),
 });
 
-export type SkillEntry = z.infer<typeof skillEntrySchema>;
+/**
+ * A homebrew skill's entry: the 5etools shape with one more ability, `flat`, for a skill whose
+ * base is a number each character holding it sets. Only homebrew carries it, so the catalog
+ * shape above stays the one upstream prints.
+ */
+export const homebrewSkillEntrySchema = skillEntrySchema.extend({
+  ability: z.enum([...ABILITIES, "flat"]),
+});
+
+export type HomebrewSkillEntry = z.infer<typeof homebrewSkillEntrySchema>;
 
 /**
  * What a caller submits to create or rename a homebrew skill. `source` is never here — the
  * server always stamps `HOMEBREW_SOURCE` — and `edition` rides beside the entry, since it is
  * a `homebrew_skills` column, not a field the 5etools shape carries.
  */
-export const homebrewSkillInputSchema = skillEntrySchema
+export const homebrewSkillInputSchema = homebrewSkillEntrySchema
   .omit({ source: true })
   .extend({ edition: z.enum(EDITIONS) });
 
@@ -33,7 +42,7 @@ export const homebrewSkillRecordSchema = z.strictObject({
   id: z.string(),
   name: z.string(),
   edition: z.enum(EDITIONS),
-  json: skillEntrySchema,
+  json: homebrewSkillEntrySchema,
   createdAt: z.iso.datetime(),
 });
 

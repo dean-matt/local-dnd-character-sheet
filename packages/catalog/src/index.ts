@@ -136,11 +136,15 @@ export {
   searchResponseSchema,
 } from "./search.ts";
 export { senseGrantsSchema } from "./sense.ts";
-export type { HomebrewSkillInput, HomebrewSkillRecord, SkillEntry } from "./skill.ts";
+export type {
+  HomebrewSkillEntry,
+  HomebrewSkillInput,
+  HomebrewSkillRecord,
+} from "./skill.ts";
 export {
+  homebrewSkillEntrySchema,
   homebrewSkillInputSchema,
   homebrewSkillRecordSchema,
-  skillEntrySchema,
 } from "./skill.ts";
 export type { SkillChoice } from "./skill-choice.ts";
 export { classSkillChoiceSchema, skillProficienciesChoiceSchema } from "./skill-choice.ts";
