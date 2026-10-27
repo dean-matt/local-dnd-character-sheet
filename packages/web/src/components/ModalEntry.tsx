@@ -3,7 +3,8 @@ import { InModal } from "./inModalContext.ts";
 
 /**
  * One entry in a `Modal`: a header naming the dialog, a body that alone scrolls, and an
- * optional `footer`. The header and footer stay put.
+ * optional `footer`. The header and footer stay put. The body's top padding leaves room for the
+ * focus ring of a first field, which the scroll container would otherwise clip.
  */
 export function ModalEntry({
   title,
@@ -35,7 +36,7 @@ export function ModalEntry({
         aria-labelledby={titleId}
         // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container takes focus so the keyboard can scroll it; the dialog opens with focus on the close button, outside it.
         tabIndex={0}
-        className={`flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-5 text-body leading-normal ${footer ? "pb-3" : "pb-5"}`}
+        className={`flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-5 pt-1 text-body leading-normal ${footer ? "pb-3" : "pb-5"}`}
       >
         {children}
       </section>
