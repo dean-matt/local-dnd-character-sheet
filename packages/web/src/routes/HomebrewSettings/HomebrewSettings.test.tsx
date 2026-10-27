@@ -1109,6 +1109,12 @@ describe("HomebrewSettings", () => {
       );
       return field("combobox", "Ability");
     };
+    const reasonFor = async (text: string) => {
+      fireEvent.click(
+        await within(editor()).findByRole("button", { name: "Why the ability is locked" }),
+      );
+      return within(editor()).findByText(text);
+    };
 
     it("is locked with the holders named while characters hold the skill", async () => {
       stubApi({ skills: [sailing] }, [], {
@@ -1123,11 +1129,8 @@ describe("HomebrewSettings", () => {
 
       const select = await openSailing();
 
-      const reason = await within(editor()).findByText(
-        "Held by Vex, Ash and Rue; remove it from them first",
-      );
-      expect(select).toHaveAttribute("aria-disabled", "true");
-      expect(select).toHaveAttribute("aria-describedby", reason.id);
+      await waitFor(() => expect(select).toBeDisabled());
+      expect(await reasonFor("Held by Vex, Ash and Rue; remove it from them first")).toBeVisible();
     });
 
     it("names one or two holders as written", async () => {
@@ -1142,9 +1145,7 @@ describe("HomebrewSettings", () => {
 
       await openSailing();
 
-      expect(
-        await within(editor()).findByText("Held by Vex and Ash; remove it from them first"),
-      ).toBeVisible();
+      expect(await reasonFor("Held by Vex and Ash; remove it from them first")).toBeVisible();
     });
 
     it("switches freely with no holder", async () => {
@@ -1153,8 +1154,10 @@ describe("HomebrewSettings", () => {
 
       const select = await openSailing();
 
-      await waitFor(() => expect(select).not.toHaveAttribute("aria-disabled", "true"));
-      expect(within(editor()).queryByText(/Held by/)).toBeNull();
+      await waitFor(() => expect(select).toBeEnabled());
+      expect(
+        within(editor()).queryByRole("button", { name: "Why the ability is locked" }),
+      ).toBeNull();
     });
 
     it("stays locked, saying so, when the holders cannot be read", async () => {
@@ -1163,10 +1166,8 @@ describe("HomebrewSettings", () => {
 
       const select = await openSailing();
 
-      expect(
-        await within(editor()).findByText("Couldn't check which characters hold this skill."),
-      ).toBeVisible();
-      expect(select).toHaveAttribute("aria-disabled", "true");
+      expect(await reasonFor("Couldn't check which characters hold this skill.")).toBeVisible();
+      expect(select).toBeDisabled();
     });
 
     it("is open for a skill not yet saved", () => {
@@ -1179,7 +1180,7 @@ describe("HomebrewSettings", () => {
         }),
       );
 
-      expect(field("combobox", "Ability")).not.toHaveAttribute("aria-disabled", "true");
+      expect(field("combobox", "Ability")).toBeEnabled();
     });
   });
 

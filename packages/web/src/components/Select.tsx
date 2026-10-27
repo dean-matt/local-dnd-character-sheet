@@ -11,11 +11,11 @@ interface SelectOption {
 
 /**
  * `id` and the ARIA attributes are `FormField`'s, which name and describe the button.
- * `aria-disabled` keeps the button focusable but refuses to open the list.
+ * `disabled` takes the button out of the tab order and refuses to open the list.
  */
 export type SelectProps = Pick<
   ComponentProps<"button">,
-  "id" | "aria-invalid" | "aria-describedby" | "aria-disabled"
+  "id" | "aria-invalid" | "aria-describedby" | "disabled"
 > & {
   options: SelectOption[];
   value: string;
@@ -41,7 +41,6 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
   const buttonId = control.id ?? `${id}-button`;
   const chosen = options.findIndex((option) => option.value === value);
   const optionId = (index: number) => `${id}-option-${index}`;
-  const held = control["aria-disabled"] === true || control["aria-disabled"] === "true";
   const typed = useRef({ text: "", at: 0 });
 
   useEffect(() => {
@@ -50,7 +49,7 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
   }, [open, active, id]);
 
   function show(at: number) {
-    if (held) return;
+    if (control.disabled) return;
     setActive(at);
     setOpen(true);
   }
@@ -59,7 +58,7 @@ export function Select({ options, value, onChange, ...control }: SelectProps) {
     setOpen(false);
     button.current?.focus();
     const option = options[index];
-    if (option && index !== chosen && !held) onChange(option.value);
+    if (option && index !== chosen && !control.disabled) onChange(option.value);
   }
 
   /** The option a typed letter leads to, `undefined` where the key types nothing or none matches. */

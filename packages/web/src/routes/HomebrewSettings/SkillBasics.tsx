@@ -1,7 +1,8 @@
 import { ABILITIES, ABILITY_LABEL } from "@dnd/character";
-import { useId } from "react";
+import { Info } from "lucide-react";
 import { FormField } from "../../components/FormField.tsx";
 import { InputField } from "../../components/InputField.tsx";
+import { Popover } from "../../components/Popover.tsx";
 import { Select } from "../../components/Select.tsx";
 import { useSkillHolders } from "../../hooks/useSkillHolders.ts";
 import { type HomebrewFormProps, textAt, withField } from "./homebrewEntry.ts";
@@ -22,12 +23,12 @@ function listed(names: readonly string[]) {
 /**
  * A homebrew skill's first step: its name and the ability it uses, or a flat bonus whose number
  * each character holding the skill keeps. The ability stays fixed while any character holds the
- * skill, since switching it would change what their sheets show.
+ * skill, since switching it would change what their sheets show. The select is disabled and an info icon
+ * beside it gives the reason.
  */
 export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const holders = useSkillHolders(recordId);
-  const reasonId = useId();
   const held = (holders.data?.length ?? 0) > 0;
   const loading = recordId !== undefined && holders.isPending;
   const reason = holders.isError
@@ -51,21 +52,26 @@ export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFor
       <div className={SHORT}>
         <FormField label="Ability" error={errorFor("ability")}>
           {(control) => (
-            <Select
-              {...control}
-              aria-describedby={reason ? reasonId : control["aria-describedby"]}
-              aria-disabled={reason !== undefined}
-              options={ABILITY_OPTIONS}
-              value={textAt(entry, "ability")}
-              onChange={(next) => set("ability", next)}
-            />
+            <div className="flex items-center gap-2">
+              <Select
+                {...control}
+                disabled={reason !== undefined}
+                options={ABILITY_OPTIONS}
+                value={textAt(entry, "ability")}
+                onChange={(next) => set("ability", next)}
+              />
+              {reason && (
+                <Popover
+                  trigger={<Info size={16} aria-hidden />}
+                  triggerLabel="Why the ability is locked"
+                  label="Why the ability is locked"
+                >
+                  {reason}
+                </Popover>
+              )}
+            </div>
           )}
         </FormField>
-        {reason && (
-          <p id={reasonId} className="mt-1 text-muted text-row">
-            {reason}
-          </p>
-        )}
       </div>
     </div>
   );
