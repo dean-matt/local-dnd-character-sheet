@@ -123,7 +123,7 @@ describe("a homebrew skill on the sheet", () => {
     fireEvent.mouseEnter(mark);
     expect(
       within(row("Sailing")).getByRole("link", { name: "Settings › Homebrew" }),
-    ).toHaveAttribute("href", "/settings/homebrew");
+    ).toHaveAttribute("href", "/settings/homebrew#homebrew-skills");
     expect(
       within(row("Stealth")).queryByRole("button", { name: "Homebrew skill" }),
     ).not.toBeInTheDocument();
@@ -324,7 +324,7 @@ describe("AddHomebrewSkill", () => {
     expect(within(dialog).getByText(/holds every homebrew skill/)).toBeVisible();
     expect(within(dialog).getByRole("link", { name: "Make one in Settings" })).toHaveAttribute(
       "href",
-      "/settings/homebrew",
+      "/settings/homebrew#homebrew-skills",
     );
   });
 
