@@ -63,8 +63,6 @@ export type SkillConversion = {
   homebrewToAdd: { name: string; edition: Edition; ability: Form }[];
   characters: { id: string; definition: Record<string, unknown> }[];
   snapshots: { characterId: string; id: number; keep: false | { previousState: unknown } }[];
-  /** Each skill that took a new name, on the character that held it, for the rolls that cited it. */
-  renames: { characterId: string; from: string; to: string }[];
 };
 
 const hasKey = (value: unknown): boolean =>
@@ -311,16 +309,5 @@ export function convertCustomSkills(
       : [],
   );
 
-  const seen = new Set<string>();
-  const renames = entries.flatMap((entry) => {
-    const to = finalName.get(entry);
-    const characterId = characters[entry.character]?.id;
-    const key = `${characterId}\0${entry.name}`;
-    if (to === undefined || to === entry.name || characterId === undefined || seen.has(key))
-      return [];
-    seen.add(key);
-    return [{ characterId, from: entry.name, to }];
-  });
-
-  return { homebrewToAdd, characters: converted, snapshots: convertSnapshots(characters), renames };
+  return { homebrewToAdd, characters: converted, snapshots: convertSnapshots(characters) };
 }

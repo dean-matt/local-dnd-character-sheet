@@ -46,9 +46,6 @@ passing over a name already taken. A name a catalog skill holds is suffixed in e
 rules live in `packages/character/src/convertCustomSkills.ts`. The API runs them at start and on
 importing a character file exported before the change.
 
-A roll-log label citing a renamed skill, "<name> check", follows the rename on that character; where
-one character held two forms of the same name, the label follows the first.
-
 ## How an item names one
 
 An item's advantage effect names the skill in `target`, the way it names a built-in skill:
