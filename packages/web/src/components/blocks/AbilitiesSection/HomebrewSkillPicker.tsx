@@ -92,7 +92,8 @@ export function HomebrewSkillPicker({
             aria-label="Homebrew skills"
             onMouseDown={(event) => event.preventDefault()}
             hidden={!listShown}
-            style={anchoredListStyle(anchor)}
+            // Below the field unless it does not fit there, rather than wherever has more room.
+            style={{ ...anchoredListStyle(anchor), positionTryOrder: "normal" }}
             className={`${ANCHORED_LIST_CLASSES} overflow-y-auto rounded-card border border-border bg-surface p-1 shadow-popover`}
           >
             {shown.map((skill, index) => (
