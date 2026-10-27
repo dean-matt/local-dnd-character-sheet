@@ -36,13 +36,13 @@ homebrew skill that already carries a catalog name keeps it and is not refused o
 
 ## Numbered renames
 
-Custom skills an older sheet stored per character were converted to homebrew skills on the first
-start after they were removed. Skills of one name and form merge; where one name carried
-different forms, the existing homebrew skill or else the first form (STR to CHA, then flat)
-kept the plain name and each other took ` (2)`, ` (3)` on, passing over a name already taken.
-A name a catalog skill holds was suffixed in every form. The conversion lives in
-`packages/character/src/convertCustomSkills.ts` and runs from `packages/api/src/db/`; it also
-converts a character file exported before the change when it is imported.
+Converting a character's older `customSkills` into homebrew skills follows fixed rules, within one
+edition and without regard to case. Skills of one name and form merge into one row. Where one name
+carries different forms, an existing homebrew skill of that name keeps the plain name; otherwise
+the first form (STR to CHA, then flat) does, and each other form takes ` (2)`, ` (3)` on,
+passing over a name already taken. A name a catalog skill holds is suffixed in every form. The
+rules live in `packages/character/src/convertCustomSkills.ts`. The API runs them at start and on
+importing a character file exported before the change.
 
 ## How an item names one
 
