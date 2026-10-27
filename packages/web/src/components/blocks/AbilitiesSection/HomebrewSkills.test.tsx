@@ -106,20 +106,24 @@ describe("a homebrew skill on the sheet", () => {
     const stealth = { ref: { name: "Stealth", source: "XPHB" }, ability: "dex" as const };
     const modifier = { computed: 3, manual: null, terms: [] };
     renderSeeded(record, (held) => (
-      <CatalogSkills
-        character={held}
-        derived={{
-          ...derived,
-          skills: [...derived.skills, { ...stealth, modifier, passive: modifier }],
-        }}
-        onRemoved={() => {}}
-      />
+      <MemoryRouter>
+        <CatalogSkills
+          character={held}
+          derived={{
+            ...derived,
+            skills: [...derived.skills, { ...stealth, modifier, passive: modifier }],
+          }}
+          onRemoved={() => {}}
+        />
+      </MemoryRouter>
     ));
 
     const row = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
     const mark = within(row("Sailing")).getByRole("button", { name: "Homebrew skill" });
     fireEvent.mouseEnter(mark);
-    expect(within(row("Sailing")).getByText(/defined in Settings/)).toBeVisible();
+    expect(
+      within(row("Sailing")).getByRole("link", { name: "Settings › Homebrew" }),
+    ).toHaveAttribute("href", "/settings/homebrew");
     expect(
       within(row("Stealth")).queryByRole("button", { name: "Homebrew skill" }),
     ).not.toBeInTheDocument();
