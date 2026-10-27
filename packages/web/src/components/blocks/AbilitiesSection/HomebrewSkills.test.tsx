@@ -252,7 +252,8 @@ describe("AddHomebrewSkill", () => {
     expect(within(dialog).getAllByRole("option")).toHaveLength(1);
     expect(within(dialog).getByRole("option", { name: /Cartography/ })).toBeVisible();
     fireEvent.change(search, { target: { value: "zzz" } });
-    expect(within(dialog).getByText("No matches")).toBeVisible();
+    expect(search).toHaveAttribute("aria-expanded", "true");
+    expect(within(within(dialog).getByRole("listbox")).getByText("No matches")).toBeVisible();
   });
 
   it("picks the active row with the keyboard", async () => {

@@ -6,7 +6,8 @@ import { FormField } from "../../FormField.tsx";
 
 /**
  * A combobox over the homebrew skills offered. The list stays shut until the input is clicked,
- * a term is typed or an arrow key is pressed; a term narrows it to the names holding the text.
+ * a term is typed or an arrow key is pressed; a term narrows it to the names holding the text,
+ * and a term nothing holds says "No matches" in the list.
  * Focus stays in the input, which points at the active row; Enter or a click picks it and
  * Escape closes the list.
  */
@@ -27,8 +28,8 @@ export function HomebrewSkillPicker({
   const anchor = anchorName(id);
   const needle = query.trim().toLowerCase();
   const shown = skills.filter(({ name }) => name.toLowerCase().includes(needle));
-  const listShown = open && shown.length > 0;
-  const activeIndex = listShown && active < shown.length ? active : -1;
+  const listShown = open;
+  const activeIndex = shown.length > 0 && active < shown.length ? active : -1;
   useTopLayer(list, listShown);
 
   useEffect(() => {
@@ -56,10 +57,7 @@ export function HomebrewSkillPicker({
   }
 
   return (
-    <FormField
-      label="Search homebrew skills"
-      status={open && shown.length === 0 ? "No matches" : undefined}
-    >
+    <FormField label="Search homebrew skills" labelHidden>
       {(control) => (
         <div className="flex flex-col gap-1">
           <input
@@ -71,6 +69,7 @@ export function HomebrewSkillPicker({
             aria-expanded={listShown}
             aria-controls={listboxId}
             aria-activedescendant={activeIndex === -1 ? undefined : optionId(activeIndex)}
+            placeholder="Search"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -96,6 +95,17 @@ export function HomebrewSkillPicker({
             style={{ ...anchoredListStyle(anchor), positionTryOrder: "normal" }}
             className={`${ANCHORED_LIST_CLASSES} overflow-y-auto rounded-card border border-border bg-surface p-1 shadow-popover`}
           >
+            {shown.length === 0 && (
+              <div
+                role="option"
+                tabIndex={-1}
+                aria-disabled="true"
+                aria-selected="false"
+                className="px-2 py-1.5 text-body text-muted"
+              >
+                No matches
+              </div>
+            )}
             {shown.map((skill, index) => (
               // biome-ignore lint/a11y/useKeyWithClickEvents: focus stays in the combobox input, which handles every key.
               <div
