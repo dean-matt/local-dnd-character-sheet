@@ -224,8 +224,9 @@ describe("AddHomebrewSkill", () => {
     renderSeeded(holding([]), add);
 
     const dialog = await openModal();
+    fireEvent.click(within(dialog).getByRole("combobox", { name: "Search homebrew skills" }));
     expect(within(dialog).queryByText("Survival (Underdark)")).not.toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole("button", { name: /Sailing/ }));
+    fireEvent.click(within(dialog).getByRole("option", { name: /Sailing/ }));
 
     await waitFor(() =>
       expect(written(fetchMock).proficiencies.skills).toEqual([{ ref: SAILING, level: "none" }]),
@@ -233,17 +234,40 @@ describe("AddHomebrewSkill", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("narrows the list to the skills holding what is typed", async () => {
+  it("shows no skills until the field is clicked or a term is typed", async () => {
     stubServer(holding([]), [homebrewRow("Sailing", "one"), homebrewRow("Cartography", "one")]);
     renderSeeded(holding([]), add);
 
     const dialog = await openModal();
-    fireEvent.change(within(dialog).getByRole("searchbox"), { target: { value: "cart" } });
+    const search = within(dialog).getByRole("combobox", { name: "Search homebrew skills" });
+    expect(search).toHaveAttribute("aria-expanded", "false");
+    expect(within(dialog).queryByRole("option")).not.toBeInTheDocument();
 
-    expect(within(dialog).queryByText("Sailing")).not.toBeInTheDocument();
-    expect(within(dialog).getByText("Cartography")).toBeVisible();
-    fireEvent.change(within(dialog).getByRole("searchbox"), { target: { value: "zzz" } });
+    fireEvent.click(search);
+    expect(within(dialog).getAllByRole("option")).toHaveLength(2);
+
+    fireEvent.keyDown(search, { key: "Escape" });
+    expect(within(dialog).queryByRole("option")).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "cart" } });
+    expect(within(dialog).getAllByRole("option")).toHaveLength(1);
+    expect(within(dialog).getByRole("option", { name: /Cartography/ })).toBeVisible();
+    fireEvent.change(search, { target: { value: "zzz" } });
     expect(within(dialog).getByText("No matches")).toBeVisible();
+  });
+
+  it("picks the active row with the keyboard", async () => {
+    const fetchMock = stubServer(holding([]), [homebrewRow("Sailing", "one")]);
+    renderSeeded(holding([]), add);
+
+    const search = within(await openModal()).getByRole("combobox", {
+      name: "Search homebrew skills",
+    });
+    fireEvent.keyDown(search, { key: "ArrowDown" });
+    fireEvent.keyDown(search, { key: "Enter" });
+
+    await waitFor(() =>
+      expect(written(fetchMock).proficiencies.skills).toEqual([{ ref: SAILING, level: "none" }]),
+    );
   });
 
   it("says so, and points to Settings, once the character holds every homebrew skill", async () => {

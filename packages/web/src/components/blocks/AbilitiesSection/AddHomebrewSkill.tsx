@@ -7,9 +7,9 @@ import { useHomebrew } from "../../../hooks/useHomebrew.ts";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
-import { InputField } from "../../InputField.tsx";
 import { Modal } from "../../Modal.tsx";
 import { ModalEntry } from "../../ModalEntry.tsx";
+import { HomebrewSkillPicker } from "./HomebrewSkillPicker.tsx";
 
 /**
  * The Skills card's Add skill button, opening a modal that searches the homebrew skills of the
@@ -30,7 +30,6 @@ export function AddHomebrewSkill({
   const update = useUpdateCharacterDefinition(character.id);
   const skills = useHomebrew("skills", homebrewSkillRecordSchema).list.data;
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const [failure, setFailure] = useState<{ error: Error; retry: () => void }>();
   const returned = useReturnFocus<HTMLButtonElement>(open);
   useSaveToast(
@@ -44,8 +43,6 @@ export function AddHomebrewSkill({
   const available = ofEdition.filter(
     ({ name }) => !held.has(refKey({ name, source: HOMEBREW_SOURCE })),
   );
-  const needle = query.trim().toLowerCase();
-  const shown = available.filter(({ name }) => name.toLowerCase().includes(needle));
 
   function hold(record: HomebrewSkillRecord) {
     update
@@ -74,7 +71,6 @@ export function AddHomebrewSkill({
 
   function close() {
     setOpen(false);
-    setQuery("");
   }
 
   const empty =
@@ -111,41 +107,13 @@ export function AddHomebrewSkill({
                 .
               </p>
             ) : (
-              <>
-                <InputField
-                  label="Search homebrew skills"
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  // biome-ignore lint/a11y/noAutofocus: the modal exists to search.
-                  autoFocus
-                />
-                {shown.length === 0 ? (
-                  <p className="text-muted text-row">No matches</p>
-                ) : (
-                  <ul className="flex flex-col gap-0.5">
-                    {shown.map((record) => (
-                      <li key={record.id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            close();
-                            hold(record);
-                          }}
-                          className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-control px-2 py-1.5 text-left text-row hover:bg-subtle"
-                        >
-                          {record.name}
-                          <span className="text-muted">
-                            {record.json.ability === "flat"
-                              ? "Flat bonus"
-                              : record.json.ability.toUpperCase()}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
+              <HomebrewSkillPicker
+                skills={available}
+                onPick={(record) => {
+                  close();
+                  hold(record);
+                }}
+              />
             )}
           </ModalEntry>
         </Modal>
