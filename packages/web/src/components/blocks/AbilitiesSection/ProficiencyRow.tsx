@@ -37,7 +37,7 @@ export function ProficiencyRow({
   effects?: readonly RollEffectEntry[];
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
-  /** The foot of the modal the name opens, for an action on the row itself. */
+  /** The foot of the modal the name opens, for an action on the row itself; it shows the total, which the modal's body then leaves out. */
   detailFooter?: ReactNode;
 }) {
   const roll = ability ? `${name} check` : `${name} save`;
@@ -62,6 +62,7 @@ export function ProficiencyRow({
           value={modifier}
           rules={rules}
           footer={detailFooter}
+          total={detailFooter === undefined}
           className="hover:underline"
         >
           {label ? (
