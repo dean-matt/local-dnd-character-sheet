@@ -24,7 +24,7 @@ function listed(names: readonly string[]) {
  * A homebrew skill's first step: its name and the ability it uses, or a flat bonus whose number
  * each character holding the skill keeps. The ability stays fixed while any character holds the
  * skill, since switching it would change what their sheets show. The select is disabled and an info icon
- * beside it gives the reason.
+ * beside its label gives the reason.
  */
 export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
@@ -50,26 +50,29 @@ export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFor
         />
       </div>
       <div className={SHORT}>
-        <FormField label="Ability" error={errorFor("ability")}>
+        <FormField
+          label="Ability"
+          error={errorFor("ability")}
+          labelAddon={
+            reason && (
+              <Popover
+                trigger={<Info size={14} aria-hidden />}
+                triggerLabel="Why the ability is locked"
+                label="Why the ability is locked"
+              >
+                {reason}
+              </Popover>
+            )
+          }
+        >
           {(control) => (
-            <div className="flex items-center gap-2">
-              <Select
-                {...control}
-                disabled={reason !== undefined}
-                options={ABILITY_OPTIONS}
-                value={textAt(entry, "ability")}
-                onChange={(next) => set("ability", next)}
-              />
-              {reason && (
-                <Popover
-                  trigger={<Info size={16} aria-hidden />}
-                  triggerLabel="Why the ability is locked"
-                  label="Why the ability is locked"
-                >
-                  {reason}
-                </Popover>
-              )}
-            </div>
+            <Select
+              {...control}
+              disabled={reason !== undefined}
+              options={ABILITY_OPTIONS}
+              value={textAt(entry, "ability")}
+              onChange={(next) => set("ability", next)}
+            />
           )}
         </FormField>
       </div>
