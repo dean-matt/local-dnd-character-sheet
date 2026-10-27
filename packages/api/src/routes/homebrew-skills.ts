@@ -206,14 +206,17 @@ export function homebrewSkillsRoutes(db: HomebrewDb, charactersDb: CharactersDb,
     const current = getHomebrewSkill(db, id);
     const refusal = current && updateRefusal(current, input);
     if (refusal) return c.json(refusal, 409);
+    // Before the update, since the two files cannot share a transaction: a reset that fails
+    // leaves the skill as it was, and one that lands before an update that fails is harmless,
+    // where the other order leaves some holders with values from the old form.
+    if (current && isFlat(current.json.ability) !== isFlat(input.ability))
+      resetHomebrewSkillValues(charactersDb, current, isFlat(input.ability));
     const result = claimName(
       () => updateHomebrewSkill(db, id, input),
       holder(db, homebrewSkills, input),
     );
     if ("taken" in result) return c.json(nameTakenError("homebrew skill", result.taken), 409);
     if (!result.row) return c.json({ error: SKILL_NOT_FOUND }, 404);
-    if (current && isFlat(current.json.ability) !== isFlat(input.ability))
-      resetHomebrewSkillValues(charactersDb, result.row, isFlat(input.ability));
     return c.json(toSkillRecord(result.row), 200);
   });
 
