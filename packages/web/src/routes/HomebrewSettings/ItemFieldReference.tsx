@@ -34,6 +34,11 @@ export function ItemFieldReference() {
   );
   return (
     <div className="flex flex-col gap-2 text-row">
+      <p>
+        A field listed below changes the sheet unless its description says it only displays. Any
+        other effect only displays: put it in the rules text, or use a manual override on the sheet
+        where it has one.
+      </p>
       <InputField
         label="Search fields"
         type="search"

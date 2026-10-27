@@ -657,6 +657,15 @@ describe("HomebrewSettings", () => {
     expect(keys).toEqual([...keys].sort((a, b) => a.localeCompare(b)));
     expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/only displays/);
     expect(reference).not.toHaveTextContent(/not listed/);
+    const note = within(reference).getByText(/^A field listed below changes the sheet/);
+    expect(note).toHaveTextContent(/only displays/);
+    expect(note).toHaveTextContent(/rules text/);
+    expect(note).toHaveTextContent(/manual override/);
+    expect(
+      note.compareDocumentPosition(
+        within(reference).getByRole("searchbox", { name: "Search fields" }),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     fireEvent.change(within(reference).getByRole("searchbox", { name: "Search fields" }), {
       target: { value: "copper" },
@@ -666,10 +675,12 @@ describe("HomebrewSettings", () => {
         .getAllByRole("term")
         .map((term) => term.textContent),
     ).toEqual(["value"]);
+    expect(note).toBeInTheDocument();
     fireEvent.change(within(reference).getByRole("searchbox", { name: "Search fields" }), {
       target: { value: "nothing like this" },
     });
     expect(reference).toHaveTextContent("No field matches");
+    expect(note).toBeInTheDocument();
     fireEvent.change(within(reference).getByRole("searchbox", { name: "Search fields" }), {
       target: { value: "" },
     });
@@ -682,6 +693,9 @@ describe("HomebrewSettings", () => {
     expect(show).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(show);
     const reopened = within(editor()).getByRole("region", { name: "Field Reference" });
+    expect(
+      within(reopened).getByText(/^A field listed below changes the sheet/),
+    ).toBeInTheDocument();
     expect(within(reopened).getByText("value").nextSibling).toHaveTextContent(/copper/);
     expect(within(reopened).getByText("ability")).toBeInTheDocument();
     expect(
