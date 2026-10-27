@@ -32,14 +32,23 @@ const heldSchema = proficiencies.shape.skills;
 
 type Held = z.infer<typeof heldSchema>[number];
 
-/** The parts of a legacy definition the conversion reads; the rest is carried over untouched. */
-function readLegacy(definition: Record<string, unknown>) {
-  return {
-    edition: editionSchema.parse(definition.edition),
-    customSkills: legacySkillsSchema.parse(definition.customSkills ?? []),
-    overrides: overridesSchema.parse(definition.overrides ?? {}),
-    proficiencies: proficiencies.parse(definition.proficiencies),
-  };
+/**
+ * The parts of a legacy definition the conversion reads; the rest is carried over untouched. A
+ * definition that fails fails with the character's id at the head of each issue's path, so a
+ * start or an import that stops names the one to fix.
+ */
+function readLegacy(id: string, definition: Record<string, unknown>) {
+  try {
+    return {
+      edition: editionSchema.parse(definition.edition),
+      customSkills: legacySkillsSchema.parse(definition.customSkills ?? []),
+      overrides: overridesSchema.parse(definition.overrides ?? {}),
+      proficiencies: proficiencies.parse(definition.proficiencies),
+    };
+  } catch (error) {
+    if (!(error instanceof z.ZodError)) throw error;
+    throw new z.ZodError(error.issues.map((issue) => ({ ...issue, path: [id, ...issue.path] })));
+  }
 }
 
 export type StoredCharacter = {
@@ -258,7 +267,7 @@ export function convertCustomSkills(
   const parsed: Parsed[] = characters.map((stored) => ({
     stored,
     definition: carriesCustomSkills(stored.definition)
-      ? readLegacy(stored.definition as Record<string, unknown>)
+      ? readLegacy(stored.id, stored.definition as Record<string, unknown>)
       : undefined,
   }));
 

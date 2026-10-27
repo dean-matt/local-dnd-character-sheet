@@ -26,7 +26,7 @@ import {
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type Database from "better-sqlite3";
-import { importWithCustomSkills } from "../db/convertCustomSkills.ts";
+import { DatabasesBusyError, importWithCustomSkills } from "../db/convertCustomSkills.ts";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import {
   deleteCharacter,
@@ -179,6 +179,10 @@ const importFile = createRoute({
     201: {
       description: "The imported character",
       content: { "application/json": { schema: characterRecordSchema } },
+    },
+    409: {
+      description: "Another program has the databases open, so nothing was written",
+      content: { "application/json": { schema: errorSchema } },
     },
     422: {
       description: "The file fails the schema, so nothing was written",
@@ -418,6 +422,7 @@ export function charactersRoutes(
         return c.json(toRecord(row), 201);
       } catch (error) {
         if (error instanceof z.ZodError) return c.json({ error: describeIssues(error) }, 422);
+        if (error instanceof DatabasesBusyError) return c.json({ error: error.message }, 409);
         throw error;
       }
     },

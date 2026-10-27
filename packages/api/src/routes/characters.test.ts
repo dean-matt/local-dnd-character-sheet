@@ -7,6 +7,7 @@ import {
   defaultCharacterState,
   PRESET_PAGES,
 } from "@dnd/character";
+import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { characters, undoLog } from "../db/characters.ts";
@@ -758,6 +759,22 @@ describe("importing a file that still carries custom skills", () => {
       (await importFile(await legacyFile([{ name: "Sailing", ability: "wis", level: "none" }])))
         .status,
     ).toBe(201);
+  });
+
+  it("refuses with a 409, writing nothing, while another program holds the databases open", async () => {
+    const file = await legacyFile([{ name: "Sailing", ability: "wis", level: "none" }]);
+    const other = new Database(join(databases, "characters.db"));
+    other.prepare("SELECT count(*) FROM characters").get();
+    try {
+      const res = await importFile(file);
+
+      expect(res.status).toBe(409);
+      expect((await res.json()).error).toMatch(/Another program has the databases open/);
+    } finally {
+      other.close();
+    }
+    expect(homebrewRows()).toEqual([]);
+    expect((await importFile(file)).status).toBe(201);
   });
 
   it("refuses a converted definition that fails the schema, writing nothing", async () => {

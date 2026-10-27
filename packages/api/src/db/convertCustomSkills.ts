@@ -29,11 +29,28 @@ import type { CharactersDb } from "./queries/characters.ts";
 import { importCharacterRows } from "./queries/characters.ts";
 import { catalogSkillNames } from "./queries/skills.ts";
 
+/** Another connection holds a file in WAL mode, so the two cannot commit together. */
+export class DatabasesBusyError extends Error {
+  constructor() {
+    super("Another program has the databases open, such as db:studio. Close it and try again.");
+  }
+}
+
 type WithClient = CharactersDb & { $client: Database.Database };
 
 type Handles = { charactersDb: WithClient; homebrew: Database.Database; dataDir: string };
 
 type Tx = Parameters<Parameters<CharactersDb["transaction"]>[0]>[0];
+
+/** SQLite refuses to leave WAL while another connection has the file open, by an error or by staying in it. */
+function leaveWal(file: Database.Database) {
+  try {
+    if (file.pragma("journal_mode = DELETE", { simple: true }) === "delete") return;
+  } catch (error) {
+    if ((error as { code?: string }).code !== "SQLITE_BUSY") throw error;
+  }
+  throw new DatabasesBusyError();
+}
 
 /** Runs `write` in a characters transaction that can also write `homebrew.db`, attached as `hb`. */
 function writeAcross<T>(
@@ -42,11 +59,7 @@ function writeAcross<T>(
 ): T {
   const files = [charactersDb.$client, homebrew];
   try {
-    for (const file of files) {
-      if (file.pragma("journal_mode = DELETE", { simple: true }) !== "delete") {
-        throw new Error("could not leave WAL mode, so the two files could not commit together");
-      }
-    }
+    for (const file of files) leaveWal(file);
     charactersDb.$client.prepare("ATTACH DATABASE ? AS hb").run(homebrew.name);
     try {
       return charactersDb.transaction(write);

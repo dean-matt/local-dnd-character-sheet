@@ -333,4 +333,10 @@ describe("convertCustomSkills", () => {
 
     expect(result.characters).toEqual([]);
   });
+
+  it("names the character whose custom skills fail the legacy shape", () => {
+    const bad = character("c-7", [], { customSkills: [{ name: "Juggling", ability: "luck" }] });
+
+    expect(() => convert([bad])).toThrowError(/c-7/);
+  });
 });
