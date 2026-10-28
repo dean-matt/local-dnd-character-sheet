@@ -78,7 +78,8 @@ Issues, pull requests, review and merge run through the `github-sdlc` plugin, en
 [`docs/workflow.md`](docs/workflow.md). A reviewer reads
 [`docs/review-lenses.md`](docs/review-lenses.md) and applies each lens whose packages the
 diff reaches. `.github/protected-paths.txt` lists what a
-merge waits on the user for.
+merge waits on the user for. A `severity:critical` bug loses or corrupts data in
+`characters.db` or `homebrew.db`, or computes a wrong rules value the user would play with.
 
 ## Skills
 
