@@ -31,7 +31,7 @@ const dieHeld = (
   { name, hitDie }: { name: string; hitDie: number },
   characters: { id: string; name: string }[],
 ) => ({
-  error: `${name} is held by ${names.format(characters.map((held) => held.name))}, so its hit die stays d${hitDie}. Keep d${hitDie}, or add a new class for the new die.`,
+  error: `${name} is held by ${names.format(characters.map((held) => held.name))}, so its hit die stays d${hitDie}. Keep d${hitDie}, or add a class with another name for the new die.`,
   characters,
 });
 

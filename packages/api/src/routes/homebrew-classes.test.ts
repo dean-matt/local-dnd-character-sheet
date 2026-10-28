@@ -101,7 +101,7 @@ describe("homebrewClassesRoutes", () => {
         expect(res.status).toBe(409);
         expect(await res.json()).toEqual({
           error:
-            "Warden is held by Vex, so its hit die stays d10. Keep d10, or add a new class for the new die.",
+            "Warden is held by Vex, so its hit die stays d10. Keep d10, or add a class with another name for the new die.",
           characters: [{ id: character.id, name: "Vex" }],
         });
         const stored = await (await routes.request(`/homebrew/classes/${created.id}`)).json();
