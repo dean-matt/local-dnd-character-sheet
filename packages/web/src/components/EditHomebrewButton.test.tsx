@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { CatalogDetail } from "./CatalogDetail.tsx";
 import { ResolvedRefs } from "./resolvedRefsContext.ts";
 
@@ -130,6 +130,11 @@ async function openEditor() {
 const nameField = () => within(editor()).getByLabelText("Name", { selector: "input" });
 const titleOf = (dialog: HTMLElement) =>
   document.getElementById(dialog.getAttribute("aria-labelledby") ?? "")?.textContent;
+
+// Edit loads the editor as its own chunk; loaded here, no test's wait has to cover the import.
+beforeAll(async () => {
+  await import("./HomebrewEditor/HomebrewEditor.tsx");
+});
 
 afterEach(() => {
   vi.useRealTimers();

@@ -2,7 +2,7 @@ import type { CharacterInventory, SheetItem } from "@dnd/catalog";
 import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacter } from "../../../../hooks/useCharacter.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
@@ -253,6 +253,11 @@ const searchedKinds = (fetchMock: ReturnType<typeof stubApi>) =>
     .map(([url]) => String(url))
     .filter((url) => url.startsWith("/api/search?"))
     .map((url) => new URL(url, "http://local").searchParams.get("kind") ?? undefined);
+
+// Edit loads the editor as its own chunk; loaded here, no test's wait has to cover the import.
+beforeAll(async () => {
+  await import("../../../HomebrewEditor/HomebrewEditor.tsx");
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();

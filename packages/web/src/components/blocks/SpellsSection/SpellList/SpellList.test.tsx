@@ -2,7 +2,7 @@ import type { CharacterSpells, SheetSpell } from "@dnd/catalog";
 import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
 import { SpellList } from "./SpellList.tsx";
@@ -138,6 +138,11 @@ function renderList(
 }
 
 const computed = (value: number) => ({ computed: value, manual: null, terms: [] });
+
+// Edit loads the editor as its own chunk; loaded here, no test's wait has to cover the import.
+beforeAll(async () => {
+  await import("../../../HomebrewEditor/HomebrewEditor.tsx");
+});
 
 afterEach(() => vi.unstubAllGlobals());
 
