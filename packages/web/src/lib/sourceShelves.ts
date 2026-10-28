@@ -32,7 +32,7 @@ const SHELF_OF_GROUP: Record<string, Shelf> = {
 /** Upstream's prefix for Unearthed Arcana, which no book or adventure index lists. */
 const PLAYTEST = /^X?UA/;
 
-const HOMEBREW_TITLE = "Your own items and spells";
+const HOMEBREW_TITLE = "Your own items, spells, races, classes, backgrounds and feats";
 
 type ShelvedSource = { source: string; title: string | undefined };
 

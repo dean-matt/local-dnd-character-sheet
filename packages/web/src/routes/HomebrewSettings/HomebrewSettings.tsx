@@ -34,8 +34,8 @@ export function HomebrewSettings() {
           Homebrew
         </h1>
         <p className="mt-1 text-label text-muted">
-          Your own items, spells, races, classes, backgrounds and feats. Search finds homebrew items
-          and spells beside the catalog's. Rules text takes the same <code>{"{@tag}"}</code> markup
+          Your own items, spells, races, classes, backgrounds and feats. Search and the pickers
+          offer them beside the catalog's. Rules text takes the same <code>{"{@tag}"}</code> markup
           the catalog's does.
         </p>
       </div>

@@ -147,6 +147,17 @@ afterEach(() => {
 });
 
 describe("HomebrewSettings", () => {
+  it("says search and the pickers offer every kind beside the catalog's", () => {
+    stubApi({});
+    renderPage();
+
+    expect(
+      screen.getByText(
+        /^Your own items, spells, races, classes, backgrounds and feats\. Search and the pickers offer them beside the catalog's\./,
+      ),
+    ).toBeVisible();
+  });
+
   it("lists the kinds in a fixed order", () => {
     stubApi({});
     renderPage();
