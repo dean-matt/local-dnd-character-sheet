@@ -54,9 +54,8 @@ const ward = {
 type Answer = { status: number; body?: unknown };
 
 /**
- * A fake API: a `GET` of a homebrew list answers from `lists`, `GET /characters` from
- * `lists.characters`, and any other request under `/api/homebrew` takes the next answer in
- * `writes`.
+ * A fake API: a `GET` of a homebrew list or of `/characters` answers from `lists`, and any
+ * other request under `/api/homebrew` takes the next answer in `writes`.
  */
 function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = [], holders?: Answer) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -65,7 +64,8 @@ function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = [], holder
     if (holders && /^\/api\/homebrew\/skills\/[^/]+\/holders$/.test(url)) {
       return json(holders.status, holders.body);
     }
-    const listed = /^\/api\/(?:homebrew\/)?(\w+)$/.exec(url)?.[1];
+    const match = /^\/api\/(?:homebrew\/(\w+)|(characters))$/.exec(url);
+    const listed = match?.[1] ?? match?.[2];
     if (method === "GET" && listed) return json(200, lists[listed] ?? []);
     const answer = url.startsWith("/api/homebrew") ? writes.shift() : undefined;
     return answer ? json(answer.status, answer.body) : json(404, { error: `nothing at ${url}` });
@@ -1212,6 +1212,26 @@ describe("HomebrewSettings", () => {
       typeJson("Class JSON", "{");
 
       expect(note()).toBeNull();
+      expect(save()).not.toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("leaves Save available, with no info button, while the holders load", async () => {
+      const fetchMock = stubApi({ classes: [warden] });
+      const answer = fetchMock.getMockImplementation();
+      fetchMock.mockImplementation((input, init) =>
+        String(input) === "/api/characters"
+          ? new Promise<Response>(() => {})
+          : (answer as NonNullable<typeof answer>)(input, init),
+      );
+      const client = renderPage();
+
+      await editWarden(8);
+      await waitFor(() =>
+        expect(client.getQueryState(charactersKey)?.fetchStatus).toBe("fetching"),
+      );
+
+      expect(note()).toBeNull();
+      expect(within(editor()).queryByRole("button", { name: "Who holds this class" })).toBeNull();
       expect(save()).not.toHaveAttribute("aria-disabled", "true");
     });
 
