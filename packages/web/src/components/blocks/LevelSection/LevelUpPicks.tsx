@@ -2,6 +2,7 @@ import type { SubclassRecord } from "@dnd/catalog";
 import { type CharacterDefinition, entryKey, featureKey, refKey } from "@dnd/character";
 import { useId } from "react";
 import { useDisabledSources } from "../../../hooks/useDisabledSources.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { shownOptions } from "../../../lib/featureChoices.ts";
 import { grantTitle } from "../../../lib/improvementGrants.ts";
 import { FormField } from "../../FormField.tsx";
@@ -25,6 +26,7 @@ export interface LevelUpPicksProps {
  * spells the level adds.
  */
 export function LevelUpPicks({ edition, plan }: LevelUpPicksProps) {
+  const names = useHomebrewNames();
   const improvementId = useId();
   const disabled = useDisabledSources();
   const { target, level, grant, candidate } = plan;
@@ -51,7 +53,7 @@ export function LevelUpPicks({ edition, plan }: LevelUpPicksProps) {
       {grant && candidate && (
         <section aria-labelledby={improvementId} className="flex flex-col gap-1.5">
           <h3 id={improvementId} className="font-semibold text-label text-muted uppercase">
-            {grantTitle(grant)}
+            {grantTitle(grant, names)}
           </h3>
           <ImprovementField
             name={`Level ${grant.level}`}

@@ -1,7 +1,6 @@
 /**
- * Reads `content.db`'s `backgrounds` table. Homebrew backgrounds live in `homebrew.db`
- * but are not merged in here — that merge is separate work, the way it was for items and
- * spells. Creating, renaming or deleting one stays with `/homebrew/backgrounds`.
+ * Reads `content.db`'s `backgrounds` table, catalog rows alone: `/search` merges homebrew
+ * backgrounds with these, and `/homebrew/backgrounds` creates, renames and deletes them.
  */
 import { type BackgroundRecord, backgroundRecordSchema } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";

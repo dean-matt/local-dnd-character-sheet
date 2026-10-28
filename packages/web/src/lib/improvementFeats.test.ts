@@ -1,4 +1,4 @@
-import type { FeatRecord } from "@dnd/catalog";
+import type { FeatRecord, HomebrewFeatRecord } from "@dnd/catalog";
 import { withImprovement } from "@dnd/character";
 import { describe, expect, it } from "vitest";
 import {
@@ -107,6 +107,35 @@ describe("improvementFeats", () => {
     expect(improvementFeats(classic, { ...at4, edition: "classic", takesFeats: false })).toEqual(
       [],
     );
+  });
+});
+
+describe("improvementFeats over homebrew feats", () => {
+  const homebrew = (id: string, name: string, json: object = {}): HomebrewFeatRecord => ({
+    id,
+    name,
+    edition: "one",
+    json: { name, source: "HB", ...json },
+    createdAt: "2026-10-28T00:00:00.000Z",
+  });
+  const offered = (feats: HomebrewFeatRecord[], candidate: Partial<Candidate> = {}) =>
+    improvementFeats(feats, { ...at4, ...candidate }).map(({ name }) => name);
+
+  it("narrows a homebrew feat by the category and prerequisites its entry carries", () => {
+    expect(offered([homebrew("1", "Duelist's Edge", { category: "FS" })])).toEqual([]);
+    expect(
+      offered([
+        homebrew("2", "Mighty Grip", { category: "G", prerequisite: [{ ability: [{ str: 15 }] }] }),
+      ]),
+    ).toEqual([]);
+    expect(offered([homebrew("3", "Lucky Break")])).toEqual([]);
+    expect(offered([homebrew("4", "Quick Study", { category: "O" })])).toEqual(["Quick Study"]);
+  });
+
+  it("refuses a homebrew feat held already that does not repeat", () => {
+    const study = homebrew("4", "Quick Study", { category: "O" });
+    expect(offered([study], { held: [{ homebrewId: "4" }] })).toEqual([]);
+    expect(featBarrier(study, { ...at4, held: [{ homebrewId: "4" }] })).toBe("held");
   });
 });
 

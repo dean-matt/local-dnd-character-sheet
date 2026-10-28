@@ -13,6 +13,7 @@ import {
   type EntryRef,
   entryKey,
   type FeatureKey,
+  type HomebrewNames,
   refKey,
 } from "@dnd/character";
 import { candidateAt } from "./improvementFeats.ts";
@@ -80,7 +81,12 @@ export function lostGrantors(before: CharacterDefinition, after: CharacterDefini
 const listed = (words: string[]) =>
   words.length < 3 ? words.join(" and ") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`;
 
-type Refusal = (before: CharacterDefinition, after: CharacterDefinition, level: number) => string[];
+type Refusal = (
+  before: CharacterDefinition,
+  after: CharacterDefinition,
+  level: number,
+  names: HomebrewNames,
+) => string[];
 
 const subclassBuiltOn: Refusal = (before, after, level) => {
   const was = before.levels[level - 1];
@@ -101,7 +107,7 @@ const subclassBuiltOn: Refusal = (before, after, level) => {
  * shift: the old class's would start over as a multiclass entry, and the new class's would
  * take a second first level.
  */
-const startingClassBuiltOn: Refusal = (before, after, level) => {
+const startingClassBuiltOn: Refusal = (before, after, level, names) => {
   const was = before.levels[0]?.class;
   const now = after.levels[0]?.class;
   if (level !== 1 || !was || !now || entryKey(was) === entryKey(now)) return [];
@@ -112,7 +118,7 @@ const startingClassBuiltOn: Refusal = (before, after, level) => {
   if (later.length === 0) return [];
   const many = later.length > 1;
   return [
-    `${many ? "Levels" : "Level"} ${listed(later)} ${many ? "take" : "takes"} ${displayName(was)} or ${displayName(now)}; remove ${many ? "them" : "it"} to change the starting class.`,
+    `${many ? "Levels" : "Level"} ${listed(later)} ${many ? "take" : "takes"} ${displayName(was, names)} or ${displayName(now, names)}; remove ${many ? "them" : "it"} to change the starting class.`,
   ];
 };
 
@@ -147,7 +153,7 @@ function restingOnClassLevel(definition: CharacterDefinition, index: number) {
  * choice, spell pick or option pick: each rests on the class level the level takes, which the
  * change shifts by one. A later level holding none has nothing to leave behind.
  */
-const classLevelBuiltOn: Refusal = (before, after, level) => {
+const classLevelBuiltOn: Refusal = (before, after, level, names) => {
   const was = before.levels[level - 1]?.class;
   const now = after.levels[level - 1]?.class;
   if (level === 1 || !was || !now || entryKey(was) === entryKey(now)) return [];
@@ -158,22 +164,22 @@ const classLevelBuiltOn: Refusal = (before, after, level) => {
     return rests.length === 0
       ? []
       : [
-          `Level ${index + 1} takes ${displayName(each.class)} and holds ${listed(rests)}; remove it to change level ${level}'s class.`,
+          `Level ${index + 1} takes ${displayName(each.class, names)} and holds ${listed(rests)}; remove it to change level ${level}'s class.`,
         ];
   });
 };
 
-const preparedDropped: Refusal = (before, after) => {
+const preparedDropped: Refusal = (before, after, _level, names) => {
   const kept = new Set(after.spells.map((spell) => entryKey(spell.ref)));
   return before.spells
     .filter((spell) => spell.prepared && !kept.has(entryKey(spell.ref)))
-    .map((spell) => `${displayName(spell.ref)} is prepared; unprepare it to drop the pick.`);
+    .map((spell) => `${displayName(spell.ref, names)} is prepared; unprepare it to drop the pick.`);
 };
 
-const grantorDropped: Refusal = (before, after) => {
+const grantorDropped: Refusal = (before, after, _level, names) => {
   const orphaned = lostGrantors(before, after);
   const line = (ref: EntryRef, by: Grantor) =>
-    `${displayName(ref)} was picked for ${displayName(by.ref)}; remove it to drop ${displayName(by.ref)}.`;
+    `${displayName(ref, names)} was picked for ${displayName(by.ref, names)}; remove it to drop ${displayName(by.ref, names)}.`;
   return [
     ...after.spells.flatMap((spell) =>
       spell.pickedFor && orphaned(spell.pickedFor) ? [line(spell.ref, spell.pickedFor)] : [],
@@ -192,7 +198,7 @@ export type PrerequisiteRows = {
 
 const optionShort =
   (rows: PrerequisiteRows): Refusal =>
-  (before, after) => {
+  (before, after, _level, names) => {
     const was = prerequisiteFacts(before);
     const now = prerequisiteFacts(after);
     const held = new Set(before.optionalFeatures.map((pick) => entryKey(pick.ref)));
@@ -202,7 +208,7 @@ const optionShort =
       const missing = prerequisiteNotes(needs, now).needs;
       return missing
         ? [
-            `${displayName(pick.ref)}, picked at level ${pick.level}, needs ${missing}; remove it to make this change.`,
+            `${displayName(pick.ref, names)}, picked at level ${pick.level}, needs ${missing}; remove it to make this change.`,
           ]
         : [];
     });
@@ -210,7 +216,7 @@ const optionShort =
 
 const featShort =
   (rows: PrerequisiteRows): Refusal =>
-  (before, after, level) =>
+  (before, after, level, names) =>
     after.feats.flatMap(({ ref, level: at }) => {
       const row = rows.feats.find((feat) => entryKey(feat) === entryKey(ref));
       if (at === undefined || at === level || !row) return [];
@@ -225,7 +231,7 @@ const featShort =
       };
       return needs.length > 0 && met(before) && !met(after)
         ? [
-            `${displayName(ref)}, taken at level ${at}, needs ${prerequisiteText(needs)}; remove it to make this change.`,
+            `${displayName(ref, names)}, taken at level ${at}, needs ${prerequisiteText(needs)}; remove it to make this change.`,
           ]
         : [];
     });
@@ -245,6 +251,7 @@ export const levelChoiceRefusals = (
   after: CharacterDefinition,
   level: number,
   rows: PrerequisiteRows,
+  names: HomebrewNames,
 ) =>
   [
     subclassBuiltOn,
@@ -254,7 +261,7 @@ export const levelChoiceRefusals = (
     grantorDropped,
     optionShort(rows),
     featShort(rows),
-  ].flatMap((refusal) => refusal(before, after, level));
+  ].flatMap((refusal) => refusal(before, after, level, names));
 
 /**
  * `after`'s departures with every multiclass prerequisite its scores leave unmet noted, as the

@@ -1,6 +1,6 @@
 /**
  * Searches the catalog and homebrew together: Tier A's tables, Tier B's rules lookups, Tier
- * C's `entities`, and `homebrew.db`'s items and spells, merged into one list ranked by
+ * C's `entities`, and `homebrew.db`'s items, spells, races, classes, backgrounds and feats, merged into one list ranked by
  * `compareSearchHits`, and lists the sources such a search can leave out and the types it
  * can return.
  * See `packages/api/src/db/queries/catalog-search.ts`'s `searchCatalog` for what each tier's
@@ -25,6 +25,12 @@ import {
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import {
+  homebrewBackgrounds,
+  homebrewClasses,
+  homebrewFeats,
+  homebrewRaces,
+} from "../db/homebrew.ts";
+import {
   type CatalogSearchRow,
   listSearchSources,
   listSearchTypes,
@@ -34,7 +40,9 @@ import {
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import {
   listHomebrewSearchSources,
+  type NamedSearchTable,
   searchHomebrewItems,
+  searchHomebrewNamed,
   searchHomebrewSpells,
 } from "../db/queries/homebrew.ts";
 import { catalogOutOfDate } from "./errors.ts";
@@ -67,6 +75,17 @@ function toHomebrewSpellHit(row: HomebrewSpellRow): SearchHit {
     edition: row.edition,
   });
 }
+
+/** The homebrew kinds no `SearchFilter` facet narrows, so a hit of each passes every facet. */
+const NAMED_HOMEBREW: readonly (readonly [
+  "race" | "class" | "background" | "feat",
+  NamedSearchTable,
+])[] = [
+  ["race", homebrewRaces],
+  ["class", homebrewClasses],
+  ["background", homebrewBackgrounds],
+  ["feat", homebrewFeats],
+];
 
 const csv = (description: string, example: string) =>
   z.string().optional().openapi({ description, example });
@@ -222,6 +241,25 @@ const types = createRoute({
   },
 });
 
+/** `homebrew.db`'s hits for `filter`, of each kind `reads` admits. */
+function homebrewHits(
+  homebrewDb: HomebrewDb,
+  filter: SearchFilter,
+  reads: (type: string) => boolean,
+): SearchHit[] {
+  const items = reads("item") ? searchHomebrewItems(homebrewDb, filter).map(toHomebrewItemHit) : [];
+  const spells =
+    !filter.classList && !filter.offer && reads("spell")
+      ? searchHomebrewSpells(homebrewDb, filter).map(toHomebrewSpellHit)
+      : [];
+  const named = NAMED_HOMEBREW.filter(([type]) => reads(type)).flatMap(([type, table]) =>
+    searchHomebrewNamed(homebrewDb, table, filter).map((row) =>
+      homebrewSearchHitSchema.parse({ type, ...row }),
+    ),
+  );
+  return [...items, ...spells, ...named];
+}
+
 export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   const routes = new OpenAPIHono();
 
@@ -256,19 +294,9 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
     const catalogHits = searchCatalog(dataDir, filter)
       .filter((row) => shown(row.source))
       .map(toHit);
-    const homebrewShown = shown(HOMEBREW_SOURCE);
-    const homebrewItemHits =
-      homebrewShown && reads("item")
-        ? searchHomebrewItems(homebrewDb, filter).map(toHomebrewItemHit)
-        : [];
-    const homebrewSpellHits =
-      homebrewShown && !classList && !offer && reads("spell")
-        ? searchHomebrewSpells(homebrewDb, filter).map(toHomebrewSpellHit)
-        : [];
+    const homebrew = shown(HOMEBREW_SOURCE) ? homebrewHits(homebrewDb, filter, reads) : [];
 
-    const merged = [...catalogHits, ...homebrewItemHits, ...homebrewSpellHits].sort(
-      compareSearchHits(term),
-    );
+    const merged = [...catalogHits, ...homebrew].sort(compareSearchHits(term));
 
     return c.json(
       {

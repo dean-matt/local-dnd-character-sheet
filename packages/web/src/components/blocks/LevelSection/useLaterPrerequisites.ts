@@ -3,6 +3,7 @@ import { type CharacterDefinition, classLevels, displayName, entryKey } from "@d
 import { useQueries } from "@tanstack/react-query";
 import { classQuery } from "../../../hooks/classQuery.ts";
 import { useFeats } from "../../../hooks/useFeats.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { ApiError, apiGet } from "../../../lib/api.ts";
 import { levelChoiceDepartures, type PrerequisiteRows } from "../../../lib/levelChoices.ts";
 import { retryUnlessClientError } from "../../../lib/retryUnlessClientError.ts";
@@ -14,6 +15,7 @@ import { prerequisiteOf } from "./useMulticlassEntry.ts";
  * departures `after`, `definition` changed, carries. A homebrew option or class needs nothing.
  */
 export function useLaterPrerequisites(definition: CharacterDefinition, after: CharacterDefinition) {
+  const names = useHomebrewNames();
   const options = definition.optionalFeatures.flatMap(({ ref }) => ("name" in ref ? [ref] : []));
   const optionRows = useQueries({
     queries: options.map((ref) => ({
@@ -42,7 +44,7 @@ export function useLaterPrerequisites(definition: CharacterDefinition, after: Ch
     feats: feats.data?.items ?? [],
   };
   const judged = groups.map((group, index) => ({
-    name: displayName(group.class),
+    name: displayName(group.class, names),
     firstIndex: after.levels.findIndex((level) => entryKey(level.class) === entryKey(group.class)),
     prerequisite: prerequisiteOf(group.class, classRows[index]?.data?.json),
   }));

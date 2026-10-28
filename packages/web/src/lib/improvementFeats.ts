@@ -2,6 +2,7 @@ import {
   type FeatPrerequisite,
   type FeatRecord,
   featTermsSchema,
+  type HomebrewFeatRecord,
   type RacePrerequisite,
 } from "@dnd/catalog";
 import {
@@ -9,8 +10,9 @@ import {
   type Ability,
   abilityScore,
   type CharacterDefinition,
-  type ContentRef,
   displayName,
+  type EntryRef,
+  entryKey,
   houseRule,
   IMPROVEMENT_FEAT,
   proficiencyKey,
@@ -18,6 +20,10 @@ import {
   withoutImprovement,
 } from "@dnd/character";
 import type { ImprovementGrant } from "./improvementGrants.ts";
+import { searchHitKey } from "./searchHitKey.ts";
+
+/** A feat an improvement or a background may offer: a catalog row or a homebrew one. */
+export type OfferedFeat = FeatRecord | HomebrewFeatRecord;
 
 /**
  * The 2024 categories an improvement offers: general, origin and epic boon feats. A
@@ -40,8 +46,8 @@ export type Candidate = {
    */
   scores: Record<Ability, number> | undefined;
   totals: Record<Ability, number> | undefined;
-  /** The feats the character holds from elsewhere, which a feat that does not repeat leaves out. */
-  held: readonly ContentRef[];
+  /** The feats the character holds from elsewhere, catalog or homebrew, which a feat that does not repeat leaves out. */
+  held: readonly EntryRef[];
   /** The feats held before this level, keyed `name|source` lowercased, which a feat may need. */
   earlier: readonly string[];
   /** The race, and any subrace, lowercased; `undefined` while unset or homebrew, which names none. */
@@ -63,9 +69,12 @@ export type Candidate = {
  * `Ability Score Improvement` (XPHB) feat stands for and so is not one of them. Scores
  * not yet set refuse no feat.
  */
-export function improvementFeats(feats: readonly FeatRecord[], candidate: Candidate): FeatRecord[] {
+export function improvementFeats<F extends OfferedFeat>(
+  feats: readonly F[],
+  candidate: Candidate,
+): F[] {
   return feats.filter((feat) => {
-    if (refKey(feat) === refKey(IMPROVEMENT_FEAT)) return false;
+    if (searchHitKey(feat) === entryKey(IMPROVEMENT_FEAT)) return false;
     const { category } = featTermsSchema.parse(feat.json);
     if (candidate.edition === "one" && !OFFERED_CATEGORIES.includes(category ?? "")) return false;
     return featBarrier(feat, candidate) === undefined;
@@ -77,12 +86,13 @@ export function improvementFeats(feats: readonly FeatRecord[], candidate: Candid
  * held already and not repeatable, or no alternative of its prerequisites met.
  */
 export function featBarrier(
-  feat: FeatRecord,
+  feat: OfferedFeat,
   candidate: Candidate,
 ): "noFeats" | "held" | "prerequisite" | undefined {
   if (!candidate.takesFeats) return "noFeats";
   const { repeatable, prerequisites } = featTermsSchema.parse(feat.json);
-  if (!repeatable && candidate.held.some((ref) => refKey(ref) === refKey(feat))) return "held";
+  const key = searchHitKey(feat);
+  if (!repeatable && candidate.held.some((ref) => entryKey(ref) === key)) return "held";
   const met =
     prerequisites.length === 0 ||
     prerequisites.some((prerequisite) => meets(prerequisite, candidate));
@@ -195,7 +205,7 @@ export function candidateAt(
       feats.filter((feat) => feat.level === undefined),
     ),
     totals: scored(abilityIncreases, feats),
-    held: feats.flatMap(({ ref }) => ("name" in ref ? [ref] : [])),
+    held: feats.map(({ ref }) => ref),
     earlier: feats.flatMap(({ ref, level }) =>
       "name" in ref && (level ?? 0) < grant.level ? [refKey(ref).toLowerCase()] : [],
     ),

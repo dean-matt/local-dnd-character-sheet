@@ -1,4 +1,5 @@
 import { displayName, entryKey, grantorKey } from "@dnd/character";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { featureTypeLabel, featureTypeNoun } from "../../../lib/featureTypeLabel.ts";
 import {
   optionalFeatureJudge,
@@ -13,6 +14,7 @@ import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
  * misses at the new level is listed and cannot be picked.
  */
 export function LevelUpOptions({ plan }: { plan: ReturnType<typeof useLevelUpPlan> }) {
+  const names = useHomebrewNames();
   const { gains, add, remove } = plan.optionPicks;
   const facts = prerequisiteFacts(plan.draft);
   // Held under any type: one fighting style is never taken twice, though four classes offer it.
@@ -25,10 +27,10 @@ export function LevelUpOptions({ plan }: { plan: ReturnType<typeof useLevelUpPla
     return (
       <PickField
         key={`${gain.featureType}|${grantorKey(gain.grantedBy)}`}
-        heading={`New ${label}${shared ? ` from ${displayName(gain.grantedBy.ref)}` : ""}`}
+        heading={`New ${label}${shared ? ` from ${displayName(gain.grantedBy.ref, names)}` : ""}`}
         noun={featureTypeNoun(gain.featureType)}
         count={gain.count}
-        picked={gain.picked.map(({ ref }) => ({ ref, name: displayName(ref) }))}
+        picked={gain.picked.map(({ ref }) => ({ ref, name: displayName(ref, names) }))}
         edition={gain.edition}
         type="optfeature"
         filters={{ featureType: gain.featureType }}

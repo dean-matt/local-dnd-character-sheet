@@ -97,6 +97,10 @@ const SEARCH: Record<string, object[]> = {
 };
 
 const ROWS: Record<string, unknown> = {
+  "/api/homebrew/races": [],
+  "/api/homebrew/classes": [],
+  "/api/homebrew/backgrounds": [],
+  "/api/homebrew/feats": [],
   "/api/backgrounds?edition=one&limit=200": page([
     {
       ...XPHB("Charlatan"),

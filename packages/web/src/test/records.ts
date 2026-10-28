@@ -7,6 +7,7 @@ import {
   characterDefinitionSchema,
   defaultCharacterState,
   deriveCharacter,
+  type EntryRef,
   entryKey,
   PRESET_PAGES,
 } from "@dnd/character";
@@ -112,12 +113,13 @@ export function identityRecord(): CharacterRecord {
 
 /**
  * What `GET /characters/{id}/derived` returns for `characterRecord`'s Warlock, unarmored,
- * or for `definition` read in that Warlock's catalog.
+ * or for `definition` read in that Warlock's catalog, with `caster` in the Warlock's place.
  */
 export function derivedRecord(
   definition: CharacterDefinition = characterRecord("1", "Vex").definition,
+  caster: EntryRef = { name: "Warlock", source: "XPHB" },
 ): CharacterDerived {
-  const warlock = entryKey({ name: "Warlock", source: "XPHB" });
+  const warlock = entryKey(caster);
   return deriveCharacter(definition, {
     hitDice: new Map([[warlock, 8]]),
     spellcastingAbilities: new Map([[warlock, "cha"]]),

@@ -28,7 +28,7 @@ const names = (rows: ReturnType<typeof levelHistory>) =>
 describe("levelHistory", () => {
   it("interleaves a multiclass character's classes in the order the levels were taken", () => {
     const levels = [{ class: FIGHTER }, { class: WIZARD }, { class: FIGHTER }];
-    expect(names(levelHistory(levels, featuresOf))).toEqual([
+    expect(names(levelHistory(levels, featuresOf, new Map()))).toEqual([
       [1, 1, ["Fighting Style"]],
       [2, 1, ["Spellcasting", "Arcane Recovery"]],
       [3, 2, ["Action Surge"]],
@@ -42,7 +42,7 @@ describe("levelHistory", () => {
       { class: FIGHTER, subclass: PHB("Champion") },
       ...Array.from({ length: 4 }, () => ({ class: FIGHTER })),
     ];
-    const rows = levelHistory(levels, featuresOf);
+    const rows = levelHistory(levels, featuresOf, new Map());
     expect(rows.map((row) => row.subclass)).toEqual([
       undefined,
       undefined,
@@ -68,7 +68,7 @@ describe("levelHistory", () => {
       ...Array.from({ length: 4 }, () => ({ class: FIGHTER })),
       { class: FIGHTER, subclass: PHB("Champion") },
     ];
-    expect(names(levelHistory(levels, featuresOf)).at(-1)).toEqual([
+    expect(names(levelHistory(levels, featuresOf, new Map())).at(-1)).toEqual([
       5,
       5,
       ["Extra Attack", "Improved Critical"],
@@ -80,7 +80,7 @@ describe("levelHistory", () => {
       class: [feature("Totem Spirit", 1), feature("Bear", 1, "Totem Spirit")],
       subclass: [],
     };
-    expect(names(levelHistory([{ class: PHB("Barbarian") }], () => totem))).toEqual([
+    expect(names(levelHistory([{ class: PHB("Barbarian") }], () => totem, new Map()))).toEqual([
       [1, 1, ["Totem Spirit"]],
     ]);
   });
@@ -96,7 +96,7 @@ describe("levelHistory", () => {
       { class: PHB("Paladin"), subclass: PHB("Oath of Devotion") },
     ];
     expect(
-      levelHistory(levels, () => paladin)[2]?.features.map(({ grantor, subclass }) => [
+      levelHistory(levels, () => paladin, new Map())[2]?.features.map(({ grantor, subclass }) => [
         grantor,
         subclass,
       ]),

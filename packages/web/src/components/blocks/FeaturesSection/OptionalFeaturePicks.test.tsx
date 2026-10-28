@@ -53,7 +53,7 @@ function holding(picks: ReturnType<typeof invocation>[]): CharacterRecord {
   return { ...record, definition: { ...record.definition, optionalFeatures: picks } };
 }
 
-/** Answers a search with `HITS` and a write with the record it sent. */
+/** Answers a search with `HITS`, a homebrew read with none, and a write with the record it sent. */
 function stubApi() {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -65,7 +65,9 @@ function stubApi() {
     const definition = JSON.parse(String(init?.body));
     return new Response(JSON.stringify({ ...warlockRecord(), definition }));
   });
-  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) =>
+    String(input).startsWith("/api/homebrew/") ? new Response("[]") : fetchMock(input, init),
+  );
   return fetchMock;
 }
 

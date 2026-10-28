@@ -1,5 +1,11 @@
 import type { SheetSpell } from "@dnd/catalog";
-import { type CharacterDerived, derivedValue, displayName, entryKey } from "@dnd/character";
+import {
+  type CharacterDerived,
+  derivedValue,
+  displayName,
+  entryKey,
+  type HomebrewNames,
+} from "@dnd/character";
 
 type Caster = CharacterDerived["spellcasting"][number];
 
@@ -27,6 +33,7 @@ export type PreparedTally = { name: string; prepared: number; limit: number };
 export function preparedTallies(
   spells: readonly SheetSpell[],
   casters: readonly Caster[],
+  names: HomebrewNames,
 ): PreparedTally[] {
   return casters.flatMap((caster) => {
     if (!caster.preparedSpells) return [];
@@ -39,7 +46,11 @@ export function preparedTallies(
         spellCaster(spell, casters) === caster,
     ).length;
     return [
-      { name: displayName(caster.class), prepared, limit: derivedValue(caster.preparedSpells) },
+      {
+        name: displayName(caster.class, names),
+        prepared,
+        limit: derivedValue(caster.preparedSpells),
+      },
     ];
   });
 }

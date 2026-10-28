@@ -70,11 +70,14 @@ describe("a feat's fixed increase", () => {
 describe("improvementText", () => {
   it("names the scores raised, or the feat and what it raised", () => {
     expect(
-      improvementText({ feat: IMPROVEMENT_FEAT, increases: [{ ability: "int", amount: 2 }] }),
+      improvementText(
+        { feat: IMPROVEMENT_FEAT, increases: [{ ability: "int", amount: 2 }] },
+        new Map(),
+      ),
     ).toBe("+2 Intelligence");
-    expect(improvementText({ feat: GRAPPLER, increases: [{ ability: "str", amount: 1 }] })).toBe(
-      "Grappler (+1 Strength)",
-    );
-    expect(improvementText({ feat: ALERT, increases: [] })).toBe("Alert");
+    expect(
+      improvementText({ feat: GRAPPLER, increases: [{ ability: "str", amount: 1 }] }, new Map()),
+    ).toBe("Grappler (+1 Strength)");
+    expect(improvementText({ feat: ALERT, increases: [] }, new Map())).toBe("Alert");
   });
 });

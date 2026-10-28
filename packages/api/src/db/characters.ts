@@ -25,8 +25,6 @@ export const characters = sqliteTable("characters", {
   name: text("name").notNull(),
   edition: text("edition", { enum: EDITIONS }).notNull(),
   level: integer("level").notNull(),
-  raceSummary: text("race_summary").notNull(),
-  classSummary: text("class_summary").notNull(),
   definition: text("definition", { mode: "json" }).notNull(),
   /**
    * When `character_portraits` last changed for this character, null with no portrait. A

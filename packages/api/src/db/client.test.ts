@@ -40,8 +40,6 @@ describe("openDatabases", () => {
         name: "Rian",
         edition: "classic",
         level: 1,
-        raceSummary: "",
-        classSummary: "",
         definition: {},
       })
       .run();

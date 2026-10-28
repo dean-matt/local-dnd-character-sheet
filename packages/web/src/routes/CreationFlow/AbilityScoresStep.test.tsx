@@ -41,6 +41,10 @@ const feat = (name: string, json: object = {}) => ({
 });
 
 const ROWS: Record<string, unknown> = {
+  "/api/homebrew/races": [],
+  "/api/homebrew/classes": [],
+  "/api/homebrew/backgrounds": [],
+  "/api/homebrew/feats": [],
   "/api/classes/Fighter/PHB/at/4": {
     level: 4,
     resources: [],

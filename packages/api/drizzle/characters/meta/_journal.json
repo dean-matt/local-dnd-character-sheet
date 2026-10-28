@@ -99,6 +99,13 @@
       "when": 1792763426012,
       "tag": "0013_character_portraits_previous",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1793209760324,
+      "tag": "0014_drop_character_summaries",
+      "breakpoints": true
     }
   ]
 }

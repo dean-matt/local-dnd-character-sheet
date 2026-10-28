@@ -169,6 +169,7 @@ export {
   classLevels,
   classSummary,
   displayName,
+  type HomebrewNames,
   raceSummary,
   totalLevel,
   withExperienceFloor,

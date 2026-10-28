@@ -18,6 +18,7 @@ import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { useTopLayer } from "../../hooks/useTopLayer.ts";
 import { ANCHORED_LIST_CLASSES, anchoredListStyle, anchorName } from "../../lib/anchoring.ts";
 import { isCatalogOutOfDate } from "../../lib/api.ts";
+import { searchHitRef } from "../../lib/searchHitKey.ts";
 import { FormField } from "../FormField.tsx";
 import { CatalogPickerOption } from "./CatalogPickerOption.tsx";
 
@@ -42,10 +43,6 @@ export interface CatalogPickerProps {
   placeholder?: string;
   /** Moves focus to the input on mount, as where a cleared choice gave way to it. */
   focusOnMount?: boolean;
-}
-
-function toRef(hit: SearchHit): EntryRef {
-  return "id" in hit ? { homebrewId: hit.id } : { name: hit.name, source: hit.source };
 }
 
 function boundText(shown: number, total: number): string {
@@ -101,7 +98,7 @@ export function CatalogPicker({
 
   function pick(hit: SearchHit) {
     if (unavailableReason?.(hit) !== undefined) return;
-    onPick(toRef(hit), hit);
+    onPick(searchHitRef(hit), hit);
     setQuery("");
     setOpen(false);
     setActive(-1);

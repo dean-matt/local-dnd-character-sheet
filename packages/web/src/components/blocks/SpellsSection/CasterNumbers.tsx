@@ -7,6 +7,7 @@ import {
   entryKey,
   overrideKey,
 } from "@dnd/character";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { Card } from "../../Card.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { LabeledValue } from "../LabeledValue.tsx";
@@ -21,6 +22,7 @@ export function CasterNumbers({
   character: CharacterRecord;
   derived: CharacterDerived;
 }) {
+  const names = useHomebrewNames();
   return (
     <>
       {derived.spellDamageBonus && (
@@ -37,7 +39,7 @@ export function CasterNumbers({
       )}
       {derived.spellcasting.map((caster) => {
         const key = overrideKey("spellcasting", caster, character.definition);
-        const name = displayName(caster.class);
+        const name = displayName(caster.class, names);
         return (
           <Card key={entryKey(caster.class)} title={`${name} · ${ABILITY_LABEL[caster.ability]}`}>
             <div className="flex flex-col gap-0.5">

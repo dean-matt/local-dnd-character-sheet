@@ -67,6 +67,7 @@ function renderSeeded(character: CharacterRecord) {
   });
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
     const path = String(url);
+    if (path.startsWith("/api/homebrew/")) return new Response("[]");
     if (path === "/api/classes/Wizard/XPHB/at/8") return new Response(JSON.stringify(GRANTS));
     if (path === "/api/feats?edition=one&limit=200")
       return new Response(JSON.stringify({ items: FEATS, total: FEATS.length }));

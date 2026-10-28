@@ -1,5 +1,6 @@
 /**
- * Reads `content.db`'s class and subclass tables. No homebrew class exists to merge in.
+ * Reads `content.db`'s class and subclass tables, catalog rows alone: `/search` merges
+ * homebrew classes with these.
  * `docs/class-tables.md` describes what a resource key means and the traps in the
  * upstream shape it came from; this file does not restate them.
  */

@@ -13,6 +13,12 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { characters, undoLog } from "../db/characters.ts";
 import { openDatabases } from "../db/client.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
+import {
+  deleteHomebrewRace,
+  insertHomebrewClass,
+  insertHomebrewRace,
+  updateHomebrewClass,
+} from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
 import { pagesRoutes } from "./pages.ts";
@@ -73,6 +79,46 @@ describe("charactersRoutes", () => {
     const body = await res.json();
     expect(body).toMatchObject({ name: "Vex", level: 1, edition: "one" });
     expect(typeof body.id).toBe("string");
+  });
+
+  it("summarizes race and class on every read, a catalog row by its name", async () => {
+    await routes.request("/characters", json(baseDefinition()));
+
+    const [listed] = await (await routes.request("/characters")).json();
+    expect(listed).toMatchObject({ raceSummary: "Half-Elf", classSummary: "Warlock" });
+  });
+
+  it("names a homebrew race and class in the summaries, following a rename and a delete", async () => {
+    insertHomebrewRace(opened.homebrewDb, "race-1", {
+      name: "Fireborn",
+      edition: "one",
+      size: ["M"],
+      speed: 30,
+    });
+    const warden = {
+      name: "Warden",
+      edition: "one" as const,
+      hd: { number: 1 as const, faces: 10 },
+    };
+    insertHomebrewClass(opened.homebrewDb, "class-1", warden);
+    await routes.request(
+      "/characters",
+      json(
+        baseDefinition({
+          race: { homebrewId: "race-1" },
+          levels: [{ class: { homebrewId: "class-1" } }],
+        }),
+      ),
+    );
+    const listed = async () => (await (await routes.request("/characters")).json())[0];
+
+    expect(await listed()).toMatchObject({ raceSummary: "Fireborn", classSummary: "Warden" });
+
+    updateHomebrewClass(opened.homebrewDb, "class-1", { ...warden, name: "Sentinel" });
+    expect(await listed()).toMatchObject({ classSummary: "Sentinel" });
+
+    deleteHomebrewRace(opened.homebrewDb, "race-1");
+    expect(await listed()).toMatchObject({ raceSummary: "Homebrew" });
   });
 
   it("rejects a definition missing a required field, naming which one failed", async () => {

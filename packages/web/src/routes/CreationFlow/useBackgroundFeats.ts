@@ -1,9 +1,10 @@
 import type { CharacterDefinition } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import { useFeats } from "../../hooks/useFeats.ts";
+import { useOfferedFeats } from "../../hooks/useOfferedFeats.ts";
 import {
   type BackgroundFeatOffers,
   backgroundFeatOffers,
+  heldFromBackground,
   withBackgroundFeat,
 } from "./backgroundFeats.ts";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
@@ -19,11 +20,14 @@ export function useBackgroundFeats() {
     ["edition", "background", "feats"]
   >({ name: ["edition", "background", "feats"] });
   const { backgrounds, backgroundRow } = useIdentityCatalog();
-  const catalog = useFeats(edition);
+  const offered = useOfferedFeats(
+    edition,
+    heldFromBackground(feats).map(({ ref }) => ref),
+  );
   const offers: BackgroundFeatOffers | undefined =
-    backgrounds.isSuccess && catalog.isSuccess
+    backgrounds.isSuccess && offered
       ? backgroundRow
-        ? backgroundFeatOffers(backgroundRow.json, catalog.data.items)
+        ? backgroundFeatOffers(backgroundRow.json, offered)
         : { options: [], fixed: false }
       : undefined;
   return {

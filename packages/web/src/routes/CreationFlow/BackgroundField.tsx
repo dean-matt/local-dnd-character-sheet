@@ -3,6 +3,7 @@ import { type CharacterDefinition, displayName, type EntryRef } from "@dnd/chara
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
+import { useHomebrewNames } from "../../hooks/useHomebrewNames.ts";
 import { grantNames } from "../../lib/proficiencyGrants.ts";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
@@ -14,6 +15,7 @@ const grantsOf = (row: BackgroundRecord | undefined) => {
 
 /** The background, chosen through the picker, each result saying what it grants first. */
 export function BackgroundField() {
+  const names = useHomebrewNames();
   const { setValue } = useFormContext<CharacterDefinition>();
   const background = useWatch<CharacterDefinition, "background">({ name: "background" });
   const { edition, backgrounds, backgroundRow } = useIdentityCatalog();
@@ -51,7 +53,7 @@ export function BackgroundField() {
     <div className="flex flex-col">
       <ChosenChip
         label="Background"
-        value={displayName(background)}
+        value={displayName(background, names)}
         focusOnMount={moved}
         onClear={() => choose(undefined)}
       />

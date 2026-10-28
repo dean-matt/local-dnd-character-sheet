@@ -24,8 +24,6 @@ erDiagram
         text name
         text edition "classic | one"
         int  level
-        text race_summary
-        text class_summary
         json definition
     }
     character_state {
@@ -185,9 +183,10 @@ folds it into that field's `manual`. An absent key means the computed value appl
 one leaves the computed value untouched; clearing it restores that value, not a remembered
 old number. A key naming no field, or a value its field refuses, stays stored and unapplied.
 
-**`name`, `edition`, `level`, `race_summary` and `class_summary` are recomputed, never
-accepted.** All five derive from `characters.definition` — `race_summary` and `class_summary`
-from `raceSummary()` and `classSummary()`, reading `Homebrew` for an unresolvable `homebrewId`.
+**`name`, `edition` and `level` are recomputed, never accepted.** All three derive from
+`characters.definition` on every write. A record's `raceSummary` and `classSummary` are
+computed on read by `raceSummary()` and `classSummary()`, naming a homebrew race or class from
+`homebrew.db` and reading `Homebrew` for a `homebrewId` no row holds.
 
 **A preset page is one a `PRESET_PAGES` slug names**, which only the server marks and a new
 page never takes; a write may delete it. Restoring resets the presets and their seeded order

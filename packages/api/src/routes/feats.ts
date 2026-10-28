@@ -1,7 +1,6 @@
 /**
- * Reads `content.db`'s `feats` table. Homebrew feats live in `homebrew.db` but are not
- * merged in here — that merge is separate work, the way it was for items, spells and
- * backgrounds. Creating, renaming or deleting one stays with `/homebrew/feats`.
+ * Reads `content.db`'s `feats` table, catalog rows alone, so a page of 200 always holds
+ * them: `/search` and `/homebrew/feats` serve homebrew feats.
  */
 import { type FeatRecord, featRecordSchema } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";

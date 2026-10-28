@@ -7,7 +7,7 @@ const WIZARD = { name: "Wizard", source: "XPHB" };
 
 describe("characterSubtitle", () => {
   it("reads race, class with level and subclass, then background", () => {
-    expect(characterSubtitle(warlockRecord())).toBe(
+    expect(characterSubtitle(warlockRecord(), new Map())).toBe(
       "Half-Elf Warlock 3 (Fiend Patron) • Charlatan",
     );
   });
@@ -15,15 +15,15 @@ describe("characterSubtitle", () => {
   it("joins a multiclass character's classes", () => {
     const record = warlockRecord();
     const levels = [{ class: WARLOCK }, { class: WIZARD }];
-    expect(characterSubtitle({ ...record, definition: { ...record.definition, levels } })).toBe(
-      "Half-Elf Warlock 1 / Wizard 1 • Charlatan",
-    );
+    expect(
+      characterSubtitle({ ...record, definition: { ...record.definition, levels } }, new Map()),
+    ).toBe("Half-Elf Warlock 1 / Wizard 1 • Charlatan");
   });
 
   it("leaves out the class segment for a character with no levels", () => {
     const record = warlockRecord();
     const definition = { ...record.definition, levels: [] };
-    expect(characterSubtitle({ ...record, definition })).toBe("Half-Elf • Charlatan");
+    expect(characterSubtitle({ ...record, definition }, new Map())).toBe("Half-Elf • Charlatan");
   });
 
   it("adds an alignment and a deity, the deity with its pantheon, once they are set", () => {
@@ -33,12 +33,12 @@ describe("characterSubtitle", () => {
       alignment: "Chaotic Good" as const,
       deity: { name: "Oghma", source: "PHB", pantheon: "Celtic" },
     };
-    expect(characterSubtitle({ ...record, definition })).toBe(
+    expect(characterSubtitle({ ...record, definition }, new Map())).toBe(
       "Half-Elf Warlock 3 (Fiend Patron) • Charlatan • Chaotic Good • Oghma (Celtic)",
     );
 
     const realms = { ...definition, deity: { ...definition.deity, pantheon: "Forgotten Realms" } };
-    expect(characterSubtitle({ ...record, definition: realms })).toContain(
+    expect(characterSubtitle({ ...record, definition: realms }, new Map())).toContain(
       "Oghma (Forgotten Realms)",
     );
   });
@@ -46,25 +46,27 @@ describe("characterSubtitle", () => {
 
 describe("headerSubtitle", () => {
   it("reads the total level, the race and the class, without the class's level or subclass", () => {
-    expect(headerSubtitle(warlockRecord())).toBe("Lv. 3 · Half-Elf · Warlock");
+    expect(headerSubtitle(warlockRecord(), new Map())).toBe("Lv. 3 · Half-Elf · Warlock");
   });
 
   it("joins a multiclass character's classes and counts every level", () => {
     const record = warlockRecord();
     const levels = [{ class: WIZARD }, { class: WARLOCK }, { class: WIZARD }];
-    expect(headerSubtitle({ ...record, definition: { ...record.definition, levels } })).toBe(
-      "Lv. 3 · Half-Elf · Wizard / Warlock",
-    );
+    expect(
+      headerSubtitle({ ...record, definition: { ...record.definition, levels } }, new Map()),
+    ).toBe("Lv. 3 · Half-Elf · Wizard / Warlock");
   });
 
   it("leaves out the level and the classes for a character with no levels", () => {
     const record = warlockRecord();
     const definition = { ...record.definition, levels: [] };
-    expect(headerSubtitle({ ...record, definition })).toBe("Half-Elf");
+    expect(headerSubtitle({ ...record, definition }, new Map())).toBe("Half-Elf");
   });
 
   it("leaves out the race where none is summarized", () => {
-    expect(headerSubtitle({ ...warlockRecord(), raceSummary: "" })).toBe("Lv. 3 · Warlock");
+    expect(headerSubtitle({ ...warlockRecord(), raceSummary: "" }, new Map())).toBe(
+      "Lv. 3 · Warlock",
+    );
   });
 
   it("leaves background, alignment and deity to the Identity tab", () => {
@@ -74,6 +76,6 @@ describe("headerSubtitle", () => {
       alignment: "Chaotic Good" as const,
       deity: { name: "Oghma", source: "PHB", pantheon: "Celtic" },
     };
-    expect(headerSubtitle({ ...record, definition })).toBe("Lv. 3 · Half-Elf · Warlock");
+    expect(headerSubtitle({ ...record, definition }, new Map())).toBe("Lv. 3 · Half-Elf · Warlock");
   });
 });

@@ -1,6 +1,11 @@
-import type { FeatRecord } from "@dnd/catalog";
+import type { FeatRecord, HomebrewFeatRecord } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
-import { backgroundFeatOffers, withFeatBlock } from "./backgroundFeats.ts";
+import {
+  backgroundFeatOffers,
+  withBackgroundFeat,
+  withBackgroundPick,
+  withFeatBlock,
+} from "./backgroundFeats.ts";
 
 const feat = (name: string, source: string, category?: string): FeatRecord => ({
   name,
@@ -55,6 +60,46 @@ describe("backgroundFeatOffers", () => {
     };
     expect(names(haunted)).toEqual(["Survivor", "Watchers", "Living Shadow"]);
     expect(backgroundFeatOffers(haunted, CATALOG).fixed).toBe(false);
+  });
+});
+
+describe("backgroundFeatOffers over homebrew feats", () => {
+  const homebrew = (id: string, name: string, category?: string): HomebrewFeatRecord => ({
+    id,
+    name,
+    edition: "one",
+    json: { name, source: "HB", ...(category && { category }) },
+    createdAt: "2026-10-28T00:00:00.000Z",
+  });
+  const origin = [feat("Alert", "XPHB", "O"), feat("Skilled", "XPHB", "O")];
+
+  it("offers a homebrew feat of the category beside the catalog's", () => {
+    const offers = backgroundFeatOffers({ feats: [{ anyFromCategory: { category: ["O"] } }] }, [
+      ...origin,
+      homebrew("hf-1", "Quick Study", "O"),
+      homebrew("hf-2", "Brawler", "G"),
+    ]);
+    expect(offers.options.map((row) => row.name)).toEqual(["Alert", "Skilled", "Quick Study"]);
+  });
+
+  it("answers a named feat from the catalog alone", () => {
+    const offers = backgroundFeatOffers({ feats: [{ "alert|xphb": true }] }, [
+      ...origin,
+      homebrew("hf-3", "Alert", "O"),
+    ]);
+    expect(offers.options).toEqual([expect.objectContaining({ name: "Alert", source: "XPHB" })]);
+  });
+
+  it("stores a homebrew pick by id, granted by the background, and drops it with the background", () => {
+    const sage = { name: "Sage", source: "XPHB" };
+    const study = homebrew("hf-1", "Quick Study", "O");
+    const picked = withBackgroundPick([], sage, study);
+    expect(picked).toEqual([
+      { ref: { homebrewId: "hf-1" }, grantedBy: { kind: "background", ref: sage } },
+    ]);
+    const offers = { options: [study], fixed: false };
+    expect(withBackgroundFeat(picked, sage, offers)).toBe(picked);
+    expect(withBackgroundFeat(picked, { name: "Hermit", source: "XPHB" }, offers)).toEqual([]);
   });
 });
 

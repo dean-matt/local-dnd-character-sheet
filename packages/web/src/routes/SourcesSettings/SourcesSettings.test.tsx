@@ -59,6 +59,9 @@ describe("SourcesSettings", () => {
     expect(
       within(screen.getByRole("region", { name: "Homebrew" })).getAllByRole("switch"),
     ).toHaveLength(1);
+    expect(hb).toHaveAccessibleName(
+      "HB Your own items, spells, races, classes, backgrounds and feats",
+    );
     expect(hb).toBeChecked();
 
     fireEvent.click(hb);

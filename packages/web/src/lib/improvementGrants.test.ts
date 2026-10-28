@@ -60,11 +60,11 @@ describe("improvementGrants", () => {
   });
 
   it("titles a grant by its levels, and a boon as one", () => {
-    expect(grantTitle({ level: 10, cls: FIGHTER, classLevel: 6, boon: false, features: [] })).toBe(
-      "Level 10 · Fighter 6",
-    );
-    expect(grantTitle({ level: 19, cls: WIZARD, classLevel: 19, boon: true, features: [] })).toBe(
-      "Level 19 · Wizard 19 · Epic Boon",
-    );
+    expect(
+      grantTitle({ level: 10, cls: FIGHTER, classLevel: 6, boon: false, features: [] }, new Map()),
+    ).toBe("Level 10 · Fighter 6");
+    expect(
+      grantTitle({ level: 19, cls: WIZARD, classLevel: 19, boon: true, features: [] }, new Map()),
+    ).toBe("Level 19 · Wizard 19 · Epic Boon");
   });
 });

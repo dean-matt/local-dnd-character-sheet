@@ -1,9 +1,8 @@
 /**
- * The only path that writes `characters.definition`. `name`, `level`, `edition`,
- * `raceSummary` and `classSummary` are denormalized projections of it, so all five
- * recompute here in the same statement rather than arrive as arguments a caller could
- * set adrift. An edit and an undo share that statement, so a restore passes the schema
- * and the projections an edit does.
+ * The only path that writes `characters.definition`. `name`, `level` and `edition` are
+ * denormalized projections of it, so all three recompute here in the same statement
+ * rather than arrive as arguments a caller could set adrift. An edit and an undo share
+ * that statement, so a restore passes the schema and the projections an edit does.
  */
 import { HOMEBREW_SOURCE } from "@dnd/catalog";
 import {
@@ -11,10 +10,8 @@ import {
   type CharacterFile,
   type CharacterState,
   characterDefinitionSchema,
-  classSummary,
   defaultCharacterState,
   PRESET_PAGES,
-  raceSummary,
   refKey,
   totalLevel,
 } from "@dnd/character";
@@ -55,8 +52,6 @@ function insertCharacterRows(
       name: definition.name,
       edition: definition.edition,
       level: totalLevel(definition),
-      raceSummary: raceSummary(definition),
-      classSummary: classSummary(definition),
       definition,
     })
     .returning()
@@ -137,8 +132,6 @@ function writeDefinition(
       name: definition.name,
       edition: definition.edition,
       level: totalLevel(definition),
-      raceSummary: raceSummary(definition),
-      classSummary: classSummary(definition),
       updatedAt: now,
     })
     .where(eq(characters.id, id))

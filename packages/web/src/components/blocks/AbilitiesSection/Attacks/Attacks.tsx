@@ -13,6 +13,7 @@ import {
   overrideKey,
 } from "@dnd/character";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
+import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { Card } from "../../../Card.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
 import { damageText } from "../../attack.ts";
@@ -64,13 +65,14 @@ export function Attacks({
   character: CharacterRecord;
   derived: CharacterDerived;
 }) {
+  const names = useHomebrewNames();
   const inventory = useCharacterInventory(character.id);
   const { definition } = character;
   const rollEffects = derivedValue(derived.rollEffects);
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
     const ref = definition.inventory[entry]?.ref;
-    return inventory.data?.items[entry]?.name ?? (ref ? displayName(ref) : "Weapon");
+    return inventory.data?.items[entry]?.name ?? (ref ? displayName(ref, names) : "Weapon");
   };
   return (
     <Card title="Attacks & Spellcasting">
@@ -135,7 +137,7 @@ export function Attacks({
               );
             })}
             {derived.spellcasting.map((caster) => {
-              const name = `${displayName(caster.class)} spell attack`;
+              const name = `${displayName(caster.class, names)} spell attack`;
               return (
                 <AttackRow
                   key={entryKey(caster.class)}

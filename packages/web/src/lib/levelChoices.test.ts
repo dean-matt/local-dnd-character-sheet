@@ -54,11 +54,11 @@ describe("levelChoiceRefusals", () => {
     const before = definition({ levels: fighter(5, 3) });
     const changed = (levels: number) => definition({ levels: fighter(levels) });
 
-    expect(levelChoiceRefusals(before, changed(5), 3, NO_ROWS)).toEqual([
+    expect(levelChoiceRefusals(before, changed(5), 3, NO_ROWS, new Map())).toEqual([
       "Levels 4 and 5 build on Champion; remove them to change the subclass.",
     ]);
     const newest = definition({ levels: fighter(3, 3) });
-    expect(levelChoiceRefusals(newest, changed(3), 3, NO_ROWS)).toEqual([]);
+    expect(levelChoiceRefusals(newest, changed(3), 3, NO_ROWS, new Map())).toEqual([]);
   });
 
   it("names the later levels in the old or new starting class, and allows the rest", () => {
@@ -73,10 +73,11 @@ describe("levelChoiceRefusals", () => {
         started(WIZARD, FIGHTER, WIZARD),
         1,
         NO_ROWS,
+        new Map(),
       ),
     ).toEqual(["Levels 2 and 3 take Fighter or Wizard; remove them to change the starting class."]);
     expect(
-      levelChoiceRefusals(started(FIGHTER, ROGUE), started(WIZARD, ROGUE), 1, NO_ROWS),
+      levelChoiceRefusals(started(FIGHTER, ROGUE), started(WIZARD, ROGUE), 1, NO_ROWS, new Map()),
     ).toEqual([]);
   });
 
@@ -88,7 +89,7 @@ describe("levelChoiceRefusals", () => {
       levels: before.levels.map((each, index) => (index === 1 ? { class: ROGUE } : each)),
     });
     const bare = definition({ levels: levels(FIGHTER, FIGHTER, FIGHTER, ROGUE) });
-    expect(levelChoiceRefusals(bare, retaken(bare), 2, NO_ROWS)).toEqual([]);
+    expect(levelChoiceRefusals(bare, retaken(bare), 2, NO_ROWS, new Map())).toEqual([]);
 
     const built = definition({
       levels: [{ class: FIGHTER }, { class: FIGHTER }, { class: FIGHTER, subclass: CHAMPION }],
@@ -99,10 +100,10 @@ describe("levelChoiceRefusals", () => {
         { ref: PHB("Feint"), level: 3, grantedBy: { kind: "class", ref: FIGHTER } },
       ] as CharacterDefinition["optionalFeatures"],
     });
-    expect(levelChoiceRefusals(built, retaken(built), 2, NO_ROWS)).toEqual([
+    expect(levelChoiceRefusals(built, retaken(built), 2, NO_ROWS, new Map())).toEqual([
       "Level 3 takes Fighter and holds a subclass, an improvement, a feature choice, a spell pick and an option pick; remove it to change level 2's class.",
     ]);
-    expect(levelChoiceRefusals(built, built, 2, NO_ROWS)).toEqual([]);
+    expect(levelChoiceRefusals(built, built, 2, NO_ROWS, new Map())).toEqual([]);
   });
 
   it("names a pick made for a feat the level no longer takes", () => {
@@ -123,7 +124,7 @@ describe("levelChoiceRefusals", () => {
     });
     const after = { ...before, feats: [] };
 
-    expect(levelChoiceRefusals(before, after, 2, NO_ROWS)).toEqual([
+    expect(levelChoiceRefusals(before, after, 2, NO_ROWS, new Map())).toEqual([
       "Fire Bolt was picked for Magic Initiate; remove it to drop Magic Initiate.",
     ]);
   });
@@ -148,10 +149,10 @@ describe("levelChoiceRefusals", () => {
       ]),
     };
 
-    expect(levelChoiceRefusals(before, after, 3, rows)).toEqual([
+    expect(levelChoiceRefusals(before, after, 3, rows, new Map())).toEqual([
       "Book of Ancient Secrets, picked at level 5, needs Pact of the Tome; remove it to make this change.",
     ]);
-    expect(levelChoiceRefusals(before, before, 3, rows)).toEqual([]);
+    expect(levelChoiceRefusals(before, before, 3, rows, new Map())).toEqual([]);
   });
 
   it("names a later feat whose ability prerequisite the changed improvement met", () => {
@@ -177,10 +178,10 @@ describe("levelChoiceRefusals", () => {
     const after = { ...before, abilityIncreases: [increase("str")] };
     const rows = { ...NO_ROWS, feats: [ritualCaster] };
 
-    expect(levelChoiceRefusals(before, after, 4, rows)).toEqual([
+    expect(levelChoiceRefusals(before, after, 4, rows, new Map())).toEqual([
       "Ritual Caster, taken at level 8, needs Intelligence 13 or Wisdom 13; remove it to make this change.",
     ]);
-    expect(levelChoiceRefusals(before, before, 4, rows)).toEqual([]);
+    expect(levelChoiceRefusals(before, before, 4, rows, new Map())).toEqual([]);
   });
 });
 
@@ -209,6 +210,6 @@ describe("levelChoiceDepartures", () => {
       added: [note],
     });
     expect(levelChoiceDepartures(before, before, classes).departures).toEqual([]);
-    expect(levelChoiceRefusals(before, after, 4, NO_ROWS)).toEqual([]);
+    expect(levelChoiceRefusals(before, after, 4, NO_ROWS, new Map())).toEqual([]);
   });
 });
