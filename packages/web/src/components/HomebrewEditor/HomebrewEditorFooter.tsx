@@ -1,3 +1,6 @@
+import { ClassDieHoldNote } from "./ClassDieHoldNote.tsx";
+import type { ClassDieHold } from "./useClassDieHold.ts";
+
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
 const SECONDARY = `${BUTTON} border border-border bg-surface text-ink hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50`;
 
@@ -8,12 +11,14 @@ export interface HomebrewEditorFooterProps {
   first: boolean;
   onAdvance: (by: number) => void;
   saving: boolean;
+  /** Why Save is unavailable, drawn to its left; Save holds while it is set. */
+  hold?: ClassDieHold;
   onSave: () => void;
 }
 
 /**
- * Cancel, why a save failed, Previous and Next while stepping, and Save. Previous stays in
- * place on the first step, so focus never drops off a button that vanished.
+ * Cancel, why a save failed, Previous and Next while stepping, any hold on saving, and Save.
+ * Previous stays in place on the first step, so focus never drops off a button that vanished.
  */
 export function HomebrewEditorFooter({
   failure,
@@ -22,6 +27,7 @@ export function HomebrewEditorFooter({
   first,
   onAdvance,
   saving,
+  hold,
   onSave,
 }: HomebrewEditorFooterProps) {
   return (
@@ -47,10 +53,11 @@ export function HomebrewEditorFooter({
           </button>
         </>
       )}
+      {hold && <ClassDieHoldNote hold={hold} />}
       <button
         type="button"
         onClick={onSave}
-        aria-disabled={saving}
+        aria-disabled={saving || hold !== undefined}
         className={`${BUTTON} bg-accent text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
       >
         {saving ? "Saving…" : "Save"}

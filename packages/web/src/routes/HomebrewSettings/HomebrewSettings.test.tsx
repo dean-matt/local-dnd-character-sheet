@@ -10,6 +10,7 @@ import {
   ITEM_STARTERS,
   RACE_STARTERS,
 } from "../../lib/homebrewStarters.ts";
+import { characterRecord } from "../../test/records.ts";
 import { HomebrewSettings } from "./HomebrewSettings.tsx";
 
 const CREATED_AT = "2026-01-01T00:00:00.000Z";
@@ -52,8 +53,9 @@ const ward = {
 type Answer = { status: number; body?: unknown };
 
 /**
- * A fake API: a `GET` of a homebrew list answers from `lists`, and any other request under
- * `/api/homebrew` takes the next answer in `writes`.
+ * A fake API: a `GET` of a homebrew list answers from `lists`, `GET /characters` from
+ * `lists.characters`, and any other request under `/api/homebrew` takes the next answer in
+ * `writes`.
  */
 function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = [], holders?: Answer) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -62,7 +64,7 @@ function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = [], holder
     if (holders && /^\/api\/homebrew\/skills\/[^/]+\/holders$/.test(url)) {
       return json(holders.status, holders.body);
     }
-    const listed = /^\/api\/homebrew\/(\w+)$/.exec(url)?.[1];
+    const listed = /^\/api\/(?:homebrew\/)?(\w+)$/.exec(url)?.[1];
     if (method === "GET" && listed) return json(200, lists[listed] ?? []);
     const answer = url.startsWith("/api/homebrew") ? writes.shift() : undefined;
     return answer ? json(answer.status, answer.body) : json(404, { error: `nothing at ${url}` });
@@ -1051,33 +1053,211 @@ describe("HomebrewSettings", () => {
     expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
   });
 
-  it("keeps a held class's editor open with its draft when the API refuses a new hit die", async () => {
-    const json = { ...CLASS_STARTERS[0].entry, source: "HB" };
-    const error =
-      "Warden is held by Vex, so its hit die stays d10. Keep d10, or add a new class for the new die.";
-    stubApi(
-      {
-        classes: [
-          { id: "c1", name: "Warden", edition: "one", json, createdAt: CREATED_AT, hitDie: 10 },
+  describe("a held class's hit die", () => {
+    const stored = { ...CLASS_STARTERS[0].entry, source: "HB" };
+    const { source: _source, ...entry } = stored;
+    const warden = {
+      id: "c1",
+      name: "Warden",
+      edition: "one",
+      json: stored,
+      createdAt: CREATED_AT,
+      hitDie: 10,
+    };
+    /** A character holding `classId`, or a catalog class without one. */
+    const holder = (id: string, name: string, classId?: string) => {
+      const record = characterRecord(id, name);
+      return classId
+        ? {
+            ...record,
+            definition: { ...record.definition, levels: [{ class: { homebrewId: classId } }] },
+          }
+        : record;
+    };
+    const editWarden = async (faces: number) => {
+      fireEvent.click(
+        await within(screen.getByRole("region", { name: "Classes" })).findByRole("button", {
+          name: "Edit Warden",
+        }),
+      );
+      const draft = JSON.stringify({ ...entry, hd: { number: 1, faces } });
+      typeJson("Class JSON", draft);
+      return draft;
+    };
+    const save = () => within(editor()).getByRole("button", { name: "Save" });
+    const note = () => within(editor()).queryByRole("button", { name: "Why Save is unavailable" });
+    const ok = { status: 200, body: warden };
+
+    it("holds Save on a new die, naming and linking the character that holds the class", async () => {
+      const fetchMock = stubApi({ classes: [warden], characters: [holder("x1", "Vex", "c1")] }, [
+        ok,
+      ]);
+      renderPage();
+
+      await editWarden(8);
+      await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
+      fireEvent.click(save());
+      fireEvent.click(note() as HTMLElement);
+
+      expect(
+        within(editor()).getByText(
+          "Warden is held by this character, so its hit die stays d10. Keep d10, or add a class with another name for the new die.",
+        ),
+      ).toBeVisible();
+      expect(within(editor()).getByRole("link", { name: "Vex" })).toHaveAttribute(
+        "href",
+        "/characters/x1",
+      );
+      expect(writesOf(fetchMock)).toEqual([]);
+    });
+
+    it("links every holder and no other character", async () => {
+      stubApi({
+        classes: [warden],
+        characters: [holder("a", "Vex", "c1"), holder("b", "Ash", "c1"), holder("c", "Bram")],
+      });
+      renderPage();
+
+      await editWarden(8);
+      fireEvent.click(
+        await within(editor()).findByRole("button", { name: "Why Save is unavailable" }),
+      );
+
+      expect(within(editor()).getByText(/^Warden is held by these characters,/)).toBeVisible();
+      expect(
+        within(editor())
+          .getAllByRole("link")
+          .map((link) => link.textContent),
+      ).toEqual(["Vex", "Ash"]);
+    });
+
+    it("frees Save once the die matches the stored one", async () => {
+      const fetchMock = stubApi({ classes: [warden], characters: [holder("x1", "Vex", "c1")] }, [
+        ok,
+      ]);
+      renderPage();
+
+      await editWarden(8);
+      await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
+      typeJson(
+        "Class JSON",
+        JSON.stringify({ ...entry, name: "Keeper", hd: { number: 1, faces: 10 } }),
+      );
+
+      expect(note()).toBeNull();
+      expect(save()).not.toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(save());
+      await waitFor(() => expect(document.querySelector("dialog[open]")).toBeNull());
+      expect(writesOf(fetchMock)).toMatchObject([
+        { method: "PUT", url: "/api/homebrew/classes/c1" },
+      ]);
+    });
+
+    it("saves a new die on a class no character holds", async () => {
+      const fetchMock = stubApi({ classes: [warden], characters: [holder("c", "Bram")] }, [ok]);
+      renderPage();
+
+      await editWarden(8);
+      await waitFor(() =>
+        expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/characters")).toBe(true),
+      );
+      expect(note()).toBeNull();
+      fireEvent.click(save());
+
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    });
+
+    it("holds Save for a character holding the class at a later level", async () => {
+      const multiclass = characterRecord("m1", "Ash");
+      stubApi({
+        classes: [warden],
+        characters: [
+          {
+            ...multiclass,
+            definition: {
+              ...multiclass.definition,
+              levels: [...multiclass.definition.levels, { class: { homebrewId: "c1" } }],
+            },
+          },
         ],
-      },
-      [{ status: 409, body: { error, characters: [{ id: "x1", name: "Vex" }] } }],
-    );
-    renderPage();
+      });
+      renderPage();
 
-    fireEvent.click(
-      await within(screen.getByRole("region", { name: "Classes" })).findByRole("button", {
-        name: "Edit Warden",
-      }),
-    );
-    const { source: _source, ...entry } = json;
-    const draft = JSON.stringify({ ...entry, hd: { number: 1, faces: 8 } });
-    typeJson("Class JSON", draft);
-    const save = click("Save");
+      await editWarden(8);
 
-    expect(await within(editor()).findByRole("alert")).toHaveTextContent(`Save failed: ${error}`);
-    expect(jsonText("Class JSON")).toBe(draft);
-    expect(save).not.toHaveAttribute("aria-disabled", "true");
+      await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
+    });
+
+    it("orders the footer Cancel, the info button, then Save", async () => {
+      stubApi({ classes: [warden], characters: [holder("x1", "Vex", "c1")] });
+      renderPage();
+
+      await editWarden(8);
+      const info = await within(editor()).findByRole("button", { name: "Why Save is unavailable" });
+      const cancel = within(editor()).getByRole("button", { name: "Cancel" });
+
+      expect(cancel.compareDocumentPosition(info) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(info.compareDocumentPosition(save()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("shows no info button while the draft does not parse", async () => {
+      stubApi({ classes: [warden], characters: [holder("x1", "Vex", "c1")] });
+      renderPage();
+
+      await editWarden(8);
+      await within(editor()).findByRole("button", { name: "Why Save is unavailable" });
+      typeJson("Class JSON", "{");
+
+      expect(note()).toBeNull();
+      expect(save()).not.toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("leaves Save to the server when the characters cannot be read", async () => {
+      const fetchMock = stubApi({ classes: [warden] }, [ok]);
+      const answer = fetchMock.getMockImplementation();
+      fetchMock.mockImplementation(async (input, init) =>
+        String(input) === "/api/characters"
+          ? json(500, { error: "down" })
+          : (answer as NonNullable<typeof answer>)(input, init),
+      );
+      renderPage();
+
+      await editWarden(8);
+      await waitFor(() =>
+        expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/characters")).toBe(true),
+      );
+
+      expect(note()).toBeNull();
+      expect(save()).not.toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(save());
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    });
+
+    it("never reads the characters to edit an item", async () => {
+      const fetchMock = stubApi({ items: [sunblade] });
+      renderPage();
+
+      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+
+      expect(within(editor()).getByRole("button", { name: "Save" })).toBeVisible();
+      expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/characters")).toBe(false);
+    });
+
+    it("keeps the editor open with its draft when the API refuses a new hit die", async () => {
+      const error =
+        "Warden is held by Vex, so its hit die stays d10. Keep d10, or add a class with another name for the new die.";
+      stubApi({ classes: [warden] }, [
+        { status: 409, body: { error, characters: [{ id: "x1", name: "Vex" }] } },
+      ]);
+      renderPage();
+
+      const draft = await editWarden(8);
+      fireEvent.click(save());
+
+      expect(await within(editor()).findByRole("alert")).toHaveTextContent(`Save failed: ${error}`);
+      expect(jsonText("Class JSON")).toBe(draft);
+      expect(save()).not.toHaveAttribute("aria-disabled", "true");
+    });
   });
 
   it("refuses to delete a row a character holds, naming each character", async () => {

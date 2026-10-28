@@ -4,14 +4,17 @@
  * exports.
  */
 import { characterRecordSchema } from "@dnd/character";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet } from "../lib/api.ts";
 import { charactersKey } from "./characterKeys.ts";
 
+/** Every character, for a reader that narrows the list with its own `select`. */
+export const charactersQuery = queryOptions({
+  queryKey: charactersKey,
+  queryFn: () => apiGet("/characters", z.array(characterRecordSchema)),
+});
+
 export function useCharacters() {
-  return useQuery({
-    queryKey: charactersKey,
-    queryFn: () => apiGet("/characters", z.array(characterRecordSchema)),
-  });
+  return useQuery(charactersQuery);
 }

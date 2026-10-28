@@ -11,6 +11,7 @@ import { HomebrewPreview } from "./HomebrewPreview.tsx";
 import { HomebrewStepMode } from "./HomebrewStepMode.tsx";
 import { HomebrewViewTabs } from "./HomebrewViewTabs.tsx";
 import { EDITING_KINDS, type EditingKind, stepOf, stepsOf } from "./homebrewKinds.ts";
+import { useClassDieHold } from "./useClassDieHold.ts";
 import { useHomebrewEntryDraft } from "./useHomebrewEntryDraft.ts";
 
 const MODES = ["Step by step", "JSON"] as const;
@@ -74,6 +75,7 @@ export function HomebrewEditor({
   }, [refusals]);
   const mode = draft.text === undefined ? MODES[0] : MODES[1];
   const views: readonly View[] = kind.sections.length > 0 ? VIEWS : ["JSON", "Preview"];
+  const hold = useClassDieHold(collection, record, draft.checked);
   const problems = "problems" in draft.checked ? draft.checked.problems : [];
   const shownProblems = tried ? problems : [];
   const title = record ? `Edit ${record.name}` : `New ${lower}`;
@@ -108,7 +110,7 @@ export function HomebrewEditor({
   };
   const save = () => {
     if ("input" in draft.checked) {
-      if (!saving) onSave(draft.checked.input);
+      if (!saving && !hold) onSave(draft.checked.input);
       return;
     }
     refuse();
@@ -142,6 +144,7 @@ export function HomebrewEditor({
             first={step === 0}
             onAdvance={(by) => goTo(step + by)}
             saving={saving}
+            hold={hold}
             onSave={save}
           />
         }
