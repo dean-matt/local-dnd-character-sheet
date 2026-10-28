@@ -50,8 +50,8 @@ export const catalogSearchHitSchema = z.strictObject({
     .optional(),
 });
 
-/** The two homebrew tables a search reads — `homebrew.db` carries no others. */
-const HOMEBREW_SEARCH_TYPES = ["item", "spell"] as const;
+/** The homebrew tables a search reads; homebrew skills are not searched. */
+const HOMEBREW_SEARCH_TYPES = ["item", "spell", "race", "class", "background", "feat"] as const;
 
 /** A homebrew hit, addressed by `id` rather than `(name, source)`. */
 export const homebrewSearchHitSchema = z.strictObject({

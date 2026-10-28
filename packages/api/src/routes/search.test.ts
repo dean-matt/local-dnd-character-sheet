@@ -3,7 +3,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishSearchFixture, publishSpellLists } from "../db/queries/contentFixture.ts";
-import { insertHomebrewItem, insertHomebrewSpell } from "../db/queries/homebrew.ts";
+import {
+  insertHomebrewBackground,
+  insertHomebrewClass,
+  insertHomebrewFeat,
+  insertHomebrewItem,
+  insertHomebrewRace,
+  insertHomebrewSpell,
+} from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { searchRoutes } from "./search.ts";
 
@@ -277,6 +284,87 @@ describe("searchRoutes", () => {
       edition: "classic",
       item: axe,
     });
+  });
+
+  describe("homebrew races, classes, backgrounds and feats", () => {
+    beforeEach(() => {
+      for (const edition of ["classic", "one"] as const) {
+        const tag = edition === "one" ? "2024" : "Classic";
+        insertHomebrewRace(opened.homebrewDb, `race-${edition}`, {
+          name: `Fireborn ${tag}`,
+          edition,
+          size: ["M"],
+          speed: 30,
+        });
+        insertHomebrewClass(opened.homebrewDb, `class-${edition}`, {
+          name: `Firekeeper ${tag}`,
+          edition,
+          hd: { number: 1, faces: 8 },
+        });
+        insertHomebrewBackground(opened.homebrewDb, `background-${edition}`, {
+          name: `Fire Watch ${tag}`,
+          edition,
+        });
+        insertHomebrewFeat(opened.homebrewDb, `feat-${edition}`, {
+          name: `Firebrand ${tag}`,
+          edition,
+        });
+      }
+    });
+
+    it("returns one hit per kind in the edition asked, ranked among catalog hits", async () => {
+      const body = await (await routes.request("/search?edition=one&q=fire")).json();
+
+      expect(body.items).toEqual([
+        { type: "race", id: "race-one", name: "Fireborn 2024", edition: "one" },
+        { type: "monster", name: "Fire Elemental", source: "MM", edition: null },
+        { type: "feat", id: "feat-one", name: "Firebrand 2024", edition: "one" },
+        { type: "background", id: "background-one", name: "Fire Watch 2024", edition: "one" },
+        { type: "class", id: "class-one", name: "Firekeeper 2024", edition: "one" },
+        { type: "monster", name: "Azer", source: "MM", edition: null },
+      ]);
+    });
+
+    it("leaves every homebrew kind out when its source is excluded", async () => {
+      const body = await (await routes.request("/search?edition=one&q=fire&exclude=HB")).json();
+
+      expect(body.items.filter((hit: { id?: string }) => hit.id !== undefined)).toEqual([]);
+    });
+
+    it("returns no homebrew hit for a term no homebrew name holds", async () => {
+      const body = await (await routes.request("/search?edition=one&q=azer")).json();
+
+      expect(body.items).toEqual([{ type: "monster", name: "Azer", source: "MM", edition: null }]);
+    });
+
+    it("lists a homebrew race whatever a spell facet narrows", async () => {
+      const body = await (
+        await routes.request("/search?edition=one&q=fire&type=spell,race&school=A")
+      ).json();
+
+      expect(body.items).toEqual([
+        { type: "race", id: "race-one", name: "Fireborn 2024", edition: "one" },
+      ]);
+    });
+  });
+
+  it("returns catalog hits alone while homebrew holds no row", async () => {
+    const body = await (await routes.request("/search?edition=classic&q=fire")).json();
+
+    expect(body.items.every((hit: { source?: string }) => hit.source !== undefined)).toBe(true);
+  });
+
+  it("lists HB among the sources once homebrew holds a race alone", async () => {
+    insertHomebrewRace(opened.homebrewDb, "1", {
+      name: "Fireborn",
+      edition: "one",
+      size: ["M"],
+      speed: 30,
+    });
+
+    const res = await routes.request("/search/sources");
+
+    expect(await res.json()).toEqual({ sources: ["HB", "MM", "PHB"] });
   });
 
   it("lists every type a search can return", async () => {
