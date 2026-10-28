@@ -178,6 +178,14 @@ describe("EditHomebrewButton", () => {
   it.each([
     ["races", option("hb-race", "Tidekin")],
     ["backgrounds", option("hb-bg", "Wrecker")],
+    [
+      "classes",
+      {
+        ...option("hb-class", "Tidecaller"),
+        hitDie: 8,
+        json: { name: "Tidecaller", source: "HB", hd: { number: 1, faces: 8 } },
+      },
+    ],
   ])("shows no Edit, and no footer, on a homebrew row of %s", async (collection, row) => {
     stubApi({ [`/api/homebrew/${collection}/${row.id}`]: { status: 200, body: row } });
     renderDetail(`/homebrew/${collection}/${row.id}`);
