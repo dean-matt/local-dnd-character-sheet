@@ -5,8 +5,8 @@
  * accepted from a request body — the query layer derives all three from `definition` on
  * every write, and a state write never reaches that table. `raceSummary` and
  * `classSummary` are computed on every read, naming a homebrew race or class from
- * `homebrew.db`, so a rename shows on the next read. A delete runs `backup` first and deletes nothing where it
- * throws, since that snapshot is the only way back.
+ * `homebrew.db`, so a rename shows on the next read. A delete runs `backup` first and
+ * deletes nothing where it throws, since that snapshot is the only way back.
  */
 import { randomUUID } from "node:crypto";
 import {

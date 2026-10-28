@@ -1,8 +1,8 @@
 /**
  * The only path that writes `characters.definition`. `name`, `level` and `edition` are
  * denormalized projections of it, so all three recompute here in the same statement
- * rather than arrive as arguments a caller could set adrift. An edit and an undo share that statement, so a restore passes the schema
- * and the projections an edit does.
+ * rather than arrive as arguments a caller could set adrift. An edit and an undo share
+ * that statement, so a restore passes the schema and the projections an edit does.
  */
 import { HOMEBREW_SOURCE } from "@dnd/catalog";
 import {
