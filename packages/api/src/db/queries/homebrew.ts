@@ -68,12 +68,56 @@ export function searchHomebrewItems(db: HomebrewDb, filter: SearchFilter) {
     .filter((row) => ofWantedKind(itemKinds(row.json), filter.itemKinds));
 }
 
-/** The sources a homebrew row `/search` can return cites: `HOMEBREW_SOURCE` once any item or spell exists. */
+/** A homebrew table `/search` reads by name and edition alone, with no facet to narrow it. */
+export type NamedSearchTable =
+  | typeof homebrewRaces
+  | typeof homebrewClasses
+  | typeof homebrewBackgrounds
+  | typeof homebrewFeats;
+
+export function searchHomebrewNamed(db: HomebrewDb, table: NamedSearchTable, filter: SearchFilter) {
+  return db
+    .select({ id: table.id, name: table.name, edition: table.edition })
+    .from(table)
+    .where(
+      and(
+        filter.edition ? eq(table.edition, filter.edition) : undefined,
+        filter.term ? nameHolds(table.name, filter.term) : undefined,
+      ),
+    )
+    .all();
+}
+
+const SEARCHED_TABLES = [
+  homebrewItems,
+  homebrewSpells,
+  homebrewRaces,
+  homebrewClasses,
+  homebrewBackgrounds,
+  homebrewFeats,
+];
+
+/** The sources a homebrew row `/search` can return cites: `HOMEBREW_SOURCE` once any searched row exists. */
 export function listHomebrewSearchSources(db: HomebrewDb): string[] {
-  const held =
-    db.select({ id: homebrewItems.id }).from(homebrewItems).limit(1).get() ??
-    db.select({ id: homebrewSpells.id }).from(homebrewSpells).limit(1).get();
+  const held = SEARCHED_TABLES.some(
+    (table) => db.select({ id: table.id }).from(table).limit(1).get() !== undefined,
+  );
   return held ? [HOMEBREW_SOURCE] : [];
+}
+
+/**
+ * Every homebrew race and class name by id, for the summaries a character list computes on
+ * read. Ids are random UUIDs in every table, so one map spans both kinds.
+ */
+export function homebrewNames(db: HomebrewDb): Map<string, string> {
+  const rows = [
+    ...db.select({ id: homebrewRaces.id, name: homebrewRaces.name }).from(homebrewRaces).all(),
+    ...db
+      .select({ id: homebrewClasses.id, name: homebrewClasses.name })
+      .from(homebrewClasses)
+      .all(),
+  ];
+  return new Map(rows.map(({ id, name }) => [id, name]));
 }
 
 /** A homebrew table whose rows a `{@tag}` names, each name unique within its edition. */
