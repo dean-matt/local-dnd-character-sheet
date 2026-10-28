@@ -112,23 +112,21 @@ describe("homebrewClassesRoutes", () => {
         const created = await create();
         const other = await create(warden({ name: "Ranger" }));
         hold(created.id, "a", "A");
-        hold(created.id, "b", "B");
-        hold(created.id, "c", "C");
-        hold(other.id, "d", "D");
+        hold(other.id, "b", "D");
+        hold(created.id, "c", "B");
+        hold(created.id, "d", "C");
 
         const res = await put(created.id, warden({ hd: { number: 1, faces: 8 } }));
         expect(res.status).toBe(409);
-        const body = await res.json();
-        expect(body.characters).toHaveLength(3);
-        expect(body.characters).toEqual(
-          expect.arrayContaining([
+        expect(await res.json()).toEqual({
+          error:
+            "Warden is held by A, B, and C, so its hit die stays d10. Keep d10, or add a class with another name for the new die.",
+          characters: [
             { id: "a", name: "A" },
-            { id: "b", name: "B" },
-            { id: "c", name: "C" },
-          ]),
-        );
-        const listed = body.error.match(/held by (.*), so/)[1];
-        expect(listed.split(/, and |, /).sort()).toEqual(["A", "B", "C"]);
+            { id: "c", name: "B" },
+            { id: "d", name: "C" },
+          ],
+        });
       });
 
       it("refuses a rename that also changes the die, keeping both", async () => {

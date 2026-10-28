@@ -81,15 +81,19 @@ describe("characters queries", () => {
   });
 
   describe("listCharacters and getCharacter", () => {
-    it("lists every character", () => {
-      insertCharacter(db, { id: "1", definition: baseDefinition() });
+    it("lists every character oldest first, by id within the same second", () => {
+      insertCharacter(db, { id: "0", definition: baseDefinition({ name: "Ash" }) });
       insertCharacter(db, { id: "2", definition: baseDefinition({ name: "Rian" }) });
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+      db.update(characters)
+        .set({ createdAt: new Date(1_000_000) })
+        .run();
+      db.update(characters)
+        .set({ createdAt: new Date(2_000_000) })
+        .where(eq(characters.id, "0"))
+        .run();
 
-      expect(
-        listCharacters(db)
-          .map((row) => row.name)
-          .sort(),
-      ).toEqual(["Rian", "Vex"]);
+      expect(listCharacters(db).map((row) => row.name)).toEqual(["Vex", "Rian", "Ash"]);
     });
 
     it("reads one character by id, or nothing for an id that does not exist", () => {
