@@ -1,8 +1,8 @@
 import type { CharacterRecord } from "@dnd/character";
-import { FormField } from "../../components/FormField.tsx";
-import { Select } from "../../components/Select.tsx";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
-import type { HomebrewStarters } from "./homebrewStarters.ts";
+import type { HomebrewStarters } from "../../lib/homebrewStarters.ts";
+import { FormField } from "../FormField.tsx";
+import { Select } from "../Select.tsx";
 
 type Edition = CharacterRecord["edition"];
 type Starter = HomebrewStarters[number];

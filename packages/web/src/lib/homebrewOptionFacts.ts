@@ -11,10 +11,12 @@ import {
   proficiencyGrantsSchema,
   raceTraitsSchema,
 } from "@dnd/catalog";
-import { capitalize } from "../../lib/capitalize.ts";
-import { prerequisiteText as scoreText } from "../../lib/multiclassPrerequisites.ts";
-import { titleCase } from "../../lib/proficiencyGrants.ts";
-import type { Fact } from "./homebrewFacts.ts";
+import { capitalize } from "./capitalize.ts";
+import { prerequisiteText as scoreText } from "./multiclassPrerequisites.ts";
+import { titleCase } from "./proficiencyGrants.ts";
+
+/** One fact a preview or a chip prints: its label and its value. */
+export type Fact = [label: string, value: string];
 
 type Json = Record<string, unknown>;
 

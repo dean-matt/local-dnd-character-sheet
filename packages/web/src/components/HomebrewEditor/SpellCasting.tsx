@@ -1,7 +1,7 @@
-import { FormField } from "../../components/FormField.tsx";
-import { InputField } from "../../components/InputField.tsx";
-import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { FormField } from "../FormField.tsx";
+import { InputField } from "../InputField.tsx";
+import { Select } from "../Select.tsx";
 import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
 import {
   type HomebrewFormProps,

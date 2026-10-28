@@ -1,8 +1,8 @@
 import { useIsFetching } from "@tanstack/react-query";
 import { useEffect, useId, useRef } from "react";
 import { useLocation } from "react-router";
+import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 import { HomebrewSection } from "./HomebrewSection.tsx";
-import { HOMEBREW_KINDS } from "./homebrewKinds.ts";
 
 /**
  * Every homebrew row of each kind, outside any character, each written as a 5etools entry. A
@@ -39,7 +39,7 @@ export function HomebrewSettings() {
           the catalog's does.
         </p>
       </div>
-      {HOMEBREW_KINDS.map((kind) => (
+      {Object.values(LISTING_KINDS).map((kind) => (
         <HomebrewSection key={kind.collection} kind={kind} />
       ))}
     </section>

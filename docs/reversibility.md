@@ -95,7 +95,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 
 | Decision | Written in | Reversed by |
 |---|---|---|
-| Creating a row | `routes/HomebrewSettings/HomebrewEditor.tsx`, through `hooks/useHomebrew.ts` | Deleting it |
+| Creating a row | `components/HomebrewEditor/HomebrewEditor.tsx`, through `hooks/useHomebrew.ts` | Deleting it |
 | Saving an edit | The same | Cannot be: #987. A held class changing under its characters is #900 |
 | Deleting a row | `routes/HomebrewSettings/DeleteHomebrewDialog.tsx` | Cannot be: #987. A held row refuses the delete |
 

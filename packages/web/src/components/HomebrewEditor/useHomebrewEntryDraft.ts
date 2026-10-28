@@ -1,8 +1,9 @@
 import type { CharacterRecord } from "@dnd/character";
 import { useMemo, useState } from "react";
+import type { HomebrewRow } from "../../lib/homebrewListing.ts";
+import type { HomebrewStarters } from "../../lib/homebrewStarters.ts";
 import { checkHomebrewEntry, type HomebrewEntry, parseHomebrewEntry } from "./homebrewDraft.ts";
-import type { HomebrewKind, HomebrewRow } from "./homebrewKinds.ts";
-import type { HomebrewStarters } from "./homebrewStarters.ts";
+import type { EditingKind } from "./homebrewKinds.ts";
 
 type Edition = CharacterRecord["edition"];
 
@@ -32,7 +33,7 @@ const asText = (entry: HomebrewEntry) => JSON.stringify(sortedKeys(entry), null,
  * each time the entry is replaced whole, so the form's own text areas reread it. `changed`
  * turns true on the first edit.
  */
-export function useHomebrewEntryDraft(kind: HomebrewKind, record: HomebrewRow | undefined) {
+export function useHomebrewEntryDraft(kind: EditingKind, record: HomebrewRow | undefined) {
   const [starter, setStarter] = useState(kind.starters[0]);
   const [entry, setEntry] = useState(() => editable(record ? record.json : starter.entry));
   // A kind with no form opens in JSON and stays there.

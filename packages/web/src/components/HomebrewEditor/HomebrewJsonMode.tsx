@@ -1,6 +1,6 @@
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
-import { FormField } from "../../components/FormField.tsx";
+import { FormField } from "../FormField.tsx";
 import { HomebrewProblemList } from "./HomebrewProblemList.tsx";
 import type { HomebrewProblem } from "./homebrewDraft.ts";
 import { JsonEditor, type JsonEditorProps } from "./JsonEditor.tsx";

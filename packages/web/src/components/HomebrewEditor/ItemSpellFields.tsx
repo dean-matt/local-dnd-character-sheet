@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
-import { InputField } from "../../components/InputField.tsx";
-import { RemovableChipList } from "../../components/RemovableChipList.tsx";
+import { InputField } from "../InputField.tsx";
+import { RemovableChipList } from "../RemovableChipList.tsx";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
 
 /**

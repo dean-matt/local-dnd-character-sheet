@@ -13,13 +13,12 @@ import {
 } from "@dnd/catalog";
 import type { z } from "zod";
 import { copperLabel } from "../../lib/coins.ts";
+import type { Fact } from "../../lib/homebrewOptionFacts.ts";
 import { itemMeta } from "../../lib/itemKind.ts";
 import { castingTime, spellComponents, spellDuration, spellRange } from "../../lib/spellFacts.ts";
 import { ORDINAL } from "../../lib/spellLevel.ts";
 import { schoolName } from "../../lib/spellSchool.ts";
 import { numberAt, signed } from "./homebrewEntry.ts";
-
-export type Fact = [label: string, value: string];
 
 const stated = (facts: [string, string | undefined][]): Fact[] =>
   facts.filter((fact): fact is Fact => fact[1] !== undefined && fact[1] !== "");

@@ -1,6 +1,6 @@
 import { appliedItemFieldsSchema } from "@dnd/catalog";
 import { type ReactNode, useState } from "react";
-import { InputField } from "../../components/InputField.tsx";
+import { InputField } from "../InputField.tsx";
 import { ENTRIES_TEXT } from "./itemJsonSchema.ts";
 
 const ENTRIES: ReactNode = (

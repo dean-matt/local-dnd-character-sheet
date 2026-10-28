@@ -1,6 +1,7 @@
 import { Pencil, Plus, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
+import { HomebrewEditor } from "../../components/HomebrewEditor/HomebrewEditor.tsx";
 import { ListRow } from "../../components/ListRow/ListRow.tsx";
 import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../components/Tag.tsx";
@@ -8,16 +9,15 @@ import { EmptyState } from "../../EmptyState.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useHomebrew } from "../../hooks/useHomebrew.ts";
 import { LoadingState } from "../../LoadingState.tsx";
+import type { HomebrewRow, ListingKind } from "../../lib/homebrewListing.ts";
 import { firstLine } from "../../lib/rulesProse.ts";
 import { DeleteHomebrewDialog } from "./DeleteHomebrewDialog.tsx";
-import { HomebrewEditor } from "./HomebrewEditor.tsx";
-import type { HomebrewKind, HomebrewRow } from "./homebrewKinds.ts";
 
 const ICON_BUTTON =
   "flex size-6 items-center justify-center rounded-control text-muted hover:bg-border";
 
 /** One kind of homebrew: its rows, each editable and deletable, and a way to add one. */
-export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
+export function HomebrewSection({ kind }: { kind: ListingKind }) {
   const { list, save, remove } = useHomebrew(kind.collection, kind.recordSchema);
   // `"new"` while adding a row, a row's id while editing it.
   const [editing, setEditing] = useState<string>();
@@ -121,7 +121,7 @@ export function HomebrewSection({ kind }: { kind: HomebrewKind }) {
       {(editing === "new" || edited) && (
         <HomebrewEditor
           key={editing}
-          kind={kind}
+          collection={kind.collection}
           record={edited}
           saving={save.isPending}
           failure={save.error?.message}

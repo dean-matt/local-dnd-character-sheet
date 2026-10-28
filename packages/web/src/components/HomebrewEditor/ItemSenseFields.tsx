@@ -1,8 +1,8 @@
 import { SENSES } from "@dnd/character";
 import type { ReactNode } from "react";
-import { InputField } from "../../components/InputField.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
+import { InputField } from "../InputField.tsx";
 import { numberAt, typedInteger } from "./homebrewEntry.ts";
 
 /** The range a `senses` list gives `sense`: the longest any of its entries states. */

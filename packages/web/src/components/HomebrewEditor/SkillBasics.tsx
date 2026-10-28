@@ -1,11 +1,11 @@
 import { ABILITIES, ABILITY_LABEL } from "@dnd/character";
 import { Info } from "lucide-react";
 import { Link } from "react-router";
-import { FormField } from "../../components/FormField.tsx";
-import { InputField } from "../../components/InputField.tsx";
-import { Popover } from "../../components/Popover.tsx";
-import { Select } from "../../components/Select.tsx";
 import { useSkillHolders } from "../../hooks/useSkillHolders.ts";
+import { FormField } from "../FormField.tsx";
+import { InputField } from "../InputField.tsx";
+import { Popover } from "../Popover.tsx";
+import { Select } from "../Select.tsx";
 import { type HomebrewFormProps, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 

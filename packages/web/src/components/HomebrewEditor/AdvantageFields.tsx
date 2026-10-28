@@ -1,11 +1,11 @@
 import { homebrewSkillRecordSchema } from "@dnd/catalog";
 import { ABILITIES, ABILITY_LABEL } from "@dnd/character";
 import type { ReactNode } from "react";
-import { FormField } from "../../components/FormField.tsx";
-import { InputField } from "../../components/InputField.tsx";
-import { Select } from "../../components/Select.tsx";
 import { useHomebrew } from "../../hooks/useHomebrew.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { FormField } from "../FormField.tsx";
+import { InputField } from "../InputField.tsx";
+import { Select } from "../Select.tsx";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { textAt } from "./homebrewEntry.ts";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";

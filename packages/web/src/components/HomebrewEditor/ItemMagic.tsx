@@ -1,6 +1,6 @@
-import { FormField } from "../../components/FormField.tsx";
-import { Select } from "../../components/Select.tsx";
 import { RARITIES } from "../../lib/rarities.ts";
+import { FormField } from "../FormField.tsx";
+import { Select } from "../Select.tsx";
 import { type HomebrewFormProps, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
 import { NOT_STATED, withCurrent } from "./homebrewOptions.ts";

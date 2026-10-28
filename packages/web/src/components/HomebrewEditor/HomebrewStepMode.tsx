@@ -1,11 +1,11 @@
 import { Eye } from "lucide-react";
 import { HomebrewProblemAlert } from "./HomebrewProblemAlert.tsx";
 import { errorFor, type HomebrewProblem } from "./homebrewDraft.ts";
-import { type HomebrewKind, stepOf, stepsOf } from "./homebrewKinds.ts";
+import { type EditingKind, stepOf, stepsOf } from "./homebrewKinds.ts";
 import type { useHomebrewEntryDraft } from "./useHomebrewEntryDraft.ts";
 
 export interface HomebrewStepModeProps {
-  kind: HomebrewKind;
+  kind: EditingKind;
   step: number;
   draft: ReturnType<typeof useHomebrewEntryDraft>;
   /** The id of the row being edited, absent for a new one. */

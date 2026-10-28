@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { FormField } from "../../components/FormField.tsx";
-import { Select } from "../../components/Select.tsx";
 import { useBaseWeapons } from "../../hooks/useBaseWeapons.ts";
 import { EDITION_LABELS } from "../../lib/editionLabels.ts";
+import { FormField } from "../FormField.tsx";
+import { Select } from "../Select.tsx";
 import type { HomebrewFormProps } from "./homebrewEntry.ts";
 import { NOT_STATED } from "./homebrewOptions.ts";
 

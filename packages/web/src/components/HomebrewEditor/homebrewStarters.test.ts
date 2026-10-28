@@ -9,9 +9,9 @@ import {
   weaponTraitSchema,
 } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
+import { ITEM_STARTERS, SPELL_STARTERS } from "../../lib/homebrewStarters.ts";
 import { checkHomebrewEntry } from "./homebrewDraft.ts";
-import { HOMEBREW_KINDS } from "./homebrewKinds.ts";
-import { ITEM_STARTERS, SPELL_STARTERS } from "./homebrewStarters.ts";
+import { EDITING_KINDS } from "./homebrewKinds.ts";
 
 const starter = (label: string) => {
   const found = [...ITEM_STARTERS, ...SPELL_STARTERS].find((each) => each.label === label);
@@ -21,7 +21,7 @@ const starter = (label: string) => {
 
 describe("homebrew starters", () => {
   it.each(
-    HOMEBREW_KINDS.flatMap((kind) =>
+    Object.values(EDITING_KINDS).flatMap((kind) =>
       kind.starters.map(({ label, entry }) => ({ kind, label, entry })),
     ),
   )("saves the $label example as it opens", ({ kind, entry }) => {

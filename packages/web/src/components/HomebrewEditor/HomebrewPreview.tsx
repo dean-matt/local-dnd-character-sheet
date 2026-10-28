@@ -1,10 +1,10 @@
 import type { Entries } from "@dnd/catalog";
-import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
-import { RulesText } from "../../components/RulesText/RulesText.tsx";
-import { SourceChip } from "../../components/SourceChip.tsx";
-import { TypeChip } from "../../components/TypeChip.tsx";
 import { capitalize } from "../../lib/capitalize.ts";
-import type { Fact } from "./homebrewFacts.ts";
+import type { Fact } from "../../lib/homebrewOptionFacts.ts";
+import { RulesEntries } from "../RulesEntries/RulesEntries.tsx";
+import { RulesText } from "../RulesText/RulesText.tsx";
+import { SourceChip } from "../SourceChip.tsx";
+import { TypeChip } from "../TypeChip.tsx";
 import type { HomebrewInput } from "./homebrewKinds.ts";
 
 export interface HomebrewPreviewProps {

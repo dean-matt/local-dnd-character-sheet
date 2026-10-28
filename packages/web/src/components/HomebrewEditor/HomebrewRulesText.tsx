@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react";
-import { FormField } from "../../components/FormField.tsx";
+import { FormField } from "../FormField.tsx";
 
 export interface HomebrewRulesTextProps {
   label: string;

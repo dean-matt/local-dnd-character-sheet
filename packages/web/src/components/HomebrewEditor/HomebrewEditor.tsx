@@ -1,21 +1,23 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Modal } from "../../components/Modal.tsx";
-import { ModalEntry } from "../../components/ModalEntry.tsx";
+import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
 import { capitalize } from "../../lib/capitalize.ts";
+import { type HomebrewRow, LISTING_KINDS } from "../../lib/homebrewListing.ts";
+import { Modal } from "../Modal.tsx";
+import { ModalEntry } from "../ModalEntry.tsx";
 import { HomebrewEditorFooter } from "./HomebrewEditorFooter.tsx";
 import { HomebrewEntrySettings } from "./HomebrewEntrySettings.tsx";
 import { HomebrewJsonMode } from "./HomebrewJsonMode.tsx";
 import { HomebrewPreview } from "./HomebrewPreview.tsx";
 import { HomebrewStepMode } from "./HomebrewStepMode.tsx";
 import { HomebrewViewTabs } from "./HomebrewViewTabs.tsx";
-import { type HomebrewKind, type HomebrewRow, stepOf, stepsOf } from "./homebrewKinds.ts";
+import { EDITING_KINDS, type EditingKind, stepOf, stepsOf } from "./homebrewKinds.ts";
 import { useHomebrewEntryDraft } from "./useHomebrewEntryDraft.ts";
 
 const MODES = ["Step by step", "JSON"] as const;
 const VIEWS = [...MODES, "Preview"] as const;
 type View = (typeof VIEWS)[number];
 
-function howTo({ noun, sections }: HomebrewKind, editing: boolean): string {
+function howTo(noun: string, { sections }: EditingKind, editing: boolean): string {
   if (sections.length === 0) {
     return `Paste the ${noun}'s 5etools-shaped entry over ${editing ? "this one" : "this example"}.`;
   }
@@ -24,7 +26,7 @@ function howTo({ noun, sections }: HomebrewKind, editing: boolean): string {
 }
 
 export interface HomebrewEditorProps {
-  kind: HomebrewKind;
+  collection: HomebrewCollection;
   /** The row being replaced; absent for a new one. */
   record: HomebrewRow | undefined;
   saving: boolean;
@@ -46,13 +48,15 @@ export interface HomebrewEditorProps {
  * asks first.
  */
 export function HomebrewEditor({
-  kind,
+  collection,
   record,
   saving,
   failure,
   onSave,
   onClose,
 }: HomebrewEditorProps) {
+  const kind = EDITING_KINDS[collection];
+  const { noun: lower } = LISTING_KINDS[collection];
   const draft = useHomebrewEntryDraft(kind, record);
   const [step, setStep] = useState(0);
   const [tried, setTried] = useState(false);
@@ -69,8 +73,8 @@ export function HomebrewEditor({
   const views: readonly View[] = kind.sections.length > 0 ? VIEWS : ["JSON", "Preview"];
   const problems = "problems" in draft.checked ? draft.checked.problems : [];
   const shownProblems = tried ? problems : [];
-  const title = record ? `Edit ${record.name}` : `New ${kind.noun}`;
-  const noun = capitalize(kind.noun);
+  const title = record ? `Edit ${record.name}` : `New ${lower}`;
+  const noun = capitalize(lower);
 
   /** `false` where JSON that does not parse keeps the mode where it is. */
   const switchView = (next: View) => {
@@ -141,8 +145,8 @@ export function HomebrewEditor({
       >
         <div className="@container flex flex-col gap-3">
           <p className="text-label text-muted">
-            {howTo(kind, record !== undefined)} Saving replaces the whole entry, and the source is
-            always Homebrew.
+            {howTo(lower, kind, record !== undefined)} Saving replaces the whole entry, and the
+            source is always Homebrew.
           </p>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <HomebrewViewTabs
@@ -161,7 +165,7 @@ export function HomebrewEditor({
             className="flex min-w-0 flex-col gap-3"
           >
             {previewing ? (
-              <HomebrewPreview noun={kind.noun} shown={draft.shown} />
+              <HomebrewPreview noun={lower} shown={draft.shown} />
             ) : (
               <form
                 ref={form}

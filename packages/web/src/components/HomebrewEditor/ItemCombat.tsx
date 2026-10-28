@@ -1,7 +1,7 @@
-import { FormField } from "../../components/FormField.tsx";
-import { InputField } from "../../components/InputField.tsx";
-import { MultiSelect } from "../../components/MultiSelect.tsx";
-import { Select } from "../../components/Select.tsx";
+import { FormField } from "../FormField.tsx";
+import { InputField } from "../InputField.tsx";
+import { MultiSelect } from "../MultiSelect.tsx";
+import { Select } from "../Select.tsx";
 import { BaseWeaponField } from "./BaseWeaponField.tsx";
 import { DiceField } from "./DiceField.tsx";
 import {

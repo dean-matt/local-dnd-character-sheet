@@ -1,7 +1,7 @@
-import { FormField } from "../../components/FormField.tsx";
-import { InputField } from "../../components/InputField.tsx";
-import { Select } from "../../components/Select.tsx";
 import { SCHOOLS } from "../../lib/spellSchool.ts";
+import { FormField } from "../FormField.tsx";
+import { InputField } from "../InputField.tsx";
+import { Select } from "../Select.tsx";
 import { type HomebrewFormProps, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 import { SPELL_LEVELS } from "./homebrewVocabulary.ts";

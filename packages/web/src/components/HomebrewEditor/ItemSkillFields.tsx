@@ -1,5 +1,5 @@
-import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { MultiSelect } from "../MultiSelect.tsx";
 import { SKILL_NAMES } from "./homebrewVocabulary.ts";
 
 const OPTIONS = SKILL_NAMES.map((name) => ({ value: name.toLowerCase(), label: name }));

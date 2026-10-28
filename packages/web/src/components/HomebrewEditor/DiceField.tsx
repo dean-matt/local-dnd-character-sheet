@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Combobox } from "../../components/Combobox.tsx";
-import { FormField } from "../../components/FormField.tsx";
+import { Combobox } from "../Combobox.tsx";
+import { FormField } from "../FormField.tsx";
 
 /** The dice a weapon's damage most often takes; any other still saves. */
 const WEAPON_DICE = ["1d4", "1d6", "1d8", "1d10", "1d12", "2d6"];

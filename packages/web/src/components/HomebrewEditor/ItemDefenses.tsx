@@ -1,5 +1,5 @@
-import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { CONDITIONS, DAMAGE_TYPE_NAMES } from "../../lib/defenseVocabulary.ts";
+import { MultiSelect } from "../MultiSelect.tsx";
 import {
   chosenIn,
   type HomebrewFormProps,

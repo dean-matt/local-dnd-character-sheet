@@ -1,8 +1,8 @@
 import { type ReactNode, useState } from "react";
-import { FormField } from "../../components/FormField.tsx";
-import { InputField } from "../../components/InputField.tsx";
-import { Select } from "../../components/Select.tsx";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { FormField } from "../FormField.tsx";
+import { InputField } from "../InputField.tsx";
+import { Select } from "../Select.tsx";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { numberAt, recordAt, typedInteger } from "./homebrewEntry.ts";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";

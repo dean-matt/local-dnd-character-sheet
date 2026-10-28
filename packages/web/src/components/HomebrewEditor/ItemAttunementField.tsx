@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
-import { FormField } from "../../components/FormField.tsx";
-import { InputField } from "../../components/InputField.tsx";
-import { Select } from "../../components/Select.tsx";
+import { FormField } from "../FormField.tsx";
+import { InputField } from "../InputField.tsx";
+import { Select } from "../Select.tsx";
 
 const OPTIONS = [
   { value: "", label: "Not required" },
