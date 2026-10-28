@@ -1051,6 +1051,35 @@ describe("HomebrewSettings", () => {
     expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
   });
 
+  it("keeps a held class's editor open with its draft when the API refuses a new hit die", async () => {
+    const json = { ...CLASS_STARTERS[0].entry, source: "HB" };
+    const error =
+      "Warden is held by Vex, so its hit die stays d10. Keep d10, or add a new class for the new die.";
+    stubApi(
+      {
+        classes: [
+          { id: "c1", name: "Warden", edition: "one", json, createdAt: CREATED_AT, hitDie: 10 },
+        ],
+      },
+      [{ status: 409, body: { error, characters: [{ id: "x1", name: "Vex" }] } }],
+    );
+    renderPage();
+
+    fireEvent.click(
+      await within(screen.getByRole("region", { name: "Classes" })).findByRole("button", {
+        name: "Edit Warden",
+      }),
+    );
+    const { source: _source, ...entry } = json;
+    const draft = JSON.stringify({ ...entry, hd: { number: 1, faces: 8 } });
+    typeJson("Class JSON", draft);
+    const save = click("Save");
+
+    expect(await within(editor()).findByRole("alert")).toHaveTextContent(`Save failed: ${error}`);
+    expect(jsonText("Class JSON")).toBe(draft);
+    expect(save).not.toHaveAttribute("aria-disabled", "true");
+  });
+
   it("refuses to delete a row a character holds, naming each character", async () => {
     const fetchMock = stubApi({ items: [sunblade] }, [
       {
