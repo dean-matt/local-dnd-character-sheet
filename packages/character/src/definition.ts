@@ -643,9 +643,10 @@ export const characterDefinitionSchema = z.strictObject({
 });
 
 /**
- * A stored character, as an endpoint returns it. `name`, `edition`, `level`,
- * `raceSummary` and `classSummary` are denormalized projections of `definition`, kept
- * here so a caller never re-derives what the database already computed on write.
+ * A stored character, as an endpoint returns it. `name`, `edition` and `level` are
+ * projections of `definition` the database computed on write; `raceSummary` and
+ * `classSummary` are computed on read, naming any homebrew race or class, so a caller
+ * never re-derives them.
  */
 export const characterRecordSchema = z.strictObject({
   id: z.string(),

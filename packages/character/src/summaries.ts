@@ -17,17 +17,20 @@ export function withExperienceFloor(definition: CharacterDefinition): CharacterD
   return definition.experience >= floor ? definition : { ...definition, experience: floor };
 }
 
+/** Homebrew row names by id; ids are random UUIDs in every homebrew table, so one map spans the kinds. */
+export type HomebrewNames = ReadonlyMap<string, string>;
+
 /**
- * `race` and `levels[].class` carry only a `homebrewId` for a homebrew choice, and no
- * catalog reaches `packages/character` to resolve it to a name — the ceiling both
- * summaries below share.
+ * A homebrew ref carries only its `homebrewId`, so its name comes from `names`; one the map
+ * lacks, still loading or deleted, reads `Homebrew`.
  */
-export const displayName = (ref: EntryRef): string => ("homebrewId" in ref ? "Homebrew" : ref.name);
+export const displayName = (ref: EntryRef, names?: HomebrewNames): string =>
+  "homebrewId" in ref ? (names?.get(ref.homebrewId) ?? "Homebrew") : ref.name;
 
 /** The race with any subrace beside it — `Elf (High)`, or `Half-Elf` taken plain. */
-export function raceSummary(definition: CharacterDefinition): string {
+export function raceSummary(definition: CharacterDefinition, names?: HomebrewNames): string {
   const subrace = definition.subrace ? ` (${definition.subrace.name})` : "";
-  return `${displayName(definition.race)}${subrace}`;
+  return `${displayName(definition.race, names)}${subrace}`;
 }
 
 /** One class a character has levels in, with the subclass named on any of those levels. */
@@ -49,19 +52,21 @@ export function classLevels(definition: {
 }
 
 /** One `classLevels` group with its count and any subclass — `Wizard 3 (Evoker)`. */
-export function classLevelLabel(group: ClassLevels): string {
+export function classLevelLabel(group: ClassLevels, names?: HomebrewNames): string {
   const subclass = group.subclass ? ` (${group.subclass.name})` : "";
-  return `${displayName(group.class)} ${group.level}${subclass}`;
+  return `${displayName(group.class, names)} ${group.level}${subclass}`;
 }
 
 /**
  * `classLevels` joined as `levelEntrySchema`'s comment writes a multiclass character —
  * `Wizard 1 / Fighter 1`. A single class carries no count.
  */
-export function classSummary(definition: CharacterDefinition): string {
+export function classSummary(definition: CharacterDefinition, names?: HomebrewNames): string {
   const groups = classLevels(definition);
   const labels = groups.map((group) =>
-    groups.length === 1 ? displayName(group.class) : `${displayName(group.class)} ${group.level}`,
+    groups.length === 1
+      ? displayName(group.class, names)
+      : `${displayName(group.class, names)} ${group.level}`,
   );
   return labels.join(" / ");
 }

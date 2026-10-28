@@ -55,7 +55,7 @@ describe("convertStoredCustomSkills", () => {
     const sqlite = opened.charactersDb.$client;
     sqlite
       .prepare(
-        "INSERT INTO characters (id, name, edition, level, race_summary, class_summary, definition, created_at) VALUES (?, 'Vex', 'classic', 1, '', '', ?, ?)",
+        "INSERT INTO characters (id, name, edition, level, definition, created_at) VALUES (?, 'Vex', 'classic', 1, ?, ?)",
       )
       .run(id, JSON.stringify(stored), createdAt);
     sqlite.prepare("INSERT INTO character_state (character_id, state) VALUES (?, '{}')").run(id);

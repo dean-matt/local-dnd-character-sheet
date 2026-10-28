@@ -262,11 +262,95 @@ describe("migrations", () => {
       insert.run(id, summary, JSON.stringify(definition));
     }
 
-    migrateCharacters(db);
+    const through = stageMigrationsThrough("0008_race_summary_with_subrace");
+    migrate(db, { migrationsFolder: through });
+    rmSync(through, { recursive: true, force: true });
 
     expect(
       sqlite.prepare("SELECT race_summary AS summary FROM characters ORDER BY id").all(),
     ).toEqual([{ summary: "Elf (High)" }, { summary: "Homebrew (High)" }, { summary: "Half-Elf" }]);
+  });
+
+  it("drops the race and class summaries and keeps every character and the rows it owns", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    sqlite.pragma("foreign_keys = ON");
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0013_character_portraits_previous");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const insert = sqlite.prepare(
+      "INSERT INTO characters (id, name, edition, level, race_summary, class_summary, definition) VALUES (?, ?, 'one', ?, ?, ?, ?)",
+    );
+    const characters = [
+      ["1", "Vex", 1, "Elf", "Wizard", { race: { name: "Elf", source: "XPHB" } }],
+      ["2", "Nyx", 1, "Homebrew", "Homebrew", { race: { homebrewId: "hb_07" } }],
+      ["3", "Ash", 2, "Human", "Wizard 1 / Fighter 1", { race: { name: "Human", source: "XPHB" } }],
+    ] as const;
+    const image = Buffer.from([1, 2, 3]);
+    for (const [id, name, level, race, classes, definition] of characters) {
+      insert.run(id, name, level, race, classes, JSON.stringify(definition));
+      sqlite.prepare("INSERT INTO character_state (character_id, state) VALUES (?, '{}')").run(id);
+      for (const table of ["character_portraits", "character_portraits_previous"]) {
+        sqlite
+          .prepare(
+            `INSERT INTO ${table} (character_id, media_type, image) VALUES (?, 'image/png', ?)`,
+          )
+          .run(id, image);
+      }
+      sqlite
+        .prepare(
+          "INSERT INTO character_pages (character_id, slug, title, position, blocks) VALUES (?, 'notes', 'Notes', 0, '[]')",
+        )
+        .run(id);
+      sqlite
+        .prepare(
+          "INSERT INTO roll_log (character_id, label, notation, result, detail) VALUES (?, 'Attack', '1d20', 12, '[12]')",
+        )
+        .run(id);
+      sqlite
+        .prepare(
+          "INSERT INTO undo_log (character_id, previous_state, described_as) VALUES (?, '{}', 'Edit')",
+        )
+        .run(id);
+    }
+    const kept = "SELECT id, name, edition, level, definition FROM characters ORDER BY id";
+    const before = sqlite.prepare(kept).all();
+
+    migrateCharacters(db);
+
+    const columns = sqlite
+      .prepare("SELECT name FROM pragma_table_info('characters')")
+      .all()
+      .map((row) => (row as { name: string }).name);
+    expect(columns).not.toContain("race_summary");
+    expect(columns).not.toContain("class_summary");
+    expect(sqlite.prepare(kept).all()).toEqual(before);
+    for (const table of [
+      "character_state",
+      "character_portraits",
+      "character_portraits_previous",
+      "character_pages",
+      "roll_log",
+      "undo_log",
+    ]) {
+      const owners = sqlite
+        .prepare(`SELECT DISTINCT character_id AS id FROM ${table} ORDER BY character_id`)
+        .all();
+      expect(owners, table).toEqual([{ id: "1" }, { id: "2" }, { id: "3" }]);
+    }
+  });
+
+  it("drops the summaries from an empty characters table", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0013_character_portraits_previous");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    migrateCharacters(db);
+
+    expect(sqlite.prepare("SELECT COUNT(*) AS n FROM characters").get()).toEqual({ n: 0 });
   });
 
   it("removes the stock Alignment preset and keeps an edited one as the user's own page", () => {

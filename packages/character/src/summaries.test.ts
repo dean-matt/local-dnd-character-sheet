@@ -1,12 +1,39 @@
 import { describe, expect, it } from "vitest";
 import {
+  classLevelLabel,
   classLevels,
   classSummary,
+  displayName,
   raceSummary,
   totalLevel,
   withExperienceFloor,
 } from "./index.ts";
 import { definition, elf, FIEND_PATRON, ROGUE, WARLOCK } from "./test/vex.ts";
+
+const names = new Map([
+  ["hb_07", "Fireborn"],
+  ["hb_08", "Warden"],
+]);
+
+describe("homebrew names", () => {
+  it("names a homebrew ref from the map, and reads Homebrew for an id it lacks or with none", () => {
+    expect(displayName({ homebrewId: "hb_07" }, names)).toBe("Fireborn");
+    expect(displayName({ homebrewId: "hb_99" }, names)).toBe("Homebrew");
+    expect(displayName({ homebrewId: "hb_07" })).toBe("Homebrew");
+  });
+
+  it("names a homebrew race and class in every summary", () => {
+    const homebrew = {
+      ...elf,
+      race: { homebrewId: "hb_07" },
+      levels: [{ class: { homebrewId: "hb_08" } }, { class: { homebrewId: "hb_08" } }],
+    };
+    expect(raceSummary(homebrew, names)).toBe("Fireborn (High)");
+    expect(classSummary(homebrew, names)).toBe("Warden");
+    expect(classLevelLabel({ class: { homebrewId: "hb_08" }, level: 2 }, names)).toBe("Warden 2");
+    expect(classLevelLabel({ class: { homebrewId: "hb_99" }, level: 2 }, names)).toBe("Homebrew 2");
+  });
+});
 
 describe("race", () => {
   it("summarizes a race with no subrace by the race's own name", () => {

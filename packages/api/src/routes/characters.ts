@@ -1,10 +1,11 @@
 /**
  * List, read, create, duplicate, import, export, update and delete for `characters.db`'s
  * `characters` table, plus read and replace for the `character_state` row each one owns,
- * and the undo log a definition update writes. `name`, `level`, `edition`, `raceSummary`
- * and `classSummary` are never accepted from a request body —
- * the query layer derives all five from `definition` on every write, and a state write
- * never reaches that table. A delete runs `backup` first and deletes nothing where it
+ * and the undo log a definition update writes. `name`, `level` and `edition` are never
+ * accepted from a request body — the query layer derives all three from `definition` on
+ * every write, and a state write never reaches that table. `raceSummary` and
+ * `classSummary` are computed on every read, naming a homebrew race or class from
+ * `homebrew.db`, so a rename shows on the next read. A delete runs `backup` first and deletes nothing where it
  * throws, since that snapshot is the only way back.
  */
 import { randomUUID } from "node:crypto";
@@ -18,8 +19,11 @@ import {
   characterRecordSchema,
   characterStateRecordSchema,
   characterStateSchema,
+  classSummary,
+  type HomebrewNames,
   type LegacyCharacterFile,
   legacyCharacterFileSchema,
+  raceSummary,
   UNDO_LOG_LIMIT,
   undoLogSchema,
   withExperienceFloor,
@@ -40,6 +44,7 @@ import {
   updateCharacterDefinition,
   updateCharacterState,
 } from "../db/queries/characters.ts";
+import { type HomebrewDb, homebrewNames } from "../db/queries/homebrew.ts";
 import { listCharacterPages } from "../db/queries/pages.ts";
 import { listUndoEntries } from "../db/queries/undo.ts";
 import { errorSchema, notFound } from "./errors.ts";
@@ -49,15 +54,16 @@ type CharacterRow = NonNullable<ReturnType<typeof getCharacter>>;
 type CharacterStateRow = NonNullable<ReturnType<typeof getCharacterState>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
-function toRecord(row: CharacterRow): CharacterRecord {
+function toRecord(row: CharacterRow, names: HomebrewNames): CharacterRecord {
+  const definition = withExperienceFloor(characterDefinitionSchema.parse(row.definition));
   return characterRecordSchema.parse({
     id: row.id,
     name: row.name,
     edition: row.edition,
     level: row.level,
-    raceSummary: row.raceSummary,
-    classSummary: row.classSummary,
-    definition: withExperienceFloor(characterDefinitionSchema.parse(row.definition)),
+    raceSummary: raceSummary(definition, names),
+    classSummary: classSummary(definition, names),
+    definition,
     portraitUpdatedAt: row.portraitUpdatedAt?.toISOString() ?? null,
     hasPreviousPortrait: row.hasPreviousPortrait,
     createdAt: row.createdAt.toISOString(),
@@ -366,28 +372,32 @@ const undo = createRoute({
 export function charactersRoutes(
   db: CharactersDb & { $client: Database.Database },
   backup: () => void,
-  homebrewDb: { $client: Database.Database },
+  homebrewDb: HomebrewDb & { $client: Database.Database },
   dataDir: string,
 ) {
   const routes = new OpenAPIHono();
+  const record = (row: CharacterRow) => toRecord(row, homebrewNames(homebrewDb));
 
-  routes.openapi(list, (c) => c.json(listCharacters(db).map(toRecord)));
+  routes.openapi(list, (c) => {
+    const names = homebrewNames(homebrewDb);
+    return c.json(listCharacters(db).map((row) => toRecord(row, names)));
+  });
 
   routes.openapi(read, (c) => {
     const row = getCharacter(db, c.req.valid("param").id);
     if (!row) return c.json({ error: NOT_FOUND }, 404);
-    return c.json(toRecord(row), 200);
+    return c.json(record(row), 200);
   });
 
   routes.openapi(create, (c) => {
     const row = insertCharacter(db, { id: randomUUID(), definition: c.req.valid("json") });
-    return c.json(toRecord(row), 201);
+    return c.json(record(row), 201);
   });
 
   routes.openapi(duplicate, (c) => {
     const row = duplicateCharacter(db, c.req.valid("param").id, randomUUID());
     if (!row) return c.json({ error: NOT_FOUND }, 404);
-    return c.json(toRecord(row), 201);
+    return c.json(record(row), 201);
   });
 
   routes.openapi(exportFile, (c) => {
@@ -399,7 +409,7 @@ export function charactersRoutes(
     const file: CharacterFile = {
       format: "local-dnd-character-sheet/character",
       version: 2,
-      definition: toRecord(row).definition,
+      definition: record(row).definition,
       state: toStateRecord(state).state,
       pages: toPageRecords(pages).map(({ preset: _, ...page }) => page),
     };
@@ -419,7 +429,7 @@ export function charactersRoutes(
               file,
             )
           : importCharacter(db, id, file);
-        return c.json(toRecord(row), 201);
+        return c.json(record(row), 201);
       } catch (error) {
         if (error instanceof z.ZodError) return c.json({ error: describeIssues(error) }, 422);
         if (error instanceof DatabasesBusyError) return c.json({ error: error.message }, 409);
@@ -446,7 +456,7 @@ export function charactersRoutes(
     if (row === "stale") {
       return c.json({ error: "The character changed since it was read; reload it" }, 412);
     }
-    return c.json(toRecord(row), 200);
+    return c.json(record(row), 200);
   });
 
   routes.openapi(remove, (c) => {
@@ -502,7 +512,7 @@ export function charactersRoutes(
       return c.json({ error: "The character changed since its undo history was read" }, 412);
     }
     if (result.kind === "invalid") return c.json({ error: result.message }, 422);
-    return c.json(toRecord(result.row), 200);
+    return c.json(record(result.row), 200);
   });
 
   return routes;
