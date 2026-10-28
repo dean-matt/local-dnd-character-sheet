@@ -133,7 +133,8 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
 
 /**
  * `source` is absent on a homebrew spell, which stores an id and no source — the same
- * shape difference that tells a homebrew row from a catalog one everywhere else.
+ * shape difference that tells a homebrew row from a catalog one everywhere else; it carries
+ * `homebrewId` instead.
  * `origin` is the class the character learned it through, and `granted` marks a spell a
  * class, race, background or feat gives rather than one the player picked. `pickedFor`
  * names the race, subrace, background, feat or optional feature a pick was made for; its
@@ -143,6 +144,7 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
 const sheetSpellFields = {
   name: z.string().min(1),
   source: z.string().min(1).optional(),
+  homebrewId: z.string().min(1).optional(),
   prepared: z.boolean(),
   granted: z.literal(true).optional(),
   fromItem: z.string().min(1).optional(),

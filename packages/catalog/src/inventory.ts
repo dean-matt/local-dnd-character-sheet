@@ -5,13 +5,15 @@ import { entriesSchema } from "./entry.ts";
 const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().min(1) });
 
 /**
- * `source` is absent on a homebrew item, the same shape difference `SheetSpell` draws.
+ * `source` is absent on a homebrew item, the same shape difference `SheetSpell` draws, and
+ * `homebrewId` names the homebrew row it holds in its place.
  * `variant` is the magic variant an unresolved entry named, so the sheet can say what went
  * missing; a resolved one already carries the expanded name.
  */
 const sheetItemFields = {
   name: z.string().min(1),
   source: z.string().min(1).optional(),
+  homebrewId: z.string().min(1).optional(),
   quantity: z.int().min(1),
   carried: z.boolean(),
   equipped: z.boolean(),

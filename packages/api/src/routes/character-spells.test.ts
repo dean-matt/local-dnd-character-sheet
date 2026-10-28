@@ -1,12 +1,12 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { CharacterSpells } from "@dnd/catalog";
+import type { CharacterSpells, HomebrewSpellInput } from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { type ItemFixtureRow, publishSpells } from "../db/queries/contentFixture.ts";
-import { insertHomebrewSpell } from "../db/queries/homebrew.ts";
+import { insertHomebrewSpell, updateHomebrewSpell } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterSpellsRoutes } from "./character-spells.ts";
 
@@ -239,8 +239,32 @@ describe("characterSpellsRoutes", () => {
     store(withSpells([{ ref: { homebrewId: "s" } }]));
     const [glimmer] = await spells();
 
-    expect(glimmer).toMatchObject({ resolved: true, name: "Glimmer", level: 0, prepared: false });
+    expect(glimmer).toMatchObject({
+      resolved: true,
+      name: "Glimmer",
+      homebrewId: "s",
+      level: 0,
+      prepared: false,
+    });
     expect(glimmer).not.toHaveProperty("source");
+  });
+
+  it("keeps holding a homebrew spell through a rename, since it holds the id", async () => {
+    const glimmer: HomebrewSpellInput = {
+      name: "Glimmer",
+      edition: "classic",
+      level: 0,
+      school: "V",
+      duration: [{ type: "instant" }],
+    };
+    insertHomebrewSpell(opened.homebrewDb, "s", glimmer);
+    store(withSpells([{ ref: { homebrewId: "s" } }]));
+
+    updateHomebrewSpell(opened.homebrewDb, "s", { ...glimmer, name: "Gleam" });
+
+    expect(await spells()).toEqual([
+      expect.objectContaining({ resolved: true, name: "Gleam", homebrewId: "s" }),
+    ]);
   });
 
   describe("a spell an item lets the character cast", () => {
@@ -264,6 +288,7 @@ describe("characterSpellsRoutes", () => {
           fromItem: "Ring of Shielding",
         }),
       ]);
+      expect((await spells())[0]).not.toHaveProperty("homebrewId");
     });
 
     it("drops it once the item is unequipped", async () => {
@@ -333,7 +358,7 @@ describe("characterSpellsRoutes", () => {
 
     expect(await spells()).toEqual([
       { resolved: false, name: "Lost Spell", source: "PHB", prepared: false },
-      { resolved: false, name: "Homebrew", prepared: false },
+      { resolved: false, name: "Homebrew", homebrewId: "gone", prepared: false },
       expect.objectContaining({ resolved: true, name: "Shield" }),
     ]);
   });

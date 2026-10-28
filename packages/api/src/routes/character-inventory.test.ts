@@ -368,12 +368,16 @@ describe("characterInventoryRoutes", () => {
     const [coin, gone, lost] = await items();
 
     expect(coin).toMatchObject({ resolved: true, name: "Lucky Coin", weight: 0.02, type: null });
+    expect(coin).toMatchObject({ homebrewId: "i" });
     expect(coin).not.toHaveProperty("source");
-    expect(gone).toEqual(expect.objectContaining({ resolved: false, name: "Homebrew" }));
+    expect(gone).toEqual(
+      expect.objectContaining({ resolved: false, name: "Homebrew", homebrewId: "gone" }),
+    );
     expect(gone).not.toHaveProperty("source");
     expect(lost).toEqual(
       expect.objectContaining({ resolved: false, name: "Lost", source: "PHB", carried: false }),
     );
+    expect(lost).not.toHaveProperty("homebrewId");
   });
 
   it("keeps holding a homebrew item through a rename, since it holds the id", async () => {
@@ -383,7 +387,7 @@ describe("characterInventoryRoutes", () => {
     updateHomebrewItem(opened.homebrewDb, "i", { name: "Cursed Coin", edition: "classic" });
 
     expect(await items()).toEqual([
-      expect.objectContaining({ resolved: true, name: "Cursed Coin" }),
+      expect.objectContaining({ resolved: true, name: "Cursed Coin", homebrewId: "i" }),
     ]);
   });
 });

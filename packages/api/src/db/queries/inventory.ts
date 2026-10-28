@@ -147,7 +147,7 @@ function sheetItem(
     return {
       resolved: false,
       name: displayName(ref),
-      ...("homebrewId" in ref ? {} : { source: ref.source }),
+      ...("homebrewId" in ref ? { homebrewId: ref.homebrewId } : { source: ref.source }),
       ...flags,
       ...(variant && { variant }),
     };
@@ -158,7 +158,8 @@ function sheetItem(
   return {
     resolved: true,
     name: row.name,
-    ...("homebrewId" in ref || typeof source !== "string" ? {} : { source }),
+    ...("homebrewId" in ref && { homebrewId: ref.homebrewId }),
+    ...(!("homebrewId" in ref) && typeof source === "string" && { source }),
     ...flags,
     type: type && abbreviation ? { abbreviation, name: typeNames.get(type) ?? null } : null,
     rarity: row.rarity,
