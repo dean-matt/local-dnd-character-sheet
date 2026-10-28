@@ -1,7 +1,7 @@
 import type { FeatRecord } from "@dnd/catalog";
 import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
 import { z } from "zod";
-import type { OfferedFeat as Row } from "../../lib/improvementFeats.ts";
+import type { OfferedFeat } from "../../lib/improvementFeats.ts";
 import { searchHitKey, searchHitRef } from "../../lib/searchHitKey.ts";
 import { withSpellBlock } from "../../lib/spellGrantors.ts";
 
@@ -13,11 +13,11 @@ type Blocks = CharacterDefinition["spellBlocks"];
  * a feat the catalog holds once, such as `magic initiate; cleric`, `block` is the position
  * of the spell list in the feat's `additionalSpells` and `list` that list's name.
  */
-type OfferedFeat = Row & { block?: number; list?: string };
+type BackgroundFeat = OfferedFeat & { block?: number; list?: string };
 
 /** The feats a background grants, and whether the character has no say in which. */
 export interface BackgroundFeatOffers {
-  options: OfferedFeat[];
+  options: BackgroundFeat[];
   fixed: boolean;
 }
 
@@ -29,7 +29,7 @@ const spellListsSchema = z.array(z.object({ name: z.string().optional() }));
 const lowerKey = (name: string, source: string) => `${name}|${source}`.toLowerCase();
 
 /** The feats a `name|source` key names; a `base; variant` name with no row of its own names the base's row and the variant's spell list. */
-function featsNamedBy(key: string, catalog: readonly FeatRecord[]): OfferedFeat[] {
+function featsNamedBy(key: string, catalog: readonly FeatRecord[]): BackgroundFeat[] {
   const lower = key.toLowerCase();
   const exact = catalog.filter(({ name, source }) => lowerKey(name, source) === lower);
   if (exact.length > 0) return exact;
@@ -54,11 +54,11 @@ function featsNamedBy(key: string, catalog: readonly FeatRecord[]): OfferedFeat[
  */
 export function backgroundFeatOffers(
   json: Record<string, unknown>,
-  feats: readonly Row[],
+  feats: readonly OfferedFeat[],
 ): BackgroundFeatOffers {
   const alternatives = z.array(alternativeSchema).safeParse(json.feats).data ?? [];
   const catalog = feats.filter((row): row is FeatRecord => "source" in row);
-  const options = alternatives.flatMap((alternative): OfferedFeat[] => {
+  const options = alternatives.flatMap((alternative): BackgroundFeat[] => {
     const category = categorySchema.safeParse(alternative).data?.anyFromCategory.category;
     if (category) return feats.filter(({ json: feat }) => category.includes(String(feat.category)));
     return Object.keys(alternative).flatMap((key) => featsNamedBy(key, catalog));
@@ -125,7 +125,7 @@ export function withBackgroundFeat(
 }
 
 /** `feats` with `pick` as the background's feat in place of the one held. */
-export function withBackgroundPick(feats: Feats, background: EntryRef, pick: Row): Feats {
+export function withBackgroundPick(feats: Feats, background: EntryRef, pick: OfferedFeat): Feats {
   return [
     ...feats.filter((entry) => grantedBy(entry) === undefined),
     {

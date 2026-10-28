@@ -34,14 +34,16 @@ export function offeredFeats(
 /**
  * Every feat an improvement or a background may offer in `edition`: `/feats`, which stays
  * catalog-only so its 200-row page always holds them, beside `/homebrew/feats`, which is
- * unbounded. See `offeredFeats` for `held`.
+ * unbounded. See `offeredFeats` for `held`. A failed homebrew read offers the catalog alone
+ * rather than nothing.
  */
 export function useOfferedFeats(
   edition: CharacterDefinition["edition"],
   held: readonly EntryRef[],
 ): OfferedFeat[] | undefined {
   const catalog = useFeats(edition).data?.items;
-  const homebrew = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
+  const { data, isError } = useHomebrew("feats", homebrewFeatRecordSchema).list;
+  const homebrew = isError ? [] : data;
   const homebrewShown = !useDisabledSources().includes(HOMEBREW_SOURCE);
   return offeredFeats(catalog, homebrew, edition, homebrewShown, held);
 }
