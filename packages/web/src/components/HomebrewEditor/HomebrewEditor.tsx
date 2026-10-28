@@ -110,7 +110,7 @@ export function HomebrewEditor({
   };
   const save = () => {
     if ("input" in draft.checked) {
-      if (!saving && !hold) onSave(draft.checked.input);
+      if (!saving && !hold?.characters) onSave(draft.checked.input);
       return;
     }
     refuse();

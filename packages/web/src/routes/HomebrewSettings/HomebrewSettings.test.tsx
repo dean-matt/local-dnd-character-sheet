@@ -1113,7 +1113,7 @@ describe("HomebrewSettings", () => {
       );
     });
 
-    it("links every holder and no other character", async () => {
+    it("links every holder and no other character, in three columns", async () => {
       stubApi({
         classes: [warden],
         characters: [holder("a", "Vex", "c1"), holder("b", "Ash", "c1"), holder("c", "Bram")],
@@ -1131,6 +1131,7 @@ describe("HomebrewSettings", () => {
           .getAllByRole("link")
           .map((link) => link.textContent),
       ).toEqual(["Vex", "Ash"]);
+      expect(within(editor()).getByRole("list")).toHaveClass("columns-3", "gap-x-4");
     });
 
     it("frees Save once the die matches the stored one", async () => {
@@ -1214,7 +1215,7 @@ describe("HomebrewSettings", () => {
       expect(save()).not.toHaveAttribute("aria-disabled", "true");
     });
 
-    it("leaves Save to the server when the characters cannot be read", async () => {
+    it("says the holders went unchecked, and leaves Save to the server, when the characters cannot be read", async () => {
       const fetchMock = stubApi({ classes: [warden] }, [ok]);
       const answer = fetchMock.getMockImplementation();
       fetchMock.mockImplementation(async (input, init) =>
@@ -1226,8 +1227,14 @@ describe("HomebrewSettings", () => {
 
       await editWarden(8);
       await charactersRead(client, "error");
+      fireEvent.click(within(editor()).getByRole("button", { name: "Who holds this class" }));
 
       expect(note()).toBeNull();
+      expect(
+        within(editor()).getByText(
+          "Couldn't check which characters hold this class. If any do, Save fails and its hit die stays d10.",
+        ),
+      ).toBeVisible();
       expect(save()).not.toHaveAttribute("aria-disabled", "true");
       fireEvent.click(save());
       await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));

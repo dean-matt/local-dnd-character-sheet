@@ -1,31 +1,17 @@
-import { Info } from "lucide-react";
-import { Link } from "react-router";
-import { Popover } from "../Popover.tsx";
+import { HeldByNote } from "./HeldByNote.tsx";
 import type { ClassDieHold } from "./useClassDieHold.ts";
 
-const LABEL = "Why Save is unavailable";
-
-/** The info button beside an unavailable Save, naming and linking each character that holds the class. */
+/**
+ * The info button beside Save on a draft that changes a stored class's hit die: why Save is
+ * unavailable while characters hold the class, or that they could not be checked.
+ */
 export function ClassDieHoldNote({ hold: { name, hitDie, characters } }: { hold: ClassDieHold }) {
   return (
-    <Popover
-      trigger={<Info aria-hidden="true" size={14} className="block text-accent-text" />}
-      triggerLabel={LABEL}
-      label={LABEL}
-    >
-      <p>
-        {name} is held by {characters.length === 1 ? "this character" : "these characters"}, so its
-        hit die stays d{hitDie}. Keep d{hitDie}, or add a class with another name for the new die.
-      </p>
-      <ul className="mt-1 list-disc pl-5">
-        {characters.map(({ id, name: held }) => (
-          <li key={id}>
-            <Link to={`/characters/${id}`} className="text-accent-text underline">
-              {held}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </Popover>
+    <HeldByNote
+      label={characters ? "Why Save is unavailable" : "Who holds this class"}
+      holders={characters}
+      message={`${name} is held by ${characters?.length === 1 ? "this character" : "these characters"}, so its hit die stays d${hitDie}. Keep d${hitDie}, or add a class with another name for the new die.`}
+      failure={`Couldn't check which characters hold this class. If any do, Save fails and its hit die stays d${hitDie}.`}
+    />
   );
 }

@@ -9,13 +9,14 @@ import type { HomebrewDraft } from "./homebrewDraft.ts";
 export interface ClassDieHold {
   name: string;
   hitDie: number;
-  characters: { id: string; name: string }[];
+  /** `undefined` where the holders failed to load, so Save stays open and the server decides. */
+  characters: { id: string; name: string }[] | undefined;
 }
 
 /**
  * The hold on saving a stored homebrew class whose draft changes its hit die while characters
- * hold it; `undefined` for any other kind, a new class, a draft that keeps the die or does not
- * parse, and while the holders load or fail to, where the server's refusal still stands.
+ * hold it, or could not be checked; `undefined` for any other kind, a new class, a draft that
+ * keeps the die or does not parse, while the holders load, and where none holds the class.
  * Only `levels[].class` is read; the server walks the whole definition and refuses any holder
  * this misses.
  */
@@ -40,8 +41,8 @@ export function useClassDieHold(
   });
   const faces = homebrewClassInputSchema.safeParse("input" in checked ? checked.input : undefined)
     .data?.hd.faces;
-  if (!stored || faces === undefined || faces === stored.hitDie || !holders.data?.length) {
-    return undefined;
-  }
-  return { name: stored.name, hitDie: stored.hitDie, characters: holders.data };
+  if (!stored || faces === undefined || faces === stored.hitDie) return undefined;
+  const characters = holders.data?.length ? holders.data : undefined;
+  if (!characters && !holders.isError) return undefined;
+  return { name: stored.name, hitDie: stored.hitDie, characters };
 }
