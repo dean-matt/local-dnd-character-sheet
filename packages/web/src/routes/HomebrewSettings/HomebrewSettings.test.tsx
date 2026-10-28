@@ -1094,9 +1094,7 @@ describe("HomebrewSettings", () => {
       waitFor(() => expect(client.getQueryState(charactersKey)?.status).toBe(status));
 
     it("holds Save on a new die, naming and linking the character that holds the class", async () => {
-      const fetchMock = stubApi({ classes: [warden], characters: [holder("x1", "Vex", "c1")] }, [
-        ok,
-      ]);
+      stubApi({ classes: [warden], characters: [holder("x1", "Vex", "c1")] }, [ok]);
       renderPage();
 
       await editWarden(8);
@@ -1113,7 +1111,6 @@ describe("HomebrewSettings", () => {
         "href",
         "/characters/x1",
       );
-      expect(writesOf(fetchMock)).toEqual([]);
     });
 
     it("links every holder and no other character", async () => {
@@ -1144,6 +1141,8 @@ describe("HomebrewSettings", () => {
 
       await editWarden(8);
       await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
+      // The PUT this click must not send would show up in the one write counted below.
+      fireEvent.click(save());
       typeJson(
         "Class JSON",
         JSON.stringify({ ...entry, name: "Keeper", hd: { number: 1, faces: 10 } }),
