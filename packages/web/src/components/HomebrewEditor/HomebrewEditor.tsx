@@ -34,6 +34,8 @@ export interface HomebrewEditorProps {
   failure: string | undefined;
   onSave: (input: unknown) => void;
   onClose: () => void;
+  /** Says the change reaches every character holding the row, where it is edited from a sheet. */
+  appliesToAll?: boolean;
 }
 
 /**
@@ -54,6 +56,7 @@ export function HomebrewEditor({
   failure,
   onSave,
   onClose,
+  appliesToAll,
 }: HomebrewEditorProps) {
   const kind = EDITING_KINDS[collection];
   const { noun: lower } = LISTING_KINDS[collection];
@@ -147,6 +150,8 @@ export function HomebrewEditor({
           <p className="text-label text-muted">
             {howTo(lower, kind, record !== undefined)} Saving replaces the whole entry, and the
             source is always Homebrew.
+            {appliesToAll &&
+              ` Changes to this ${lower} apply to every character that holds it, not only this one.`}
           </p>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <HomebrewViewTabs

@@ -67,7 +67,8 @@ export function Modal({
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        // React carries a dialog portaled inside this one's cancel up to here as well.
+        if (event.target === event.currentTarget) onClose();
       }}
       onPointerDown={(event) => {
         pressedBackdrop.current = event.target === event.currentTarget;

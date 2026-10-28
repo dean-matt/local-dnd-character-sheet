@@ -987,6 +987,7 @@ describe("HomebrewSettings", () => {
     edit.focus();
     fireEvent.click(edit);
     expect(screen.getByRole("dialog", { name: "Edit Sunblade" })).toBeInTheDocument();
+    expect(editor()).not.toHaveTextContent("apply to every character");
     mode("JSON");
     const { source: _source, ...entry } = sunblade.json;
     expect(JSON.parse(jsonText("Item JSON"))).toEqual(entry);

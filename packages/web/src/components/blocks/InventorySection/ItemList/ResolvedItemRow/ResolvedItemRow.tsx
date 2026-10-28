@@ -2,6 +2,7 @@ import type { SheetItem } from "@dnd/catalog";
 import type { ReactNode } from "react";
 import { capitalize } from "../../../../../lib/capitalize.ts";
 import { firstLine } from "../../../../../lib/rulesProse.ts";
+import { EditHomebrewButton } from "../../../../EditHomebrewButton.tsx";
 import { ListRow } from "../../../../ListRow/ListRow.tsx";
 import { RemoveButton } from "../../../../RemoveButton.tsx";
 import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
@@ -89,6 +90,7 @@ export function ResolvedItemRow({
       }
       detail={{
         meta: rarity ?? "Item",
+        footer: item.homebrewId && <EditHomebrewButton collection="items" id={item.homebrewId} />,
         children: (
           <>
             {item.entries.length > 0 ? (

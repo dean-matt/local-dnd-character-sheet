@@ -14,9 +14,14 @@ export type HomebrewCollection =
 
 /**
  * One homebrew collection under `/homebrew/{collection}`: its rows, a save that creates a
- * row where `id` is absent and replaces it otherwise, and a delete by id.
+ * row where `id` is absent and replaces it otherwise, and a delete by id. `listed: false`
+ * leaves the rows unfetched, for a caller that only saves.
  */
-export function useHomebrew<R>(collection: HomebrewCollection, schema: z.ZodType<R>) {
+export function useHomebrew<R>(
+  collection: HomebrewCollection,
+  schema: z.ZodType<R>,
+  { listed = true }: { listed?: boolean } = {},
+) {
   const queryClient = useQueryClient();
   const path = `/homebrew/${collection}`;
   const rowPath = (id: string) => `${path}/${encodeURIComponent(id)}`;
@@ -27,6 +32,7 @@ export function useHomebrew<R>(collection: HomebrewCollection, schema: z.ZodType
   const list = useQuery({
     queryKey: ["homebrew", collection],
     queryFn: () => apiGet(path, z.array(schema)),
+    enabled: listed,
   });
   const save = useMutation({
     mutationFn: ({ id, input }: { id: string | undefined; input: unknown }) =>

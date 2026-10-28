@@ -1,6 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
+import { derivedRecord } from "../packages/web/src/test/records.ts";
 import { box } from "./box";
+import { createCharacter } from "./character";
 
 // CI runs with no content.db, so the references a preview resolves are stubbed at the network.
 test.beforeEach(async ({ page }) => {
@@ -186,3 +188,103 @@ test("in the dark theme the JSON editor's text, caret and search panel take the 
   expect(panel).toBe(await tokenColor(page, "backgroundColor", "--color-subtle"));
   await expectNoViolations(page);
 });
+
+test("a keyboard user edits a homebrew item from a sheet's inventory, and focus returns to Edit", async ({
+  page,
+  request,
+}) => {
+  const named = `Sheet Lantern ${test.info().retry + 1} ${Date.now()}`;
+  const created = await request.post("/api/homebrew/items", {
+    data: { name: named, edition: "one", entries: ["It glows."] },
+  });
+  expect(created.ok()).toBe(true);
+  const itemId = (await created.json()).id as string;
+  const id = await createCharacter(request, `E2E Sheet Edit ${Date.now()}`);
+  try {
+    // CI runs with no content.db, so the derived block and the inventory are stubbed, the
+    // inventory naming the homebrew row as the API stores it.
+    await page.route(`**/api/characters/${id}/derived`, (route) =>
+      route.fulfill({ json: derivedRecord() }),
+    );
+    await page.route(`**/api/characters/${id}/inventory`, async (route) => {
+      const row = await (await page.request.get(`/api/homebrew/items/${itemId}`)).json();
+      await route.fulfill({
+        json: {
+          items: [
+            {
+              resolved: true,
+              name: row.name,
+              homebrewId: itemId,
+              quantity: 1,
+              carried: true,
+              equipped: false,
+              attuned: false,
+              type: null,
+              rarity: null,
+              value: null,
+              estimate: null,
+              weapon: null,
+              armor: null,
+              offers: { abilities: null, proficiency: false, language: false },
+              entries: row.json.entries ?? [],
+              requiresAttunement: false,
+              weight: null,
+            },
+          ],
+        },
+      });
+    });
+    await page.goto(`/characters/${id}/p/inventory`);
+
+    // Focused by locator: where a first Tab lands depends on the route-change focus's timing.
+    await page.getByRole("button", { name: named, exact: true }).focus();
+    await page.keyboard.press("Enter");
+    const detail = page.getByRole("dialog", { name: named, exact: true });
+    const edit = detail.getByRole("button", { name: "Edit" });
+    await expect(edit).toBeVisible();
+    await tabTo(page, edit);
+    await expectNoViolations(page);
+
+    await page.keyboard.press("Enter");
+    const editor = page.getByRole("dialog", { name: `Edit ${named}` });
+    await expect(editor.getByRole("button", { name: "Close" })).toBeFocused();
+    await expectNoViolations(page);
+    // Past the last control a modal dialog hands focus to the browser, which reads as the body.
+    // Nothing else on the page, the detail beneath included, ever takes it.
+    for (let presses = 0; presses < 40; presses++) {
+      await page.keyboard.press("Tab");
+      const held = await editor.evaluate(
+        (dialog) =>
+          document.activeElement === document.body || dialog.contains(document.activeElement),
+      );
+      expect(held).toBe(true);
+    }
+
+    const name = editor.getByRole("textbox", { name: "Name" });
+    await tabTo(page, name);
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.type(`${named} II`);
+    await tabTo(page, editor.getByRole("button", { name: "Save" }));
+    await page.keyboard.press("Enter");
+
+    await expect(editor).toBeHidden();
+    const renamed = page.getByRole("dialog", { name: `${named} II`, exact: true });
+    await expect(renamed).toBeVisible();
+    await expect(renamed.getByRole("button", { name: "Edit" })).toBeFocused();
+  } finally {
+    await request.delete(`/api/characters/${id}`);
+    await request.delete(`/api/homebrew/items/${itemId}`);
+  }
+});
+
+/** Presses Tab until `target` holds focus, failing past a bound so a missing target cannot hang. */
+async function tabTo(page: Page, target: ReturnType<Page["locator"]>) {
+  for (
+    let presses = 0;
+    presses < 80 && !(await target.evaluate((node) => node === document.activeElement));
+    presses++
+  ) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(target).toBeFocused();
+}

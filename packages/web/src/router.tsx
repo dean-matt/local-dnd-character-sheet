@@ -48,7 +48,7 @@ export const routeConfig: RouteObject[] = [
           {
             path: "homebrew",
             HydrateFallback: LoadingState,
-            // Its own chunk, so the JSON editor it carries loads with this page alone.
+            // Its own chunk, so the JSON editor it carries loads with this page or a sheet's Edit alone.
             lazy: async () => ({
               Component: (await import("./routes/HomebrewSettings/HomebrewSettings.tsx"))
                 .HomebrewSettings,
