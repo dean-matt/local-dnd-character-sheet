@@ -7,6 +7,7 @@ import {
 } from "@dnd/character";
 import { type ReactNode, useId } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { levelChoiceRefusals } from "../../../lib/levelChoices.ts";
 import { Modal } from "../../Modal.tsx";
 import { ModalEntry } from "../../ModalEntry.tsx";
@@ -93,6 +94,7 @@ export function LevelEditForm({
   onRemove,
   cancel,
 }: LevelEditFormProps) {
+  const names = useHomebrewNames();
   const id = useId();
   const { getValues, setValue, formState } = useFormContext<CharacterDefinition>();
   const cls = definition.levels[level - 1]?.class;
@@ -105,7 +107,7 @@ export function LevelEditForm({
   const starting = useClassChangeGrants(definition, level, drafted);
   const after = withReopenedLevel(definition, level, getValues());
   const later = useLaterPrerequisites(definition, after);
-  const refusals = levelChoiceRefusals(definition, after, level, later.rows);
+  const refusals = levelChoiceRefusals(definition, after, level, later.rows, names);
   const { departures, added: notes } = later.read
     ? later.departures
     : { departures: after.departures, added: [] };
@@ -176,7 +178,7 @@ export function LevelEditForm({
         <LevelUpPicks edition={definition.edition} plan={plan} />
         <UnmetPrerequisites notes={notes} />
         {starting.picks && drafted && (
-          <ClassPicksFields name={displayName(drafted)} picks={starting.picks} />
+          <ClassPicksFields name={displayName(drafted, names)} picks={starting.picks} />
         )}
         {(level === 1 || changed) && <ClassSpellsNote />}
       </ModalEntry>

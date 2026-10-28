@@ -2,6 +2,7 @@ import { type CharacterDefinition, improvementAt, withImprovement } from "@dnd/c
 import { useFormContext, useWatch } from "react-hook-form";
 import { ImprovementField } from "../../components/ImprovementField.tsx";
 import { useFeats } from "../../hooks/useFeats.ts";
+import { useHomebrewNames } from "../../hooks/useHomebrewNames.ts";
 import { useImprovementGrants } from "../../hooks/useImprovementGrants.ts";
 import { isMade } from "../../lib/improvementChoice.ts";
 import { candidateAt } from "../../lib/improvementFeats.ts";
@@ -27,6 +28,7 @@ const WATCHED = [
  * character's level, each marked until it is made.
  */
 export function ImprovementsField() {
+  const names = useHomebrewNames();
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const [
     levels = [],
@@ -73,7 +75,7 @@ export function ImprovementsField() {
             <h3
               className={`text-body ${made ? "font-semibold" : "font-semibold text-accent-text"}`}
             >
-              {grantTitle(grant)}
+              {grantTitle(grant, names)}
               {!made && " — choose"}
             </h3>
             <ImprovementField

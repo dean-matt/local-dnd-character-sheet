@@ -17,6 +17,7 @@ import {
 import { useQueries } from "@tanstack/react-query";
 import { classQuery } from "../../../hooks/classQuery.ts";
 import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { meetsPrerequisite } from "../../../lib/multiclassPrerequisites.ts";
 import { type Granted, NO_GRANTS, resolveGrants } from "../../../lib/proficiencyGrants.ts";
 import { skillPickOf, toolPicksOf } from "./entryPicks.ts";
@@ -41,6 +42,7 @@ export function useMulticlassEntry(
   name: string,
   json: unknown,
 ) {
+  const homebrewNames = useHomebrewNames();
   const { edition, proficiencies } = definition;
   const entering = definition.levels.every((level) => entryKey(level.class) !== entryKey(cls));
   const start = entering && catalogOf(cls) && json ? multiclassEntrySchema.parse(json) : undefined;
@@ -72,7 +74,7 @@ export function useMulticlassEntry(
   const judged = entering
     ? [
         ...groups.map((group, index) => ({
-          name: displayName(group.class),
+          name: displayName(group.class, homebrewNames),
           firstIndex: definition.levels.findIndex(
             (level) => entryKey(level.class) === entryKey(group.class),
           ),

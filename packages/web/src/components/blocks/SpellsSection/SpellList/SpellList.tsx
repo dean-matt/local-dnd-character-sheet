@@ -10,6 +10,7 @@ import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterSpellsKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterSpells } from "../../../../hooks/useCharacterSpells.ts";
 import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
+import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { withSpell } from "../../../../lib/addedEntries.ts";
@@ -60,6 +61,7 @@ export function SpellList({
   character: CharacterRecord;
   derived: CharacterDerived;
 }) {
+  const names = useHomebrewNames();
   const spells = useCharacterSpells(character.id);
   const write = useHeldSave(character.id, "Spells");
   const { settled, hold, writing } = useRowWrites(characterSpellsKey(character.id));
@@ -81,7 +83,7 @@ export function SpellList({
   const list = spells.data.spells;
   const classOf = (spell: SheetSpell) => {
     const caster = casters.length > 1 ? spellCaster(spell, casters) : undefined;
-    return caster && displayName(caster.class);
+    return caster && displayName(caster.class, names);
   };
   // A cantrip is always ready, a granted spell always prepared, and a class that knows its
   // spells, as a classic Sorcerer does, prepares none.
@@ -93,7 +95,7 @@ export function SpellList({
   return (
     <Card title="Known Spells">
       <div className="flex flex-col gap-2">
-        <PreparedTallies tallies={preparedTallies(list, casters)} />
+        <PreparedTallies tallies={preparedTallies(list, casters, names)} />
         {list.length === 0 ? (
           <EmptyNote>{character.name} has no spells yet.</EmptyNote>
         ) : (

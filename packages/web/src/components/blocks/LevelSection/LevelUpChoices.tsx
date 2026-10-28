@@ -7,6 +7,7 @@ import {
   entryKey,
 } from "@dnd/character";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { searchHitKey, searchHitRef } from "../../../lib/searchHitKey.ts";
 import { FormField } from "../../FormField.tsx";
 import { Select } from "../../Select.tsx";
@@ -38,6 +39,7 @@ export function LevelUpChoices({
   method,
   onMethod,
 }: LevelUpChoicesProps) {
+  const names = useHomebrewNames();
   const derived = useCharacterDerived(characterId);
   const groups = classLevels(definition);
   const { target, die, level } = plan;
@@ -58,7 +60,7 @@ export function LevelUpChoices({
             options={[
               ...groups.map((group) => ({
                 value: entryKey(group.class),
-                label: `${displayName(group.class)} ${group.level} → ${group.level + 1}`,
+                label: `${displayName(group.class, names)} ${group.level} → ${group.level + 1}`,
               })),
               ...fresh.map((hit) => ({
                 value: searchHitKey(hit),

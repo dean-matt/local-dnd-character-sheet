@@ -13,6 +13,7 @@ import { useState } from "react";
 import { classQuery } from "../../../../hooks/classQuery.ts";
 import { useClassGrants } from "../../../../hooks/useClassGrants.ts";
 import { useClassSpellList } from "../../../../hooks/useClassSpellList.ts";
+import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { useSubclassGrants } from "../../../../hooks/useSubclassGrants.ts";
 import { castableCeiling } from "../../../../lib/casterFacts.ts";
 import { searchHitKey } from "../../../../lib/searchHitKey.ts";
@@ -85,6 +86,7 @@ export function LearnSpellField({
   casters: readonly Caster[];
   onLearn: (ref: EntryRef, origin: ContentRef | undefined) => void;
 }) {
+  const names = useHomebrewNames();
   const { definition } = character;
   const [chosen, setChosen] = useState(0);
   const caster = casters[chosen] ?? casters[0];
@@ -99,7 +101,7 @@ export function LearnSpellField({
     };
   const listed = useClassSpellList(definition.edition, list);
   const tooHigh = useTooHigh(definition.edition, list);
-  const name = caster ? displayName(caster.class) : "";
+  const name = caster ? displayName(caster.class, names) : "";
   const known = new Set(
     definition.spells
       .filter((spell) => spellCaster(spell, casters) === caster)
@@ -121,7 +123,7 @@ export function LearnSpellField({
               value={String(chosen)}
               options={casters.map((each, index) => ({
                 value: String(index),
-                label: displayName(each.class),
+                label: displayName(each.class, names),
               }))}
               onChange={(next) => setChosen(Number(next))}
             />

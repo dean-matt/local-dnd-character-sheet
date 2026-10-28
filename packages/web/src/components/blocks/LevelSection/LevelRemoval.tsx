@@ -1,4 +1,5 @@
-import { type CharacterRecord, displayName, entryKey } from "@dnd/character";
+import { type CharacterRecord, displayName, entryKey, type HomebrewNames } from "@dnd/character";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import type { LevelHistoryRow } from "../../../lib/levelHistory.ts";
 import { withoutLevelsFrom } from "../../../lib/levelRemoval.ts";
@@ -7,8 +8,8 @@ import { ModalEntry } from "../../ModalEntry.tsx";
 
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
 
-const named = (row: LevelHistoryRow) =>
-  `level ${row.level} (${displayName(row.cls)} ${row.classLevel})`;
+const named = (row: LevelHistoryRow, names: HomebrewNames) =>
+  `level ${row.level} (${displayName(row.cls, names)} ${row.classLevel})`;
 
 /**
  * Confirms removing a level past the first and every level after it, with what each brought,
@@ -29,11 +30,12 @@ export function LevelRemoval({
   onRemoved: () => void;
 }) {
   const update = useUpdateCharacterDefinition(character.id);
+  const homebrewNames = useHomebrewNames();
   const first = rows[0];
   const from = first.level;
   const last = from + rows.length - 1;
   const many = rows.length > 1;
-  const listed = rows.map(named);
+  const listed = rows.map((row) => named(row, homebrewNames));
   const names = many ? `${listed.slice(0, -1).join(", ")} and ${listed.at(-1)}` : listed[0];
   const entered = rows.some((row) => row.classLevel === 1);
 
@@ -82,7 +84,7 @@ export function LevelRemoval({
               }}
               className={`${BUTTON} border border-error bg-surface text-error hover:bg-subtle aria-disabled:cursor-wait aria-disabled:opacity-60`}
             >
-              {many ? `Remove ${rows.length} levels` : `Remove ${named(first)}`}
+              {many ? `Remove ${rows.length} levels` : `Remove ${named(first, homebrewNames)}`}
             </button>
           </div>
         }

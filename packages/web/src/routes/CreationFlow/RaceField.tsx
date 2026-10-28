@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
 import { ChoicePills } from "../../components/ChoicePills.tsx";
+import { useHomebrewNames } from "../../hooks/useHomebrewNames.ts";
 import { CUSTOM_RACE_SOURCE } from "../../lib/customRace.ts";
 import { RACE_FIELD, withDeparture } from "../../lib/departures.ts";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
@@ -35,6 +36,7 @@ function traitNames(json: { entries?: unknown } | undefined): string[] {
  * from a race the catalog lacks.
  */
 export function RaceField() {
+  const names = useHomebrewNames();
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const [race, subrace, size, raceResistance] = useWatch<
     CharacterDefinition,
@@ -84,8 +86,9 @@ export function RaceField() {
     <div className="flex flex-col">
       <ChosenChip
         label="Race"
-        value={displayName(race)}
+        value={displayName(race, names)}
         source={catalogRace?.source}
+        homebrew={"homebrewId" in race}
         focusOnMount={moved}
         onClear={() => choose(undefined)}
       />
@@ -96,7 +99,11 @@ export function RaceField() {
       )}
       {named.length > 0 && (
         <ChoicePills
-          legend={plain ? `Subrace of ${displayName(race)}` : `${displayName(race)} has subraces`}
+          legend={
+            plain
+              ? `Subrace of ${displayName(race, names)}`
+              : `${displayName(race, names)} has subraces`
+          }
           prompting={!plain && subrace === undefined}
           options={[
             ...(plain ? [{ value: "", label: "None" }] : []),

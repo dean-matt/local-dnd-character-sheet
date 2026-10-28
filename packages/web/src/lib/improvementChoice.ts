@@ -10,6 +10,7 @@ import {
   type Ability,
   displayName,
   type EntryRef,
+  type HomebrewNames,
   IMPROVEMENT_CAP,
   IMPROVEMENT_FEAT,
   type Improvement,
@@ -92,11 +93,11 @@ export function isMade(
 }
 
 /** What `improvement` took, in words: the feat, then each score it raised. */
-export function improvementText(improvement: Improvement): string {
+export function improvementText(improvement: Improvement, names: HomebrewNames): string {
   const raised = improvement.increases
     .map(({ ability, amount }) => `+${amount} ${ABILITY_LABEL[ability]}`)
     .join(", ");
   if (raisesScores(improvement) || !improvement.feat) return raised;
-  const feat = displayName(improvement.feat);
+  const feat = displayName(improvement.feat, names);
   return raised ? `${feat} (${raised})` : feat;
 }

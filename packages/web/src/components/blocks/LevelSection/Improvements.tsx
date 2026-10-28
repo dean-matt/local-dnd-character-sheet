@@ -6,6 +6,7 @@ import {
 } from "@dnd/character";
 import { useFeats } from "../../../hooks/useFeats.ts";
 import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
 import { useSaveToast } from "../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
@@ -22,6 +23,7 @@ import { ImprovementField } from "../../ImprovementField.tsx";
  * improvements were recorded.
  */
 export function Improvements({ character }: { character: CharacterRecord }) {
+  const names = useHomebrewNames();
   const { definition } = character;
   const { grants } = useImprovementGrants(definition.levels);
   const feats = useFeats(definition.edition);
@@ -65,8 +67,10 @@ export function Improvements({ character }: { character: CharacterRecord }) {
           return (
             <li key={grant.level} className="flex flex-col gap-1">
               <p className="text-body">
-                <span className="font-semibold">{grantTitle(grant)}:</span>{" "}
-                {improvement ? improvementText(improvement) || "nothing placed" : "not chosen"}
+                <span className="font-semibold">{grantTitle(grant, names)}:</span>{" "}
+                {improvement
+                  ? improvementText(improvement, names) || "nothing placed"
+                  : "not chosen"}
               </p>
               <ImprovementField
                 name={`Level ${grant.level}`}

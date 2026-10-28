@@ -8,6 +8,8 @@ export interface ChosenChipProps {
   value: string;
   /** The book the row comes from, shown as the picker's option shows it. */
   source?: string;
+  /** Shows the Homebrew source chip, for a homebrew row, in place of `source`. */
+  homebrew?: boolean;
   onClear: () => void;
   /** Moves focus to the clear button on mount, where the picker it replaced held it. */
   focusOnMount?: boolean;
@@ -18,6 +20,7 @@ export function ChosenChip({
   label,
   value,
   source,
+  homebrew = false,
   onClear,
   focusOnMount = false,
 }: ChosenChipProps) {
@@ -31,7 +34,11 @@ export function ChosenChip({
       <span className="mb-1 text-muted text-row">{label}</span>
       <span className="flex w-fit items-center gap-1 rounded-pill border border-border bg-subtle py-1 pr-1 pl-3 text-body">
         {value}
-        {source !== undefined && <SourceChip source={source} />}
+        {homebrew ? (
+          <SourceChip source={undefined} />
+        ) : (
+          source !== undefined && <SourceChip source={source} />
+        )}
         <button
           type="button"
           ref={clear}

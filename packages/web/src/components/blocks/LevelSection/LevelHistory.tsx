@@ -3,6 +3,7 @@ import { type CharacterRecord, displayName, improvementAt } from "@dnd/character
 import { useCallback, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
 import { useClassFeatures } from "../../../hooks/useClassFeatures.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { improvementText } from "../../../lib/improvementChoice.ts";
 import { type HistoryFeature, levelHistory } from "../../../lib/levelHistory.ts";
 import { Card } from "../../Card.tsx";
@@ -29,12 +30,13 @@ function featureLabel(feature: HistoryFeature, row: readonly HistoryFeature[]): 
  * or removes it.
  */
 export function LevelHistory({ character }: { character: CharacterRecord }) {
+  const names = useHomebrewNames();
   const { definition } = character;
   const features = useClassFeatures(definition.levels);
   const derived = useCharacterDerived(character.id);
   const terms = derived.data?.hitPointMaximum.terms;
   const hitPoints = terms?.length === definition.levels.length ? terms : undefined;
-  const rows = levelHistory(definition.levels, features.featuresOf);
+  const rows = levelHistory(definition.levels, features.featuresOf, names);
   const [focusLevel, setFocusLevel] = useState<number>();
   const focused = useCallback(() => setFocusLevel(undefined), []);
 
@@ -68,14 +70,14 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
             {rows.map((row) => {
               const term = hitPoints?.[row.level - 1];
               const improvement = improvementAt(definition, row.level);
-              const taken = improvement && improvementText(improvement);
+              const taken = improvement && improvementText(improvement, names);
               return (
                 <tr key={row.level} className="border-border border-t">
                   <th scope="row" className={`${CELL} font-semibold tabular-nums`}>
                     {row.level}
                   </th>
                   <td className={`${CELL} whitespace-nowrap`}>
-                    {displayName(row.cls)} {row.classLevel}
+                    {displayName(row.cls, names)} {row.classLevel}
                   </td>
                   <td className={CELL}>
                     {term ? (

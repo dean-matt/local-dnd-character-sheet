@@ -5,6 +5,7 @@ import {
   displayName,
   type EntryRef,
   entryKey,
+  type HomebrewNames,
 } from "@dnd/character";
 import type { ClassFeatures } from "./classFeatures.ts";
 
@@ -38,6 +39,7 @@ export type HistoryFeature = { record: ClassFeatureRecord; grantor: string; subc
 export function levelHistory(
   levels: readonly Level[],
   featuresOf: (cls: EntryRef) => ClassFeatures,
+  names: HomebrewNames,
 ): LevelHistoryRow[] {
   const taken = new Map<string, number>();
   const chosenAt = new Map<string, { level: number; subclass: ContentRef }>();
@@ -58,7 +60,7 @@ export function levelHistory(
       features: [
         ...features.class
           .filter((feature) => arrives(feature, false))
-          .map((record) => ({ record, grantor: displayName(cls), subclass: false })),
+          .map((record) => ({ record, grantor: displayName(cls, names), subclass: false })),
         ...(chosen === undefined
           ? []
           : features.subclass

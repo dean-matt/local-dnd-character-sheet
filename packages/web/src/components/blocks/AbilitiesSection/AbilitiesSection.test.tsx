@@ -112,7 +112,8 @@ const nameButton = (region: string, name: string) =>
 
 /**
  * Answers the rules lookups a modal makes, and apart from them the state read `Vitals`
- * makes, the inventory read `Attacks` makes and the homebrew skills read the Skills card makes.
+ * makes, the inventory read `Attacks` makes, the homebrew skills read the Skills card makes
+ * and the homebrew name reads.
  */
 function stubRules(entries: unknown[]) {
   const fetchMock = vi.fn(
@@ -123,6 +124,10 @@ function stubRules(entries: unknown[]) {
     "/api/characters/1/state": stateRecord(),
     "/api/characters/1/inventory": { items: [] },
     "/api/homebrew/skills": [],
+    "/api/homebrew/races": [],
+    "/api/homebrew/classes": [],
+    "/api/homebrew/backgrounds": [],
+    "/api/homebrew/feats": [],
   };
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
     const path = String(url);

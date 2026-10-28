@@ -6,6 +6,7 @@ import {
   raceSummary,
 } from "@dnd/character";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { useRaceRows } from "../../../hooks/useRaceRows.ts";
 import { RACE_FIELD, withDeparture } from "../../../lib/departures.ts";
 import { increaseSource } from "../../../lib/grantorIncreases.ts";
@@ -28,6 +29,7 @@ const subraceKey = (row: { name: string; source: string }) => `${row.name}|${row
  * typed past the catalog; what it grants is left for the player to apply.
  */
 export function RaceCard({ character }: { character: CharacterRecord }) {
+  const names = useHomebrewNames();
   const { definition } = character;
   const write = useHeldSave(character.id, "Race");
   const { race, subrace, size, raceResistance } = definition;
@@ -44,7 +46,7 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
       <div className="flex flex-col gap-2">
         <ChangeablePick
           noun="race"
-          value={raceSummary(definition)}
+          value={raceSummary(definition, names)}
           edition={definition.edition}
           type="race"
           onPick={(ref) => {
@@ -108,7 +110,7 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
             definition={definition}
             source={increaseSource(
               "race",
-              raceSummary(definition),
+              raceSummary(definition, names),
               json,
               houseRule(definition, "customOrigin"),
             )}

@@ -1,6 +1,6 @@
 import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider, skipToken, useQuery } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord, identityRecord } from "../../../test/records.ts";
@@ -56,8 +56,9 @@ let classGrants: unknown;
 let writes: Mock;
 
 /**
- * Answers the class and feat reads `Improvements` and the history's hit dice make, refuses the derived read the
- * history's hit points wait on, and hands every other call to `writes`.
+ * Answers the class and feat reads `Improvements` and the history's hit dice make and the
+ * homebrew name reads, refuses the derived read the history's hit points wait on, and hands
+ * every other call to `writes`.
  */
 beforeEach(() => {
   classGrants = NO_GRANTS;
@@ -69,6 +70,7 @@ beforeEach(() => {
     if (path.startsWith("/api/feats?"))
       return new Response(JSON.stringify({ items: [], total: 0 }));
     if (path.endsWith("/derived")) return new Response("{}", { status: 404 });
+    if (path.startsWith("/api/homebrew/")) return new Response("[]");
     return writes(url, init);
   });
 });
@@ -90,6 +92,35 @@ describe("LevelSection", () => {
         .queryAllByRole("listitem")
         .map((item) => item.textContent),
     ).toEqual(["Warlock 2 (Fiend Patron)", "Fighter 1"]);
+  });
+
+  it("names a homebrew class from its row, and follows a rename with the sheet still mounted", async () => {
+    const warden = (name: string) => [
+      {
+        id: "hc-1",
+        name,
+        edition: "one",
+        hitDie: 10,
+        json: { name, source: "HB", hd: { number: 1, faces: 10 } },
+        createdAt: "2026-10-28T00:00:00.000Z",
+      },
+    ];
+    const homebrewClass = { homebrewId: "hc-1" };
+    const client = renderSeeded(
+      record({ levels: [{ class: homebrewClass }, { class: homebrewClass }] }),
+    );
+    const chips = () =>
+      within(card())
+        .queryAllByRole("listitem")
+        .map((item) => item.textContent);
+    expect(chips()).toEqual(["Homebrew 2"]);
+    await waitFor(() => expect(client.isFetching()).toBe(0));
+
+    act(() => client.setQueryData(["homebrew", "classes"], warden("Warden")));
+    await waitFor(() => expect(chips()).toEqual(["Warden 2"]));
+
+    act(() => client.setQueryData(["homebrew", "classes"], warden("Sentinel")));
+    await waitFor(() => expect(chips()).toEqual(["Sentinel 2"]));
   });
 
   it("follows the Level card with the improvements the classes grant", async () => {

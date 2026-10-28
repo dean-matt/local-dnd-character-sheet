@@ -1,6 +1,7 @@
 import type { CharacterRecord } from "@dnd/character";
 import type { ReactNode } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
+import { useHomebrewNames } from "../../hooks/useHomebrewNames.ts";
 import { headerSubtitle } from "./characterSubtitle.ts";
 import { PortraitUpload } from "./PortraitUpload.tsx";
 import { SaveIndicator } from "./SaveIndicator.tsx";
@@ -19,7 +20,8 @@ export function CharacterHeader({
   character: CharacterRecord;
   actions?: ReactNode;
 }) {
-  const subtitle = headerSubtitle(character);
+  const names = useHomebrewNames();
+  const subtitle = headerSubtitle(character, names);
   return (
     <div
       data-character-header

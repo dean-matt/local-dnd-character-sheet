@@ -1,6 +1,7 @@
 import { type CharacterRecord, displayName, entryKey } from "@dnd/character";
 import { useBackgrounds } from "../../../hooks/useBackgrounds.ts";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { increaseSource } from "../../../lib/grantorIncreases.ts";
 import { Card } from "../../Card.tsx";
 import { ChangeablePick } from "./ChangeablePick.tsx";
@@ -12,6 +13,7 @@ import { OriginSpellBlocks } from "./OriginSpellBlocks.tsx";
  * applies; what a new background grants is left for the player to apply.
  */
 export function BackgroundCard({ character }: { character: CharacterRecord }) {
+  const names = useHomebrewNames();
   const { definition } = character;
   const { background, edition } = definition;
   const write = useHeldSave(character.id, "Background");
@@ -25,7 +27,7 @@ export function BackgroundCard({ character }: { character: CharacterRecord }) {
       <div className="flex flex-col gap-2">
         <ChangeablePick
           noun="background"
-          value={displayName(background)}
+          value={displayName(background, names)}
           edition={edition}
           type="background"
           onPick={(ref) => {
@@ -37,7 +39,7 @@ export function BackgroundCard({ character }: { character: CharacterRecord }) {
         {(catalogBackground === undefined || backgrounds.isSuccess) && (
           <OriginIncreases
             definition={definition}
-            source={increaseSource("background", displayName(background), row?.json)}
+            source={increaseSource("background", displayName(background, names), row?.json)}
             write={write}
           />
         )}

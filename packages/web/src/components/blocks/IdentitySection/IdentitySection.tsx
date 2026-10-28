@@ -3,6 +3,7 @@
  * itself. It shows as unavailable until the character loads, as the Level and Notes pages beside it do.
  */
 import { type CharacterRecord, characterDefinitionSchema } from "@dnd/character";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { ChipList } from "../../ChipList.tsx";
@@ -19,6 +20,7 @@ import { RaceCard } from "./RaceCard.tsx";
 
 export function IdentitySection({ character }: { character: CharacterRecord | undefined }) {
   const update = useUpdateCharacterDefinition(character?.id ?? "");
+  const names = useHomebrewNames();
   if (!character) return <SectionUnavailable page="Identity" />;
   const { definition } = character;
   return (
@@ -41,7 +43,7 @@ export function IdentitySection({ character }: { character: CharacterRecord | un
       </Card>
       <RaceCard character={character} />
       <Card title="Class">
-        <ChipList labels={classChips(definition)} />
+        <ChipList labels={classChips(definition, names)} />
       </Card>
       <BackgroundCard character={character} />
       <AlignmentCard character={character} />

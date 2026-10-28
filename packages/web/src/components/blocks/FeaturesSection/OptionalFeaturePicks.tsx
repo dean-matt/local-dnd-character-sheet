@@ -9,6 +9,7 @@ import {
   spareEntitlement,
 } from "@dnd/character";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { featureTypeLabel, featureTypeNoun } from "../../../lib/featureTypeLabel.ts";
 import {
   optionalFeatureJudge,
@@ -32,6 +33,7 @@ export function OptionalFeaturePicks({
   character: CharacterRecord;
   tallies: readonly OptionalFeatureTally[];
 }) {
+  const names = useHomebrewNames();
   const write = useHeldSave(character.id, "Optional features");
   const facts = prerequisiteFacts(character.definition);
   return (
@@ -61,7 +63,7 @@ export function OptionalFeaturePicks({
             noun={featureTypeNoun(featureType)}
             count={tally.known}
             note={<EntitlementNote tally={tally} />}
-            picked={tally.picks.map(({ ref }) => ({ ref, name: displayName(ref) }))}
+            picked={tally.picks.map(({ ref }) => ({ ref, name: displayName(ref, names) }))}
             edition={spare?.edition ?? character.definition.edition}
             replaceEdition={(ref) => {
               const pick = tally.picks.find(same(ref));

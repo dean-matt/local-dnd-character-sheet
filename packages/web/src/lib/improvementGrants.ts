@@ -4,6 +4,7 @@ import {
   displayName,
   type EntryRef,
   entryKey,
+  type HomebrewNames,
 } from "@dnd/character";
 
 type Level = CharacterDefinition["levels"][number];
@@ -59,5 +60,5 @@ export function improvementGrants(
 }
 
 /** Names `grant` where a sheet lists it: `Level 4 · Wizard 4`, a boon saying so. */
-export const grantTitle = (grant: ImprovementGrant): string =>
-  `Level ${grant.level} · ${displayName(grant.cls)} ${grant.classLevel}${grant.boon ? " · Epic Boon" : ""}`;
+export const grantTitle = (grant: ImprovementGrant, names: HomebrewNames): string =>
+  `Level ${grant.level} · ${displayName(grant.cls, names)} ${grant.classLevel}${grant.boon ? " · Epic Boon" : ""}`;

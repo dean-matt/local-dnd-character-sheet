@@ -1,5 +1,6 @@
 import { type CharacterRecord, totalLevel } from "@dnd/character";
 import { useId } from "react";
+import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { Card } from "../../Card.tsx";
 import { ChipList } from "../../ChipList.tsx";
 import { classChips } from "../classChips.ts";
@@ -12,6 +13,7 @@ import { LevelUp } from "./LevelUp.tsx";
 
 export function LevelSection({ character }: { character: CharacterRecord | undefined }) {
   const captionId = useId();
+  const names = useHomebrewNames();
   if (!character) return <SectionUnavailable page="Level" />;
   const { definition } = character;
   const xp = definition.leveling === "xp";
@@ -24,7 +26,7 @@ export function LevelSection({ character }: { character: CharacterRecord | undef
               <span className="sr-only">Total level </span>
               {totalLevel(definition)}
             </p>
-            <ChipList labels={classChips(definition)} />
+            <ChipList labels={classChips(definition, names)} />
           </div>
           <LevelingField character={character} />
           {xp ? (
