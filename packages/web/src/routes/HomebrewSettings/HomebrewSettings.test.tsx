@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { EditorView } from "codemirror";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { charactersKey } from "../../hooks/characterKeys.ts";
 import {
   BACKGROUND_STARTERS,
   CLASS_STARTERS,
@@ -85,6 +86,7 @@ function renderPage() {
       </MemoryRouter>
     </QueryClientProvider>,
   );
+  return client;
 }
 
 const writesOf = (fetchMock: ReturnType<typeof stubApi>) =>
@@ -1087,6 +1089,9 @@ describe("HomebrewSettings", () => {
     const save = () => within(editor()).getByRole("button", { name: "Save" });
     const note = () => within(editor()).queryByRole("button", { name: "Why Save is unavailable" });
     const ok = { status: 200, body: warden };
+    /** Waits for the character list the hold reads to settle as `status`. */
+    const charactersRead = (client: QueryClient, status: "success" | "error") =>
+      waitFor(() => expect(client.getQueryState(charactersKey)?.status).toBe(status));
 
     it("holds Save on a new die, naming and linking the character that holds the class", async () => {
       const fetchMock = stubApi({ classes: [warden], characters: [holder("x1", "Vex", "c1")] }, [
@@ -1155,12 +1160,10 @@ describe("HomebrewSettings", () => {
 
     it("saves a new die on a class no character holds", async () => {
       const fetchMock = stubApi({ classes: [warden], characters: [holder("c", "Bram")] }, [ok]);
-      renderPage();
+      const client = renderPage();
 
       await editWarden(8);
-      await waitFor(() =>
-        expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/characters")).toBe(true),
-      );
+      await charactersRead(client, "success");
       expect(note()).toBeNull();
       fireEvent.click(save());
 
@@ -1220,12 +1223,10 @@ describe("HomebrewSettings", () => {
           ? json(500, { error: "down" })
           : (answer as NonNullable<typeof answer>)(input, init),
       );
-      renderPage();
+      const client = renderPage();
 
       await editWarden(8);
-      await waitFor(() =>
-        expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/characters")).toBe(true),
-      );
+      await charactersRead(client, "error");
 
       expect(note()).toBeNull();
       expect(save()).not.toHaveAttribute("aria-disabled", "true");
