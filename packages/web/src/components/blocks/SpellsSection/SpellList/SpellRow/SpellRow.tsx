@@ -8,6 +8,7 @@ import {
   spellRange,
 } from "../../../../../lib/spellFacts.ts";
 import { schoolName } from "../../../../../lib/spellSchool.ts";
+import { EditHomebrewButton } from "../../../../EditHomebrewButton.tsx";
 import { ListRow } from "../../../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../../../NotFoundTag.tsx";
 import { RemoveButton } from "../../../../RemoveButton.tsx";
@@ -100,6 +101,9 @@ export function SpellRow({
             <SpellFact label="Components" value={spellComponents(spell.components)} />
             <SpellFact label="Duration" value={spellDuration(spell.duration)} />
           </span>
+        ),
+        footer: spell.homebrewId && (
+          <EditHomebrewButton collection="spells" id={spell.homebrewId} />
         ),
         children: <RulesEntries entries={spell.entries} />,
       }}

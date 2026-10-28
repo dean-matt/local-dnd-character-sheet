@@ -77,7 +77,7 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, fromItem?: str
   const { ref, prepared, granted, origin, pickedFor } = entry;
   const fields = {
     name: row?.name ?? displayName(ref),
-    ...("homebrewId" in ref ? {} : { source: ref.source }),
+    ...("homebrewId" in ref ? { homebrewId: ref.homebrewId } : { source: ref.source }),
     prepared,
     ...(granted && { granted }),
     ...(fromItem && { fromItem }),

@@ -3,14 +3,14 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { EditorView } from "codemirror";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { HomebrewSettings } from "./HomebrewSettings.tsx";
 import {
   BACKGROUND_STARTERS,
   CLASS_STARTERS,
   FEAT_STARTERS,
   ITEM_STARTERS,
   RACE_STARTERS,
-} from "./homebrewStarters.ts";
+} from "../../lib/homebrewStarters.ts";
+import { HomebrewSettings } from "./HomebrewSettings.tsx";
 
 const CREATED_AT = "2026-01-01T00:00:00.000Z";
 
@@ -147,6 +147,22 @@ afterEach(() => {
 });
 
 describe("HomebrewSettings", () => {
+  it("lists the kinds in a fixed order", () => {
+    stubApi({});
+    renderPage();
+
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(headings).toEqual([
+      "Items",
+      "Spells",
+      "Races",
+      "Classes",
+      "Backgrounds",
+      "Feats",
+      "Skills",
+    ]);
+  });
+
   it("lists each homebrew row under its kind, with its edition and what it is", async () => {
     stubApi({ items: [sunblade] });
     renderPage();
@@ -971,6 +987,7 @@ describe("HomebrewSettings", () => {
     edit.focus();
     fireEvent.click(edit);
     expect(screen.getByRole("dialog", { name: "Edit Sunblade" })).toBeInTheDocument();
+    expect(editor()).not.toHaveTextContent("apply to every character");
     mode("JSON");
     const { source: _source, ...entry } = sunblade.json;
     expect(JSON.parse(jsonText("Item JSON"))).toEqual(entry);

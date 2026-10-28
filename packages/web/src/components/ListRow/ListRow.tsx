@@ -35,7 +35,7 @@ export function ListRow({
   actions?: ReactNode;
   controls?: ReactNode;
   remove?: ReactNode;
-  detail?: { meta?: ReactNode; children: ReactNode };
+  detail?: { meta?: ReactNode; footer?: ReactNode; children: ReactNode };
 }) {
   const nameClass = "min-w-0 truncate font-semibold print:overflow-visible print:whitespace-normal";
   return (
@@ -45,6 +45,7 @@ export function ListRow({
           <DetailTrigger
             title={name}
             meta={detail.meta}
+            footer={detail.footer}
             detail={detail.children}
             className={nameClass}
           >

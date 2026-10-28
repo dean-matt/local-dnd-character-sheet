@@ -34,7 +34,9 @@ import {
 import type { CharacterRecord } from "@dnd/character";
 import { matchPath, type Params } from "react-router";
 import { z } from "zod";
+import type { HomebrewCollection } from "../hooks/useHomebrew.ts";
 import { ApiError, apiGet } from "./api.ts";
+import type { HomebrewRow } from "./homebrewListing.ts";
 import { searchHitTypeLabel } from "./searchHits.ts";
 import { shownName } from "./shownName.ts";
 
@@ -51,6 +53,8 @@ interface CatalogRow {
   entries: Entries;
   /** The row as the API returned it, for the detail's JSON view. */
   json: Record<string, unknown>;
+  /** A homebrew row's stored record, which its editor opens on; absent on a catalog row. */
+  homebrew?: { collection: HomebrewCollection; record: HomebrewRow };
 }
 
 export interface CatalogTarget {
@@ -99,13 +103,20 @@ function nameSource(
   };
 }
 
-function homebrew(collection: string, label: string, schema: z.ZodType<Row>, entries?: ToEntries) {
+function homebrew(
+  collection: HomebrewCollection,
+  label: string,
+  schema: z.ZodType<Row & HomebrewRow>,
+  entries?: ToEntries,
+) {
   return {
     path: `homebrew/${collection}/:id`,
     label: () => label,
     lookedFor: (key: Params) => `the homebrew ${label} ${key.id}`,
-    load: async (key: Params) =>
-      toRow(await apiGet(`/homebrew/${collection}/${segments(key.id)}`, schema), entries),
+    load: async (key: Params): Promise<CatalogRow> => {
+      const record = await apiGet(`/homebrew/${collection}/${segments(key.id)}`, schema);
+      return { ...toRow(record, entries), homebrew: { collection, record } };
+    },
   };
 }
 

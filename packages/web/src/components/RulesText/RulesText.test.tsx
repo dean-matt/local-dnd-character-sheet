@@ -83,7 +83,9 @@ describe("reference resolution", () => {
     });
     const fetchMock = stubFetchByUrl({ "/api/refs/resolve": { refs: [asi(4), asi(6)] } });
     renderWithClient(
-      <RulesText text="{@classFeature Ability Score Improvement|Fighter||4||At 4} and {@classFeature Ability Score Improvement|Fighter||6||at 6}" />,
+      <MemoryRouter>
+        <RulesText text="{@classFeature Ability Score Improvement|Fighter||4||At 4} and {@classFeature Ability Score Improvement|Fighter||6||at 6}" />
+      </MemoryRouter>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "at 6" }));
@@ -114,7 +116,11 @@ describe("reference resolution", () => {
     const fetchMock = stubFetchByUrl({
       "/api/refs/resolve": { refs: [tyr("Forgotten Realms"), tyr("Norse")] },
     });
-    renderWithClient(<RulesText text="{@deity Tyr} and {@deity Tyr|norse|PHB|the Norse Tyr}" />);
+    renderWithClient(
+      <MemoryRouter>
+        <RulesText text="{@deity Tyr} and {@deity Tyr|norse|PHB|the Norse Tyr}" />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(await screen.findByRole("button", { name: "the Norse Tyr" }));
     expect(requested(fetchMock)).toEqual([
@@ -168,7 +174,7 @@ describe("reference resolution", () => {
         ? Promise.resolve(new Response(JSON.stringify({ refs: [shield] })))
         : byUrl(url, init),
     );
-    // The detail's "Add to…" reads the route.
+    // The detail's "Add to…" and Edit read the route.
     renderWithClient(
       <MemoryRouter>
         <p>
@@ -223,7 +229,11 @@ describe("reference resolution", () => {
         json: { entries: ["Your Speed is 0."] },
       },
     });
-    renderWithClient(<RulesText text="{@condition Restrained|XPHB}" />);
+    renderWithClient(
+      <MemoryRouter>
+        <RulesText text="{@condition Restrained|XPHB}" />
+      </MemoryRouter>,
+    );
 
     fireEvent.click(await screen.findByRole("button", { name: "Restrained" }));
     fireEvent.click(screen.getByRole("button", { name: "Open Restrained" }));

@@ -2,7 +2,7 @@ import type { CharacterInventory, SheetItem } from "@dnd/catalog";
 import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacter } from "../../../../hooks/useCharacter.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
@@ -146,6 +146,7 @@ function stubApi({
   holdFirstPut = false,
   houseRules,
   firstEntry,
+  homebrewItem,
 }: {
   inventory?: SheetItem[];
   variantStatus?: number;
@@ -155,16 +156,31 @@ function stubApi({
   holdFirstPut?: boolean;
   houseRules?: Record<string, boolean>;
   firstEntry?: object;
+  /** The homebrew record `/api/homebrew/items/{id}` reads, which a `PUT` there renames. */
+  homebrewItem?: { id: string; name: string };
 } = {}) {
   let reads = 0;
+  let homebrewRow = homebrewItem;
+  const homebrewReply = (url: string, init?: RequestInit) => {
+    if (!homebrewRow || url !== `/api/homebrew/items/${homebrewRow.id}`) return undefined;
+    if (init?.method === "PUT") {
+      homebrewRow = { ...homebrewRow, name: JSON.parse(String(init.body)).name };
+    }
+    return json(homebrewRow);
+  };
+  const renamed = (items: SheetItem[]) =>
+    items.map((item) =>
+      homebrewRow && item.homebrewId === homebrewRow.id
+        ? { ...item, name: homebrewRow.name }
+        : item,
+    );
   let record = vex(houseRules, firstEntry);
   let held = holdFirstPut
     ? new Promise<void>((resolve) => {
         releasePut = resolve;
       })
     : undefined;
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input);
+  const answer = async (url: string, init?: RequestInit) => {
     if (init?.method === "PUT") {
       const wait = held;
       held = undefined;
@@ -175,12 +191,18 @@ function stubApi({
     if (url === "/api/characters/1") return json(record);
     if (url === "/api/characters/1/inventory") {
       reads += 1;
-      return reads > 1 && !refetch ? new Promise<Response>(() => {}) : json({ items: inventory });
+      return reads > 1 && !refetch
+        ? new Promise<Response>(() => {})
+        : json({ items: renamed(inventory) });
     }
     if (url.startsWith("/api/search?")) return searchPage(url);
     if (url.startsWith("/api/items/"))
       return variantReply(url, variantStatus, overrideStatus, refusal);
     return json({ error: `nothing at ${url}` }, 404);
+  };
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    return homebrewReply(url, init) ?? answer(url, init);
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -231,6 +253,11 @@ const searchedKinds = (fetchMock: ReturnType<typeof stubApi>) =>
     .map(([url]) => String(url))
     .filter((url) => url.startsWith("/api/search?"))
     .map((url) => new URL(url, "http://local").searchParams.get("kind") ?? undefined);
+
+// Edit loads the editor as its own chunk; loaded here, no test's wait has to cover the import.
+beforeAll(async () => {
+  await import("../../../HomebrewEditor/HomebrewEditor.tsx");
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -304,6 +331,72 @@ describe("ItemList", () => {
     expect((await written(fetchMock)).inventory[3]).toEqual({
       ref: { homebrewId: "hb-1" },
       ...flags,
+    });
+  });
+
+  describe("a homebrew item's detail", () => {
+    const record = {
+      id: "hb-1",
+      name: "Lucky Lantern",
+      edition: "one",
+      type: null,
+      rarity: null,
+      requiresAttunement: false,
+      json: { name: "Lucky Lantern", source: "HB", entries: ["It glows."] },
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    const inventory: SheetItem[] = [
+      ITEMS[0] as SheetItem,
+      {
+        resolved: true,
+        name: "Lucky Lantern",
+        homebrewId: "hb-1",
+        ...flags,
+        ...plain,
+        requiresAttunement: false,
+        weight: null,
+      },
+      { resolved: false, name: "Homebrew", homebrewId: "gone", ...flags },
+    ];
+    const openDetail = (name: string) =>
+      fireEvent.click(within(row(name)).getByRole("button", { name }));
+    const detail = () => document.querySelector("dialog[open]") as HTMLElement;
+
+    it("offers Edit, reading the row alone, and none on a catalog item or a missing one", async () => {
+      const fetchMock = renderList(derivedRecord(), inventory, { homebrewItem: record });
+
+      await screen.findByText("Lucky Lantern");
+      openDetail("Lucky Lantern");
+      expect(await within(detail()).findByRole("button", { name: "Edit" })).toBeInTheDocument();
+      const urls = fetchMock.mock.calls.map(([url]) => String(url));
+      expect(urls).toContain("/api/homebrew/items/hb-1");
+      expect(urls).not.toContain("/api/homebrew/items");
+      fireEvent(detail(), new Event("cancel", { cancelable: true }));
+
+      openDetail("Longsword");
+      expect(within(detail()).queryByRole("button", { name: "Edit" })).toBeNull();
+      fireEvent(detail(), new Event("cancel", { cancelable: true }));
+
+      expect(within(row("Homebrew")).queryByRole("button", { name: "Homebrew" })).toBeNull();
+    });
+
+    it("renames the inventory row once a rename from the sheet saves", async () => {
+      renderList(derivedRecord(), inventory, { homebrewItem: record });
+
+      await screen.findByText("Lucky Lantern");
+      openDetail("Lucky Lantern");
+      fireEvent.click(await within(detail()).findByRole("button", { name: "Edit" }));
+      const editor = await waitFor(() => {
+        const open = document.querySelectorAll<HTMLElement>("dialog[open]");
+        expect(open).toHaveLength(2);
+        return open[1] as HTMLElement;
+      });
+      fireEvent.change(within(editor).getByLabelText("Name", { selector: "input" }), {
+        target: { value: "Cursed Lantern" },
+      });
+      fireEvent.click(within(editor).getByRole("button", { name: "Save" }));
+
+      expect(await screen.findByRole("button", { name: "Cursed Lantern" })).toBeInTheDocument();
     });
   });
 

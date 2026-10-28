@@ -1,8 +1,8 @@
 import type { CharacterSpells, SheetSpell } from "@dnd/catalog";
 import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
 import { SpellList } from "./SpellList.tsx";
@@ -21,6 +21,8 @@ const spell = (name: string, level: number, prepared = false): SheetSpell => ({
   ritual: false,
   entries: [],
 });
+
+type HomebrewSpell = { id: string; name: string; level: number; json: Record<string, unknown> };
 
 const hit = (name: string) => ({ type: "spell", name, source: "XPHB", edition: "one" });
 
@@ -82,10 +84,25 @@ function searchAnswer(url: string) {
  * 2nd-level Darkness, or Darkness alone from 2nd level; any other search with Hex,
  * Fireball, Hellish Rebuke, Darkness and a homebrew Glimmer; and a write with the record.
  */
-function stubServer(record: CharacterRecord, sheet: CharacterSpells) {
+function stubServer(record: CharacterRecord, sheet: CharacterSpells, homebrew?: HomebrewSpell) {
+  let spells = sheet;
+  let row = homebrew;
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url === "/api/characters/1/spells") return json(sheet);
+    if (url === "/api/characters/1/spells") return json(spells);
+    if (row && url === `/api/homebrew/spells/${row.id}`) {
+      if (init?.method === "PUT") {
+        const { level, name } = JSON.parse(String(init.body));
+        const saved = { ...row, name, level };
+        row = saved;
+        spells = {
+          spells: spells.spells.map((it) =>
+            it.homebrewId === saved.id ? { ...it, name, level } : it,
+          ),
+        };
+      }
+      return json(row);
+    }
     return (
       classAnswer(url) ??
       searchAnswer(url) ??
@@ -105,8 +122,9 @@ function renderList(
   record: CharacterRecord = vex(),
   sheet: CharacterSpells = SHEET,
   derived: CharacterDerived = derivedRecord(record.definition),
+  homebrew?: HomebrewSpell,
 ) {
-  const fetchMock = stubServer(record, sheet);
+  const fetchMock = stubServer(record, sheet, homebrew);
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -120,6 +138,11 @@ function renderList(
 }
 
 const computed = (value: number) => ({ computed: value, manual: null, terms: [] });
+
+// Edit loads the editor as its own chunk; loaded here, no test's wait has to cover the import.
+beforeAll(async () => {
+  await import("../../../HomebrewEditor/HomebrewEditor.tsx");
+});
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -281,6 +304,77 @@ describe("SpellList", () => {
       ref: { homebrewId: "hb-1" },
       prepared: false,
       origin: WARLOCK,
+    });
+  });
+
+  describe("a homebrew spell's detail", () => {
+    const glimmer: HomebrewSpell & Record<string, unknown> = {
+      id: "hb-1",
+      name: "Glimmer",
+      edition: "one",
+      level: 1,
+      school: "V",
+      concentration: false,
+      ritual: false,
+      json: {
+        name: "Glimmer",
+        source: "HB",
+        level: 1,
+        school: "V",
+        time: [{ number: 1, unit: "action" }],
+        range: { type: "point", distance: { type: "self" } },
+        components: { v: true },
+        duration: [{ type: "instant" }],
+        entries: ["A faint light."],
+      },
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    const sheet: CharacterSpells = {
+      spells: [
+        spell("Hex", 1, true),
+        { ...spell("Glimmer", 1), source: undefined, homebrewId: "hb-1" },
+        { resolved: false, name: "Homebrew", homebrewId: "gone", prepared: false },
+      ],
+    };
+    const record = vex([
+      { ref: { homebrewId: "hb-1" }, prepared: false },
+      { ref: { homebrewId: "gone" }, prepared: false },
+    ]);
+    const dialogs = () => [...document.querySelectorAll<HTMLElement>("dialog[open]")];
+
+    it("offers Edit on a homebrew spell's detail, and none on a catalog one or a missing one", async () => {
+      renderList(record, sheet, undefined, glimmer);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Glimmer" }));
+      expect(
+        await within(dialogs()[0] as HTMLElement).findByRole("button", { name: "Edit" }),
+      ).toBeInTheDocument();
+      fireEvent(dialogs()[0] as HTMLElement, new Event("cancel", { cancelable: true }));
+
+      fireEvent.click(screen.getByRole("button", { name: "Hex" }));
+      expect(
+        within(dialogs()[0] as HTMLElement).queryByRole("button", { name: "Edit" }),
+      ).toBeNull();
+      fireEvent(dialogs()[0] as HTMLElement, new Event("cancel", { cancelable: true }));
+
+      expect(screen.queryByRole("button", { name: "Homebrew" })).toBeNull();
+    });
+
+    it("moves the spell under its new level once a level change from the sheet saves", async () => {
+      renderList(record, sheet, undefined, glimmer);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Glimmer" }));
+      fireEvent.click(
+        await within(dialogs()[0] as HTMLElement).findByRole("button", { name: "Edit" }),
+      );
+      await waitFor(() => expect(dialogs()).toHaveLength(2));
+      const editor = dialogs()[1] as HTMLElement;
+      fireEvent.click(within(editor).getByRole("combobox", { name: "Level" }));
+      fireEvent.click(screen.getByRole("option", { name: "Level 3" }));
+      fireEvent.click(within(editor).getByRole("button", { name: "Save" }));
+
+      const third = await screen.findByRole("heading", { name: "3rd Level" });
+      expect(third.parentElement).toHaveTextContent("Glimmer");
     });
   });
 

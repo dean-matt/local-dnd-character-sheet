@@ -1,8 +1,10 @@
 import { type ReactNode, useState } from "react";
+import { useMatch } from "react-router";
 import { EmptyState } from "../EmptyState.tsx";
 import { ErrorState } from "../ErrorState.tsx";
 import type { AddOutcome } from "../hooks/useAddToCharacter.ts";
 import { useCatalogRow } from "../hooks/useCatalogRow.ts";
+import type { HomebrewCollection } from "../hooks/useHomebrew.ts";
 import { LoadingState } from "../LoadingState.tsx";
 import { addableAt } from "../lib/addable.ts";
 import { ApiError } from "../lib/api.ts";
@@ -10,6 +12,7 @@ import { matchCatalogTarget } from "../lib/catalogRows.ts";
 import { shownName } from "../lib/shownName.ts";
 import { AddedNotice } from "./AddedNotice.tsx";
 import { AddTo } from "./AddTo/AddTo.tsx";
+import { EditHomebrewButton } from "./EditHomebrewButton.tsx";
 import { JsonView } from "./JsonView.tsx";
 import { ModalEntry } from "./ModalEntry.tsx";
 import { RulesEntries } from "./RulesEntries/RulesEntries.tsx";
@@ -20,13 +23,27 @@ import { TypeChip } from "./TypeChip.tsx";
 const capitalized = (label: string) => label.charAt(0).toUpperCase() + label.slice(1);
 
 /**
+ * The homebrew row's collection and id, where it is one a detail edits: an item or a spell
+ * opened on a sheet.
+ */
+const editableOf = (
+  onSheet: boolean,
+  homebrew?: { collection: HomebrewCollection; record: { id: string } },
+) =>
+  onSheet && (homebrew?.collection === "items" || homebrew?.collection === "spells")
+    ? { collection: homebrew.collection, id: homebrew.record.id }
+    : undefined;
+
+/**
  * One catalog or homebrew row as an entry of a `Modal`, fetched while it shows. An item, a
- * spell or a feat ends on "Add to…".
+ * spell or a feat ends on "Add to…"; a homebrew item or spell opened on a sheet offers Edit
+ * before it.
  */
 export function CatalogEntry({ address }: { address: string }) {
   const match = matchCatalogTarget(address);
   const row = useCatalogRow(match);
   const [added, setAdded] = useState<AddOutcome>();
+  const onSheet = useMatch("/characters/:id/p/:slug") !== null;
   const entry = (
     title: string,
     body: ReactNode,
@@ -54,6 +71,7 @@ export function CatalogEntry({ address }: { address: string }) {
   const group = kind === "itemGroup";
   const qualifier = group ? "Item group" : row.data.qualifier;
   const addable = group ? undefined : addableAt(address, row.data.name, source);
+  const editable = editableOf(onSheet, row.data.homebrew);
   return entry(
     name,
     <>
@@ -73,6 +91,11 @@ export function CatalogEntry({ address }: { address: string }) {
       {qualifier}
       <SourceChip source={source} edition={edition} of={label} />
     </span>,
-    addable && <AddTo row={addable} onAdded={setAdded} look="primary" above />,
+    (editable || addable) && (
+      <div className="flex gap-2">
+        {editable && <EditHomebrewButton {...editable} />}
+        {addable && <AddTo row={addable} onAdded={setAdded} look="primary" above />}
+      </div>
+    ),
   );
 }
