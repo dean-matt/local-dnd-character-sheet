@@ -2,7 +2,9 @@ import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "../../components/ChoicePills.tsx";
+import { searchHitKey } from "../../lib/searchHitKey.ts";
 import { setRefValue } from "../../lib/setRefValue.ts";
+import { sharedNameLabel } from "../../lib/sharedNameLabel.ts";
 import { heldFromBackground, withBackgroundPick, withFeatBlock } from "./backgroundFeats.ts";
 import { useBackgroundFeats } from "./useBackgroundFeats.ts";
 
@@ -26,7 +28,7 @@ export function BackgroundFeatField() {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: the list is set when the background or its list changes, so a later choice on the Spells step stands.
   useEffect(() => {
-    if (only && block !== undefined)
+    if (only && "source" in only && block !== undefined)
       setRefValue(
         setValue,
         "spellBlocks",
@@ -39,6 +41,7 @@ export function BackgroundFeatField() {
 
   if (offers === undefined || background === undefined || offers.options.length === 0) return null;
   const [held] = heldFromBackground(feats);
+  const label = sharedNameLabel(offers.options);
   if (offers.fixed) {
     return (
       <p className="mt-1.5 text-muted text-row">
@@ -51,10 +54,10 @@ export function BackgroundFeatField() {
     <ChoicePills
       legend="Background feat"
       prompting={held === undefined}
-      options={offers.options.map((row) => ({ value: entryKey(row), label: row.name }))}
+      options={offers.options.map((row) => ({ value: searchHitKey(row), label: label(row) }))}
       value={held && entryKey(held.ref)}
       onChange={(value) => {
-        const row = offers.options.find((each) => entryKey(each) === value);
+        const row = offers.options.find((each) => searchHitKey(each) === value);
         if (row)
           setRefValue(setValue, "feats", withBackgroundPick(feats, background, row), {
             shouldDirty: true,

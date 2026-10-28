@@ -1,20 +1,21 @@
 import type { FeatRecord } from "@dnd/catalog";
 import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
 import { z } from "zod";
+import type { OfferedFeat as Row } from "../../lib/improvementFeats.ts";
+import { searchHitKey, searchHitRef } from "../../lib/searchHitKey.ts";
 import { withSpellBlock } from "../../lib/spellGrantors.ts";
 
 type Feats = CharacterDefinition["feats"];
 type Blocks = CharacterDefinition["spellBlocks"];
-type Row = Pick<FeatRecord, "name" | "source">;
 
 /**
- * A feat a background offers. Where the background names a variant of a feat the catalog
- * holds once, such as `magic initiate; cleric`, `block` is the position of the spell list in
- * the feat's `additionalSpells` and `list` that list's name.
+ * A feat a background offers, catalog or homebrew. Where the background names a variant of
+ * a feat the catalog holds once, such as `magic initiate; cleric`, `block` is the position
+ * of the spell list in the feat's `additionalSpells` and `list` that list's name.
  */
 type OfferedFeat = Row & { block?: number; list?: string };
 
-/** The catalog feats a background grants, and whether the character has no say in which. */
+/** The feats a background grants, and whether the character has no say in which. */
 export interface BackgroundFeatOffers {
   options: OfferedFeat[];
   fixed: boolean;
@@ -45,24 +46,25 @@ function featsNamedBy(key: string, catalog: readonly FeatRecord[]): OfferedFeat[
 }
 
 /**
- * The feats a background row's `feats` offers. Each entry of the list is an alternative; a
- * `name|source` key names one feat and `anyFromCategory` every feat of those categories.
- * Upstream writes no entry with two feats at the pinned tag, so each key is its own
- * alternative. A name no catalog feat answers offers nothing.
+ * The feats a background row's `feats` offers from `feats`, catalog and homebrew. Each entry
+ * of the list is an alternative; a `name|source` key names one catalog feat and
+ * `anyFromCategory` every feat of those categories, homebrew among them. Upstream writes no
+ * entry with two feats at the pinned tag, so each key is its own alternative. A name no
+ * catalog feat answers offers nothing.
  */
 export function backgroundFeatOffers(
   json: Record<string, unknown>,
-  catalog: readonly FeatRecord[],
+  feats: readonly Row[],
 ): BackgroundFeatOffers {
   const alternatives = z.array(alternativeSchema).safeParse(json.feats).data ?? [];
+  const catalog = feats.filter((row): row is FeatRecord => "source" in row);
   const options = alternatives.flatMap((alternative): OfferedFeat[] => {
     const category = categorySchema.safeParse(alternative).data?.anyFromCategory.category;
-    if (category)
-      return catalog.filter(({ json: feat }) => category.includes(String(feat.category)));
+    if (category) return feats.filter(({ json: feat }) => category.includes(String(feat.category)));
     return Object.keys(alternative).flatMap((key) => featsNamedBy(key, catalog));
   });
   const unique = options.filter(
-    (row, i) => options.findIndex((each) => entryKey(each) === entryKey(row)) === i,
+    (row, i) => options.findIndex((each) => searchHitKey(each) === searchHitKey(row)) === i,
   );
   const [only] = alternatives;
   return {
@@ -91,7 +93,7 @@ export function withBackgroundFeat(
   background: EntryRef | undefined,
   offers: BackgroundFeatOffers,
 ): Feats {
-  const offered = new Set(offers.options.map(entryKey));
+  const offered = new Set(offers.options.map(searchHitKey));
   const keep = (entry: Feats[number]) => {
     const from = grantedBy(entry);
     if (from === undefined) return true;
@@ -108,11 +110,11 @@ export function withBackgroundFeat(
     offers.fixed &&
     fixed &&
     !heldFromBackground(kept).length &&
-    !kept.some((entry) => entryKey(entry.ref) === entryKey(fixed))
+    !kept.some((entry) => entryKey(entry.ref) === searchHitKey(fixed))
       ? [
           ...kept,
           {
-            ref: { name: fixed.name, source: fixed.source },
+            ref: searchHitRef(fixed),
             grantedBy: { kind: "background" as const, ref: background },
           },
         ]
@@ -127,7 +129,7 @@ export function withBackgroundPick(feats: Feats, background: EntryRef, pick: Row
   return [
     ...feats.filter((entry) => grantedBy(entry) === undefined),
     {
-      ref: { name: pick.name, source: pick.source },
+      ref: searchHitRef(pick),
       grantedBy: { kind: "background", ref: background },
     },
   ];
@@ -137,5 +139,9 @@ export function withBackgroundPick(feats: Feats, background: EntryRef, pick: Row
  * `blocks` with the spell list `block` chosen for `feat`, or `blocks` itself where it
  * already is.
  */
-export const withFeatBlock = (blocks: Blocks, feat: Row, block: number): Blocks =>
+export const withFeatBlock = (
+  blocks: Blocks,
+  feat: Pick<FeatRecord, "name" | "source">,
+  block: number,
+): Blocks =>
   withSpellBlock(blocks, { kind: "feat", ref: { name: feat.name, source: feat.source } }, block);

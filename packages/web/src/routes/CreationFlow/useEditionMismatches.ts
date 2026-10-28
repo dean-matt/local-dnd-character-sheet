@@ -1,4 +1,4 @@
-import { catalogRowRecordSchema } from "@dnd/catalog";
+import { catalogRowRecordSchema, homebrewFeatRecordSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type ContentRef,
@@ -10,6 +10,7 @@ import { skipToken, useQuery } from "@tanstack/react-query";
 import { useWatch } from "react-hook-form";
 import { z } from "zod";
 import { useFeats } from "../../hooks/useFeats.ts";
+import { useHomebrew } from "../../hooks/useHomebrew.ts";
 import { apiGet } from "../../lib/api.ts";
 import { takesFeats } from "../../lib/improvementFeats.ts";
 import { retryUnlessClientError } from "../../lib/retryUnlessClientError.ts";
@@ -73,8 +74,8 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
  * Each choice made so far that the character's edition does not hold: a race, class or
  * deity row, or a homebrew race, background or class, of the other edition; or a subrace,
  * background or subclass absent from the edition's list, or a feat a class granted at an
- * improvement that the edition's list lacks, or that a 2014 character took with feats not
- * allowed. `Ability Score Improvement` (XPHB) is never named: an
+ * improvement that the edition's list lacks, a homebrew one of the other edition, or either
+ * that a 2014 character took with feats not allowed. `Ability Score Improvement` (XPHB) is never named: an
  * edition change converts the scores it raised. Each class the draft holds is
  * checked. A choice counts only once its row loads, so one still loading is never named,
  * and a deity both editions share never is.
@@ -87,6 +88,7 @@ export function useEditionMismatches(): EditionMismatch[] {
   const { edition, catalogRace, raceRow, subraces, backgrounds } = useIdentityCatalog();
   const { entries } = useClassEntries();
   const featRows = useFeats(edition).data?.items;
+  const homebrewFeats = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
   const homebrewRace = useRowAt(homebrewPath("races", race));
   const homebrewBackground = useRowAt(homebrewPath("backgrounds", background));
   const deityRow = useRowAt(
@@ -110,13 +112,19 @@ export function useEditionMismatches(): EditionMismatch[] {
       ),
       missingFrom("Subclass", entry.subclass, entry.subclasses),
     ]),
-    ...feats.map(({ ref, grantedBy }) =>
-      grantedBy?.kind === "class" && "name" in ref && refKey(ref) !== refKey(IMPROVEMENT_FEAT)
-        ? featsAllowed
-          ? missingFrom("Feat", ref, featRows)
-          : { label: "Feat", value: named(ref) }
-        : undefined,
-    ),
+    ...feats.map(({ ref, grantedBy }) => {
+      if (grantedBy?.kind !== "class") return undefined;
+      if ("homebrewId" in ref) {
+        const row = homebrewFeats?.find((feat) => feat.id === ref.homebrewId);
+        return row && (!featsAllowed || row.edition !== edition)
+          ? { label: "Feat", value: `${row.name} (homebrew)` }
+          : undefined;
+      }
+      if (refKey(ref) === refKey(IMPROVEMENT_FEAT)) return undefined;
+      return featsAllowed
+        ? missingFrom("Feat", ref, featRows)
+        : { label: "Feat", value: named(ref) };
+    }),
     other("Deity", deity && `${deity.name} · ${deity.pantheon}`, deityRow?.edition),
   ].filter((mismatch) => mismatch !== undefined);
 }

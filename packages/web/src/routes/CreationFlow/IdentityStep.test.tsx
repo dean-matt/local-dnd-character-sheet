@@ -41,6 +41,33 @@ const background = (name: string, skills: Record<string, true>, feats?: unknown[
 });
 
 const ROWS: Record<string, unknown> = {
+  "/api/homebrew/races": [
+    {
+      id: "hr-1",
+      name: "Kenku",
+      edition: "classic",
+      json: { name: "Kenku", source: "HB", size: ["M"], speed: 30 },
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ],
+  "/api/homebrew/classes": [],
+  "/api/homebrew/backgrounds": [],
+  "/api/homebrew/feats": [
+    {
+      id: "hf-1",
+      name: "Lucky Break",
+      edition: "classic",
+      json: { name: "Lucky Break", source: "HB" },
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+    {
+      id: "hf-2",
+      name: "Quick Study",
+      edition: "one",
+      json: { name: "Quick Study", source: "HB" },
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ],
   "/api/races/Elf/PHB": { ...PHB("Elf"), edition: "classic", json: ELF },
   "/api/races/Elf/PHB/subraces?edition=classic&limit=200": page([
     { ...PHB("High"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: HIGH_ELF },
@@ -125,7 +152,11 @@ const ROWS: Record<string, unknown> = {
 };
 
 const SEARCHES: Record<string, unknown[]> = {
-  race: [hit("race", "Elf"), hit("race", "Verdan", "AI")],
+  race: [
+    hit("race", "Elf"),
+    hit("race", "Verdan", "AI"),
+    { type: "race", id: "hr-1", name: "Kenku", edition: "classic" },
+  ],
   background: [
     hit("background", "Sage"),
     hit("background", "Acolyte"),
@@ -483,6 +514,67 @@ describe("IdentityStep", () => {
         "Class: Blood Hunter (homebrew)",
         "Deity: Oghma · Celtic",
       ]),
+    );
+  });
+
+  it("offers a homebrew race marked Homebrew, and stores the pick by id with no departure", async () => {
+    renderStep();
+
+    await pick("Race", "ken", /^Kenku.*Homebrew/);
+
+    expect(values.race).toEqual({ homebrewId: "hr-1" });
+    expect(values.departures ?? []).toEqual([]);
+    expect(await screen.findByRole("button", { name: "Clear race, Kenku" })).toBeVisible();
+    expect(screen.getByText("Homebrew")).toBeVisible();
+    expect(screen.queryByText(/^Traits:/)).not.toBeInTheDocument();
+  });
+
+  it("names a homebrew feat taken at an improvement whose row carries the other edition", async () => {
+    const fighter = PHB("Fighter");
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        houseRules: { feats: true },
+        levels: Array.from({ length: 4 }, () => ({ class: fighter })),
+        feats: [
+          { ref: { homebrewId: "hf-1" }, grantedBy: { kind: "class", ref: fighter }, level: 4 },
+        ],
+      }),
+    );
+    renderStep();
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+
+    click("2024");
+
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toContain(
+        "Feat: Lucky Break (homebrew)",
+      ),
+    );
+  });
+
+  it("names a homebrew feat taken at an improvement where the new edition takes no feats", async () => {
+    const fighter = { name: "Fighter", source: "XPHB" };
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "one",
+        levels: Array.from({ length: 4 }, () => ({ class: fighter })),
+        feats: [
+          { ref: { homebrewId: "hf-2" }, grantedBy: { kind: "class", ref: fighter }, level: 4 },
+        ],
+      }),
+    );
+    renderStep();
+    const status = screen.getByRole("status", { name: "Choices outside the rules" });
+
+    click("2014");
+
+    await waitFor(() =>
+      expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toContain(
+        "Feat: Quick Study (homebrew)",
+      ),
     );
   });
 

@@ -1,6 +1,6 @@
-import type { SearchHit } from "@dnd/catalog";
 import type { CharacterDefinition } from "@dnd/character";
 import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
+import { sharedNameLabel } from "../../../lib/sharedNameLabel.ts";
 
 // Above every class one edition and the homebrew hold together; past it, the classes
 // beyond go unoffered until this pages.
@@ -19,12 +19,5 @@ export function useClassList(edition: CharacterDefinition["edition"]) {
     listAll: true,
   });
   const hits = classes.data?.items ?? [];
-  const names = hits.map((hit) => hit.name);
-  const shared = new Set(names.filter((name, index) => names.indexOf(name) !== index));
-  return {
-    hits,
-    failed: classes.isError,
-    label: (hit: SearchHit) =>
-      shared.has(hit.name) ? `${hit.name} (${"id" in hit ? "homebrew" : hit.source})` : hit.name,
-  };
+  return { hits, failed: classes.isError, label: sharedNameLabel(hits) };
 }
