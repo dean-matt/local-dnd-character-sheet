@@ -1,11 +1,9 @@
 import { ABILITIES, ABILITY_LABEL } from "@dnd/character";
-import { Info } from "lucide-react";
-import { Link } from "react-router";
 import { useSkillHolders } from "../../hooks/useSkillHolders.ts";
 import { FormField } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
-import { Popover } from "../Popover.tsx";
 import { Select } from "../Select.tsx";
+import { HeldByNote } from "./HeldByNote.tsx";
 import { type HomebrewFormProps, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
 
@@ -26,28 +24,12 @@ export function SkillBasics({ entry, recordId, onChange, errorFor }: HomebrewFor
   const held = holders.data ?? [];
   const note =
     holders.isError || held.length > 0 ? (
-      <Popover
-        trigger={<Info aria-hidden="true" size={14} className="block text-accent-text" />}
-        triggerLabel="Who holds this skill"
+      <HeldByNote
         label="Who holds this skill"
-      >
-        {holders.isError ? (
-          "Couldn't check which characters hold this skill. Changing it may reset their custom values."
-        ) : (
-          <>
-            <p>Held by the following characters, changing will reset custom values</p>
-            <ul className="mt-1 columns-3 gap-x-4 list-disc pl-5">
-              {held.map(({ id, name }) => (
-                <li key={id}>
-                  <Link to={`/characters/${id}`} className="text-accent-text underline">
-                    {name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </Popover>
+        holders={holders.isError ? undefined : held}
+        message="Held by the following characters, changing will reset custom values"
+        failure="Couldn't check which characters hold this skill. Changing it may reset their custom values."
+      />
     ) : undefined;
 
   return (

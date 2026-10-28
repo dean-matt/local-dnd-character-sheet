@@ -31,8 +31,9 @@ import {
 
 export type CharactersDb = BetterSQLite3Database<typeof charactersSchema>;
 
+/** Oldest first; `id` breaks a tie within the second `createdAt` resolves to. */
 export function listCharacters(db: CharactersDb) {
-  return db.select().from(characters).all();
+  return db.select().from(characters).orderBy(characters.createdAt, characters.id).all();
 }
 
 export function getCharacter(db: CharactersDb, id: string) {

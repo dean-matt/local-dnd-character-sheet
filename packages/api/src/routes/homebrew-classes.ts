@@ -25,6 +25,16 @@ import {
 
 const CLASS_NOT_FOUND = "No homebrew class with that id";
 
+const names = new Intl.ListFormat("en", { type: "conjunction" });
+
+const dieHeld = (
+  { name, hitDie }: { name: string; hitDie: number },
+  characters: { id: string; name: string }[],
+) => ({
+  error: `${name} is held by ${names.format(characters.map((held) => held.name))}, so its hit die stays d${hitDie}. Keep d${hitDie}, or add a class with another name for the new die.`,
+  characters,
+});
+
 const listClasses = createRoute({
   method: "get",
   path: "/homebrew/classes",
@@ -85,7 +95,18 @@ const updateClass = createRoute({
       content: { "application/json": { schema: homebrewClassRecordSchema } },
     },
     404: notFound("homebrew class"),
-    409: nameTaken("homebrew class"),
+    409: {
+      description:
+        "Another class of that edition has this name, or a character holds the class and the hit die would change",
+      content: {
+        "application/json": {
+          schema: z.union([
+            nameTaken("homebrew class").content["application/json"].schema,
+            referenced("homebrew class").content["application/json"].schema,
+          ]),
+        },
+      },
+    },
   },
 });
 
@@ -126,6 +147,14 @@ export function homebrewClassesRoutes(db: HomebrewDb, charactersDb: CharactersDb
   routes.openapi(updateClass, (c) => {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
+    const current = getHomebrewClass(db, id);
+    // Holders derive hit points from the stored die, so a new die would change them silently.
+    // The check and the write share no transaction across the two files: a character created
+    // on the class between them keeps the new die. An index table of holders is the way out.
+    if (current && current.hitDie !== input.hd.faces) {
+      const characters = charactersReferencingHomebrew(charactersDb, id);
+      if (characters.length > 0) return c.json(dieHeld(current, characters), 409);
+    }
     const result = claimName(
       () => updateHomebrewClass(db, id, input),
       holder(db, homebrewClasses, input),
