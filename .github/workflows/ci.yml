@@ -86,8 +86,15 @@ jobs:
       # makes that a reviewed change rather than a surprise.
       - uses: crate-ci/typos@v1.50.3
 
+  # Shards, not more workers: a runner's 4 vCPUs also host both servers, and 4 workers
+  # ran slower than 2 and timed out saves.
   e2e:
+    name: e2e (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v7
 
@@ -100,11 +107,11 @@ jobs:
         run: pnpm exec playwright install chromium
 
       - name: End-to-end tests
-        run: pnpm test:e2e
+        run: pnpm test:e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
 
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 7
