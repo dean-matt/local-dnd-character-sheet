@@ -1786,6 +1786,17 @@ describe("HomebrewSettings", () => {
       expect(
         group("Languages").getByLabelText("Granted as", { selector: FIELD_SELECTOR.combobox }),
       ).not.toHaveAccessibleDescription();
+
+      stepTo("Ability scores");
+      pickIn("Ability score increases", "Granted as", "Fixed");
+      tickIn("Ability score increases", "Granted", "Constitution");
+      typeIn("Ability score increases", "Increase by", "");
+      click("Next");
+      expect(
+        group("Ability score increases").getByLabelText("Increase by", {
+          selector: FIELD_SELECTOR.spinbutton,
+        }),
+      ).toHaveAccessibleDescription("Increase by: a whole number");
     });
 
     it("chips a feat's alternatives as its entry states them", async () => {
@@ -1817,13 +1828,31 @@ describe("HomebrewSettings", () => {
       click("Next");
 
       expect(within(editor()).getByRole("heading", { name: "Ability scores" })).toBeInTheDocument();
-      expect(editor()).toHaveTextContent("Prerequisite 1: a character level from 1 to 20");
+      expect(
+        group("Prerequisite 1").getByLabelText("Character level", {
+          selector: FIELD_SELECTOR.spinbutton,
+        }),
+      ).toHaveAccessibleDescription("Prerequisite 1: a character level from 1 to 20");
       const mode = group("Saving throws").getByLabelText("Granted as", {
         selector: FIELD_SELECTOR.combobox,
       });
       expect(mode).toHaveAccessibleDescription("Pick at least one to choose from");
 
       typeIn("Prerequisite 1", "Character level", "4");
+      typeIn("Prerequisite 1", "Minimum score", "31");
+      click("Add an alternative");
+      click("Next");
+      expect(
+        group("Prerequisite 1").getByLabelText("Minimum score", {
+          selector: FIELD_SELECTOR.spinbutton,
+        }),
+      ).toHaveAccessibleDescription("Prerequisite 1: a score minimum from 1 to 30");
+      expect(group("Prerequisite 2").getByRole("alert")).toHaveTextContent(
+        "Prerequisite 2: set at least one requirement",
+      );
+
+      typeIn("Prerequisite 1", "Minimum score", "13");
+      click("Remove prerequisite 2");
       tickIn("Saving throws", "Choose from", "Wisdom");
       click("Next");
       expect(within(editor()).getByRole("heading", { name: "Proficiencies" })).toBeInTheDocument();

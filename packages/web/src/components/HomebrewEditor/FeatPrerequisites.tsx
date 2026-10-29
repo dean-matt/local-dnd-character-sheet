@@ -10,7 +10,9 @@ import { Select } from "../Select.tsx";
 import {
   featsOf,
   hasUnshownParts,
+  isScoreMinimum,
   levelOf,
+  prerequisiteErrors,
   proficienciesOf,
   proficiencyEntry,
   racesOf,
@@ -89,6 +91,8 @@ export function FeatPrerequisites({ entry, edition, onChange, errorFor }: Homebr
       </p>
       {alternatives.map((alternative, at) => {
         const position = at + 1;
+        // Shown once a step or a save is tried, beside the input holding it where one does.
+        const errors = error ? prerequisiteErrors(alternative, position) : {};
         const parts: Alternative = isRecord(alternative) ? alternative : {};
         const level = levelOf(parts);
         const scores = scoresOf(parts);
@@ -111,6 +115,7 @@ export function FeatPrerequisites({ entry, edition, onChange, errorFor }: Homebr
                     max={20}
                     step={1}
                     value={level ?? ""}
+                    error={errors.level}
                     onChange={(event) => set("level", typedInteger(event.target.value))}
                   />
                 </div>
@@ -195,6 +200,7 @@ export function FeatPrerequisites({ entry, edition, onChange, errorFor }: Homebr
                         max={30}
                         step={1}
                         value={score.minimum ?? ""}
+                        error={isScoreMinimum(score.minimum) ? undefined : errors.score}
                         onChange={(event) =>
                           rewrite({ minimum: typedInteger(event.target.value) ?? null })
                         }
@@ -229,6 +235,11 @@ export function FeatPrerequisites({ entry, edition, onChange, errorFor }: Homebr
                 </button>
               </fieldset>
             )}
+            {errors.alternative && (
+              <p role="alert" className="text-error text-row">
+                {errors.alternative}
+              </p>
+            )}
             {hasUnshownParts(parts) && (
               <p className="text-muted text-row">
                 Part of this prerequisite is stated in a way the form cannot show. Edit it in JSON.
@@ -251,11 +262,6 @@ export function FeatPrerequisites({ entry, edition, onChange, errorFor }: Homebr
       >
         {alternatives.length === 0 ? "Add a prerequisite" : "Add an alternative"}
       </button>
-      {error && (
-        <p role="alert" className="text-error text-row">
-          {error}
-        </p>
-      )}
     </div>
   );
 }

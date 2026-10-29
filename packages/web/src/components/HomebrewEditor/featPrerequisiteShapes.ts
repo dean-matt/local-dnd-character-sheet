@@ -107,6 +107,10 @@ export function hasUnshownParts(alternative: Record<string, unknown>): boolean {
   );
 }
 
+/** Whether a score minimum is one a score can meet. */
+export const isScoreMinimum = (minimum: number | null): boolean =>
+  minimum !== null && Number.isInteger(minimum) && minimum >= 1 && minimum <= 30;
+
 /** What is wrong with the alternative as the form shows it, naming it by its position. */
 export function prerequisiteProblem(alternative: unknown, position: number): string | undefined {
   const named = `Prerequisite ${position}`;
@@ -118,13 +122,22 @@ export function prerequisiteProblem(alternative: unknown, position: number): str
     return `${named}: a character level from 1 to 20`;
   }
   const scores = scoresOf(parts) ?? [];
-  if (
-    scores.some(
-      ({ minimum }) =>
-        minimum === null || !(Number.isInteger(minimum) && minimum >= 1 && minimum <= 30),
-    )
-  ) {
+  if (scores.some(({ minimum }) => !isScoreMinimum(minimum))) {
     return `${named}: a score minimum from 1 to 30`;
   }
   return undefined;
+}
+
+/**
+ * The alternative's problem, split by where it shows: beside the level input, beside a score
+ * minimum, or under the alternative where no input holds it.
+ */
+export function prerequisiteErrors(
+  alternative: unknown,
+  position: number,
+): { level?: string; score?: string; alternative?: string } {
+  const problem = prerequisiteProblem(alternative, position);
+  if (problem?.includes("character level")) return { level: problem };
+  if (problem?.includes("score minimum")) return { score: problem };
+  return problem ? { alternative: problem } : {};
 }
