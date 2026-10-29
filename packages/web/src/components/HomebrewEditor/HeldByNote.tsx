@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Popover } from "../Popover.tsx";
 
@@ -10,7 +11,7 @@ interface HeldByNoteProps {
   /** Shown above the linked holders. */
   message: string;
   /** Shown alone where the holders could not be read. */
-  failure: string;
+  failure: ReactNode;
 }
 
 /** An info button whose popover names and links each character holding a homebrew row. */

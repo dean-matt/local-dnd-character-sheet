@@ -1231,33 +1231,134 @@ describe("HomebrewSettings", () => {
       );
 
       expect(note()).toBeNull();
-      expect(within(editor()).queryByRole("button", { name: "Who holds this class" })).toBeNull();
       expect(save()).not.toHaveAttribute("aria-disabled", "true");
     });
 
-    it("says the holders went unchecked, and leaves Save to the server, when the characters cannot be read", async () => {
-      const fetchMock = stubApi({ classes: [warden] }, [ok]);
-      const answer = fetchMock.getMockImplementation();
-      fetchMock.mockImplementation(async (input, init) =>
-        String(input) === "/api/characters"
-          ? json(500, { error: "down" })
-          : (answer as NonNullable<typeof answer>)(input, init),
-      );
+    it("holds Save on a character that took the class after the editor opened", async () => {
+      const lists = { classes: [warden], characters: [holder("c", "Bram")] };
+      stubApi(lists);
       const client = renderPage();
 
-      await editWarden(8);
-      await charactersRead(client, "error");
-      fireEvent.click(within(editor()).getByRole("button", { name: "Who holds this class" }));
+      fireEvent.click(
+        await within(screen.getByRole("region", { name: "Classes" })).findByRole("button", {
+          name: "Edit Warden",
+        }),
+      );
+      await charactersRead(client, "success");
+      lists.characters = [holder("c", "Bram"), holder("x1", "Vex", "c1")];
+      typeJson("Class JSON", JSON.stringify({ ...entry, hd: { number: 1, faces: 8 } }));
 
-      expect(note()).toBeNull();
-      expect(
-        within(editor()).getByText(
-          "Couldn't check which characters hold this class. If any do, Save fails and its hit die stays d10.",
-        ),
-      ).toBeVisible();
-      expect(save()).not.toHaveAttribute("aria-disabled", "true");
-      fireEvent.click(save());
-      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
+      fireEvent.click(note() as HTMLElement);
+      expect(within(editor()).getByRole("link", { name: "Vex" })).toHaveAttribute(
+        "href",
+        "/characters/x1",
+      );
+    });
+
+    describe("when the characters cannot be read", () => {
+      /** Edits Warden onto d8 while `/characters` fails, until `answer` is swapped for a list. */
+      const unchecked = async () => {
+        const lists = { classes: [warden] } as Record<string, unknown[]>;
+        const fetchMock = stubApi(lists, [ok]);
+        const answer = fetchMock.getMockImplementation() as NonNullable<
+          ReturnType<typeof fetchMock.getMockImplementation>
+        >;
+        let failing = true;
+        fetchMock.mockImplementation(async (input, init) =>
+          failing && String(input) === "/api/characters"
+            ? json(500, { error: "down" })
+            : answer(input, init),
+        );
+        const client = renderPage();
+        await editWarden(8);
+        await charactersRead(client, "error");
+        return {
+          fetchMock,
+          recover: (characters: unknown[]) => {
+            lists.characters = characters;
+            failing = false;
+          },
+        };
+      };
+
+      it("holds Save, says the holders went unchecked and offers a retry", async () => {
+        const { fetchMock } = await unchecked();
+
+        expect(save()).toHaveAttribute("aria-disabled", "true");
+        fireEvent.click(save());
+        fireEvent.click(note() as HTMLElement);
+        expect(
+          within(editor()).getByText(
+            "Couldn't check which characters hold this class, so Save waits until they are checked. A held class keeps its hit die, d10.",
+          ),
+        ).toBeVisible();
+        expect(within(editor()).getByRole("button", { name: "Retry" })).toBeVisible();
+        expect(writesOf(fetchMock)).toHaveLength(0);
+      });
+
+      it("frees Save on a retry that finds no holder", async () => {
+        const { fetchMock, recover } = await unchecked();
+        recover([holder("c", "Bram")]);
+        fireEvent.click(note() as HTMLElement);
+        fireEvent.click(within(editor()).getByRole("button", { name: "Retry" }));
+
+        await waitFor(() => expect(save()).not.toHaveAttribute("aria-disabled", "true"));
+        expect(note()).toBeNull();
+        expect(save()).toHaveFocus();
+        fireEvent.click(save());
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      });
+
+      it("links each holder a retry finds, and keeps Save held", async () => {
+        const { recover } = await unchecked();
+        recover([holder("a", "Vex", "c1"), holder("b", "Ash", "c1"), holder("c", "Bram")]);
+        fireEvent.click(note() as HTMLElement);
+        fireEvent.click(within(editor()).getByRole("button", { name: "Retry" }));
+
+        await waitFor(() =>
+          expect(
+            within(editor())
+              .queryAllByRole("link")
+              .map((link) => link.textContent),
+          ).toEqual(["Vex", "Ash"]),
+        );
+        expect(save()).toHaveAttribute("aria-disabled", "true");
+        expect(save()).toHaveFocus();
+      });
+
+      it("keeps one retry at a time, saying it is checking", async () => {
+        const { fetchMock } = await unchecked();
+        const answer = fetchMock.getMockImplementation() as NonNullable<
+          ReturnType<typeof fetchMock.getMockImplementation>
+        >;
+        fetchMock.mockImplementation((input, init) =>
+          String(input) === "/api/characters"
+            ? new Promise<Response>(() => {})
+            : answer(input, init),
+        );
+        const reads = () =>
+          fetchMock.mock.calls.filter(([url]) => String(url) === "/api/characters").length;
+        fireEvent.click(note() as HTMLElement);
+        fireEvent.click(within(editor()).getByRole("button", { name: "Retry" }));
+        const checking = await within(editor()).findByRole("button", { name: "Checking…" });
+        const before = reads();
+
+        expect(checking).toHaveAttribute("aria-disabled", "true");
+        fireEvent.click(checking);
+        expect(reads()).toBe(before);
+        expect(save()).toHaveAttribute("aria-disabled", "true");
+      });
+
+      it("frees Save once the die is back to the stored one", async () => {
+        const { fetchMock } = await unchecked();
+        typeJson("Class JSON", JSON.stringify({ ...entry, hd: { number: 1, faces: 10 } }));
+
+        expect(note()).toBeNull();
+        expect(save()).not.toHaveAttribute("aria-disabled", "true");
+        fireEvent.click(save());
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      });
     });
 
     it("never reads the characters to edit an item", async () => {
