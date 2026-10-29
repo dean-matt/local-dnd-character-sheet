@@ -4,7 +4,7 @@ The `github-sdlc` plugin carries the workflow: picking, building, reviewing, mer
 file holds what is true of this repository alone, which the plugin's skills read from
 `CLAUDE.md` and here.
 
-## Before designing
+## Before building
 
 Verify every count and shape the issue states against `vendor/`, and say which are wrong,
 or that `vendor/` was not there to ask. An issue's numbers come from memory more often than
