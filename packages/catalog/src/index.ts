@@ -2,6 +2,7 @@ export { abilityGrantSchema } from "./ability.ts";
 export type { IncreaseAlternative } from "./ability-increases.ts";
 export { abilityIncreasesSchema, customOrigin } from "./ability-increases.ts";
 export { appliedItemFieldsSchema } from "./applied-item-fields.ts";
+export { appliedSpellFieldsSchema } from "./applied-spell-fields.ts";
 export { catalogRowRecordSchema } from "./catalog-row.ts";
 export { catalogRowEntries } from "./catalog-row-entries.ts";
 export type {
@@ -169,6 +170,7 @@ export {
   homebrewSpellRecordSchema,
   spellCastingFacts,
   spellCastingFactsSchema,
+  spellEffectSchema,
   spellEntrySchema,
   spellRecordSchema,
 } from "./spell.ts";

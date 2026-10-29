@@ -9,9 +9,10 @@ import {
   entriesSchema,
   type SheetSpell,
   spellCastingFacts,
+  spellEffectSchema,
 } from "@dnd/catalog";
 import { type CharacterDefinition, displayName, entryKey } from "@dnd/character";
-import { type ZodType, z } from "zod";
+import type { ZodType } from "zod";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
 import { resolveItemRows } from "./inventory.ts";
 import { type SpellRow as CatalogSpellRow, findSpells, getSpells } from "./spells.ts";
@@ -33,14 +34,12 @@ const pick = <T>(schema: ZodType<T>, value: unknown): T | undefined => {
 
 const DAMAGE_TAG = /\{@damage ([^|}]+)/;
 
-const damageTypesSchema = z.array(z.string().min(1)).min(1);
-
 /** Scans the serialized text, whose key order is the order the entries print in. */
 function damageFacts(json: Record<string, unknown>) {
   const dice = DAMAGE_TAG.exec(JSON.stringify(json.entries ?? []))?.[1]?.trim();
   return {
     ...(dice && { damageDice: dice }),
-    damageTypes: pick(damageTypesSchema, json.damageInflict),
+    damageTypes: pick(spellEffectSchema.shape.damageInflict, json.damageInflict),
   };
 }
 
@@ -97,7 +96,7 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, fromItem?: str
     // Upstream keeps the upcast rule apart, and dropping it makes the text read complete.
     entries: [
       ...(pick(entriesSchema, row.json.entries) ?? []),
-      ...(pick(entriesSchema, row.json.entriesHigherLevel) ?? []),
+      ...(pick(spellEffectSchema.shape.entriesHigherLevel, row.json.entriesHigherLevel) ?? []),
     ],
   };
 }
