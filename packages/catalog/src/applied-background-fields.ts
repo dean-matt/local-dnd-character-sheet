@@ -18,7 +18,7 @@ type Shape = typeof shape;
 const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   name: "The background's name, as the sheet prints it for the character's background.",
   entries:
-    'The rules text, {@tags} included, printed in the background\'s detail. Each named entry with "data": {"isFeature": true} lists among the character\'s background features, "Feature: " dropped from its name, so "Feature: Open Road" lists as Open Road.',
+    'The rules text, {@tags} included, printed in the background\'s detail. Each entry with "data": {"isFeature": true} lists among the character\'s background features under its name, "Feature: " dropped, so "Feature: Open Road" lists as Open Road; one with no name lists under the background\'s.',
   entriesHigherLevel: 'Further rules text, printed after "entries" in the background\'s detail.',
   skillProficiencies:
     'Skills, such as [{"insight": true, "survival": true}], printed in the background\'s homebrew list entry. The sheet grants none of them to a character with a homebrew background.',
@@ -34,7 +34,7 @@ const described = Object.fromEntries(
 /**
  * Every field the sheet reads off a homebrew background, each described for a table writing
  * one. A field a schema here gains fails typecheck until it is described. `rowEntries`,
- * `backgroundFacts` and the features route also read the entry directly; a test records what
- * the first two read and fails on a field this list lacks.
+ * `backgroundFacts` and the features route also read the entry directly; tests record what
+ * each reads and fail on a field this list lacks.
  */
 export const appliedBackgroundFieldsSchema = z.object(described);

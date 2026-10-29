@@ -229,11 +229,6 @@ function raceGroup(
   return { origin: "race", name, features };
 }
 
-/**
- * The node a `classic` background flags `data.isFeature` — `Feature: Shelter of the
- * Faithful`. A `one` background flags none, since its feature is the origin feat the
- * feat group already carries.
- */
 function backgroundGroup(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -246,6 +241,15 @@ function backgroundGroup(
       : getBackground(dataDir, ref.name, ref.source)?.json,
   );
   if (!entry) return { origin: "background", name: displayName(ref), features: [unresolved(ref)] };
+  return backgroundEntryGroup(entry, ref);
+}
+
+/**
+ * The node a `classic` background flags `data.isFeature` — `Feature: Shelter of the
+ * Faithful`. A `one` background flags none, since its feature is the origin feat the
+ * feat group already carries.
+ */
+export function backgroundEntryGroup(entry: CharacterOptionEntry, ref: EntryRef): FeatureGroup {
   const features = (entry.entries ?? [])
     .filter(isNode)
     .filter((node) => (node.data as { isFeature?: unknown } | undefined)?.isFeature === true)
