@@ -72,8 +72,10 @@ export function classFacts(json: Json): Fact[] {
   ]);
 }
 
+/** Reads the skills alone, the one grant the list entry prints, so the field reference lists no other. */
 export function backgroundFacts(json: Json): Fact[] {
-  return stated([["Skills", proficiencyGrantsSchema.parse(json).skills.map(titleCase).join(", ")]]);
+  const skills = proficiencyGrantsSchema.in.shape.skillProficiencies.parse(json.skillProficiencies);
+  return stated([["Skills", skills.map(titleCase).join(", ")]]);
 }
 
 /** One alternative of a feat's prerequisites, every part of which it needs. */

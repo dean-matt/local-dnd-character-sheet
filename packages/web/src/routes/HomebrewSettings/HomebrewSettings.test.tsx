@@ -1826,6 +1826,48 @@ describe("HomebrewSettings", () => {
     ).toBeTruthy();
   });
 
+  it("lists every field the sheet reads off a background, its rules text among them, beside the background's JSON", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Backgrounds" })).getByRole("button", {
+        name: "Add background",
+      }),
+    );
+    const reference = within(editor()).getByRole("region", { name: "Field Reference" });
+    const terms = () =>
+      within(reference)
+        .getAllByRole("term")
+        .map((term) => term.textContent ?? "");
+    expect(terms()).toEqual(["entries", "entriesHigherLevel", "name", "skillProficiencies"]);
+    expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/rules text/);
+    expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(
+      /background features/,
+    );
+    expect(within(reference).getByText("skillProficiencies").nextSibling).toHaveTextContent(
+      /grants none of them/,
+    );
+
+    const search = within(reference).getByRole("searchbox", { name: "Search fields" });
+    fireEvent.change(search, { target: { value: "isFeature" } });
+    expect(terms()).toEqual(["entries"]);
+    fireEvent.change(search, { target: { value: "skill" } });
+    expect(terms()).toEqual(["skillProficiencies"]);
+    fireEvent.change(search, { target: { value: "nothing like this" } });
+    expect(reference).toHaveTextContent("No field matches");
+
+    fireEvent.click(within(editor()).getByRole("button", { name: "Hide field reference" }));
+    expect(within(editor()).queryByRole("region", { name: "Field Reference" })).toBeNull();
+    fireEvent.click(within(editor()).getByRole("button", { name: "Show field reference" }));
+    expect(
+      within(editor())
+        .getByRole("region", { name: "Field Reference" })
+        .compareDocumentPosition(field("textbox", "Background JSON")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   describe("a feat's form", () => {
     const feats = () => screen.getByRole("region", { name: "Feats" });
     const addFeat = () =>
