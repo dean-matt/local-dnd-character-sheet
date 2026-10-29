@@ -100,8 +100,8 @@ function offerOptions(offer: FeatOffer, pools: (field: FeatPick["field"]) => Opt
  * The picks a feat's own fields offer — a saving throw, a skill, a tool, a language, a
  * resistance — and, for a feat taken outside an improvement, the increases it offers, each
  * saved as soon as it is picked. A name another slot of the same field holds is not offered
- * again, and a pick stays shown while the list it came from loads or after it leaves it. A
- * homebrew feat's own row goes unread, so it shows none, whatever its entry offers.
+ * again, and a pick stays shown while the list it came from loads or after it leaves it. The
+ * sheet does not yet read a homebrew feat's offers, so it shows none.
  *
  * Each offer is asked on its own, so `Resilient` (XPHB) can store a Constitution save beside
  * a +1 to Strength, where the rules raise the save's ability. Upstream writes no field tying

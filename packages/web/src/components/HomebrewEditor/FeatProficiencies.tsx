@@ -68,7 +68,7 @@ export function FeatProficiencies({ entry, edition, onChange, errorFor }: Homebr
           label: name,
         })),
       ],
-      false,
+      loading(weapons.isPending, "weapons"),
     ],
     [
       "languageProficiencies",

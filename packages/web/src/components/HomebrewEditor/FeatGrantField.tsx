@@ -84,12 +84,16 @@ export function FeatGrantField({
     setState(next);
     onChange(writeGrant(value, spec, next));
   };
+  // A problem names the input it sits in, as `How many: …`, and shows beside that input.
+  const errorAt = (input: string) =>
+    typeof error === "string" && error.startsWith(`${input}:`) ? error : undefined;
+  const modeError = errorAt("How many") || errorAt("Increase by") ? undefined : error;
   const named = state.mode === "fixed" ? state.names : state.mode === "list" ? state.from : [];
   const shown = [
     ...options,
     ...named
       .filter((name) => !options.some((option) => option.value === name))
-      .map((name) => ({ value: name, label: titleCase(name) })),
+      .map((name) => ({ value: name, label: titleCase(name.split("|")[0] ?? name) })),
   ];
   const names = (namesLabel: string, onNames: (next: string[]) => void) => (
     <div className={PAIRED}>
@@ -111,6 +115,7 @@ export function FeatGrantField({
         min={1}
         step={1}
         value={current ?? ""}
+        error={errorAt("How many")}
         onChange={(event) => onCount(typedInteger(event.target.value) ?? null)}
       />
     </div>
@@ -120,6 +125,11 @@ export function FeatGrantField({
     return (
       <div className={FORM_GRID}>
         {names(label, (next) => write({ mode: "fixed", names: next, amount: null }))}
+        {status && (
+          <p role="status" className="col-span-full text-muted text-row">
+            {status}
+          </p>
+        )}
       </div>
     );
   }
@@ -128,7 +138,7 @@ export function FeatGrantField({
       <legend className="mb-1 font-semibold text-row">{label}</legend>
       <div className={FORM_GRID}>
         <div className={SHORT}>
-          <FormField label="Granted as" error={error} status={status}>
+          <FormField label="Granted as" error={modeError} status={status}>
             {(control) => (
               <Select
                 {...control}
@@ -147,6 +157,7 @@ export function FeatGrantField({
               type="number"
               step={1}
               value={state.amount ?? ""}
+              error={errorAt("Increase by")}
               onChange={(event) =>
                 write({ ...state, amount: typedInteger(event.target.value) ?? null })
               }

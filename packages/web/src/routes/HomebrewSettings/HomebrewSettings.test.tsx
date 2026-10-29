@@ -1720,6 +1720,74 @@ describe("HomebrewSettings", () => {
       expect(fromJson?.body).toEqual(fromForm?.body);
     });
 
+    it("writes a race, a feat and score minimums from the edition's lists", async () => {
+      const fetchMock = stubApi({});
+      const listed = (url: string) => {
+        if (url.startsWith("/api/search?") && url.includes("type=race")) {
+          const hit = { type: "race", name: "Elf", source: "XPHB", edition: "one" };
+          return { items: [hit], total: 1, limit: 200, offset: 0 };
+        }
+        if (url.startsWith("/api/feats?")) {
+          const json = { name: "Alert", source: "XPHB" };
+          return { items: [{ ...json, edition: "one", json }], total: 1 };
+        }
+        return undefined;
+      };
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const body = listed(String(input));
+          return body ? json(200, body) : fetchMock(input, init);
+        }),
+      );
+      renderPage();
+
+      addFeat();
+      stepTo("Prerequisites");
+      fireEvent.click(group("Prerequisite 1").getByRole("button", { name: "Add a score minimum" }));
+      const minimums = group("Prerequisite 1").getAllByLabelText("Minimum score", {
+        selector: FIELD_SELECTOR.spinbutton,
+      });
+      expect(minimums).toHaveLength(2);
+      fireEvent.change(minimums[1] as HTMLElement, { target: { value: "15" } });
+      fireEvent.click(
+        group("Prerequisite 1").getByRole("button", {
+          name: "Remove prerequisite 1 score minimum 1",
+        }),
+      );
+      await waitFor(() =>
+        expect(group("Prerequisite 1").getByRole("button", { name: /^Race / })).toBeEnabled(),
+      );
+      tickIn("Prerequisite 1", "Race", "Elf");
+      await within(editor()).findByRole("button", { name: /^Feat / });
+      fireEvent.click(group("Prerequisite 1").getByRole("button", { name: /^Feat / }));
+      fireEvent.click(await within(editor()).findByRole("checkbox", { name: "Alert (XPHB)" }));
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+
+      mode("JSON");
+      expect(JSON.parse(jsonText("Feat JSON")).prerequisite).toEqual([
+        { ability: [{ str: 15 }], race: [{ name: "elf" }], feat: ["alert|xphb"] },
+      ]);
+    });
+
+    it("names a count problem beside its own input", () => {
+      stubApi({});
+      renderPage();
+
+      addFeat();
+      stepTo("Proficiencies");
+      pickIn("Languages", "Granted as", "Choice of any");
+      typeIn("Languages", "How many", "");
+      click("Next");
+
+      expect(
+        group("Languages").getByLabelText("How many", { selector: FIELD_SELECTOR.spinbutton }),
+      ).toHaveAccessibleDescription("How many: a whole number of at least 1");
+      expect(
+        group("Languages").getByLabelText("Granted as", { selector: FIELD_SELECTOR.combobox }),
+      ).not.toHaveAccessibleDescription();
+    });
+
     it("chips a feat's alternatives as its entry states them", async () => {
       stubApi({
         feats: [
