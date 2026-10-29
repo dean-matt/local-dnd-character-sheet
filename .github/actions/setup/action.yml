@@ -1,0 +1,46 @@
+name: setup
+description: Install Node, pnpm and the workspace's dependencies, restoring each from cache.
+
+runs:
+  using: composite
+  steps:
+    # pnpm comes from the pinned Node's corepack, so setup-node runs first and cannot cache
+    # the pnpm store itself; the store is cached below, once pnpm exists.
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .node-version
+        package-manager-cache: false
+
+    # Corepack fetches the pinned pnpm on first use, which takes about 20 s on Windows, so
+    # its download folder is cached under the pin. The `warm` workflow saves this cache and
+    # the pnpm store on `main`, the only scope every pull request can read.
+    - id: pm
+      shell: bash
+      run: |
+        corepack enable
+        echo "pin=$(node -p 'require("./package.json").packageManager')" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/cache@v6
+      with:
+        path: |
+          ~/.cache/node/corepack
+          ~/AppData/Local/node/corepack
+        key: corepack-${{ runner.os }}-${{ steps.pm.outputs.pin }}
+
+    - id: store
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/cache@v6
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: pnpm-store-${{ runner.os }}-
+
+    - name: Exclude the workspace from Defender
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: Add-MpPreference -ExclusionPath $env:GITHUB_WORKSPACE, $env:RUNNER_TEMP
+
+    - shell: bash
+      run: pnpm install --frozen-lockfile
