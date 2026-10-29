@@ -32,6 +32,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // Playwright's default of half the cores leaves a hosted runner's 4 vCPUs half idle.
+  workers: process.env.CI ? "100%" : undefined,
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: `http://127.0.0.1:${WEB_PORT}`,
