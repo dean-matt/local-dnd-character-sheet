@@ -1290,7 +1290,7 @@ describe("HomebrewSettings", () => {
         fireEvent.click(note() as HTMLElement);
         expect(
           within(editor()).getByText(
-            "Couldn't check which characters hold this class, so Save waits until they can be. A held class keeps its hit die, d10.",
+            "Couldn't check which characters hold this class, so Save waits until they are checked. A held class keeps its hit die, d10.",
           ),
         ).toBeVisible();
         expect(within(editor()).getByRole("button", { name: "Retry" })).toBeVisible();
@@ -1305,6 +1305,7 @@ describe("HomebrewSettings", () => {
 
         await waitFor(() => expect(save()).not.toHaveAttribute("aria-disabled", "true"));
         expect(note()).toBeNull();
+        expect(save()).toHaveFocus();
         fireEvent.click(save());
         await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
       });
@@ -1322,6 +1323,30 @@ describe("HomebrewSettings", () => {
               .map((link) => link.textContent),
           ).toEqual(["Vex", "Ash"]),
         );
+        expect(save()).toHaveAttribute("aria-disabled", "true");
+        expect(save()).toHaveFocus();
+      });
+
+      it("keeps one retry at a time, saying it is checking", async () => {
+        const { fetchMock } = await unchecked();
+        const answer = fetchMock.getMockImplementation() as NonNullable<
+          ReturnType<typeof fetchMock.getMockImplementation>
+        >;
+        fetchMock.mockImplementation((input, init) =>
+          String(input) === "/api/characters"
+            ? new Promise<Response>(() => {})
+            : answer(input, init),
+        );
+        const reads = () =>
+          fetchMock.mock.calls.filter(([url]) => String(url) === "/api/characters").length;
+        fireEvent.click(note() as HTMLElement);
+        fireEvent.click(within(editor()).getByRole("button", { name: "Retry" }));
+        const checking = await within(editor()).findByRole("button", { name: "Checking…" });
+        const before = reads();
+
+        expect(checking).toHaveAttribute("aria-disabled", "true");
+        fireEvent.click(checking);
+        expect(reads()).toBe(before);
         expect(save()).toHaveAttribute("aria-disabled", "true");
       });
 

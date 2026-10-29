@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { ClassDieHoldNote } from "./ClassDieHoldNote.tsx";
 import type { ClassDieHold } from "./useClassDieHold.ts";
 
@@ -30,6 +31,14 @@ export function HomebrewEditorFooter({
   hold,
   onSave,
 }: HomebrewEditorFooterProps) {
+  const saveButton = useRef<HTMLButtonElement>(null);
+  // A read that lands takes the Retry button away with focus on it, so focus moves to Save,
+  // whose state says whether the read freed it.
+  const retry = async () => {
+    const read = (await hold?.retry()) ?? false;
+    if (read) saveButton.current?.focus();
+    return read;
+  };
   return (
     <div className="flex w-full flex-wrap items-center justify-end gap-2">
       <button type="button" onClick={onCancel} className={SECONDARY}>
@@ -53,8 +62,9 @@ export function HomebrewEditorFooter({
           </button>
         </>
       )}
-      {hold && <ClassDieHoldNote hold={hold} />}
+      {hold && <ClassDieHoldNote hold={{ ...hold, retry }} />}
       <button
+        ref={saveButton}
         type="button"
         onClick={onSave}
         aria-disabled={saving || hold !== undefined}

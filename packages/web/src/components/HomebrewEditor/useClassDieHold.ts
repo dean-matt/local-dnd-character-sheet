@@ -13,8 +13,8 @@ export interface ClassDieHold {
   hitDie: number;
   /** `undefined` where the holders failed to load. */
   characters: { id: string; name: string }[] | undefined;
-  /** Reads the holders again. */
-  retry: () => void;
+  /** Reads the holders again; resolves `true` where the read succeeded. */
+  retry: () => Promise<boolean>;
   /** Whether a read of the holders is in flight. */
   checking: boolean;
 }
@@ -23,6 +23,8 @@ export interface ClassDieHold {
  * The hold on saving a stored homebrew class whose draft changes its hit die while characters
  * hold it, or could not be checked; `undefined` for any other kind, a new class, a draft that
  * keeps the die or does not parse, while the holders first load, and where none holds the class.
+ * A die change reads the holders again and leaves Save to the last list until that read lands,
+ * which on a local API takes milliseconds; the server's refusal covers a save inside that gap.
  * Only `levels[].class` is read; the server walks the whole definition and refuses any holder
  * this misses, so the holders a refused save names stand in for a list that missed them.
  */
@@ -58,12 +60,14 @@ export function useClassDieHold(
   const refused = refusedHolders(failure).characters;
   const listed = holders.data?.length ? holders.data : undefined;
   const characters = listed ?? (refused.length ? refused : undefined);
-  if (!characters && !holders.isError) return undefined;
+  // A retry with no list yet puts the query back to pending, which must not read as a first load.
+  const unchecked = holders.isError || (holders.isPending && holders.errorUpdateCount > 0);
+  if (!characters && !unchecked) return undefined;
   return {
     name: stored.name,
     hitDie: stored.hitDie,
     characters,
-    retry: () => void refetch(),
+    retry: () => refetch().then(({ isSuccess }) => isSuccess),
     checking: holders.isFetching,
   };
 }

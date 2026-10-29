@@ -18,8 +18,8 @@ export function ClassDieHoldNote({
       failure={
         <>
           <p>
-            Couldn't check which characters hold this class, so Save waits until they can be. A held
-            class keeps its hit die, d{hitDie}.
+            Couldn't check which characters hold this class, so Save waits until they are checked. A
+            held class keeps its hit die, d{hitDie}.
           </p>
           <button
             type="button"
