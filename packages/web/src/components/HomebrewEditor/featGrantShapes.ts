@@ -145,8 +145,12 @@ const whole = (value: Typed) => value !== null && Number.isInteger(value);
 /** What is wrong with `value` as the form shows it; nothing for a shape the form leaves to the JSON. */
 export function grantProblem(value: unknown, spec: GrantSpec): string | undefined {
   const state = readGrant(value, spec);
-  if (state?.mode === "fixed" && spec.amounts && !whole(state.amount)) {
-    return "Increase by: a whole number";
+  if (
+    state?.mode === "fixed" &&
+    spec.amounts &&
+    !(whole(state.amount) && Number(state.amount) >= 1)
+  ) {
+    return "Increase by: a whole number of at least 1";
   }
   if (state?.mode === "list" && state.from.length === 0) return "Pick at least one to choose from";
   if (

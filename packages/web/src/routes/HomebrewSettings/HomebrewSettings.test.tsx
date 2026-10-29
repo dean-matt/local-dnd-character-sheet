@@ -1796,7 +1796,7 @@ describe("HomebrewSettings", () => {
         group("Ability score increases").getByLabelText("Increase by", {
           selector: FIELD_SELECTOR.spinbutton,
         }),
-      ).toHaveAccessibleDescription("Increase by: a whole number");
+      ).toHaveAccessibleDescription("Increase by: a whole number of at least 1");
     });
 
     it("chips a feat's alternatives as its entry states them", async () => {

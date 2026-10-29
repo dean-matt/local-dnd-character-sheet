@@ -1,12 +1,10 @@
-import type { SearchHit } from "@dnd/catalog";
 import { useBaseWeapons } from "../../hooks/useBaseWeapons.ts";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { FeatGrantField } from "./FeatGrantField.tsx";
 import { FEAT_GRANT_SPECS, type FeatGrantKey } from "./featGrantShapes.ts";
 import { type HomebrewFormProps, withField } from "./homebrewEntry.ts";
+import { byName, type Option } from "./homebrewOptions.ts";
 import { SKILL_NAMES } from "./homebrewVocabulary.ts";
-
-type Option = { value: string; label: string };
 
 const SKILLS = SKILL_NAMES.map((name) => ({ value: name.toLowerCase(), label: name }));
 
@@ -21,15 +19,6 @@ const WEAPON_CATEGORIES = [
   { value: "simple", label: "Simple weapons" },
   { value: "martial", label: "Martial weapons" },
 ];
-
-/** Each hit once by its lowercased name, as upstream keys a proficiency. */
-const byName = (hits: readonly SearchHit[]): Option[] => {
-  const seen = new Set<string>();
-  return hits.flatMap(({ name }) => {
-    const value = name.toLowerCase();
-    return seen.has(value) || !seen.add(value) ? [] : [{ value, label: name }];
-  });
-};
 
 /**
  * The skills, expertise, tools, armor, weapons and languages a homebrew feat grants, each

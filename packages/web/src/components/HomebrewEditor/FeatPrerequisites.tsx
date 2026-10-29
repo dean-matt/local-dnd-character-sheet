@@ -1,8 +1,7 @@
-import { ABILITIES, ABILITY_LABEL, type Ability } from "@dnd/character";
+import type { Ability } from "@dnd/character";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
 import { useFeats } from "../../hooks/useFeats.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
-import { titleCase } from "../../lib/proficiencyGrants.ts";
 import { FormField } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
 import { MultiSelect } from "../MultiSelect.tsx";
@@ -23,14 +22,12 @@ import { HomebrewCheckbox } from "./HomebrewCheckbox.tsx";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { type HomebrewFormProps, listAt, typedInteger, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT, WHOLE } from "./homebrewGrid.ts";
+import { ABILITY_OPTIONS, byName, type Option, withValues } from "./homebrewOptions.ts";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
 
-type Option = { value: string; label: string };
 type Alternative = Record<string, unknown>;
 
 const ALTERNATIVE = "flex min-w-0 flex-col gap-3 rounded-control border border-border p-3";
-
-const ABILITY_OPTIONS = ABILITIES.map((value) => ({ value, label: ABILITY_LABEL[value] }));
 
 const PROFICIENCY_OPTIONS = [
   { value: "armor:light", label: "Light armor" },
@@ -39,14 +36,6 @@ const PROFICIENCY_OPTIONS = [
   { value: "armor:shield", label: "Shields" },
   { value: "weapon:simple", label: "Simple weapons" },
   { value: "weapon:martial", label: "Martial weapons" },
-];
-
-/** `options` with each of `values` they lack listed under its own spelling. */
-const withValues = (options: Option[], values: string[]): Option[] => [
-  ...options,
-  ...values
-    .filter((value) => !options.some((option) => option.value === value))
-    .map((value) => ({ value, label: titleCase(value.split("|")[0] ?? value) })),
 ];
 
 /** A list part written back: `undefined` where nothing is left, so the key drops. */
@@ -63,14 +52,8 @@ const listed = <T,>(values: T[]): T[] | undefined => (values.length > 0 ? values
 export function FeatPrerequisites({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
   const races = useCatalogSearch({ edition, type: "race", query: "", limit: 200, listAll: true });
   const feats = useFeats(edition);
-  const raceOptions: Option[] = [];
-  for (const { name } of races.data?.items ?? []) {
-    const value = name.toLowerCase();
-    if (!raceOptions.some((option) => option.value === value)) {
-      raceOptions.push({ value, label: name });
-    }
-  }
-  const featOptions = (feats.data?.items ?? []).map(({ name, source }) => ({
+  const raceOptions = byName(races.data?.items ?? []);
+  const featOptions: Option[] = (feats.data?.items ?? []).map(({ name, source }) => ({
     value: `${name}|${source}`.toLowerCase(),
     label: `${name} (${source})`,
   }));

@@ -1,5 +1,4 @@
 import { type ReactNode, useState } from "react";
-import { titleCase } from "../../lib/proficiencyGrants.ts";
 import { FormField } from "../FormField.tsx";
 import { InputField } from "../InputField.tsx";
 import { MultiSelect } from "../MultiSelect.tsx";
@@ -13,8 +12,7 @@ import {
 } from "./featGrantShapes.ts";
 import { typedInteger } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT } from "./homebrewGrid.ts";
-
-type Option = { value: string; label: string };
+import { type Option, withValues } from "./homebrewOptions.ts";
 
 const MODES: { value: GrantMode; label: string }[] = [
   { value: "none", label: "None" },
@@ -89,19 +87,13 @@ export function FeatGrantField({
     typeof error === "string" && error.startsWith(`${input}:`) ? error : undefined;
   const modeError = errorAt("How many") || errorAt("Increase by") ? undefined : error;
   const named = state.mode === "fixed" ? state.names : state.mode === "list" ? state.from : [];
-  const shown = [
-    ...options,
-    ...named
-      .filter((name) => !options.some((option) => option.value === name))
-      .map((name) => ({ value: name, label: titleCase(name.split("|")[0] ?? name) })),
-  ];
   const names = (namesLabel: string, onNames: (next: string[]) => void) => (
     <div className={PAIRED}>
       <MultiSelect
         inForm
         label={namesLabel}
         noun={noun}
-        options={shown}
+        options={withValues(options, named)}
         selected={named}
         onChange={onNames}
       />
@@ -155,6 +147,7 @@ export function FeatGrantField({
             <InputField
               label="Increase by"
               type="number"
+              min={1}
               step={1}
               value={state.amount ?? ""}
               error={errorAt("Increase by")}

@@ -9,6 +9,7 @@ import { FeatPicks } from "./FeatPicks.tsx";
 const RESILIENT = { name: "Resilient", source: "XPHB" };
 const SKILLED = { name: "Skilled", source: "XPHB" };
 const EXPERT = { name: "Skill Expert", source: "XPHB" };
+const LISTED_EXPERT = { name: "Lore Expert", source: "HB" };
 const ARCANA = { name: "Arcana", source: "XPHB" };
 const HISTORY = { name: "History", source: "XPHB" };
 
@@ -31,6 +32,11 @@ const FEATS = [
     },
   },
   { ...EXPERT, edition: "one", json: { ...EXPERT, expertise: [{ anyProficientSkill: 1 }] } },
+  {
+    ...LISTED_EXPERT,
+    edition: "one",
+    json: { ...LISTED_EXPERT, expertise: [{ choose: { from: ["arcana", "history"] } }] },
+  },
 ];
 
 type Feat = CharacterDefinition["feats"][number];
@@ -147,8 +153,11 @@ describe("FeatPicks", () => {
     expect(options("Skilled skill or tool, 2 of 2")).toEqual(["History"]);
   });
 
-  it("offers expertise only in a skill held at proficient or better", async () => {
-    const base = holding([{ ref: EXPERT }]);
+  it.each([
+    ["of any", EXPERT],
+    ["from a list", LISTED_EXPERT],
+  ])("offers expertise %s only in a skill held at proficient or better", async (_, feat) => {
+    const base = holding([{ ref: feat }]);
     const record = {
       ...base,
       definition: {
@@ -165,8 +174,8 @@ describe("FeatPicks", () => {
     stubApi(record);
     renderSeeded(record);
 
-    await screen.findByRole("combobox", { name: "Skill Expert expertise" });
-    expect(options("Skill Expert expertise")).toEqual(["History"]);
+    await screen.findByRole("combobox", { name: `${feat.name} expertise` });
+    expect(options(`${feat.name} expertise`)).toEqual(["History"]);
   });
 
   it("caps an increase by the scores alone, leaving out what an equipped item sets", async () => {

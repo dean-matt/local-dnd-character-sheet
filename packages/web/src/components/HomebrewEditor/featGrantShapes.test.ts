@@ -51,13 +51,16 @@ describe("writeGrant", () => {
 });
 
 describe("grantProblem", () => {
-  it("names a choice with nothing to choose, too many to pick, or no count", () => {
+  it("names a choice with nothing to choose, too many to pick or no count, and an increase under 1", () => {
     expect(grantProblem([{ choose: { from: [], count: 1 } }], expertise)).toMatch(/at least one/);
     expect(grantProblem([{ choose: { from: ["stealth"], count: 2 } }], expertise)).toMatch(
       /no more than the 1/,
     );
     expect(grantProblem([{ anyProficientSkill: null }], expertise)).toMatch(/at least 1/);
     expect(grantProblem([{ con: null }], ability)).toMatch(/Increase by/);
+    expect(grantProblem([{ con: 0 }], ability)).toMatch(/Increase by: .* at least 1/);
+    expect(grantProblem([{ con: -2 }], ability)).toMatch(/Increase by/);
+    expect(grantProblem([{ con: 1 }], ability)).toBeUndefined();
     expect(grantProblem([{ draconic: true }, { any: 0 }], expertise)).toBeUndefined();
   });
 });
