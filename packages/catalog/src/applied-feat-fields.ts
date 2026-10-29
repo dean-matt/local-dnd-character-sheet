@@ -10,8 +10,7 @@ import { senseGrantsSchema } from "./sense.ts";
  * `featGrantsSchema` reads `savingThrowProficiencies`, `expertise` and
  * `skillToolLanguageProficiencies` off the entry directly, and `rowEntries` reads
  * `entriesHigherLevel`, with no schema to borrow. `ability` is left out: the sheet places no
- * increase a homebrew feat prints. The homebrew fields come last, so a key both read keeps
- * the shape a homebrew save validates.
+ * increase a homebrew feat prints.
  */
 const shape = {
   entriesHigherLevel: entriesSchema.optional(),
@@ -72,8 +71,8 @@ const described = Object.fromEntries(
 
 /**
  * Every field the sheet reads off a homebrew feat, each described for a table writing one. A
- * field a schema here gains fails typecheck until it is described. `featGrantsSchema` and
- * `rowEntries` also read the entry directly; tests record what each reads and fail on a field
- * this list lacks.
+ * field a schema here gains fails typecheck until it is described. `featGrantsSchema`,
+ * `rowEntries`, `backgroundFeatOffers` and the features route also read the entry directly;
+ * tests record what each reads and fail on a field this list lacks.
  */
 export const appliedFeatFieldsSchema = z.object(described);

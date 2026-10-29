@@ -66,7 +66,7 @@ const unresolved = (ref: EntryRef, placement: Placement = {}): SheetFeature => (
  * A whole catalog or homebrew row as one feature, unresolved where the row is missing or
  * its `json` does not parse.
  */
-function rowFeature(json: unknown, ref: EntryRef, placement: Placement = {}): SheetFeature {
+export function rowFeature(json: unknown, ref: EntryRef, placement: Placement = {}): SheetFeature {
   const entry = entryOf(json);
   if (!entry) return unresolved(ref, placement);
   return {
