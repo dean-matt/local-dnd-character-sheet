@@ -1,5 +1,7 @@
+import { appliedClassFieldsSchema, classEntries, spellcastingAbilitySchema } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
 import { backgroundFacts, classFacts, featFacts, raceFacts } from "./homebrewOptionFacts.ts";
+import { CLASS_STARTERS } from "./homebrewStarters.ts";
 
 describe("homebrewOptionFacts", () => {
   it("names a varying size, a walking speed and fixed increases, a decrease signed as written", () => {
@@ -63,5 +65,27 @@ describe("homebrewOptionFacts", () => {
         prerequisite: [{ background: [{ name: "Rune Carver" }] }],
       }),
     ).toEqual([]);
+  });
+  it("reads nothing off a homebrew class that the class's field reference leaves out", () => {
+    const read = new Set<string>();
+    const recorded = (entry: Record<string, unknown>) =>
+      new Proxy(entry, {
+        get(target, key, receiver) {
+          if (typeof key === "string") read.add(key);
+          return Reflect.get(target, key, receiver);
+        },
+      });
+    const entry = {
+      ...CLASS_STARTERS[0].entry,
+      spellcastingAbility: "wis",
+      startingProficiencies: { armor: ["light"], skills: [{ choose: { from: ["nature"] } }] },
+      startingEquipment: { default: ["a club"], goldAlternative: "50" },
+      multiclassing: { requirements: { str: 13 }, proficienciesGained: { armor: ["light"] } },
+      classFeatures: ["Grove Ward|Warden|Homebrew|1"],
+    };
+    classEntries(recorded(entry));
+    classFacts(recorded(entry));
+    spellcastingAbilitySchema.parse(recorded(entry));
+    expect([...read].filter((key) => !(key in appliedClassFieldsSchema.shape))).toEqual([]);
   });
 });

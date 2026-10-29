@@ -1787,10 +1787,25 @@ describe("HomebrewSettings", () => {
       within(reference)
         .getAllByRole("term")
         .map((term) => term.textContent ?? "");
-    expect(terms()).toEqual(["entries", "hd", "name", "spellcastingAbility"]);
+    expect(terms()).toEqual([
+      "classFeatures",
+      "entries",
+      "entriesHigherLevel",
+      "hd",
+      "multiclassing",
+      "name",
+      "primaryAbility",
+      "proficiency",
+      "spellcastingAbility",
+      "startingEquipment",
+      "startingProficiencies",
+    ]);
     expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/rules text/);
     expect(within(reference).getByText("spellcastingAbility").nextSibling).toHaveTextContent(
       /no spell slots/,
+    );
+    expect(within(reference).getByText("proficiency").nextSibling).toHaveTextContent(
+      /grants no saving throw/,
     );
 
     const search = within(reference).getByRole("searchbox", { name: "Search fields" });
