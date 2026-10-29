@@ -88,7 +88,7 @@ jobs:
 
   # Shards, not more workers: a runner's 4 vCPUs also host both servers, and 4 workers
   # ran slower than 2 and timed out saves.
-  e2e:
+  e2e-shard:
     name: e2e (${{ matrix.shard }}/${{ strategy.job-total }})
     runs-on: ubuntu-latest
     strategy:
@@ -115,3 +115,11 @@ jobs:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 7
+
+  # The ruleset requires `e2e` by name, so it stands for the shards as `check (<os>)` does.
+  e2e:
+    needs: [e2e-shard]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: for r in ${{ join(needs.*.result, ' ') }}; do echo "$r"; [ "$r" = success ] || exit 1; done
