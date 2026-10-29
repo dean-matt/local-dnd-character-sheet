@@ -1773,6 +1773,44 @@ describe("HomebrewSettings", () => {
     ).toBeTruthy();
   });
 
+  it("lists every field the sheet reads off a class, its rules text among them, beside the class's JSON", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Classes" })).getByRole("button", {
+        name: "Add class",
+      }),
+    );
+    const reference = within(editor()).getByRole("region", { name: "Field Reference" });
+    const terms = () =>
+      within(reference)
+        .getAllByRole("term")
+        .map((term) => term.textContent ?? "");
+    expect(terms()).toEqual(["entries", "hd", "name", "spellcastingAbility"]);
+    expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/rules text/);
+    expect(within(reference).getByText("spellcastingAbility").nextSibling).toHaveTextContent(
+      /no spell slots/,
+    );
+
+    const search = within(reference).getByRole("searchbox", { name: "Search fields" });
+    fireEvent.change(search, { target: { value: "hit points" } });
+    expect(terms()).toEqual(["hd"]);
+    fireEvent.change(search, { target: { value: "save dc" } });
+    expect(terms()).toEqual(["spellcastingAbility"]);
+    fireEvent.change(search, { target: { value: "nothing like this" } });
+    expect(reference).toHaveTextContent("No field matches");
+
+    fireEvent.click(within(editor()).getByRole("button", { name: "Hide field reference" }));
+    expect(within(editor()).queryByRole("region", { name: "Field Reference" })).toBeNull();
+    fireEvent.click(within(editor()).getByRole("button", { name: "Show field reference" }));
+    expect(
+      within(editor())
+        .getByRole("region", { name: "Field Reference" })
+        .compareDocumentPosition(field("textbox", "Class JSON")) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   describe("a feat's form", () => {
     const feats = () => screen.getByRole("region", { name: "Feats" });
     const addFeat = () =>

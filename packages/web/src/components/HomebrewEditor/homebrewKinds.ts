@@ -1,4 +1,5 @@
 import {
+  appliedClassFieldsSchema,
   appliedItemFieldsSchema,
   appliedRaceFieldsSchema,
   appliedSpellFieldsSchema,
@@ -226,16 +227,19 @@ const race = {
   reference: createElement(FieldReference, { schema: appliedRaceFieldsSchema }),
 };
 
-const klass = pasted(
-  {
-    inputSchema: homebrewClassInputSchema,
-    starters: CLASS_STARTERS,
-    entries: classEntries,
-  },
-  classFacts,
-  // `classEntries` already prints the hit die and saving throws.
-  ([label]) => label === "Primary Ability",
-);
+const klass = {
+  ...pasted(
+    {
+      inputSchema: homebrewClassInputSchema,
+      starters: CLASS_STARTERS,
+      entries: classEntries,
+    },
+    classFacts,
+    // `classEntries` already prints the hit die and saving throws.
+    ([label]) => label === "Primary Ability",
+  ),
+  reference: createElement(FieldReference, { schema: appliedClassFieldsSchema }),
+};
 
 const background = pasted(
   {
