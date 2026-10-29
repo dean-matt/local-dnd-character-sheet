@@ -11,7 +11,7 @@ export interface HomebrewEditorFooterProps {
   first: boolean;
   onAdvance: (by: number) => void;
   saving: boolean;
-  /** Why Save is unavailable, drawn to its left; Save holds while it names characters. */
+  /** Why Save is unavailable, drawn to its left; Save holds while it stands. */
   hold?: ClassDieHold;
   onSave: () => void;
 }
@@ -57,7 +57,7 @@ export function HomebrewEditorFooter({
       <button
         type="button"
         onClick={onSave}
-        aria-disabled={saving || hold?.characters !== undefined}
+        aria-disabled={saving || hold !== undefined}
         className={`${BUTTON} bg-accent text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:opacity-50`}
       >
         {saving ? "Saving…" : "Save"}
