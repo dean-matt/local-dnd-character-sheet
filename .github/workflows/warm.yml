@@ -1,0 +1,24 @@
+name: warm
+
+# A pull request reads caches saved on its own ref or on `main`, and `ci` runs only on pull
+# requests, so without this every pull request's first run starts cold. Setting up on
+# `main` saves the caches `ci` restores; a cache whose key already exists is not saved again.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: warm
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup

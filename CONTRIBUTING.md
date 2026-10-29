@@ -264,7 +264,9 @@ CI splits by what a check needs to read. Everything that reads only committed da
 on every pull request; the tests run on Linux and Windows, the rest on Linux alone. The
 tests run as shards, because one Windows runner took minutes over them. The ruleset
 requires `check (<os>)` by name, so that job stands for its OS's shards and fails when
-one does. The `corpus` job reads `vendor/` and fetches 109 MB to do it, so on a pull request it waits
+one does. Every job sets up through `.github/actions/setup`, and the `warm` workflow runs
+the same setup on each push to `main`, because a pull request reads only its own caches
+and `main`'s. The `corpus` job reads `vendor/` and fetches 109 MB to do it, so on a pull request it waits
 for a change to `content.manifest.json`, `content.lock.json` or the workflow itself. A
 tag bump is the event it exists for: that is the one change that can leave the lockfile
 and the committed fixtures each describing a different upstream.

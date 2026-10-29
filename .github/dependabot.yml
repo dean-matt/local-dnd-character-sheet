@@ -4,7 +4,7 @@ updates:
   # repository whose lockfile is updated deliberately, and pnpm workspaces are not
   # what this bot is good at.
   - package-ecosystem: github-actions
-    directory: /
+    directories: [/, /.github/actions/*]
     schedule:
       interval: monthly
     commit-message:
