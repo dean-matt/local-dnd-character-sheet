@@ -1,5 +1,6 @@
 import {
   appliedItemFieldsSchema,
+  appliedRaceFieldsSchema,
   appliedSpellFieldsSchema,
   classEntries,
   type Entries,
@@ -213,14 +214,17 @@ function pasted<I extends HomebrewInput & Record<string, unknown>>(
   };
 }
 
-const race = pasted(
-  {
-    inputSchema: homebrewRaceInputSchema,
-    starters: RACE_STARTERS,
-    entries: rowEntries,
-  },
-  raceFacts,
-);
+const race = {
+  ...pasted(
+    {
+      inputSchema: homebrewRaceInputSchema,
+      starters: RACE_STARTERS,
+      entries: rowEntries,
+    },
+    raceFacts,
+  ),
+  reference: createElement(FieldReference, { schema: appliedRaceFieldsSchema }),
+};
 
 const klass = pasted(
   {

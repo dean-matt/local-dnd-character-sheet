@@ -1,4 +1,4 @@
-import { appliedSpellFieldsSchema } from "@dnd/catalog";
+import { appliedRaceFieldsSchema, appliedSpellFieldsSchema } from "@dnd/catalog";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { EditorView } from "codemirror";
@@ -1733,6 +1733,44 @@ describe("HomebrewSettings", () => {
         },
       ]),
     );
+  });
+
+  it("lists every field the sheet reads off a race, its rules text among them, beside the race's JSON", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Races" })).getByRole("button", {
+        name: "Add race",
+      }),
+    );
+    const reference = within(editor()).getByRole("region", { name: "Field Reference" });
+    const terms = () =>
+      within(reference)
+        .getAllByRole("term")
+        .map((term) => term.textContent ?? "");
+    expect(terms()).toEqual(
+      Object.keys(appliedRaceFieldsSchema.shape).sort((a, b) => a.localeCompare(b)),
+    );
+    expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/race trait/);
+    expect(within(reference).getByText("resist").nextSibling).toHaveTextContent(/grants nothing/);
+
+    const search = within(reference).getByRole("searchbox", { name: "Search fields" });
+    fireEvent.change(search, { target: { value: "carrying" } });
+    expect(terms()).toEqual(["size"]);
+    fireEvent.change(search, { target: { value: "darkv" } });
+    expect(terms()).toEqual(["darkvision", "entries", "senses"]);
+    fireEvent.change(search, { target: { value: "nothing like this" } });
+    expect(reference).toHaveTextContent("No field matches");
+
+    fireEvent.click(within(editor()).getByRole("button", { name: "Hide field reference" }));
+    expect(within(editor()).queryByRole("region", { name: "Field Reference" })).toBeNull();
+    fireEvent.click(within(editor()).getByRole("button", { name: "Show field reference" }));
+    expect(
+      within(editor())
+        .getByRole("region", { name: "Field Reference" })
+        .compareDocumentPosition(field("textbox", "Race JSON")) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   describe("a feat's form", () => {
