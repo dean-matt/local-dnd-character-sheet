@@ -69,6 +69,18 @@ describe("featGrantsSchema", () => {
     ]);
   });
 
+  it("reads a pick of named languages and of named skills for expertise", () => {
+    expect(
+      featGrantsSchema.parse({
+        languageProficiencies: [{ choose: { from: ["Elvish", "sylvan"] } }],
+        expertise: [{ choose: { from: ["stealth", "perception"], count: 2 } }],
+      }).offers,
+    ).toEqual([
+      { fields: ["languages"], from: ["elvish", "sylvan"], count: 1 },
+      { fields: ["expertise"], from: ["stealth", "perception"], count: 2 },
+    ]);
+  });
+
   it("reads a tool pick of named tools and one of a kind", () => {
     expect(
       featGrantsSchema.parse({
