@@ -1270,20 +1270,49 @@ describe("HomebrewSettings", () => {
       expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/characters")).toBe(false);
     });
 
-    it("keeps the editor open with its draft when the API refuses a new hit die", async () => {
+    describe("refused by the API on a list that missed the holder", () => {
       const error =
         "Warden is held by Vex, so its hit die stays d10. Keep d10, or add a class with another name for the new die.";
-      stubApi({ classes: [warden] }, [
-        { status: 409, body: { error, characters: [{ id: "x1", name: "Vex" }] } },
-      ]);
-      renderPage();
+      /** Edits Warden onto d8 against a list naming no holder, and saves into the refusal. */
+      const refuse = async () => {
+        const fetchMock = stubApi({ classes: [warden], characters: [holder("c", "Bram")] }, [
+          { status: 409, body: { error, characters: [{ id: "x1", name: "Vex" }] } },
+          ok,
+        ]);
+        const client = renderPage();
+        const draft = await editWarden(8);
+        await charactersRead(client, "success");
+        fireEvent.click(save());
+        return { fetchMock, draft };
+      };
 
-      const draft = await editWarden(8);
-      fireEvent.click(save());
+      it("keeps the draft, holds Save and links the holders the refusal names", async () => {
+        const { fetchMock, draft } = await refuse();
 
-      expect(await within(editor()).findByRole("alert")).toHaveTextContent(`Save failed: ${error}`);
-      expect(jsonText("Class JSON")).toBe(draft);
-      expect(save()).not.toHaveAttribute("aria-disabled", "true");
+        expect(await within(editor()).findByRole("alert")).toHaveTextContent(
+          `Save failed: ${error}`,
+        );
+        expect(jsonText("Class JSON")).toBe(draft);
+        expect(save()).toHaveAttribute("aria-disabled", "true");
+        fireEvent.click(save());
+        fireEvent.click(note() as HTMLElement);
+        expect(within(editor()).getByRole("link", { name: "Vex" })).toHaveAttribute(
+          "href",
+          "/characters/x1",
+        );
+        expect(writesOf(fetchMock)).toHaveLength(1);
+      });
+
+      it("frees Save once the die is back to the stored one", async () => {
+        const { fetchMock } = await refuse();
+        await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
+        typeJson("Class JSON", JSON.stringify({ ...entry, hd: { number: 1, faces: 10 } }));
+
+        expect(note()).toBeNull();
+        expect(save()).not.toHaveAttribute("aria-disabled", "true");
+        fireEvent.click(save());
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(2));
+      });
     });
   });
 

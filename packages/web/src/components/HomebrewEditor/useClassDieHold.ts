@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { charactersQuery } from "../../hooks/useCharacters.ts";
 import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
 import type { HomebrewRow } from "../../lib/homebrewListing.ts";
+import { refusedHolders } from "../../lib/refusedHolders.ts";
 import type { HomebrewDraft } from "./homebrewDraft.ts";
 
 /** A stored class whose die the draft would change under the characters holding it. */
@@ -18,12 +19,13 @@ export interface ClassDieHold {
  * hold it, or could not be checked; `undefined` for any other kind, a new class, a draft that
  * keeps the die or does not parse, while the holders load, and where none holds the class.
  * Only `levels[].class` is read; the server walks the whole definition and refuses any holder
- * this misses.
+ * this misses, so the holders a refused save names stand in for a list that missed them.
  */
 export function useClassDieHold(
   collection: HomebrewCollection,
   record: HomebrewRow | undefined,
   checked: HomebrewDraft<unknown>,
+  failure: Error | null,
 ): ClassDieHold | undefined {
   const stored =
     collection === "classes" ? homebrewClassRecordSchema.safeParse(record).data : undefined;
@@ -42,7 +44,9 @@ export function useClassDieHold(
   const faces = homebrewClassInputSchema.safeParse("input" in checked ? checked.input : undefined)
     .data?.hd.faces;
   if (!stored || faces === undefined || faces === stored.hitDie) return undefined;
-  const characters = holders.data?.length ? holders.data : undefined;
+  const refused = refusedHolders(failure).characters;
+  const listed = holders.data?.length ? holders.data : undefined;
+  const characters = listed ?? (refused.length ? refused : undefined);
   if (!characters && !holders.isError) return undefined;
   return { name: stored.name, hitDie: stored.hitDie, characters };
 }
