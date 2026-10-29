@@ -1602,4 +1602,202 @@ describe("HomebrewSettings", () => {
       ]),
     );
   });
+
+  describe("a feat's form", () => {
+    const feats = () => screen.getByRole("region", { name: "Feats" });
+    const addFeat = () =>
+      fireEvent.click(within(feats()).getByRole("button", { name: "Add feat" }));
+    const group = (name: string) => within(within(editor()).getByRole("group", { name }));
+    const pickIn = (name: string, label: string, option: string) => {
+      fireEvent.click(group(name).getByLabelText(label, { selector: FIELD_SELECTOR.combobox }));
+      fireEvent.click(screen.getByRole("option", { name: option }));
+    };
+    const tickIn = (name: string, list: string, ...options: string[]) => {
+      fireEvent.click(group(name).getByRole("button", { name: new RegExp(`^${list} `) }));
+      for (const option of options) {
+        fireEvent.click(within(editor()).getByRole("checkbox", { name: option }));
+      }
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    };
+    const typeIn = (name: string, label: string, value: string) =>
+      fireEvent.change(group(name).getByLabelText(label, { selector: FIELD_SELECTOR.spinbutton }), {
+        target: { value },
+      });
+    const preview = () => {
+      mode("Preview");
+      const text = editor().querySelector('[role="tabpanel"]')?.textContent;
+      mode("Step by step");
+      return text;
+    };
+
+    const built = {
+      name: "Stonewarden",
+      entries: FEAT_STARTERS[0].entry.entries,
+      prerequisite: [
+        { ability: [{ str: 13 }], level: 4 },
+        { proficiency: [{ armor: "heavy" }], spellcasting: true },
+      ],
+      ability: [{ choose: { from: ["str", "dex", "con", "int", "wis", "cha"], count: 1 } }],
+      savingThrowProficiencies: [{ choose: { from: ["str", "con"], count: 1 } }],
+      skillProficiencies: [{ athletics: true }],
+      expertise: [{ anyProficientSkill: 1 }],
+      armorProficiencies: [{ heavy: true }],
+      languageProficiencies: [{ any: 2 }],
+    };
+
+    it("offers its steps beside JSON and Preview", () => {
+      stubApi({});
+      renderPage();
+
+      addFeat();
+      for (const name of ["Step by step", "JSON", "Preview"]) {
+        expect(within(editor()).getByRole("tab", { name })).toBeInTheDocument();
+      }
+      const steps = within(editor()).getByRole("navigation", { name: "Steps" });
+      expect(
+        within(steps)
+          .getAllByRole("button")
+          .map((button) => button.textContent),
+      ).toEqual([
+        "Basics & Rules text",
+        "Prerequisites & Ability scores",
+        "Proficiencies",
+        "Preview",
+      ]);
+      expect(field("textbox", "Name")).toHaveValue("Ironbound");
+    });
+
+    it("builds alternatives, increases and proficiencies in upstream's shapes, and saves what the same JSON pasted saves", async () => {
+      const stored = {
+        id: "f1",
+        name: built.name,
+        edition: "one",
+        json: { ...built, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const fetchMock = stubApi({}, [
+        { status: 201, body: stored },
+        { status: 201, body: stored },
+      ]);
+      renderPage();
+
+      addFeat();
+      fireEvent.change(field("textbox", "Name"), { target: { value: "Stonewarden" } });
+      stepTo("Prerequisites");
+      typeIn("Prerequisite 1", "Character level", "4");
+      click("Add an alternative");
+      tickIn("Prerequisite 2", "Armor or weapon proficiency", "Heavy armor");
+      fireEvent.click(group("Prerequisite 2").getByLabelText("Can cast at least one spell"));
+      pickIn("Ability score increases", "Granted as", "Choice of any");
+      pickIn("Saving throws", "Granted as", "Choice from a list");
+      tickIn("Saving throws", "Choose from", "Strength", "Constitution");
+      stepTo("Proficiencies");
+      pickIn("Skills", "Granted as", "Fixed");
+      tickIn("Skills", "Granted", "Athletics");
+      pickIn("Expertise", "Granted as", "Choice of any");
+      fireEvent.click(within(editor()).getByRole("button", { name: /^Armor / }));
+      fireEvent.click(within(editor()).getByRole("checkbox", { name: "Heavy armor" }));
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      pickIn("Languages", "Granted as", "Choice of any");
+      typeIn("Languages", "How many", "2");
+      const formPreview = preview();
+      expect(formPreview).toContain(
+        "Prerequisite: Level 4, STR 13; or Heavy armor proficiency, Spellcasting",
+      );
+      click("Save");
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+      addFeat();
+      mode("JSON");
+      typeJson("Feat JSON", JSON.stringify(built));
+      expect(preview()).toBe(formPreview);
+      click("Save");
+
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(2));
+      const [fromForm, fromJson] = writesOf(fetchMock);
+      expect(fromForm?.body).toEqual({ ...built, edition: "one" });
+      expect(fromJson?.body).toEqual(fromForm?.body);
+    });
+
+    it("chips a feat's alternatives as its entry states them", async () => {
+      stubApi({
+        feats: [
+          {
+            id: "f1",
+            name: built.name,
+            edition: "one",
+            json: { ...built, source: "HB" },
+            createdAt: CREATED_AT,
+          },
+        ],
+      });
+      renderPage();
+
+      const row = (await within(feats()).findByText("Stonewarden")).closest("li");
+      expect(row).toHaveTextContent("Level 4, STR 13; or Heavy armor proficiency, Spellcasting");
+    });
+
+    it("holds a step while a field it shows has a problem, naming it beside the field", () => {
+      stubApi({});
+      renderPage();
+
+      addFeat();
+      stepTo("Prerequisites");
+      typeIn("Prerequisite 1", "Character level", "25");
+      pickIn("Saving throws", "Granted as", "Choice from a list");
+      click("Next");
+
+      expect(within(editor()).getByRole("heading", { name: "Ability scores" })).toBeInTheDocument();
+      expect(editor()).toHaveTextContent("Prerequisite 1: a character level from 1 to 20");
+      const mode = group("Saving throws").getByLabelText("Granted as", {
+        selector: FIELD_SELECTOR.combobox,
+      });
+      expect(mode).toHaveAccessibleDescription("Pick at least one to choose from");
+
+      typeIn("Prerequisite 1", "Character level", "4");
+      tickIn("Saving throws", "Choose from", "Wisdom");
+      click("Next");
+      expect(within(editor()).getByRole("heading", { name: "Proficiencies" })).toBeInTheDocument();
+    });
+
+    it("keeps every field and part the form has no control for through an edit", async () => {
+      const json = {
+        name: "Marked",
+        source: "HB",
+        category: "G",
+        repeatable: true,
+        prerequisite: [{ level: 4, campaign: ["Eberron"] }],
+        languageProficiencies: [{ draconic: true }, { any: 1 }],
+      };
+      const stored = { id: "f1", name: "Marked", edition: "one", json, createdAt: CREATED_AT };
+      const fetchMock = stubApi({ feats: [stored] }, [{ status: 200, body: stored }]);
+      renderPage();
+
+      fireEvent.click(await within(feats()).findByRole("button", { name: "Edit Marked" }));
+      fireEvent.change(field("textbox", "Name"), { target: { value: "Twice Marked" } });
+      stepTo("Prerequisites");
+      expect(group("Prerequisite 1").getByText(/cannot show/)).toBeInTheDocument();
+      typeIn("Prerequisite 1", "Character level", "5");
+      stepTo("Proficiencies");
+      expect(within(editor()).getByText(/languages as alternatives/)).toBeInTheDocument();
+      click("Save");
+
+      const { source: _source, ...rest } = json;
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          {
+            url: "/api/homebrew/feats/f1",
+            method: "PUT",
+            body: {
+              ...rest,
+              name: "Twice Marked",
+              prerequisite: [{ level: 5, campaign: ["Eberron"] }],
+              edition: "one",
+            },
+          },
+        ]),
+      );
+    });
+  });
 });

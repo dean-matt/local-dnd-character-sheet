@@ -1,11 +1,11 @@
 import {
   classEntries,
   type Entries,
+  type HomebrewFeatInput,
   type HomebrewItemInput,
   type HomebrewSpellInput,
   homebrewBackgroundInputSchema,
   homebrewClassInputSchema,
-  homebrewFeatInputSchema,
   homebrewRaceInputSchema,
   homebrewSkillInputSchema,
   homebrewSpellInputSchema,
@@ -34,8 +34,13 @@ import {
   SKILL_STARTERS,
   SPELL_STARTERS,
 } from "../../lib/homebrewStarters.ts";
+import { FeatAbilityScores } from "./FeatAbilityScores.tsx";
+import { FeatBasics } from "./FeatBasics.tsx";
+import { FeatPrerequisites } from "./FeatPrerequisites.tsx";
+import { FeatProficiencies } from "./FeatProficiencies.tsx";
 import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { itemFacts, spellFacts } from "./homebrewFacts.ts";
+import { homebrewFeatFormSchema } from "./homebrewFeatChecks.ts";
 import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
 import { isVersatile, itemGroup } from "./homebrewVocabulary.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
@@ -234,14 +239,40 @@ const background = pasted(
   backgroundFacts,
 );
 
-const feat = pasted(
-  {
-    inputSchema: homebrewFeatInputSchema,
-    starters: FEAT_STARTERS,
-    entries: rowEntries,
-  },
-  featFacts,
-);
+const FEAT_PROFICIENCIES = [
+  "skillProficiencies",
+  "expertise",
+  "toolProficiencies",
+  "armorProficiencies",
+  "weaponProficiencies",
+  "languageProficiencies",
+];
+
+const feat: EditingKind<HomebrewFeatInput> = {
+  inputSchema: homebrewFeatFormSchema,
+  facts: featFacts,
+  entries: rowEntries,
+  starters: FEAT_STARTERS,
+  sections: [
+    { title: "Basics", Fields: FeatBasics, keys: ["name"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+    { title: "Prerequisites", Fields: FeatPrerequisites, keys: ["prerequisite"] },
+    {
+      title: "Ability scores",
+      Fields: FeatAbilityScores,
+      keys: ["ability", "savingThrowProficiencies"],
+    },
+    { title: "Proficiencies", Fields: FeatProficiencies, keys: FEAT_PROFICIENCIES },
+  ],
+  shownKeys: () => [
+    "name",
+    "entries",
+    "prerequisite",
+    "ability",
+    "savingThrowProficiencies",
+    ...FEAT_PROFICIENCIES,
+  ],
+};
 
 const skill: EditingKind<z.infer<typeof homebrewSkillInputSchema>> = {
   inputSchema: homebrewSkillInputSchema,
