@@ -25,11 +25,6 @@ the issue is the last open one in an artboard's row of
 [Retiring an artboard](mockup/README.md#retiring-an-artboard), delete that artboard as the
 section says.
 
-## The version
-
-The merge raises the root `package.json` version, never the pull request, so a pull request
-that edits it conflicts with every other.
-
 ## Protected paths
 
 `.github/protected-paths.txt` lists what a merge waits on the user for. A change under one is
