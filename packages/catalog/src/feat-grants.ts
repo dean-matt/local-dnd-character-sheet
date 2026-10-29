@@ -44,15 +44,24 @@ function chosen(element: unknown): { from: string[]; count: number } | undefined
   );
 }
 
+/** The picks a list offers by count of any under `anyKey`, and from a `choose` list. */
+function picksOf(field: FeatPickField, list: unknown, anyKey: string): FeatOffer[] {
+  const only = onlyOf(list);
+  const any = countSchema.safeParse(only?.[anyKey]).data;
+  const named = chosen(only);
+  return [
+    ...(any ? [{ fields: [field], count: any, from: null }] : []),
+    ...(named ? [{ fields: [field], ...named }] : []),
+  ];
+}
+
 /** The picks every field but the skill and tool lists offers, which their own schemas read. */
 function otherOffers(row: Record<string, unknown>): FeatOffer[] {
   const offers: FeatOffer[] = [];
   const saves = chosen(onlyOf(row.savingThrowProficiencies));
   if (saves) offers.push({ fields: ["savingThrows"], ...saves });
-  const languages = countSchema.safeParse(onlyOf(row.languageProficiencies)?.any).data;
-  if (languages) offers.push({ fields: ["languages"], count: languages, from: null });
-  const expertise = countSchema.safeParse(onlyOf(row.expertise)?.anyProficientSkill).data;
-  if (expertise) offers.push({ fields: ["expertise"], count: expertise, from: null });
+  offers.push(...picksOf("languages", row.languageProficiencies, "any"));
+  offers.push(...picksOf("expertise", row.expertise, "anyProficientSkill"));
   const mixed = z
     .looseObject({ choose: z.array(chooseSchema) })
     .safeParse(onlyOf(row.skillToolLanguageProficiencies)).data?.choose;

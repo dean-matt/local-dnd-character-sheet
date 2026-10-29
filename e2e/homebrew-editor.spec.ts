@@ -72,6 +72,37 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
   await expect(add).toBeFocused();
 });
 
+test("a keyboard user sets a homebrew feat's choice on each step, which holds no violation", async ({
+  page,
+}) => {
+  await page.goto("/settings/homebrew");
+  await page.getByRole("button", { name: "Add feat" }).click();
+  const editor = page.getByRole("dialog", { name: "New feat" });
+  await expect(editor.getByRole("textbox", { name: "Name" })).toBeVisible();
+  await expectNoViolations(page);
+
+  await editor.getByRole("button", { name: "Prerequisites & Ability scores" }).click();
+  const saves = editor.getByRole("group", { name: "Saving throws" });
+  const granted = saves.getByRole("combobox", { name: "Granted as" });
+  await granted.press("Enter");
+  await granted.press("ArrowDown");
+  await granted.press("ArrowDown");
+  await granted.press("Enter");
+  await expect(granted).toHaveText("Choice from a list");
+  await saves.getByRole("button", { name: /^Choose from/ }).press("Enter");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Space");
+  await page.keyboard.press("Escape");
+  await expect(saves.getByRole("button", { name: /^Choose from/ })).toHaveAccessibleName(
+    "Choose from Strength",
+  );
+  await expectNoViolations(page);
+
+  await editor.getByRole("button", { name: "Proficiencies" }).click();
+  await expect(editor.getByRole("group", { name: "Languages" })).toBeVisible();
+  await expectNoViolations(page);
+});
+
 test("at phone width the field reference stacks above the JSON, and the editor fits the window", async ({
   page,
 }) => {

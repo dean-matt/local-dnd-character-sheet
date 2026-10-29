@@ -83,14 +83,19 @@ function pool(
 
 /** The options an offer's slot gives, its named ones first, each field's pool after. */
 function offerOptions(offer: FeatOffer, pools: (field: FeatPick["field"]) => Option[]): Option[] {
-  const listed = offer.fields.flatMap((field) =>
-    (offer.from ?? []).map((name) =>
-      option(
-        { field, name },
-        field === "savingThrows" ? ABILITY_LABEL[name as Ability] : titleCase(name),
-      ),
-    ),
-  );
+  const listed = offer.fields.flatMap((field) => {
+    // Expertise needs the proficiency, so a listed skill the character lacks is not offered.
+    const proficient =
+      field === "expertise" ? new Set(pools(field).map(({ value }) => value)) : undefined;
+    return (offer.from ?? [])
+      .filter((name) => !proficient || proficient.has(pickValue({ field, name })))
+      .map((name) =>
+        option(
+          { field, name },
+          field === "savingThrows" ? ABILITY_LABEL[name as Ability] : titleCase(name),
+        ),
+      );
+  });
   const any = offer.from === null || offer.types ? offer.fields.flatMap(pools) : [];
   const seen = new Set<string>();
   return [...listed, ...any].filter(({ value }) => !seen.has(value) && seen.add(value));
@@ -100,8 +105,8 @@ function offerOptions(offer: FeatOffer, pools: (field: FeatPick["field"]) => Opt
  * The picks a feat's own fields offer — a saving throw, a skill, a tool, a language, a
  * resistance — and, for a feat taken outside an improvement, the increases it offers, each
  * saved as soon as it is picked. A name another slot of the same field holds is not offered
- * again, and a pick stays shown while the list it came from loads or after it leaves it. A
- * homebrew feat states no offer the sheet reads, so it shows none.
+ * again, and a pick stays shown while the list it came from loads or after it leaves it. The
+ * sheet does not yet read a homebrew feat's offers, so it shows none.
  *
  * Each offer is asked on its own, so `Resilient` (XPHB) can store a Constitution save beside
  * a +1 to Strength, where the rules raise the save's ability. Upstream writes no field tying

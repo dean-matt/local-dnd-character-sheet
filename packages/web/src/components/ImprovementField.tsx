@@ -40,9 +40,9 @@ export interface ImprovementFieldProps {
 /**
  * One Ability Score Improvement or Epic Boon: raise scores, +2 to one or +1 to two, or take
  * a feat the character qualifies for, catalog or homebrew, then place whatever increases the
- * feat offers; a homebrew feat offers none. A score an increase would carry past its cap is
- * not offered, and the feat already taken stays offered after the character stops
- * qualifying for it.
+ * feat offers; the sheet does not yet read a homebrew feat's increases. A score an increase
+ * would carry past its cap is not offered, and the feat already taken stays offered after the
+ * character stops qualifying for it.
  */
 export function ImprovementField({
   name,
