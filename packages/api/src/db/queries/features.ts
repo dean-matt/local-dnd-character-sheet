@@ -45,8 +45,11 @@ import {
 
 type Placement = { level?: number; featureType?: string };
 
-const entryOf = (json: unknown): CharacterOptionEntry | undefined =>
-  json === undefined ? undefined : parseJson(characterOptionEntrySchema, json);
+/** The row itself where it parses, not zod's copy, so a test can record each field read off it. */
+const entryOf = (json: unknown): CharacterOptionEntry | undefined => {
+  const parsed = json === undefined ? undefined : parseJson(characterOptionEntrySchema, json);
+  return parsed && typeof json === "object" ? (json as CharacterOptionEntry) : parsed;
+};
 
 /**
  * A homebrew row's stamped source names no book, so its feature carries none, as items do.
