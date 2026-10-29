@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { characterOptionEntrySchema } from "./character-options.ts";
 import { defenseTraitSchema } from "./defense.ts";
 import { homebrewRaceInputSchema, raceTraitsSchema } from "./race.ts";
 import { senseGrantsSchema } from "./sense.ts";
@@ -10,7 +9,6 @@ import { senseGrantsSchema } from "./sense.ts";
  * and keep the shape a homebrew save validates.
  */
 const shape = {
-  ...characterOptionEntrySchema.omit({ source: true }).shape,
   ...raceTraitsSchema.in.shape,
   ...defenseTraitSchema.in.omit({ type: true }).shape,
   ...senseGrantsSchema.in.shape,
@@ -25,11 +23,11 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   name: "The race's name, which heads its traits among the character's features.",
   entries:
     'The rules text, {@tags} included. Each named entry, such as {"type": "entries", "name": "Darkvision", "entries": ["You see in dim light within 60 feet."]}, lists as a race trait among the character\'s features.',
-  size: 'Size codes, such as ["M"]: "T" tiny, "S" small, "M" medium, "L" large, "H" huge, "G" gargantuan, or "V" small or medium. Sets the size carrying capacity reads; of several, the largest unless the character picks another.',
+  size: 'Size codes, such as ["M"]: "T" tiny, "S" small, "M" medium, "L" large, "H" huge, "G" gargantuan, or "V" small or medium. Sets the size carrying capacity reads; of several, the sheet takes the largest.',
   speed:
-    'Feet, such as 30, or a speed per mode, such as {"walk": 30, "fly": 30, "swim": true}, where true matches the walking speed. The modes are walk, burrow, climb, fly and swim.',
+    'Feet of walking speed, such as 30, or a speed per mode, such as {"walk": 30, "fly": 30, "swim": true}, where walk is required and true matches it. The other modes are burrow, climb, fly and swim.',
   resist:
-    'Damage types resisted, such as ["fire"]. {"choose": {"from": ["cold", "fire"]}} in the list offers a choice of one.',
+    'Damage types resisted, such as ["fire"]. {"choose": {"from": ["cold", "fire"]}} in the list grants nothing: the sheet offers no pick for a homebrew race and lists the choice as not yet made.',
   immune: 'Damage types the character is immune to, such as ["poison"].',
   conditionImmune: 'Conditions the character is immune to, such as ["charmed"].',
   vulnerable: 'Damage types the character is vulnerable to, such as ["thunder"].',

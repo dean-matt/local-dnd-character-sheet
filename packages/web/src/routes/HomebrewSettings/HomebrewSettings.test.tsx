@@ -1753,7 +1753,7 @@ describe("HomebrewSettings", () => {
       Object.keys(appliedRaceFieldsSchema.shape).sort((a, b) => a.localeCompare(b)),
     );
     expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/race trait/);
-    expect(within(reference).getByText("resist").nextSibling).toHaveTextContent(/choose/);
+    expect(within(reference).getByText("resist").nextSibling).toHaveTextContent(/grants nothing/);
 
     const search = within(reference).getByRole("searchbox", { name: "Search fields" });
     fireEvent.change(search, { target: { value: "carrying" } });
