@@ -1,13 +1,17 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { appliedBackgroundFieldsSchema, type CharacterFeatures } from "@dnd/catalog";
+import {
+  appliedBackgroundFieldsSchema,
+  appliedFeatFieldsSchema,
+  type CharacterFeatures,
+} from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { publishFeaturesFixture } from "../db/queries/contentFixture.ts";
-import { backgroundEntryGroup } from "../db/queries/features.ts";
+import { backgroundEntryGroup, rowFeature } from "../db/queries/features.ts";
 import {
   insertHomebrewBackground,
   insertHomebrewFeat,
@@ -585,6 +589,25 @@ describe("featuresRoutes", () => {
     // The server stamps `source`, so no table writes it.
     const unlisted = [...read].filter(
       (key) => key !== "source" && !(key in appliedBackgroundFieldsSchema.shape),
+    );
+    expect(unlisted).toEqual([]);
+  });
+
+  it("reads nothing off a homebrew feat that the feat's field reference leaves out", () => {
+    const read = new Set<string>();
+    const entry = new Proxy(
+      { name: "Ironbound", source: "Homebrew", entries: ["Your skin toughens."] },
+      {
+        get(target, key, receiver) {
+          if (typeof key === "string") read.add(key);
+          return Reflect.get(target, key, receiver);
+        },
+      },
+    );
+    rowFeature(entry, { homebrewId: "hft" }, { level: 4 });
+    // The server stamps `source`, so no table writes it.
+    const unlisted = [...read].filter(
+      (key) => key !== "source" && !(key in appliedFeatFieldsSchema.shape),
     );
     expect(unlisted).toEqual([]);
   });

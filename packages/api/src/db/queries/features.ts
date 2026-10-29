@@ -45,8 +45,11 @@ import {
 
 type Placement = { level?: number; featureType?: string };
 
-const entryOf = (json: unknown): CharacterOptionEntry | undefined =>
-  json === undefined ? undefined : parseJson(characterOptionEntrySchema, json);
+/** The row itself where it parses, not zod's copy, so a test can record each field read off it. */
+const entryOf = (json: unknown): CharacterOptionEntry | undefined => {
+  const parsed = json === undefined ? undefined : parseJson(characterOptionEntrySchema, json);
+  return parsed && typeof json === "object" ? (json as CharacterOptionEntry) : parsed;
+};
 
 /**
  * A homebrew row's stamped source names no book, so its feature carries none, as items do.
@@ -66,7 +69,7 @@ const unresolved = (ref: EntryRef, placement: Placement = {}): SheetFeature => (
  * A whole catalog or homebrew row as one feature, unresolved where the row is missing or
  * its `json` does not parse.
  */
-function rowFeature(json: unknown, ref: EntryRef, placement: Placement = {}): SheetFeature {
+export function rowFeature(json: unknown, ref: EntryRef, placement: Placement = {}): SheetFeature {
   const entry = entryOf(json);
   if (!entry) return unresolved(ref, placement);
   return {

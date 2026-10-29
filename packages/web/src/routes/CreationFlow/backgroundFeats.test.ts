@@ -1,4 +1,4 @@
-import type { FeatRecord, HomebrewFeatRecord } from "@dnd/catalog";
+import { appliedFeatFieldsSchema, type FeatRecord, type HomebrewFeatRecord } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
 import {
   backgroundFeatOffers,
@@ -132,5 +132,29 @@ describe("withFeatBlock", () => {
     expect(cleric).toEqual([{ grantor, block: 0 }]);
     expect(withFeatBlock(cleric, feat, 0)).toBe(cleric);
     expect(withFeatBlock(cleric, feat, 2)).toEqual([{ grantor, block: 2 }]);
+  });
+});
+
+describe("backgroundFeatOffers on a homebrew feat", () => {
+  it("reads nothing off it that the feat's field reference leaves out", () => {
+    const read = new Set<string>();
+    const json = new Proxy<HomebrewFeatRecord["json"]>(
+      { name: "Ironbound", source: "Homebrew", category: "O" },
+      {
+        get(target, key, receiver) {
+          if (typeof key === "string") read.add(key);
+          return Reflect.get(target, key, receiver);
+        },
+      },
+    );
+    const homebrew: HomebrewFeatRecord = {
+      id: "hft",
+      name: "Ironbound",
+      edition: "one",
+      json,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    backgroundFeatOffers({ feats: [{ anyFromCategory: { category: ["O"] } }] }, [homebrew]);
+    expect([...read].filter((key) => !(key in appliedFeatFieldsSchema.shape))).toEqual([]);
   });
 });

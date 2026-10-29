@@ -3,6 +3,7 @@ export type { IncreaseAlternative } from "./ability-increases.ts";
 export { abilityIncreasesSchema, customOrigin } from "./ability-increases.ts";
 export { appliedBackgroundFieldsSchema } from "./applied-background-fields.ts";
 export { appliedClassFieldsSchema } from "./applied-class-fields.ts";
+export { appliedFeatFieldsSchema } from "./applied-feat-fields.ts";
 export { appliedItemFieldsSchema } from "./applied-item-fields.ts";
 export { appliedRaceFieldsSchema } from "./applied-race-fields.ts";
 export { appliedSpellFieldsSchema } from "./applied-spell-fields.ts";

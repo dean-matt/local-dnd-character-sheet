@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { defenseTraitSchema } from "./defense.ts";
+import { isRecord } from "./entry-text.ts";
 import type { ToolType } from "./item-kind.ts";
 import { grantedSchema, proficiencyGrantsSchema } from "./proficiency-grants.ts";
 import { senseGrantsSchema } from "./sense.ts";
@@ -90,12 +91,18 @@ const outrightSchema = z.looseObject({
  * languages of `Cult of the Dragon Initiate` (FRHoF), grants and offers nothing, and so does
  * a pick by filter, such as the weapons of `Weapon Master` (PHB). Asking the alternative, and
  * resolving the filter against the item rows, are the ways out. A malformed field reads as
- * absent rather than refusing the row.
+ * absent rather than refusing the row. The row is read in place, not copied, so a test can
+ * record each field read.
  */
-export const featGrantsSchema = z.looseObject({}).transform((row) => {
+export const featGrantsSchema = z.custom<Record<string, unknown>>(isRecord).transform((row) => {
   const outright = outrightSchema.parse(row);
   const { skills, languages, tools, weapons, armor } = proficiencyGrantsSchema.parse(row);
-  const { resist, immune, conditionImmune } = defenseTraitSchema.parse(row);
+  // A feat makes no one vulnerable, and no feat is a potion, so `vulnerable` and `type` go unread.
+  const { resist, immune, conditionImmune } = defenseTraitSchema.parse({
+    resist: row.resist,
+    immune: row.immune,
+    conditionImmune: row.conditionImmune,
+  });
   const senses = senseGrantsSchema.parse(row);
   const skillPick = skillProficienciesChoiceSchema.parse(row);
   const toolPicks = backgroundToolChoicesSchema.parse(row);

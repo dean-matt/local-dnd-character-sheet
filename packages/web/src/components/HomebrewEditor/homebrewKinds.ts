@@ -1,6 +1,7 @@
 import {
   appliedBackgroundFieldsSchema,
   appliedClassFieldsSchema,
+  appliedFeatFieldsSchema,
   appliedItemFieldsSchema,
   appliedRaceFieldsSchema,
   appliedSpellFieldsSchema,
@@ -279,6 +280,7 @@ const feat: EditingKind<HomebrewFeatInput> = {
     },
     { title: "Proficiencies", Fields: FeatProficiencies, keys: FEAT_PROFICIENCIES },
   ],
+  reference: createElement(FieldReference, { schema: appliedFeatFieldsSchema }),
   shownKeys: () => [
     "name",
     "entries",
