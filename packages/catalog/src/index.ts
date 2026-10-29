@@ -1,6 +1,7 @@
 export { abilityGrantSchema } from "./ability.ts";
 export type { IncreaseAlternative } from "./ability-increases.ts";
 export { abilityIncreasesSchema, customOrigin } from "./ability-increases.ts";
+export { appliedClassFieldsSchema } from "./applied-class-fields.ts";
 export { appliedItemFieldsSchema } from "./applied-item-fields.ts";
 export { appliedRaceFieldsSchema } from "./applied-race-fields.ts";
 export { appliedSpellFieldsSchema } from "./applied-spell-fields.ts";
