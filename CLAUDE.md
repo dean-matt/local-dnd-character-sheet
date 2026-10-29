@@ -64,8 +64,9 @@ pnpm check           # typecheck, lint, spell, deadcode, test — what CI runs
   writes it from `vendor/` and elides the prose. Widen a fixture in its declaration.
 - **A pushed commit is never rewritten.** No amend, rebase or force push — add a commit.
   `scripts/no-rewrite.mjs` rejects a non-fast-forward push of the current branch.
-- **The merge raises the root `package.json` version**, never the pull request: a feature
-  raises the minor, anything else the patch, and prose-only changes none.
+- **The pull request's last commit raises the root `package.json` version** over the default
+  branch's: a feature raises the minor, anything else the patch, and prose-only changes none.
+  `merge-pr` raises it again only if the default branch moved past it.
 - **Replacing an approach means deleting the old one in the same commit.** No "might be
   useful later" — a leaf package exports a schema or a type the day something reads it,
   and a test import counts as a reader. `knip` reports an orphaned file and an export
