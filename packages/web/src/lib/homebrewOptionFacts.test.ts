@@ -1,13 +1,16 @@
 import {
   appliedBackgroundFieldsSchema,
   appliedClassFieldsSchema,
+  appliedFeatFieldsSchema,
   classEntries,
+  featGrantsSchema,
+  featTermsSchema,
   rowEntries,
   spellcastingAbilitySchema,
 } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
 import { backgroundFacts, classFacts, featFacts, raceFacts } from "./homebrewOptionFacts.ts";
-import { BACKGROUND_STARTERS, CLASS_STARTERS } from "./homebrewStarters.ts";
+import { BACKGROUND_STARTERS, CLASS_STARTERS, FEAT_STARTERS } from "./homebrewStarters.ts";
 
 const recording = () => {
   const read = new Set<string>();
@@ -105,5 +108,32 @@ describe("homebrewOptionFacts", () => {
     rowEntries(recorded(entry));
     backgroundFacts(recorded(entry));
     expect([...read].filter((key) => !(key in appliedBackgroundFieldsSchema.shape))).toEqual([]);
+  });
+  it("reads nothing off a homebrew feat that the feat's field reference leaves out", () => {
+    const { read, recorded } = recording();
+    const entry = {
+      ...FEAT_STARTERS[0].entry,
+      entriesHigherLevel: ["More."],
+      category: "O",
+      repeatable: true,
+      savingThrowProficiencies: [{ choose: { from: ["str", "dex"] } }],
+      expertise: [{ anyProficientSkill: 1 }],
+      skillProficiencies: [{ perception: true }],
+      languageProficiencies: [{ any: 1 }],
+      toolProficiencies: [{ anyArtisansTool: 1 }],
+      weaponProficiencies: [{ martial: true }],
+      armorProficiencies: [{ heavy: true }],
+      skillToolLanguageProficiencies: [{ choose: [{ from: ["anySkill", "anyTool"], count: 3 }] }],
+      resist: ["fire", { choose: { from: ["cold", "acid"] } }],
+      immune: ["poison"],
+      conditionImmune: ["charmed"],
+      darkvision: 60,
+      senses: [{ blindsight: 10 }],
+    };
+    rowEntries(recorded(entry));
+    featFacts(recorded(entry));
+    featGrantsSchema.parse(recorded(entry));
+    featTermsSchema.parse(recorded(entry));
+    expect([...read].filter((key) => !(key in appliedFeatFieldsSchema.shape))).toEqual([]);
   });
 });

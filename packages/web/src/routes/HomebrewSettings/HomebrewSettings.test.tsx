@@ -1,4 +1,8 @@
-import { appliedRaceFieldsSchema, appliedSpellFieldsSchema } from "@dnd/catalog";
+import {
+  appliedFeatFieldsSchema,
+  appliedRaceFieldsSchema,
+  appliedSpellFieldsSchema,
+} from "@dnd/catalog";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { EditorView } from "codemirror";
@@ -1865,6 +1869,46 @@ describe("HomebrewSettings", () => {
         .getByRole("region", { name: "Field Reference" })
         .compareDocumentPosition(field("textbox", "Background JSON")) &
         Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("lists every field the sheet reads off a feat, its rules text among them, beside the feat's JSON", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(
+      within(screen.getByRole("region", { name: "Feats" })).getByRole("button", {
+        name: "Add feat",
+      }),
+    );
+    expect(within(editor()).queryByText("Field Reference")).toBeNull();
+    mode("JSON");
+    const reference = within(editor()).getByRole("region", { name: "Field Reference" });
+    const terms = () =>
+      within(reference)
+        .getAllByRole("term")
+        .map((term) => term.textContent ?? "");
+    expect(terms()).toEqual(
+      Object.keys(appliedFeatFieldsSchema.shape).sort((a, b) => a.localeCompare(b)),
+    );
+    expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/rules text/);
+    expect(within(reference).getByText("prerequisite").nextSibling).toHaveTextContent(/"level"/);
+
+    const search = within(reference).getByRole("searchbox", { name: "Search fields" });
+    fireEvent.change(search, { target: { value: "epic boon" } });
+    expect(terms()).toEqual(["category"]);
+    fireEvent.change(search, { target: { value: "repeat" } });
+    expect(terms()).toEqual(["repeatable"]);
+    fireEvent.change(search, { target: { value: "nothing like this" } });
+    expect(reference).toHaveTextContent("No field matches");
+
+    fireEvent.click(within(editor()).getByRole("button", { name: "Hide field reference" }));
+    expect(within(editor()).queryByRole("region", { name: "Field Reference" })).toBeNull();
+    fireEvent.click(within(editor()).getByRole("button", { name: "Show field reference" }));
+    expect(
+      within(editor())
+        .getByRole("region", { name: "Field Reference" })
+        .compareDocumentPosition(field("textbox", "Feat JSON")) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
