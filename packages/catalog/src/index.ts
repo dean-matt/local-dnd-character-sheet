@@ -6,6 +6,7 @@ export { appliedClassFieldsSchema } from "./applied-class-fields.ts";
 export { appliedFeatFieldsSchema } from "./applied-feat-fields.ts";
 export { appliedItemFieldsSchema } from "./applied-item-fields.ts";
 export { appliedRaceFieldsSchema } from "./applied-race-fields.ts";
+export { appliedSkillFieldsSchema } from "./applied-skill-fields.ts";
 export { appliedSpellFieldsSchema } from "./applied-spell-fields.ts";
 export { catalogRowRecordSchema } from "./catalog-row.ts";
 export { catalogRowEntries } from "./catalog-row-entries.ts";

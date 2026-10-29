@@ -4,6 +4,7 @@ import {
   appliedFeatFieldsSchema,
   appliedItemFieldsSchema,
   appliedRaceFieldsSchema,
+  appliedSkillFieldsSchema,
   appliedSpellFieldsSchema,
   classEntries,
   type Entries,
@@ -300,6 +301,7 @@ const skill: EditingKind<z.infer<typeof homebrewSkillInputSchema>> = {
     { title: "Basics", Fields: SkillBasics, keys: ["name", "ability"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
   ],
+  reference: createElement(FieldReference, { schema: appliedSkillFieldsSchema }),
   shownKeys: () => ["name", "ability", "entries"],
 };
 

@@ -2,6 +2,7 @@ import {
   appliedBackgroundFieldsSchema,
   appliedClassFieldsSchema,
   appliedFeatFieldsSchema,
+  appliedSkillFieldsSchema,
   classEntries,
   featGrantsSchema,
   featTermsSchema,
@@ -9,8 +10,19 @@ import {
   spellcastingAbilitySchema,
 } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
-import { backgroundFacts, classFacts, featFacts, raceFacts } from "./homebrewOptionFacts.ts";
-import { BACKGROUND_STARTERS, CLASS_STARTERS, FEAT_STARTERS } from "./homebrewStarters.ts";
+import {
+  backgroundFacts,
+  classFacts,
+  featFacts,
+  raceFacts,
+  skillFacts,
+} from "./homebrewOptionFacts.ts";
+import {
+  BACKGROUND_STARTERS,
+  CLASS_STARTERS,
+  FEAT_STARTERS,
+  SKILL_STARTERS,
+} from "./homebrewStarters.ts";
 
 const recording = () => {
   const read = new Set<string>();
@@ -135,5 +147,12 @@ describe("homebrewOptionFacts", () => {
     featGrantsSchema.parse(recorded(entry));
     featTermsSchema.parse(recorded(entry));
     expect([...read].filter((key) => !(key in appliedFeatFieldsSchema.shape))).toEqual([]);
+  });
+  it("reads nothing off a homebrew skill that the skill's field reference leaves out", () => {
+    const { read, recorded } = recording();
+    const entry = { ...SKILL_STARTERS[0].entry, entriesHigherLevel: ["More."] };
+    rowEntries(recorded(entry));
+    skillFacts(recorded(entry));
+    expect([...read].filter((key) => !(key in appliedSkillFieldsSchema.shape))).toEqual([]);
   });
 });
