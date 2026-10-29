@@ -142,7 +142,7 @@ data/               the three SQLite databases, gitignored
 ## Contributing
 
 Work is tracked in GitHub issues, grouped into milestones that follow the build order.
-Cut a branch from an issue with `gh issue develop <number> --checkout`.
+Cut a branch for an issue with `git switch -c <type>/<number>-<slug>`.
 
 Direct pushes to `main` are rejected — everything lands through a pull request. Commits
 follow Conventional Commits, checked by `commitlint` on the commit-msg hook.

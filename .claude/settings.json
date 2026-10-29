@@ -5,7 +5,6 @@
     "allow": [
       "Agent(general-purpose)",
       "Agent(github-sdlc:pr-auditor)",
-      "Agent(github-sdlc:design-auditor)",
       "Bash(gh:*)",
       "Bash(gh pr merge:*)",
       "Bash(gh api repos/dean-matt/local-dnd-character-sheet/pulls/:*)",

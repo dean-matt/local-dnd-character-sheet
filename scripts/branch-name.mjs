@@ -51,7 +51,7 @@ if (process.argv[1] !== undefined && import.meta.filename === realpathSync(proce
   if (error !== null) {
     console.error(
       `${error}\n\n  Types: ${TYPES.join(", ")}\n` +
-        "  Cut one from the issue:  gh issue develop 12 --name feat/12-short-slug --checkout\n" +
+        "  Cut one for the issue:   git switch -c feat/12-short-slug\n" +
         "  Rename this one:         git branch -m feat/12-short-slug\n",
     );
     process.exit(1);
