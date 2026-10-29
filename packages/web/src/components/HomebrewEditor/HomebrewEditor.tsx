@@ -31,8 +31,8 @@ export interface HomebrewEditorProps {
   /** The row being replaced; absent for a new one. */
   record: HomebrewRow | undefined;
   saving: boolean;
-  /** Why the last save failed, such as a name another row holds. */
-  failure: string | undefined;
+  /** The last save's failure, such as a name another row holds. */
+  failure: Error | null;
   onSave: (input: unknown) => void;
   onClose: () => void;
   /** Says the change reaches every character holding the row, where it is edited from a sheet. */
@@ -75,7 +75,7 @@ export function HomebrewEditor({
   }, [refusals]);
   const mode = draft.text === undefined ? MODES[0] : MODES[1];
   const views: readonly View[] = kind.sections.length > 0 ? VIEWS : ["JSON", "Preview"];
-  const hold = useClassDieHold(collection, record, draft.checked);
+  const hold = useClassDieHold(collection, record, draft.checked, failure);
   const problems = "problems" in draft.checked ? draft.checked.problems : [];
   const shownProblems = tried ? problems : [];
   const title = record ? `Edit ${record.name}` : `New ${lower}`;
@@ -138,7 +138,7 @@ export function HomebrewEditor({
         title={title}
         footer={
           <HomebrewEditorFooter
-            failure={failure}
+            failure={failure?.message}
             onCancel={close}
             stepping={mode === "Step by step" && !previewing}
             first={step === 0}

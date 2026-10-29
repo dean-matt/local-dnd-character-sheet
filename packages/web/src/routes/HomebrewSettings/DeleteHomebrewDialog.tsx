@@ -1,24 +1,9 @@
 import { Link } from "react-router";
-import { z } from "zod";
 import { Modal } from "../../components/Modal.tsx";
 import { ModalEntry } from "../../components/ModalEntry.tsx";
-import { ApiError } from "../../lib/api.ts";
+import { refusedHolders } from "../../lib/refusedHolders.ts";
 
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
-
-const namedSchema = z.object({ id: z.string(), name: z.string() });
-
-const refusalSchema = z.object({
-  characters: z.array(namedSchema),
-  items: z.array(namedSchema).default([]),
-});
-
-/** The characters and items a refused delete names; none where it failed for another reason. */
-function holders(error: Error | null) {
-  const none = { characters: [], items: [] };
-  if (!(error instanceof ApiError) || error.status !== 409) return none;
-  return refusalSchema.safeParse(error.body).data ?? none;
-}
 
 export interface DeleteHomebrewDialogProps {
   name: string;
@@ -41,7 +26,7 @@ export function DeleteHomebrewDialog({
   onConfirm,
   onClose,
 }: DeleteHomebrewDialogProps) {
-  const { characters: holding, items } = holders(error);
+  const { characters: holding, items } = refusedHolders(error);
   const held = holding.length + items.length > 0;
   return (
     <Modal onClose={onClose}>

@@ -124,7 +124,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
           collection={kind.collection}
           record={edited}
           saving={save.isPending}
-          failure={save.error?.message}
+          failure={save.error}
           onSave={(input) =>
             save.mutate({ id: edited?.id, input }, { onSuccess: () => setEditing(undefined) })
           }

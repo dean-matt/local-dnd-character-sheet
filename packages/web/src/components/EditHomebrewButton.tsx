@@ -59,7 +59,7 @@ export function EditHomebrewButton({
                 collection={collection}
                 record={homebrew.record}
                 saving={save.isPending}
-                failure={save.error?.message}
+                failure={save.error}
                 onSave={(input) =>
                   save.mutate({ id, input }, { onSuccess: () => setEditorOpen(false) })
                 }
