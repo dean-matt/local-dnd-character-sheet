@@ -118,6 +118,15 @@ export const spellCastingFactsSchema = z.strictObject({
   duration: z.array(spellDurationSchema).min(1).optional(),
 });
 
+/**
+ * The damage types and the upcast text the sheet reads off a spell entry, beside its casting
+ * facts. Each is optional, and a value that does not match is dropped.
+ */
+export const spellEffectSchema = z.looseObject({
+  damageInflict: z.array(z.string().min(1)).min(1).optional(),
+  entriesHigherLevel: entriesSchema.optional(),
+});
+
 /** A spell entry's casting facts, each parsed alone, so one malformed field leaves the others standing. */
 export function spellCastingFacts(json: Record<string, unknown>) {
   const { shape } = spellCastingFactsSchema;

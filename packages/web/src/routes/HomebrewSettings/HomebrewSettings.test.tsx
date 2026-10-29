@@ -1,3 +1,4 @@
+import { appliedSpellFieldsSchema } from "@dnd/catalog";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { EditorView } from "codemirror";
@@ -674,7 +675,7 @@ describe("HomebrewSettings", () => {
     expect(within(editor()).getByText(/groups its spells/)).toBeInTheDocument();
   });
 
-  it("lists the fields the sheet reads, and the rules text, by name ahead of an item's JSON, and none beside a spell's", async () => {
+  it("lists the fields the sheet reads, and the rules text, by name ahead of an item's JSON", async () => {
     stubApi({});
     renderPage();
 
@@ -719,11 +720,41 @@ describe("HomebrewSettings", () => {
       reopened.compareDocumentPosition(field("textbox", "Item JSON")) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    click("Close");
+  });
+
+  it("lists every field the sheet reads off a spell, its rules text among them, beside the spell's JSON", () => {
+    stubApi({});
+    renderPage();
 
     fireEvent.click(within(spells()).getByRole("button", { name: "Add spell" }));
     mode("JSON");
-    expect(within(editor()).queryByText("Field Reference")).toBeNull();
+    const reference = within(editor()).getByRole("region", { name: "Field Reference" });
+    const terms = () =>
+      within(reference)
+        .getAllByRole("term")
+        .map((term) => term.textContent ?? "");
+    expect(terms()).toEqual(
+      Object.keys(appliedSpellFieldsSchema.shape).sort((a, b) => a.localeCompare(b)),
+    );
+    expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/{@damage 8d6}/);
+    expect(within(reference).getByText("meta").nextSibling).toHaveTextContent(/ritual/);
+
+    const search = within(reference).getByRole("searchbox", { name: "Search fields" });
+    fireEvent.change(search, { target: { value: "concentration" } });
+    expect(terms()).toEqual(["duration"]);
+    fireEvent.change(search, { target: { value: "damageInf" } });
+    expect(terms()).toEqual(["damageInflict"]);
+    fireEvent.change(search, { target: { value: "nothing like this" } });
+    expect(reference).toHaveTextContent("No field matches");
+
+    fireEvent.click(within(editor()).getByRole("button", { name: "Hide field reference" }));
+    expect(within(editor()).queryByRole("region", { name: "Field Reference" })).toBeNull();
+    fireEvent.click(within(editor()).getByRole("button", { name: "Show field reference" }));
+    expect(
+      within(editor())
+        .getByRole("region", { name: "Field Reference" })
+        .compareDocumentPosition(field("textbox", "Spell JSON")) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("offers no example to pick for a spell or a row being edited", async () => {

@@ -1,4 +1,6 @@
 import {
+  appliedItemFieldsSchema,
+  appliedSpellFieldsSchema,
   classEntries,
   type Entries,
   type HomebrewFeatInput,
@@ -38,6 +40,7 @@ import { FeatAbilityScores } from "./FeatAbilityScores.tsx";
 import { FeatBasics } from "./FeatBasics.tsx";
 import { FeatPrerequisites } from "./FeatPrerequisites.tsx";
 import { FeatProficiencies } from "./FeatProficiencies.tsx";
+import { FieldReference } from "./FieldReference.tsx";
 import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewFeatFormSchema } from "./homebrewFeatChecks.ts";
@@ -47,7 +50,6 @@ import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
 import { ItemDefenses } from "./ItemDefenses.tsx";
 import { ItemEffects } from "./ItemEffects.tsx";
-import { ItemFieldReference } from "./ItemFieldReference.tsx";
 import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
 import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
@@ -153,7 +155,7 @@ const item: EditingKind<HomebrewItemInput> = {
       keys: ["ability", "modifySpeed", "senses", "skillProficiencies", "expertise", "advantage"],
     },
   ],
-  reference: createElement(ItemFieldReference),
+  reference: createElement(FieldReference, { schema: appliedItemFieldsSchema }),
   jsonSchema: ITEM_JSON_SCHEMA,
   shownKeys: (entry) => [
     "name",
@@ -193,6 +195,7 @@ const spell: EditingKind<HomebrewSpellInput> = {
   facts: spellFacts,
   entries: rowEntries,
   forEdition: withUpcastNameFor,
+  reference: createElement(FieldReference, { schema: appliedSpellFieldsSchema }),
   shownKeys: () => ["name", "level", "school", "duration", "meta", "entries"],
 };
 
