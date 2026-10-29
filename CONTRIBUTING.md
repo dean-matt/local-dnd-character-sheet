@@ -41,7 +41,7 @@ that says why — and those are meant to stay countable on one hand.
 
 ## Branching and commits
 
-Branches are named for an issue, so the work and the reason for it stay linked, as
+Branches are named for an issue, so the work and the reason for it stay linked, and are
 named `<type>/<issue>-<slug>` — the same type vocabulary the commits use:
 
 ```bash
