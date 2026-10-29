@@ -1,13 +1,18 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { CharacterFeatures } from "@dnd/catalog";
+import { appliedBackgroundFieldsSchema, type CharacterFeatures } from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { publishFeaturesFixture } from "../db/queries/contentFixture.ts";
-import { insertHomebrewFeat, insertHomebrewRace } from "../db/queries/homebrew.ts";
+import { backgroundEntryGroup } from "../db/queries/features.ts";
+import {
+  insertHomebrewBackground,
+  insertHomebrewFeat,
+  insertHomebrewRace,
+} from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { featuresRoutes } from "./features.ts";
 
@@ -539,5 +544,48 @@ describe("featuresRoutes", () => {
     expect(groups.find(({ origin }) => origin === "race")?.features).toEqual([
       { resolved: true, name: "Dusksight", entries: ["You see in dusk."] },
     ]);
+  });
+
+  it("lists a homebrew background's flagged entries, named or not, as its features", async () => {
+    insertHomebrewBackground(opened.homebrewDb, "hbg", {
+      name: "Wayfarer",
+      edition: "classic",
+      entries: [
+        "A wanderer.",
+        { type: "entries", name: "Feature: Open Road", data: { isFeature: true }, entries: ["A"] },
+        { type: "entries", data: { isFeature: true }, entries: ["B"] },
+        { type: "entries", name: "Unflagged", entries: ["C"] },
+      ],
+    });
+    store(definitionWith({ background: { homebrewId: "hbg" } }));
+    const { groups } = await features();
+
+    expect(groups.find(({ origin }) => origin === "background")?.features).toEqual([
+      { resolved: true, name: "Open Road", entries: ["A"] },
+      { resolved: true, name: "Wayfarer", entries: ["B"] },
+    ]);
+  });
+
+  it("reads nothing off a homebrew background that the background's field reference leaves out", () => {
+    const read = new Set<string>();
+    const entry = new Proxy(
+      {
+        name: "Wayfarer",
+        source: "Homebrew",
+        entries: [{ type: "entries", name: "Open Road", data: { isFeature: true }, entries: [] }],
+      },
+      {
+        get(target, key, receiver) {
+          if (typeof key === "string") read.add(key);
+          return Reflect.get(target, key, receiver);
+        },
+      },
+    );
+    backgroundEntryGroup(entry, { homebrewId: "hbg" });
+    // The server stamps `source`, so no table writes it.
+    const unlisted = [...read].filter(
+      (key) => key !== "source" && !(key in appliedBackgroundFieldsSchema.shape),
+    );
+    expect(unlisted).toEqual([]);
   });
 });

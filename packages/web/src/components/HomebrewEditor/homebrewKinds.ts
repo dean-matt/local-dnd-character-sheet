@@ -1,4 +1,5 @@
 import {
+  appliedBackgroundFieldsSchema,
   appliedClassFieldsSchema,
   appliedItemFieldsSchema,
   appliedRaceFieldsSchema,
@@ -241,14 +242,17 @@ const klass = {
   reference: createElement(FieldReference, { schema: appliedClassFieldsSchema }),
 };
 
-const background = pasted(
-  {
-    inputSchema: homebrewBackgroundInputSchema,
-    starters: BACKGROUND_STARTERS,
-    entries: rowEntries,
-  },
-  backgroundFacts,
-);
+const background = {
+  ...pasted(
+    {
+      inputSchema: homebrewBackgroundInputSchema,
+      starters: BACKGROUND_STARTERS,
+      entries: rowEntries,
+    },
+    backgroundFacts,
+  ),
+  reference: createElement(FieldReference, { schema: appliedBackgroundFieldsSchema }),
+};
 
 const FEAT_PROFICIENCIES = [
   "skillProficiencies",

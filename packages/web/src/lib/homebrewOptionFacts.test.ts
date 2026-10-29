@@ -1,7 +1,25 @@
-import { appliedClassFieldsSchema, classEntries, spellcastingAbilitySchema } from "@dnd/catalog";
+import {
+  appliedBackgroundFieldsSchema,
+  appliedClassFieldsSchema,
+  classEntries,
+  rowEntries,
+  spellcastingAbilitySchema,
+} from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
 import { backgroundFacts, classFacts, featFacts, raceFacts } from "./homebrewOptionFacts.ts";
-import { CLASS_STARTERS } from "./homebrewStarters.ts";
+import { BACKGROUND_STARTERS, CLASS_STARTERS } from "./homebrewStarters.ts";
+
+const recording = () => {
+  const read = new Set<string>();
+  const recorded = (entry: Record<string, unknown>) =>
+    new Proxy(entry, {
+      get(target, key, receiver) {
+        if (typeof key === "string") read.add(key);
+        return Reflect.get(target, key, receiver);
+      },
+    });
+  return { read, recorded };
+};
 
 describe("homebrewOptionFacts", () => {
   it("names a varying size, a walking speed and fixed increases, a decrease signed as written", () => {
@@ -67,14 +85,7 @@ describe("homebrewOptionFacts", () => {
     ).toEqual([]);
   });
   it("reads nothing off a homebrew class that the class's field reference leaves out", () => {
-    const read = new Set<string>();
-    const recorded = (entry: Record<string, unknown>) =>
-      new Proxy(entry, {
-        get(target, key, receiver) {
-          if (typeof key === "string") read.add(key);
-          return Reflect.get(target, key, receiver);
-        },
-      });
+    const { read, recorded } = recording();
     const entry = {
       ...CLASS_STARTERS[0].entry,
       spellcastingAbility: "wis",
@@ -87,5 +98,12 @@ describe("homebrewOptionFacts", () => {
     classFacts(recorded(entry));
     spellcastingAbilitySchema.parse(recorded(entry));
     expect([...read].filter((key) => !(key in appliedClassFieldsSchema.shape))).toEqual([]);
+  });
+  it("reads nothing off a homebrew background that the background's field reference leaves out", () => {
+    const { read, recorded } = recording();
+    const entry = { ...BACKGROUND_STARTERS[0].entry, entriesHigherLevel: ["More."] };
+    rowEntries(recorded(entry));
+    backgroundFacts(recorded(entry));
+    expect([...read].filter((key) => !(key in appliedBackgroundFieldsSchema.shape))).toEqual([]);
   });
 });
