@@ -50,8 +50,8 @@ jobs:
   # follows the suite: one shard per 40 test files, so run time holds as tests are added.
   # Measured at 4, 6, 8, 10 and 12 shards, a shard costs about 55 s of setup plus its tests,
   # and the slowest fell from 134 s at 4 to 95 s at 8 but only to 84 s at 12, where the
-  # largest single files set the floor. The cap is 16 because the plan's concurrent-job
-  # limit is 20 and the other jobs hold some of it.
+  # largest single files set the floor. The cap is 16 to stay under the free plan's 20
+  # concurrent jobs beside the other jobs; past it, raise the files per shard.
   plan-windows:
     runs-on: ubuntu-latest
     outputs:
@@ -64,7 +64,7 @@ jobs:
           files=$(git ls-files '*.test.ts' '*.test.tsx' | wc -l)
           n=$(( (files + 39) / 40 ))
           n=$(( n < 2 ? 2 : n > 16 ? 16 : n ))
-          echo "shards=$(seq -s, 1 "$n" | sed 's/.*/[&]/')" >> "$GITHUB_OUTPUT"
+          echo "shards=$(jq -nc --argjson n "$n" '[range(1; $n + 1)]')" >> "$GITHUB_OUTPUT"
 
   test-windows:
     name: test (windows-latest, ${{ matrix.shard }}/${{ strategy.job-total }})

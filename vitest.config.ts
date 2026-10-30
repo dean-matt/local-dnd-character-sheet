@@ -53,11 +53,13 @@ export default defineConfig({
             "tests/**/*.test.ts",
             "packages/{rules,character,dice,tags,catalog,api}/src/**/*.test.ts",
           ],
-          // packages/api/src/db/{client,migrate,backup}.test.ts build a database on
-          // disk, but each does a handful of inserts rather than a catalog import,
-          // so they fit the 5 s default. Every other api test opens its databases
-          // in memory through db/testDatabases.ts and publishes each content fixture
-          // in one write, shared across the file where its tests read one catalog.
+          // Three api tests build a database on disk, and a hosted Windows runner
+          // takes more than the 5 s default over their inserts. Every other api test
+          // opens its databases in memory through db/testDatabases.ts and publishes
+          // each content fixture in one write, shared across the file where its tests
+          // read one catalog. 30 s still fails a hang.
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
         },
       },
       {

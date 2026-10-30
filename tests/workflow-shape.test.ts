@@ -1,4 +1,6 @@
-import { readdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
@@ -75,7 +77,8 @@ type CiJob = {
   name?: string;
   needs?: string[];
   if?: string;
-  strategy?: { matrix?: { shard?: number[] } };
+  strategy?: { matrix?: { shard?: number[] | string } };
+  steps?: { id?: string; run?: string }[];
 };
 
 /**
@@ -101,9 +104,24 @@ describe("ci.yml", () => {
 
   it("numbers each OS's shards 1 to n", () => {
     for (const [id, job] of Object.entries(jobs).filter(([id]) => id.startsWith("test-"))) {
-      const shards = job.strategy?.matrix?.shard ?? [];
-      expect(shards, id).toEqual(shards.map((_, i) => i + 1));
-      expect(shards.length, id).toBeGreaterThan(0);
+      const shards = job.strategy?.matrix?.shard;
+      if (typeof shards === "string") continue;
+      expect(shards, id).toEqual((shards ?? []).map((_, i) => i + 1));
+      expect(shards?.length, id).toBeGreaterThan(0);
     }
+  });
+
+  it("plans the Windows shards 1 to n, within the cap, from the plan job", () => {
+    expect(jobs["test-windows"]?.needs).toContain("plan-windows");
+    expect(jobs["test-windows"]?.strategy?.matrix?.shard).toBe(
+      `\${{ fromJSON(needs.plan-windows.outputs.shards) }}`,
+    );
+    const run = jobs["plan-windows"]?.steps?.find((s) => s.id === "plan")?.run ?? "";
+    const out = join(mkdtempSync(join(tmpdir(), "plan-")), "output");
+    execFileSync("bash", ["-c", run], { cwd: ROOT, env: { ...process.env, GITHUB_OUTPUT: out } });
+    const shards = JSON.parse(readFileSync(out, "utf8").replace("shards=", "")) as number[];
+    expect(shards).toEqual(shards.map((_, i) => i + 1));
+    expect(shards.length).toBeGreaterThanOrEqual(2);
+    expect(shards.length).toBeLessThanOrEqual(16);
   });
 });
