@@ -127,8 +127,23 @@ const WARDEN = {
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 
+const TINKER = {
+  ...WARDEN,
+  id: "hb_8",
+  name: "Tinker",
+  json: {
+    name: "Tinker",
+    source: "Homebrew",
+    hd: { number: 1, faces: 8 },
+    startingProficiencies: {
+      toolProficiencies: [{ "thieves' tools": true, anyArtisansTool: 1 }],
+    },
+  },
+};
+
 const ROWS: Record<string, unknown> = {
   "/api/homebrew/classes/hb_9": WARDEN,
+  "/api/homebrew/classes/hb_8": TINKER,
   "/api/classes/Wizard/PHB": WIZARD,
   "/api/classes/Rogue/PHB": ROGUE,
   "/api/races/Half-Orc/PHB": HALF_ORC,
@@ -293,6 +308,86 @@ describe("ProficienciesStep", () => {
     expect(values.proficiencies?.armor).toEqual(["Light", "Shield"]);
     expect(values.proficiencies?.weapons).toEqual(["Simple"]);
     expect(screen.getByText("Choose 1 — 0 selected")).toBeVisible();
+  });
+
+  it("grants a homebrew class's tools and asks its tool choice", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        background: PHB("Sage"),
+        levels: [{ class: { homebrewId: "hb_8" } }],
+      }),
+    );
+    renderStep({ keepDraft: true });
+
+    await waitFor(() =>
+      expect(values.proficiencies?.tools.map((tool) => tool.name)).toContain("Thieves' Tools"),
+    );
+    const group = await screen.findByRole("group", { name: /Tools from Class: Tinker/ });
+    expect(within(group).getByText("Choose 1 — 0 selected")).toBeVisible();
+  });
+
+  it("grants nothing for a later homebrew class", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        background: PHB("Sage"),
+        levels: [{ class: PHB("Wizard") }, { class: { homebrewId: "hb_9" } }],
+      }),
+    );
+    renderStep({ keepDraft: true });
+
+    await screen.findByRole("group", { name: "From Class: Wizard" });
+    await waitFor(() => expect(done).toBe(false));
+    expect(screen.queryByRole("group", { name: "From Class: Warden" })).toBeNull();
+    expect(values.proficiencies?.savingThrows ?? []).toEqual([]);
+  });
+
+  describe("a homebrew class that has not loaded", () => {
+    const draft = (id: string) =>
+      localStorage.setItem(
+        "draft:creation",
+        JSON.stringify({
+          edition: "classic",
+          background: PHB("Sage"),
+          levels: [{ class: { homebrewId: id } }],
+        }),
+      );
+
+    it("offers nothing while its row is pending", async () => {
+      const real = fetch;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+          String(input) === "/api/homebrew/classes/hb_9"
+            ? new Promise<Response>(() => {})
+            : real(input, init),
+        ),
+      );
+      draft("hb_9");
+      renderStep({ keepDraft: true });
+
+      await waitFor(() => expect(vi.mocked(fetch)).toHaveBeenCalled());
+      expect(screen.queryByRole("group", { name: "From Class: Warden" })).toBeNull();
+      expect(values.proficiencies?.savingThrows ?? []).toEqual([]);
+      expect(done).toBe(false);
+    });
+
+    it("offers nothing once its read fails", async () => {
+      draft("hb_missing");
+      renderStep({ keepDraft: true });
+
+      await waitFor(() =>
+        expect(vi.mocked(fetch).mock.calls.map(([url]) => String(url))).toContain(
+          "/api/homebrew/classes/hb_missing",
+        ),
+      );
+      expect(screen.queryByRole("group", { name: /From Class/ })).toBeNull();
+      expect(values.proficiencies?.savingThrows ?? []).toEqual([]);
+      expect(done).toBe(false);
+    });
   });
 
   it("shows a class skill the background grants as checked, disabled and granted", async () => {
