@@ -17,15 +17,23 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { CATALOG_OUT_OF_DATE } from "@dnd/catalog";
+import { CATALOG_MISSING, CATALOG_OUT_OF_DATE } from "@dnd/catalog";
 import { SCHEMA_STAMP } from "@dnd/content/schema";
 import Database from "better-sqlite3";
 
 /** Thrown by `openContentDb` for a catalog whose schema stamp is not this build's. */
 export class CatalogOutOfDateError extends Error {
-  constructor() {
-    super(CATALOG_OUT_OF_DATE);
+  constructor(message = CATALOG_OUT_OF_DATE) {
+    super(message);
     this.name = "CatalogOutOfDateError";
+  }
+}
+
+/** Thrown by `openContentDb` before any build has written `current`; answers like an out-of-date catalog. */
+export class CatalogMissingError extends CatalogOutOfDateError {
+  constructor() {
+    super(CATALOG_MISSING);
+    this.name = "CatalogMissingError";
   }
 }
 
@@ -45,7 +53,13 @@ function stampMatches(db: Database.Database): boolean {
 
 export function openContentDb(dataDir: string): Database.Database {
   const contentDir = join(dataDir, "content");
-  const current = readFileSync(join(contentDir, "current"), "utf8").trim();
+  let current: string;
+  try {
+    current = readFileSync(join(contentDir, "current"), "utf8").trim();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") throw new CatalogMissingError();
+    throw error;
+  }
   const path = join(contentDir, current);
   const db = new Database(path, { readonly: true });
   if (path === matchedPath) return db;
