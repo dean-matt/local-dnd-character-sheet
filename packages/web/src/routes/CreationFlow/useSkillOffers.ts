@@ -28,7 +28,7 @@ export function useSkillOffers():
     useIdentityCatalog();
   const { entries } = useClassEntries();
   const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
-  const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
+  const classRead = entries.every((entry) => !entry.awaited);
   if (!(raceRead && classRead && backgrounds.isSuccess && names.isSuccess)) return undefined;
   const hits = names.data.items;
   const row = (name: string) => catalogRow(hits, "skill", name, edition);
@@ -62,10 +62,8 @@ export function useSkillOffers():
     return [{ by, name, count: choice.count, options: unique }];
   };
   const offers = [
-    ...entries.flatMap(({ catalogClass, start }) =>
-      catalogClass && start
-        ? offer("Class", catalogClass.name, classSkillChoiceSchema.parse(start))
-        : [],
+    ...entries.flatMap(({ name, start }) =>
+      start ? offer("Class", name, classSkillChoiceSchema.parse(start)) : [],
     ),
     ...(backgroundRow
       ? offer(

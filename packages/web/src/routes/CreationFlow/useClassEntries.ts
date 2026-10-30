@@ -52,6 +52,8 @@ export interface ClassEntry {
   rowEdition: CharacterDefinition["edition"] | undefined;
   /** The class's own row has loaded; its subclasses may still be loading. */
   read: boolean;
+  /** The row the class's grants read is still loading, or a catalog class's failed to. */
+  awaited: boolean;
   /** A row the class reads failed to load. */
   failed: boolean;
 }
@@ -66,6 +68,12 @@ function classGroups(levels: readonly Level[]) {
     groups.set(key, group);
   });
   return [...groups.values()];
+}
+
+/** A later homebrew class grants no multiclass gains, which the sheet does not read. */
+function startOf(own: unknown, catalog: boolean, index: number) {
+  if (!own || !(catalog || index === 0)) return undefined;
+  return index === 0 ? own : multiclassEntrySchema.parse(own);
 }
 
 const catalogOf = (cls: EntryRef) => ("name" in cls ? cls : undefined);
@@ -95,7 +103,7 @@ export function useClassEntries() {
     const subclasses = subclassLists[index];
     const json = classRow?.data?.json;
     const own = json ?? homebrew?.data?.json;
-    const start = json && (index === 0 ? json : multiclassEntrySchema.parse(json));
+    const start = startOf(own, catalogClass !== undefined, index);
     return {
       ...group,
       catalogClass,
@@ -110,6 +118,7 @@ export function useClassEntries() {
       prerequisite: catalogClass ? json && multiclassPrerequisiteSchema.parse(json) : [],
       rowEdition: classRow?.data?.edition ?? homebrew?.data?.edition,
       read: (catalogClass ? classRow : homebrew)?.isSuccess === true,
+      awaited: catalogClass ? classRow?.isSuccess !== true : homebrew?.isPending === true,
       failed: Boolean(classRow?.isError || subclasses?.isError || homebrew?.isError),
     };
   });

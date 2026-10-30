@@ -108,7 +108,27 @@ const LEONIN = {
   },
 };
 
+const WARDEN = {
+  id: "hb_9",
+  name: "Warden",
+  edition: "classic",
+  hitDie: 10,
+  json: {
+    name: "Warden",
+    source: "Homebrew",
+    hd: { number: 1, faces: 10 },
+    proficiency: ["str", "con"],
+    startingProficiencies: {
+      armorProficiencies: [{ light: true, shield: true }],
+      weapons: ["simple"],
+      skills: [{ choose: { from: ["athletics", "insight"], count: 1 } }],
+    },
+  },
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
 const ROWS: Record<string, unknown> = {
+  "/api/homebrew/classes/hb_9": WARDEN,
   "/api/classes/Wizard/PHB": WIZARD,
   "/api/classes/Rogue/PHB": ROGUE,
   "/api/races/Half-Orc/PHB": HALF_ORC,
@@ -255,6 +275,24 @@ describe("ProficienciesStep", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+  });
+
+  it("grants a homebrew first class's saving throws and proficiencies and offers its skill choice", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        background: PHB("Sage"),
+        levels: [{ class: { homebrewId: "hb_9" } }],
+      }),
+    );
+    renderStep({ keepDraft: true });
+
+    await screen.findByRole("group", { name: "From Class: Warden" });
+    await waitFor(() => expect(values.proficiencies?.savingThrows).toEqual(["str", "con"]));
+    expect(values.proficiencies?.armor).toEqual(["Light", "Shield"]);
+    expect(values.proficiencies?.weapons).toEqual(["Simple"]);
+    expect(screen.getByText("Choose 1 — 0 selected")).toBeVisible();
   });
 
   it("shows a class skill the background grants as checked, disabled and granted", async () => {
