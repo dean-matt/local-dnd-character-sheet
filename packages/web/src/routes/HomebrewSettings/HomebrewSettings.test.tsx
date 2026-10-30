@@ -1985,7 +1985,10 @@ describe("HomebrewSettings", () => {
       /no spell slots/,
     );
     expect(within(reference).getByText("proficiency").nextSibling).toHaveTextContent(
-      /grants no saving throw/,
+      /gains these saving throws/,
+    );
+    expect(within(reference).getByText("startingProficiencies").nextSibling).toHaveTextContent(
+      /asked the skill choice/,
     );
 
     const search = within(reference).getByRole("searchbox", { name: "Search fields" });

@@ -50,7 +50,7 @@ export function useToolTally() {
     limit: 200,
     filters: { kind: "tool", rarity: "none" },
   });
-  const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
+  const classRead = entries.every((entry) => !entry.awaited);
   if (!(raceRead && classRead && backgrounds.isSuccess && tools.isSuccess)) return undefined;
   const hits = tools.data.items;
   const named = (name: string) =>
@@ -86,11 +86,9 @@ export function useToolTally() {
     return { by, name, count: choice.count, options, ...(kind && { kind }) };
   };
   const listed = [
-    ...entries.flatMap(({ catalogClass, start }) =>
-      catalogClass && start
-        ? classToolChoicesSchema
-            .parse(start)
-            .map((choice) => offer("Class", catalogClass.name, choice))
+    ...entries.flatMap(({ name, start }) =>
+      start
+        ? classToolChoicesSchema.parse(start).map((choice) => offer("Class", name, choice))
         : [],
     ),
     ...(backgroundRow

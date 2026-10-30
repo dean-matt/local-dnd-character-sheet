@@ -21,7 +21,7 @@ export function CreationGrants() {
   const { edition, raceRead, raceJson, backgroundRow, backgrounds, names } = useIdentityCatalog();
   const { entries } = useClassEntries();
   // A failed read waits too: resolving against a missing list would drop what it granted.
-  const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
+  const classRead = entries.every((entry) => !entry.awaited);
   const loading = !(raceRead && classRead && backgrounds.isSuccess && names.isSuccess);
   const sources: ProficiencyGrants[] = [raceJson, backgroundRow?.json].flatMap((json) =>
     json ? [proficiencyGrantsSchema.parse(json)] : [],

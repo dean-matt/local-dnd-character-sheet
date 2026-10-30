@@ -40,11 +40,11 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
     'The slot table the class casts from: "full", "1/2", "1/3", "artificer" or "pact". Kept on the entry as 5etools writes it; the sheet reads it for no homebrew class and counts no spell slots.',
   entriesHigherLevel: 'Further rules text, printed after "entries" in the class\'s detail.',
   proficiency:
-    'Saving throw abilities, such as ["str", "con"], printed in the class\'s detail and its homebrew list entry. The sheet grants no saving throw off a homebrew class.',
+    'Saving throw abilities, such as ["str", "con"], printed in the class\'s detail and its homebrew list entry. A character whose first class this is gains these saving throws.',
   primaryAbility:
     'The primary ability, as alternatives, such as [{"str": true}] or [{"dex": true, "wis": true}]. Printed in the homebrew list entry, and in the class\'s detail as a multiclassing prerequisite of 13 where "multiclassing" states no requirements.',
   startingProficiencies:
-    'Such as {"armor": ["light", "shield"], "weapons": ["simple"], "tools": ["herbalism kit"], "skills": [{"choose": {"from": ["athletics", "nature"], "count": 2}}]}, printed in the class\'s detail. The sheet grants none of them and offers no skill choice off a homebrew class.',
+    'Such as {"armorProficiencies": [{"light": true, "shield": true}], "weapons": ["simple"], "toolProficiencies": [{"herbalism kit": true}], "skills": [{"choose": {"from": ["athletics", "nature"], "count": 2}}]}, printed in the class\'s detail. A character whose first class this is gains the armor, weapons and tools outright and is asked the skill choice in creation.',
   multiclassing:
     'Such as {"requirements": {"str": 13}, "proficienciesGained": {"armor": ["light"]}}, printed in the class\'s detail. The sheet checks no score and grants no proficiency when a character multiclasses into a homebrew class.',
   startingEquipment:

@@ -10,7 +10,7 @@ import type { ClassEntry } from "./useClassEntries.ts";
 export function ClassGrantsSummary({ entry, first }: { entry: ClassEntry; first: boolean }) {
   const { catalogClass, level, grants } = entry;
   const byLevel = useClassGrants(catalogClass, Math.max(level, 1));
-  if (catalogClass === undefined || grants === undefined) return null;
+  if (grants === undefined) return null;
   const proficiencies = grantNames(grants);
   const features = [...new Set(byLevel.data?.features.map((feature) => feature.name))];
   return (
