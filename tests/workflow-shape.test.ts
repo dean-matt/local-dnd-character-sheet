@@ -75,7 +75,7 @@ type CiJob = {
   name?: string;
   needs?: string[];
   if?: string;
-  strategy?: { matrix?: { shard?: number[] | string } };
+  strategy?: { matrix?: { shard?: string } };
   outputs?: Record<string, string>;
 };
 
@@ -98,15 +98,6 @@ describe("ci.yml", () => {
 
   it("gates the OS-independent steps under check (ubuntu-latest)", () => {
     expect(jobs["check-ubuntu"]?.needs).toContain("static");
-  });
-
-  it("numbers each OS's shards 1 to n", () => {
-    for (const [id, job] of Object.entries(jobs).filter(([id]) => id.startsWith("test-"))) {
-      const shards = job.strategy?.matrix?.shard;
-      if (typeof shards === "string") continue;
-      expect(shards, id).toEqual((shards ?? []).map((_, i) => i + 1));
-      expect(shards?.length, id).toBeGreaterThan(0);
-    }
   });
 
   it.each([
