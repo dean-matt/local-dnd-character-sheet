@@ -24,7 +24,6 @@ export interface JsonEditorProps {
 const theme = EditorView.theme({
   "&": {
     height: "20lh",
-    resize: "vertical",
     overflow: "hidden",
     borderRadius: "var(--radius-control)",
     border: "1px solid var(--color-border)",

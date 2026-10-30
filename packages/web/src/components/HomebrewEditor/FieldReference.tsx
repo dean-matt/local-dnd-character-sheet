@@ -39,7 +39,7 @@ export function FieldReference({ schema }: FieldReferenceProps) {
       needle === "" || key.toLowerCase().includes(needle) || text.toLowerCase().includes(needle),
   );
   return (
-    <div className="flex flex-col gap-2 text-row">
+    <div className="flex min-h-0 flex-col gap-2 text-row @2xl:flex-1">
       <InputField
         label="Search fields"
         type="search"
@@ -49,7 +49,11 @@ export function FieldReference({ schema }: FieldReferenceProps) {
       {shown.length === 0 ? (
         <p className="text-muted">No field matches “{query.trim()}”.</p>
       ) : (
-        <dl className="flex flex-col gap-2">
+        <dl
+          aria-label="Fields"
+          tabIndex={0}
+          className="flex flex-col gap-2 @2xl:min-h-0 @2xl:overflow-y-auto"
+        >
           {shown.map(({ key, description }) => (
             <div key={key}>
               <dt className="font-mono">{key}</dt>

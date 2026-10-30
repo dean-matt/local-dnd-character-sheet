@@ -345,6 +345,18 @@ test("in a window 600px high the editor's body never scrolls and its footer stay
     editor.getByText("Tab indents. Press Esc, then Tab, to leave the editor."),
   ).toBeInViewport();
   await expectBodyFixed();
+  expect(await editor.locator(".cm-editor").evaluate((n) => getComputedStyle(n).resize)).toBe(
+    "none",
+  );
+  const heading = editor.getByRole("heading", { name: "Field Reference" });
+  const search = editor.getByRole("searchbox", { name: "Search fields" });
+  const list = editor.getByLabel("Fields", { exact: true });
+  const [headingAt, searchAt] = [await box(heading), await box(search)];
+  expect(await list.evaluate((n) => n.scrollHeight > n.clientHeight)).toBe(true);
+  await list.evaluate((n) => n.scrollTo(0, n.scrollHeight));
+  expect(await list.evaluate((n) => n.scrollTop)).toBeGreaterThan(0);
+  expect(await box(heading)).toEqual(headingAt);
+  expect(await box(search)).toEqual(searchAt);
   await editor.getByRole("tab", { name: "Preview" }).click();
   await expect(editor.getByRole("region", { name: "Item preview" })).toBeVisible();
   await expectBodyFixed();

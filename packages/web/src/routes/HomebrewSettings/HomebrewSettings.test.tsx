@@ -451,7 +451,10 @@ describe("HomebrewSettings", () => {
 
     mode("JSON");
     const reference = within(editor()).getByRole("region", { name: "Field Reference" });
-    expect(reference.className).toMatch(/overflow-y-auto/);
+    expect(reference.className).not.toMatch(/overflow-y-auto/);
+    expect(within(reference).getByLabelText("Fields", { exact: true }).className).toMatch(
+      /overflow-y-auto/,
+    );
     expect(field("textbox", "Item JSON").closest('[class*="overflow-y-auto"]')).not.toBe(reference);
     expect(body).toHaveClass("overflow-hidden");
   });
