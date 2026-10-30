@@ -9,13 +9,13 @@ import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 /**
  * Whether the Identity step is finished: Finish would find no fault in a value it sets, and
  * the race leaves nothing open — a subrace where it has subraces and no plain variant, a
- * size where it offers more than one, a resistance where it offers a choice. A race the
- * catalog does not hold leaves nothing to ask. A background offering a choice of feats waits
+ * size where it offers more than one, a resistance where it offers a choice. A typed race
+ * leaves nothing to ask. A background offering a choice of feats waits
  * for its pick.
  */
 export function useIdentityDone(): boolean {
   const values = useWatch<CharacterDefinition>();
-  const { catalogRace, raceRow, subraces, subraceRow, raceJson } = useIdentityCatalog();
+  const { catalogRace, subraces, subraceRow, raceJson, raceRead } = useIdentityCatalog();
   const backgroundFeats = useBackgroundFeats();
   const parsed = characterDefinitionSchema.safeParse(values);
   const faulted = parsed.error?.issues.some(
@@ -30,13 +30,13 @@ export function useIdentityDone(): boolean {
     heldFromBackground(feats).length === 0
   )
     return false;
-  if (catalogRace === undefined) return true;
-  if (raceRow.data === undefined || subraces.data === undefined) return false;
-  const rows = subraces.data.items;
+  if (!raceRead) return false;
+  const rows = subraces.data?.items ?? [];
   if (
-    values.subrace
+    catalogRace &&
+    (values.subrace
       ? subraceRow === undefined
-      : rows.length > 0 && !rows.some((row) => row.name === "")
+      : rows.length > 0 && !rows.some((row) => row.name === ""))
   )
     return false;
   const { sizes, resistances } = raceChoices(raceJson);

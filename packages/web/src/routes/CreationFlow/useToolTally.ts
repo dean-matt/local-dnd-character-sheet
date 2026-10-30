@@ -36,8 +36,7 @@ const KIND_LABEL: Record<ToolType, string> = {
  * included, so a half-read never reads as an offer of nothing.
  */
 export function useToolTally() {
-  const { edition, catalogRace, raceRow, subraces, raceJson, backgroundRow, backgrounds } =
-    useIdentityCatalog();
+  const { edition, raceRead, raceJson, backgroundRow, backgrounds } = useIdentityCatalog();
   const { entries } = useClassEntries();
   const proficiencies = useWatch<CharacterDefinition, "proficiencies">({ name: "proficiencies" });
   const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
@@ -51,7 +50,6 @@ export function useToolTally() {
     limit: 200,
     filters: { kind: "tool", rarity: "none" },
   });
-  const raceRead = catalogRace === undefined || (raceRow.isSuccess && subraces.isSuccess);
   const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
   if (!(raceRead && classRead && backgrounds.isSuccess && tools.isSuccess)) return undefined;
   const hits = tools.data.items;

@@ -10,15 +10,14 @@ import { useIdentityCatalog } from "./useIdentityCatalog.ts";
  * and the custom-origin house rule frees a race's increases to any ability.
  */
 export function useIncreaseOptions(): IncreaseSource[] | undefined {
-  const { catalogRace, raceRow, subraces, subraceRow, raceJson, backgrounds, backgroundRow } =
+  const { raceName, raceRead, subraceRow, raceJson, backgrounds, backgroundRow } =
     useIdentityCatalog();
   const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
   const freed = houseRule({ houseRules: houseRules ?? {} }, "customOrigin");
-  const raceRead = catalogRace === undefined || (raceRow.isSuccess && subraces.isSuccess);
   if (!raceRead || !backgrounds.isSuccess) return undefined;
   const subrace = subraceRow?.name ? ` (${subraceRow.name})` : "";
   return [
-    increaseSource("race", catalogRace ? `${catalogRace.name}${subrace}` : "", raceJson, freed),
+    increaseSource("race", raceName ? `${raceName}${subrace}` : "", raceJson, freed),
     increaseSource("background", backgroundRow?.name ?? "", backgroundRow?.json),
   ];
 }

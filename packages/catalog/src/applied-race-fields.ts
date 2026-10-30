@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { abilityIncreasesSchema } from "./ability-increases.ts";
 import { defenseTraitSchema } from "./defense.ts";
 import { homebrewRaceInputSchema, raceTraitsSchema } from "./race.ts";
 import { senseGrantsSchema } from "./sense.ts";
@@ -9,6 +10,7 @@ import { senseGrantsSchema } from "./sense.ts";
  * and keep the shape a homebrew save validates.
  */
 const shape = {
+  ability: abilityIncreasesSchema.in.shape.ability,
   ...raceTraitsSchema.in.shape,
   ...defenseTraitSchema.in.omit({ type: true }).shape,
   ...senseGrantsSchema.in.shape,
@@ -27,7 +29,9 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   speed:
     'Feet of walking speed, such as 30, or a speed per mode, such as {"walk": 30, "fly": 30, "swim": true}, where walk is required and true matches it. The other modes are burrow, climb, fly and swim.',
   resist:
-    'Damage types resisted, such as ["fire"]. {"choose": {"from": ["cold", "fire"]}} in the list grants nothing: the sheet offers no pick for a homebrew race and lists the choice as not yet made.',
+    'Damage types resisted, such as ["fire"]. {"choose": {"from": ["cold", "fire"]}} in the list grants nothing until the character picks, which the sheet offers on the Race card and in creation.',
+  ability:
+    'Ability score increases, as alternatives, such as [{"str": 2, "cha": 1}] or [{"choose": {"from": ["str", "dex", "con"], "count": 2}}]. The sheet asks where a choice goes, on the Race card and in creation, and the increases it places raise the character\'s scores.',
   immune: 'Damage types the character is immune to, such as ["poison"].',
   conditionImmune: 'Conditions the character is immune to, such as ["charmed"].',
   vulnerable: 'Damage types the character is vulnerable to, such as ["thunder"].',

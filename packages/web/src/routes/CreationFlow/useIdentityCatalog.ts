@@ -11,14 +11,19 @@ const sameRow = (row: ContentRef, ref: ContentRef | undefined) =>
  * The catalog rows the Identity step's choices name: the race, its subraces and the chosen
  * one, every background of the edition, and the skill and language rows a grant resolves
  * against. `raceJson` is the chosen subrace's row, which already holds its race's, or the
- * race's own. A typed or homebrew race names no catalog row, so `catalogRace` is absent.
+ * race's own. A typed or homebrew race names no catalog row, so `catalogRace` is absent; a homebrew
+ * race's own row is `raceJson`.
  */
 export function useIdentityCatalog() {
   const [edition = "one", race, subrace, background] = useWatch<
     CharacterDefinition,
     ["edition", "race", "subrace", "background"]
   >({ name: ["edition", "race", "subrace", "background"] });
-  const { catalogRace, raceRow, subraces, subraceRow, json } = useRaceRows(race, subrace, edition);
+  const { catalogRace, raceRow, subraces, subraceRow, json, name, read } = useRaceRows(
+    race,
+    subrace,
+    edition,
+  );
   const backgrounds = useBackgrounds(edition);
   // One edition holds at most 168 skill and language rows, under the route's 200. Past
   // that, a grant naming a row beyond the page resolves to nothing.
@@ -37,6 +42,8 @@ export function useIdentityCatalog() {
     subraces,
     subraceRow,
     raceJson: json,
+    raceName: name,
+    raceRead: read,
     backgrounds,
     backgroundRow: backgrounds.data?.items.find((row) => sameRow(row, catalogBackground)),
     names,

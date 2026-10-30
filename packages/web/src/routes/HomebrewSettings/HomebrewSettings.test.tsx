@@ -1931,6 +1931,7 @@ describe("HomebrewSettings", () => {
     );
     expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/race trait/);
     expect(within(reference).getByText("resist").nextSibling).toHaveTextContent(/grants nothing/);
+    expect(within(reference).getByText("ability").nextSibling).toHaveTextContent(/asks where/);
 
     const search = within(reference).getByRole("searchbox", { name: "Search fields" });
     fireEvent.change(search, { target: { value: "carrying" } });
