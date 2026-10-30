@@ -11,8 +11,8 @@ const sameRow = (row: ContentRef, ref: ContentRef | undefined) =>
  * The catalog rows the Identity step's choices name: the race, its subraces and the chosen
  * one, every background of the edition, and the skill and language rows a grant resolves
  * against. `raceJson` is the chosen subrace's row, which already holds its race's, or the
- * race's own. A typed or homebrew race names no catalog row, so `catalogRace` is absent; a homebrew
- * race's own row is `raceJson`.
+ * race's own, or a homebrew race's. A typed or homebrew race names no catalog row, so
+ * `catalogRace` is absent.
  */
 export function useIdentityCatalog() {
   const [edition = "one", race, subrace, background] = useWatch<
