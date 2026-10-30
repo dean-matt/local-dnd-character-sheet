@@ -46,13 +46,34 @@ jobs:
       - name: Test
         run: pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
 
+  # Windows runs the content tests about 25 times slower than Linux, so its shard count
+  # follows the suite: one shard per 40 test files, so run time holds as tests are added.
+  # Measured at 4, 6, 8, 10 and 12 shards, a shard costs about 55 s of setup plus its tests,
+  # and the slowest fell from 134 s at 4 to 95 s at 8 but only to 84 s at 12, where the
+  # largest single files set the floor. The cap is 16 because the plan's concurrent-job
+  # limit is 20 and the other jobs hold some of it.
+  plan-windows:
+    runs-on: ubuntu-latest
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: plan
+        run: |
+          files=$(git ls-files '*.test.ts' '*.test.tsx' | wc -l)
+          n=$(( (files + 39) / 40 ))
+          n=$(( n < 2 ? 2 : n > 16 ? 16 : n ))
+          echo "shards=$(seq -s, 1 "$n" | sed 's/.*/[&]/')" >> "$GITHUB_OUTPUT"
+
   test-windows:
     name: test (windows-latest, ${{ matrix.shard }}/${{ strategy.job-total }})
+    needs: [plan-windows]
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: ${{ fromJSON(needs.plan-windows.outputs.shards) }}
     steps: *test-steps
 
   # The ruleset requires these two names, so each stands for its OS's shards. always()
@@ -68,7 +89,7 @@ jobs:
 
   check-windows:
     name: check (windows-latest)
-    needs: [test-windows]
+    needs: [plan-windows, test-windows]
     if: always()
     runs-on: ubuntu-latest
     steps:
