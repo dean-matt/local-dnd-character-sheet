@@ -86,3 +86,9 @@ describe("homebrew starters", () => {
     expect(entriesSchema.safeParse(entriesHigherLevel).success).toBe(true);
   });
 });
+
+describe("homebrew kinds", () => {
+  it.each(Object.entries(EDITING_KINDS))("gives %s a step form", (_, kind) => {
+    expect(kind.sections.length).toBeGreaterThan(0);
+  });
+});
