@@ -7,8 +7,8 @@ import { useHomebrew } from "./useHomebrew.ts";
 /**
  * Every feat a character may hold in `edition`, whole: the catalog's, and every homebrew
  * feat whatever its edition or the Homebrew source, since a held feat is read for its
- * choices and increases. `isSuccess` waits on both lists; a failed homebrew read leaves
- * the catalog alone rather than nothing.
+ * choices and increases. `isSuccess` needs both lists, so a failed homebrew read never
+ * reads as complete: a held homebrew feat would offer nothing and count as made.
  */
 export function useFeatRows(edition: CharacterDefinition["edition"]): {
   rows: OfferedFeat[];
@@ -18,6 +18,6 @@ export function useFeatRows(edition: CharacterDefinition["edition"]): {
   const homebrew = useHomebrew("feats", homebrewFeatRecordSchema).list;
   return {
     rows: [...(catalog.data?.items ?? []), ...(homebrew.data ?? [])],
-    isSuccess: catalog.isSuccess && (homebrew.isSuccess || homebrew.isError),
+    isSuccess: catalog.isSuccess && homebrew.isSuccess,
   };
 }

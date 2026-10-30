@@ -59,7 +59,11 @@ function stubFeats() {
   return release;
 }
 
-function renderField(improvement: Improvement | undefined, excluded?: string[]) {
+function renderField(
+  improvement: Improvement | undefined,
+  excluded?: string[],
+  feats: readonly (FeatRecord | HomebrewFeatRecord)[] = CATALOG,
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -67,7 +71,7 @@ function renderField(improvement: Improvement | undefined, excluded?: string[]) 
         <ImprovementField
           name="Level 4"
           improvement={improvement}
-          feats={CATALOG}
+          feats={feats}
           candidate={CANDIDATE}
           onChange={() => {}}
         />
@@ -116,5 +120,20 @@ describe("ImprovementField with homebrew feats", () => {
 
     await waitFor(() => expect(combobox()).toHaveTextContent("Quick Study"));
     expect(optionLabels()).toEqual(["Raise ability scores", "Alert", "Skilled", "Quick Study"]);
+  });
+});
+
+describe("ImprovementField with a homebrew feat that raises a score", () => {
+  const steady: HomebrewFeatRecord = {
+    ...homebrew("hf-3", "Steady"),
+    json: { name: "Steady", source: "HB", ability: [{ choose: { from: ["str", "dex"] } }] },
+  };
+
+  it("shows the feat's increase dropdown, and names the feat when it is not offered", async () => {
+    stubFeats()();
+    renderField({ feat: { homebrewId: "hf-3" }, increases: [] }, undefined, [steady]);
+
+    expect(screen.getByRole("combobox", { name: "Level 4 +1" })).toBeDefined();
+    expect(combobox()).toHaveTextContent("Steady");
   });
 });
