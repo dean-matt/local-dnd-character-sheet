@@ -7,10 +7,10 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { CATALOG_OUT_OF_DATE } from "@dnd/catalog";
+import { CATALOG_MISSING, CATALOG_OUT_OF_DATE } from "@dnd/catalog";
 import { SCHEMA_STAMP } from "@dnd/content/schema";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { publishMeta } from "./db/queries/contentFixture.ts";
 import { openTestDatabases } from "./db/testDatabases.ts";
 import { characterInventoryRoutes } from "./routes/character-inventory.ts";
@@ -177,5 +177,26 @@ describe("a catalog built from another schema", () => {
     expect(CATALOG_OUT_OF_DATE).toContain("pnpm content:build");
 
     expect((await app.request("/characters")).status).toBe(200);
+  });
+});
+
+describe("no catalog built", () => {
+  it("answers 503 naming the build, and logs no stack trace", async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), "app-no-catalog-"));
+    const opened = openTestDatabases();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const app = new OpenAPIHono();
+    app.onError(onAppError);
+    app.route("/", spellsRoutes(dataDir, opened.homebrewDb));
+
+    const spells = await app.request("/spells/Fireball/PHB");
+    expect(spells.status).toBe(503);
+    expect(await spells.json()).toEqual({ error: CATALOG_MISSING, code: "catalog_out_of_date" });
+    expect(logged).not.toHaveBeenCalled();
+
+    logged.mockRestore();
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
+    rmSync(dataDir, { recursive: true, force: true });
   });
 });

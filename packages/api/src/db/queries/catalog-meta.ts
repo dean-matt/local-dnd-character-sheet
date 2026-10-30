@@ -1,6 +1,6 @@
 import type { CatalogSource } from "@dnd/catalog";
 import type Database from "better-sqlite3";
-import { openContentDb } from "../content.ts";
+import { CatalogMissingError, openContentDb } from "../content.ts";
 
 export type CatalogMetaRow = { key: string; value: string };
 
@@ -12,7 +12,7 @@ function readBuiltCatalog<T>(dataDir: string, read: (db: Database.Database) => T
   try {
     db = openContentDb(dataDir);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    if (error instanceof CatalogMissingError) return undefined;
     throw error;
   }
   try {
