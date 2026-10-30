@@ -11,7 +11,7 @@ import { ROOT } from "./lib/doc-helpers.ts";
  */
 const SKIP_DIRS = new Set(["node_modules", "dist", "vendor", "e2e"]);
 
-/** The budget the content project states, repeated here so a change to it is deliberate. */
+/** The budget the node and content projects state, repeated here so a change to it is deliberate. */
 const BUDGET = 30_000;
 
 const posixPaths = (patterns: string[]): string[] =>
@@ -65,7 +65,10 @@ describe("vitest projects", () => {
   it("states one budget, covering tests and the hooks that make the same calls", () => {
     expect(
       budgeted.map(({ name, testTimeout, hookTimeout }) => ({ name, testTimeout, hookTimeout })),
-    ).toEqual([{ name: "content", testTimeout: BUDGET, hookTimeout: BUDGET }]);
+    ).toEqual([
+      { name: "node", testTimeout: BUDGET, hookTimeout: BUDGET },
+      { name: "content", testTimeout: BUDGET, hookTimeout: BUDGET },
+    ]);
   });
 });
 

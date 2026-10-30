@@ -75,7 +75,8 @@ type CiJob = {
   name?: string;
   needs?: string[];
   if?: string;
-  strategy?: { matrix?: { shard?: number[] } };
+  strategy?: { matrix?: { shard?: string } };
+  outputs?: Record<string, string>;
 };
 
 /**
@@ -99,11 +100,18 @@ describe("ci.yml", () => {
     expect(jobs["check-ubuntu"]?.needs).toContain("static");
   });
 
-  it("numbers each OS's shards 1 to n", () => {
-    for (const [id, job] of Object.entries(jobs).filter(([id]) => id.startsWith("test-"))) {
-      const shards = job.strategy?.matrix?.shard ?? [];
-      expect(shards, id).toEqual(shards.map((_, i) => i + 1));
-      expect(shards.length, id).toBeGreaterThan(0);
-    }
+  it.each([
+    ["test-windows", "windows"],
+    ["test-ubuntu", "ubuntu"],
+    ["e2e-shard", "e2e"],
+  ])("sizes %s from the plan job", (id, output) => {
+    expect(jobs[id]?.needs).toContain("plan");
+    expect(jobs[id]?.strategy?.matrix?.shard).toBe(
+      `\${{ fromJSON(needs.plan.outputs.${output}) }}`,
+    );
+  });
+
+  it("publishes each planned shard list as a job output", () => {
+    expect(Object.keys(jobs.plan?.outputs ?? {}).sort()).toEqual(["e2e", "ubuntu", "windows"]);
   });
 });
