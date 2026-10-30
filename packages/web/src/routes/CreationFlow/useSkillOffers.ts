@@ -24,11 +24,10 @@ export type GrantedSkill = { ref: ContentRef; by: "Race" | "Background" };
 export function useSkillOffers():
   | { granted: GrantedSkill[]; offers: SkillOffer[]; everySkill: ContentRef[] }
   | undefined {
-  const { edition, catalogRace, raceRow, subraces, raceJson, backgroundRow, backgrounds, names } =
+  const { edition, raceName, raceRead, raceJson, backgroundRow, backgrounds, names } =
     useIdentityCatalog();
   const { entries } = useClassEntries();
   const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
-  const raceRead = catalogRace === undefined || (raceRow.isSuccess && subraces.isSuccess);
   const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
   if (!(raceRead && classRead && backgrounds.isSuccess && names.isSuccess)) return undefined;
   const hits = names.data.items;
@@ -75,8 +74,8 @@ export function useSkillOffers():
           skillProficienciesChoiceSchema.parse(backgroundRow.json),
         )
       : []),
-    ...(catalogRace && raceJson
-      ? offer("Race", catalogRace.name, skillProficienciesChoiceSchema.parse(raceJson))
+    ...(raceName && raceJson
+      ? offer("Race", raceName, skillProficienciesChoiceSchema.parse(raceJson))
       : []),
   ];
   const replaces =

@@ -18,11 +18,9 @@ import { useIdentityCatalog } from "./useIdentityCatalog.ts";
  */
 export function CreationGrants() {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const { edition, catalogRace, raceRow, subraces, raceJson, backgroundRow, backgrounds, names } =
-    useIdentityCatalog();
+  const { edition, raceRead, raceJson, backgroundRow, backgrounds, names } = useIdentityCatalog();
   const { entries } = useClassEntries();
   // A failed read waits too: resolving against a missing list would drop what it granted.
-  const raceRead = catalogRace === undefined || (raceRow.isSuccess && subraces.isSuccess);
   const classRead = entries.every((entry) => entry.catalogClass === undefined || entry.read);
   const loading = !(raceRead && classRead && backgrounds.isSuccess && names.isSuccess);
   const sources: ProficiencyGrants[] = [raceJson, backgroundRow?.json].flatMap((json) =>

@@ -235,3 +235,51 @@ describe("RaceCard's open choices", () => {
     expect(written(fetchMock).spellBlocks).toEqual([]);
   });
 });
+
+describe("RaceCard with a homebrew race", () => {
+  const homebrewRecord = (json: object) => ({
+    id: "hb_1",
+    name: "Stoneborn",
+    edition: "one",
+    json: { name: "Stoneborn", source: "Homebrew", size: ["S", "M"], speed: 30, ...json },
+    createdAt: "2026-01-01T00:00:00.000Z",
+  });
+  const withRace = () => {
+    const record = identityRecord();
+    record.definition.race = { homebrewId: "hb_1" };
+    record.definition.subrace = undefined;
+    return record;
+  };
+  const serving = (json: object) => (url: string) =>
+    url === "/api/homebrew/races" ? [homebrewRecord(json)] : undefined;
+
+  it("asks where its increase goes and saves the pick", async () => {
+    const fetchMock = stubServer(
+      withRace(),
+      serving({ ability: [{ choose: { from: ["int", "wis"] } }] }),
+    );
+    renderCard(withRace());
+
+    const slot = await screen.findByRole("group", { name: /^Race \+1/ });
+    fireEvent.click(within(slot).getByRole("button", { name: "Wisdom" }));
+    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+    expect(written(fetchMock).abilityIncreases).toEqual([
+      { ability: "wis", amount: 1, grantedBy: "race" },
+    ]);
+  });
+
+  it("offers a size and a choice of resistance and saves the size", async () => {
+    const fetchMock = stubServer(
+      withRace(),
+      serving({ resist: [{ choose: { from: ["fire", "cold"] } }] }),
+    );
+    renderCard(withRace());
+
+    const size = await screen.findByRole("group", { name: "Size — choose one" });
+    expect(
+      screen.getByRole("group", { name: "Damage resistance — choose one" }),
+    ).toBeInTheDocument();
+    fireEvent.click(within(size).getByRole("button", { name: "Small" }));
+    await waitFor(() => expect(written(fetchMock)?.size).toBe("small"));
+  });
+});

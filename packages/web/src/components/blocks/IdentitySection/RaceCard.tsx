@@ -33,9 +33,13 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
   const { definition } = character;
   const write = useHeldSave(character.id, "Race");
   const { race, subrace, size, raceResistance } = definition;
-  const { catalogRace, raceRow, subraces, json } = useRaceRows(race, subrace, definition.edition);
-  // True once the row `json` is read from has loaded, or where no catalog row is read.
-  const ready = catalogRace === undefined || (subrace ? subraces.isSuccess : raceRow.isSuccess);
+  const { catalogRace, raceRow, subraces, json, read } = useRaceRows(
+    race,
+    subrace,
+    definition.edition,
+  );
+  // True once the row `json` is read from has loaded, or where no row is read.
+  const ready = catalogRace ? (subrace ? subraces.isSuccess : raceRow.isSuccess) : read;
   const rows = subraces.data?.items ?? [];
   const plain = rows.some((row) => row.name === "");
   const named = rows.filter((row) => row.name !== "");
