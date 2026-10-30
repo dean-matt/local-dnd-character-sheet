@@ -1,5 +1,4 @@
 import { execFileSync } from "node:child_process";
-import { globSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { FIXED_JOBS, MIN_SHARDS, planShards, SLOTS } from "../scripts/plan-shards.mjs";
 import { ROOT } from "./lib/doc-helpers.ts";
@@ -57,11 +56,12 @@ describe("plan-shards.mjs", () => {
           return [name, JSON.parse(json ?? "[]") as number[]];
         }),
     );
-    const skip = (path: string | { name: string }) =>
-      ["node_modules", "dist", "vendor"].includes(typeof path === "string" ? path : path.name);
-    const count = (pattern: string) => globSync(pattern, { cwd: ROOT, exclude: skip }).length;
+    const count = (...pathspecs: string[]) =>
+      execFileSync("git", ["ls-files", ...pathspecs], { cwd: ROOT, encoding: "utf8" })
+        .split("\n")
+        .filter(Boolean).length;
     const expected = planShards({
-      tests: count("**/*.test.{ts,tsx}"),
+      tests: count("*.test.ts", "*.test.tsx"),
       specs: count("e2e/*.spec.ts"),
     });
     expect(lists).toEqual({

@@ -5,7 +5,7 @@
  *
  * A free-plan run holds 20 jobs at once and a job past that queues, so a shard past the
  * budget stops paying. Ubuntu and e2e stop at four shards each and Windows takes what they
- * leave, since its tests run about 25 times slower per file. Past that, raise the files
+ * leave, since its tests run slower per file. Past that, raise the files
  * per shard or move to a larger plan; a matrix may hold 256 jobs.
  */
 import { appendFileSync } from "node:fs";
