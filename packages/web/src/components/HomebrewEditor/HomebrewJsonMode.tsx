@@ -19,9 +19,10 @@ export interface HomebrewJsonModeProps {
 
 /**
  * The entry as JSON text, with the kind's field reference in a sidebar on its left where it
- * has one. The sidebar fills the body and scrolls on its own beside the JSON, which scrolls
- * on its own. It collapses sideways to a strip, and the JSON takes the width; where the modal
- * is narrow, the two stack and scroll together, and the sidebar collapses to its button.
+ * has one. The sidebar scrolls on its own beside the JSON editor, which fills the height
+ * between its label and its hint and scrolls only its text. The sidebar collapses sideways
+ * to a strip, and the JSON takes the width; where the modal is narrow, the two stack and
+ * scroll together, and the sidebar collapses to its button.
  */
 export function HomebrewJsonMode({
   noun,
@@ -78,12 +79,19 @@ export function HomebrewJsonMode({
           ))}
         <div className="-m-1 flex min-w-0 flex-1 flex-col p-1 @2xl:min-h-0 @2xl:overflow-y-auto">
           <FormField
+            className="@2xl:min-h-0 @2xl:flex-1"
             label={`${noun} JSON`}
             status="Tab indents. Press Esc, then Tab, to leave the editor."
             error={problems.length > 0 && <HomebrewProblemList problems={problems} />}
           >
             {(control) => (
-              <JsonEditor {...control} value={text} onChange={onText} schema={schema} />
+              <JsonEditor
+                {...control}
+                className="@2xl:min-h-32 @2xl:flex-1 @2xl:[&>.cm-editor]:h-full!"
+                value={text}
+                onChange={onText}
+                schema={schema}
+              />
             )}
           </FormField>
         </div>

@@ -42,6 +42,8 @@ export interface FormFieldProps {
   describedBy?: string;
   /** `into` is null until the caller's element mounts; nothing renders until then. */
   messageSlot?: { into: Element | null; name?: string };
+  /** Classes for the field's root, for a field that fills a flex parent. */
+  className?: string;
   children: (control: ControlProps) => ReactNode;
 }
 
@@ -54,6 +56,7 @@ export function FormField({
   status,
   describedBy,
   messageSlot,
+  className,
   children,
 }: FormFieldProps) {
   const id = useId();
@@ -90,7 +93,7 @@ export function FormField({
   );
 
   return (
-    <div className="flex flex-col">
+    <div className={`flex flex-col ${className ?? ""}`}>
       <div className={labelAddon ? "mb-1 flex items-center gap-1" : undefined}>
         <label
           id={`${id}-label`}

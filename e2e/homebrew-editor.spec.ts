@@ -341,6 +341,9 @@ test("in a window 600px high the editor's body never scrolls and its footer stay
   await expectBodyFixed();
   await editor.getByRole("tab", { name: "JSON" }).click();
   await expect(editor.getByRole("textbox", { name: "Item JSON" })).toBeVisible();
+  await expect(
+    editor.getByText("Tab indents. Press Esc, then Tab, to leave the editor."),
+  ).toBeInViewport();
   await expectBodyFixed();
   await editor.getByRole("tab", { name: "Preview" }).click();
   await expect(editor.getByRole("region", { name: "Item preview" })).toBeVisible();
