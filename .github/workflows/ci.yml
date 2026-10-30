@@ -50,8 +50,10 @@ jobs:
   # follows the suite: one shard per 30 test files, so run time holds as tests are added.
   # Measured at 4, 6, 8, 10 and 12 shards, a shard costs about 55 s of setup plus its tests,
   # and the slowest fell from 134 s at 4 to 95 s at 8 but only to 84 s at 12, where the
-  # largest single files set the floor. The cap is 16 to stay under the free plan's 20
-  # concurrent jobs beside the other jobs; past it, raise the files per shard.
+  # largest single files set the floor. The free plan runs 20 jobs at once and the
+  # six other jobs that start with the shards (static, two Ubuntu tests, two e2e, spellcheck)
+  # leave 14 slots; a shard past that queues and the run time stops holding. A matrix
+  # may hold 256 jobs. Past the cap, raise the files per shard or move to a larger plan.
   plan-windows:
     runs-on: ubuntu-latest
     outputs:
@@ -63,7 +65,7 @@ jobs:
         run: |
           files=$(git ls-files '*.test.ts' '*.test.tsx' | wc -l)
           n=$(( (files + 29) / 30 ))
-          n=$(( n < 2 ? 2 : n > 16 ? 16 : n ))
+          n=$(( n < 2 ? 2 : n > 14 ? 14 : n ))
           echo "shards=$(jq -nc --argjson n "$n" '[range(1; $n + 1)]')" >> "$GITHUB_OUTPUT"
 
   test-windows:

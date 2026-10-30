@@ -122,6 +122,6 @@ describe("ci.yml", () => {
     const shards = JSON.parse(readFileSync(out, "utf8").replace("shards=", "")) as number[];
     expect(shards).toEqual(shards.map((_, i) => i + 1));
     expect(shards.length).toBeGreaterThanOrEqual(2);
-    expect(shards.length).toBeLessThanOrEqual(16);
+    expect(shards.length).toBeLessThanOrEqual(14);
   });
 });
