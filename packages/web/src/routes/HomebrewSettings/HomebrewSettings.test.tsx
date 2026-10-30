@@ -2031,7 +2031,7 @@ describe("HomebrewSettings", () => {
       /background features/,
     );
     expect(within(reference).getByText("skillProficiencies").nextSibling).toHaveTextContent(
-      /grants none of them/,
+      /gains them outright/,
     );
 
     const search = within(reference).getByRole("searchbox", { name: "Search fields" });

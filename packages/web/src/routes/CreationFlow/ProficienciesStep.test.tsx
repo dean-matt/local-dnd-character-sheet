@@ -142,7 +142,20 @@ const TINKER = {
   },
 };
 
+const DRIFTER = {
+  id: "hb_5",
+  name: "Drifter",
+  edition: "classic",
+  json: {
+    name: "Drifter",
+    source: "Homebrew",
+    skillProficiencies: [{ insight: true, stealth: true }],
+  },
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
 const ROWS: Record<string, unknown> = {
+  "/api/homebrew/backgrounds": [DRIFTER],
   "/api/homebrew/classes/hb_9": WARDEN,
   "/api/homebrew/classes/hb_8": TINKER,
   "/api/classes/Wizard/PHB": WIZARD,
@@ -317,6 +330,26 @@ describe("ProficienciesStep", () => {
     expect(values.proficiencies?.armor).toEqual(["Light", "Shield"]);
     expect(values.proficiencies?.weapons).toEqual(["Simple"]);
     expect(screen.getByText("Choose 1 — 0 selected")).toBeVisible();
+  });
+
+  it("grants a homebrew background's skills outright", async () => {
+    localStorage.setItem(
+      "draft:creation",
+      JSON.stringify({
+        edition: "classic",
+        background: { homebrewId: "hb_5" },
+        levels: [{ class: PHB("Wizard") }],
+      }),
+    );
+    renderStep({ keepDraft: true });
+
+    await waitFor(() =>
+      expect(values.proficiencies?.skills.map((skill) => skill.ref.name)).toEqual([
+        "Insight",
+        "Stealth",
+      ]),
+    );
+    expect(screen.getByRole("checkbox", { name: /Insight — granted by Background/ })).toBeChecked();
   });
 
   it("grants a homebrew class's tools and asks its tool choice", async () => {
