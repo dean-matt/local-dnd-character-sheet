@@ -41,8 +41,14 @@ function draft(values: object) {
   );
 }
 
+let client: QueryClient;
+
+async function settled() {
+  await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/homebrew/races", undefined));
+  await waitFor(() => expect(client.isFetching()).toBe(0));
+}
+
 function wrapper({ children }: { children: ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
       <creationForm.FormShell onSubmit={() => {}}>{() => children}</creationForm.FormShell>
@@ -51,7 +57,10 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 describe("a homebrew race in creation", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  });
   afterEach(() => vi.unstubAllGlobals());
 
   it("grants the tools its row names", async () => {
@@ -89,13 +98,17 @@ describe("a homebrew race in creation", () => {
 
     const { result } = renderHook(() => useIncreaseOptions(), { wrapper });
 
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/homebrew/races", undefined));
+    await settled();
     expect(result.current).toBeUndefined();
   });
 
   describe("identity", () => {
     const named = { name: "Ada", background: { name: "Sage", source: "PHB" } };
-    const sized = homebrew({ size: ["S", "M"], resist: [{ choose: { from: ["cold", "fire"] } }] });
+    const sized = homebrew({
+      size: ["S", "M"],
+      speed: 30,
+      resist: [{ choose: { from: ["cold", "fire"] } }],
+    });
 
     it("is done once the size and resistance its row offers are picked", async () => {
       stub({ status: 200, body: [sized] });
@@ -106,7 +119,7 @@ describe("a homebrew race in creation", () => {
       await waitFor(() => expect(result.current).toBe(true));
     });
 
-    it.each([{ size: "medium" }, { raceResistance: "fire" }])(
+    it.each([{ size: "medium" }, { size: "large", raceResistance: "fire" }])(
       "is held by a pick its row offers left open: %j",
       async (picked) => {
         stub({ status: 200, body: [sized] });
@@ -114,7 +127,7 @@ describe("a homebrew race in creation", () => {
 
         const { result } = renderHook(() => useIdentityDone(), { wrapper });
 
-        await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/homebrew/races", undefined));
+        await settled();
         expect(result.current).toBe(false);
       },
     );
@@ -134,7 +147,7 @@ describe("a homebrew race in creation", () => {
 
       const { result } = renderHook(() => useIdentityDone(), { wrapper });
 
-      await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/homebrew/races", undefined));
+      await settled();
       expect(result.current).toBe(false);
     });
   });
