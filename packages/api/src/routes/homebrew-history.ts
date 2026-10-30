@@ -81,7 +81,10 @@ const KINDS: Record<Collection, Kind> = {
   },
 };
 
-/** Marks a PUT as a revert, so the middleware clears the held version instead of replacing it. */
+/**
+ * Marks a PUT as a revert, so the middleware clears the held version instead of replacing it.
+ * Internal: only the revert route sends it, and a client's PUT that sets it merely loses its undo.
+ */
 const REVERT_HEADER = "x-homebrew-revert";
 
 const rowParams = idParam.extend({ collection: homebrewCollectionSchema });
@@ -152,6 +155,8 @@ export function homebrewHistoryRoutes(
 ) {
   const routes = new OpenAPIHono();
   const keyOf = (collection: string, id: string) => `${collection}/${id}`;
+  // Unbounded: one entry per row saved or deleted since the API started. A single user's
+  // session keeps these small; cap them like `undo_log` if that stops holding.
   const earlier = new Map<string, { collection: Collection; id: string; input: object }>();
   const deleted = new Map<
     string,
@@ -209,7 +214,8 @@ export function homebrewHistoryRoutes(
       body: JSON.stringify(held.input),
     });
     if (res.ok) return c.body(null, 204);
-    return c.json(await res.json(), res.status === 404 ? 404 : 409);
+    const body = await res.json().catch(() => ({ error: res.statusText }));
+    return c.json(body, res.status === 404 ? 404 : 409);
   });
 
   routes.openapi(restoreRow, (c) => {

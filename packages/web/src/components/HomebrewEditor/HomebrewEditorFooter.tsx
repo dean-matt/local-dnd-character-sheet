@@ -21,8 +21,9 @@ export interface HomebrewEditorFooterProps {
 }
 
 /**
- * Cancel, why a save or an undo failed, Previous and Next while stepping, any hold on saving, and Save.
- * Undo, where the row has been saved before, sits beside Save. Previous stays in place on the first step, so focus never drops off a button that vanished.
+ * Cancel, why a save or an undo failed, Previous and Next while stepping, any hold on saving,
+ * and Save. Undo, where the row has been saved before, sits beside Save. Previous stays in
+ * place on the first step, so focus never drops off a button that vanished.
  */
 export function HomebrewEditorFooter({
   failure,

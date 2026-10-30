@@ -15,8 +15,9 @@ export interface DeleteHomebrewDialogProps {
 }
 
 /**
- * Asks before deleting a homebrew row, which Undo and Recently deleted bring back until the API restarts. A row a character
- * still holds is refused, and the refusal links each character holding it.
+ * Asks before deleting a homebrew row, which Undo and Recently deleted bring back until the
+ * API restarts. A row a character still holds is refused, and the refusal links each
+ * character holding it.
  */
 export function DeleteHomebrewDialog({
   name,
