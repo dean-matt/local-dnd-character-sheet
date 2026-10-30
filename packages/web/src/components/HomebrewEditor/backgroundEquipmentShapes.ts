@@ -62,12 +62,15 @@ export function readEquipment(value: unknown): EquipmentState | undefined {
 /** `state` written over `value`, keeping the entries of `A` the form has no control for. */
 export function writeEquipment(value: unknown, state: EquipmentState): unknown[] | undefined {
   const original = alternativeOf(value)?.A;
+  let seenCoins = false;
   let placed = false;
   const kept = (Array.isArray(original) ? original : []).flatMap((entry) => {
     const item = itemOf(entry);
     if (item !== undefined) return state.items.includes(item) ? [entry] : [];
     if (goldOf(entry) === undefined) return [entry];
-    if (placed || state.coins === null) return [];
+    if (seenCoins) return [entry];
+    seenCoins = true;
+    if (state.coins === null) return [];
     placed = true;
     return [copper(state.coins)];
   });

@@ -2355,6 +2355,21 @@ describe("HomebrewSettings", () => {
       expect(within(editor()).getByRole("heading", { name: "Proficiencies" })).toBeInTheDocument();
     });
 
+    it("holds the equipment step on negative gold and says so beside the field", () => {
+      stubApi({});
+      renderPage();
+
+      addBackground();
+      stepTo("Feat");
+      fireEvent.change(field("spinbutton", "Gold with the items (GP)"), {
+        target: { value: "-1" },
+      });
+      click("Next");
+
+      expect(within(editor()).getByText("Coins: zero or more gold pieces")).toBeInTheDocument();
+      expect(field("spinbutton", "Gold with the items (GP)")).toBeInTheDocument();
+    });
+
     it("keeps every field the form has no control for through an edit", async () => {
       const json = {
         name: "Marked",

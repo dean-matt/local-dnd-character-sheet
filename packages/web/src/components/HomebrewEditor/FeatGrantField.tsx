@@ -53,10 +53,11 @@ function switched(state: GrantState, mode: GrantMode): GrantState {
 }
 
 /**
- * One grant field of a feat or background: none, a fixed grant of the names picked, or a choice the player
- * makes on the sheet, from a list or of any, with how many they pick. A field upstream writes
- * as alternatives, or as a pick the form cannot show, stays in the JSON. A name the options
- * lack, pasted or not yet loaded, stays listed under its own spelling.
+ * One grant field of a feat or background: none, a fixed grant of the names picked, or a
+ * choice the player makes on the sheet, from a list or of any, with how many they pick. A
+ * field upstream writes as alternatives, or as a pick the form cannot show, stays in the
+ * JSON. A name the options lack, pasted or not yet loaded, stays listed under its own
+ * spelling.
  */
 export function FeatGrantField({
   label,

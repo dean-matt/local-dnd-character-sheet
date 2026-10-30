@@ -51,6 +51,13 @@ describe("writeEquipment", () => {
     ]);
   });
 
+  it("keeps the coin entries past the first, which the form does not show", () => {
+    const value = [{ A: [{ value: 100 }, { value: 200 }] }];
+    expect(writeEquipment(value, { items: [], coins: 3, instead: null })).toEqual([
+      { A: [{ value: 300 }, { value: 200 }] },
+    ]);
+  });
+
   it("writes nothing for an empty state", () => {
     expect(writeEquipment(acolyte, { items: [], coins: null, instead: null })).toEqual([
       { A: [{ special: "vestments" }] },
