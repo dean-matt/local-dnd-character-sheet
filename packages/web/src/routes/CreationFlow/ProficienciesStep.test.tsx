@@ -11,6 +11,7 @@ import { CreationTools } from "./CreationTools.tsx";
 import { creationForm } from "./creationForm.ts";
 import { type EquipmentMemory, NO_EQUIPMENT } from "./equipmentPicks.ts";
 import { ProficienciesStep } from "./ProficienciesStep.tsx";
+import { useClassEntries } from "./useClassEntries.ts";
 import { useProficienciesDone } from "./useProficienciesDone.ts";
 
 const PHB = (name: string) => ({ name, source: "PHB" });
@@ -234,6 +235,13 @@ function Values() {
   return null;
 }
 
+let entries: ReturnType<typeof useClassEntries>["entries"] = [];
+
+function Entries() {
+  entries = useClassEntries().entries;
+  return null;
+}
+
 let done = false;
 
 function Step() {
@@ -271,6 +279,7 @@ function renderStep({
           <CreationGrants />
           <Step />
           <Values />
+          <Entries />
         </>
       )}
     </creationForm.FormShell>,
@@ -387,6 +396,25 @@ describe("ProficienciesStep", () => {
       expect(screen.queryByRole("group", { name: /From Class/ })).toBeNull();
       expect(values.proficiencies?.savingThrows ?? []).toEqual([]);
       expect(done).toBe(false);
+    });
+
+    it("still awaits a later homebrew class's failed read once the catalog class has loaded", async () => {
+      localStorage.setItem(
+        "draft:creation",
+        JSON.stringify({
+          edition: "classic",
+          background: PHB("Sage"),
+          levels: [{ class: PHB("Wizard") }, { class: { homebrewId: "hb_missing" } }],
+        }),
+      );
+      renderStep({ keepDraft: true });
+
+      await waitFor(() => {
+        expect(entries[0]?.read).toBe(true);
+        expect(entries[1]?.failed).toBe(true);
+      });
+      expect(entries[1]?.awaited).toBe(true);
+      expect(screen.queryByRole("group", { name: "From Class: Wizard" })).toBeNull();
     });
   });
 
