@@ -33,6 +33,8 @@ export interface FeatGrantFieldProps {
   error?: ReactNode;
   /** Progress the user should hear, such as the options loading. */
   status?: ReactNode;
+  /** What the entry is called where the form leaves a field to the JSON. */
+  owner?: string;
 }
 
 /** The state a switch to `mode` starts from, carrying the names already picked. */
@@ -51,7 +53,7 @@ function switched(state: GrantState, mode: GrantMode): GrantState {
 }
 
 /**
- * One grant field of a feat: none, a fixed grant of the names picked, or a choice the player
+ * One grant field of a feat or background: none, a fixed grant of the names picked, or a choice the player
  * makes on the sheet, from a list or of any, with how many they pick. A field upstream writes
  * as alternatives, or as a pick the form cannot show, stays in the JSON. A name the options
  * lack, pasted or not yet loaded, stays listed under its own spelling.
@@ -65,6 +67,7 @@ export function FeatGrantField({
   onChange,
   error,
   status,
+  owner = "feat",
 }: FeatGrantFieldProps) {
   const [state, setState] = useState(() => readGrant(value, spec));
   if (!state) {
@@ -72,8 +75,8 @@ export function FeatGrantField({
       <div className="flex flex-col">
         <span className="mb-1 text-muted text-row">{label}</span>
         <p className="text-muted text-row">
-          This feat states its {label.toLowerCase()} as alternatives or a pick the form cannot show.
-          Edit them in JSON.
+          This {owner} states its {label.toLowerCase()} as alternatives or a pick the form cannot
+          show. Edit them in JSON.
         </p>
       </div>
     );

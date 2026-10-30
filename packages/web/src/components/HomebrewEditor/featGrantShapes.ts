@@ -16,7 +16,7 @@ export interface GrantSpec {
    * The key a pick of any writes its count under, as `{any: 2}`; absent where a pick of any is
    * a `choose` from `everyName`, as a saving throw of any ability.
    */
-  anyKey?: "any" | "anyProficientSkill";
+  anyKey?: "any" | "anyProficientSkill" | "anyStandard";
   /** Every name a pick of any offers, where `anyKey` is absent. */
   everyName?: readonly string[];
   /** A fixed grant raises each name by an amount, as an ability score, rather than naming it `true`. */
@@ -40,6 +40,16 @@ export const FEAT_GRANT_SPECS = {
 } satisfies Record<string, GrantSpec>;
 
 export type FeatGrantKey = keyof typeof FEAT_GRANT_SPECS;
+
+/** The grant fields a background's form shows; a language pick of any is upstream's `anyStandard`. */
+export const BACKGROUND_GRANT_SPECS = {
+  ability: FEAT_GRANT_SPECS.ability,
+  skillProficiencies: FEAT_GRANT_SPECS.skillProficiencies,
+  toolProficiencies: FEAT_GRANT_SPECS.toolProficiencies,
+  languageProficiencies: { anyKey: "anyStandard" },
+} satisfies Record<string, GrantSpec>;
+
+export type BackgroundGrantKey = keyof typeof BACKGROUND_GRANT_SPECS;
 
 /** A count or an amount, `null` while its input is empty. */
 type Typed = number | null;

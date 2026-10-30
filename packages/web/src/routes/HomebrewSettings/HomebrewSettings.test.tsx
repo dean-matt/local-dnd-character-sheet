@@ -1840,6 +1840,8 @@ describe("HomebrewSettings", () => {
         name: "Add background",
       }),
     );
+    expect(within(editor()).queryByText("Field Reference")).toBeNull();
+    mode("JSON");
     const reference = within(editor()).getByRole("region", { name: "Field Reference" });
     const terms = () =>
       within(reference)
@@ -1951,33 +1953,33 @@ describe("HomebrewSettings", () => {
     ).toBeTruthy();
   });
 
+  const group = (name: string) => within(within(editor()).getByRole("group", { name }));
+  const pickIn = (name: string, label: string, option: string) => {
+    fireEvent.click(group(name).getByLabelText(label, { selector: FIELD_SELECTOR.combobox }));
+    fireEvent.click(screen.getByRole("option", { name: option }));
+  };
+  const tickIn = (name: string, list: string, ...options: string[]) => {
+    fireEvent.click(group(name).getByRole("button", { name: new RegExp(`^${list} `) }));
+    for (const option of options) {
+      fireEvent.click(within(editor()).getByRole("checkbox", { name: option }));
+    }
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+  };
+  const typeIn = (name: string, label: string, value: string) =>
+    fireEvent.change(group(name).getByLabelText(label, { selector: FIELD_SELECTOR.spinbutton }), {
+      target: { value },
+    });
+  const preview = () => {
+    mode("Preview");
+    const text = editor().querySelector('[role="tabpanel"]')?.textContent;
+    mode("Step by step");
+    return text;
+  };
+
   describe("a feat's form", () => {
     const feats = () => screen.getByRole("region", { name: "Feats" });
     const addFeat = () =>
       fireEvent.click(within(feats()).getByRole("button", { name: "Add feat" }));
-    const group = (name: string) => within(within(editor()).getByRole("group", { name }));
-    const pickIn = (name: string, label: string, option: string) => {
-      fireEvent.click(group(name).getByLabelText(label, { selector: FIELD_SELECTOR.combobox }));
-      fireEvent.click(screen.getByRole("option", { name: option }));
-    };
-    const tickIn = (name: string, list: string, ...options: string[]) => {
-      fireEvent.click(group(name).getByRole("button", { name: new RegExp(`^${list} `) }));
-      for (const option of options) {
-        fireEvent.click(within(editor()).getByRole("checkbox", { name: option }));
-      }
-      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
-    };
-    const typeIn = (name: string, label: string, value: string) =>
-      fireEvent.change(group(name).getByLabelText(label, { selector: FIELD_SELECTOR.spinbutton }), {
-        target: { value },
-      });
-    const preview = () => {
-      mode("Preview");
-      const text = editor().querySelector('[role="tabpanel"]')?.textContent;
-      mode("Step by step");
-      return text;
-    };
-
     const built = {
       name: "Stonewarden",
       entries: FEAT_STARTERS[0].entry.entries,
@@ -2238,6 +2240,160 @@ describe("HomebrewSettings", () => {
               ...rest,
               name: "Twice Marked",
               prerequisite: [{ level: 5, campaign: ["Eberron"] }],
+              edition: "one",
+            },
+          },
+        ]),
+      );
+    });
+  });
+  describe("a background's form", () => {
+    const backgrounds = () => screen.getByRole("region", { name: "Backgrounds" });
+    const addBackground = () =>
+      fireEvent.click(within(backgrounds()).getByRole("button", { name: "Add background" }));
+
+    const built = {
+      name: "Wayfarer",
+      skillProficiencies: [{ insight: true, survival: true }],
+      entries: BACKGROUND_STARTERS[0].entry.entries,
+      languageProficiencies: [{ anyStandard: 2 }],
+      ability: [{ con: 1 }],
+      feats: [{ "alert|xphb": true }],
+      startingEquipment: [{ B: [{ value: 5000 }] }],
+    };
+
+    function stubFeats() {
+      const stored = {
+        id: "b1",
+        name: built.name,
+        edition: "one",
+        json: { ...built, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const fetchMock = stubApi({}, [
+        { status: 201, body: stored },
+        { status: 201, body: stored },
+      ]);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          if (!String(input).startsWith("/api/feats?")) return fetchMock(input, init);
+          const json = { name: "Alert", source: "XPHB" };
+          return Response.json({ items: [{ ...json, edition: "one", json }], total: 1 });
+        }),
+      );
+      return fetchMock;
+    }
+
+    it("offers its steps beside JSON and Preview", () => {
+      stubApi({});
+      renderPage();
+
+      addBackground();
+      for (const name of ["Step by step", "JSON", "Preview"]) {
+        expect(within(editor()).getByRole("tab", { name })).toBeInTheDocument();
+      }
+      const steps = within(editor()).getByRole("navigation", { name: "Steps" });
+      expect(
+        within(steps)
+          .getAllByRole("button")
+          .map((button) => button.textContent),
+      ).toEqual([
+        "Basics & Rules text",
+        "Proficiencies & Ability scores",
+        "Feat & Equipment",
+        "Preview",
+      ]);
+      expect(field("textbox", "Name")).toHaveValue("Wayfarer");
+    });
+
+    it("saves what the same JSON pasted saves", async () => {
+      const fetchMock = stubFeats();
+      renderPage();
+
+      addBackground();
+      stepTo("Proficiencies");
+      pickIn("Languages", "Granted as", "Choice of any");
+      typeIn("Languages", "How many", "2");
+      pickIn("Ability score increases", "Granted as", "Fixed");
+      tickIn("Ability score increases", "Granted", "Constitution");
+      stepTo("Feat");
+      pickIn("Feat", "Granted as", "Fixed");
+      await within(editor()).findByRole("button", { name: /^Granted / });
+      tickIn("Feat", "Granted", "Alert (XPHB)");
+      fireEvent.change(field("spinbutton", "Gold instead of the items (GP)"), {
+        target: { value: "50" },
+      });
+      click("Save");
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+      addBackground();
+      mode("JSON");
+      typeJson("Background JSON", JSON.stringify(built));
+      click("Save");
+
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(2));
+      const [fromForm, fromJson] = writesOf(fetchMock);
+      expect(fromForm?.body).toEqual({ ...built, edition: "one" });
+      expect(fromJson?.body).toEqual(fromForm?.body);
+    });
+
+    it("holds a step while a field it shows has a problem, and shows it beside the field", () => {
+      stubApi({});
+      renderPage();
+
+      addBackground();
+      stepTo("Proficiencies");
+      pickIn("Languages", "Granted as", "Choice of any");
+      typeIn("Languages", "How many", "");
+      click("Next");
+
+      expect(
+        group("Languages").getByLabelText("How many", { selector: FIELD_SELECTOR.spinbutton }),
+      ).toHaveAccessibleDescription("How many: a whole number of at least 1");
+      expect(within(editor()).getByRole("heading", { name: "Proficiencies" })).toBeInTheDocument();
+    });
+
+    it("keeps every field the form has no control for through an edit", async () => {
+      const json = {
+        name: "Marked",
+        source: "HB",
+        page: 7,
+        ability: [{ choose: { weighted: { from: ["int", "wis"], weights: [2, 1] } } }],
+        feats: [{ anyFromCategory: { category: ["DG"] } }],
+        toolProficiencies: [{ anyArtisansTool: 1 }],
+        startingEquipment: [{ A: [{ item: "robe|xphb", quantity: 2 }, { special: "vestments" }] }],
+      };
+      const stored = { id: "b1", name: "Marked", edition: "one", json, createdAt: CREATED_AT };
+      const fetchMock = stubApi({ backgrounds: [stored] }, [{ status: 200, body: stored }]);
+      renderPage();
+
+      fireEvent.click(await within(backgrounds()).findByRole("button", { name: "Edit Marked" }));
+      fireEvent.change(field("textbox", "Name"), { target: { value: "Twice Marked" } });
+      stepTo("Proficiencies");
+      expect(within(editor()).getByText(/tools as alternatives/)).toBeInTheDocument();
+      expect(
+        within(editor()).getByText(/ability score increases as alternatives/),
+      ).toBeInTheDocument();
+      stepTo("Feat");
+      expect(within(editor()).getByText(/feat as a pick the form cannot show/)).toBeInTheDocument();
+      fireEvent.change(field("spinbutton", "Gold with the items (GP)"), {
+        target: { value: "3" },
+      });
+      fireEvent.click(within(editor()).getByRole("button", { name: /^Remove Robe/ }));
+      click("Save");
+
+      const { source: _source, ...rest } = json;
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          {
+            url: "/api/homebrew/backgrounds/b1",
+            method: "PUT",
+            body: {
+              ...rest,
+              name: "Twice Marked",
+              startingEquipment: [{ A: [{ special: "vestments" }, { value: 300 }] }],
               edition: "one",
             },
           },

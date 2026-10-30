@@ -8,10 +8,10 @@ import {
   appliedSpellFieldsSchema,
   classEntries,
   type Entries,
+  type HomebrewBackgroundInput,
   type HomebrewFeatInput,
   type HomebrewItemInput,
   type HomebrewSpellInput,
-  homebrewBackgroundInputSchema,
   homebrewClassInputSchema,
   homebrewRaceInputSchema,
   homebrewSkillInputSchema,
@@ -41,11 +41,16 @@ import {
   SKILL_STARTERS,
   SPELL_STARTERS,
 } from "../../lib/homebrewStarters.ts";
+import { BackgroundAbilityScores } from "./BackgroundAbilityScores.tsx";
+import { BackgroundEquipment } from "./BackgroundEquipment.tsx";
+import { BackgroundFeat } from "./BackgroundFeat.tsx";
+import { BackgroundProficiencies } from "./BackgroundProficiencies.tsx";
 import { FeatAbilityScores } from "./FeatAbilityScores.tsx";
 import { FeatBasics } from "./FeatBasics.tsx";
 import { FeatPrerequisites } from "./FeatPrerequisites.tsx";
 import { FeatProficiencies } from "./FeatProficiencies.tsx";
 import { FieldReference } from "./FieldReference.tsx";
+import { homebrewBackgroundFormSchema } from "./homebrewBackgroundChecks.ts";
 import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewFeatFormSchema } from "./homebrewFeatChecks.ts";
@@ -244,16 +249,34 @@ const klass = {
   reference: createElement(FieldReference, { schema: appliedClassFieldsSchema }),
 };
 
-const background = {
-  ...pasted(
+const background: EditingKind<HomebrewBackgroundInput> = {
+  inputSchema: homebrewBackgroundFormSchema,
+  facts: backgroundFacts,
+  entries: rowEntries,
+  starters: BACKGROUND_STARTERS,
+  sections: [
+    { title: "Basics", Fields: FeatBasics, keys: ["name"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
     {
-      inputSchema: homebrewBackgroundInputSchema,
-      starters: BACKGROUND_STARTERS,
-      entries: rowEntries,
+      title: "Proficiencies",
+      Fields: BackgroundProficiencies,
+      keys: ["skillProficiencies", "toolProficiencies", "languageProficiencies"],
     },
-    backgroundFacts,
-  ),
+    { title: "Ability scores", Fields: BackgroundAbilityScores, keys: ["ability"] },
+    { title: "Feat", Fields: BackgroundFeat, keys: ["feats"] },
+    { title: "Equipment", Fields: BackgroundEquipment, keys: ["startingEquipment"] },
+  ],
   reference: createElement(FieldReference, { schema: appliedBackgroundFieldsSchema }),
+  shownKeys: () => [
+    "name",
+    "entries",
+    "skillProficiencies",
+    "toolProficiencies",
+    "languageProficiencies",
+    "ability",
+    "feats",
+    "startingEquipment",
+  ],
 };
 
 const FEAT_PROFICIENCIES = [

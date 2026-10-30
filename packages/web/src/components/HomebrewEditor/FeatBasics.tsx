@@ -2,7 +2,7 @@ import { InputField } from "../InputField.tsx";
 import { type HomebrewFormProps, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED } from "./homebrewGrid.ts";
 
-/** A homebrew feat's first step: its name. */
+/** The first step of a homebrew feat or background: its name. */
 export function FeatBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   return (
     <div className={FORM_GRID}>
