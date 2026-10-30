@@ -2600,5 +2600,24 @@ describe("HomebrewSettings", () => {
         ]),
       );
     });
+
+    it("keeps a sense stated in a shape the form cannot read when another sense changes", async () => {
+      const json = { name: "Odd", source: "HB", size: ["M"], speed: 30, truesight: "30" };
+      const stored = { id: "r2", name: "Odd", edition: "one", json, createdAt: CREATED_AT };
+      const fetchMock = stubApi({ races: [stored] }, [{ status: 200, body: stored }]);
+      renderPage();
+
+      fireEvent.click(await within(races()).findByRole("button", { name: "Edit Odd" }));
+      stepTo("Senses");
+      fireEvent.change(field("spinbutton", "Blindsight (ft.)"), { target: { value: "15" } });
+      click("Save");
+
+      await waitFor(() =>
+        expect(writesOf(fetchMock)[0]?.body).toMatchObject({
+          truesight: "30",
+          senses: [{ blindsight: 15 }],
+        }),
+      );
+    });
   });
 });

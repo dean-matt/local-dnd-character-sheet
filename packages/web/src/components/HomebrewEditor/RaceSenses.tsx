@@ -16,7 +16,10 @@ export function RaceSenses({ entry, onChange, errorFor }: HomebrewFormProps) {
       senses={[...listAt(entry, "senses"), ...ownFields]}
       onChange={(next) => {
         const rest = Object.fromEntries(
-          Object.entries(entry).filter(([key]) => !(SENSES as readonly string[]).includes(key)),
+          Object.entries(entry).filter(
+            ([key, value]) =>
+              !(SENSES as readonly string[]).includes(key) || numberAt(value) === undefined,
+          ),
         );
         onChange(withField(rest, "senses", next.length > 0 ? next : undefined));
       }}
