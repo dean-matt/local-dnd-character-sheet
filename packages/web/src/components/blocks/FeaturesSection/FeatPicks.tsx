@@ -14,7 +14,7 @@ import {
 } from "@dnd/character";
 import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
-import { useFeats } from "../../../hooks/useFeats.ts";
+import { useFeatRows } from "../../../hooks/useFeatRows.ts";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { pickSlots, pickValue, withPick } from "../../../lib/featPicks.ts";
 import { alternativesOf, featRow } from "../../../lib/improvementChoice.ts";
@@ -105,8 +105,7 @@ function offerOptions(offer: FeatOffer, pools: (field: FeatPick["field"]) => Opt
  * The picks a feat's own fields offer — a saving throw, a skill, a tool, a language, a
  * resistance — and, for a feat taken outside an improvement, the increases it offers, each
  * saved as soon as it is picked. A name another slot of the same field holds is not offered
- * again, and a pick stays shown while the list it came from loads or after it leaves it. The
- * sheet does not yet read a homebrew feat's offers, so it shows none.
+ * again, and a pick stays shown while the list it came from loads or after it leaves it.
  *
  * Each offer is asked on its own, so `Resilient` (XPHB) can store a Constitution save beside
  * a +1 to Strength, where the rules raise the save's ability. Upstream writes no field tying
@@ -115,7 +114,7 @@ function offerOptions(offer: FeatOffer, pools: (field: FeatPick["field"]) => Opt
 export function FeatPicks({ character, index }: { character: CharacterRecord; index: number }) {
   const { definition } = character;
   const entry = definition.feats[index];
-  const feats = useFeats(definition.edition).data?.items ?? [];
+  const { rows: feats } = useFeatRows(definition.edition);
   const derived = useCharacterDerived(character.id).data;
   const row = entry && featRow(feats, entry.ref);
   const offers = row ? featGrantsSchema.parse(row.json).offers : [];

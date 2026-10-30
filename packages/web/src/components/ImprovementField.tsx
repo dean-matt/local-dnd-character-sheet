@@ -1,4 +1,3 @@
-import type { FeatRecord } from "@dnd/catalog";
 import {
   displayName,
   type EntryRef,
@@ -29,8 +28,8 @@ export interface ImprovementFieldProps {
   /** Names the improvement, such as `Level 4`, in each control's label. */
   name: string;
   improvement: Improvement | undefined;
-  /** Every catalog feat in the character's edition. */
-  feats: readonly FeatRecord[];
+  /** Every feat the character may hold, catalog or homebrew. */
+  feats: readonly OfferedFeat[];
   candidate: Candidate;
   onChange: (next: Improvement) => void;
   /** Outlines every control, as for a change that did not save. */
@@ -40,7 +39,7 @@ export interface ImprovementFieldProps {
 /**
  * One Ability Score Improvement or Epic Boon: raise scores, +2 to one or +1 to two, or take
  * a feat the character qualifies for, catalog or homebrew, then place whatever increases the
- * feat offers; the sheet does not yet read a homebrew feat's increases. A score an increase
+ * feat offers. A score an increase
  * would carry past its cap is not offered, and the feat already taken stays offered after the
  * character stops qualifying for it.
  */
@@ -115,7 +114,7 @@ export function ImprovementField({
 function featOptions(
   offered: readonly OfferedFeat[],
   taken: EntryRef | undefined,
-  feats: readonly FeatRecord[],
+  feats: readonly OfferedFeat[],
   names: HomebrewNames,
 ) {
   const label = sharedNameLabel(offered);

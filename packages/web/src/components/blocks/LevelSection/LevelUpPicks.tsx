@@ -58,7 +58,7 @@ export function LevelUpPicks({ edition, plan }: LevelUpPicksProps) {
           <ImprovementField
             name={`Level ${grant.level}`}
             improvement={plan.improvement}
-            feats={plan.catalogFeats}
+            feats={plan.featRows}
             candidate={candidate}
             onChange={plan.setImprovement}
           />

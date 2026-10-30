@@ -1,6 +1,6 @@
 import { type CharacterDefinition, characterDefinitionSchema, improvementAt } from "@dnd/character";
 import { useWatch } from "react-hook-form";
-import { useFeats } from "../../hooks/useFeats.ts";
+import { useFeatRows } from "../../hooks/useFeatRows.ts";
 import { useImprovementGrants } from "../../hooks/useImprovementGrants.ts";
 import { isMade } from "../../lib/improvementChoice.ts";
 import { candidateAt } from "../../lib/improvementFeats.ts";
@@ -21,7 +21,7 @@ export function useAbilitiesDone(): boolean {
   >({ name: ["abilityIncreases", "levels", "edition", "feats", "houseRules"] });
   const sources = useIncreaseOptions();
   const { grants, read } = useImprovementGrants(levels);
-  const feats = useFeats(edition);
+  const feats = useFeatRows(edition);
   const parsed = characterDefinitionSchema.safeParse(values);
   const faulted = parsed.error?.issues.some(
     (issue) => stepOf(String(issue.path[0] ?? ""))?.slug === "abilities",
@@ -40,11 +40,7 @@ export function useAbilitiesDone(): boolean {
     (grants.length === 0 ||
       (feats.isSuccess &&
         grants.every((grant) =>
-          isMade(
-            improvementAt(draft, grant.level),
-            feats.data.items,
-            candidateAt(draft, grant).totals,
-          ),
+          isMade(improvementAt(draft, grant.level), feats.rows, candidateAt(draft, grant).totals),
         )));
   return (
     improved &&

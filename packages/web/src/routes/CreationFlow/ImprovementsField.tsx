@@ -1,7 +1,7 @@
 import { type CharacterDefinition, improvementAt, withImprovement } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
 import { ImprovementField } from "../../components/ImprovementField.tsx";
-import { useFeats } from "../../hooks/useFeats.ts";
+import { useFeatRows } from "../../hooks/useFeatRows.ts";
 import { useHomebrewNames } from "../../hooks/useHomebrewNames.ts";
 import { useImprovementGrants } from "../../hooks/useImprovementGrants.ts";
 import { isMade } from "../../lib/improvementChoice.ts";
@@ -43,7 +43,7 @@ export function ImprovementsField() {
     spells,
   ] = useWatch<CharacterDefinition, typeof WATCHED>({ name: WATCHED });
   const { grants } = useImprovementGrants(levels);
-  const catalog = useFeats(edition).data?.items ?? [];
+  const catalog = useFeatRows(edition).rows;
   if (grants.length === 0) return null;
   const draft = {
     edition,

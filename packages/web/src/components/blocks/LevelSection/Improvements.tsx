@@ -4,7 +4,7 @@ import {
   improvementAt,
   withImprovement,
 } from "@dnd/character";
-import { useFeats } from "../../../hooks/useFeats.ts";
+import { useFeatRows } from "../../../hooks/useFeatRows.ts";
 import { useHeldWrites } from "../../../hooks/useHeldWrites.ts";
 import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
@@ -26,7 +26,7 @@ export function Improvements({ character }: { character: CharacterRecord }) {
   const names = useHomebrewNames();
   const { definition } = character;
   const { grants } = useImprovementGrants(definition.levels);
-  const feats = useFeats(definition.edition);
+  const feats = useFeatRows(definition.edition);
   const update = useUpdateCharacterDefinition(character.id);
   const writes = useHeldWrites(update);
   const failure = writes.latest;
@@ -37,7 +37,7 @@ export function Improvements({ character }: { character: CharacterRecord }) {
     failure?.error,
   );
   if (grants.length === 0) return null;
-  const catalog = feats.data?.items ?? [];
+  const catalog = feats.rows;
   const missing = grants.filter(
     (grant) =>
       !isMade(
