@@ -177,6 +177,17 @@ describe("EditHomebrewButton", () => {
       );
     });
 
+    it("sits immediately after Cancel", async () => {
+      undoSetup([]);
+      renderDetail("/homebrew/items/hb-item");
+      await openEditor();
+
+      const cancel = within(editor()).getByRole("button", { name: "Cancel" });
+      expect(cancel.nextElementSibling).toBe(
+        within(editor()).getByRole("button", { name: "Undo" }),
+      );
+    });
+
     it("reverts the row once it has, saying why where the API refuses", async () => {
       const fetchMock = undoSetup([{ collection: "items", id: "hb-item" }]);
       renderDetail("/homebrew/items/hb-item");
