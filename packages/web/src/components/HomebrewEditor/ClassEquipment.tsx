@@ -55,7 +55,7 @@ export function ClassEquipment({ entry, onChange, errorFor }: HomebrewFormProps)
         <InputField
           label="Gold instead (GP)"
           value={state.gold}
-          onChange={(event) => write({ ...state, gold: event.target.value.trim() })}
+          onChange={(event) => write({ ...state, gold: event.target.value })}
         />
       </div>
       <div className={WHOLE}>

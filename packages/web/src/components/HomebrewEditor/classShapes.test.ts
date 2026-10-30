@@ -67,6 +67,21 @@ describe("proficiency names", () => {
     expect(readNames({ armor: ["Light"] }, "armor")).toEqual(["light"]);
     expect(readNames({ armor: [{ proficiency: "medium" }] }, "armor")).toBeUndefined();
   });
+
+  it("refuses a structured list of several alternatives or a weapons list it cannot write beside", () => {
+    expect(
+      readNames({ armorProficiencies: [{ light: true }, { medium: true }] }, "armor"),
+    ).toBeUndefined();
+    expect(readNames({ weaponProficiencies: [{ simple: true }] }, "weapons")).toBeUndefined();
+    expect(readNames({}, "armor")).toEqual([]);
+  });
+
+  it("writes the printed text of a name the user left selected", () => {
+    const container = { weapons: ["Martial weapons that have the Light property", "simple"] };
+    expect(
+      writeNames(container, "weapons", ["martial weapons that have the light property"]),
+    ).toEqual({ weapons: ["Martial weapons that have the Light property"] });
+  });
 });
 
 describe("multiclassing", () => {

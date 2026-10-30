@@ -72,18 +72,23 @@ const STRUCTURED: Partial<Record<ProficiencyList, string>> = {
   tools: "toolProficiencies",
 };
 
+/** The names a structured list holds where no prose one is stated; `undefined` where the form cannot show it. */
+function readStructured(container: Json, list: ProficiencyList): string[] | undefined {
+  if (list === "weapons") return container.weaponProficiencies === undefined ? [] : undefined;
+  const structured = STRUCTURED[list];
+  const only = structured ? container[structured] : undefined;
+  if (only === undefined) return [];
+  if (!Array.isArray(only) || only.length !== 1) return undefined;
+  const alternative = objectAt(only[0]);
+  return alternative && Object.values(alternative).every((flag) => flag === true)
+    ? Object.keys(alternative)
+    : undefined;
+}
+
 /** The names a prose list holds, lowercased; `undefined` where it holds anything but strings. */
 export function readNames(container: Json, list: ProficiencyList): string[] | undefined {
   const prose = container[list];
-  if (prose === undefined) {
-    const structured = STRUCTURED[list];
-    const only = structured ? container[structured] : undefined;
-    if (!Array.isArray(only) || only.length !== 1) return [];
-    const alternative = objectAt(only[0]);
-    return alternative && Object.values(alternative).every((flag) => flag === true)
-      ? Object.keys(alternative)
-      : undefined;
-  }
+  if (prose === undefined) return readStructured(container, list);
   if (!Array.isArray(prose) || !prose.every((name) => typeof name === "string")) return undefined;
   return prose.map((name: string) => name.toLowerCase());
 }
@@ -93,7 +98,13 @@ export function readNames(container: Json, list: ProficiencyList): string[] | un
  * upstream writes one, set to the plain names among them.
  */
 export function writeNames(container: Json, list: ProficiencyList, names: string[]): Json {
-  const withProse = withKey(container, list, names.length > 0 ? names : undefined);
+  const stated = Array.isArray(container[list]) ? (container[list] as unknown[]) : [];
+  const original = (name: string) =>
+    stated.find(
+      (line): line is string => typeof line === "string" && line.toLowerCase() === name,
+    ) ?? name;
+  const kept = names.map(original);
+  const withProse = withKey(container, list, kept.length > 0 ? kept : undefined);
   const structured = STRUCTURED[list];
   if (!structured) return withProse;
   const plain = names.filter((name) => PLAIN.test(name));
