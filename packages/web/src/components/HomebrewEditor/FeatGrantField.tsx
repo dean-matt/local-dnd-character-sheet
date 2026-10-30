@@ -35,6 +35,8 @@ export interface FeatGrantFieldProps {
   status?: ReactNode;
   /** What the entry is called where the form leaves a field to the JSON. */
   owner?: string;
+  /** The ways to grant that the field offers; all four where absent. */
+  modes?: GrantMode[];
 }
 
 /** The state a switch to `mode` starts from, carrying the names already picked. */
@@ -69,6 +71,7 @@ export function FeatGrantField({
   error,
   status,
   owner = "feat",
+  modes,
 }: FeatGrantFieldProps) {
   const [state, setState] = useState(() => readGrant(value, spec));
   if (!state) {
@@ -138,7 +141,7 @@ export function FeatGrantField({
             {(control) => (
               <Select
                 {...control}
-                options={MODES}
+                options={modes ? MODES.filter(({ value }) => modes.includes(value)) : MODES}
                 value={state.mode}
                 onChange={(next) => write(switched(state, next as GrantMode))}
               />

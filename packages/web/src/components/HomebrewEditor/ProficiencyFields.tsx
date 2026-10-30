@@ -4,21 +4,7 @@ import { FeatGrantField } from "./FeatGrantField.tsx";
 import type { FeatGrantKey, GrantSpec } from "./featGrantShapes.ts";
 import { type HomebrewFormProps, withField } from "./homebrewEntry.ts";
 import { byName, type Option } from "./homebrewOptions.ts";
-import { SKILL_NAMES } from "./homebrewVocabulary.ts";
-
-const SKILLS = SKILL_NAMES.map((name) => ({ value: name.toLowerCase(), label: name }));
-
-const ARMOR = [
-  { value: "light", label: "Light armor" },
-  { value: "medium", label: "Medium armor" },
-  { value: "heavy", label: "Heavy armor" },
-  { value: "shield", label: "Shields" },
-];
-
-const WEAPON_CATEGORIES = [
-  { value: "simple", label: "Simple weapons" },
-  { value: "martial", label: "Martial weapons" },
-];
+import { ARMOR, SKILLS, WEAPON_PROFICIENCIES } from "./homebrewVocabulary.ts";
 
 type ProficiencySpecs = Partial<Record<FeatGrantKey, GrantSpec>>;
 
@@ -60,7 +46,7 @@ export function ProficiencyFields({
       "Weapons",
       "weapons",
       [
-        ...WEAPON_CATEGORIES,
+        ...WEAPON_PROFICIENCIES,
         ...(weapons.data?.items ?? []).map(({ name, source }) => ({
           value: `${name}|${source}`.toLowerCase(),
           label: name,

@@ -188,3 +188,17 @@ export function isVersatile(entry: Record<string, unknown>): boolean {
   const properties = entry.property;
   return Array.isArray(properties) && properties.some((property) => propertyCode(property) === "V");
 }
+
+export const SKILLS = SKILL_NAMES.map((name) => ({ value: name.toLowerCase(), label: name }));
+
+export const ARMOR = [
+  { value: "light", label: "Light armor" },
+  { value: "medium", label: "Medium armor" },
+  { value: "heavy", label: "Heavy armor" },
+  { value: "shield", label: "Shields" },
+];
+
+export const WEAPON_PROFICIENCIES = [
+  { value: "simple", label: "Simple weapons" },
+  { value: "martial", label: "Martial weapons" },
+];

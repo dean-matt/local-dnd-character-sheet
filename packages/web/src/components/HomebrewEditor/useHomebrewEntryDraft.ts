@@ -36,8 +36,7 @@ const asText = (entry: HomebrewEntry) => JSON.stringify(sortedKeys(entry), null,
 export function useHomebrewEntryDraft(kind: EditingKind, record: HomebrewRow | undefined) {
   const [starter, setStarter] = useState(kind.starters[0]);
   const [entry, setEntry] = useState(() => editable(record ? record.json : starter.entry));
-  // A kind with no form opens in JSON and stays there.
-  const [text, setText] = useState(() => (kind.sections.length > 0 ? undefined : asText(entry)));
+  const [text, setText] = useState<string>();
   const [revision, setRevision] = useState(0);
   const [edition, setEdition] = useState<Edition>(record?.edition ?? "one");
   const [changed, setChanged] = useState(false);
