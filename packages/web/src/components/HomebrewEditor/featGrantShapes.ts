@@ -51,6 +51,17 @@ export const BACKGROUND_GRANT_SPECS = {
 
 export type BackgroundGrantKey = keyof typeof BACKGROUND_GRANT_SPECS;
 
+/** The grant fields a race's form shows; a language pick of any is upstream's `anyStandard`. */
+export const RACE_GRANT_SPECS = {
+  skillProficiencies: FEAT_GRANT_SPECS.skillProficiencies,
+  toolProficiencies: FEAT_GRANT_SPECS.toolProficiencies,
+  armorProficiencies: FEAT_GRANT_SPECS.armorProficiencies,
+  weaponProficiencies: FEAT_GRANT_SPECS.weaponProficiencies,
+  languageProficiencies: BACKGROUND_GRANT_SPECS.languageProficiencies,
+} satisfies Record<string, GrantSpec>;
+
+export type RaceGrantKey = keyof typeof RACE_GRANT_SPECS;
+
 /** A count or an amount, `null` while its input is empty. */
 type Typed = number | null;
 

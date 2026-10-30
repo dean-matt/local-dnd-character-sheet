@@ -1708,7 +1708,7 @@ describe("HomebrewSettings", () => {
     );
   });
 
-  it("creates a race from pasted JSON alone, naming a field that fails rather than the whole paste", async () => {
+  it("creates a race from pasted JSON, naming a field that fails rather than the whole paste", async () => {
     const fetchMock = stubApi({}, [{ status: 201, body: {} }]);
     renderPage();
 
@@ -1717,7 +1717,7 @@ describe("HomebrewSettings", () => {
         name: "Add race",
       }),
     );
-    expect(within(editor()).queryByRole("tab", { name: "Step by step" })).toBeNull();
+    mode("JSON");
     const { size: _size, ...sizeless } = RACE_STARTERS[0].entry;
     typeJson("Race JSON", JSON.stringify(sizeless));
     click("Save");
@@ -1749,6 +1749,7 @@ describe("HomebrewSettings", () => {
         name: "Add race",
       }),
     );
+    mode("JSON");
     const reference = within(editor()).getByRole("region", { name: "Field Reference" });
     const terms = () =>
       within(reference)
@@ -2413,6 +2414,209 @@ describe("HomebrewSettings", () => {
             },
           },
         ]),
+      );
+    });
+  });
+  describe("a race's form", () => {
+    const races = () => screen.getByRole("region", { name: "Races" });
+    const addRace = () =>
+      fireEvent.click(within(races()).getByRole("button", { name: "Add race" }));
+    const tick = (label: string) => fireEvent.click(field("checkbox", label));
+
+    const built = {
+      name: "Duskling",
+      size: ["S", "M"],
+      speed: { walk: 30, fly: true, swim: 20 },
+      ability: [{ dex: 2, cha: -1 }],
+      entries: RACE_STARTERS[0].entry.entries,
+      senses: [{ darkvision: 60 }],
+      resist: ["cold"],
+      immune: ["poison"],
+      skillProficiencies: [{ stealth: true }],
+      languageProficiencies: [{ anyStandard: 1 }],
+    };
+
+    it("offers its steps beside JSON and Preview", () => {
+      stubApi({});
+      renderPage();
+
+      addRace();
+      for (const name of ["Step by step", "JSON", "Preview"]) {
+        expect(within(editor()).getByRole("tab", { name })).toBeInTheDocument();
+      }
+      const steps = within(editor()).getByRole("navigation", { name: "Steps" });
+      expect(
+        within(steps)
+          .getAllByRole("button")
+          .map((button) => button.textContent),
+      ).toEqual([
+        "Basics & Rules text",
+        "Speed & Ability scores",
+        "Senses & Defenses",
+        "Proficiencies",
+        "Preview",
+      ]);
+      expect(field("textbox", "Name")).toHaveValue("Duskling");
+      stepTo("Speed");
+      expect(field("spinbutton", "Walking (ft.)")).toHaveValue(30);
+    });
+
+    it("saves what the same JSON pasted saves", async () => {
+      const stored = {
+        id: "r1",
+        name: built.name,
+        edition: "one",
+        json: { ...built, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const fetchMock = stubApi({}, [
+        { status: 201, body: stored },
+        { status: 201, body: stored },
+      ]);
+      renderPage();
+
+      addRace();
+      fireEvent.click(within(editor()).getByRole("button", { name: /^Size / }));
+      fireEvent.click(within(editor()).getByRole("checkbox", { name: "Small" }));
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      stepTo("Speed");
+      tick("Flying equals walking");
+      fireEvent.change(field("spinbutton", "Swimming (ft.)"), { target: { value: "20" } });
+      pickIn("Ability score increases", "Granted as", "Fixed");
+      fireEvent.change(field("spinbutton", "Dexterity increase"), { target: { value: "2" } });
+      fireEvent.change(field("spinbutton", "Charisma increase"), { target: { value: "-1" } });
+      stepTo("Senses");
+      fireEvent.change(field("spinbutton", "Darkvision (ft.)"), { target: { value: "60" } });
+      for (const [list, option] of [
+        ["Resistances", "Cold"],
+        ["Damage immunities", "Poison"],
+      ]) {
+        fireEvent.click(within(editor()).getByRole("button", { name: new RegExp(`^${list} `) }));
+        fireEvent.click(within(editor()).getByRole("checkbox", { name: option }));
+        fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      }
+      stepTo("Proficiencies");
+      pickIn("Skills", "Granted as", "Fixed");
+      tickIn("Skills", "Granted", "Stealth");
+      pickIn("Languages", "Granted as", "Choice of any");
+      click("Save");
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+      addRace();
+      mode("JSON");
+      typeJson("Race JSON", JSON.stringify(built));
+      click("Save");
+
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(2));
+      const [fromForm, fromJson] = writesOf(fetchMock);
+      expect(fromForm?.body).toEqual({ ...built, edition: "one" });
+      expect(fromJson?.body).toEqual(fromForm?.body);
+    });
+
+    it("holds a step while a field it shows has a problem, and shows it beside the field", () => {
+      stubApi({});
+      renderPage();
+
+      addRace();
+      click("Next");
+      fireEvent.change(field("spinbutton", "Walking (ft.)"), { target: { value: "" } });
+      pickIn("Ability score increases", "Granted as", "Choice from a list");
+      click("Next");
+      expect(within(editor()).getByText(/^Walking speed: /)).toBeInTheDocument();
+      expect(
+        group("Ability score increases").getByLabelText("Granted as", {
+          selector: FIELD_SELECTOR.combobox,
+        }),
+      ).toHaveAccessibleDescription("Pick at least one to choose from");
+      expect(within(editor()).getByRole("heading", { name: "Speed" })).toBeInTheDocument();
+
+      stepTo("Basics");
+      fireEvent.click(within(editor()).getByRole("button", { name: /^Size / }));
+      fireEvent.click(within(editor()).getByRole("checkbox", { name: "Medium" }));
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      click("Next");
+      expect(within(editor()).getByText("Pick at least one size")).toBeInTheDocument();
+      expect(within(editor()).getByRole("heading", { name: "Basics" })).toBeInTheDocument();
+    });
+
+    it("sets senses and defenses with the item form's controls", () => {
+      stubApi({});
+      renderPage();
+
+      addRace();
+      stepTo("Senses");
+      expect(field("spinbutton", "Blindsight (ft.)")).toBeInTheDocument();
+      for (const list of ["Resistances", "Damage immunities", "Damage vulnerabilities"]) {
+        expect(
+          within(editor()).getByRole("button", { name: new RegExp(`^${list} `) }),
+        ).toBeInTheDocument();
+      }
+    });
+
+    it("keeps every field the form has no control for through an edit", async () => {
+      const json = {
+        name: "Marked",
+        source: "HB",
+        page: 7,
+        size: ["M"],
+        speed: { walk: 30, hover: true },
+        darkvision: 60,
+        ability: [{ str: 1 }, { dex: 1 }],
+        resist: [{ choose: { from: ["cold", "fire"] } }, "acid"],
+        toolProficiencies: [{ "thieves' tools": true }, { "smith's tools": true }],
+        traitTags: ["Natural Armor"],
+      };
+      const stored = { id: "r1", name: "Marked", edition: "one", json, createdAt: CREATED_AT };
+      const fetchMock = stubApi({ races: [stored] }, [{ status: 200, body: stored }]);
+      renderPage();
+
+      fireEvent.click(await within(races()).findByRole("button", { name: "Edit Marked" }));
+      fireEvent.change(field("textbox", "Name"), { target: { value: "Twice Marked" } });
+      stepTo("Speed");
+      expect(
+        within(editor()).getByText(/ability score increases as alternatives/),
+      ).toBeInTheDocument();
+      fireEvent.change(field("spinbutton", "Swimming (ft.)"), { target: { value: "10" } });
+      stepTo("Senses");
+      expect(field("spinbutton", "Darkvision (ft.)")).toHaveValue(60);
+      stepTo("Proficiencies");
+      expect(within(editor()).getByText(/tools as alternatives/)).toBeInTheDocument();
+      click("Save");
+
+      const { source: _source, ...rest } = json;
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          {
+            url: "/api/homebrew/races/r1",
+            method: "PUT",
+            body: {
+              ...rest,
+              name: "Twice Marked",
+              speed: { walk: 30, hover: true, swim: 10 },
+              edition: "one",
+            },
+          },
+        ]),
+      );
+    });
+
+    it("keeps a sense stated in a shape the form cannot read when another sense changes", async () => {
+      const json = { name: "Odd", source: "HB", size: ["M"], speed: 30, truesight: "30" };
+      const stored = { id: "r2", name: "Odd", edition: "one", json, createdAt: CREATED_AT };
+      const fetchMock = stubApi({ races: [stored] }, [{ status: 200, body: stored }]);
+      renderPage();
+
+      fireEvent.click(await within(races()).findByRole("button", { name: "Edit Odd" }));
+      stepTo("Senses");
+      fireEvent.change(field("spinbutton", "Blindsight (ft.)"), { target: { value: "15" } });
+      click("Save");
+
+      await waitFor(() =>
+        expect(writesOf(fetchMock)[0]?.body).toMatchObject({
+          truesight: "30",
+          senses: [{ blindsight: 15 }],
+        }),
       );
     });
   });

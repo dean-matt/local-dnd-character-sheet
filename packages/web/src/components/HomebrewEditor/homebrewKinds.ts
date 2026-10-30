@@ -13,7 +13,6 @@ import {
   type HomebrewItemInput,
   type HomebrewSpellInput,
   homebrewClassInputSchema,
-  homebrewRaceInputSchema,
   homebrewSkillInputSchema,
   homebrewSpellInputSchema,
   itemEntries,
@@ -55,6 +54,7 @@ import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewFeatFormSchema } from "./homebrewFeatChecks.ts";
 import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
+import { homebrewRaceFormSchema } from "./homebrewRaceChecks.ts";
 import { isVersatile, itemGroup } from "./homebrewVocabulary.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
@@ -64,6 +64,11 @@ import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
 import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
 import type { JsonEditorProps } from "./JsonEditor.tsx";
+import { RaceAbilityScores } from "./RaceAbilityScores.tsx";
+import { RaceBasics } from "./RaceBasics.tsx";
+import { RaceProficiencies } from "./RaceProficiencies.tsx";
+import { RaceSenses } from "./RaceSenses.tsx";
+import { RaceSpeed } from "./RaceSpeed.tsx";
 import { SkillBasics } from "./SkillBasics.tsx";
 import { SpellBasics } from "./SpellBasics.tsx";
 import { SpellCasting } from "./SpellCasting.tsx";
@@ -223,16 +228,38 @@ function pasted<I extends HomebrewInput & Record<string, unknown>>(
   };
 }
 
-const race = {
-  ...pasted(
+const RACE_GRANTS = [
+  "skillProficiencies",
+  "toolProficiencies",
+  "armorProficiencies",
+  "weaponProficiencies",
+  "languageProficiencies",
+];
+
+const race: EditingKind<z.infer<typeof homebrewRaceFormSchema>> = {
+  inputSchema: homebrewRaceFormSchema,
+  facts: raceFacts,
+  entries: rowEntries,
+  starters: RACE_STARTERS,
+  sections: [
+    { title: "Basics", Fields: RaceBasics, keys: ["name", "size"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+    { title: "Speed", Fields: RaceSpeed, keys: ["speed"] },
+    { title: "Ability scores", Fields: RaceAbilityScores, keys: ["ability"] },
     {
-      inputSchema: homebrewRaceInputSchema,
-      starters: RACE_STARTERS,
-      entries: rowEntries,
+      title: "Senses",
+      Fields: RaceSenses,
+      keys: ["senses", "darkvision", "blindsight", "tremorsense", "truesight"],
     },
-    raceFacts,
-  ),
+    {
+      title: "Defenses",
+      Fields: ItemDefenses,
+      keys: ["resist", "immune", "vulnerable", "conditionImmune"],
+    },
+    { title: "Proficiencies", Fields: RaceProficiencies, keys: RACE_GRANTS },
+  ],
   reference: createElement(FieldReference, { schema: appliedRaceFieldsSchema }),
+  shownKeys: () => ["name", "size", "entries", "speed", "ability", "senses", ...RACE_GRANTS],
 };
 
 const klass = {
