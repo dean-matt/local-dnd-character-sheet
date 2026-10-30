@@ -17,12 +17,13 @@ export interface JsonEditorProps {
   onChange: (next: string) => void;
   /** Drives suggestions, hovers and in-place marks; without one the editor only highlights. */
   schema?: Parameters<typeof jsonSchema>[0];
+  /** Classes for the element holding the editor. */
+  className?: string;
 }
 
 const theme = EditorView.theme({
   "&": {
     height: "20lh",
-    resize: "vertical",
     overflow: "hidden",
     borderRadius: "var(--radius-control)",
     border: "1px solid var(--color-border)",
@@ -95,7 +96,7 @@ const highlight = HighlightStyle.define([
  * outdents; Escape then Tab leaves
  * the editor, CodeMirror's own way out, which the field's hint names.
  */
-export function JsonEditor({ value, onChange, schema, ...control }: JsonEditorProps) {
+export function JsonEditor({ value, onChange, schema, className, ...control }: JsonEditorProps) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView>(null);
   const [attributes] = useState(() => new Compartment());
@@ -157,5 +158,5 @@ export function JsonEditor({ value, onChange, schema, ...control }: JsonEditorPr
     editor.dispatch({ changes: { from: 0, to: editor.state.doc.length, insert: value } });
   }, [value]);
 
-  return <div ref={host} className="min-w-0" />;
+  return <div ref={host} className={`min-w-0 ${className ?? ""}`} />;
 }

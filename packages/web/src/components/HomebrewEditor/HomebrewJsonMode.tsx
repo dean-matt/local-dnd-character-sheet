@@ -19,8 +19,10 @@ export interface HomebrewJsonModeProps {
 
 /**
  * The entry as JSON text, with the kind's field reference in a sidebar on its left where it
- * has one, as tall as the JSON and scrolling within it. The sidebar collapses sideways to a strip, and the JSON takes the width; where
- * the modal is narrow, it stacks above the JSON and collapses to its button.
+ * has one. The sidebar keeps its header and search in place and scrolls only its field list, beside the JSON editor, which fills the height
+ * between its label and its hint and scrolls only its text. The sidebar collapses sideways
+ * to a strip, and the JSON takes the width; where the modal is narrow, the two stack and
+ * scroll together, and the sidebar collapses to its button.
  */
 export function HomebrewJsonMode({
   noun,
@@ -33,13 +35,13 @@ export function HomebrewJsonMode({
   const id = useId();
   const [open, setOpen] = useState(true);
   return (
-    <div className="@container">
-      <div className="flex flex-col gap-4 @2xl:grid @2xl:grid-cols-[auto_minmax(0,1fr)] @2xl:items-start">
+    <div className="@container flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto @2xl:grid @2xl:grid-cols-[auto_minmax(0,1fr)] @2xl:grid-rows-[minmax(0,1fr)] @2xl:overflow-hidden">
         {reference &&
           (open ? (
             <section
               aria-labelledby={`${id}-heading`}
-              className="flex min-w-0 flex-col gap-2 @2xl:h-0 @2xl:min-h-full @2xl:w-80 @2xl:overflow-y-auto"
+              className="flex min-w-0 flex-col gap-2 @2xl:min-h-0 @2xl:w-80"
             >
               <div className="flex items-center justify-between gap-2">
                 <h3 id={`${id}-heading`} className="font-semibold text-row">
@@ -73,14 +75,21 @@ export function HomebrewJsonMode({
               </span>
             </button>
           ))}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="-m-1 flex min-w-0 flex-1 flex-col p-1 @2xl:min-h-0 @2xl:overflow-y-auto">
           <FormField
+            className="@2xl:min-h-0 @2xl:flex-1"
             label={`${noun} JSON`}
             status="Tab indents. Press Esc, then Tab, to leave the editor."
             error={problems.length > 0 && <HomebrewProblemList problems={problems} />}
           >
             {(control) => (
-              <JsonEditor {...control} value={text} onChange={onText} schema={schema} />
+              <JsonEditor
+                {...control}
+                className="@2xl:min-h-32 @2xl:flex-1 @2xl:[&>.cm-editor]:h-full!"
+                value={text}
+                onChange={onText}
+                schema={schema}
+              />
             )}
           </FormField>
         </div>

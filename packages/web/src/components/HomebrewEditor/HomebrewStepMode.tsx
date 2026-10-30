@@ -33,7 +33,7 @@ export function HomebrewStepMode({
   const shown = kind.shownKeys(draft.entry);
   return (
     <>
-      <nav aria-label="Steps">
+      <nav aria-label="Steps" className="shrink-0">
         <ol className="flex flex-wrap items-center gap-1">
           {steps.map(({ title }, index) => (
             <li key={title}>
@@ -63,23 +63,28 @@ export function HomebrewStepMode({
         Step {step + 1} of {steps.length}
       </p>
       {current && (
-        <>
-          <div className={`grid gap-6 ${current.sections.length > 1 ? "@3xl:grid-cols-2" : ""}`}>
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto @3xl:overflow-hidden">
+          <div
+            className={`grid gap-6 @3xl:min-h-0 @3xl:flex-1 @3xl:grid-rows-[minmax(0,1fr)] ${current.sections.length > 1 ? "@3xl:grid-cols-2" : ""}`}
+          >
             {current.sections.map(({ title, Fields }) => (
               <section
                 key={title}
                 aria-label={title}
-                className="@container flex min-w-0 flex-col gap-3"
+                className="flex min-h-0 min-w-0 flex-col gap-3"
               >
-                <h3 className="font-semibold text-sm">{title}</h3>
-                <Fields
-                  key={draft.revision}
-                  entry={draft.entry}
-                  edition={draft.edition}
-                  recordId={recordId}
-                  onChange={draft.edit}
-                  errorFor={(key) => errorFor(shownProblems, key)}
-                />
+                <h3 className="shrink-0 font-semibold text-sm">{title}</h3>
+                {/* Padded and pulled back out, so the scroll container does not clip a focus ring. */}
+                <div className="@container -m-1 min-h-0 flex-1 overflow-y-auto p-1">
+                  <Fields
+                    key={draft.revision}
+                    entry={draft.entry}
+                    edition={draft.edition}
+                    recordId={recordId}
+                    onChange={draft.edit}
+                    errorFor={(key) => errorFor(shownProblems, key)}
+                  />
+                </div>
               </section>
             ))}
           </div>
@@ -88,7 +93,7 @@ export function HomebrewStepMode({
               ({ key }) => stepOf(kind, key) === step && !shown.includes(key),
             )}
           />
-        </>
+        </div>
       )}
     </>
   );

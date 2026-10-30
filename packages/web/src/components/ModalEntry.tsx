@@ -11,6 +11,7 @@ export function ModalEntry({
   badge,
   meta,
   footer,
+  contained,
   children,
 }: {
   title: string;
@@ -18,6 +19,8 @@ export function ModalEntry({
   badge?: ReactNode;
   meta?: ReactNode;
   footer?: ReactNode;
+  /** The body does not scroll; `children` fill it and scroll what overflows themselves. */
+  contained?: boolean;
   children: ReactNode;
 }) {
   const titleId = useContext(InModal)?.titleId;
@@ -34,9 +37,9 @@ export function ModalEntry({
       </div>
       <section
         aria-labelledby={titleId}
-        // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container takes focus so the keyboard can scroll it; the dialog opens with focus on the close button, outside it.
-        tabIndex={0}
-        className={`flex min-h-0 flex-1 flex-col gap-2 overflow-auto px-5 pt-1 text-body leading-normal ${footer ? "pb-3" : "pb-5"}`}
+        // A scroll container takes focus so the keyboard can scroll it; the dialog opens with focus on the close button, outside it.
+        {...(contained ? {} : { tabIndex: 0 })}
+        className={`flex min-h-0 flex-1 flex-col gap-2 ${contained ? "overflow-hidden" : "overflow-auto"} px-5 pt-1 text-body leading-normal ${footer ? "pb-3" : "pb-5"}`}
       >
         {children}
       </section>
