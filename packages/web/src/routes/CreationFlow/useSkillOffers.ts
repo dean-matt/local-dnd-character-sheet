@@ -24,12 +24,22 @@ export type GrantedSkill = { ref: ContentRef; by: "Race" | "Background" };
 export function useSkillOffers():
   | { granted: GrantedSkill[]; offers: SkillOffer[]; everySkill: ContentRef[] }
   | undefined {
-  const { edition, raceName, raceRead, raceJson, backgroundRow, backgrounds, names } =
-    useIdentityCatalog();
+  const {
+    edition,
+    raceName,
+    raceRead,
+    raceJson,
+    backgroundRow,
+    backgroundSkills,
+    backgroundRead,
+    backgrounds,
+    names,
+  } = useIdentityCatalog();
   const { entries } = useClassEntries();
   const houseRules = useWatch<CharacterDefinition, "houseRules">({ name: "houseRules" });
   const classRead = entries.every((entry) => !entry.awaited);
-  if (!(raceRead && classRead && backgrounds.isSuccess && names.isSuccess)) return undefined;
+  if (!(raceRead && classRead && backgrounds.isSuccess && backgroundRead && names.isSuccess))
+    return undefined;
   const hits = names.data.items;
   const row = (name: string) => catalogRow(hits, "skill", name, edition);
   const skillNames = [
@@ -40,7 +50,7 @@ export function useSkillOffers():
   const granted = (
     [
       ["Race", raceJson],
-      ["Background", backgroundRow?.json],
+      ["Background", backgroundRow?.json ?? backgroundSkills],
     ] as const
   ).flatMap(([by, json]) =>
     json

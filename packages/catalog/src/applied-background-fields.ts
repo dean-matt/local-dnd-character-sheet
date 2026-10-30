@@ -21,7 +21,7 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
     'The rules text, {@tags} included, printed in the background\'s detail. Each entry with "data": {"isFeature": true} lists among the character\'s background features under its name, "Feature: " dropped, so "Feature: Open Road" lists as Open Road; one with no name lists under the background\'s.',
   entriesHigherLevel: 'Further rules text, printed after "entries" in the background\'s detail.',
   skillProficiencies:
-    'Skills, such as [{"insight": true, "survival": true}], printed in the background\'s homebrew list entry. The sheet grants none of them to a character with a homebrew background.',
+    'Skills, such as [{"insight": true, "survival": true}], printed in the background\'s homebrew list entry. A character with this background gains them outright; a "choose" entry is not offered.',
 };
 
 const described = Object.fromEntries(

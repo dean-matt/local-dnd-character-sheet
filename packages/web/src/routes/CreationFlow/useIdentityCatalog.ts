@@ -1,7 +1,9 @@
+import { homebrewBackgroundRecordSchema } from "@dnd/catalog";
 import type { CharacterDefinition, ContentRef } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { useBackgrounds } from "../../hooks/useBackgrounds.ts";
 import { useCatalogSearch } from "../../hooks/useCatalogSearch.ts";
+import { useHomebrew } from "../../hooks/useHomebrew.ts";
 import { useRaceRows } from "../../hooks/useRaceRows.ts";
 
 const sameRow = (row: ContentRef, ref: ContentRef | undefined) =>
@@ -12,7 +14,8 @@ const sameRow = (row: ContentRef, ref: ContentRef | undefined) =>
  * one, every background of the edition, and the skill and language rows a grant resolves
  * against. `raceJson` is the chosen subrace's row, which already holds its race's, or the
  * race's own, or a homebrew race's. A typed or homebrew race names no catalog row, so
- * `catalogRace` is absent.
+ * `catalogRace` is absent. A homebrew background grants its skills alone, as `backgroundSkills`;
+ * `backgroundRead` is true once the row they come from has loaded, or where none is read.
  */
 export function useIdentityCatalog() {
   const [edition = "one", race, subrace, background] = useWatch<
@@ -35,6 +38,11 @@ export function useIdentityCatalog() {
     limit: 200,
   });
   const catalogBackground = background && "name" in background ? background : undefined;
+  const homebrewId = background && "homebrewId" in background ? background.homebrewId : undefined;
+  const homebrewBackgrounds = useHomebrew("backgrounds", homebrewBackgroundRecordSchema, {
+    listed: homebrewId !== undefined,
+  }).list;
+  const homebrewJson = homebrewBackgrounds.data?.find((row) => row.id === homebrewId)?.json;
   return {
     edition,
     catalogRace,
@@ -47,5 +55,7 @@ export function useIdentityCatalog() {
     backgrounds,
     backgroundRow: backgrounds.data?.items.find((row) => sameRow(row, catalogBackground)),
     names,
+    backgroundSkills: homebrewJson && { skillProficiencies: homebrewJson.skillProficiencies },
+    backgroundRead: homebrewId === undefined || homebrewBackgrounds.isSuccess,
   };
 }
