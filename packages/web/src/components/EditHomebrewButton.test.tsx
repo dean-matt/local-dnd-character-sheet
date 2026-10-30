@@ -158,6 +158,52 @@ describe("EditHomebrewButton", () => {
     },
   );
 
+  describe("Undo in the editor opened from a sheet", () => {
+    const undoSetup = (reversible: unknown[]) =>
+      stubApi({
+        "/api/homebrew/items/hb-item": { status: 200, body: lantern },
+        "/api/homebrew/history": { status: 200, body: { reversible, deleted: [] } },
+        "/api/homebrew/items/hb-item/revert": { status: 409, body: { error: "refused" } },
+      });
+
+    it("is disabled until the row has been saved over", async () => {
+      undoSetup([]);
+      renderDetail("/homebrew/items/hb-item");
+      await openEditor();
+
+      expect(within(editor()).getByRole("button", { name: "Undo" })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+    });
+
+    it("sits immediately after Cancel", async () => {
+      undoSetup([]);
+      renderDetail("/homebrew/items/hb-item");
+      await openEditor();
+
+      const cancel = within(editor()).getByRole("button", { name: "Cancel" });
+      expect(cancel.nextElementSibling).toBe(
+        within(editor()).getByRole("button", { name: "Undo" }),
+      );
+    });
+
+    it("reverts the row once it has, saying why where the API refuses", async () => {
+      const fetchMock = undoSetup([{ collection: "items", id: "hb-item" }]);
+      renderDetail("/homebrew/items/hb-item");
+      await openEditor();
+      const undo = within(editor()).getByRole("button", { name: "Undo" });
+      await waitFor(() => expect(undo).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(undo);
+
+      expect(await within(editor()).findByText("Undo failed: refused")).toBeVisible();
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/homebrew/items/hb-item/revert",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+  });
+
   it.each([
     [
       "/items/Lantern/PHB",

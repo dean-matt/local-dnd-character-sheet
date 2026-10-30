@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
+import type { HomebrewUndo } from "../../hooks/useHomebrewHistory.ts";
 import { capitalize } from "../../lib/capitalize.ts";
 import { type HomebrewRow, LISTING_KINDS } from "../../lib/homebrewListing.ts";
 import { Modal } from "../Modal.tsx";
@@ -31,6 +32,8 @@ export interface HomebrewEditorProps {
   /** The last save's failure, such as a name another row holds. */
   failure: Error | null;
   onSave: (input: unknown) => void;
+  /** Reverts the row to the version before its last save; offered only on a row being edited. */
+  undo?: HomebrewUndo;
   onClose: () => void;
   /** Says the change reaches every character holding the row, where it is edited from a sheet. */
   appliesToAll?: boolean;
@@ -52,6 +55,7 @@ export function HomebrewEditor({
   saving,
   failure,
   onSave,
+  undo,
   onClose,
   appliesToAll,
 }: HomebrewEditorProps) {
@@ -142,6 +146,7 @@ export function HomebrewEditor({
             onAdvance={(by) => goTo(step + by)}
             saving={saving}
             hold={hold}
+            undo={record ? undo : undefined}
             onSave={save}
           />
         }

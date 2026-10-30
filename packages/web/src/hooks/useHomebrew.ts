@@ -1,16 +1,10 @@
+import type { homebrewCollectionSchema } from "@dnd/catalog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
 
 /** The path segment of each kind's routes, `/homebrew/{collection}`. */
-export type HomebrewCollection =
-  | "items"
-  | "spells"
-  | "races"
-  | "classes"
-  | "backgrounds"
-  | "feats"
-  | "skills";
+export type HomebrewCollection = z.infer<typeof homebrewCollectionSchema>;
 
 /**
  * One homebrew collection under `/homebrew/{collection}`: its rows, a save that creates a

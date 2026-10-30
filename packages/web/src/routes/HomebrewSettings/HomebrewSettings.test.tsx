@@ -63,7 +63,7 @@ type Answer = { status: number; body?: unknown };
  * A fake API: a `GET` of a homebrew list or of `/characters` answers from `lists`, and any
  * other request under `/api/homebrew` takes the next answer in `writes`.
  */
-function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = [], holders?: Answer) {
+function stubApi(lists: Record<string, unknown>, writes: Answer[] = [], holders?: Answer) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? "GET";
@@ -72,7 +72,8 @@ function stubApi(lists: Record<string, unknown[]>, writes: Answer[] = [], holder
     }
     const match = /^\/api\/(?:homebrew\/(\w+)|(characters))$/.exec(url);
     const listed = match?.[1] ?? match?.[2];
-    if (method === "GET" && listed) return json(200, lists[listed] ?? []);
+    const empty = listed === "history" ? { reversible: [], deleted: [] } : [];
+    if (method === "GET" && listed) return json(200, lists[listed] ?? empty);
     const answer = url.startsWith("/api/homebrew") ? writes.shift() : undefined;
     return answer ? json(answer.status, answer.body) : json(404, { error: `nothing at ${url}` });
   });
@@ -181,6 +182,7 @@ describe("HomebrewSettings", () => {
       "Backgrounds",
       "Feats",
       "Skills",
+      "Recently deleted",
     ]);
   });
 
@@ -1672,6 +1674,150 @@ describe("HomebrewSettings", () => {
     expect(writesOf(fetchMock)).toEqual([
       { url: "/api/homebrew/items/i1", method: "DELETE", body: undefined },
     ]);
+  });
+
+  describe("undoing a change", () => {
+    const history = (reversible: unknown[], deleted: unknown[] = []) => ({
+      history: { reversible, deleted },
+    });
+
+    it("disables Undo in the editor until the row has been saved over", async () => {
+      const fetchMock = stubApi({ items: [sunblade], ...history([]) });
+      renderPage();
+
+      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+      const undo = within(editor()).getByRole("button", { name: "Undo" });
+      expect(undo).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(undo);
+
+      expect(writesOf(fetchMock)).toEqual([]);
+    });
+
+    it("offers no Undo on a new row", async () => {
+      stubApi({ ...history([]) });
+      renderPage();
+
+      fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+
+      expect(within(editor()).queryByRole("button", { name: "Undo" })).toBeNull();
+    });
+
+    it("reverts the row from the editor and closes it", async () => {
+      const fetchMock = stubApi(
+        { items: [sunblade], ...history([{ collection: "items", id: "i1" }]) },
+        [{ status: 204 }],
+      );
+      renderPage();
+
+      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+      const undo = within(editor()).getByRole("button", { name: "Undo" });
+      await waitFor(() => expect(undo).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(undo);
+
+      await waitFor(() => expect(document.querySelector("dialog[open]")).toBeNull());
+      expect(writesOf(fetchMock)).toEqual([
+        { url: "/api/homebrew/items/i1/revert", method: "POST", body: undefined },
+      ]);
+    });
+
+    it("says why the row's own save refused a revert, leaving the editor open", async () => {
+      stubApi({ items: [sunblade], ...history([{ collection: "items", id: "i1" }]) }, [
+        { status: 409, body: { error: "A character holds it" } },
+      ]);
+      renderPage();
+
+      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+      const undo = within(editor()).getByRole("button", { name: "Undo" });
+      await waitFor(() => expect(undo).toHaveAttribute("aria-disabled", "false"));
+      fireEvent.click(undo);
+
+      expect(await within(editor()).findByText("Undo failed: A character holds it")).toBeVisible();
+    });
+
+    it("toasts a delete and restores the row from the toast's Undo", async () => {
+      const fetchMock = stubApi({ items: [sunblade] }, [{ status: 204 }, { status: 204 }]);
+      renderPage();
+
+      fireEvent.click(await within(items()).findByRole("button", { name: "Delete Sunblade" }));
+      fireEvent.click(
+        within(screen.getByRole("dialog", { name: "Delete Sunblade?" })).getByRole("button", {
+          name: "Delete",
+        }),
+      );
+      const toast = await screen.findByRole("status");
+      expect(toast).toHaveTextContent("Deleted Sunblade.");
+      fireEvent.click(within(toast).getByRole("button", { name: "Undo" }));
+
+      await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+      expect(writesOf(fetchMock).map(({ url, method }) => `${method} ${url}`)).toEqual([
+        "DELETE /api/homebrew/items/i1",
+        "POST /api/homebrew/items/i1/restore",
+      ]);
+    });
+
+    it("lists recently deleted rows with a Restore button that restores one", async () => {
+      const fetchMock = stubApi(
+        {
+          ...history(
+            [],
+            [
+              {
+                collection: "spells",
+                id: "s1",
+                name: "Coastal Ward",
+                edition: "one",
+                deletedAt: CREATED_AT,
+              },
+            ],
+          ),
+        },
+        [{ status: 204 }],
+      );
+      renderPage();
+
+      const section = screen.getByRole("region", { name: "Recently deleted" });
+      expect(await within(section).findByText("Coastal Ward")).toBeVisible();
+      fireEvent.click(within(section).getByRole("button", { name: "Restore Coastal Ward" }));
+
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          { url: "/api/homebrew/spells/s1/restore", method: "POST", body: undefined },
+        ]),
+      );
+    });
+
+    it("names the row holding the name when a restore is refused", async () => {
+      stubApi(
+        {
+          ...history(
+            [],
+            [
+              {
+                collection: "items",
+                id: "i1",
+                name: "Sunblade",
+                edition: "one",
+                deletedAt: CREATED_AT,
+              },
+            ],
+          ),
+        },
+        [
+          {
+            status: 409,
+            body: { error: 'The homebrew item i9 is already named "Sunblade" in the one edition' },
+          },
+        ],
+      );
+      renderPage();
+
+      const section = screen.getByRole("region", { name: "Recently deleted" });
+      fireEvent.click(await within(section).findByRole("button", { name: "Restore Sunblade" }));
+
+      expect(await within(section).findByRole("alert")).toHaveTextContent(
+        'Restore failed: The homebrew item i9 is already named "Sunblade"',
+      );
+    });
   });
 
   it("loads a starter picked while the JSON editor is open, and keeps it through the next edit", async () => {

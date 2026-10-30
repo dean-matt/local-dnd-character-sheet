@@ -16,6 +16,7 @@ import { healthRoutes } from "./routes/health.ts";
 import { homebrewBackgroundsRoutes } from "./routes/homebrew-backgrounds.ts";
 import { homebrewClassesRoutes } from "./routes/homebrew-classes.ts";
 import { homebrewFeatsRoutes } from "./routes/homebrew-feats.ts";
+import { homebrewHistoryRoutes } from "./routes/homebrew-history.ts";
 import { homebrewItemsRoutes } from "./routes/homebrew-items.ts";
 import { homebrewRacesRoutes } from "./routes/homebrew-races.ts";
 import { homebrewSkillsRoutes } from "./routes/homebrew-skills.ts";
@@ -41,6 +42,10 @@ app.route("/", optionalFeaturesRoutes(charactersDb, DATA_DIR));
 app.route("/", characterSpellsRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", characterInventoryRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", characterReferencesRoutes(charactersDb, DATA_DIR));
+app.route(
+  "/",
+  homebrewHistoryRoutes(homebrewDb, DATA_DIR, (path, init) => app.request(path, init)),
+);
 app.route("/", homebrewItemsRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewSpellsRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewBackgroundsRoutes(homebrewDb, charactersDb));
