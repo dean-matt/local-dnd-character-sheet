@@ -1119,6 +1119,7 @@ describe("HomebrewSettings", () => {
         }),
       );
       const draft = JSON.stringify({ ...entry, hd: { number: 1, faces } });
+      mode("JSON");
       typeJson("Class JSON", draft);
       return draft;
     };
@@ -1282,6 +1283,7 @@ describe("HomebrewSettings", () => {
       );
       await charactersRead(client, "success");
       lists.characters = [holder("c", "Bram"), holder("x1", "Vex", "c1")];
+      mode("JSON");
       typeJson("Class JSON", JSON.stringify({ ...entry, hd: { number: 1, faces: 8 } }));
 
       await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
@@ -1788,12 +1790,14 @@ describe("HomebrewSettings", () => {
         name: "Add class",
       }),
     );
+    mode("JSON");
     const reference = within(editor()).getByRole("region", { name: "Field Reference" });
     const terms = () =>
       within(reference)
         .getAllByRole("term")
         .map((term) => term.textContent ?? "");
     expect(terms()).toEqual([
+      "casterProgression",
       "classFeatures",
       "entries",
       "entriesHigherLevel",
@@ -2617,6 +2621,247 @@ describe("HomebrewSettings", () => {
           truesight: "30",
           senses: [{ blindsight: 15 }],
         }),
+      );
+    });
+  });
+
+  describe("a class's form", () => {
+    const classes = () => screen.getByRole("region", { name: "Classes" });
+    const addClass = () =>
+      fireEvent.click(within(classes()).getByRole("button", { name: "Add class" }));
+    /** Ticks `options` in the list `list` opens, which stays in the page once closed. */
+    const tick = (list: string, ...options: string[]) => {
+      const button = within(editor()).getByRole("button", { name: new RegExp(`^${list} `) });
+      fireEvent.click(button);
+      const open = document.getElementById(button.getAttribute("aria-controls") ?? "");
+      for (const option of options) {
+        fireEvent.click(within(open as HTMLElement).getByRole("checkbox", { name: option }));
+      }
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    };
+
+    const built = {
+      name: "Warden",
+      hd: { number: 1, faces: 8 },
+      proficiency: ["str", "con", "wis"],
+      primaryAbility: [{ str: true, dex: true }],
+      entries: CLASS_STARTERS[0].entry.entries,
+      startingProficiencies: {
+        armor: ["light"],
+        armorProficiencies: [{ light: true }],
+        weapons: ["simple"],
+        skills: [{ choose: { from: ["athletics", "nature"], count: 2 } }],
+      },
+      startingEquipment: {
+        default: ["(a) a mace or (b) a handaxe", "A holy symbol"],
+        goldAlternative: "150",
+        additionalFromBackground: true,
+      },
+      multiclassing: {
+        requirements: { str: 13, wis: 13 },
+        proficienciesGained: { armor: ["light"], armorProficiencies: [{ light: true }] },
+      },
+      spellcastingAbility: "wis",
+      casterProgression: "1/2",
+    };
+
+    it("offers its steps beside JSON and Preview", () => {
+      stubApi({});
+      renderPage();
+
+      addClass();
+      for (const name of ["Step by step", "JSON", "Preview"]) {
+        expect(within(editor()).getByRole("tab", { name })).toBeInTheDocument();
+      }
+      const steps = within(editor()).getByRole("navigation", { name: "Steps" });
+      expect(
+        within(steps)
+          .getAllByRole("button")
+          .map((button) => button.textContent),
+      ).toEqual([
+        "Basics & Rules text",
+        "Proficiencies & Equipment",
+        "Multiclassing & Spellcasting",
+        "Preview",
+      ]);
+      expect(field("textbox", "Name")).toHaveValue("Warden");
+      expect(field("combobox", "Hit die")).toHaveTextContent("d10");
+    });
+
+    it("saves what the same JSON pasted saves", async () => {
+      const stored = {
+        id: "c9",
+        name: built.name,
+        edition: "one",
+        hitDie: 8,
+        json: { ...built, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const fetchMock = stubApi({}, [
+        { status: 201, body: stored },
+        { status: 201, body: stored },
+      ]);
+      renderPage();
+
+      addClass();
+      pick("Hit die", "d8");
+      tick("Saving throws", "Wisdom");
+      tick("Primary ability", "Dexterity");
+      pick("Primary ability needs", "All of them");
+      stepTo("Proficiencies");
+      tick("Armor", "Light armor");
+      tick("Weapons", "Simple weapons");
+      pickIn("Skills", "Granted as", "Choice from a list");
+      tickIn("Skills", "Choose from", "Athletics", "Nature");
+      typeIn("Skills", "How many", "2");
+      fireEvent.change(field("textbox", "Equipment choices, one to a line"), {
+        target: { value: "(a) a mace or (b) a handaxe\nA holy symbol" },
+      });
+      fireEvent.change(field("textbox", "Gold instead (GP)"), { target: { value: "150" } });
+      fireEvent.click(field("checkbox", "In addition to what the background grants"));
+      stepTo("Multiclassing");
+      fireEvent.change(field("spinbutton", "Strength minimum"), { target: { value: "13" } });
+      fireEvent.change(field("spinbutton", "Wisdom minimum"), { target: { value: "13" } });
+      tick("Armor", "Light armor");
+      pick("Spellcasting ability", "Wisdom");
+      pick("Spell slot progression", "Half caster");
+      click("Save");
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+      addClass();
+      mode("JSON");
+      typeJson("Class JSON", JSON.stringify(built));
+      click("Save");
+
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(2));
+      const [fromForm, fromJson] = writesOf(fetchMock);
+      expect(fromForm?.body).toEqual({ ...built, edition: "one" });
+      expect(fromJson?.body).toEqual(fromForm?.body);
+    });
+
+    it("holds a step while a field it shows has a problem, and shows it beside the field", () => {
+      stubApi({});
+      renderPage();
+
+      addClass();
+      stepTo("Multiclassing");
+      fireEvent.change(field("spinbutton", "Strength minimum"), { target: { value: "0" } });
+      click("Next");
+      expect(field("spinbutton", "Strength minimum")).toHaveAccessibleDescription(
+        "STR minimum: a whole number from 1 to 30",
+      );
+      expect(within(editor()).getByRole("heading", { name: "Multiclassing" })).toBeInTheDocument();
+
+      stepTo("Proficiencies");
+      pickIn("Skills", "Granted as", "Choice from a list");
+      click("Next");
+      expect(
+        group("Skills").getByLabelText("Granted as", { selector: FIELD_SELECTOR.combobox }),
+      ).toHaveAccessibleDescription("Pick at least one to choose from");
+      expect(within(editor()).getByRole("heading", { name: "Proficiencies" })).toBeInTheDocument();
+    });
+
+    it("holds Save on a new hit die chosen in the form while a character holds the class", async () => {
+      const warden = {
+        id: "c1",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const record = characterRecord("x1", "Vex");
+      stubApi({
+        classes: [warden],
+        characters: [
+          {
+            ...record,
+            definition: { ...record.definition, levels: [{ class: { homebrewId: "c1" } }] },
+          },
+        ],
+      });
+      renderPage();
+
+      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+      pick("Hit die", "d8");
+
+      await waitFor(() =>
+        expect(within(editor()).getByRole("button", { name: "Save" })).toHaveAttribute(
+          "aria-disabled",
+          "true",
+        ),
+      );
+      fireEvent.click(within(editor()).getByRole("button", { name: "Why Save is unavailable" }));
+      expect(within(editor()).getByRole("link", { name: "Vex" })).toHaveAttribute(
+        "href",
+        "/characters/x1",
+      );
+    });
+
+    it("keeps every field the form has no control for through an edit", async () => {
+      const json = {
+        name: "Odd",
+        source: "HB",
+        page: 7,
+        hd: { number: 1, faces: 10 },
+        proficiency: ["str"],
+        primaryAbility: [{ str: 13 }],
+        classFeatures: ["Grove Ward|Odd|HB|1"],
+        startingProficiencies: {
+          armor: ["light", { proficiency: "medium", optional: true }],
+          weapons: ["simple"],
+          toolProficiencies: [{ "thieves' tools": true }],
+        },
+        startingEquipment: {
+          default: ["A staff"],
+          defaultData: [{ _: ["quarterstaff|phb"] }],
+          goldAlternative: "{@dice 4d4 × 10}",
+        },
+        multiclassing: { requirements: { or: [{ str: 13 }, { dex: 13 }] } },
+      };
+      const stored = {
+        id: "c2",
+        name: "Odd",
+        edition: "one",
+        hitDie: 10,
+        json,
+        createdAt: CREATED_AT,
+      };
+      const fetchMock = stubApi({ classes: [stored] }, [{ status: 200, body: stored }]);
+      renderPage();
+
+      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Odd" }));
+      expect(within(editor()).getByText(/primary ability in a shape/)).toBeInTheDocument();
+      fireEvent.change(field("textbox", "Name"), { target: { value: "Odder" } });
+      stepTo("Proficiencies");
+      expect(
+        within(editor()).getByText(/armor in a shape the form cannot show/),
+      ).toBeInTheDocument();
+      tick("Weapons", "Martial weapons");
+      stepTo("Multiclassing");
+      expect(within(editor()).getByText(/requirements as alternatives/)).toBeInTheDocument();
+      pick("Spellcasting ability", "Wisdom");
+      click("Save");
+
+      const { source: _source, ...rest } = json;
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          {
+            url: "/api/homebrew/classes/c2",
+            method: "PUT",
+            body: {
+              ...rest,
+              name: "Odder",
+              startingProficiencies: {
+                ...json.startingProficiencies,
+                weapons: ["simple", "martial"],
+              },
+              spellcastingAbility: "wis",
+              edition: "one",
+            },
+          },
+        ]),
       );
     });
   });

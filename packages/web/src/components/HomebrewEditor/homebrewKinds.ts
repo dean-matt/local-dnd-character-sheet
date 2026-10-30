@@ -12,7 +12,6 @@ import {
   type HomebrewFeatInput,
   type HomebrewItemInput,
   type HomebrewSpellInput,
-  homebrewClassInputSchema,
   homebrewSkillInputSchema,
   homebrewSpellInputSchema,
   itemEntries,
@@ -44,12 +43,18 @@ import { BackgroundAbilityScores } from "./BackgroundAbilityScores.tsx";
 import { BackgroundEquipment } from "./BackgroundEquipment.tsx";
 import { BackgroundFeat } from "./BackgroundFeat.tsx";
 import { BackgroundProficiencies } from "./BackgroundProficiencies.tsx";
+import { ClassBasics } from "./ClassBasics.tsx";
+import { ClassEquipment } from "./ClassEquipment.tsx";
+import { ClassMulticlassing } from "./ClassMulticlassing.tsx";
+import { ClassProficiencies } from "./ClassProficiencies.tsx";
+import { ClassSpellcasting } from "./ClassSpellcasting.tsx";
 import { FeatAbilityScores } from "./FeatAbilityScores.tsx";
 import { FeatBasics } from "./FeatBasics.tsx";
 import { FeatPrerequisites } from "./FeatPrerequisites.tsx";
 import { FeatProficiencies } from "./FeatProficiencies.tsx";
 import { FieldReference } from "./FieldReference.tsx";
 import { homebrewBackgroundFormSchema } from "./homebrewBackgroundChecks.ts";
+import { homebrewClassFormSchema } from "./homebrewClassChecks.ts";
 import { type HomebrewFormProps, numberAt } from "./homebrewEntry.ts";
 import { itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewFeatFormSchema } from "./homebrewFeatChecks.ts";
@@ -103,8 +108,7 @@ export interface EditingKind<I extends HomebrewInput = HomebrewInput> {
   starters: HomebrewStarters;
   /**
    * The form's sections, in order: each one's fields, and the top-level fields whose problems
-   * keep its step from advancing. A field no section names belongs to the last. A kind with
-   * none is edited as JSON alone.
+   * keep its step from advancing. A field no section names belongs to the last.
    */
   sections: HomebrewSection[];
   /** What the JSON view shows beside its editor: the fields the sheet reads, where a kind lists them. */
@@ -214,20 +218,6 @@ const spell: EditingKind<HomebrewSpellInput> = {
   shownKeys: () => ["name", "level", "school", "duration", "meta", "entries"],
 };
 
-/** A kind edited as pasted JSON alone, its preview facts read off the entry. */
-function pasted<I extends HomebrewInput & Record<string, unknown>>(
-  kind: Pick<EditingKind<I>, "inputSchema" | "starters" | "entries">,
-  facts: (json: Record<string, unknown>) => Fact[],
-  previewed: (fact: Fact) => boolean = () => true,
-): EditingKind<I> {
-  return {
-    ...kind,
-    facts: (input) => facts(input).filter(previewed),
-    sections: [],
-    shownKeys: () => [],
-  };
-}
-
 const RACE_GRANTS = [
   "skillProficiencies",
   "toolProficiencies",
@@ -262,18 +252,37 @@ const race: EditingKind<z.infer<typeof homebrewRaceFormSchema>> = {
   shownKeys: () => ["name", "size", "entries", "speed", "ability", "senses", ...RACE_GRANTS],
 };
 
-const klass = {
-  ...pasted(
+const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
+  inputSchema: homebrewClassFormSchema,
+  // `classEntries` already prints the hit die and saving throws.
+  facts: (input) => classFacts(input).filter(([label]) => label === "Primary Ability"),
+  entries: classEntries,
+  starters: CLASS_STARTERS,
+  sections: [
+    { title: "Basics", Fields: ClassBasics, keys: ["name", "hd", "proficiency", "primaryAbility"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+    { title: "Proficiencies", Fields: ClassProficiencies, keys: ["startingProficiencies"] },
+    { title: "Equipment", Fields: ClassEquipment, keys: ["startingEquipment"] },
+    { title: "Multiclassing", Fields: ClassMulticlassing, keys: ["multiclassing"] },
     {
-      inputSchema: homebrewClassInputSchema,
-      starters: CLASS_STARTERS,
-      entries: classEntries,
+      title: "Spellcasting",
+      Fields: ClassSpellcasting,
+      keys: ["spellcastingAbility", "casterProgression"],
     },
-    classFacts,
-    // `classEntries` already prints the hit die and saving throws.
-    ([label]) => label === "Primary Ability",
-  ),
+  ],
   reference: createElement(FieldReference, { schema: appliedClassFieldsSchema }),
+  shownKeys: () => [
+    "name",
+    "hd",
+    "proficiency",
+    "primaryAbility",
+    "entries",
+    "startingProficiencies",
+    "startingEquipment",
+    "multiclassing",
+    "spellcastingAbility",
+    "casterProgression",
+  ],
 };
 
 const background: EditingKind<HomebrewBackgroundInput> = {

@@ -10,7 +10,7 @@ import { HomebrewJsonMode } from "./HomebrewJsonMode.tsx";
 import { HomebrewPreview } from "./HomebrewPreview.tsx";
 import { HomebrewStepMode } from "./HomebrewStepMode.tsx";
 import { HomebrewViewTabs } from "./HomebrewViewTabs.tsx";
-import { EDITING_KINDS, type EditingKind, stepOf, stepsOf } from "./homebrewKinds.ts";
+import { EDITING_KINDS, stepOf, stepsOf } from "./homebrewKinds.ts";
 import { useClassDieHold } from "./useClassDieHold.ts";
 import { useHomebrewEntryDraft } from "./useHomebrewEntryDraft.ts";
 
@@ -18,10 +18,7 @@ const MODES = ["Step by step", "JSON"] as const;
 const VIEWS = [...MODES, "Preview"] as const;
 type View = (typeof VIEWS)[number];
 
-function howTo(noun: string, { sections }: EditingKind, editing: boolean): string {
-  if (sections.length === 0) {
-    return `Paste the ${noun}'s 5etools-shaped entry over ${editing ? "this one" : "this example"}.`;
-  }
+function howTo(noun: string, editing: boolean): string {
   const what = editing ? `Edit the ${noun}` : `Fill in this example ${noun}`;
   return `${what} step by step, or in JSON, where a pasted 5etools-shaped one replaces it.`;
 }
@@ -41,8 +38,7 @@ export interface HomebrewEditorProps {
 
 /**
  * A homebrew entry in a modal, edited step by step through its kind's form, or as the
- * 5etools-shaped JSON it is stored as beside the kind's field reference. A kind with no form
- * offers the JSON alone.
+ * 5etools-shaped JSON it is stored as beside the kind's field reference.
  * Both modes edit one entry, so a change in either shows in the other and a field the form
  * has no control for survives it. Leaving JSON waits until the text parses. A step holding a
  * problem holds every step after it, and each problem shows beside its field once a step or
@@ -74,7 +70,6 @@ export function HomebrewEditor({
     if (refusals > 0) form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }, [refusals]);
   const mode = draft.text === undefined ? MODES[0] : MODES[1];
-  const views: readonly View[] = kind.sections.length > 0 ? VIEWS : ["JSON", "Preview"];
   const hold = useClassDieHold(collection, record, draft.checked, failure);
   const problems = "problems" in draft.checked ? draft.checked.problems : [];
   const shownProblems = tried ? problems : [];
@@ -106,7 +101,7 @@ export function HomebrewEditor({
     if (target < stepsOf(kind).length) return setStep(target);
     switchView("Preview");
     // The step buttons and Next leave with the form, so focus moves to the tab now selected.
-    document.getElementById(`${id}-tab-${views.indexOf("Preview")}`)?.focus();
+    document.getElementById(`${id}-tab-${VIEWS.indexOf("Preview")}`)?.focus();
   };
   const save = () => {
     if ("input" in draft.checked) {
@@ -151,8 +146,8 @@ export function HomebrewEditor({
       >
         <div className="@container flex flex-col gap-3">
           <p className="text-label text-muted">
-            {howTo(lower, kind, record !== undefined)} Saving replaces the whole entry, and the
-            source is always Homebrew.
+            {howTo(lower, record !== undefined)} Saving replaces the whole entry, and the source is
+            always Homebrew.
             {appliesToAll &&
               ` Changes to this ${lower} apply to every character that holds it, not only this one.`}
           </p>
@@ -160,7 +155,7 @@ export function HomebrewEditor({
             <HomebrewViewTabs
               label={`${noun} editor`}
               idPrefix={id}
-              views={views}
+              views={VIEWS}
               view={previewing ? "Preview" : mode}
               onView={switchView}
             />
@@ -169,7 +164,7 @@ export function HomebrewEditor({
           <div
             id={`${id}-panel`}
             role="tabpanel"
-            aria-labelledby={`${id}-tab-${views.indexOf(previewing ? "Preview" : mode)}`}
+            aria-labelledby={`${id}-tab-${VIEWS.indexOf(previewing ? "Preview" : mode)}`}
             className="flex min-w-0 flex-col gap-3"
           >
             {previewing ? (

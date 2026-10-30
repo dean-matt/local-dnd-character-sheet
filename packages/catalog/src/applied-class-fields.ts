@@ -1,5 +1,9 @@
 import { z } from "zod";
-import { homebrewClassInputSchema, spellcastingAbilitySchema } from "./class.ts";
+import {
+  casterProgressionSchema,
+  homebrewClassInputSchema,
+  spellcastingAbilitySchema,
+} from "./class.ts";
 import { entriesSchema } from "./entry.ts";
 import { multiclassEntrySchema, multiclassPrerequisiteSchema } from "./multiclass.ts";
 import { classProficiencyGrantsSchema } from "./proficiency-grants.ts";
@@ -19,6 +23,7 @@ const shape = {
   ...multiclassEntrySchema.in.shape,
   ...multiclassPrerequisiteSchema.in.shape,
   ...spellcastingAbilitySchema.in.shape,
+  ...casterProgressionSchema.in.shape,
   ...homebrewClassInputSchema.omit({ edition: true }).shape,
 };
 
@@ -31,6 +36,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   hd: 'The hit die, such as {"number": 1, "faces": 10} for a d10, which sets hit points and the character\'s hit dice. "number" is always 1, and "faces" is 6, 8, 10 or 12: the sheet cannot build a character holding a class of any other die.',
   spellcastingAbility:
     'The ability the class casts with, such as "int", which gives the character a spell save DC and spell attack bonus from 1st level. Creation lets the character learn spells up to 9th level, with no count; the sheet counts no spell slots for a homebrew class.',
+  casterProgression:
+    'The slot table the class casts from: "full", "1/2", "1/3", "artificer" or "pact". Kept on the entry as 5etools writes it; the sheet reads it for no homebrew class and counts no spell slots.',
   entriesHigherLevel: 'Further rules text, printed after "entries" in the class\'s detail.',
   proficiency:
     'Saving throw abilities, such as ["str", "con"], printed in the class\'s detail and its homebrew list entry. The sheet grants no saving throw off a homebrew class.',
