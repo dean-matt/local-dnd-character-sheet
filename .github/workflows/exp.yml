@@ -14,43 +14,56 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [base]
-        total: [2, 3, 4, 6]
-        shard: [1, 2, 3, 4, 5, 6]
         include:
-          - { variant: tmp-defender, total: 4, shard: 1 }
-          - { variant: tmp-defender, total: 4, shard: 2 }
-          - { variant: tmp-defender, total: 4, shard: 3 }
-          - { variant: tmp-defender, total: 4, shard: 4 }
-          - { variant: devdrive, total: 4, shard: 1 }
-          - { variant: devdrive, total: 4, shard: 2 }
-          - { variant: devdrive, total: 4, shard: 3 }
-          - { variant: devdrive, total: 4, shard: 4 }
-        exclude:
-          - { total: 2, shard: 3 }
-          - { total: 2, shard: 4 }
-          - { total: 2, shard: 5 }
-          - { total: 2, shard: 6 }
-          - { total: 3, shard: 4 }
-          - { total: 3, shard: 5 }
-          - { total: 3, shard: 6 }
-          - { total: 4, shard: 5 }
-          - { total: 4, shard: 6 }
+          - { variant: base, total: 4, shard: 1 }
+          - { variant: base, total: 4, shard: 2 }
+          - { variant: base, total: 4, shard: 3 }
+          - { variant: base, total: 4, shard: 4 }
+          - { variant: base, total: 8, shard: 1 }
+          - { variant: base, total: 8, shard: 2 }
+          - { variant: base, total: 8, shard: 3 }
+          - { variant: base, total: 8, shard: 4 }
+          - { variant: base, total: 8, shard: 5 }
+          - { variant: base, total: 8, shard: 6 }
+          - { variant: base, total: 8, shard: 7 }
+          - { variant: base, total: 8, shard: 8 }
+          - { variant: base, total: 10, shard: 1 }
+          - { variant: base, total: 10, shard: 2 }
+          - { variant: base, total: 10, shard: 3 }
+          - { variant: base, total: 10, shard: 4 }
+          - { variant: base, total: 10, shard: 5 }
+          - { variant: base, total: 10, shard: 6 }
+          - { variant: base, total: 10, shard: 7 }
+          - { variant: base, total: 10, shard: 8 }
+          - { variant: base, total: 10, shard: 9 }
+          - { variant: base, total: 10, shard: 10 }
+          - { variant: base, total: 12, shard: 1 }
+          - { variant: base, total: 12, shard: 2 }
+          - { variant: base, total: 12, shard: 3 }
+          - { variant: base, total: 12, shard: 4 }
+          - { variant: base, total: 12, shard: 5 }
+          - { variant: base, total: 12, shard: 6 }
+          - { variant: base, total: 12, shard: 7 }
+          - { variant: base, total: 12, shard: 8 }
+          - { variant: base, total: 12, shard: 9 }
+          - { variant: base, total: 12, shard: 10 }
+          - { variant: base, total: 12, shard: 11 }
+          - { variant: base, total: 12, shard: 12 }
     steps:
       - uses: actions/checkout@v7
 
-      - if: matrix.variant == 'devdrive'
+      - if: false
         uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0
         with:
           env-mapping: |
             TEMP,{{ DEV_DRIVE }}/tmp
             TMP,{{ DEV_DRIVE }}/tmp
 
-      - if: matrix.variant == 'devdrive'
+      - if: false
         shell: pwsh
         run: New-Item -ItemType Directory -Force $env:TEMP
 
-      - if: matrix.variant == 'tmp-defender'
+      - if: false
         shell: pwsh
         run: Add-MpPreference -ExclusionPath $env:TEMP
 
