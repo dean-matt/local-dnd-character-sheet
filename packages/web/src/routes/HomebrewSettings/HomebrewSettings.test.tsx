@@ -436,6 +436,28 @@ describe("HomebrewSettings", () => {
     expect(entry.vulnerable).toEqual(["thunder", "cold"]);
   });
 
+  it("keeps the body fixed and scrolls each column, the field reference and the JSON on their own", () => {
+    stubApi({});
+    renderPage();
+
+    fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
+    const scrollers = () => [...editor().querySelectorAll('[class*="overflow-y-auto"]')];
+    const body = editor().querySelector("section[aria-labelledby]");
+    expect(body).toHaveClass("overflow-hidden");
+    expect(body).not.toHaveAttribute("tabindex");
+    stepTo("Magic");
+    const column = within(editor()).getByRole("region", { name: "Effects" });
+    expect(column.querySelector("h3")?.parentElement).toBe(column);
+    expect(column.className).not.toMatch(/overflow-y-auto/);
+    expect(scrollers().some((scroller) => column.contains(scroller))).toBe(true);
+
+    mode("JSON");
+    const reference = within(editor()).getByRole("region", { name: "Field Reference" });
+    expect(reference.className).toMatch(/overflow-y-auto/);
+    expect(field("textbox", "Item JSON").closest('[class*="overflow-y-auto"]')).not.toBe(reference);
+    expect(body).toHaveClass("overflow-hidden");
+  });
+
   it("opens the JSON with every object's fields in alphabetical order", () => {
     stubApi({});
     renderPage();

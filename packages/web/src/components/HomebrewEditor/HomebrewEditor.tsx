@@ -127,9 +127,11 @@ export function HomebrewEditor({
   );
 
   return (
-    // `wide`'s height is the JSON mode's at its default size, so that mode never scrolls.
+    // `wide`'s height is the JSON mode's at its default size. The body never scrolls: a step's
+    // columns, the field reference, the editor and the preview each scroll their own overflow.
     <Modal onClose={close} wide>
       <ModalEntry
+        contained
         title={title}
         footer={
           <HomebrewEditorFooter
@@ -144,14 +146,14 @@ export function HomebrewEditor({
           />
         }
       >
-        <div className="@container flex flex-col gap-3">
+        <div className="@container flex min-h-0 flex-1 flex-col gap-3">
           <p className="text-label text-muted">
             {howTo(lower, record !== undefined)} Saving replaces the whole entry, and the source is
             always Homebrew.
             {appliesToAll &&
               ` Changes to this ${lower} apply to every character that holds it, not only this one.`}
           </p>
-          <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
             <HomebrewViewTabs
               label={`${noun} editor`}
               idPrefix={id}
@@ -165,10 +167,12 @@ export function HomebrewEditor({
             id={`${id}-panel`}
             role="tabpanel"
             aria-labelledby={`${id}-tab-${VIEWS.indexOf(previewing ? "Preview" : mode)}`}
-            className="flex min-w-0 flex-col gap-3"
+            className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
           >
             {previewing ? (
-              <HomebrewPreview noun={lower} shown={draft.shown} />
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <HomebrewPreview noun={lower} shown={draft.shown} />
+              </div>
             ) : (
               <form
                 ref={form}
@@ -186,7 +190,7 @@ export function HomebrewEditor({
                   if (mode === "Step by step") goTo(step + 1);
                   else save();
                 }}
-                className="flex min-w-0 flex-col gap-3"
+                className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
               >
                 {mode === "JSON" ? (
                   <HomebrewJsonMode
