@@ -39,6 +39,22 @@ const FEATS = [
   },
 ];
 
+const HOMEBREW = { homebrewId: "hb-1" };
+const HOMEBREW_FEATS = [
+  {
+    id: HOMEBREW.homebrewId,
+    name: "Steady",
+    edition: "one",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    json: {
+      name: "Steady",
+      source: "HB",
+      ability: [{ choose: { from: ["str", "con"], amount: 1 } }],
+      savingThrowProficiencies: [{ choose: { from: ["str", "con"] } }],
+    },
+  },
+];
+
 type Feat = CharacterDefinition["feats"][number];
 
 const holding = (feats: Feat[]): CharacterRecord => {
@@ -70,6 +86,7 @@ function stubApi(record: CharacterRecord) {
     }
     if (url.startsWith("/api/feats?")) return json({ items: FEATS, total: FEATS.length });
     if (url === "/api/characters/1/derived") return json(derivedFor(record));
+    if (url === "/api/homebrew/feats") return json(HOMEBREW_FEATS);
     if (url.startsWith("/api/search?")) return json({ items: [], total: 0, limit: 200, offset: 0 });
     return new Response(JSON.stringify({ error: `nothing at ${url}` }), { status: 404 });
   });
@@ -130,6 +147,21 @@ describe("FeatPicks", () => {
           picks: { savingThrows: ["con"], ability: [{ ability: "con", amount: 1 }] },
         },
       ]),
+    );
+  });
+
+  it("asks a homebrew feat's choice and increase as a catalog feat's", async () => {
+    const record = holding([{ ref: HOMEBREW }]);
+    const writes = stubApi(record);
+    renderSeeded(record);
+
+    await pick("Steady saving throw", "Strength");
+    await waitFor(() =>
+      expect(writes.at(-1)?.feats).toEqual([{ ref: HOMEBREW, picks: { savingThrows: ["str"] } }]),
+    );
+    await pick("Steady +1", "+1 Constitution");
+    await waitFor(() =>
+      expect(writes.at(-1)?.feats[0]?.picks?.ability).toEqual([{ ability: "con", amount: 1 }]),
     );
   });
 

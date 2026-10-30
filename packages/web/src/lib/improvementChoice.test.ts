@@ -67,6 +67,27 @@ describe("a feat's fixed increase", () => {
   });
 });
 
+describe("a homebrew feat", () => {
+  const homebrew = {
+    id: "hb-1",
+    name: "Steady",
+    edition: "one" as const,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    json: { name: "Steady", source: "HB", ability: [{ choose: { from: ["str", "dex"] } }] },
+  };
+  const ref = { homebrewId: "hb-1" };
+
+  it("offers its increases and waits on them as a catalog feat's", () => {
+    expect(alternativesOf({ feat: ref, increases: [] }, [homebrew], undefined)[0]?.slots).toEqual([
+      { from: ["str", "dex"], amount: 1 },
+    ]);
+    expect(isMade({ feat: ref, increases: [] }, [homebrew], undefined)).toBe(false);
+    expect(
+      isMade({ feat: ref, increases: [{ ability: "dex", amount: 1 }] }, [homebrew], undefined),
+    ).toBe(true);
+  });
+});
+
 describe("improvementText", () => {
   it("names the scores raised, or the feat and what it raised", () => {
     expect(

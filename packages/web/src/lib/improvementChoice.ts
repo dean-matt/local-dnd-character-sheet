@@ -3,20 +3,23 @@
  * offers, or the ones the feat taken prints. The choice is made once it names a feat or
  * scores and fills every slot those offer.
  */
-import { abilityIncreasesSchema, type FeatRecord, type IncreaseAlternative } from "@dnd/catalog";
+import { abilityIncreasesSchema, type IncreaseAlternative } from "@dnd/catalog";
 import {
   ABILITIES,
   ABILITY_LABEL,
   type Ability,
   displayName,
   type EntryRef,
+  entryKey,
   type HomebrewNames,
   IMPROVEMENT_CAP,
   IMPROVEMENT_FEAT,
   type Improvement,
   refKey,
 } from "@dnd/character";
+import type { OfferedFeat } from "./improvementFeats.ts";
 import { isComplete, readPicks } from "./increasePicks.ts";
+import { searchHitKey } from "./searchHitKey.ts";
 
 /** +2 to one score or +1 to two, in both editions; the 2024 feat prints the same pair. */
 const RAISE_ALTERNATIVES: IncreaseAlternative[] = [
@@ -34,9 +37,9 @@ export const raisesScores = (improvement: Improvement): boolean =>
   improvement.feat === undefined ||
   ("name" in improvement.feat && refKey(improvement.feat) === refKey(IMPROVEMENT_FEAT));
 
-/** The catalog row `feat` names, `undefined` for a homebrew feat or one the catalog lacks. */
-export const featRow = (feats: readonly FeatRecord[], feat: EntryRef): FeatRecord | undefined =>
-  "name" in feat ? feats.find((row) => refKey(row) === refKey(feat)) : undefined;
+/** The row `feat` names, catalog or homebrew, `undefined` for one `feats` lacks. */
+export const featRow = (feats: readonly OfferedFeat[], feat: EntryRef): OfferedFeat | undefined =>
+  feats.find((row) => searchHitKey(row) === entryKey(feat));
 
 type Totals = Record<Ability, number> | undefined;
 
@@ -62,12 +65,12 @@ function capped(alternative: IncreaseAlternative, totals: Totals): IncreaseAlter
 
 /**
  * The increases `improvement` offers to place, a feat's fixed ones held under the cap
- * above `totals`, the scores bar this improvement's own; a feat the catalog lacks offers
+ * above `totals`, the scores bar this improvement's own; a feat `feats` lacks offers
  * none.
  */
 export function alternativesOf(
   improvement: Improvement,
-  feats: readonly FeatRecord[],
+  feats: readonly OfferedFeat[],
   totals: Totals,
 ): IncreaseAlternative[] {
   if (raisesScores(improvement))
@@ -81,7 +84,7 @@ export function alternativesOf(
 /** Whether `improvement` is made: chosen, with every increase it offers placed. */
 export function isMade(
   improvement: Improvement | undefined,
-  feats: readonly FeatRecord[],
+  feats: readonly OfferedFeat[],
   totals: Totals,
 ) {
   if (improvement === undefined) return false;

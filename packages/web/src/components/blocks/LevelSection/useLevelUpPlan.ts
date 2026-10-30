@@ -9,7 +9,7 @@ import {
   withImprovement,
 } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useFeats } from "../../../hooks/useFeats.ts";
+import { useFeatRows } from "../../../hooks/useFeatRows.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
 import { takenOption, withFeatureChoice } from "../../../lib/featureChoices.ts";
 import { type FeatureOffering, featureOfferings } from "../../../lib/featureOfferings.ts";
@@ -86,14 +86,14 @@ export function useLevelUpPlan(
   const pickedTools = entry.toolPicks.map((pick) =>
     pick.options.filter((tool) => proficiencies.tools.some((held) => held.name === tool)),
   );
-  const featList = useFeats(definition.edition);
+  const featList = useFeatRows(definition.edition);
   const die = HIT_DICE.find((each) => each === target.hitDie);
   const improvements = useImprovementGrants(levels);
   const grant = improvements.grants.find((each) => each.level === levels.length);
   const draft = { ...definition, levels, feats, abilityIncreases };
   const candidate = grant && candidateAt(draft, grant);
   const improvement = grant && improvementAt(draft, grant.level);
-  const catalogFeats = featList.data?.items ?? [];
+  const featRows = featList.rows;
   const offerings = offeringsAt(level.class, target);
   const chosen = (offering: FeatureOffering) =>
     takenOption(featureChoices, offering.feature, offering.options);
@@ -115,7 +115,7 @@ export function useLevelUpPlan(
     (!target.asksSubclass || level.subclass !== undefined) &&
     improvements.read &&
     (grant === undefined ||
-      (featList.isSuccess && isMade(improvement, catalogFeats, candidate?.totals))) &&
+      (featList.isSuccess && isMade(improvement, featRows, candidate?.totals))) &&
     offerings.every((offering) => chosen(offering) !== undefined) &&
     spellPicks.ready &&
     optionPicks.ready;
@@ -134,7 +134,7 @@ export function useLevelUpPlan(
     grant,
     candidate,
     improvement,
-    catalogFeats,
+    featRows,
     offerings,
     chosen,
     entry,
