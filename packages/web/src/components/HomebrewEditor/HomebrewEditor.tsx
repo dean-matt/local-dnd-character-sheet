@@ -170,9 +170,14 @@ export function HomebrewEditor({
             className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
           >
             {previewing ? (
-              <div className="min-h-0 flex-1 overflow-y-auto">
+              <section
+                aria-label={`${noun} preview`}
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: the preview holds nothing focusable, so the scroll container takes focus for the keyboard.
+                tabIndex={0}
+                className="min-h-0 flex-1 overflow-y-auto"
+              >
                 <HomebrewPreview noun={lower} shown={draft.shown} />
-              </div>
+              </section>
             ) : (
               <form
                 ref={form}

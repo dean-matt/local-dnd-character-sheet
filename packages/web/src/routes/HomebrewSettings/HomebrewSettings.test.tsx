@@ -441,15 +441,13 @@ describe("HomebrewSettings", () => {
     renderPage();
 
     fireEvent.click(within(items()).getByRole("button", { name: "Add item" }));
-    const scrollers = () => [...editor().querySelectorAll('[class*="overflow-y-auto"]')];
     const body = editor().querySelector("section[aria-labelledby]");
     expect(body).toHaveClass("overflow-hidden");
     expect(body).not.toHaveAttribute("tabindex");
     stepTo("Magic");
     const column = within(editor()).getByRole("region", { name: "Effects" });
-    expect(column.querySelector("h3")?.parentElement).toBe(column);
     expect(column.className).not.toMatch(/overflow-y-auto/);
-    expect(scrollers().some((scroller) => column.contains(scroller))).toBe(true);
+    expect(column.querySelector(":scope > h3 + div")?.className).toMatch(/overflow-y-auto/);
 
     mode("JSON");
     const reference = within(editor()).getByRole("region", { name: "Field Reference" });

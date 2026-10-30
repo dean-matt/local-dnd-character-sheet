@@ -19,8 +19,9 @@ export interface HomebrewJsonModeProps {
 
 /**
  * The entry as JSON text, with the kind's field reference in a sidebar on its left where it
- * has one, filling the body and scrolling on its own beside the JSON, which scrolls on its own. The sidebar collapses sideways to a strip, and the JSON takes the width; where
- * the modal is narrow, it stacks above the JSON and collapses to its button.
+ * has one. The sidebar fills the body and scrolls on its own beside the JSON, which scrolls
+ * on its own. It collapses sideways to a strip, and the JSON takes the width; where the modal
+ * is narrow, the two stack and scroll together, and the sidebar collapses to its button.
  */
 export function HomebrewJsonMode({
   noun,
@@ -39,6 +40,8 @@ export function HomebrewJsonMode({
           (open ? (
             <section
               aria-labelledby={`${id}-heading`}
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: a scroll container takes focus so the keyboard can scroll it.
+              tabIndex={0}
               className="flex min-w-0 flex-col gap-2 @2xl:min-h-0 @2xl:w-80 @2xl:overflow-y-auto"
             >
               <div className="flex items-center justify-between gap-2">

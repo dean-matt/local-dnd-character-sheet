@@ -319,3 +319,30 @@ async function tabTo(page: Page, target: ReturnType<Page["locator"]>) {
   }
   await expect(target).toBeFocused();
 }
+
+test("in a window 600px high the editor's body never scrolls and its footer stays in view", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await page.goto("/settings/homebrew");
+  await page.getByRole("button", { name: "Add item" }).click();
+  const editor = page.getByRole("dialog", { name: "New item" });
+  await expect(editor).toBeVisible();
+  const body = editor.locator("section[aria-labelledby]").first();
+  const save = editor.getByRole("button", { name: "Save" });
+
+  const expectBodyFixed = async () => {
+    await expect(save).toBeInViewport();
+    expect(await body.evaluate((n) => n.scrollHeight <= n.clientHeight)).toBe(true);
+  };
+
+  await expectBodyFixed();
+  await editor.getByRole("button", { name: "Next" }).click();
+  await expectBodyFixed();
+  await editor.getByRole("tab", { name: "JSON" }).click();
+  await expect(editor.getByRole("textbox", { name: "Item JSON" })).toBeVisible();
+  await expectBodyFixed();
+  await editor.getByRole("tab", { name: "Preview" }).click();
+  await expect(editor.getByRole("region", { name: "Item preview" })).toBeVisible();
+  await expectBodyFixed();
+});
