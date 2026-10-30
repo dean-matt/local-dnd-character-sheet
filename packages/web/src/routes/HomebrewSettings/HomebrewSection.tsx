@@ -8,9 +8,11 @@ import { Tag } from "../../components/Tag.tsx";
 import { EmptyState } from "../../EmptyState.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useHomebrew } from "../../hooks/useHomebrew.ts";
+import { useHomebrewHistory } from "../../hooks/useHomebrewHistory.ts";
 import { LoadingState } from "../../LoadingState.tsx";
 import type { HomebrewRow, ListingKind } from "../../lib/homebrewListing.ts";
 import { firstLine } from "../../lib/rulesProse.ts";
+import { DeletedToast } from "./DeletedToast.tsx";
 import { DeleteHomebrewDialog } from "./DeleteHomebrewDialog.tsx";
 
 const ICON_BUTTON =
@@ -22,6 +24,8 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
   // `"new"` while adding a row, a row's id while editing it.
   const [editing, setEditing] = useState<string>();
   const [deleting, setDeleting] = useState<HomebrewRow>();
+  const [justDeleted, setJustDeleted] = useState<HomebrewRow>();
+  const { undoOf, restore, resetRevert } = useHomebrewHistory();
   const id = useId();
   const rows = list.data ?? [];
   const edited = rows.find((row) => row.id === editing);
@@ -33,6 +37,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
       opener.current = document.activeElement;
     }
     save.reset();
+    resetRevert();
     setEditing(next);
   };
 
@@ -125,6 +130,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
           record={edited}
           saving={save.isPending}
           failure={save.error}
+          undo={undoOf(kind.collection, edited?.id ?? "", () => setEditing(undefined))}
           onSave={(input) =>
             save.mutate({ id: edited?.id, input }, { onSuccess: () => setEditing(undefined) })
           }
@@ -139,10 +145,28 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
           error={remove.error}
           onConfirm={() =>
             remove.mutate(deleting.id, {
-              onSuccess: closeDelete,
+              onSuccess: () => {
+                setJustDeleted(deleting);
+                restore.reset();
+                closeDelete();
+              },
             })
           }
           onClose={closeDelete}
+        />
+      )}
+      {justDeleted && (
+        <DeletedToast
+          name={justDeleted.name}
+          restoring={restore.isPending}
+          failure={restore.error?.message}
+          onUndo={() =>
+            restore.mutate(
+              { collection: kind.collection, id: justDeleted.id },
+              { onSuccess: () => setJustDeleted(undefined) },
+            )
+          }
+          onDismiss={() => setJustDeleted(undefined)}
         />
       )}
     </section>

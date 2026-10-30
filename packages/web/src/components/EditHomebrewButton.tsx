@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCatalogRow } from "../hooks/useCatalogRow.ts";
 import { useHomebrew } from "../hooks/useHomebrew.ts";
+import { useHomebrewHistory } from "../hooks/useHomebrewHistory.ts";
 import { useReturnFocus } from "../hooks/useReturnFocus.ts";
 import { matchCatalogTarget } from "../lib/catalogRows.ts";
 import { LISTING_KINDS } from "../lib/homebrewListing.ts";
@@ -31,6 +32,7 @@ export function EditHomebrewButton({
   );
   const kind = LISTING_KINDS[collection];
   const { save } = useHomebrew(collection, kind.recordSchema, { listed: false });
+  const { undoOf, resetRevert } = useHomebrewHistory();
   const [editorOpen, setEditorOpen] = useState(false);
   const button = useReturnFocus<HTMLButtonElement>(editorOpen);
   const homebrew = row.data?.homebrew;
@@ -44,6 +46,7 @@ export function EditHomebrewButton({
         aria-haspopup="dialog"
         onClick={() => {
           save.reset();
+          resetRevert();
           setEditorOpen(true);
         }}
         className="rounded-control border border-border bg-surface px-3.5 py-2 font-semibold text-ink text-row hover:bg-subtle"
@@ -63,6 +66,7 @@ export function EditHomebrewButton({
                 onSave={(input) =>
                   save.mutate({ id, input }, { onSuccess: () => setEditorOpen(false) })
                 }
+                undo={undoOf(collection, id, () => setEditorOpen(false))}
                 onClose={() => setEditorOpen(false)}
                 appliesToAll
               />

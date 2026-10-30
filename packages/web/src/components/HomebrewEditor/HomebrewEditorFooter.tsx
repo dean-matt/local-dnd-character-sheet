@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import type { HomebrewUndo } from "../../hooks/useHomebrewHistory.ts";
 import { ClassDieHoldNote } from "./ClassDieHoldNote.tsx";
 import type { ClassDieHold } from "./useClassDieHold.ts";
 
@@ -14,12 +15,14 @@ export interface HomebrewEditorFooterProps {
   saving: boolean;
   /** Why Save is unavailable, drawn to its left; Save holds while it stands. */
   hold?: ClassDieHold;
+  /** Reverts the row to the version its last save replaced; absent for a new row. */
+  undo?: HomebrewUndo;
   onSave: () => void;
 }
 
 /**
- * Cancel, why a save failed, Previous and Next while stepping, any hold on saving, and Save.
- * Previous stays in place on the first step, so focus never drops off a button that vanished.
+ * Cancel, why a save or an undo failed, Previous and Next while stepping, any hold on saving, and Save.
+ * Undo, where the row has been saved before, sits beside Save. Previous stays in place on the first step, so focus never drops off a button that vanished.
  */
 export function HomebrewEditorFooter({
   failure,
@@ -29,6 +32,7 @@ export function HomebrewEditorFooter({
   onAdvance,
   saving,
   hold,
+  undo,
   onSave,
 }: HomebrewEditorFooterProps) {
   const saveButton = useRef<HTMLButtonElement>(null);
@@ -46,6 +50,7 @@ export function HomebrewEditorFooter({
       </button>
       <p role="alert" className="mr-auto text-error text-row">
         {failure && `Save failed: ${failure}`}
+        {undo?.failure && `Undo failed: ${undo.failure}`}
       </p>
       {stepping && (
         <>
@@ -63,6 +68,16 @@ export function HomebrewEditorFooter({
         </>
       )}
       {hold && <ClassDieHoldNote hold={{ ...hold, retry }} />}
+      {undo && (
+        <button
+          type="button"
+          aria-disabled={!undo.available || undo.pending}
+          onClick={() => undo.available && !undo.pending && undo.onUndo()}
+          className={SECONDARY}
+        >
+          {undo.pending ? "Undoing…" : "Undo"}
+        </button>
+      )}
       <button
         ref={saveButton}
         type="button"

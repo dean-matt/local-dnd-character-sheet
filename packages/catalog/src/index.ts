@@ -68,6 +68,7 @@ export type {
   SheetFeature,
 } from "./features.ts";
 export { characterFeaturesSchema } from "./features.ts";
+export { homebrewCollectionSchema, homebrewHistorySchema } from "./homebrew-history.ts";
 export type { CharacterInventory, SheetItem } from "./inventory.ts";
 export { characterInventorySchema } from "./inventory.ts";
 export type {
