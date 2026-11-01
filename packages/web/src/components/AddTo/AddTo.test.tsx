@@ -39,6 +39,13 @@ afterEach(() => {
 });
 
 describe("AddTo", () => {
+  it("keeps its text and no tooltip by default", () => {
+    renderAt("/settings");
+    const button = screen.getByRole("button", { name: "Add to… Ember (Homebrew)" });
+    expect(button).not.toHaveAttribute("title");
+    expect(button.querySelector("[aria-hidden]")).toBeNull();
+  });
+
   it("asks which character away from a sheet, adds to the one chosen, and returns focus", async () => {
     const { onAdded, writes } = renderAt("/settings");
     const button = screen.getByRole("button", { name: "Add to… Ember (Homebrew)" });

@@ -11,6 +11,7 @@ const LOOKS = {
     "rounded-control border border-border bg-surface px-2.5 py-1 text-label font-semibold text-accent-text hover:bg-subtle",
   primary:
     "rounded-control bg-accent px-3.5 py-2 text-row font-semibold text-white hover:bg-accent-hover",
+  icon: "flex size-8 items-center justify-center rounded-control border border-border bg-surface text-body font-semibold leading-none text-accent-text hover:bg-subtle",
 };
 
 export interface AddToProps {
@@ -83,9 +84,11 @@ export function AddTo({ row, onAdded, look = "quiet", above = false }: AddToProp
         aria-controls={sheet || !open ? undefined : listId}
         aria-busy={busy || undefined}
         onClick={press}
+        title={look === "icon" ? "Add to…" : undefined}
         className={`${LOOKS[look]} cursor-pointer aria-busy:cursor-wait`}
       >
-        Add to…{" "}
+        {look === "icon" ? <span aria-hidden>+</span> : null}
+        <span className={look === "icon" ? "sr-only" : undefined}>Add to…</span>{" "}
         <span className="sr-only">
           {row.label}
           {sheet && `, for ${sheet.name}`}

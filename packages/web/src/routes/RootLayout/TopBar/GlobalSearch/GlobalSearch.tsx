@@ -11,9 +11,9 @@
  * from a sheet the character too.
  */
 import { Search, X } from "lucide-react";
-import { type KeyboardEvent, useId, useState } from "react";
+import { type KeyboardEvent, useCallback, useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { AddedNotice } from "../../../../components/AddedNotice.tsx";
+import { AddedToast } from "../../../../components/AddedToast.tsx";
 import { AddTo } from "../../../../components/AddTo/AddTo.tsx";
 import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
 import type { AddOutcome } from "../../../../hooks/useAddToCharacter.ts";
@@ -42,6 +42,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [active, setActive] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | undefined>(undefined);
   const [added, setAdded] = useState<AddOutcome>();
+  const dismissAdded = useCallback(() => setAdded(undefined), []);
   const characters = useCharacters();
   const sheet = useSheetCharacter();
   const debounced = useDebounce(query, SEARCH_DEBOUNCE_MS);
@@ -174,7 +175,6 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
               setQuery(event.target.value);
               setOpen(true);
               setActive(null);
-              setAdded(undefined);
             }}
             onFocus={() => {
               setOpen(true);
@@ -251,7 +251,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
                     className="col-start-2 self-center pr-1"
                     style={{ gridRow }}
                   >
-                    <AddTo row={addable} onAdded={setAdded} />
+                    <AddTo row={addable} onAdded={setAdded} look="icon" />
                   </div>
                 )
               );
@@ -264,7 +264,6 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           >
             {showPanel ? status() : undefined}
           </p>
-          <AddedNotice outcome={added} />
           <div className="mt-1 shrink-0 border-t border-border pt-1">
             <Link
               to={`/search?${new URLSearchParams({ q: query.trim(), ...(sheet && { [SEARCHED_FROM]: sheet.id }) })}`}
@@ -283,6 +282,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
       {detail !== undefined && (
         <CatalogDetail address={detail} onClose={() => setDetail(undefined)} />
       )}
+      <AddedToast outcome={added} onDismiss={dismissAdded} />
       {/* Mounted outside the hidden panel, so a screen reader hears each change of text. */}
       <p role="status" className="sr-only">
         {showPanel ? status() : undefined}
