@@ -8,7 +8,7 @@
 import { ABILITIES } from "@dnd/character";
 import { isRecord } from "../../lib/entryGuards.ts";
 
-export type GrantMode = "none" | "fixed" | "list" | "any";
+export type GrantMode = "none" | "fixed" | "list" | "any" | "weighted";
 
 /** How one field writes each way of granting. */
 export interface GrantSpec {
@@ -21,6 +21,8 @@ export interface GrantSpec {
   everyName?: readonly string[];
   /** A fixed grant raises each name by an amount, as an ability score, rather than naming it `true`. */
   amounts?: boolean;
+  /** A background's 2024 pick: +2/+1 or +1/+1/+1 across the same abilities, as two alternatives. */
+  weighted?: boolean;
   /** Only a fixed grant, as armor and weapons. */
   fixedOnly?: boolean;
   /** Keys of the alternative the form shows no control for and keeps, as an Epic Boon's `max`. */
@@ -43,7 +45,7 @@ export type FeatGrantKey = keyof typeof FEAT_GRANT_SPECS;
 
 /** The grant fields a background's form shows; a language pick of any is upstream's `anyStandard`. */
 export const BACKGROUND_GRANT_SPECS = {
-  ability: FEAT_GRANT_SPECS.ability,
+  ability: { ...FEAT_GRANT_SPECS.ability, weighted: true },
   skillProficiencies: FEAT_GRANT_SPECS.skillProficiencies,
   toolProficiencies: FEAT_GRANT_SPECS.toolProficiencies,
   languageProficiencies: { anyKey: "anyStandard" },
@@ -69,7 +71,33 @@ export type GrantState =
   | { mode: "none" }
   | { mode: "fixed"; names: string[]; amount: Typed }
   | { mode: "list"; from: string[]; count: Typed }
-  | { mode: "any"; count: Typed };
+  | { mode: "any"; count: Typed }
+  | { mode: "weighted"; from: string[] };
+
+const WEIGHT_PATTERNS = [
+  [2, 1],
+  [1, 1, 1],
+];
+
+/** The abilities both alternatives of a weighted pick choose from; `undefined` for any other value. */
+function readWeighted(value: unknown): string[] | undefined {
+  if (!Array.isArray(value) || value.length !== WEIGHT_PATTERNS.length) return undefined;
+  const picks = value.map((alternative, index) => {
+    const choose = isRecord(alternative) ? alternative.choose : undefined;
+    const weighted = isRecord(choose) ? choose.weighted : undefined;
+    if (!isRecord(weighted) || Object.keys(weighted).length !== 2) return undefined;
+    const { from, weights } = weighted;
+    const sound =
+      Object.keys(alternative).length === 1 &&
+      Object.keys(choose as object).length === 1 &&
+      Array.isArray(from) &&
+      from.every((name) => typeof name === "string") &&
+      JSON.stringify(weights) === JSON.stringify(WEIGHT_PATTERNS[index]);
+    return sound ? (from as string[]) : undefined;
+  });
+  const [first, second] = picks;
+  return first && JSON.stringify(first) === JSON.stringify(second) ? first : undefined;
+}
 
 const typed = (value: unknown): value is Typed =>
   value === null || (typeof value === "number" && Number.isFinite(value));
@@ -98,6 +126,8 @@ function readChoose(choose: unknown, spec: GrantSpec): GrantState | undefined {
 /** `value` as the form shows it, or `undefined` where the form cannot. */
 export function readGrant(value: unknown, spec: GrantSpec): GrantState | undefined {
   if (value === undefined) return { mode: "none" };
+  const weighted = spec.weighted ? readWeighted(value) : undefined;
+  if (weighted) return { mode: "weighted", from: weighted };
   const alternative = onlyAlternative(value);
   if (!alternative) return undefined;
   const shown = Object.entries(alternative).filter(([key]) => !spec.kept?.includes(key));
@@ -149,6 +179,12 @@ export function writeGrant(
           ];
     case "list":
       return [{ ...kept, choose: { from: state.from, count: state.count, ...amount } }];
+    case "weighted":
+      return state.from.length === 0
+        ? undefined
+        : WEIGHT_PATTERNS.map((weights) => ({
+            choose: { weighted: { from: state.from, weights } },
+          }));
     case "any":
       return spec.anyKey
         ? [{ ...kept, [spec.anyKey]: state.count }]
@@ -172,6 +208,9 @@ export function grantProblem(value: unknown, spec: GrantSpec): string | undefine
     !(whole(state.amount) && Number(state.amount) >= 1)
   ) {
     return "Increase by: a whole number of at least 1";
+  }
+  if (state?.mode === "weighted" && state.from.length !== 3) {
+    return "Pick exactly three abilities to choose from";
   }
   if (state?.mode === "list" && state.from.length === 0) return "Pick at least one to choose from";
   if (

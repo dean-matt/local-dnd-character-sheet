@@ -2517,6 +2517,31 @@ describe("HomebrewSettings", () => {
       expect(fromJson?.body).toEqual(fromForm?.body);
     });
 
+    it("writes a weighted ability choice in upstream's shape and reads it back from JSON", () => {
+      stubApi({});
+      renderPage();
+
+      addBackground();
+      stepTo("Proficiencies");
+      pickIn("Ability score increases", "Granted as", "Weighted choice (+2/+1 or +1/+1/+1)");
+      tickIn("Ability score increases", "Choose from", "Intelligence", "Wisdom", "Charisma");
+      mode("JSON");
+      const written = JSON.parse(jsonView("Background JSON").state.doc.toString());
+      const from = ["int", "wis", "cha"];
+      expect(written.ability).toEqual([
+        { choose: { weighted: { from, weights: [2, 1] } } },
+        { choose: { weighted: { from, weights: [1, 1, 1] } } },
+      ]);
+
+      mode("Step by step");
+      stepTo("Proficiencies");
+      expect(
+        group("Ability score increases").getByLabelText("Granted as", {
+          selector: FIELD_SELECTOR.combobox,
+        }),
+      ).toHaveTextContent("Weighted choice (+2/+1 or +1/+1/+1)");
+    });
+
     it("holds a step while a field it shows has a problem, and shows it beside the field", () => {
       stubApi({});
       renderPage();

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { FEAT_GRANT_SPECS, grantProblem, readGrant, writeGrant } from "./featGrantShapes.ts";
+import {
+  BACKGROUND_GRANT_SPECS,
+  FEAT_GRANT_SPECS,
+  grantProblem,
+  readGrant,
+  writeGrant,
+} from "./featGrantShapes.ts";
 
 const { ability, expertise, weaponProficiencies } = FEAT_GRANT_SPECS;
 
@@ -62,5 +68,41 @@ describe("grantProblem", () => {
     expect(grantProblem([{ con: -2 }], ability)).toMatch(/Increase by/);
     expect(grantProblem([{ con: 1 }], ability)).toBeUndefined();
     expect(grantProblem([{ draconic: true }, { any: 0 }], expertise)).toBeUndefined();
+  });
+});
+
+describe("a background's weighted ability choice", () => {
+  const { ability: backgroundAbility } = BACKGROUND_GRANT_SPECS;
+  const from = ["int", "wis", "cha"];
+  const weighted = [
+    { choose: { weighted: { from, weights: [2, 1] } } },
+    { choose: { weighted: { from, weights: [1, 1, 1] } } },
+  ];
+
+  it("reads upstream's two alternatives and writes them back unchanged", () => {
+    const state = readGrant(weighted, backgroundAbility);
+    expect(state).toEqual({ mode: "weighted", from });
+    expect(writeGrant(weighted, backgroundAbility, { mode: "weighted", from })).toEqual(weighted);
+  });
+
+  it("leaves other weights, mismatched abilities and a feat's field to the JSON", () => {
+    expect(readGrant(weighted.slice(0, 1), backgroundAbility)).toBeUndefined();
+    expect(
+      readGrant(
+        [weighted[0], { choose: { weighted: { from: ["str"], weights: [1, 1, 1] } } }],
+        backgroundAbility,
+      ),
+    ).toBeUndefined();
+    expect(readGrant(weighted, ability)).toBeUndefined();
+  });
+
+  it("names a choice that does not offer exactly three abilities", () => {
+    expect(grantProblem(weighted, backgroundAbility)).toBeUndefined();
+    expect(
+      grantProblem(
+        writeGrant(undefined, backgroundAbility, { mode: "weighted", from: ["str"] }),
+        backgroundAbility,
+      ),
+    ).toMatch(/exactly three/);
   });
 });

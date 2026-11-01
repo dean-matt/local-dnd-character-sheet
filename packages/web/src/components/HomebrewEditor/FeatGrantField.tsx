@@ -19,6 +19,7 @@ const MODES: { value: GrantMode; label: string }[] = [
   { value: "fixed", label: "Fixed" },
   { value: "list", label: "Choice from a list" },
   { value: "any", label: "Choice of any" },
+  { value: "weighted", label: "Weighted choice (+2/+1 or +1/+1/+1)" },
 ];
 
 export interface FeatGrantFieldProps {
@@ -35,13 +36,22 @@ export interface FeatGrantFieldProps {
   status?: ReactNode;
   /** What the entry is called where the form leaves a field to the JSON. */
   owner?: string;
-  /** The ways to grant that the field offers; all four where absent. */
+  /** The ways to grant that the field offers; all but the weighted choice where absent. */
   modes?: GrantMode[];
 }
 
+const namesOf = (state: GrantState) =>
+  state.mode === "fixed" ? state.names : "from" in state ? state.from : [];
+
+/** The ways to grant that a field offers: `modes`, else all but the weighted choice unless `spec` has it. */
+const offeredModes = (spec: GrantSpec, modes?: GrantMode[]) =>
+  MODES.filter(({ value }) =>
+    modes ? modes.includes(value) : spec.weighted || value !== "weighted",
+  );
+
 /** The state a switch to `mode` starts from, carrying the names already picked. */
 function switched(state: GrantState, mode: GrantMode): GrantState {
-  const names = state.mode === "fixed" ? state.names : state.mode === "list" ? state.from : [];
+  const names = namesOf(state);
   switch (mode) {
     case "none":
       return { mode };
@@ -51,6 +61,8 @@ function switched(state: GrantState, mode: GrantMode): GrantState {
       return { mode, from: names, count: 1 };
     case "any":
       return { mode, count: 1 };
+    case "weighted":
+      return { mode, from: names };
   }
 }
 
@@ -93,7 +105,7 @@ export function FeatGrantField({
   const errorAt = (input: string) =>
     typeof error === "string" && error.startsWith(`${input}:`) ? error : undefined;
   const modeError = errorAt("How many") || errorAt("Increase by") ? undefined : error;
-  const named = state.mode === "fixed" ? state.names : state.mode === "list" ? state.from : [];
+  const named = namesOf(state);
   const names = (namesLabel: string, onNames: (next: string[]) => void) => (
     <div className={PAIRED}>
       <MultiSelect
@@ -141,7 +153,7 @@ export function FeatGrantField({
             {(control) => (
               <Select
                 {...control}
-                options={modes ? MODES.filter(({ value }) => modes.includes(value)) : MODES}
+                options={offeredModes(spec, modes)}
                 value={state.mode}
                 onChange={(next) => write(switched(state, next as GrantMode))}
               />
@@ -164,7 +176,8 @@ export function FeatGrantField({
             />
           </div>
         )}
-        {state.mode === "list" && names("Choose from", (next) => write({ ...state, from: next }))}
+        {(state.mode === "list" || state.mode === "weighted") &&
+          names("Choose from", (next) => write({ ...state, from: next }))}
         {(state.mode === "list" || state.mode === "any") &&
           count(state.count, (next) => write({ ...state, count: next }))}
       </div>
