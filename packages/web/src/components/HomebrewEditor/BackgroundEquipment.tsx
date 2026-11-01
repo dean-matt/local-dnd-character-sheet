@@ -1,40 +1,13 @@
 import { HOMEBREW_SOURCE } from "@dnd/catalog";
-import { useState } from "react";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
 import { CatalogPicker } from "../CatalogPicker/CatalogPicker.tsx";
 import { EmptyNote } from "../EmptyNote.tsx";
 import { InputField } from "../InputField.tsx";
 import { RemoveButton } from "../RemoveButton.tsx";
 import { type EquipmentState, readEquipment, writeEquipment } from "./backgroundEquipmentShapes.ts";
-import { type HomebrewFormProps, typedInteger, typedNumber, withField } from "./homebrewEntry.ts";
+import { type HomebrewFormProps, typedNumber, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, TEXT, WHOLE } from "./homebrewGrid.ts";
-
-function QuantityField({
-  label,
-  quantity,
-  onCommit,
-}: {
-  label: string;
-  quantity: number;
-  onCommit: (quantity: number) => void;
-}) {
-  const [draft, setDraft] = useState<string | null>(null);
-  return (
-    <InputField
-      label={label}
-      type="number"
-      min={1}
-      step={1}
-      value={draft ?? quantity}
-      onChange={(event) => {
-        setDraft(event.target.value);
-        const next = typedInteger(event.target.value);
-        if (next !== undefined && next >= 1) onCommit(next);
-      }}
-      onBlur={() => setDraft(null)}
-    />
-  );
-}
+import { QuantityField } from "./QuantityField.tsx";
 
 /**
  * A homebrew background's starting equipment: the items, picked from the edition's catalog,
