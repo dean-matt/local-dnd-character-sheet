@@ -180,11 +180,9 @@ export function writeGrant(
     case "list":
       return [{ ...kept, choose: { from: state.from, count: state.count, ...amount } }];
     case "weighted":
-      return state.from.length === 0
-        ? undefined
-        : WEIGHT_PATTERNS.map((weights) => ({
-            choose: { weighted: { from: state.from, weights } },
-          }));
+      return WEIGHT_PATTERNS.map((weights) => ({
+        choose: { weighted: { from: state.from, weights } },
+      }));
     case "any":
       return spec.anyKey
         ? [{ ...kept, [spec.anyKey]: state.count }]

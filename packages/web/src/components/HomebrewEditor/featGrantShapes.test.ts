@@ -104,5 +104,11 @@ describe("a background's weighted ability choice", () => {
         backgroundAbility,
       ),
     ).toMatch(/exactly three/);
+    expect(
+      grantProblem(
+        writeGrant(undefined, backgroundAbility, { mode: "weighted", from: [] }),
+        backgroundAbility,
+      ),
+    ).toMatch(/exactly three/);
   });
 });
