@@ -2642,6 +2642,10 @@ describe("Homebrew kind page", () => {
       fireEvent.click(await within(backgrounds()).findByRole("button", { name: "Edit Classic" }));
       stepTo("Feat");
       expect(field("spinbutton", "Rope quantity")).toHaveValue(2);
+      fireEvent.change(field("spinbutton", "Rope quantity"), { target: { value: "" } });
+      expect(field("spinbutton", "Rope quantity")).toHaveValue(null);
+      fireEvent.change(field("spinbutton", "Rope quantity"), { target: { value: "0" } });
+      expect(field("spinbutton", "Rope quantity")).toHaveValue(0);
       fireEvent.change(field("spinbutton", "Rope quantity"), { target: { value: "5" } });
       click("Save");
 

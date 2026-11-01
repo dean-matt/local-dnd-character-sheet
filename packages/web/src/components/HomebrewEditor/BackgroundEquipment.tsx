@@ -1,4 +1,5 @@
 import { HOMEBREW_SOURCE } from "@dnd/catalog";
+import { useState } from "react";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
 import { CatalogPicker } from "../CatalogPicker/CatalogPicker.tsx";
 import { EmptyNote } from "../EmptyNote.tsx";
@@ -10,9 +11,36 @@ import { FORM_GRID, TEXT, WHOLE } from "./homebrewGrid.ts";
 
 /**
  * A homebrew background's starting equipment: the items, picked from the edition's catalog,
- * the gold listed with them, and the gold taken instead, and the quantity of each item. A name an item carries, and an
- * entry such as a pouch of coins, stays as written.
+ * each item's quantity, the gold listed with them and the gold taken instead. A name an item
+ * carries, and an entry such as a pouch of coins, stays as written.
  */
+function QuantityField({
+  label,
+  quantity,
+  onCommit,
+}: {
+  label: string;
+  quantity: number;
+  onCommit: (quantity: number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <InputField
+      label={label}
+      type="number"
+      min={1}
+      step={1}
+      value={draft ?? quantity}
+      onChange={(event) => {
+        setDraft(event.target.value);
+        const next = typedInteger(event.target.value);
+        if (next !== undefined && next >= 1) onCommit(next);
+      }}
+      onBlur={() => setDraft(null)}
+    />
+  );
+}
+
 export function BackgroundEquipment({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
   const state = readEquipment(entry.startingEquipment);
   if (!state) {
@@ -51,19 +79,14 @@ export function BackgroundEquipment({ entry, edition, onChange, errorFor }: Home
               <li key={item} className="flex items-end gap-2">
                 <span className="flex-1 text-row">{name}</span>
                 <div className="w-24">
-                  <InputField
+                  <QuantityField
                     label={`${name} quantity`}
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={quantity}
-                    onChange={(event) =>
+                    quantity={quantity}
+                    onCommit={(next) =>
                       write({
                         ...state,
                         items: state.items.map((entry) =>
-                          entry.item === item
-                            ? { item, quantity: Math.max(1, typedInteger(event.target.value) ?? 1) }
-                            : entry,
+                          entry.item === item ? { item, quantity: next } : entry,
                         ),
                       })
                     }

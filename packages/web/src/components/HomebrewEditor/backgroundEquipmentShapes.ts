@@ -1,8 +1,7 @@
 /**
  * A background's `startingEquipment` read as the form shows it: one alternative whose `A`
  * (or, in a classic list, `_`) lists the items, with coins among them, and whose `B` is coins
- * alone. Coins are copper in
- * upstream and gold pieces here. A shape past that, such as several alternatives or a
+ * alone. Coins are copper in upstream and gold pieces here. A shape past that, such as several alternatives or a
  * `special` entry, reads as `undefined` and is left to the JSON; an entry of `A` the form has
  * no control for survives a write.
  */
@@ -80,9 +79,9 @@ export function readEquipment(value: unknown): EquipmentState | undefined {
 }
 
 /** `entry` with `quantity` written; the entry as it was where that is already its quantity. */
-const withQuantity = (entry: unknown, item: string, quantity: number) => {
+const withQuantity = (entry: unknown, quantity: number) => {
   if (quantityOf(entry) === quantity) return entry;
-  const { quantity: _dropped, ...rest } = asRecord(entry) ?? { item };
+  const { quantity: _dropped, ...rest } = asRecord(entry) ?? { item: entry };
   return quantity === 1 ? rest : { ...rest, quantity };
 };
 
@@ -98,7 +97,7 @@ export function writeEquipment(value: unknown, state: EquipmentState): unknown[]
     const item = itemOf(entry);
     if (item !== undefined) {
       const quantity = wanted.get(item);
-      return quantity === undefined ? [] : [withQuantity(entry, item, quantity)];
+      return quantity === undefined ? [] : [withQuantity(entry, quantity)];
     }
     if (goldOf(entry) === undefined) return [entry];
     if (seenCoins) return [entry];

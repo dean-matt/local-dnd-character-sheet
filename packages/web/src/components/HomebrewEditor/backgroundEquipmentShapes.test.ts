@@ -81,6 +81,15 @@ describe("writeEquipment", () => {
     ).toEqual([{ A: [{ item: "rope|xphb" }] }]);
   });
 
+  it("keeps a bare entry's case when its quantity changes", () => {
+    const value = [{ _: ["Dagger|PHB"] }];
+    const state = readEquipment(value);
+    if (!state) throw new Error("unreadable");
+    expect(
+      writeEquipment(value, { ...state, items: [{ item: "dagger|phb", quantity: 3 }] }),
+    ).toEqual([{ _: [{ item: "Dagger|PHB", quantity: 3 }] }]);
+  });
+
   it("round-trips a classic list under its own key", () => {
     const classic = [{ _: ["dagger|phb", { item: "rope|phb", quantity: 2 }, { value: 1500 }] }];
     const state = readEquipment(classic);
