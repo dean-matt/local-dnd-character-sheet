@@ -106,6 +106,10 @@ describe("GlobalSearch", () => {
     expect(
       screen.getByRole("button", { name: "Add to… Ember Charm (Homebrew), for Fira" }),
     ).toBeInTheDocument();
+    const add = screen.getByRole("button", { name: "Add to… Fireball (PHB), for Fira" });
+    expect(add).toHaveAttribute("title", "Add to…");
+    expect(add).toHaveTextContent("+");
+    expect(add.querySelector(":not(.sr-only):not([aria-hidden])")).toBeNull();
     expect(screen.queryByRole("button", { name: /Fire Giant/ })).not.toBeInTheDocument();
     // A listbox owns options and groups alone.
     expect(
@@ -115,6 +119,23 @@ describe("GlobalSearch", () => {
       "href",
       "/search?q=fir&for=7",
     );
+  });
+
+  it("tells what an add did in a toast outside the results, which can be dismissed", async () => {
+    const { input } = renderSearch(
+      { [searchUrl("fir")]: page([ember]), "/api/characters/7": characterRecord("7", "Fira") },
+      "/characters/7/p/stats",
+    );
+    type(input, "fir");
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Add to… Ember Charm (Homebrew), for Fira" }),
+    );
+
+    const toast = await screen.findByRole("status", { name: "Last addition" });
+    await waitFor(() => expect(toast).toHaveTextContent("Ember Charm"));
+    expect(screen.getByRole("listbox").closest(".absolute")).not.toContainElement(toast);
+    fireEvent.click(within(toast).getByRole("button", { name: "Dismiss" }));
+    expect(toast).toBeEmptyDOMElement();
   });
 
   it("groups characters and compendium hits from both editions, in the order the server ranks them, each with its type", async () => {
