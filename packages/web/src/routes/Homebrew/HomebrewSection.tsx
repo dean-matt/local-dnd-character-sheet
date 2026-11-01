@@ -51,10 +51,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
   };
 
   return (
-    <section
-      aria-labelledby={`${id}-title`}
-      className="flex scroll-mt-20 flex-col gap-2.5 rounded-card border border-border bg-surface p-4"
-    >
+    <section aria-labelledby={`${id}-title`} className="flex scroll-mt-20 flex-col gap-2.5">
       <div className="flex justify-end">
         <h2 id={`${id}-title`} className="sr-only">
           {kind.heading}
