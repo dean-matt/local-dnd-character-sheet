@@ -55,11 +55,8 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
       aria-labelledby={`${id}-title`}
       className="flex scroll-mt-20 flex-col gap-2.5 rounded-card border border-border bg-surface p-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2
-          id={`${id}-title`}
-          className="font-semibold text-label text-muted uppercase tracking-label"
-        >
+      <div className="flex justify-end">
+        <h2 id={`${id}-title`} className="sr-only">
           {kind.heading}
         </h2>
         <button

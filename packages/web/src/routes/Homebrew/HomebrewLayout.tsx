@@ -40,16 +40,7 @@ export function HomebrewLayout() {
     <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} />}>
       <div className="min-w-0 flex-1 px-gutter py-6">
         <section className="flex max-w-6xl flex-col gap-4">
-          <div>
-            <h1 className="font-semibold text-label text-muted uppercase tracking-label">
-              Homebrew
-            </h1>
-            <p className="mt-1 text-label text-muted">
-              Your own items, spells, races, classes, backgrounds and feats. Search and the pickers
-              offer them beside the catalog's. Rules text takes the same <code>{"{@tag}"}</code>{" "}
-              markup the catalog's does.
-            </p>
-          </div>
+          <h1 className="sr-only">Homebrew</h1>
           <Outlet />
         </section>
       </div>

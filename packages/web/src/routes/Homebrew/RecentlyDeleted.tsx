@@ -19,10 +19,7 @@ export function RecentlyDeleted() {
       aria-labelledby={`${id}-title`}
       className="flex flex-col gap-2.5 rounded-card border border-border bg-surface p-4"
     >
-      <h2
-        id={`${id}-title`}
-        className="font-semibold text-label text-muted uppercase tracking-label"
-      >
+      <h2 id={`${id}-title`} className="sr-only">
         Recently deleted
       </h2>
       <p className="text-label text-muted">
