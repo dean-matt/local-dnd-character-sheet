@@ -208,16 +208,12 @@ describe("routing", () => {
       within(nav)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual([
-      "Items",
-      "Spells",
-      "Races",
-      "Classes",
-      "Backgrounds",
-      "Feats",
-      "Skills",
-      "Recently deleted",
-    ]);
+    ).toEqual(["Items", "Spells", "Races", "Classes", "Backgrounds", "Feats", "Skills"]);
+    expect(
+      within(screen.getByRole("navigation", { name: "Homebrew kinds footer" })).getByRole("link", {
+        name: "Recently deleted",
+      }),
+    ).toHaveAttribute("href", "/homebrew/deleted");
     expect(within(nav).getByRole("link", { name: "Items" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -234,7 +230,7 @@ describe("routing", () => {
     expect(router.state.location.pathname).toBe("/homebrew/spells");
     expect(screen.queryByRole("region", { name: "Items" })).not.toBeInTheDocument();
 
-    fireEvent.click(within(nav).getByRole("link", { name: "Recently deleted" }));
+    fireEvent.click(screen.getByRole("link", { name: "Recently deleted" }));
     await screen.findByRole("region", { name: "Recently deleted" });
     expect(router.state.location.pathname).toBe("/homebrew/deleted");
   });
