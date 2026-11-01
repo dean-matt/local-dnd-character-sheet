@@ -16,7 +16,7 @@ const loadEditor = () =>
 const HomebrewEditor = lazy(loadEditor);
 
 /**
- * Edit for a homebrew item or spell's detail on a sheet: opens the Settings › Homebrew
+ * Edit for a homebrew item or spell's detail on a sheet: opens the Homebrew page
  * editor on the stored row as a second dialog over the detail, and takes focus back on every
  * close. It draws nothing until the row is read, which `CatalogEntry` has usually cached.
  */

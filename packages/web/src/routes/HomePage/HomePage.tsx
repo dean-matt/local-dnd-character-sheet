@@ -97,7 +97,7 @@ export function HomePage() {
           </li>
           <li className="min-w-0">
             <HomeQuickLink
-              to="/settings/homebrew"
+              to="/homebrew"
               icon={FlaskConical}
               label="Homebrew"
               description="Your own items, spells, races, classes, backgrounds and feats, written as 5etools entries"

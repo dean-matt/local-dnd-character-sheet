@@ -96,8 +96,8 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 | Decision | Written in | Reversed by |
 |---|---|---|
 | Creating a row | `components/HomebrewEditor/HomebrewEditor.tsx`, through `hooks/useHomebrew.ts` | Deleting it |
-| Saving an edit | That editor, opened from Settings › Homebrew or from a sheet through `components/EditHomebrewButton.tsx` | The editor's Undo, which reverts the row to the version its latest save replaced, one save deep. A held class changing under its characters is #900 |
-| Deleting a row | `routes/HomebrewSettings/DeleteHomebrewDialog.tsx` | The toast's Undo, or Restore under Recently deleted in Settings › Homebrew. A held row refuses the delete |
+| Saving an edit | That editor, opened from Homebrew or from a sheet through `components/EditHomebrewButton.tsx` | The editor's Undo, which reverts the row to the version its latest save replaced, one save deep. A held class changing under its characters is #900 |
+| Deleting a row | `routes/Homebrew/DeleteHomebrewDialog.tsx` | The toast's Undo, or Restore under Recently deleted in Homebrew. A held row refuses the delete |
 
 `routes/homebrew-history.ts` in `packages/api` holds each row's prior version and each deleted
 row in the API's memory: a reload keeps them, a restart loses them, and `homebrew.db` never

@@ -101,11 +101,8 @@ export function AddHomebrewSkill({
             {empty ? (
               <p className="text-muted text-row">
                 {empty}{" "}
-                <Link
-                  to="/settings/homebrew#homebrew-skills"
-                  className="text-accent-text underline"
-                >
-                  Make one in Settings
+                <Link to="/homebrew/skills" className="text-accent-text underline">
+                  Make one in Homebrew
                 </Link>
                 .
               </p>

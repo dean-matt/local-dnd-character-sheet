@@ -1,4 +1,4 @@
-import { FlaskConical, Layers, Monitor } from "lucide-react";
+import { Layers, Monitor } from "lucide-react";
 import { Outlet } from "react-router";
 import { AppVersion } from "./AppVersion.tsx";
 import { Sidebar, type SidebarProps } from "./Sidebar/Sidebar.tsx";
@@ -11,7 +11,6 @@ const SECTIONS: SidebarProps["items"] = [
     end: true,
     icon: Monitor,
   },
-  { to: "/settings/homebrew", label: "Homebrew", icon: FlaskConical },
   { to: "/settings/sources", label: "Sources", icon: Layers },
 ];
 

@@ -1,0 +1,58 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Award,
+  BookOpen,
+  Dumbbell,
+  Shield,
+  Sparkles,
+  Swords,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import { Outlet } from "react-router";
+import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
+import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
+import { Sidebar, type SidebarProps } from "../Sidebar/Sidebar.tsx";
+import { SidebarFrame } from "../SidebarFrame.tsx";
+
+const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
+  items: Swords,
+  spells: Sparkles,
+  races: UserRound,
+  classes: Shield,
+  backgrounds: BookOpen,
+  feats: Award,
+  skills: Dumbbell,
+};
+
+const SECTIONS: SidebarProps["items"] = [
+  ...Object.values(LISTING_KINDS).map((kind) => ({
+    to: `/homebrew/${kind.collection}`,
+    label: kind.heading,
+    icon: KIND_ICONS[kind.collection],
+  })),
+  { to: "/homebrew/deleted", label: "Recently deleted", icon: Trash2 },
+];
+
+/** The Homebrew page: a rail of its kinds beside the open one, whose list is the outlet. */
+export function HomebrewLayout() {
+  return (
+    <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} />}>
+      <div className="min-w-0 flex-1 px-gutter py-6">
+        <section className="flex max-w-6xl flex-col gap-4">
+          <div>
+            <h1 className="font-semibold text-label text-muted uppercase tracking-label">
+              Homebrew
+            </h1>
+            <p className="mt-1 text-label text-muted">
+              Your own items, spells, races, classes, backgrounds and feats. Search and the pickers
+              offer them beside the catalog's. Rules text takes the same <code>{"{@tag}"}</code>{" "}
+              markup the catalog's does.
+            </p>
+          </div>
+          <Outlet />
+        </section>
+      </div>
+    </SidebarFrame>
+  );
+}

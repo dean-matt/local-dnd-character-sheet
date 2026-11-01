@@ -58,6 +58,18 @@ describe("TopBar", () => {
     );
   });
 
+  it("Homebrew links to the Homebrew page, between Character and Mechanics", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    const homebrew = screen.getByRole("link", { name: "Homebrew" });
+    expect(homebrew).toHaveAttribute("href", "/homebrew");
+    const character = screen.getByRole("button", { name: /^Character/ });
+    const mechanics = screen.getByRole("button", { name: /^Mechanics/ });
+    expect(character.compareDocumentPosition(homebrew)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(homebrew.compareDocumentPosition(mechanics)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
   it("Settings links to the Settings page", () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();

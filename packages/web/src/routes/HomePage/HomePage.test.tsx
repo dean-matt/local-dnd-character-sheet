@@ -121,7 +121,7 @@ describe("HomePage", () => {
     );
     expect(within(explore).getByRole("link", { name: /^Homebrew/ })).toHaveAttribute(
       "href",
-      "/settings/homebrew",
+      "/homebrew",
     );
     const compendium = await within(explore).findByRole("list", { name: "Compendium" });
     expect(

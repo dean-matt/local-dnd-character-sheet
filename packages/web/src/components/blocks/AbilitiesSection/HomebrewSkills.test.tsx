@@ -121,9 +121,10 @@ describe("a homebrew skill on the sheet", () => {
     const row = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
     const mark = within(row("Sailing")).getByRole("button", { name: "Homebrew skill" });
     fireEvent.mouseEnter(mark);
-    expect(
-      within(row("Sailing")).getByRole("link", { name: "Settings › Homebrew" }),
-    ).toHaveAttribute("href", "/settings/homebrew#homebrew-skills");
+    expect(within(row("Sailing")).getByRole("link", { name: "Homebrew" })).toHaveAttribute(
+      "href",
+      "/homebrew/skills",
+    );
     expect(
       within(row("Stealth")).queryByRole("button", { name: "Homebrew skill" }),
     ).not.toBeInTheDocument();
@@ -322,9 +323,9 @@ describe("AddHomebrewSkill", () => {
 
     const dialog = await openModal();
     expect(within(dialog).getByText(/holds every homebrew skill/)).toBeVisible();
-    expect(within(dialog).getByRole("link", { name: "Make one in Settings" })).toHaveAttribute(
+    expect(within(dialog).getByRole("link", { name: "Make one in Homebrew" })).toHaveAttribute(
       "href",
-      "/settings/homebrew#homebrew-skills",
+      "/homebrew/skills",
     );
   });
 

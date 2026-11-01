@@ -114,6 +114,15 @@ export function TopBar() {
         )}
       </div>
 
+      <NavLink
+        to="/homebrew"
+        className={({ isActive }) =>
+          `shrink-0 ${TRIGGER} ${isActive ? CURRENT : ELSEWHERE} hover:bg-subtle`
+        }
+      >
+        Homebrew
+      </NavLink>
+
       <MechanicsMenu
         open={menu === "mechanics"}
         onToggle={() => setMenu(menu === "mechanics" ? null : "mechanics")}
