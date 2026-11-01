@@ -31,13 +31,16 @@ const SECTIONS: SidebarProps["items"] = [
     label: kind.heading,
     icon: KIND_ICONS[kind.collection],
   })),
+];
+
+const FOOTER: SidebarProps["items"] = [
   { to: "/homebrew/deleted", label: "Recently deleted", icon: Trash2 },
 ];
 
 /** The Homebrew page: a rail of its kinds beside the open one, whose list is the outlet. */
 export function HomebrewLayout() {
   return (
-    <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} />}>
+    <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} footerItems={FOOTER} />}>
       <div className="min-w-0 flex-1 px-gutter py-6">
         <section className="flex max-w-6xl flex-col gap-4">
           <h1 className="sr-only">Homebrew</h1>
