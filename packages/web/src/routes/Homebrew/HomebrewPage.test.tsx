@@ -2628,6 +2628,42 @@ describe("Homebrew kind page", () => {
         ]),
       );
     });
+
+    it("writes an item's quantity and reads a classic equipment list", async () => {
+      const json = {
+        name: "Classic",
+        source: "HB",
+        startingEquipment: [{ _: [{ item: "rope|phb", quantity: 2 }] }],
+      };
+      const stored = { id: "b2", name: "Classic", edition: "classic", json, createdAt: CREATED_AT };
+      const fetchMock = stubApi({ backgrounds: [stored] }, [{ status: 200, body: stored }]);
+      renderPage("backgrounds");
+
+      fireEvent.click(await within(backgrounds()).findByRole("button", { name: "Edit Classic" }));
+      stepTo("Feat");
+      expect(field("spinbutton", "Rope quantity")).toHaveValue(2);
+      fireEvent.change(field("spinbutton", "Rope quantity"), { target: { value: "" } });
+      expect(field("spinbutton", "Rope quantity")).toHaveValue(null);
+      fireEvent.change(field("spinbutton", "Rope quantity"), { target: { value: "0" } });
+      expect(field("spinbutton", "Rope quantity")).toHaveValue(0);
+      fireEvent.change(field("spinbutton", "Rope quantity"), { target: { value: "5" } });
+      click("Save");
+
+      const { source: _source, ...rest } = json;
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          {
+            url: "/api/homebrew/backgrounds/b2",
+            method: "PUT",
+            body: {
+              ...rest,
+              startingEquipment: [{ _: [{ item: "rope|phb", quantity: 5 }] }],
+              edition: "classic",
+            },
+          },
+        ]),
+      );
+    });
   });
   describe("a race's form", () => {
     const races = () => screen.getByRole("region", { name: "Races" });
