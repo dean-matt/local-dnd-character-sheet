@@ -1,16 +1,17 @@
 import { HOMEBREW_SOURCE } from "@dnd/catalog";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
 import { CatalogPicker } from "../CatalogPicker/CatalogPicker.tsx";
+import { EmptyNote } from "../EmptyNote.tsx";
 import { InputField } from "../InputField.tsx";
-import { RemovableChipList } from "../RemovableChipList.tsx";
+import { RemoveButton } from "../RemoveButton.tsx";
 import { type EquipmentState, readEquipment, writeEquipment } from "./backgroundEquipmentShapes.ts";
-import { type HomebrewFormProps, typedNumber, withField } from "./homebrewEntry.ts";
+import { type HomebrewFormProps, typedInteger, typedNumber, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, TEXT, WHOLE } from "./homebrewGrid.ts";
 
 /**
  * A homebrew background's starting equipment: the items, picked from the edition's catalog,
- * the gold listed with them, and the gold taken instead. A quantity or a name an item
- * carries, and an entry such as a pouch of coins, stays as written.
+ * the gold listed with them, and the gold taken instead, and the quantity of each item. A name an item carries, and an
+ * entry such as a pouch of coins, stays as written.
  */
 export function BackgroundEquipment({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
   const state = readEquipment(entry.startingEquipment);
@@ -42,18 +43,43 @@ export function BackgroundEquipment({ entry, edition, onChange, errorFor }: Home
     <fieldset className="flex min-w-0 flex-col gap-2">
       <legend className="mb-1 font-semibold text-row">Starting equipment</legend>
       <div className={FORM_GRID}>
-        <div className={WHOLE}>
-          <RemovableChipList
-            items={state.items.map((item) => ({
-              key: item,
-              label: titleCase(item.split("|")[0] ?? item),
-            }))}
-            onRemove={(key) =>
-              write({ ...state, items: state.items.filter((item) => item !== key) })
-            }
-            empty="No items."
-          />
-        </div>
+        <ul className={`${WHOLE} flex flex-col gap-2`}>
+          {state.items.length === 0 && <EmptyNote>No items.</EmptyNote>}
+          {state.items.map(({ item, quantity }) => {
+            const name = titleCase(item.split("|")[0] ?? item);
+            return (
+              <li key={item} className="flex items-end gap-2">
+                <span className="flex-1 text-row">{name}</span>
+                <div className="w-24">
+                  <InputField
+                    label={`${name} quantity`}
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={quantity}
+                    onChange={(event) =>
+                      write({
+                        ...state,
+                        items: state.items.map((entry) =>
+                          entry.item === item
+                            ? { item, quantity: Math.max(1, typedInteger(event.target.value) ?? 1) }
+                            : entry,
+                        ),
+                      })
+                    }
+                  />
+                </div>
+                <RemoveButton
+                  name={name}
+                  busy={false}
+                  onRemove={() =>
+                    write({ ...state, items: state.items.filter((entry) => entry.item !== item) })
+                  }
+                />
+              </li>
+            );
+          })}
+        </ul>
         <div className={WHOLE}>
           <CatalogPicker
             label="Add an item"
@@ -62,7 +88,8 @@ export function BackgroundEquipment({ entry, edition, onChange, errorFor }: Home
             onPick={(_ref, hit) => {
               const item =
                 `${hit.name}|${"source" in hit ? hit.source : HOMEBREW_SOURCE}`.toLowerCase();
-              if (!state.items.includes(item)) write({ ...state, items: [...state.items, item] });
+              if (!state.items.some((entry) => entry.item === item))
+                write({ ...state, items: [...state.items, { item, quantity: 1 }] });
             }}
           />
         </div>
