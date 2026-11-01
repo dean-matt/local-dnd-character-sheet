@@ -22,7 +22,7 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
 }) => {
   // CI retries on the same homebrew.db, where a first attempt's save would hold the name.
   const named = `Lantern Blade ${test.info().retry + 1}`;
-  await page.goto("/settings/homebrew");
+  await page.goto("/homebrew/items");
   const items = page.getByRole("region", { name: "Items" });
   const add = items.getByRole("button", { name: "Add item" });
   await add.press("Enter");
@@ -75,7 +75,7 @@ test("a keyboard user adds a homebrew item step by step, switches to JSON, previ
 test("a keyboard user sets a homebrew feat's choice on each step, which holds no violation", async ({
   page,
 }) => {
-  await page.goto("/settings/homebrew");
+  await page.goto("/homebrew/feats");
   await page.getByRole("button", { name: "Add feat" }).click();
   const editor = page.getByRole("dialog", { name: "New feat" });
   await expect(editor.getByRole("textbox", { name: "Name" })).toBeVisible();
@@ -108,7 +108,7 @@ test("at phone width the field reference stacks above the JSON, and the editor f
 }) => {
   const width = 390;
   await page.setViewportSize({ width, height: 800 });
-  await page.goto("/settings/homebrew");
+  await page.goto("/homebrew/items");
   await page.getByRole("button", { name: "Add item" }).click();
   const editor = page.getByRole("dialog", { name: "New item" });
   await editor.getByRole("tab", { name: "JSON" }).click();
@@ -129,7 +129,7 @@ test("at phone width the field reference stacks above the JSON, and the editor f
 test("the item JSON editor suggests, describes and marks the fields the sheet applies, and a keyboard user leaves it", async ({
   page,
 }) => {
-  await page.goto("/settings/homebrew");
+  await page.goto("/homebrew/items");
   await page.getByRole("button", { name: "Add item" }).click();
   const editor = page.getByRole("dialog", { name: "New item" });
   await editor.getByRole("tab", { name: "JSON" }).click();
@@ -199,7 +199,7 @@ test("in the dark theme the JSON editor's text, caret and search panel take the 
   page,
 }) => {
   await page.emulateMedia({ colorScheme: "dark" });
-  await page.goto("/settings/homebrew");
+  await page.goto("/homebrew/items");
   await page.getByRole("button", { name: "Add item" }).click();
   const editor = page.getByRole("dialog", { name: "New item" });
   await editor.getByRole("tab", { name: "JSON" }).click();
@@ -324,7 +324,7 @@ test("in a window 600px high the editor's body never scrolls and its footer stay
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 600 });
-  await page.goto("/settings/homebrew");
+  await page.goto("/homebrew/items");
   await page.getByRole("button", { name: "Add item" }).click();
   const editor = page.getByRole("dialog", { name: "New item" });
   await expect(editor).toBeVisible();

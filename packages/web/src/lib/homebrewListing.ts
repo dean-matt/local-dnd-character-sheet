@@ -67,7 +67,7 @@ const spells: ListingKind<z.infer<typeof homebrewSpellRecordSchema>> = {
   ],
 };
 
-/** Each kind, keyed in the order the Homebrew settings page lists them. */
+/** Each kind, keyed in the order the Homebrew sidebar lists them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
   items,
   spells,

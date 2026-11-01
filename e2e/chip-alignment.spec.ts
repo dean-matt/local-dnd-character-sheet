@@ -36,7 +36,7 @@ test("a homebrew entry's edition chip lines up with the Homebrew chip beside it"
     data: { edition: "one", name, category: "O" },
   });
   expect(saved.ok()).toBe(true);
-  await page.goto("/settings/homebrew");
+  await page.goto("/homebrew/feats");
   const row = page.getByRole("listitem").filter({ hasText: name });
   await expectAligned(
     row.getByText("2024", { exact: true }),

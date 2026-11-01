@@ -40,20 +40,39 @@ export const routeConfig: RouteObject[] = [
       },
       { path: "search", element: <SearchPage /> },
       {
+        path: "homebrew",
+        HydrateFallback: LoadingState,
+        // Their own chunk, so the JSON editor the lists carry loads with this page or a sheet's Edit alone.
+        lazy: async () => ({
+          Component: (await import("./routes/Homebrew/HomebrewLayout.tsx")).HomebrewLayout,
+        }),
+        children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: (await import("./routes/Homebrew/HomebrewIndex.tsx")).HomebrewIndex,
+            }),
+          },
+          {
+            path: "deleted",
+            lazy: async () => ({
+              Component: (await import("./routes/Homebrew/RecentlyDeleted.tsx")).RecentlyDeleted,
+            }),
+          },
+          {
+            path: ":kind",
+            lazy: async () => ({
+              Component: (await import("./routes/Homebrew/HomebrewKindPage.tsx")).HomebrewKindPage,
+            }),
+          },
+        ],
+      },
+      {
         path: "settings",
         element: <SettingsLayout />,
         children: [
           { index: true, element: <DisplaySettings /> },
           { path: "sources", element: <SourcesSettings /> },
-          {
-            path: "homebrew",
-            HydrateFallback: LoadingState,
-            // Its own chunk, so the JSON editor it carries loads with this page or a sheet's Edit alone.
-            lazy: async () => ({
-              Component: (await import("./routes/HomebrewSettings/HomebrewSettings.tsx"))
-                .HomebrewSettings,
-            }),
-          },
         ],
       },
     ],

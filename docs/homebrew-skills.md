@@ -1,6 +1,6 @@
 # Homebrew skills
 
-A table defines a skill once in Settings › Homebrew › Skills, and a character or an item
+A table defines a skill once in Homebrew › Skills, and a character or an item
 cites it. A row's `json` is a `lookups` skill row, `{name, source: "HB", ability, entries?}`,
 keyed `(name, source)` and unique by name within an edition, like every homebrew row.
 
@@ -24,11 +24,11 @@ the modifier is that number plus the proficiency bonus the level gives. Only hom
 
 A character picks its homebrew skills from the Skills card's Add skill button, which searches the
 skills of its edition it does not hold yet. The card never makes one, so a table's skill list holds
-only what Settings defined. There is no second kind of skill.
+only what Homebrew defined. There is no second kind of skill.
 
 A skill may switch between an ability and `flat` while characters hold it. The switch resets, on
 each holder, the flat number and any override of the skill's modifier, as its own undo entry; an
-info icon beside Ability in Settings lists the holders, linked, and says so.
+info icon beside Ability on the Homebrew page lists the holders, linked, and says so.
 
 ## One name per skill
 

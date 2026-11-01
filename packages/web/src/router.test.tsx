@@ -198,16 +198,71 @@ describe("routing", () => {
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("aria-current", "page");
   });
 
-  it("renders Homebrew as a Settings section", async () => {
-    renderAt("/settings/homebrew");
-    await screen.findByText("Homebrew", { selector: "h1" });
+  it("opens /homebrew on the first kind, with the sidebar marking it", async () => {
+    const router = renderAt("/homebrew");
+    await waitFor(() => expect(router.state.location.pathname).toBe("/homebrew/items"));
+    await screen.findByRole("region", { name: "Items" });
 
-    const nav = screen.getByRole("navigation", { name: "Settings sections" });
-    expect(within(nav).getByRole("link", { name: "Homebrew" })).toHaveAttribute(
+    const nav = screen.getByRole("navigation", { name: "Homebrew kinds" });
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual([
+      "Items",
+      "Spells",
+      "Races",
+      "Classes",
+      "Backgrounds",
+      "Feats",
+      "Skills",
+      "Recently deleted",
+    ]);
+    expect(within(nav).getByRole("link", { name: "Items" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("heading", { level: 1, name: "Homebrew" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Spells" })).not.toBeInTheDocument();
+  });
+
+  it("switches kind from the sidebar, and opens Recently deleted at /homebrew/deleted", async () => {
+    const router = renderAt("/homebrew/items");
+    const nav = await screen.findByRole("navigation", { name: "Homebrew kinds" });
+
+    fireEvent.click(within(nav).getByRole("link", { name: "Spells" }));
+    await screen.findByRole("region", { name: "Spells" });
+    expect(router.state.location.pathname).toBe("/homebrew/spells");
+    expect(screen.queryByRole("region", { name: "Items" })).not.toBeInTheDocument();
+
+    fireEvent.click(within(nav).getByRole("link", { name: "Recently deleted" }));
+    await screen.findByRole("region", { name: "Recently deleted" });
+    expect(router.state.location.pathname).toBe("/homebrew/deleted");
+  });
+
+  it("shows no counts and no version in the Homebrew sidebar", async () => {
+    renderAt("/homebrew/items");
+    const nav = await screen.findByRole("navigation", { name: "Homebrew kinds" });
+
+    expect(nav.closest("aside")).not.toHaveTextContent(/\d|v\d/);
+  });
+
+  it("lists only Display and Sources in Settings, and has no /settings/homebrew page", async () => {
+    renderAt("/settings");
+    const nav = await screen.findByRole("navigation", { name: "Settings sections" });
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Display", "Sources"]);
+
+    renderAt("/settings/homebrew");
+    expect(await screen.findAllByText("Page not found", { selector: "h1" })).not.toHaveLength(0);
+  });
+
+  it("shows the not-found panel for a homebrew kind that does not exist", async () => {
+    renderAt("/homebrew/dragons");
+    await screen.findByText("Page not found", { selector: "h1" });
+    expect(screen.getByRole("navigation", { name: "Homebrew kinds" })).toBeInTheDocument();
   });
 
   it("shows the not-found state for an address catalog detail used to have", async () => {

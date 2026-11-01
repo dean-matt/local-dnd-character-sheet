@@ -103,11 +103,8 @@ export function ProficiencyRow({
                 label="Homebrew skill"
               >
                 Homebrew skill, defined in{" "}
-                <Link
-                  to="/settings/homebrew#homebrew-skills"
-                  className="text-accent-text underline"
-                >
-                  Settings › Homebrew
+                <Link to="/homebrew/skills" className="text-accent-text underline">
+                  Homebrew
                 </Link>
                 .
               </Popover>
