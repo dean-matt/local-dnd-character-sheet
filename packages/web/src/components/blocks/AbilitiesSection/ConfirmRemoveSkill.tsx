@@ -74,7 +74,7 @@ export function ConfirmRemoveSkill({
     >
       <p>
         Remove {name} from this character, with its proficiency level, overrides and any flat bonus.
-        Undo brings it back, and it stays listed in Settings.
+        Undo brings it back, and it stays listed in Homebrew.
       </p>
     </ModalEntry>
   );
