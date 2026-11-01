@@ -5,6 +5,7 @@ import { useCharacters } from "../../../hooks/useCharacters.ts";
 import { appVersionText } from "../../appVersionText.ts";
 import { CharacterAvatar } from "./CharacterAvatar.tsx";
 import { GlobalSearch } from "./GlobalSearch/GlobalSearch.tsx";
+import { HomebrewMenu } from "./HomebrewMenu.tsx";
 import { MechanicsMenu } from "./MechanicsMenu.tsx";
 import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
@@ -17,7 +18,7 @@ const feedbackUrl = () => `${FEEDBACK_URL}&version=${encodeURIComponent(appVersi
 
 export function TopBar() {
   const characters = useCharacters();
-  const [menu, setMenu] = useState<"character" | "mechanics" | null>(null);
+  const [menu, setMenu] = useState<"character" | "homebrew" | "mechanics" | null>(null);
   const open = menu === "character";
   const closeMenu = () => setMenu(null);
   const inCharacters = useMatch({ path: "/characters", end: false }) !== null;
@@ -114,14 +115,11 @@ export function TopBar() {
         )}
       </div>
 
-      <NavLink
-        to="/homebrew"
-        className={({ isActive }) =>
-          `shrink-0 ${TRIGGER} ${isActive ? CURRENT : ELSEWHERE} hover:bg-subtle`
-        }
-      >
-        Homebrew
-      </NavLink>
+      <HomebrewMenu
+        open={menu === "homebrew"}
+        onToggle={() => setMenu(menu === "homebrew" ? null : "homebrew")}
+        onClose={closeMenu}
+      />
 
       <MechanicsMenu
         open={menu === "mechanics"}
