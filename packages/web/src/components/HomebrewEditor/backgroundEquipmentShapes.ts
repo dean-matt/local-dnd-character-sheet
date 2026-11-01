@@ -1,9 +1,9 @@
 /**
  * A background's `startingEquipment` read as the form shows it: one alternative whose `A`
  * (or, in a classic list, `_`) lists the items, with coins among them, and whose `B` is coins
- * alone. Coins are copper in upstream and gold pieces here. A shape past that, such as several alternatives or a
- * `special` entry, reads as `undefined` and is left to the JSON; an entry of `A` the form has
- * no control for survives a write.
+ * alone. Coins are copper in upstream and gold pieces here. A shape past that, such as
+ * several alternatives or a `special` entry, reads as `undefined` and is left to the JSON;
+ * an entry of `A` the form has no control for survives a write.
  */
 import { isRecord } from "../../lib/entryGuards.ts";
 

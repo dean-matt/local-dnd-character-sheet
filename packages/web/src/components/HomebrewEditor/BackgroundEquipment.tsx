@@ -9,11 +9,6 @@ import { type EquipmentState, readEquipment, writeEquipment } from "./background
 import { type HomebrewFormProps, typedInteger, typedNumber, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, TEXT, WHOLE } from "./homebrewGrid.ts";
 
-/**
- * A homebrew background's starting equipment: the items, picked from the edition's catalog,
- * each item's quantity, the gold listed with them and the gold taken instead. A name an item
- * carries, and an entry such as a pouch of coins, stays as written.
- */
 function QuantityField({
   label,
   quantity,
@@ -41,6 +36,11 @@ function QuantityField({
   );
 }
 
+/**
+ * A homebrew background's starting equipment: the items, picked from the edition's catalog,
+ * each item's quantity, the gold listed with them and the gold taken instead. A name an item
+ * carries, and an entry such as a pouch of coins, stays as written.
+ */
 export function BackgroundEquipment({ entry, edition, onChange, errorFor }: HomebrewFormProps) {
   const state = readEquipment(entry.startingEquipment);
   if (!state) {
