@@ -186,6 +186,18 @@ export const DEITY_STARTERS: HomebrewStarters = [
   },
 ];
 
+export const OPTIONAL_FEATURE_STARTERS: HomebrewStarters = [
+  {
+    label: "Optional feature",
+    entry: {
+      name: "Ember Sight",
+      featureType: ["EI"],
+      prerequisite: [{ level: { level: 5, class: { name: "Warlock", source: "XPHB" } } }],
+      entries: ["You see through dim light and smoke as if it were bright light."],
+    },
+  },
+];
+
 export const BACKGROUND_STARTERS: HomebrewStarters = [
   {
     label: "Background",

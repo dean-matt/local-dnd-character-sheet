@@ -5,6 +5,7 @@ import {
   homebrewDeityRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
+  homebrewOptionalFeatureRecordSchema,
   homebrewRaceRecordSchema,
   homebrewSkillRecordSchema,
   homebrewSpellRecordSchema,
@@ -15,6 +16,7 @@ import {
 import type { CharacterRecord } from "@dnd/character";
 import type { z } from "zod";
 import type { HomebrewCollection } from "../hooks/useHomebrew.ts";
+import { featureTypeLabel } from "./featureTypeLabel.ts";
 import {
   backgroundFacts,
   classFacts,
@@ -126,6 +128,14 @@ const deities: ListingKind<z.infer<typeof homebrewDeityRecordSchema>> = {
     [pantheon, deityAlignment(json), ...(json.domains ?? [])].filter(Boolean),
 };
 
+const optionalFeatures: ListingKind<z.infer<typeof homebrewOptionalFeatureRecordSchema>> = {
+  collection: "optional-features",
+  noun: "optional feature",
+  heading: "Optional features",
+  recordSchema: homebrewOptionalFeatureRecordSchema,
+  chips: ({ json }) => json.featureType.map(featureTypeLabel),
+};
+
 /** Each kind, keyed in the order the Homebrew sidebar lists them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
   items,
@@ -168,4 +178,5 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     chips: factChips(skillFacts),
   },
   deities,
+  "optional-features": optionalFeatures,
 };

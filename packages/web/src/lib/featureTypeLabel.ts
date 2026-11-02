@@ -14,6 +14,12 @@ const FEATURE_TYPE_LABEL: Record<string, string> = {
   RN: "Rune Knight Rune",
 };
 
+/** The codes the app names, each with its label, for a control that picks one. */
+export const FEATURE_TYPE_OPTIONS = Object.entries(FEATURE_TYPE_LABEL).map(([value, label]) => ({
+  value,
+  label,
+}));
+
 /** The name of the option type `code` stands for, or `code` itself where none is listed. */
 export const featureTypeLabel = (code: string): string => FEATURE_TYPE_LABEL[code] ?? code;
 

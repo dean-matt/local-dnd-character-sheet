@@ -26,3 +26,12 @@ and a table cannot add an invocation to Warlock yet.
 `/search?type=optfeature&featureType=EI` returns catalog and homebrew features together. A homebrew
 hit has an `id` and no `source`, and carries its prerequisites as `optionalFeature`, read the way a
 catalog hit's are.
+
+## Editor
+
+The Homebrew page edits a feature step by step or as JSON: a name, feature types,
+prerequisites and rules text, with the Rules control choosing the edition. A type is picked
+from the codes `featureTypeLabel` names or typed as a new one. The prerequisite step shows a
+level (in a named class), a pact boon, spells known and options held; any other part stays
+as written and is edited in JSON. A delete a character blocks lists its holders, and a name
+another feature holds in a shared type is refused with the API's reason.

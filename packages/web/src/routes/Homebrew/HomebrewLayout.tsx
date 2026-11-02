@@ -11,6 +11,7 @@ import {
   Trash2,
   UserRound,
   UsersRound,
+  WandSparkles,
 } from "lucide-react";
 import { Outlet } from "react-router";
 import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
@@ -29,6 +30,7 @@ const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
   subclasses: ShieldPlus,
   subraces: UsersRound,
   deities: Church,
+  "optional-features": WandSparkles,
 };
 
 const SECTIONS: SidebarProps["items"] = [

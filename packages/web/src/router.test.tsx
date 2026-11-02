@@ -219,6 +219,7 @@ describe("routing", () => {
       "Feats",
       "Skills",
       "Deities",
+      "Optional features",
     ]);
     expect(
       within(screen.getByRole("navigation", { name: "Homebrew kinds footer" })).getByRole("link", {

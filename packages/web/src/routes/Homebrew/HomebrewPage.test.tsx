@@ -92,7 +92,7 @@ function stubApi(lists: Record<string, unknown>, writes: Answer[] = [], holders?
     const method = init?.method ?? "GET";
     const side = sideRoute(url, method, lists, init?.body, holders);
     if (side) return side;
-    const match = /^\/api\/(?:homebrew\/(\w+)|(characters))$/.exec(url);
+    const match = /^\/api\/(?:homebrew\/([\w-]+)|(characters))$/.exec(url);
     const listed = match?.[1] ?? match?.[2];
     const empty = listed === "history" ? { reversible: [], deleted: [] } : [];
     if (method === "GET" && listed) return json(200, lists[listed] ?? empty);
@@ -3837,5 +3837,167 @@ describe("Homebrew deities", () => {
     expect(writesOf(fetchMock)).toEqual([
       { url: "/api/homebrew/deities/d1", method: "DELETE", body: undefined },
     ]);
+  });
+});
+
+describe("Homebrew optional features", () => {
+  const stored = {
+    id: "o1",
+    name: "Ember Sight",
+    edition: "one",
+    json: {
+      name: "Ember Sight",
+      source: "HB",
+      featureType: ["EI", "XYZ"],
+      prerequisite: [{ level: 5, pact: "Blade" }],
+      entries: ["You see through smoke."],
+    },
+    createdAt: CREATED_AT,
+  };
+  const lists = { "optional-features": [stored] };
+  const features = () => screen.getByRole("region", { name: "Optional features" });
+
+  it("lists a feature with a chip per feature type", async () => {
+    stubApi(lists);
+    renderPage("optional-features");
+
+    expect(await within(features()).findByText("Ember Sight")).toBeInTheDocument();
+    expect(within(features()).getByText("Eldritch Invocation")).toBeInTheDocument();
+    expect(within(features()).getByText("XYZ")).toBeInTheDocument();
+  });
+
+  it("creates a feature with a catalog type, a typed new type and a prerequisite", async () => {
+    const fetchMock = stubApi(lists, [{ status: 201, body: stored }]);
+    renderPage("optional-features");
+
+    fireEvent.click(within(features()).getByRole("button", { name: "Add optional feature" }));
+    await settled();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Cinder Step" } });
+    fireEvent.change(field("textbox", "New feature type"), { target: { value: "QQ" } });
+    click("Add feature type");
+    stepTo("Prerequisites");
+    fireEvent.change(field("spinbutton", "Level"), { target: { value: "7" } });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]).toMatchObject({
+      method: "POST",
+      url: "/api/homebrew/optional-features",
+      body: {
+        name: "Cinder Step",
+        edition: "one",
+        featureType: ["EI", "QQ"],
+        prerequisite: [{ level: { level: 7, class: { name: "Warlock" } } }],
+      },
+    });
+  });
+
+  it("shows the form's changes in JSON mode and JSON's in the form", async () => {
+    stubApi(lists);
+    renderPage("optional-features");
+
+    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await settled();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Ember Gaze" } });
+    mode("JSON");
+    expect(JSON.parse(jsonText("Optional feature JSON"))).toMatchObject({
+      name: "Ember Gaze",
+      featureType: ["EI", "XYZ"],
+    });
+    typeJson(
+      "Optional feature JSON",
+      JSON.stringify({ name: "Ember Gaze", featureType: ["MM"], entries: ["Text."] }),
+    );
+    mode("Step by step");
+    expect(field("textbox", "Name")).toHaveValue("Ember Gaze");
+  });
+
+  it("refuses a repeated feature type, naming the field", async () => {
+    const fetchMock = stubApi(lists);
+    renderPage("optional-features");
+
+    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await settled();
+    mode("JSON");
+    typeJson(
+      "Optional feature JSON",
+      JSON.stringify({ name: "Ember Sight", featureType: ["EI", "EI"] }),
+    );
+    mode("Step by step");
+    click("Save");
+
+    expect(await within(editor()).findByText(/repeats/)).toBeInTheDocument();
+    expect(writesOf(fetchMock)).toEqual([]);
+  });
+
+  it("says why a save failed when the name is used in a feature type", async () => {
+    stubApi(lists, [
+      {
+        status: 409,
+        body: { error: 'The homebrew optional feature o2 is already named "Ember Sight"' },
+      },
+    ]);
+    renderPage("optional-features");
+
+    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await settled();
+    click("Save");
+
+    expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
+  });
+
+  it("lists the characters holding a feature and deletes nothing", async () => {
+    const fetchMock = stubApi(lists, [
+      {
+        status: 409,
+        body: {
+          error: "This optional feature is held by Vex",
+          characters: [{ id: "c1", name: "Vex" }],
+        },
+      },
+    ]);
+    renderPage("optional-features");
+
+    fireEvent.click(await within(features()).findByRole("button", { name: "Delete Ember Sight" }));
+    const dialog = screen.getByRole("dialog", { name: "Delete Ember Sight?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    expect(await within(dialog).findByRole("link", { name: "Vex" })).toHaveAttribute(
+      "href",
+      "/characters/c1",
+    );
+    expect(writesOf(fetchMock)).toHaveLength(1);
+    expect(features()).toHaveTextContent("Ember Sight");
+  });
+
+  it("lists a deleted optional feature and restores it", async () => {
+    const fetchMock = stubApi(
+      {
+        history: {
+          reversible: [],
+          deleted: [
+            {
+              collection: "optional-features",
+              id: "o9",
+              name: "Ember Sight",
+              edition: "one",
+              deletedAt: CREATED_AT,
+            },
+          ],
+        },
+      },
+      [{ status: 204 }],
+    );
+    renderPage("deleted");
+
+    const section = screen.getByRole("region", { name: "Recently deleted" });
+    expect(await within(section).findByText("Ember Sight")).toBeVisible();
+    fireEvent.click(within(section).getByRole("button", { name: "Restore Ember Sight" }));
+
+    await waitFor(() =>
+      expect(writesOf(fetchMock)).toEqual([
+        { url: "/api/homebrew/optional-features/o9/restore", method: "POST", body: undefined },
+      ]),
+    );
   });
 });

@@ -13,9 +13,8 @@ import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 export function RecentlyDeleted() {
   const id = useId();
   const { history, restore } = useHomebrewHistory();
-  // A deleted optional feature or monster waits for its editor; its restore is the API's alone until then.
+  // A deleted monster waits for its editor; its restore is the API's alone until then.
   const deleted = (history.data?.deleted ?? []).flatMap((row) =>
-    row.collection === "optional-features" ||
     row.collection === "monsters" ||
     row.collection === "class-resources" ||
     (row.edition === undefined && row.collection !== "deities")
