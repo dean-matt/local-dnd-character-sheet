@@ -172,6 +172,20 @@ export const SUBRACE_STARTERS: HomebrewStarters = [
   },
 ];
 
+export const DEITY_STARTERS: HomebrewStarters = [
+  {
+    label: "Deity",
+    entry: {
+      name: "Hestrel",
+      pantheon: "Hearthlands",
+      title: "Keeper of the First Flame",
+      alignment: ["N", "G"],
+      domains: ["Life", "Light"],
+      entries: ["Hestrel is worshiped by those who tend hearths and guard the road home."],
+    },
+  },
+];
+
 export const BACKGROUND_STARTERS: HomebrewStarters = [
   {
     label: "Background",

@@ -1850,6 +1850,30 @@ describe("Homebrew kind page", () => {
       );
     });
 
+    it("lists a deleted deity, which has no edition, and restores it", async () => {
+      const fetchMock = stubApi(
+        {
+          ...history(
+            [],
+            [{ collection: "deities", id: "d9", name: "Hestrel", deletedAt: CREATED_AT }],
+          ),
+        },
+        [{ status: 204 }],
+      );
+      renderPage("deleted");
+
+      const section = screen.getByRole("region", { name: "Recently deleted" });
+      expect(await within(section).findByText("Hestrel")).toBeVisible();
+      expect(within(section).queryByText(/rules/)).toBeNull();
+      fireEvent.click(within(section).getByRole("button", { name: "Restore Hestrel" }));
+
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          { url: "/api/homebrew/deities/d9/restore", method: "POST", body: undefined },
+        ]),
+      );
+    });
+
     it("names the row holding the name when a restore is refused", async () => {
       stubApi(
         {
@@ -3621,6 +3645,197 @@ describe("Homebrew subraces", () => {
     expect(writesOf(fetchMock).map(({ method, url }) => `${method} ${url}`)).toEqual([
       "DELETE /api/homebrew/subraces/u1",
       "DELETE /api/homebrew/subraces/u1",
+    ]);
+  });
+});
+
+describe("Homebrew deities", () => {
+  const stored = {
+    id: "d1",
+    name: "Hestrel",
+    pantheon: "Hearthlands",
+    json: {
+      name: "Hestrel",
+      source: "HB",
+      pantheon: "Hearthlands",
+      alignment: ["N", "G"],
+      domains: ["Life"],
+      entries: ["Keeper of the flame."],
+    },
+    createdAt: CREATED_AT,
+  };
+  const lists = { deities: [stored] };
+  const deities = () => screen.getByRole("region", { name: "Deities" });
+
+  it("lists a deity with its pantheon, alignment and domains, and no edition", async () => {
+    stubApi(lists);
+    renderPage("deities");
+
+    expect(await within(deities()).findByText("Hestrel")).toBeInTheDocument();
+    expect(within(deities()).getByText("Hearthlands")).toBeInTheDocument();
+    expect(within(deities()).getByText("Neutral Good")).toBeInTheDocument();
+    expect(within(deities()).getByText("Life")).toBeInTheDocument();
+    expect(within(deities()).queryByText(/rules/)).toBeNull();
+  });
+
+  it("creates a deity from the form, without an edition or a Rules control", async () => {
+    const fetchMock = stubApi(lists, [{ status: 201, body: stored }]);
+    renderPage("deities");
+
+    fireEvent.click(within(deities()).getByRole("button", { name: "Add deity" }));
+    await settled();
+    expect(within(editor()).queryByLabelText("Rules")).toBeNull();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Orrin" } });
+    fireEvent.change(field("textbox", "Pantheon"), { target: { value: "Tidewatch" } });
+    stepTo("Alignment");
+    fireEvent.change(field("textbox", "Domains"), { target: { value: "Tempest, Sea ," } });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    const [write] = writesOf(fetchMock);
+    expect(write).toMatchObject({
+      method: "POST",
+      url: "/api/homebrew/deities",
+      body: { name: "Orrin", pantheon: "Tidewatch", domains: ["Tempest", "Sea"] },
+    });
+    expect(write?.body).not.toHaveProperty("edition");
+  });
+
+  it("shows the form's changes in JSON mode and JSON's in the form", async () => {
+    stubApi(lists);
+    renderPage("deities");
+
+    fireEvent.click(await within(deities()).findByRole("button", { name: "Edit Hestrel" }));
+    await settled();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Hestrelle" } });
+    mode("JSON");
+    expect(JSON.parse(jsonText("Deity JSON"))).toMatchObject({
+      name: "Hestrelle",
+      pantheon: "Hearthlands",
+      alignment: ["N", "G"],
+    });
+    typeJson(
+      "Deity JSON",
+      JSON.stringify({ name: "Hestrelle", pantheon: "Embers", domains: ["Light"] }),
+    );
+    mode("Step by step");
+    expect(field("textbox", "Pantheon")).toHaveValue("Embers");
+  });
+
+  it("refuses a deity without a pantheon, naming the field", async () => {
+    const fetchMock = stubApi(lists);
+    renderPage("deities");
+
+    fireEvent.click(within(deities()).getByRole("button", { name: "Add deity" }));
+    await settled();
+    fireEvent.change(field("textbox", "Pantheon"), { target: { value: "" } });
+    click("Save");
+
+    expect(field("textbox", "Pantheon")).toHaveAttribute("aria-invalid", "true");
+    expect(writesOf(fetchMock)).toEqual([]);
+  });
+
+  it("reopens a stored deity and saves it back without an edition", async () => {
+    const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
+    renderPage("deities");
+
+    fireEvent.click(await within(deities()).findByRole("button", { name: "Edit Hestrel" }));
+    await settled();
+    expect(field("textbox", "Pantheon")).toHaveValue("Hearthlands");
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    const [write] = writesOf(fetchMock);
+    expect(write).toMatchObject({
+      method: "PUT",
+      url: "/api/homebrew/deities/d1",
+      body: { name: "Hestrel", pantheon: "Hearthlands", alignment: ["N", "G"] },
+    });
+    expect(write?.body).not.toHaveProperty("edition");
+  });
+
+  it("says why a save failed when the name is used in the pantheon", async () => {
+    stubApi(lists, [
+      {
+        status: 409,
+        body: {
+          error: 'The homebrew deity d1 is already named "Orrin" in the Tidewatch pantheon',
+        },
+      },
+    ]);
+    renderPage("deities");
+
+    fireEvent.click(within(deities()).getByRole("button", { name: "Add deity" }));
+    await settled();
+    click("Save");
+
+    expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
+  });
+
+  it("names the characters holding a deity when a rename is refused", async () => {
+    stubApi(lists, [
+      {
+        status: 409,
+        body: {
+          error: "This deity is held by Vex, Ash and its name or pantheon cannot be changed",
+          characters: [
+            { id: "c1", name: "Vex" },
+            { id: "c2", name: "Ash" },
+          ],
+        },
+      },
+    ]);
+    renderPage("deities");
+
+    fireEvent.click(await within(deities()).findByRole("button", { name: "Edit Hestrel" }));
+    await settled();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Hestrelle" } });
+    click("Save");
+
+    expect(
+      await within(editor()).findByText(/held by Vex, Ash and its name or pantheon/),
+    ).toBeInTheDocument();
+  });
+
+  it("lists the characters holding a deity and deletes nothing, then deletes once free", async () => {
+    const fetchMock = stubApi(lists, [
+      {
+        status: 409,
+        body: {
+          error: "deity is referenced by characters and cannot be deleted",
+          characters: [
+            { id: "c1", name: "Vex" },
+            { id: "c2", name: "Ash" },
+          ],
+        },
+      },
+      { status: 204 },
+    ]);
+    renderPage("deities");
+
+    fireEvent.click(await within(deities()).findByRole("button", { name: "Delete Hestrel" }));
+    const dialog = screen.getByRole("dialog", { name: "Delete Hestrel?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(await within(dialog).findByRole("link", { name: "Vex" })).toHaveAttribute(
+      "href",
+      "/characters/c1",
+    );
+    expect(within(dialog).getByRole("link", { name: "Ash" })).toBeInTheDocument();
+    expect(writesOf(fetchMock)).toHaveLength(1);
+    expect(deities()).toHaveTextContent("Hestrel");
+  });
+
+  it("deletes a deity no character holds", async () => {
+    const fetchMock = stubApi(lists, [{ status: 204 }]);
+    renderPage("deities");
+
+    fireEvent.click(await within(deities()).findByRole("button", { name: "Delete Hestrel" }));
+    const dialog = screen.getByRole("dialog", { name: "Delete Hestrel?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(writesOf(fetchMock)).toEqual([
+      { url: "/api/homebrew/deities/d1", method: "DELETE", body: undefined },
     ]);
   });
 });

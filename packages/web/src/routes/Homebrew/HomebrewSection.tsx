@@ -79,7 +79,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
               source={undefined}
               chips={
                 <>
-                  <EditionTag edition={row.edition} of={kind.noun} />
+                  {row.edition && <EditionTag edition={row.edition} of={kind.noun} />}
                   {kind.chips(row).map((chip, index) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: two chips can share a label, and the list is redrawn whole.
                     <Tag key={index}>{chip}</Tag>

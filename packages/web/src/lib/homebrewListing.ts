@@ -2,6 +2,7 @@ import {
   type Entries,
   homebrewBackgroundRecordSchema,
   homebrewClassRecordSchema,
+  homebrewDeityRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
   homebrewRaceRecordSchema,
@@ -17,6 +18,7 @@ import type { HomebrewCollection } from "../hooks/useHomebrew.ts";
 import {
   backgroundFacts,
   classFacts,
+  deityAlignment,
   type Fact,
   featFacts,
   raceFacts,
@@ -28,7 +30,8 @@ import { schoolName } from "./spellSchool.ts";
 export interface HomebrewRow {
   id: string;
   name: string;
-  edition: CharacterRecord["edition"];
+  /** Absent on a kind with no edition, such as a deity. */
+  edition?: CharacterRecord["edition"];
   json: { entries?: Entries };
 }
 
@@ -114,6 +117,15 @@ const subraces: ListingKind<z.infer<typeof subraceRecordSchema>> = {
   chips: (record) => [record.raceName],
 };
 
+const deities: ListingKind<z.infer<typeof homebrewDeityRecordSchema>> = {
+  collection: "deities",
+  noun: "deity",
+  heading: "Deities",
+  recordSchema: homebrewDeityRecordSchema,
+  chips: ({ pantheon, json }) =>
+    [pantheon, deityAlignment(json), ...(json.domains ?? [])].filter(Boolean),
+};
+
 /** Each kind, keyed in the order the Homebrew sidebar lists them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
   items,
@@ -155,4 +167,5 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     recordSchema: homebrewSkillRecordSchema,
     chips: factChips(skillFacts),
   },
+  deities,
 };

@@ -13,15 +13,14 @@ import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 export function RecentlyDeleted() {
   const id = useId();
   const { history, restore } = useHomebrewHistory();
-  // A deleted deity, optional feature or monster waits for its editor; its restore is the API's alone until then.
+  // A deleted optional feature or monster waits for its editor; its restore is the API's alone until then.
   const deleted = (history.data?.deleted ?? []).flatMap((row) =>
-    row.collection === "deities" ||
     row.collection === "optional-features" ||
     row.collection === "monsters" ||
     row.collection === "class-resources" ||
-    row.edition === undefined
+    (row.edition === undefined && row.collection !== "deities")
       ? []
-      : [{ ...row, collection: row.collection, edition: row.edition }],
+      : [{ ...row, collection: row.collection }],
   );
   return (
     <section aria-labelledby={`${id}-title`} className="flex flex-col gap-2.5">
@@ -43,7 +42,7 @@ export function RecentlyDeleted() {
             >
               <span className="min-w-0 truncate font-semibold">{name}</span>
               <Tag>{capitalize(LISTING_KINDS[collection].noun)}</Tag>
-              <EditionTag edition={edition} of={LISTING_KINDS[collection].noun} />
+              {edition && <EditionTag edition={edition} of={LISTING_KINDS[collection].noun} />}
               <button
                 type="button"
                 aria-label={`Restore ${name}`}
