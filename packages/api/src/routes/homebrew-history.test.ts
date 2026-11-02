@@ -153,7 +153,7 @@ describe("homebrewHistoryRoutes", () => {
 
       const res = await app.request(`${path}/${created.id}/revert`, post);
       expect(res.status).toBe(204);
-      const { createdAt: _a, ...after } = await read(`${path}/${created.id}`);
+      const { createdAt: _a, resources: _r, ...after } = await read(`${path}/${created.id}`);
       const { createdAt: _b, ...before } = created;
       expect(after).toEqual(before);
       expect((await history()).reversible).toEqual([]);
@@ -183,7 +183,7 @@ describe("homebrewHistoryRoutes", () => {
 
       const res = await app.request(`${path}/${created.id}/restore`, post);
       expect(res.status).toBe(204);
-      const { createdAt: _a, ...after } = await read(`${path}/${created.id}`);
+      const { createdAt: _a, resources: _r, ...after } = await read(`${path}/${created.id}`);
       const { createdAt: _b, ...before } = created;
       expect(after).toEqual(before);
       expect((await history()).deleted).toEqual([]);
@@ -254,6 +254,24 @@ describe("homebrewHistoryRoutes", () => {
     expect((await (await app.request(`/homebrew/subclasses/${sub.id}`)).json()).edition).toBe(
       other,
     );
+  });
+
+  it("reverts a replace of a class's resource tables, then holds nothing", async () => {
+    const created = await (await app.request("/homebrew/classes", json(warden()))).json();
+    const table = (name: string) => ({ name, maximums: Array(20).fill(1) });
+    const send = (body: unknown) =>
+      app.request(`/homebrew/classes/${created.id}/resources`, put(body));
+    await send([table("Ki")]);
+    await send([table("Rage")]);
+    expect((await history()).reversible).toContainEqual({
+      collection: "class-resources",
+      id: created.id,
+    });
+
+    const res = await app.request(`/homebrew/class-resources/${created.id}/revert`, post);
+    expect(res.status).toBe(204);
+    expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
+    expect((await history()).reversible).toEqual([]);
   });
 
   it("holds nothing for a save the kind's route refused", async () => {

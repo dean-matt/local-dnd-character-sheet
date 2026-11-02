@@ -1,7 +1,7 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
  * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
- * `homebrew_classes`, `homebrew_class_features`, `homebrew_subclasses`, `homebrew_subraces` and
+ * `homebrew_classes`, `homebrew_class_features`, `homebrew_class_resources`, `homebrew_subclasses`, `homebrew_subraces` and
  * `homebrew_skills`, `homebrew_deities`, `homebrew_optional_features` and `homebrew_monsters` tables. `source` never
  * arrives as an argument: every write stamps `HOMEBREW_SOURCE` into `json` here, the one
  * place that builds it. The caller chooses `id` once at creation and never reassigns it, so
@@ -11,6 +11,7 @@ import type {
   HomebrewBackgroundInput,
   HomebrewClassFeature,
   HomebrewClassInput,
+  HomebrewClassResource,
   HomebrewDeityInput,
   HomebrewFeatInput,
   HomebrewItem,
@@ -48,6 +49,7 @@ import {
   homebrewBackgrounds,
   homebrewClasses,
   homebrewClassFeatures,
+  homebrewClassResources,
   homebrewDeities,
   homebrewFeats,
   homebrewItems,
@@ -502,6 +504,42 @@ export function replaceHomebrewClassFeatures(
     if (features.length > 0) {
       tx.insert(homebrewClassFeatures)
         .values(features.map((feature) => ({ classId, ...feature })))
+        .run();
+    }
+  });
+}
+
+/** A class's resource tables by name; `resets` is absent where the table sets none. */
+export function listHomebrewClassResources(
+  db: HomebrewDb,
+  classId: string,
+): HomebrewClassResource[] {
+  return db
+    .select({
+      name: homebrewClassResources.name,
+      resets: homebrewClassResources.resets,
+      maximums: homebrewClassResources.maximums,
+    })
+    .from(homebrewClassResources)
+    .where(eq(homebrewClassResources.classId, classId))
+    .orderBy(sql`${homebrewClassResources.name} COLLATE NOCASE`)
+    .all()
+    .map(({ resets, ...table }) => (resets ? { ...table, resets } : table));
+}
+
+/** Replaces the class's whole set of resource tables in one transaction. */
+export function replaceHomebrewClassResources(
+  db: HomebrewDb,
+  classId: string,
+  tables: HomebrewClassResource[],
+) {
+  db.transaction((tx) => {
+    tx.delete(homebrewClassResources).where(eq(homebrewClassResources.classId, classId)).run();
+    if (tables.length > 0) {
+      tx.insert(homebrewClassResources)
+        .values(
+          tables.map(({ resets, ...table }) => ({ classId, resets: resets ?? null, ...table })),
+        )
         .run();
     }
   });

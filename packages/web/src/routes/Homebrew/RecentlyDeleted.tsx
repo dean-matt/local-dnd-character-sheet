@@ -20,6 +20,7 @@ export function RecentlyDeleted() {
     row.collection === "deities" ||
     row.collection === "optional-features" ||
     row.collection === "monsters" ||
+    row.collection === "class-resources" ||
     row.edition === undefined
       ? []
       : [{ ...row, collection: row.collection, edition: row.edition }],

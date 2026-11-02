@@ -10,7 +10,7 @@ import { isRecord } from "../lib/entryGuards.ts";
  */
 export type HomebrewCollection = Exclude<
   z.infer<typeof homebrewCollectionSchema>,
-  "subclasses" | "subraces" | "deities" | "optional-features" | "monsters"
+  "subclasses" | "subraces" | "deities" | "optional-features" | "monsters" | "class-resources"
 >;
 
 /**

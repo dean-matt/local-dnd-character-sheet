@@ -56,6 +56,7 @@ import {
   insertHomebrewSpell,
   insertHomebrewSubclass,
   insertHomebrewSubrace,
+  listHomebrewClassResources,
   type NamedHomebrewTable,
 } from "../db/queries/homebrew.ts";
 import { catalogSkillNames } from "../db/queries/skills.ts";
@@ -66,6 +67,8 @@ import { parentEdition } from "./homebrew-subclasses.ts";
 import { raceEdition } from "./homebrew-subraces.ts";
 
 type Collection = z.infer<typeof homebrewCollectionSchema>;
+/** A collection of rows that are saved, deleted and restored; `class-resources` is saved only. */
+type RowCollection = Exclude<Collection, typeof RESOURCES>;
 type Row = {
   id: string;
   name: string;
@@ -102,7 +105,13 @@ const named = (
   holder: (db, input: { name: string; edition: "classic" | "one" }) => holder(db, table, input),
 });
 
-const KINDS: Record<Collection, Kind> = {
+/**
+ * A class's resource tables are not a row: a PUT to `/homebrew/classes/{id}/resources` replaces
+ * them, so history holds them under the class's id and reverts through that route.
+ */
+const RESOURCES = "class-resources";
+
+const KINDS: Record<RowCollection, Kind> = {
   items: named("item", homebrewItems, getHomebrewItem, insertHomebrewItem),
   spells: named("spell", homebrewSpells, getHomebrewSpell, insertHomebrewSpell),
   races: named("race", homebrewRaces, getHomebrewRace, insertHomebrewRace),
@@ -258,7 +267,11 @@ export function homebrewHistoryRoutes(
   routes.use("/homebrew/:collection/:id", async (c, next) => {
     const collection = homebrewCollectionSchema.safeParse(c.req.param("collection"));
     const id = c.req.param("id");
-    if (!collection.success || (c.req.method !== "PUT" && c.req.method !== "DELETE")) {
+    if (
+      !collection.success ||
+      collection.data === RESOURCES ||
+      (c.req.method !== "PUT" && c.req.method !== "DELETE")
+    ) {
       return next();
     }
     const key = keyOf(collection.data, id);
@@ -281,6 +294,17 @@ export function homebrewHistoryRoutes(
     }
   });
 
+  routes.use("/homebrew/classes/:id/resources", async (c, next) => {
+    if (c.req.method !== "PUT") return next();
+    const id = c.req.param("id");
+    const key = keyOf(RESOURCES, id);
+    const before = listHomebrewClassResources(db, id);
+    await next();
+    if (c.res.status !== 200) return;
+    if (c.req.header(REVERT_HEADER)) earlier.delete(key);
+    else earlier.set(key, { collection: RESOURCES, id, input: before });
+  });
+
   routes.openapi(readHistory, (c) =>
     c.json({
       reversible: [...earlier.values()].map(({ collection, id }) => ({ collection, id })),
@@ -300,7 +324,11 @@ export function homebrewHistoryRoutes(
     const { collection, id } = c.req.valid("param");
     const held = earlier.get(keyOf(collection, id));
     if (!held) return c.json({ error: "No earlier version of this row is held" }, 404);
-    const res = await send(`/homebrew/${collection}/${encodeURIComponent(id)}`, {
+    const path =
+      collection === RESOURCES
+        ? `/homebrew/classes/${encodeURIComponent(id)}/resources`
+        : `/homebrew/${collection}/${encodeURIComponent(id)}`;
+    const res = await send(path, {
       method: "PUT",
       headers: { "Content-Type": "application/json", [REVERT_HEADER]: "1" },
       body: JSON.stringify(held.input),
@@ -314,7 +342,9 @@ export function homebrewHistoryRoutes(
     const { collection, id } = c.req.valid("param");
     const key = keyOf(collection, id);
     const gone = deleted.get(key);
-    if (!gone) return c.json({ error: "No deleted row with that id" }, 404);
+    if (!gone || collection === RESOURCES) {
+      return c.json({ error: "No deleted row with that id" }, 404);
+    }
     const kind = KINDS[collection];
     if (collection === "deities") {
       const taken = restoreDeity(db, id, gone.input as HomebrewDeityInput);

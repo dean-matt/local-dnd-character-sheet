@@ -53,7 +53,7 @@ describe("homebrewClassesRoutes", () => {
 
       const res = await routes.request(`/homebrew/classes/${created.id}`);
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual(created);
+      expect(await res.json()).toEqual({ ...created, resources: [] });
     });
 
     it("404s reading, updating or deleting an id that does not exist", async () => {
@@ -243,6 +243,81 @@ describe("homebrewClassesRoutes", () => {
     it("404s for a class that does not exist", async () => {
       expect((await routes.request("/homebrew/classes/missing/features")).status).toBe(404);
       expect((await put("missing", [feature])).status).toBe(404);
+    });
+  });
+
+  describe("resources", () => {
+    const maximums = (from: number) =>
+      Array.from({ length: 20 }, (_, i) => (i + 1 >= from ? i + 1 : null));
+    const ki = { name: "Ki", resets: "short-rest", maximums: maximums(2) };
+    const rage = { name: "Rage", maximums: maximums(1) };
+
+    const put = (id: string, body: unknown) =>
+      routes.request(`/homebrew/classes/${id}/resources`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    const create = async () =>
+      (await (await routes.request("/homebrew/classes", json(warden()))).json()).id as string;
+
+    it("stores the tables and reads them back, a level with no value staying empty", async () => {
+      const id = await create();
+      expect((await put(id, [rage, ki])).status).toBe(200);
+
+      const tables = await (await routes.request(`/homebrew/classes/${id}/resources`)).json();
+      expect(tables).toEqual([ki, rage]);
+      const [{ maximums: stored }] = tables;
+      expect(stored[0]).toBeNull();
+      expect(stored[1]).toBe(2);
+    });
+
+    it("reads an absent cadence as unspecified, distinct from none", async () => {
+      const id = await create();
+      await put(id, [rage, { name: "Luck", resets: "none", maximums: maximums(1) }]);
+
+      const tables = await (await routes.request(`/homebrew/classes/${id}/resources`)).json();
+      expect(tables.find((t: { name: string }) => t.name === "Rage")).not.toHaveProperty("resets");
+      expect(tables.find((t: { name: string }) => t.name === "Luck").resets).toBe("none");
+    });
+
+    it("returns the tables in the class's detail", async () => {
+      const id = await create();
+      await put(id, [ki, rage]);
+
+      const detail = await (await routes.request(`/homebrew/classes/${id}`)).json();
+      expect(detail.resources).toEqual([ki, rage]);
+    });
+
+    it("replaces the whole set and drops the tables with the class", async () => {
+      const id = await create();
+      await put(id, [ki, rage]);
+      await put(id, [rage]);
+      expect(await (await routes.request(`/homebrew/classes/${id}/resources`)).json()).toEqual([
+        rage,
+      ]);
+
+      await routes.request(`/homebrew/classes/${id}`, { method: "DELETE" });
+      expect(
+        opened.homebrewDb.$client
+          .prepare("SELECT count(*) AS n FROM homebrew_class_resources")
+          .get(),
+      ).toEqual({ n: 0 });
+    });
+
+    it("rejects a repeated name ignoring case, a short table and an unknown cadence", async () => {
+      const id = await create();
+      expect((await put(id, [rage, { ...rage, name: "RAGE" }])).status).toBe(400);
+      expect((await put(id, [{ ...rage, maximums: [1, 2] }])).status).toBe(400);
+      expect((await put(id, [{ ...rage, resets: "dawn" }])).status).toBe(400);
+      expect((await put(id, [{ ...rage, maximums: [...maximums(1).slice(1), -1] }])).status).toBe(
+        400,
+      );
+    });
+
+    it("404s for a class that does not exist", async () => {
+      expect((await routes.request("/homebrew/classes/missing/resources")).status).toBe(404);
+      expect((await put("missing", [rage])).status).toBe(404);
     });
   });
 });

@@ -278,6 +278,34 @@ export const homebrewClassFeaturesSchema = z
     { message: "Two features share a name and level" },
   );
 
+/** When a homebrew resource refreshes; a table that sets none reads as unspecified, not as `none`. */
+const homebrewResourceResetsSchema = z.enum(["short-rest", "long-rest", "none"]);
+
+/**
+ * One resource of a homebrew class: its maximum at each of levels 1 to 20, `maximums[0]` being
+ * level 1. A `null` is a level with no value, never the previous level's.
+ */
+const homebrewClassResourceSchema = z.strictObject({
+  name: z.string().min(1),
+  resets: homebrewResourceResetsSchema.optional(),
+  maximums: z.array(z.int().min(0).nullable()).length(20),
+});
+
+export type HomebrewClassResource = z.infer<typeof homebrewClassResourceSchema>;
+
+/** A homebrew class's whole set of resource tables; a name is unique within the class, ignoring case. */
+export const homebrewClassResourcesSchema = z
+  .array(homebrewClassResourceSchema)
+  .refine(
+    (tables) => new Set(tables.map(({ name }) => name.toLowerCase())).size === tables.length,
+    { message: "Two resources share a name" },
+  );
+
+/** A homebrew class as its detail endpoint returns it: the record and its resource tables. */
+export const homebrewClassDetailSchema = homebrewClassRecordSchema.extend({
+  resources: homebrewClassResourcesSchema,
+});
+
 /** A printed table value at one level — a count, a die, a bonus — stored as text. */
 const classResourceSchema = z.strictObject({
   resourceKey: z.string().min(1),

@@ -134,6 +134,7 @@ const ROWS: Record<string, unknown> = {
     hitDie: 10,
     json: { name: "Blood Hunter", source: "Homebrew", hd: { number: 1, faces: 10 } },
     createdAt: "2026-10-06T00:00:00.000Z",
+    resources: [],
   },
   "/api/catalog/deity/Oghma/PHB?qualifier=Celtic": {
     type: "deity",
