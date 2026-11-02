@@ -73,7 +73,7 @@ export function UndoHistory({ characterId }: { characterId: string }) {
       </p>
       {log.isError && <p className="text-error text-row">{log.error.message}</p>}
       {log.isSuccess && entries.length === 0 && <EmptyNote>Nothing to undo.</EmptyNote>}
-      <ol className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+      <ol className="flex min-h-0 flex-col gap-2 overflow-y-auto scroll-p-1 p-1">
         {entries.map((entry, at) => (
           <UndoHistoryEntry
             key={entry.id}

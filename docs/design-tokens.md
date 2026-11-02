@@ -97,7 +97,8 @@ The ring reaches 4px past a control's box. A scroll container (`overflow` other 
 pulled back out must sit inside a parent's padding, or a parent that clips cuts it.
 `e2e/homebrew-focus-ring.spec.ts` focuses every control in each homebrew editor and fails on a
 clipped ring. A modal's scrolling body takes focus with its ring inset, since the `dialog` clips
-an outer one; `e2e/modal-focus-ring.spec.ts` checks the catalog detail and delete modals.
+an outer one; `e2e/modal-focus-ring.spec.ts` checks the catalog detail and delete modals, and
+`e2e/undo-history-focus-ring.spec.ts` the Undo Changes rows.
 
 Contrast is checked once against
 these tokens rather than per view. `packages/web/src/contrast.test.ts`
