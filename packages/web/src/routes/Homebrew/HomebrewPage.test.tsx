@@ -1819,6 +1819,37 @@ describe("Homebrew kind page", () => {
       );
     });
 
+    it("lists a deleted subrace and restores it", async () => {
+      const fetchMock = stubApi(
+        {
+          ...history(
+            [],
+            [
+              {
+                collection: "subraces",
+                id: "u1",
+                name: "Moonlit",
+                edition: "one",
+                deletedAt: CREATED_AT,
+              },
+            ],
+          ),
+        },
+        [{ status: 204 }],
+      );
+      renderPage("deleted");
+
+      const section = screen.getByRole("region", { name: "Recently deleted" });
+      expect(await within(section).findByText("Moonlit")).toBeVisible();
+      fireEvent.click(within(section).getByRole("button", { name: "Restore Moonlit" }));
+
+      await waitFor(() =>
+        expect(writesOf(fetchMock)).toEqual([
+          { url: "/api/homebrew/subraces/u1/restore", method: "POST", body: undefined },
+        ]),
+      );
+    });
+
     it("names the row holding the name when a restore is refused", async () => {
       stubApi(
         {
