@@ -516,7 +516,10 @@ function choose(name: string, option: string) {
 
 beforeEach(() => localStorage.clear());
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  ROWS["/api/homebrew/races"] = [];
+});
 
 describe("LevelUp", () => {
   it("writes the level at the average as its own undo entry, keeps an override, and lists what moved", async () => {
@@ -1950,6 +1953,49 @@ describe("LevelUp", () => {
         await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
         expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
         expect(sent().proficiencies).toMatchObject({ skills: [], armor: ["Light"], tools: [] });
+      });
+
+      it("keeps what a homebrew race grants when the class that also gave it goes", async () => {
+        ROWS["/api/homebrew/races"] = [
+          {
+            id: "hb_1",
+            name: "Stoneborn",
+            edition: "one",
+            json: {
+              name: "Stoneborn",
+              source: "Homebrew",
+              skillProficiencies: [{ stealth: true }],
+              toolProficiencies: [{ "thieves' tools": true }],
+            },
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ];
+        const vex = warlock(2);
+        renderSeeded(
+          warlock(2, {
+            race: { homebrewId: "hb_1" },
+            subrace: undefined,
+            levels: [{ class: WARLOCK }, { class: ROGUE }],
+            proficiencies: {
+              ...vex.definition.proficiencies,
+              skills: [{ ref: XPHB("Stealth"), level: "proficient" }],
+              armor: ["Light"],
+              tools: [{ name: "Thieves' Tools", level: "proficient" }],
+            },
+          }),
+          { history: true },
+        );
+        await reopen(2);
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Warlock" }));
+        await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
+        fireEvent.click(applyChanges());
+
+        await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+        expect(sent().proficiencies).toMatchObject({
+          skills: [{ ref: XPHB("Stealth"), level: "proficient" }],
+          tools: [{ name: "Thieves' Tools", level: "proficient" }],
+        });
       });
 
       it("judges the new die and notes an unmet prerequisite without refusing", async () => {
