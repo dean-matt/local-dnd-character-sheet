@@ -58,6 +58,24 @@ const ward = {
   entries: ["Brine deals {@damage 2d6} cold damage."],
 };
 
+/** The answer to a skill's holders, or to a read or write of a class's features: the list the stub holds, or the body echoed back. */
+function sideRoute(
+  url: string,
+  method: string,
+  lists: Record<string, unknown>,
+  body: unknown,
+  holders: Answer | undefined,
+) {
+  const refused = lists[`${method} ${url}`] as Answer | undefined;
+  if (refused) return json(refused.status, refused.body);
+  if (holders && /^\/api\/homebrew\/skills\/[^/]+\/holders$/.test(url)) {
+    return json(holders.status, holders.body);
+  }
+  if (!/^\/api\/homebrew\/classes\/[^/]+\/features$/.test(url)) return undefined;
+  if (method === "GET") return json(200, lists[url] ?? []);
+  return method === "PUT" ? json(200, JSON.parse(String(body))) : undefined;
+}
+
 type Answer = { status: number; body?: unknown };
 
 /**
@@ -68,9 +86,8 @@ function stubApi(lists: Record<string, unknown>, writes: Answer[] = [], holders?
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? "GET";
-    if (holders && /^\/api\/homebrew\/skills\/[^/]+\/holders$/.test(url)) {
-      return json(holders.status, holders.body);
-    }
+    const side = sideRoute(url, method, lists, init?.body, holders);
+    if (side) return side;
     const match = /^\/api\/(?:homebrew\/(\w+)|(characters))$/.exec(url);
     const listed = match?.[1] ?? match?.[2];
     const empty = listed === "history" ? { reversible: [], deleted: [] } : [];
@@ -100,9 +117,14 @@ function renderPage(kind = "items") {
   return client;
 }
 
-const writesOf = (fetchMock: ReturnType<typeof stubApi>) =>
+const writesOf = (fetchMock: ReturnType<typeof stubApi>, features = false) =>
   fetchMock.mock.calls
-    .filter(([url, init]) => String(url).startsWith("/api/homebrew") && init?.method)
+    .filter(
+      ([url, init]) =>
+        String(url).startsWith("/api/homebrew") &&
+        init?.method &&
+        String(url).endsWith("/features") === features,
+    )
     .map(([url, init]) => ({
       url: String(url),
       method: init?.method,
@@ -155,6 +177,10 @@ const typeJson = (name: string, text: string) => {
   const view = jsonView(name);
   act(() => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } }));
 };
+
+/** Waits out the read of a stored class's features, which the editor opens after. */
+const loaded = () =>
+  waitFor(() => expect(within(editor()).queryByText(/Loading the class/)).toBeNull());
 
 let client: QueryClient;
 /** Waits out the requests a picker made, which its button gives no sign of. */
@@ -1145,6 +1171,7 @@ describe("Homebrew kind page", () => {
           name: "Edit Warden",
         }),
       );
+      await loaded();
       const draft = JSON.stringify({ ...entry, hd: { number: 1, faces } });
       mode("JSON");
       typeJson("Class JSON", draft);
@@ -2926,6 +2953,7 @@ describe("Homebrew kind page", () => {
         "Basics & Rules text",
         "Proficiencies & Equipment",
         "Multiclassing & Spellcasting",
+        "Features",
         "Preview",
       ]);
       expect(field("textbox", "Name")).toHaveValue("Warden");
@@ -2984,6 +3012,131 @@ describe("Homebrew kind page", () => {
       expect(fromJson?.body).toEqual(fromForm?.body);
     });
 
+    it("adds, edits and removes a class's features per level, saving them beside the row", async () => {
+      const warden = {
+        id: "c1",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const stored = [
+        { name: "Grove Ward", level: 1, entries: ["A ward."] },
+        { name: "Bark Skin", level: 3, entries: ["Tough."] },
+      ];
+      const fetchMock = stubApi(
+        {
+          classes: [warden],
+          "/api/homebrew/classes/c1/features": stored,
+        },
+        [{ status: 200, body: warden }],
+      );
+      renderPage("classes");
+
+      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+      await loaded();
+      stepTo("Features");
+      expect(field("textbox", "Feature 1 name")).toHaveValue("Grove Ward");
+      expect(field("spinbutton", "Feature 2 level")).toHaveValue(3);
+      fireEvent.change(field("textbox", "Feature 2 rules text"), {
+        target: { value: "Tougher.\n\nMuch." },
+      });
+      click("Remove Grove Ward");
+      expect(field("textbox", "Feature 1 rules text")).toHaveValue("Tougher.\n\nMuch.");
+      click("Add a feature");
+      fireEvent.change(field("textbox", "Feature 2 name"), { target: { value: "Storm Step" } });
+      fireEvent.change(field("spinbutton", "Feature 2 level"), { target: { value: "5" } });
+      fireEvent.change(field("textbox", "Feature 2 rules text"), { target: { value: "Dash." } });
+      click("Save");
+
+      await waitFor(() => expect(writesOf(fetchMock, true)).toHaveLength(1));
+      expect(writesOf(fetchMock, true)[0]).toMatchObject({
+        method: "PUT",
+        url: "/api/homebrew/classes/c1/features",
+        body: [
+          { name: "Bark Skin", level: 3, entries: ["Tougher.", "Much."] },
+          { name: "Storm Step", level: 5, entries: ["Dash."] },
+        ],
+      });
+      expect(writesOf(fetchMock)[0]?.body).not.toHaveProperty("features");
+    });
+
+    it("saves a new class's features to its new id, and removes the row when they fail", async () => {
+      const stored = {
+        id: "c9",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const fetchMock = stubApi(
+        { "PUT /api/homebrew/classes/c9/features": { status: 500, body: { error: "down" } } },
+        [{ status: 201, body: stored }, { status: 204 }],
+      );
+      renderPage("classes");
+
+      addClass();
+      stepTo("Features");
+      click("Add a feature");
+      fireEvent.change(field("textbox", "Feature 1 name"), { target: { value: "Ward" } });
+      fireEvent.change(field("textbox", "Feature 1 rules text"), { target: { value: "x" } });
+      click("Save");
+
+      await waitFor(() =>
+        expect(fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")).toBe(true),
+      );
+      expect(writesOf(fetchMock, true)[0]).toMatchObject({
+        method: "PUT",
+        url: "/api/homebrew/classes/c9/features",
+        body: [{ name: "Ward", level: 1, entries: ["x"] }],
+      });
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/homebrew/classes/c9",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+      expect(editor()).toBeInTheDocument();
+    });
+
+    it("offers a way to close when a stored class's features cannot be read", async () => {
+      const warden = {
+        id: "c1",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      stubApi({
+        classes: [warden],
+        "GET /api/homebrew/classes/c1/features": { status: 400, body: { error: "bad" } },
+      });
+      renderPage("classes");
+
+      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+
+      expect(await screen.findByText(/bad/)).toBeInTheDocument();
+      click("Close");
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    });
+
+    it("holds a feature that shares a name and level with another", () => {
+      stubApi({});
+      renderPage("classes");
+
+      addClass();
+      stepTo("Features");
+      for (const at of [1, 2]) {
+        click("Add a feature");
+        fireEvent.change(field("textbox", `Feature ${at} name`), { target: { value: "Ward" } });
+        fireEvent.change(field("textbox", `Feature ${at} rules text`), { target: { value: "x" } });
+      }
+      click("Next");
+
+      expect(within(editor()).getByText("Two features share a name and level")).toBeInTheDocument();
+    });
+
     it("holds a step while a field it shows has a problem, and shows it beside the field", () => {
       stubApi({});
       renderPage("classes");
@@ -3028,6 +3181,7 @@ describe("Homebrew kind page", () => {
       renderPage("classes");
 
       fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+      await loaded();
       pick("Hit die", "d8");
 
       await waitFor(() =>
@@ -3076,6 +3230,7 @@ describe("Homebrew kind page", () => {
       renderPage("classes");
 
       fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Odd" }));
+      await loaded();
       expect(within(editor()).getByText(/primary ability in a shape/)).toBeInTheDocument();
       fireEvent.change(field("textbox", "Name"), { target: { value: "Odder" } });
       stepTo("Proficiencies");

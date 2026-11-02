@@ -1,7 +1,8 @@
-import type { homebrewCollectionSchema } from "@dnd/catalog";
+import { homebrewClassFeaturesSchema, type homebrewCollectionSchema } from "@dnd/catalog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
+import { isRecord } from "../lib/entryGuards.ts";
 
 /** The path segment of each kind's routes, `/homebrew/{collection}`. */
 export type HomebrewCollection = z.infer<typeof homebrewCollectionSchema>;
@@ -29,10 +30,30 @@ export function useHomebrew<R>(
     enabled: listed,
   });
   const save = useMutation({
-    mutationFn: ({ id, input }: { id: string | undefined; input: unknown }) =>
-      id === undefined
-        ? apiMutate("POST", path, schema, input)
-        : apiMutate("PUT", rowPath(id), schema, input),
+    mutationFn: async ({ id, input }: { id: string | undefined; input: unknown }) => {
+      const write = (body: unknown) =>
+        id === undefined
+          ? apiMutate("POST", path, schema, body)
+          : apiMutate("PUT", rowPath(id), schema, body);
+      if (collection !== "classes" || !isRecord(input)) return write(input);
+      // A class's features live beside its row, so the save is two writes. A new class whose
+      // features fail is deleted again, so a second try does not conflict with the first.
+      const { features = [], ...row } = input;
+      const saved = await write(row);
+      const savedId = id ?? z.object({ id: z.string() }).parse(saved).id;
+      try {
+        await apiMutate(
+          "PUT",
+          `${rowPath(savedId)}/features`,
+          homebrewClassFeaturesSchema,
+          features,
+        );
+      } catch (error) {
+        if (id === undefined) await apiDelete(rowPath(savedId)).catch(() => undefined);
+        throw error;
+      }
+      return saved;
+    },
     onSuccess: refresh,
   });
   const remove = useMutation({
