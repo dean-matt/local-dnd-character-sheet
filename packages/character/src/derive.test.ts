@@ -1351,6 +1351,9 @@ describe("deriveCharacter", () => {
     const BELT = { name: "Belt of Dwarvenkind", source: "DMG" };
     const BRACERS = { name: "Bracers of Archery", source: "DMG" };
     const KAS = { name: "Sword of Kas", source: "DMG" };
+    const RING_A = { name: "Ring of Warding", source: "HB" };
+    const RING_B = { name: "Ring of Warding II", source: "HB" };
+    const RING_C = { name: "Ring of Warding III", source: "HB" };
     const worn = (ref: EntryRef, attuned = true) => ({
       ref,
       quantity: 1,
@@ -1376,7 +1379,20 @@ describe("deriveCharacter", () => {
         ...effect,
       },
     ];
-    const items = [BOOTS, CLOAK, PENNANT, MASTERY, LUCK, BIB, BELT, BRACERS, KAS];
+    const items = [
+      BOOTS,
+      CLOAK,
+      PENNANT,
+      MASTERY,
+      LUCK,
+      BIB,
+      BELT,
+      BRACERS,
+      KAS,
+      RING_A,
+      RING_B,
+      RING_C,
+    ];
     const itemCatalog = {
       ...catalog,
       weights: new Map([...catalog.weights, ...items.map((ref) => [entryKey(ref), 0] as const)]),
@@ -1400,6 +1416,9 @@ describe("deriveCharacter", () => {
         trait(KAS, { critThreshold: 19 }),
         trait(BELT, { grantsLanguage: true }),
         trait(BRACERS, { grantsProficiency: true }),
+        trait(RING_A, { save: 2, stack: { group: "ward", cap: 3 } }),
+        trait(RING_B, { save: 2, stack: { group: "ward", cap: 3 } }),
+        trait(RING_C, { save: 2, stack: { group: "ward", cap: 3 } }),
       ]),
     };
     const withItems = (inventory: CharacterDefinition["inventory"]) =>
@@ -1489,6 +1508,20 @@ describe("deriveCharacter", () => {
       expect(after?.attackBonus.terms.at(-1)).toEqual({ label: MASTERY.name, value: 1 });
       expect(block.savingThrows.cha.computed).toBe(bare.savingThrows.cha.computed + 1);
       expect(block.savingThrows.str.computed).toBe(bare.savingThrows.str.computed);
+    });
+
+    it("sums a stack group's saving throw bonuses up to its cap, cutting the member that passes it", () => {
+      const block = withItems([worn(RING_A), worn(RING_B), worn(RING_C)]);
+      expect(block.savingThrows.str.computed).toBe(bare.savingThrows.str.computed + 3);
+      expect(block.savingThrows.str.terms.slice(-2)).toEqual([
+        { label: RING_A.name, value: 2 },
+        { label: RING_B.name, value: 1 },
+      ]);
+    });
+
+    it("counts a stack group's bonuses in full under its cap", () => {
+      const block = withItems([worn(RING_A)]);
+      expect(block.savingThrows.str.computed).toBe(bare.savingThrows.str.computed + 2);
     });
 
     it("adds an ability check bonus to every skill and to initiative, not to the modifiers", () => {

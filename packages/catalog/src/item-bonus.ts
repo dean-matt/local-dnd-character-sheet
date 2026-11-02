@@ -25,6 +25,12 @@ const speedModifierSchema = z
   .optional()
   .catch(undefined);
 
+/** A malformed stack groups nothing, so the item's bonuses count in full. */
+const stackSchema = z
+  .object({ group: z.string().min(1), cap: z.number() })
+  .optional()
+  .catch(undefined);
+
 const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
 
 /**
@@ -32,7 +38,8 @@ const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
  * sheet. `ac` is `bonusAc` on an item that is not armor or a shield: armor's own `bonusAc` already sits in `armorTraitSchema`'s
  * number, so reading it here would count it twice. `save` is `bonusSavingThrow`, added to
  * every save, and `concentration` is `bonusSavingThrowConcentration`, added to concentration
- * saves alone. `spellAttack`, `spellSaveDc` and `spellDamage` are the three `bonusSpell*` fields.
+ * saves alone. `stack` groups the item's bonuses with other equipped items naming the same
+ * `group`: together they add at most `cap`. `spellAttack`, `spellSaveDc` and `spellDamage` are the three `bonusSpell*` fields.
  * `abilityCheck` is `bonusAbilityCheck`, `proficiencyBonus` is `bonusProficiencyBonus`, and
  * `critThreshold` is the lowest d20 result that scores a critical hit, absent for a row
  * that states none. `grantsProficiency` and `grantsLanguage` are upstream's flags: they
@@ -53,6 +60,7 @@ export const itemBonusSchema = z
     bonusProficiencyBonus: signed,
     critThreshold: z.int().min(2).max(19).optional().catch(undefined),
     modifySpeed: speedModifierSchema,
+    stack: stackSchema,
     grantsProficiency: z.literal(true).optional().catch(undefined),
     grantsLanguage: z.literal(true).optional().catch(undefined),
   })
@@ -73,5 +81,5 @@ export const itemBonusSchema = z
       ...(row.modifySpeed && { speed: row.modifySpeed }),
     };
     const none = Object.values(bonus).every((value) => value === 0 || value === false);
-    return none || code === "P" ? undefined : bonus;
+    return none || code === "P" ? undefined : { ...bonus, ...(row.stack && { stack: row.stack }) };
   });

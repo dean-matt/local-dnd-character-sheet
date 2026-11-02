@@ -28,6 +28,18 @@ describe("itemBonusSchema", () => {
     });
   });
 
+  it("reads a stack group beside a bonus and ignores a malformed one", () => {
+    const stack = { group: "ward", cap: 3 };
+    expect(itemBonusSchema.parse({ bonusSavingThrow: "+1", stack })).toMatchObject({
+      save: 1,
+      stack,
+    });
+    expect(
+      itemBonusSchema.parse({ bonusSavingThrow: "+1", stack: { group: "ward" } }),
+    ).not.toHaveProperty("stack");
+    expect(itemBonusSchema.parse({ stack })).toBeUndefined();
+  });
+
   it("reads spell attack, save DC and damage bonuses", () => {
     expect(
       itemBonusSchema.parse({
