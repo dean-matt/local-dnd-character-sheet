@@ -36,12 +36,22 @@ export function useHomebrew<R>(
           ? apiMutate("POST", path, schema, body)
           : apiMutate("PUT", rowPath(id), schema, body);
       if (collection !== "classes" || !isRecord(input)) return write(input);
-      // A class's features live beside its row, so the save is two writes. A failure of the
-      // second leaves the row saved; a new class then conflicts with itself on a second try.
+      // A class's features live beside its row, so the save is two writes. A new class whose
+      // features fail is deleted again, so a second try does not conflict with the first.
       const { features = [], ...row } = input;
       const saved = await write(row);
       const savedId = id ?? z.object({ id: z.string() }).parse(saved).id;
-      await apiMutate("PUT", `${rowPath(savedId)}/features`, homebrewClassFeaturesSchema, features);
+      try {
+        await apiMutate(
+          "PUT",
+          `${rowPath(savedId)}/features`,
+          homebrewClassFeaturesSchema,
+          features,
+        );
+      } catch (error) {
+        if (id === undefined) await apiDelete(rowPath(savedId)).catch(() => undefined);
+        throw error;
+      }
       return saved;
     },
     onSuccess: refresh,

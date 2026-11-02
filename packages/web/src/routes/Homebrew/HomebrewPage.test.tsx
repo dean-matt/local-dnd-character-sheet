@@ -66,6 +66,8 @@ function sideRoute(
   body: unknown,
   holders: Answer | undefined,
 ) {
+  const refused = lists[`${method} ${url}`] as Answer | undefined;
+  if (refused) return json(refused.status, refused.body);
   if (holders && /^\/api\/homebrew\/skills\/[^/]+\/holders$/.test(url)) {
     return json(holders.status, holders.body);
   }
@@ -3058,6 +3060,65 @@ describe("Homebrew kind page", () => {
         ],
       });
       expect(writesOf(fetchMock)[0]?.body).not.toHaveProperty("features");
+    });
+
+    it("saves a new class's features to its new id, and removes the row when they fail", async () => {
+      const stored = {
+        id: "c9",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const fetchMock = stubApi(
+        { "PUT /api/homebrew/classes/c9/features": { status: 500, body: { error: "down" } } },
+        [{ status: 201, body: stored }, { status: 204 }],
+      );
+      renderPage("classes");
+
+      addClass();
+      stepTo("Features");
+      click("Add a feature");
+      fireEvent.change(field("textbox", "Feature 1 name"), { target: { value: "Ward" } });
+      fireEvent.change(field("textbox", "Feature 1 rules text"), { target: { value: "x" } });
+      click("Save");
+
+      await waitFor(() =>
+        expect(fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")).toBe(true),
+      );
+      expect(writesOf(fetchMock, true)[0]).toMatchObject({
+        method: "PUT",
+        url: "/api/homebrew/classes/c9/features",
+        body: [{ name: "Ward", level: 1, entries: ["x"] }],
+      });
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/homebrew/classes/c9",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+      expect(editor()).toBeInTheDocument();
+    });
+
+    it("offers a way to close when a stored class's features cannot be read", async () => {
+      const warden = {
+        id: "c1",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      stubApi({
+        classes: [warden],
+        "GET /api/homebrew/classes/c1/features": { status: 400, body: { error: "bad" } },
+      });
+      renderPage("classes");
+
+      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+
+      expect(await screen.findByText(/bad/)).toBeInTheDocument();
+      click("Close");
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     });
 
     it("holds a feature that shares a name and level with another", () => {
