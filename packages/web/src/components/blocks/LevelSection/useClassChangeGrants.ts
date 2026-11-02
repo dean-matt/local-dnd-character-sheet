@@ -16,8 +16,7 @@ import { useState } from "react";
 import { classQuery } from "../../../hooks/classQuery.ts";
 import { useBackgrounds } from "../../../hooks/useBackgrounds.ts";
 import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
-import { useRace } from "../../../hooks/useRace.ts";
-import { useSubraces } from "../../../hooks/useSubraces.ts";
+import { useRaceRows } from "../../../hooks/useRaceRows.ts";
 import { ApiError } from "../../../lib/api.ts";
 import { NO_GRANTS, resolveGrants, swapGrants } from "../../../lib/proficiencyGrants.ts";
 import {
@@ -176,9 +175,13 @@ export function useClassChangeGrants(
   const swapping = change !== undefined;
   const old = useQuery(classQuery(change?.oldGoes ? catalogOf(change.was) : undefined));
   const next = useQuery(classQuery(change?.newComes ? catalogOf(change.now) : undefined));
-  const catalogRace = swapping && "name" in race ? race : undefined;
-  const raceRow = useRace(catalogRace);
-  const subraces = useSubraces(subrace ? catalogRace : undefined, edition);
+  const {
+    raceRow,
+    subraces,
+    homebrew: homebrewRaces,
+    json: raceJson,
+    read: raceRead,
+  } = useRaceRows(swapping ? race : undefined, subrace, edition);
   const backgrounds = useBackgrounds(edition, swapping && "name" in background);
   const others = classLevels(definition).filter(
     (group) => change !== undefined && entryKey(group.class) !== entryKey(change.was),
@@ -207,9 +210,6 @@ export function useClassChangeGrants(
 
   if (!change || !now)
     return { swap: undefined, read: true, failed: false, ready: true, picks: undefined };
-  const raceJson = subrace
-    ? subraces.data?.items.find((row) => sameRow(row, subrace))?.json
-    : raceRow.data?.json;
   const backgroundJson =
     "name" in background
       ? backgrounds.data?.items.find((row) => sameRow(row, background))?.json
@@ -238,6 +238,7 @@ export function useClassChangeGrants(
     next,
     raceRow,
     subraces,
+    homebrewRaces,
     backgrounds,
     names,
     tools,
@@ -249,7 +250,7 @@ export function useClassChangeGrants(
       now: withPicks(nowGranted, pickedSkills, pickedTools.flat()),
       still,
     },
-    read: queries.every(settled),
+    read: queries.every(settled) && ("homebrewId" in race ? raceRead : true),
     failed: queries.some((query) => query.isError && !gone(query)),
     ready,
     picks: {
