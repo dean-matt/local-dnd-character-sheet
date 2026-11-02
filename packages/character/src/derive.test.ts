@@ -1354,6 +1354,9 @@ describe("deriveCharacter", () => {
     const RING_A = { name: "Ring of Warding", source: "HB" };
     const RING_B = { name: "Ring of Warding II", source: "HB" };
     const RING_C = { name: "Ring of Warding III", source: "HB" };
+    const GUARD_A = { name: "Guard Charm", source: "HB" };
+    const GUARD_B = { name: "Guard Charm II", source: "HB" };
+    const CURSED = { name: "Cursed Ward", source: "HB" };
     const worn = (ref: EntryRef, attuned = true) => ({
       ref,
       quantity: 1,
@@ -1392,6 +1395,9 @@ describe("deriveCharacter", () => {
       RING_A,
       RING_B,
       RING_C,
+      GUARD_A,
+      GUARD_B,
+      CURSED,
     ];
     const itemCatalog = {
       ...catalog,
@@ -1416,7 +1422,10 @@ describe("deriveCharacter", () => {
         trait(KAS, { critThreshold: 19 }),
         trait(BELT, { grantsLanguage: true }),
         trait(BRACERS, { grantsProficiency: true }),
-        trait(RING_A, { save: 2, stack: { group: "ward", cap: 3 } }),
+        trait(RING_A, { save: 2, concentration: 2, stack: { group: "ward", cap: 3 } }),
+        trait(GUARD_A, { ac: 2, stack: { group: "guard", cap: 3 } }),
+        trait(GUARD_B, { ac: 2, stack: { group: "guard", cap: 1 } }),
+        trait(CURSED, { ac: -1, stack: { group: "guard", cap: 3 } }),
         trait(RING_B, { save: 2, stack: { group: "ward", cap: 3 } }),
         trait(RING_C, { save: 2, stack: { group: "ward", cap: 3 } }),
       ]),
@@ -1517,6 +1526,20 @@ describe("deriveCharacter", () => {
         { label: RING_A.name, value: 2 },
         { label: RING_B.name, value: 1 },
       ]);
+    });
+
+    it("holds a stack group's cap across the save and concentration bonuses of one roll", () => {
+      const block = withItems([worn(RING_A)]);
+      expect(block.concentrationSave?.terms.slice(-2)).toEqual([
+        { label: RING_A.name, value: 2 },
+        { label: RING_A.name, value: 1 },
+      ]);
+    });
+
+    it("clamps a stacked armor class bonus to each member's own cap and lets a penalty through", () => {
+      const ac = (refs: EntryRef[]) => withItems(refs.map((ref) => worn(ref))).armorClass;
+      expect(ac([GUARD_A, GUARD_B]).computed).toBe(bare.armorClass.computed + 1);
+      expect(ac([GUARD_A, CURSED]).computed).toBe(bare.armorClass.computed + 1);
     });
 
     it("counts a stack group's bonuses in full under its cap", () => {

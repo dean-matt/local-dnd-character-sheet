@@ -37,6 +37,9 @@ describe("itemBonusSchema", () => {
     expect(
       itemBonusSchema.parse({ bonusSavingThrow: "+1", stack: { group: "ward" } }),
     ).not.toHaveProperty("stack");
+    expect(
+      itemBonusSchema.parse({ bonusSavingThrow: "+1", stack: { group: "ward", cap: -1 } }),
+    ).not.toHaveProperty("stack");
     expect(itemBonusSchema.parse({ stack })).toBeUndefined();
   });
 

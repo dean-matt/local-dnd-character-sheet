@@ -27,7 +27,7 @@ const speedModifierSchema = z
 
 /** A malformed stack groups nothing, so the item's bonuses count in full. */
 const stackSchema = z
-  .object({ group: z.string().min(1), cap: z.number() })
+  .object({ group: z.string().min(1), cap: z.number().nonnegative() })
   .optional()
   .catch(undefined);
 
