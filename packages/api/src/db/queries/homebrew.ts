@@ -1,8 +1,5 @@
 /**
- * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
- * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
- * `homebrew_classes`, `homebrew_class_features`, `homebrew_class_resources`, `homebrew_subclasses`, `homebrew_subraces` and
- * `homebrew_skills`, `homebrew_deities`, `homebrew_optional_features` and `homebrew_monsters` tables. `source` never
+ * List, search, read, create, update and delete for the tables of `homebrew.db`. `source` never
  * arrives as an argument: every write stamps `HOMEBREW_SOURCE` into `json` here, the one
  * place that builds it. The caller chooses `id` once at creation and never reassigns it, so
  * a rename keeps the id a character already references.

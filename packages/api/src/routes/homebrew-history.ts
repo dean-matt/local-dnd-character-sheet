@@ -9,6 +9,7 @@
  * row's old id, so a character still resolves it.
  */
 import {
+  type HomebrewClassResource,
   type HomebrewDeityInput,
   type HomebrewSubclassInput,
   type HomebrewSubraceInput,
@@ -58,6 +59,7 @@ import {
   insertHomebrewSubrace,
   listHomebrewClassResources,
   type NamedHomebrewTable,
+  replaceHomebrewClassResources,
 } from "../db/queries/homebrew.ts";
 import { catalogSkillNames } from "../db/queries/skills.ts";
 import { errorSchema, notFound } from "./errors.ts";
@@ -256,12 +258,21 @@ export function homebrewHistoryRoutes(
 ) {
   const routes = new OpenAPIHono();
   const keyOf = (collection: string, id: string) => `${collection}/${id}`;
+  const classResources = (collection: Collection, id: string) =>
+    collection === "classes" ? listHomebrewClassResources(db, id) : undefined;
   // Unbounded: one entry per row saved or deleted since the API started. A single user's
   // session keeps these small; cap them like `undo_log` if that stops holding.
   const earlier = new Map<string, { collection: Collection; id: string; input: object }>();
   const deleted = new Map<
     string,
-    { collection: Collection; id: string; name: string; input: object; deletedAt: Date }
+    {
+      collection: Collection;
+      id: string;
+      name: string;
+      input: object;
+      resources?: HomebrewClassResource[];
+      deletedAt: Date;
+    }
   >();
 
   routes.use("/homebrew/:collection/:id", async (c, next) => {
@@ -276,6 +287,7 @@ export function homebrewHistoryRoutes(
     }
     const key = keyOf(collection.data, id);
     const before = KINDS[collection.data].get(db, id);
+    const resources = classResources(collection.data, id);
     await next();
     if (!before) return;
     if (c.req.method === "PUT" && c.res.status === 200) {
@@ -284,11 +296,13 @@ export function homebrewHistoryRoutes(
     }
     if (c.req.method === "DELETE" && c.res.status === 204) {
       earlier.delete(key);
+      earlier.delete(keyOf(RESOURCES, id));
       deleted.set(key, {
         collection: collection.data,
         id,
         name: before.name,
         input: inputOf(before),
+        resources,
         deletedAt: new Date(),
       });
     }
@@ -366,6 +380,7 @@ export function homebrewHistoryRoutes(
     if ("taken" in result) {
       return c.json(nameTakenError(`homebrew ${kind.noun}`, result.taken), 409);
     }
+    if (gone.resources) replaceHomebrewClassResources(db, id, gone.resources);
     deleted.delete(key);
     return c.body(null, 204);
   });

@@ -274,6 +274,17 @@ describe("homebrewHistoryRoutes", () => {
     expect((await history()).reversible).toEqual([]);
   });
 
+  it("restores a deleted class with its resource tables and offers no revert meanwhile", async () => {
+    const created = await (await app.request("/homebrew/classes", json(warden()))).json();
+    const tables = [{ name: "Ki", maximums: Array(20).fill(1) }];
+    await app.request(`/homebrew/classes/${created.id}/resources`, put(tables));
+    await app.request(`/homebrew/classes/${created.id}`, { method: "DELETE" });
+    expect((await history()).reversible).toEqual([]);
+
+    expect((await app.request(`/homebrew/classes/${created.id}/restore`, post)).status).toBe(204);
+    expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual(tables);
+  });
+
   it("holds nothing for a save the kind's route refused", async () => {
     await app.request("/homebrew/items", json(sunblade({ name: "Other" })));
     const created = await (await app.request("/homebrew/items", json(sunblade()))).json();
