@@ -74,7 +74,7 @@ row is written once and displayed, never edited field by field — the same reas
 class's `hd`, which `homebrew_classes.hit_die` derives from, and a race's `size` and
 `speed`. A race carries no child row of its own: no subrace until one proves common enough
 to need it. A class's features live in `homebrew_class_features`, keyed `(class_id, level,
-name)` and deleted with the class; no subclass until its own issue adds one — a homebrew
+name)` and deleted with the class; the sheet lists those up to the character's level, the detail's level table links them as `{@classFeature Name|Class|HB|Level}`, and `/refs/resolve` answers that tag from this table. No subclass until its own issue adds one: a homebrew
 parent has no ETL merge step to build either from. `race`, `levels[].class` and both
 feat-grantor branches accept a homebrew reference, so a delete refuses while one is held.
 

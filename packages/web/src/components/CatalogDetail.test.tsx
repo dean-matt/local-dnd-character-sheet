@@ -426,6 +426,57 @@ describe("CatalogDetail", () => {
     expect(screen.getByText("Homebrew")).toBeInTheDocument();
   });
 
+  it("lists a homebrew class's stored features in its level table and opens one", async () => {
+    const features = [{ name: "Second Wind", level: 1, entries: ["Regain hit points."] }];
+    stubFetchByUrl({
+      "/api/homebrew/classes/hb-1": {
+        id: "hb-1",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 } },
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+      "/api/homebrew/classes/hb-1/features": features,
+    });
+    renderAt("/homebrew/classes/hb-1");
+
+    await dialogNamed("Warden");
+    expect(await screen.findByText("Second Wind")).toBeInTheDocument();
+    cleanup();
+
+    renderAt("/homebrew/classes/hb-1/features/1/Second%20Wind");
+    await dialogNamed("Second Wind");
+    expect(await screen.findByText("Regain hit points.")).toBeInTheDocument();
+  });
+
+  it("leaves a feature whose name would break its tag out of the level table, and survives a failed features request", async () => {
+    const warden = {
+      id: "hb-1",
+      name: "Warden",
+      edition: "one",
+      hitDie: 10,
+      json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 } },
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    stubFetchByUrl({
+      "/api/homebrew/classes/hb-1": warden,
+      "/api/homebrew/classes/hb-1/features": [
+        { name: "Bad|Name", level: 1, entries: ["x"] },
+        { name: "Good", level: 1, entries: ["y"] },
+      ],
+    });
+    renderAt("/homebrew/classes/hb-1");
+    await dialogNamed("Warden");
+    expect(await screen.findByText("Good")).toBeInTheDocument();
+    expect(screen.queryByText("Bad|Name")).not.toBeInTheDocument();
+    cleanup();
+
+    stubFetchByUrl({ "/api/homebrew/classes/hb-1": warden });
+    renderAt("/homebrew/classes/hb-1");
+    await dialogNamed("Warden");
+  });
+
   it("renders a magic variant under the name its expansion gives it", async () => {
     stubFetchByUrl({ "/api/items/Longsword/PHB/variants/%2B1%20Weapon/DMG": longsword });
     renderAt("/items/Longsword/PHB/variants/%2B1%20Weapon/DMG");
