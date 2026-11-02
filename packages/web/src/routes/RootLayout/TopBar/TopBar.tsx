@@ -49,7 +49,7 @@ export function TopBar() {
     >
       <Link
         to="/"
-        className="mr-1 shrink-0 rounded-control text-base font-bold text-accent-text sm:mr-3.5"
+        className="mr-1 shrink-0 rounded-control text-lg font-bold sm:text-base text-accent-text sm:mr-3.5"
       >
         <span className="max-sm:sr-only">Local</span> D&D
       </Link>
