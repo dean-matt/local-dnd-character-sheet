@@ -1536,9 +1536,10 @@ describe("deriveCharacter", () => {
       ]);
     });
 
-    it("clamps a stacked armor class bonus to each member's own cap and lets a penalty through", () => {
+    it("drops a stacked armor class bonus past its cap and lets a penalty through", () => {
       const ac = (refs: EntryRef[]) => withItems(refs.map((ref) => worn(ref))).armorClass;
-      expect(ac([GUARD_A, GUARD_B]).computed).toBe(bare.armorClass.computed + 1);
+      expect(ac([GUARD_A, GUARD_B]).computed).toBe(bare.armorClass.computed + 2);
+      expect(ac([GUARD_A, GUARD_B]).terms.slice(-1)).toEqual([{ label: GUARD_A.name, value: 2 }]);
       expect(ac([GUARD_A, CURSED]).computed).toBe(bare.armorClass.computed + 1);
     });
 

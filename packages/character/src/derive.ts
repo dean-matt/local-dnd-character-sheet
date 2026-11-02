@@ -584,7 +584,7 @@ const itemTerms = (
     let value = pick(item);
     if (value !== 0 && item.stack) {
       const running = taken.get(item.stack.group) ?? 0;
-      value = Math.min(value, item.stack.cap - running);
+      value = value > 0 ? Math.max(0, Math.min(value, item.stack.cap - running)) : value;
       taken.set(item.stack.group, running + value);
     }
     return value === 0 ? [] : [{ label: item.name, value }];
@@ -928,6 +928,7 @@ export function deriveCharacter(
   ) as Record<Ability, ComputedField<number>>;
 
   const concentrationTaken = new Map<string, number>();
+  // Seeds the caps with the Con save terms that this roll already includes.
   itemTerms(bonuses, (item) => item.save, concentrationTaken);
   const concentration = itemTerms(bonuses, (item) => item.concentration, concentrationTaken);
   const concentrationSave =
