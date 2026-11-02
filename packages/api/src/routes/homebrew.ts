@@ -1,5 +1,5 @@
 /**
- * What the homebrew routes for items, spells, backgrounds, feats, races, classes and subclasses share.
+ * What the homebrew routes for items, spells, backgrounds, feats, races, classes, subclasses and subraces share.
  * `source` and `id` are never accepted from a request body — the query layer stamps
  * `source` and each route generates `id` once, on create, the same rule `characters.ts`
  * sets for `name`/`level`/`edition`.
@@ -19,6 +19,7 @@ import {
   type HomebrewSkillRecord,
   type HomebrewSpellRecord,
   type HomebrewSubclassRecord,
+  type HomebrewSubraceRecord,
   homebrewBackgroundRecordSchema,
   homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
@@ -27,6 +28,7 @@ import {
   homebrewSkillRecordSchema,
   homebrewSpellRecordSchema,
   homebrewSubclassRecordSchema,
+  homebrewSubraceRecordSchema,
 } from "@dnd/catalog";
 import { EDITIONS, type Edition } from "@dnd/rules";
 import { z } from "@hono/zod-openapi";
@@ -40,6 +42,7 @@ import {
   type getHomebrewSkill,
   type getHomebrewSpell,
   type getHomebrewSubclass,
+  type getHomebrewSubrace,
   type HomebrewDb,
   homebrewNamed,
   type NamedHomebrewTable,
@@ -52,6 +55,7 @@ type FeatRow = NonNullable<ReturnType<typeof getHomebrewFeat>>;
 type RaceRow = NonNullable<ReturnType<typeof getHomebrewRace>>;
 type ClassRow = NonNullable<ReturnType<typeof getHomebrewClass>>;
 type SubclassRow = NonNullable<ReturnType<typeof getHomebrewSubclass>>;
+type SubraceRow = NonNullable<ReturnType<typeof getHomebrewSubrace>>;
 type SkillRow = NonNullable<ReturnType<typeof getHomebrewSkill>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
@@ -94,6 +98,19 @@ export function toSubclassRecord(row: SubclassRow): HomebrewSubclassRecord {
       className: row.className,
       classSource: row.classSource,
     },
+    createdAt: row.createdAt.toISOString(),
+  });
+}
+
+export function toSubraceRecord(row: SubraceRow): HomebrewSubraceRecord {
+  return homebrewSubraceRecordSchema.parse({
+    id: row.id,
+    name: row.name,
+    edition: row.edition,
+    raceName: row.raceName,
+    raceSource: row.raceSource,
+    raceId: row.raceId ?? undefined,
+    json: row.json,
     createdAt: row.createdAt.toISOString(),
   });
 }

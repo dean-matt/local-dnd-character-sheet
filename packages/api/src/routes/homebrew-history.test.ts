@@ -16,6 +16,7 @@ import { homebrewRacesRoutes } from "./homebrew-races.ts";
 import { homebrewSkillsRoutes } from "./homebrew-skills.ts";
 import { homebrewSpellsRoutes } from "./homebrew-spells.ts";
 import { homebrewSubclassesRoutes } from "./homebrew-subclasses.ts";
+import { homebrewSubracesRoutes } from "./homebrew-subraces.ts";
 import {
   acidSplash,
   baseDefinition,
@@ -31,6 +32,12 @@ import {
 const storm = (overrides: Record<string, unknown> = {}) => ({
   name: "Storm Domain",
   parent: { name: "Cleric", source: "PHB" },
+  ...overrides,
+});
+
+const moon = (overrides: Record<string, unknown> = {}) => ({
+  name: "Moon",
+  parent: { name: "Elf", source: "PHB" },
   ...overrides,
 });
 
@@ -52,6 +59,14 @@ describe("homebrewHistoryRoutes", () => {
           edition: "classic",
           hit_die: 8,
           json: JSON.stringify({ name: "Cleric", source: "PHB" }),
+        },
+      ],
+      races: [
+        {
+          name: "Elf",
+          source: "PHB",
+          edition: "classic",
+          json: JSON.stringify({ name: "Elf", source: "PHB" }),
         },
       ],
       lookups: [
@@ -85,6 +100,7 @@ describe("homebrewHistoryRoutes", () => {
     app.route("/", homebrewRacesRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewClassesRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewSubclassesRoutes(homebrewDb, dataDir));
+    app.route("/", homebrewSubracesRoutes(homebrewDb, dataDir));
     app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb, dataDir));
   });
 
@@ -104,6 +120,7 @@ describe("homebrewHistoryRoutes", () => {
     ["races", duskling],
     ["classes", warden],
     ["subclasses", storm],
+    ["subraces", moon],
     ["skills", sailing],
   ])("%s", (collection, entry) => {
     const path = `/homebrew/${collection}`;
@@ -195,6 +212,21 @@ describe("homebrewHistoryRoutes", () => {
     const res = await app.request(`/homebrew/subclasses/${sub.id}/restore`, post);
     expect(res.status).toBe(409);
     expect((await res.json()).error).toContain("class");
+  });
+
+  it("restores a subrace of a homebrew race, and refuses once that race is gone", async () => {
+    const race = await (await app.request("/homebrew/races", json(duskling()))).json();
+    const sub = await (
+      await app.request("/homebrew/subraces", json(moon({ parent: { raceId: race.id } })))
+    ).json();
+    await app.request(`/homebrew/subraces/${sub.id}`, { method: "DELETE" });
+    expect((await app.request(`/homebrew/subraces/${sub.id}/restore`, post)).status).toBe(204);
+
+    await app.request(`/homebrew/subraces/${sub.id}`, { method: "DELETE" });
+    await app.request(`/homebrew/races/${race.id}`, { method: "DELETE" });
+    const res = await app.request(`/homebrew/subraces/${sub.id}/restore`, post);
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toContain("race");
   });
 
   it("restores a subclass under the edition its class has now", async () => {

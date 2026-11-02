@@ -1,8 +1,10 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishRaces, publishSubraces } from "../db/queries/contentFixture.ts";
+import { insertHomebrewSubrace } from "../db/queries/homebrew.ts";
+import { openTestDatabases } from "../db/testDatabases.ts";
 import { racesRoutes } from "./races.ts";
 
 const ELF = {
@@ -40,11 +42,21 @@ const BASE_HUMAN = {
 describe("racesRoutes", () => {
   let dataDir: string;
   let routes: ReturnType<typeof racesRoutes>;
+  let opened: ReturnType<typeof openTestDatabases>;
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "races-routes-"));
     publishRaces(dataDir, [ELF, TIEFLING_ONE]);
-    routes = racesRoutes(dataDir);
+  });
+
+  beforeEach(() => {
+    opened = openTestDatabases();
+    routes = racesRoutes(dataDir, opened.homebrewDb);
+  });
+
+  afterEach(() => {
+    opened.charactersDb.$client.close();
+    opened.homebrewDb.$client.close();
   });
 
   afterAll(() => {
@@ -88,7 +100,10 @@ describe("racesRoutes", () => {
     beforeAll(() => {
       subraceDataDir = mkdtempSync(join(tmpdir(), "races-routes-subraces-"));
       publishSubraces(subraceDataDir, [HIGH_ELF, BASE_HUMAN]);
-      subraceRoutes = racesRoutes(subraceDataDir);
+    });
+
+    beforeEach(() => {
+      subraceRoutes = racesRoutes(subraceDataDir, opened.homebrewDb);
     });
 
     afterAll(() => {
@@ -104,6 +119,34 @@ describe("racesRoutes", () => {
       expect(body.items).toEqual([
         expect.objectContaining({ name: "High", raceName: "Elf", raceSource: "PHB" }),
       ]);
+    });
+
+    it("lists a race's homebrew subraces with its catalog ones, told apart by id", async () => {
+      insertHomebrewSubrace(opened.homebrewDb, "moon", {
+        name: "Moon",
+        edition: "classic",
+        parent: { name: "Elf", source: "PHB" },
+      });
+      insertHomebrewSubrace(opened.homebrewDb, "one", {
+        name: "Sun",
+        edition: "one",
+        parent: { name: "Elf", source: "XPHB" },
+      });
+
+      const res = await subraceRoutes.request("/races/Elf/PHB/subraces?edition=classic");
+      const body = await res.json();
+      expect(body.total).toBe(2);
+      expect(body.items).toEqual([
+        expect.objectContaining({ name: "High", source: "PHB" }),
+        expect.objectContaining({
+          id: "moon",
+          name: "Moon",
+          raceName: "Elf",
+          raceSource: "PHB",
+          json: expect.objectContaining({ source: "HB" }),
+        }),
+      ]);
+      expect(body.items[1]).not.toHaveProperty("source");
     });
 
     it("lists a base variant whose row names no subrace of its own", async () => {

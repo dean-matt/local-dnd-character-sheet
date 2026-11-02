@@ -127,6 +127,8 @@ export {
 export type {
   HomebrewRaceInput,
   HomebrewRaceRecord,
+  HomebrewSubraceInput,
+  HomebrewSubraceRecord,
   RaceEntry,
   RaceRecord,
   SubraceRecord,
@@ -134,9 +136,13 @@ export type {
 export {
   homebrewRaceInputSchema,
   homebrewRaceRecordSchema,
+  homebrewSubraceInputSchema,
+  homebrewSubraceRecordSchema,
   raceEntrySchema,
   raceRecordSchema,
   raceTraitsSchema,
+  subraceFullName,
+  subraceListItemSchema,
   subraceRecordSchema,
 } from "./race.ts";
 export type { RefQuery, ResolvedRef } from "./ref.ts";

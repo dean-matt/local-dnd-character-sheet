@@ -13,7 +13,7 @@
  * survives a rename; a tag holds the name, so a renamed or deleted row leaves it
  * unresolved.
  */
-import { catalogRowEntries, HOMEBREW_SOURCE, type RefQuery } from "@dnd/catalog";
+import { catalogRowEntries, HOMEBREW_SOURCE, type RefQuery, subraceFullName } from "@dnd/catalog";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
 import {
@@ -28,6 +28,7 @@ import {
   type HomebrewDb,
   homebrewNamed,
   homebrewSubclassNamed,
+  homebrewSubraceNamed,
   listHomebrewClassFeatures,
   type NamedHomebrewTable,
 } from "./homebrew.ts";
@@ -323,7 +324,7 @@ function redirector(db: Database.Database, find: Find) {
 
 /**
  * The tags a homebrew row answers. A subclass is found by name alone, though only its class
- * scopes the name. A tag names no edition, so where both editions hold
+ * scopes the name; a subrace by its full name, `Elf (Moon)`, a race outranking it. A tag names no edition, so where both editions hold
  * the name the classic row answers, the way a sourceless catalog reference defaults to a
  * classic source. An edition on the request is the way out once a block knows its own.
  */
@@ -351,7 +352,17 @@ function homebrewRow(db: HomebrewDb, tag: string, name: string): ResolvedRow | u
   const target = HOMEBREW[tag];
   if (target === undefined) return undefined;
   const row = homebrewNamed(db, target.table, name);
-  if (row === undefined) return undefined;
+  if (row === undefined) {
+    const subrace = tag === "race" ? homebrewSubraceNamed(db, name) : undefined;
+    return (
+      subrace && {
+        name: subraceFullName(subrace.raceName, subrace.name),
+        source: HOMEBREW_SOURCE,
+        json: subrace.json,
+        path: `/homebrew/subraces/${segments(subrace.id)}`,
+      }
+    );
+  }
   return {
     name: row.name,
     source: HOMEBREW_SOURCE,

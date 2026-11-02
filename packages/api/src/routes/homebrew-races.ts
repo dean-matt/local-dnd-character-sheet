@@ -9,6 +9,7 @@ import {
   type HomebrewDb,
   insertHomebrewRace,
   listHomebrewRaces,
+  subracesOfHomebrewRace,
   updateHomebrewRace,
 } from "../db/queries/homebrew.ts";
 import { notFound } from "./errors.ts";
@@ -24,6 +25,13 @@ import {
 } from "./homebrew.ts";
 
 const RACE_NOT_FOUND = "No homebrew race with that id";
+
+const names = new Intl.ListFormat("en", { type: "conjunction" });
+
+const subracesHeld = ({ name }: { name: string }, subraces: { id: string; name: string }[]) => ({
+  error: `${name} has the subraces ${names.format(subraces.map((held) => held.name))}, so it cannot be deleted. Delete them first.`,
+  subraces,
+});
 
 const listRaces = createRoute({
   method: "get",
@@ -98,7 +106,20 @@ const removeRace = createRoute({
   responses: {
     204: { description: "The homebrew race was deleted" },
     404: notFound("homebrew race"),
-    409: referenced("homebrew race"),
+    409: {
+      description: "A character references the race, or it still has subraces",
+      content: {
+        "application/json": {
+          schema: z.union([
+            referenced("homebrew race").content["application/json"].schema,
+            z.object({
+              error: z.string(),
+              subraces: z.array(z.object({ id: z.string(), name: z.string() })),
+            }),
+          ]),
+        },
+      },
+    },
   },
 });
 
@@ -139,6 +160,9 @@ export function homebrewRacesRoutes(db: HomebrewDb, charactersDb: CharactersDb) 
     const { id } = c.req.valid("param");
     const characters = charactersReferencingHomebrew(charactersDb, id);
     if (characters.length > 0) return c.json(referencedError("This race", characters), 409);
+    const current = getHomebrewRace(db, id);
+    const subraces = current ? subracesOfHomebrewRace(db, id) : [];
+    if (current && subraces.length > 0) return c.json(subracesHeld(current, subraces), 409);
     if (!deleteHomebrewRace(db, id)) return c.json({ error: RACE_NOT_FOUND }, 404);
     return c.body(null, 204);
   });
