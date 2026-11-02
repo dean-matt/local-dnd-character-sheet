@@ -7,6 +7,7 @@ import {
   homebrewRaceRecordSchema,
   homebrewSkillRecordSchema,
   homebrewSpellRecordSchema,
+  homebrewSubclassRecordSchema,
   itemHitFacts,
 } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
@@ -66,6 +67,33 @@ const spells: ListingKind<z.infer<typeof homebrewSpellRecordSchema>> = {
   ],
 };
 
+/**
+ * A stored subclass as the editor edits it: its parent class, which the record holds beside
+ * `json`, moves into the entry as the input names it, and the class fields a read stamps
+ * into `json` stay out of it, so a save does not store a class name the parent has since lost.
+ */
+const subclassRecordSchema = homebrewSubclassRecordSchema.transform((record) => {
+  const { className: _name, classSource: _source, shortName, ...json } = record.json;
+  return {
+    ...record,
+    json: {
+      ...json,
+      ...(shortName === record.name ? {} : { shortName }),
+      parent: record.classId
+        ? { classId: record.classId }
+        : { name: record.className, source: record.classSource },
+    },
+  };
+});
+
+const subclasses: ListingKind<z.infer<typeof subclassRecordSchema>> = {
+  collection: "subclasses",
+  noun: "subclass",
+  heading: "Subclasses",
+  recordSchema: subclassRecordSchema,
+  chips: (record) => [record.className],
+};
+
 /** Each kind, keyed in the order the Homebrew sidebar lists them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
   items,
@@ -105,4 +133,5 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     recordSchema: homebrewSkillRecordSchema,
     chips: factChips(skillFacts),
   },
+  subclasses,
 };

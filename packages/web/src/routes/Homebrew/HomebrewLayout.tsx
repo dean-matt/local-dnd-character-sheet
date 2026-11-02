@@ -4,6 +4,7 @@ import {
   BookOpen,
   Dumbbell,
   Shield,
+  ShieldPlus,
   Sparkles,
   Swords,
   Trash2,
@@ -23,6 +24,7 @@ const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
   backgrounds: BookOpen,
   feats: Award,
   skills: Dumbbell,
+  subclasses: ShieldPlus,
 };
 
 const SECTIONS: SidebarProps["items"] = [

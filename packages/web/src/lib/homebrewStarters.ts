@@ -152,6 +152,16 @@ export const CLASS_STARTERS: HomebrewStarters = [
   },
 ];
 
+export const SUBCLASS_STARTERS: HomebrewStarters = [
+  {
+    label: "Subclass",
+    entry: {
+      name: "Path of the Hearthkeeper",
+      entries: ["A warrior who guards a home fire and fights hardest within sight of it."],
+    },
+  },
+];
+
 export const BACKGROUND_STARTERS: HomebrewStarters = [
   {
     label: "Background",

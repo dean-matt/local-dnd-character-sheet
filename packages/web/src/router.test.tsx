@@ -208,7 +208,16 @@ describe("routing", () => {
       within(nav)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Items", "Spells", "Races", "Classes", "Backgrounds", "Feats", "Skills"]);
+    ).toEqual([
+      "Items",
+      "Spells",
+      "Races",
+      "Classes",
+      "Backgrounds",
+      "Feats",
+      "Skills",
+      "Subclasses",
+    ]);
     expect(
       within(screen.getByRole("navigation", { name: "Homebrew kinds footer" })).getByRole("link", {
         name: "Recently deleted",

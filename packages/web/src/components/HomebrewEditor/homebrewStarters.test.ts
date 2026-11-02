@@ -24,8 +24,10 @@ describe("homebrew starters", () => {
     Object.values(EDITING_KINDS).flatMap((kind) =>
       kind.starters.map(({ label, entry }) => ({ kind, label, entry })),
     ),
-  )("saves the $label example as it opens", ({ kind, entry }) => {
-    expect(checkHomebrewEntry(entry, "one", kind.inputSchema)).toHaveProperty("input");
+  )("saves the $label example as it opens", ({ kind, label, entry }) => {
+    // A subclass opens without a parent, which the user picks.
+    const named = label === "Subclass" ? { ...entry, parent: { classId: "c1" } } : entry;
+    expect(checkHomebrewEntry(named, "one", kind.inputSchema)).toHaveProperty("input");
   });
 
   it("gives the weapon an attack the sheet reads, bonus and versatile die included", () => {
