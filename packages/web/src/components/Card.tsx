@@ -1,6 +1,6 @@
 import { type ReactNode, useId } from "react";
 
-/** A titled panel on the sheet, labeled by its own heading. `aside` sits beside the title; `action` is pushed to the far end. */
+/** A titled panel on the sheet, labeled by its own heading. `aside` sits beside the title; `action` sits at the far end. */
 export function Card({
   title,
   aside,

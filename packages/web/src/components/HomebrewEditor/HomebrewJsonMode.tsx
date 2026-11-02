@@ -19,10 +19,10 @@ export interface HomebrewJsonModeProps {
 
 /**
  * The entry as JSON text, with the kind's field reference in a sidebar on its left where it
- * has one. The sidebar keeps its header and search in place and scrolls only its field list, beside the JSON editor, which fills the height
- * between its label and its hint and scrolls only its text. The sidebar collapses sideways
- * to a strip, and the JSON takes the width; where the modal is narrow, the two stack and
- * scroll together, and the sidebar collapses to its button.
+ * has one. The sidebar keeps its header and search in place and scrolls only its field list.
+ * The JSON editor fills the height between its label and its hint and scrolls only its text.
+ * The sidebar collapses sideways to a strip, and the JSON takes the width; where the modal
+ * is narrow, the two stack and scroll together, and the sidebar collapses to its button.
  */
 export function HomebrewJsonMode({
   noun,

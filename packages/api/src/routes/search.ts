@@ -1,8 +1,8 @@
 /**
  * Searches the catalog and homebrew together: Tier A's tables, Tier B's rules lookups, Tier
- * C's `entities`, and `homebrew.db`'s items, spells, races, classes, backgrounds and feats, merged into one list ranked by
- * `compareSearchHits`, and lists the sources such a search can leave out and the types it
- * can return.
+ * C's `entities`, and `homebrew.db`'s items, spells, races, classes, backgrounds and feats,
+ * merged into one list ranked by `compareSearchHits`, and lists the sources such a search
+ * can leave out and the types it can return.
  * See `packages/api/src/db/queries/catalog-search.ts`'s `searchCatalog` for what each tier's
  * query can and cannot do, and its `CATALOG_SEARCH_TABLES` for what a Tier A `type` can
  * be — a Tier C hit's `type` is open, since `packages/content` loads one for every array

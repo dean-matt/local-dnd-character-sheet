@@ -1,4 +1,3 @@
-/** A catalog row keyed `(name, source)` or a homebrew row keyed by `id`. */
 type NamedRow = { name: string } & ({ id: string } | { source: string });
 
 /**

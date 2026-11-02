@@ -15,7 +15,6 @@ const NEEDS = [
   { value: "all", label: "All of them" },
 ];
 
-/** A homebrew class's name, hit die, saving throws and primary ability. */
 export function ClassBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const faces = String(recordAt(entry, "hd").faces ?? "");

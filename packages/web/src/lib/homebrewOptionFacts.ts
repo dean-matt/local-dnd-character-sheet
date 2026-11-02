@@ -15,7 +15,6 @@ import { capitalize } from "./capitalize.ts";
 import { prerequisiteText as scoreText } from "./multiclassPrerequisites.ts";
 import { titleCase } from "./proficiencyGrants.ts";
 
-/** One fact a preview or a chip prints: its label and its value. */
 export type Fact = [label: string, value: string];
 
 type Json = Record<string, unknown>;

@@ -55,32 +55,26 @@ export function toItemRecord(row: ItemRow): HomebrewItemRecord {
   return homebrewItemRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
-/** Validates a row read back from SQLite against the same schema its write went through. */
 export function toSpellRecord(row: SpellRow): HomebrewSpellRecord {
   return homebrewSpellRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
-/** Validates a row read back from SQLite against the same schema its write went through. */
 export function toBackgroundRecord(row: BackgroundRow): HomebrewBackgroundRecord {
   return homebrewBackgroundRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
-/** Validates a row read back from SQLite against the same schema its write went through. */
 export function toFeatRecord(row: FeatRow): HomebrewFeatRecord {
   return homebrewFeatRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
-/** Validates a row read back from SQLite against the same schema its write went through. */
 export function toRaceRecord(row: RaceRow): HomebrewRaceRecord {
   return homebrewRaceRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
-/** Validates a row read back from SQLite against the same schema its write went through. */
 export function toClassRecord(row: ClassRow): HomebrewClassRecord {
   return homebrewClassRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
-/** Validates a row read back from SQLite against the same schema its write went through. */
 export function toSkillRecord(row: SkillRow): HomebrewSkillRecord {
   return homebrewSkillRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }

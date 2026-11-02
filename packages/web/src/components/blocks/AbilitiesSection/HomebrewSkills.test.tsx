@@ -31,7 +31,6 @@ const homebrewRow = (name: string, edition: "classic" | "one") => ({
   createdAt: "2026-01-01T00:00:00.000Z",
 });
 
-/** A derived block that lists Sailing, with an item's advantage on it. */
 const derivedFor = (record: CharacterRecord): CharacterDerived => {
   const derived = derivedRecord(record.definition);
   const modifier = { computed: 2, manual: null, terms: [] };
