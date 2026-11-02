@@ -60,6 +60,7 @@ const HOMEBREW_SEARCH_TYPES = [
   "feat",
   "deity",
   "optfeature",
+  "monster",
 ] as const;
 
 /** A homebrew hit, addressed by `id` rather than `(name, source)`. */

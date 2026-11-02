@@ -21,6 +21,7 @@ import {
   homebrewClasses,
   homebrewFeats,
   homebrewItems,
+  homebrewMonsters,
   homebrewRaces,
   homebrewSkills,
   homebrewSpells,
@@ -35,6 +36,7 @@ import {
   getHomebrewDeity,
   getHomebrewFeat,
   getHomebrewItem,
+  getHomebrewMonster,
   getHomebrewOptionalFeature,
   getHomebrewRace,
   getHomebrewSkill,
@@ -47,6 +49,7 @@ import {
   insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewMonster,
   insertHomebrewOptionalFeature,
   insertHomebrewRace,
   insertHomebrewSkill,
@@ -133,6 +136,7 @@ const KINDS: Record<Collection, Kind> = {
     insertHomebrewBackground,
   ),
   feats: named("feat", homebrewFeats, getHomebrewFeat, insertHomebrewFeat),
+  monsters: named("monster", homebrewMonsters, getHomebrewMonster, insertHomebrewMonster),
   skills: {
     ...named("skill", homebrewSkills, getHomebrewSkill, insertHomebrewSkill),
     blocked: (_db, dataDir, input: { name: string; edition: NonNullable<Row["edition"]> }) => {

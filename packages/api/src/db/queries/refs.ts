@@ -21,6 +21,7 @@ import {
   homebrewClasses,
   homebrewFeats,
   homebrewItems,
+  homebrewMonsters,
   homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
@@ -257,7 +258,7 @@ function unhash(key: string): { name: string; source: string } | undefined {
 }
 
 /** `json` is the row's entry, parsed: `rowEntries` reads its prose from it. */
-type RowJson = { entries?: unknown; entriesHigherLevel?: unknown };
+type RowJson = { entries?: unknown; entriesHigherLevel?: unknown; [field: string]: unknown };
 
 export type ResolvedRow = { name: string; source: string; json: RowJson; path?: string };
 
@@ -337,6 +338,7 @@ const HOMEBREW: Record<string, { collection: string; table: NamedHomebrewTable }
   race: { collection: "races", table: homebrewRaces },
   background: { collection: "backgrounds", table: homebrewBackgrounds },
   feat: { collection: "feats", table: homebrewFeats },
+  creature: { collection: "monsters", table: homebrewMonsters },
   class: { collection: "classes", table: homebrewClasses },
 };
 

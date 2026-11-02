@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { homebrewMonsterInputSchema } from "@dnd/catalog";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishSearchFixture, publishSpellLists } from "../db/queries/contentFixture.ts";
 import {
@@ -9,11 +10,13 @@ import {
   insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewMonster,
   insertHomebrewOptionalFeature,
   insertHomebrewRace,
   insertHomebrewSpell,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
+import { emberImp } from "./homebrewFixtures.ts";
 import { searchRoutes } from "./search.ts";
 
 const FIREBALL = {
@@ -80,6 +83,43 @@ describe("searchRoutes", () => {
     expect(items).toEqual([
       { type: "deity", id: "d", name: "Vael", qualifier: "Ashen", edition: null },
     ]);
+  });
+
+  it("lists a homebrew monster beside the catalog's, filtered as the catalog is", async () => {
+    insertHomebrewMonster(
+      opened.homebrewDb,
+      "m",
+      homebrewMonsterInputSchema.parse(emberImp({ name: "Elemental Imp" })),
+    );
+    insertHomebrewMonster(
+      opened.homebrewDb,
+      "n",
+      homebrewMonsterInputSchema.parse(emberImp({ name: "Elemental Imp", edition: "classic" })),
+    );
+
+    const both = await (await routes.request("/search?type=monster&q=elemental")).json();
+    expect(both.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: "monster", name: "Fire Elemental", source: "MM" }),
+        { type: "monster", id: "m", name: "Elemental Imp", edition: "one" },
+        { type: "monster", id: "n", name: "Elemental Imp", edition: "classic" },
+      ]),
+    );
+    expect(both.total).toBe(3);
+
+    const one = await (await routes.request("/search?type=monster&q=elemental&edition=one")).json();
+    expect(one.items).toContainEqual(expect.objectContaining({ id: "m" }));
+    expect(one.items).not.toContainEqual(expect.objectContaining({ id: "n" }));
+
+    const hidden = await (
+      await routes.request("/search?type=monster&q=elemental&exclude=HB")
+    ).json();
+    expect(hidden.items.map((hit: { name: string }) => hit.name)).toEqual(["Fire Elemental"]);
+
+    const onlyHb = await (
+      await routes.request("/search?type=monster&source=HB&q=elemental")
+    ).json();
+    expect(onlyHb.total).toBe(2);
   });
 
   it("lists a homebrew optional feature beside the catalog's, narrowed by feature type", async () => {
