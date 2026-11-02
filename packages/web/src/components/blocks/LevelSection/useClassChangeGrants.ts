@@ -178,6 +178,7 @@ export function useClassChangeGrants(
   const {
     raceRow,
     subraces,
+    homebrew: homebrewRaces,
     json: raceJson,
     read: raceRead,
   } = useRaceRows(swapping ? race : undefined, subrace, edition);
@@ -237,6 +238,7 @@ export function useClassChangeGrants(
     next,
     raceRow,
     subraces,
+    homebrewRaces,
     backgrounds,
     names,
     tools,

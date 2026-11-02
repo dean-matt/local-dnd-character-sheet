@@ -35,6 +35,7 @@ export function useRaceRows(
     raceRow,
     subraces,
     subraceRow,
+    homebrew,
     name: catalogRace?.name ?? homebrewRow?.name,
     read:
       homebrewId !== undefined

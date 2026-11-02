@@ -29,8 +29,14 @@ const page = (items: object[]) => ({ items, total: items.length });
 /** A class's table at `level`: its resources and the slots it holds at each spell level. */
 const casterGrants = (level: number, resources: Record<string, string>, slots: number[]) => ({
   level,
-  resources: Object.entries(resources).map(([resourceKey, value]) => ({ resourceKey, value })),
-  spellSlots: slots.map((count, index) => ({ slotLevel: index + 1, slots: count })),
+  resources: Object.entries(resources).map(([resourceKey, value]) => ({
+    resourceKey,
+    value,
+  })),
+  spellSlots: slots.map((count, index) => ({
+    slotLevel: index + 1,
+    slots: count,
+  })),
   optionalFeatures: [],
   features: [],
 });
@@ -75,7 +81,11 @@ const entryRow = (ref: { name: string; source: string }, hitDie: number, json: o
 });
 
 const SEARCH: Record<string, object[]> = {
-  class: [ROGUE, PALADIN, BARD, WARLOCK].map((ref) => ({ type: "class", ...ref, edition: "one" })),
+  class: [ROGUE, PALADIN, BARD, WARLOCK].map((ref) => ({
+    type: "class",
+    ...ref,
+    edition: "one",
+  })),
   item: ["Lute", "Flute"].map((name) => ({
     type: "item",
     ...XPHB(name),
@@ -113,7 +123,12 @@ const ROWS: Record<string, unknown> = {
     edition: "one",
     json: { ...XPHB("Half-Elf"), weaponProficiencies: [{ simple: true }] },
   },
-  "/api/classes/Fighter/XPHB": { ...FIGHTER, edition: "one", hitDie: 10, json: FIGHTER },
+  "/api/classes/Fighter/XPHB": {
+    ...FIGHTER,
+    edition: "one",
+    hitDie: 10,
+    json: FIGHTER,
+  },
   "/api/classes/Fighter/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Fighter/XPHB/at/1": grants(1, 0, [feature("Second Wind", 1)]),
   "/api/classes/Fighter/XPHB/at/2": grants(2, 0, [feature("Action Surge", 2)]),
@@ -130,7 +145,10 @@ const ROWS: Record<string, unknown> = {
         weapons: ["simple", "martial"],
       },
       classFeatures: [
-        { classFeature: "Warlock Subclass|Warlock|XPHB|3", gainSubclassFeature: true },
+        {
+          classFeature: "Warlock Subclass|Warlock|XPHB|3",
+          gainSubclassFeature: true,
+        },
       ],
     },
   },
@@ -226,7 +244,12 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Bard/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Bard/XPHB/at/1": grants(1, 0, [feature("Bardic Inspiration", 1)]),
   "/api/classes/Paladin/XPHB/at/1": grants(1, 0, [feature("Lay On Hands", 1)]),
-  "/api/classes/Sorcerer/PHB": { ...SORCERER, edition: "classic", hitDie: 6, json: SORCERER },
+  "/api/classes/Sorcerer/PHB": {
+    ...SORCERER,
+    edition: "classic",
+    hitDie: 6,
+    json: SORCERER,
+  },
   "/api/classes/Sorcerer/PHB/subclasses?edition=classic&limit=200": page([]),
   "/api/classes/Sorcerer/PHB/at/3": casterGrants(
     3,
@@ -251,7 +274,10 @@ const ROWS: Record<string, unknown> = {
       ...KNIGHT_FIGHTER,
       multiclassing: { requirements: { str: 13 } },
       classFeatures: [
-        { classFeature: "Martial Archetype|Fighter|PHB|3", gainSubclassFeature: true },
+        {
+          classFeature: "Martial Archetype|Fighter|PHB|3",
+          gainSubclassFeature: true,
+        },
       ],
     },
   },
@@ -262,7 +288,9 @@ const ROWS: Record<string, unknown> = {
     fighterSubclass("Lorekeeper", "Lorekeeper", {
       additionalSpells: [
         {
-          known: { "3": [{ choose: "level=0|class=Wizard" }, { choose: "level=0|class=Wizard" }] },
+          known: {
+            "3": [{ choose: "level=0|class=Wizard" }, { choose: "level=0|class=Wizard" }],
+          },
         },
       ],
     }),
@@ -319,7 +347,12 @@ const ROWS: Record<string, unknown> = {
     ...casterGrants(3, {}, []),
     optionalFeatures: [{ featureType: "MV:B", known: 3 }],
   },
-  "/api/classes/Cleric/XPHB": { ...CLERIC, edition: "one", hitDie: 8, json: CLERIC },
+  "/api/classes/Cleric/XPHB": {
+    ...CLERIC,
+    edition: "one",
+    hitDie: 8,
+    json: CLERIC,
+  },
   "/api/classes/Cleric/XPHB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Cleric/XPHB/at/1": casterGrants(
     1,
@@ -331,7 +364,12 @@ const ROWS: Record<string, unknown> = {
     { cantrips_known: "3", prepared_spells: "5" },
     [3],
   ),
-  "/api/classes/Wizard/PHB": { ...WIZARD, edition: "classic", hitDie: 6, json: WIZARD },
+  "/api/classes/Wizard/PHB": {
+    ...WIZARD,
+    edition: "classic",
+    hitDie: 6,
+    json: WIZARD,
+  },
   "/api/classes/Wizard/PHB/subclasses?edition=classic&limit=200": page([]),
   "/api/classes/Wizard/PHB/at/3": casterGrants(3, { cantrips_known: "3" }, [4, 2]),
   "/api/classes/Wizard/PHB/at/4": casterGrants(4, { cantrips_known: "3" }, [4, 3]),
@@ -354,7 +392,11 @@ const ROWS: Record<string, unknown> = {
   ),
   "/api/feats?edition=classic&limit=200": page([]),
   "/api/feats?edition=one&limit=200": page([
-    { ...XPHB("Alert"), edition: "one", json: { ...XPHB("Alert"), category: "G" } },
+    {
+      ...XPHB("Alert"),
+      edition: "one",
+      json: { ...XPHB("Alert"), category: "G" },
+    },
   ]),
 };
 
@@ -390,7 +432,10 @@ function sorcerer(count: number): CharacterRecord {
 }
 
 function Seeded({ id, history }: { id: string; history: boolean }) {
-  const { data } = useQuery<CharacterRecord>({ queryKey: characterKey(id), queryFn: skipToken });
+  const { data } = useQuery<CharacterRecord>({
+    queryKey: characterKey(id),
+    queryFn: skipToken,
+  });
   if (!data) return null;
   return (
     <>
@@ -442,7 +487,12 @@ function searchResponse(path: string) {
       ? Object.entries(SPELLS)
           .filter(([, { level }]) => level >= Number(params.get("minLevel")))
           .filter(([, { level }]) => level <= Number(params.get("maxLevel")))
-          .map(([name]) => ({ type: "spell", name, source: "PHB", edition: "classic" }))
+          .map(([name]) => ({
+            type: "spell",
+            name,
+            source: "PHB",
+            edition: "classic",
+          }))
       : (SEARCH[type] ?? []);
   return new Response(JSON.stringify({ ...page(items), limit: 200, offset: 0 }));
 }
@@ -455,7 +505,9 @@ function renderSeeded(character: CharacterRecord, { history = false } = {}) {
   writes = vi.fn(async (_url: string, init: RequestInit) => {
     const since = new Headers(init.headers).get("If-Unmodified-Since");
     if (since !== null && Date.parse(server.updatedAt) > Date.parse(since))
-      return new Response(JSON.stringify({ error: "The character changed" }), { status: 412 });
+      return new Response(JSON.stringify({ error: "The character changed" }), {
+        status: 412,
+      });
     server = { ...server, definition: JSON.parse(String(init.body)) };
     return new Response(JSON.stringify(server));
   });
@@ -471,7 +523,9 @@ function renderSeeded(character: CharacterRecord, { history = false } = {}) {
         : new Response(JSON.stringify({ error: "offline" }), { status: 500 });
     if (path in ROWS) return new Response(JSON.stringify(ROWS[path]));
     if (path.startsWith("/api/search?")) return searchResponse(path);
-    return new Response(JSON.stringify({ error: `unstubbed ${path}` }), { status: 404 });
+    return new Response(JSON.stringify({ error: `unstubbed ${path}` }), {
+      status: 404,
+    });
   });
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -573,7 +627,10 @@ describe("LevelUp", () => {
     expect(await within(dialog()).findByText(/Dark One's Blessing/)).toBeVisible();
     fireEvent.click(applyButton());
     await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
-    expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, subclass: XPHB("Fiend Patron") });
+    expect(sent().levels.at(-1)).toEqual({
+      class: WARLOCK,
+      subclass: XPHB("Fiend Patron"),
+    });
   });
 
   it("asks for the improvement and each feature's option the level brings", async () => {
@@ -605,7 +662,12 @@ describe("LevelUp", () => {
     });
     expect(sent().featureChoices).toEqual([
       {
-        feature: { className: "Warlock", classSource: "XPHB", ...XPHB("Pact Choice"), level: 4 },
+        feature: {
+          className: "Warlock",
+          classSource: "XPHB",
+          ...XPHB("Pact Choice"),
+          level: 4,
+        },
         options: [XPHB("Pact of the Tome")],
       },
     ]);
@@ -615,7 +677,10 @@ describe("LevelUp", () => {
     const base = warlock(3);
     renderSeeded({
       ...base,
-      definition: { ...base.definition, levels: [{ class: FIGHTER }, ...base.definition.levels] },
+      definition: {
+        ...base.definition,
+        levels: [{ class: FIGHTER }, ...base.definition.levels],
+      },
     });
     await open();
     fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d8)" }));
@@ -652,9 +717,11 @@ describe("LevelUp", () => {
       "aria-pressed",
       "true",
     );
-    expect(within(dialog()).getByRole("spinbutton", { name: "Rolled value, 1 to 8" })).toHaveValue(
-      6,
-    );
+    expect(
+      within(dialog()).getByRole("spinbutton", {
+        name: "Rolled value, 1 to 8",
+      }),
+    ).toHaveValue(6);
     await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
   });
 
@@ -679,7 +746,9 @@ describe("LevelUp", () => {
     renderSeeded(warlock(1));
     await open();
     fireEvent.click(within(dialog()).getByRole("button", { name: "Custom" }));
-    const face = within(dialog()).getByRole("spinbutton", { name: "Rolled value, 1 to 8" });
+    const face = within(dialog()).getByRole("spinbutton", {
+      name: "Rolled value, 1 to 8",
+    });
 
     fireEvent.change(face, { target: { value: "9" } });
     expect(face).toHaveAccessibleDescription("Type a whole number from 1 to 8.");
@@ -688,7 +757,11 @@ describe("LevelUp", () => {
     fireEvent.change(face, { target: { value: "7" } });
     fireEvent.click(applyButton());
     await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
-    expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, rolled: 7, typed: true });
+    expect(sent().levels.at(-1)).toEqual({
+      class: WARLOCK,
+      rolled: 7,
+      typed: true,
+    });
   });
 
   it("asks for a subclass a class passed its subclass level without", async () => {
@@ -707,7 +780,10 @@ describe("LevelUp", () => {
     choose("Fiend Gift", "Hellfire");
     fireEvent.click(applyButton());
     await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
-    expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, subclass: XPHB("Fiend Patron") });
+    expect(sent().levels.at(-1)).toEqual({
+      class: WARLOCK,
+      subclass: XPHB("Fiend Patron"),
+    });
     expect(sent().featureChoices).toContainEqual({
       feature: {
         className: "Warlock",
@@ -798,7 +874,9 @@ describe("LevelUp", () => {
       expect(
         within(dialog()).getByText("Multiclassing into Rogue grants: Light, Thieves' Tools"),
       ).toBeVisible();
-      const skills = await within(dialog()).findByRole("group", { name: "Skill from Rogue" });
+      const skills = await within(dialog()).findByRole("group", {
+        name: "Skill from Rogue",
+      });
       expect(
         within(skills)
           .getAllByRole("checkbox")
@@ -851,7 +929,9 @@ describe("LevelUp", () => {
       renderSeeded(warlock(1));
       await open();
       await multiclassInto("Rogue");
-      const skills = await within(dialog()).findByRole("group", { name: "Skill from Rogue" });
+      const skills = await within(dialog()).findByRole("group", {
+        name: "Skill from Rogue",
+      });
       fireEvent.click(within(skills).getByRole("checkbox", { name: "Stealth" }));
 
       choose("Class", "Warlock 1 → 2");
@@ -868,7 +948,9 @@ describe("LevelUp", () => {
       renderSeeded(warlock(1));
       await open();
       await multiclassInto("Bard");
-      const instruments = await within(dialog()).findByRole("group", { name: "Tool from Bard" });
+      const instruments = await within(dialog()).findByRole("group", {
+        name: "Tool from Bard",
+      });
       await within(instruments).findByRole("checkbox", { name: "Lute" });
       fireEvent.click(within(dialog()).getByRole("checkbox", { name: "Acrobatics" }));
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
@@ -899,7 +981,9 @@ describe("LevelUp", () => {
       renderSeeded(sorcerer(3));
       await open();
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (4)" }));
-      const cantrips = await within(dialog()).findByRole("region", { name: "New cantrips" });
+      const cantrips = await within(dialog()).findByRole("region", {
+        name: "New cantrips",
+      });
       expect(cantrips).toHaveTextContent("Choose 1 — 0 selected");
       expect(within(dialog()).getByRole("region", { name: "New spells" })).toHaveTextContent(
         "Choose 1 — 0 selected",
@@ -910,7 +994,9 @@ describe("LevelUp", () => {
       expect(applyButton()).toHaveAttribute("aria-disabled", "true");
 
       fireEvent.focus(within(dialog()).getByRole("combobox", { name: "Add a spell" }));
-      const list = await within(dialog()).findByRole("listbox", { name: "Add a spell" });
+      const list = await within(dialog()).findByRole("listbox", {
+        name: "Add a spell",
+      });
       await waitFor(() =>
         expect(within(list).getByRole("option", { name: /Shield/ })).toHaveTextContent(
           "Known already",
@@ -1030,7 +1116,9 @@ describe("LevelUp", () => {
       });
       expect(picks).toHaveTextContent("Choose 2 — 0 selected");
       expect(
-        within(dialog()).queryByRole("region", { name: "Cantrips from Loresinger" }),
+        within(dialog()).queryByRole("region", {
+          name: "Cantrips from Loresinger",
+        }),
       ).toBeNull();
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
 
@@ -1075,12 +1163,18 @@ describe("LevelUp", () => {
       });
       await open();
       choose("Fighter subclass", "Halfsinger");
-      const picks = await within(dialog()).findByRole("region", { name: "Spells from Halfsinger" });
+      const picks = await within(dialog()).findByRole("region", {
+        name: "Spells from Halfsinger",
+      });
       await pickSpell("Add a spell", "Prestidigitation");
-      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({ minLevel: "0" });
+      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({
+        minLevel: "0",
+      });
       await waitFor(() => expect(picks).toHaveTextContent("Choose 2 — 1 selected"));
       await pickSpell("Add a spell", "Magic Missile");
-      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({ minLevel: "1" });
+      expect(Object.fromEntries(spellSearches.at(-1) ?? [])).toMatchObject({
+        minLevel: "1",
+      });
     });
 
     it("shows a cantrip past the picks that admit one among the spells, and holds Apply", async () => {
@@ -1101,7 +1195,9 @@ describe("LevelUp", () => {
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
       for (const cantrip of ["Fire Bolt", "Prestidigitation", "Light"]) {
         await pickSpell("Add a cantrip", cantrip);
-        await within(dialog()).findByRole("button", { name: `Remove ${cantrip}` });
+        await within(dialog()).findByRole("button", {
+          name: `Remove ${cantrip}`,
+        });
       }
       await waitFor(() => expect(spells).toHaveTextContent("Choose 2 — 2 selected"));
       expect(within(spells).getByRole("button", { name: "Remove Light" })).toBeVisible();
@@ -1123,7 +1219,9 @@ describe("LevelUp", () => {
       });
       await open();
       choose("Fighter subclass", "Eldritch Knight");
-      const cantrips = await within(dialog()).findByRole("region", { name: "New cantrips" });
+      const cantrips = await within(dialog()).findByRole("region", {
+        name: "New cantrips",
+      });
       expect(cantrips).toHaveTextContent("Choose 2 — 0 selected");
       expect(within(dialog()).getByRole("region", { name: "New spells" })).toHaveTextContent(
         "Choose 3 — 0 selected",
@@ -1196,14 +1294,18 @@ describe("LevelUp", () => {
       });
       await open();
       choose("Fighter subclass", "Battle Master");
-      await within(dialog()).findByRole("region", { name: "New Maneuver (Battle Master)" });
+      await within(dialog()).findByRole("region", {
+        name: "New Maneuver (Battle Master)",
+      });
       await pickSpell("Add a maneuver", "Parry");
       await within(dialog()).findByRole("button", { name: "Remove Parry" });
 
       choose("Fighter subclass", "Champion");
       await waitFor(() =>
         expect(
-          within(dialog()).queryByRole("region", { name: "New Maneuver (Battle Master)" }),
+          within(dialog()).queryByRole("region", {
+            name: "New Maneuver (Battle Master)",
+          }),
         ).toBeNull(),
       );
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
@@ -1216,7 +1318,10 @@ describe("LevelUp", () => {
       const base = sorcerer(3);
       renderSeeded({
         ...base,
-        definition: { ...base.definition, levels: [{ class: FIGHTER }, ...base.definition.levels] },
+        definition: {
+          ...base.definition,
+          levels: [{ class: FIGHTER }, ...base.definition.levels],
+        },
       });
       await open();
       await within(dialog()).findByRole("region", { name: "New cantrips" });
@@ -1256,7 +1361,9 @@ describe("LevelUp", () => {
         expect(applyButton()).toHaveAttribute("aria-disabled", "true");
 
         await pickSpell("Add a spell", "Magic Missile");
-        await within(dialog()).findByRole("button", { name: "Remove Magic Missile" });
+        await within(dialog()).findByRole("button", {
+          name: "Remove Magic Missile",
+        });
         expect(applyButton()).toHaveAttribute("aria-disabled", "true");
         await pickSpell("Add a spell", "Mage Armor");
         await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
@@ -1294,22 +1401,31 @@ describe("LevelUp", () => {
       await open();
       choose("Class", "Wizard 3 → 4");
       fireEvent.click(await within(dialog()).findByRole("button", { name: "Average (4)" }));
-      await within(dialog()).findByRole("region", { name: "Spells for your spellbook" });
+      await within(dialog()).findByRole("region", {
+        name: "Spells for your spellbook",
+      });
       await pickSpell("Add a spell", "Magic Missile");
-      await within(dialog()).findByRole("button", { name: "Remove Magic Missile" });
+      await within(dialog()).findByRole("button", {
+        name: "Remove Magic Missile",
+      });
       await pickSpell("Add a spell", "Mage Armor");
       await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
 
       choose("Class", "Fighter 1 → 2");
       fireEvent.click(await within(dialog()).findByRole("button", { name: "Average (6)" }));
       expect(
-        within(dialog()).queryByRole("region", { name: "Spells for your spellbook" }),
+        within(dialog()).queryByRole("region", {
+          name: "Spells for your spellbook",
+        }),
       ).toBeNull();
     });
 
     it("asks a class that prepares its spells for none", async () => {
       const base = warlock(1);
-      renderSeeded({ ...base, definition: { ...base.definition, levels: [{ class: CLERIC }] } });
+      renderSeeded({
+        ...base,
+        definition: { ...base.definition, levels: [{ class: CLERIC }] },
+      });
       await open();
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
       await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
@@ -1329,7 +1445,9 @@ describe("LevelUp", () => {
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       fireEvent.click(await within(dialog()).findByRole("button", { name: "Done" }));
       fireEvent.click(
-        await within(history()).findByRole("button", { name: `Edit level ${level}` }),
+        await within(history()).findByRole("button", {
+          name: `Edit level ${level}`,
+        }),
       );
       fireEvent.click(within(dialog()).getByRole("button", { name: `Remove level ${level}` }));
       fireEvent.click(within(dialog()).getByRole("button", { name: `Remove ${named}` }));
@@ -1374,7 +1492,9 @@ describe("LevelUp", () => {
       renderSeeded({ ...base, definition: before }, { history: true });
       await open();
       choose("Fighter subclass", "Battle Master");
-      await within(dialog()).findByRole("region", { name: "New Maneuver (Battle Master)" });
+      await within(dialog()).findByRole("region", {
+        name: "New Maneuver (Battle Master)",
+      });
       fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
       for (const name of ["Parry", "Riposte", "Feint"]) {
         await pickSpell("Add a maneuver", name);
@@ -1394,7 +1514,9 @@ describe("LevelUp", () => {
       await pickSpell("Add a cantrip", "Fire Bolt");
       await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" });
       await pickSpell("Add a spell", "Misty Step");
-      await within(dialog()).findByRole("button", { name: "Remove Misty Step" });
+      await within(dialog()).findByRole("button", {
+        name: "Remove Misty Step",
+      });
       await applyThenRemove(4, "level 4 (Sorcerer 4)");
 
       expect(sent()).toEqual(before.definition);
@@ -1469,16 +1591,22 @@ describe("LevelUp", () => {
 
     async function reopen(level: number) {
       fireEvent.click(
-        await within(history()).findByRole("button", { name: `Edit level ${level}` }),
+        await within(history()).findByRole("button", {
+          name: `Edit level ${level}`,
+        }),
       );
-      await within(dialog()).findByRole("heading", { name: `Edit level ${level}` });
+      await within(dialog()).findByRole("heading", {
+        name: `Edit level ${level}`,
+      });
     }
 
     it("swaps a spell an earlier level picked, as one write and one undo entry", async () => {
       const character = sorcererOfFive();
       renderSeeded(character, { history: true });
       await reopen(4);
-      const spells = await within(dialog()).findByRole("region", { name: "New spells" });
+      const spells = await within(dialog()).findByRole("region", {
+        name: "New spells",
+      });
       await within(spells).findByRole("button", { name: "Remove Misty Step" });
       expect(within(dialog()).getByRole("region", { name: "New cantrips" })).toHaveTextContent(
         "Choose 1 — 1 selected",
@@ -1487,7 +1615,9 @@ describe("LevelUp", () => {
       fireEvent.click(within(spells).getByRole("button", { name: "Remove Misty Step" }));
       await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "true"));
       await pickSpell("Add a spell", "Burning Hands");
-      await within(spells).findByRole("button", { name: "Remove Burning Hands" });
+      await within(spells).findByRole("button", {
+        name: "Remove Burning Hands",
+      });
       await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(applyChanges());
 
@@ -1509,7 +1639,11 @@ describe("LevelUp", () => {
       const character = sorcererOfFive();
       renderSeeded(character, { history: true });
       await reopen(4);
-      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      fireEvent.click(
+        await within(dialog()).findByRole("button", {
+          name: "Remove Misty Step",
+        }),
+      );
       await pickSpell("Add a spell", "Burning Hands");
       fireEvent.click(within(dialog()).getByRole("button", { name: "Roll (d6)" }));
       expect(within(dialog()).getByText("Rolled 5 on the d6")).toBeInTheDocument();
@@ -1526,7 +1660,11 @@ describe("LevelUp", () => {
     it("refuses to drop a prepared spell, naming it, and writes nothing on Cancel", async () => {
       renderSeeded(sorcererOfFive({ prepared: true }), { history: true });
       await reopen(4);
-      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      fireEvent.click(
+        await within(dialog()).findByRole("button", {
+          name: "Remove Misty Step",
+        }),
+      );
       await pickSpell("Add a spell", "Burning Hands");
 
       expect(
@@ -1541,7 +1679,11 @@ describe("LevelUp", () => {
       const character = sorcererOfFive();
       const spells = character.definition.spells.map((spell) =>
         "name" in spell.ref && spell.ref.name === "Misty Step"
-          ? { ref: { name: "Burning Hands", source: "PHB" }, prepared: false, origin: SORCERER }
+          ? {
+              ref: { name: "Burning Hands", source: "PHB" },
+              prepared: false,
+              origin: SORCERER,
+            }
           : spell,
       );
       renderSeeded(
@@ -1550,7 +1692,11 @@ describe("LevelUp", () => {
       );
       await reopen(4);
       expect(within(dialog()).queryByRole("region", { name: "New spells" })).toBeNull();
-      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Fire Bolt" }));
+      fireEvent.click(
+        await within(dialog()).findByRole("button", {
+          name: "Remove Fire Bolt",
+        }),
+      );
       await pickSpell("Add a cantrip", "Light");
       await within(dialog()).findByRole("button", { name: "Remove Light" });
       await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
@@ -1558,7 +1704,10 @@ describe("LevelUp", () => {
 
       await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
       expect(sent().spells.map((spell) => spell.ref)).toEqual(
-        ["Shield", "Burning Hands", "Fireball", "Light"].map((name) => ({ name, source: "PHB" })),
+        ["Shield", "Burning Hands", "Fireball", "Light"].map((name) => ({
+          name,
+          source: "PHB",
+        })),
       );
     });
 
@@ -1573,7 +1722,10 @@ describe("LevelUp", () => {
             levels: [
               { class: KNIGHT_FIGHTER },
               { class: KNIGHT_FIGHTER },
-              { class: KNIGHT_FIGHTER, subclass: { name: "Champion", source: "PHB" } },
+              {
+                class: KNIGHT_FIGHTER,
+                subclass: { name: "Champion", source: "PHB" },
+              },
             ],
           },
         },
@@ -1628,7 +1780,11 @@ describe("LevelUp", () => {
         { history: true },
       );
       await reopen(4);
-      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      fireEvent.click(
+        await within(dialog()).findByRole("button", {
+          name: "Remove Misty Step",
+        }),
+      );
       await pickSpell("Add a spell", "Burning Hands");
       const note = "Multiclassing in or out of Fighter needs Strength 13.";
       expect(await within(dialog()).findByText(note)).toBeVisible();
@@ -1643,7 +1799,11 @@ describe("LevelUp", () => {
       renderSeeded(sorcererOfFive(), { history: true });
       await reopen(4);
       editElsewhere({ experience: 9000 });
-      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      fireEvent.click(
+        await within(dialog()).findByRole("button", {
+          name: "Remove Misty Step",
+        }),
+      );
       await pickSpell("Add a spell", "Burning Hands");
       await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(applyChanges());
@@ -1652,7 +1812,11 @@ describe("LevelUp", () => {
         expect(within(dialog()).queryByRole("button", { name: "Reload" })).toBeNull(),
       );
 
-      fireEvent.click(await within(dialog()).findByRole("button", { name: "Remove Misty Step" }));
+      fireEvent.click(
+        await within(dialog()).findByRole("button", {
+          name: "Remove Misty Step",
+        }),
+      );
       await pickSpell("Add a spell", "Burning Hands");
       await waitFor(() => expect(applyChanges()).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(applyChanges());
@@ -1706,7 +1870,11 @@ describe("LevelUp", () => {
     });
 
     it("re-offers a subclass's spell picks as its own, and holds Apply until one changes", async () => {
-      const lore = (name: string) => ({ ...picked(name), origin: KNIGHT_FIGHTER, pickedAt: 3 });
+      const lore = (name: string) => ({
+        ...picked(name),
+        origin: KNIGHT_FIGHTER,
+        pickedAt: 3,
+      });
       const base = sorcerer(4);
       renderSeeded(
         {
@@ -1716,7 +1884,10 @@ describe("LevelUp", () => {
             levels: [
               { class: KNIGHT_FIGHTER },
               { class: KNIGHT_FIGHTER },
-              { class: KNIGHT_FIGHTER, subclass: { name: "Lorekeeper", source: "PHB" } },
+              {
+                class: KNIGHT_FIGHTER,
+                subclass: { name: "Lorekeeper", source: "PHB" },
+              },
               { class: KNIGHT_FIGHTER },
             ],
             spells: [lore("Fire Bolt"), lore("Prestidigitation")],
@@ -1735,7 +1906,11 @@ describe("LevelUp", () => {
     });
 
     it("re-offers a cantrip a subclass's cantrip-or-spell pick took as one of those picks", async () => {
-      const sung = (name: string) => ({ ...picked(name), origin: KNIGHT_FIGHTER, pickedAt: 3 });
+      const sung = (name: string) => ({
+        ...picked(name),
+        origin: KNIGHT_FIGHTER,
+        pickedAt: 3,
+      });
       const base = sorcerer(4);
       renderSeeded(
         {
@@ -1745,7 +1920,10 @@ describe("LevelUp", () => {
             levels: [
               { class: KNIGHT_FIGHTER },
               { class: KNIGHT_FIGHTER },
-              { class: KNIGHT_FIGHTER, subclass: { name: "Loresinger", source: "PHB" } },
+              {
+                class: KNIGHT_FIGHTER,
+                subclass: { name: "Loresinger", source: "PHB" },
+              },
               { class: KNIGHT_FIGHTER },
             ],
             spells: [sung("Prestidigitation"), sung("Magic Missile")],
@@ -1807,9 +1985,13 @@ describe("LevelUp", () => {
       fireEvent.click(within(dialog()).getByRole("combobox", { name: "Starting class" }));
       fireEvent.click(await within(dialog()).findByRole("option", { name: "Bard" }));
 
-      const skills = await within(dialog()).findByRole("group", { name: "Skills from Bard" });
+      const skills = await within(dialog()).findByRole("group", {
+        name: "Skills from Bard",
+      });
       await waitFor(() => expect(skills).toHaveTextContent("Choose 1 — 0 selected"));
-      const instruments = within(dialog()).getByRole("group", { name: "Tools from Bard" });
+      const instruments = within(dialog()).getByRole("group", {
+        name: "Tools from Bard",
+      });
       expect(applyChanges()).toHaveAttribute("aria-disabled", "true");
 
       fireEvent.click(within(skills).getByRole("checkbox", { name: "Stealth" }));
@@ -1840,7 +2022,10 @@ describe("LevelUp", () => {
       renderSeeded(
         warlock(2, {
           levels: [{ class: WARLOCK }, { class: PALADIN }],
-          proficiencies: { ...base.definition.proficiencies, weapons: ["Simple", "Martial"] },
+          proficiencies: {
+            ...base.definition.proficiencies,
+            weapons: ["Simple", "Martial"],
+          },
         }),
         { history: true },
       );
@@ -1908,7 +2093,9 @@ describe("LevelUp", () => {
         fireEvent.click(classField());
         fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
 
-        const skills = await within(dialog()).findByRole("group", { name: "Skills from Rogue" });
+        const skills = await within(dialog()).findByRole("group", {
+          name: "Skills from Rogue",
+        });
         expect(within(dialog()).getByRole("button", { name: "Average (5)" })).toHaveAttribute(
           "aria-pressed",
           "true",
@@ -1952,7 +2139,11 @@ describe("LevelUp", () => {
 
         await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
         expect(sent().levels).toEqual([{ class: WARLOCK }, { class: WARLOCK }]);
-        expect(sent().proficiencies).toMatchObject({ skills: [], armor: ["Light"], tools: [] });
+        expect(sent().proficiencies).toMatchObject({
+          skills: [],
+          armor: ["Light"],
+          tools: [],
+        });
       });
 
       it("keeps what a homebrew race grants when the class that also gave it goes", async () => {
@@ -1998,13 +2189,40 @@ describe("LevelUp", () => {
         });
       });
 
+      it("stops loading and says so when the homebrew races will not load", async () => {
+        renderSeeded(
+          warlock(2, {
+            race: { homebrewId: "hb_1" },
+            subrace: undefined,
+            levels: [{ class: WARLOCK }, { class: ROGUE }],
+          }),
+          { history: true },
+        );
+        const stubbed = globalThis.fetch;
+        vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) =>
+          String(url) === "/api/homebrew/races"
+            ? new Response(JSON.stringify({ error: "offline" }), {
+                status: 500,
+              })
+            : stubbed(url, init),
+        );
+        await reopen(2);
+        fireEvent.click(classField());
+        fireEvent.click(await within(dialog()).findByRole("option", { name: "Warlock" }));
+        expect(
+          await within(dialog()).findByText(/Couldn't read what the starting classes/),
+        ).toBeVisible();
+      });
+
       it("judges the new die and notes an unmet prerequisite without refusing", async () => {
         renderSeeded(warlock(2), { history: true });
         await reopen(2);
         fireEvent.click(classField());
         fireEvent.click(await within(dialog()).findByRole("option", { name: "Paladin" }));
         fireEvent.change(
-          await within(dialog()).findByRole("spinbutton", { name: "Level 2 typed gain" }),
+          await within(dialog()).findByRole("spinbutton", {
+            name: "Level 2 typed gain",
+          }),
           { target: { value: "9" } },
         );
         expect(
@@ -2027,13 +2245,20 @@ describe("LevelUp", () => {
       });
 
       it("keeps the stored level when the class goes back to the one it held", async () => {
-        renderSeeded(warlock(2, { levels: [{ class: WARLOCK }, { class: WARLOCK, rolled: 6 }] }), {
-          history: true,
-        });
+        renderSeeded(
+          warlock(2, {
+            levels: [{ class: WARLOCK }, { class: WARLOCK, rolled: 6 }],
+          }),
+          {
+            history: true,
+          },
+        );
         await reopen(2);
         fireEvent.click(classField());
         fireEvent.click(await within(dialog()).findByRole("option", { name: "Rogue" }));
-        await within(dialog()).findByRole("group", { name: "Skills from Rogue" });
+        await within(dialog()).findByRole("group", {
+          name: "Skills from Rogue",
+        });
         fireEvent.click(classField());
         fireEvent.click(await within(dialog()).findByRole("option", { name: "Warlock" }));
 
