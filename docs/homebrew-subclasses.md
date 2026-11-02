@@ -28,3 +28,9 @@ because a tag carries no class.
 
 `/homebrew/subclasses` joins revert and restore. A restore is refused with a 409 when the
 subclass's homebrew class has since been deleted.
+
+## Editor
+
+The Homebrew page edits a subclass step by step or as JSON. `parent` rides in the entry as
+the input names it. The Rules select picks the edition and the parent list holds that
+edition's classes only, so changing the edition clears the parent.

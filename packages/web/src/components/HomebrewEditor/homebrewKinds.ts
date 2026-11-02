@@ -38,6 +38,7 @@ import {
   RACE_STARTERS,
   SKILL_STARTERS,
   SPELL_STARTERS,
+  SUBCLASS_STARTERS,
 } from "../../lib/homebrewStarters.ts";
 import { BackgroundAbilityScores } from "./BackgroundAbilityScores.tsx";
 import { BackgroundEquipment } from "./BackgroundEquipment.tsx";
@@ -61,6 +62,7 @@ import { itemFacts, spellFacts } from "./homebrewFacts.ts";
 import { homebrewFeatFormSchema } from "./homebrewFeatChecks.ts";
 import { homebrewItemFormSchema } from "./homebrewItemChecks.ts";
 import { homebrewRaceFormSchema } from "./homebrewRaceChecks.ts";
+import { homebrewSubclassFormSchema } from "./homebrewSubclassChecks.ts";
 import { isVersatile, itemGroup } from "./homebrewVocabulary.ts";
 import { ItemBasics } from "./ItemBasics.tsx";
 import { ItemCombat } from "./ItemCombat.tsx";
@@ -79,6 +81,7 @@ import { SkillBasics } from "./SkillBasics.tsx";
 import { SpellBasics } from "./SpellBasics.tsx";
 import { SpellCasting } from "./SpellCasting.tsx";
 import { SpellEffect } from "./SpellEffect.tsx";
+import { SubclassBasics } from "./SubclassBasics.tsx";
 import { withUpcastNameFor } from "./spellUpcast.ts";
 
 /** What every kind's input schema accepts, whichever kind it is. */
@@ -367,6 +370,20 @@ const skill: EditingKind<z.infer<typeof homebrewSkillInputSchema>> = {
   shownKeys: () => ["name", "ability", "entries"],
 };
 
+const subclass: EditingKind<z.infer<typeof homebrewSubclassFormSchema>> = {
+  inputSchema: homebrewSubclassFormSchema,
+  facts: () => [],
+  entries: rowEntries,
+  starters: SUBCLASS_STARTERS,
+  sections: [
+    { title: "Basics", Fields: SubclassBasics, keys: ["name", "parent"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+  ],
+  // A parent class belongs to one edition, so the next edition's list does not hold it.
+  forEdition: ({ parent: _parent, ...rest }) => rest,
+  shownKeys: () => ["name", "parent", "entries"],
+};
+
 /** How the editor edits each kind; `LISTING_KINDS` holds how a list names it. */
 export const EDITING_KINDS: Record<HomebrewCollection, EditingKind> = {
   items: item,
@@ -376,6 +393,7 @@ export const EDITING_KINDS: Record<HomebrewCollection, EditingKind> = {
   backgrounds: background,
   feats: feat,
   skills: skill,
+  subclasses: subclass,
 };
 
 /** How many sections a step sets side by side, which the wide modal holds two of. */

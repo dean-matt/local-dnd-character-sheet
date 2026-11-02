@@ -71,6 +71,8 @@ function sideRoute(
   if (holders && /^\/api\/homebrew\/skills\/[^/]+\/holders$/.test(url)) {
     return json(holders.status, holders.body);
   }
+  const catalog = /^\/api\/classes\?edition=(\w+)&limit=200$/.exec(url);
+  if (catalog) return json(200, { items: lists[`catalog ${catalog[1]}`] ?? [] });
   if (!/^\/api\/homebrew\/classes\/[^/]+\/features$/.test(url)) return undefined;
   if (method === "GET") return json(200, lists[url] ?? []);
   return method === "PUT" ? json(200, JSON.parse(String(body))) : undefined;
@@ -3263,5 +3265,176 @@ describe("Homebrew kind page", () => {
         ]),
       );
     });
+  });
+});
+
+describe("Homebrew subclasses", () => {
+  const fighter = {
+    name: "Fighter",
+    source: "XPHB",
+    edition: "one",
+    hitDie: 10,
+    json: { name: "Fighter", source: "XPHB" },
+  };
+  const hearth = {
+    name: "Warden",
+    edition: "one",
+    hitDie: 10,
+    json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 } },
+  };
+  const stored = {
+    id: "s1",
+    name: "Hearthkeeper",
+    edition: "one",
+    className: "Fighter",
+    classSource: "XPHB",
+    json: {
+      name: "Hearthkeeper",
+      source: "HB",
+      shortName: "Hearthkeeper",
+      className: "Fighter",
+      classSource: "XPHB",
+      entries: ["Guards the fire."],
+    },
+    createdAt: CREATED_AT,
+  };
+  const lists = {
+    "catalog one": [fighter],
+    classes: [{ ...hearth, id: "c1", createdAt: CREATED_AT }],
+    subclasses: [stored],
+  };
+  const subclasses = () => screen.getByRole("region", { name: "Subclasses" });
+
+  it("lists a subclass with its parent class", async () => {
+    stubApi(lists);
+    renderPage("subclasses");
+
+    const row = await within(subclasses()).findByText("Hearthkeeper");
+    expect(row).toBeInTheDocument();
+    expect(within(subclasses()).getByText("Fighter")).toBeInTheDocument();
+  });
+
+  it("creates a subclass of a catalog class, and of a homebrew class, from the form and from JSON", async () => {
+    const fetchMock = stubApi(lists, [
+      { status: 201, body: stored },
+      { status: 201, body: stored },
+    ]);
+    renderPage("subclasses");
+
+    fireEvent.click(within(subclasses()).getByRole("button", { name: "Add subclass" }));
+    await settled();
+    pick("Parent class", "Fighter (XPHB)");
+    click("Save");
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    fireEvent.click(within(subclasses()).getByRole("button", { name: "Add subclass" }));
+    await settled();
+    mode("JSON");
+    expect(jsonText("Subclass JSON")).not.toContain("parent");
+    typeJson(
+      "Subclass JSON",
+      JSON.stringify({ name: "Hearthkeeper", parent: { classId: "c1" }, entries: ["Fire."] }),
+    );
+    mode("Step by step");
+    expect(field("combobox", "Parent class")).toHaveTextContent("Warden (Homebrew)");
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(2));
+    const [catalog, homebrew] = writesOf(fetchMock);
+    expect(catalog).toMatchObject({
+      method: "POST",
+      url: "/api/homebrew/subclasses",
+      body: { parent: { name: "Fighter", source: "XPHB" }, edition: "one" },
+    });
+    expect(homebrew?.body).toMatchObject({ parent: { classId: "c1" }, edition: "one" });
+  });
+
+  it("refuses a subclass without a parent class, naming the field", async () => {
+    const fetchMock = stubApi(lists);
+    renderPage("subclasses");
+
+    fireEvent.click(within(subclasses()).getByRole("button", { name: "Add subclass" }));
+    await settled();
+    click("Save");
+
+    expect(
+      await within(editor()).findAllByText(/./, { selector: '[role="alert"]' }),
+    ).not.toHaveLength(0);
+    expect(field("combobox", "Parent class")).toHaveAttribute("aria-invalid", "true");
+    expect(writesOf(fetchMock)).toEqual([]);
+  });
+
+  it("reopens a stored subclass on its parent, and saves it without the stamped class fields", async () => {
+    const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
+    renderPage("subclasses");
+
+    fireEvent.click(await within(subclasses()).findByRole("button", { name: "Edit Hearthkeeper" }));
+    await settled();
+    expect(field("combobox", "Parent class")).toHaveTextContent("Fighter (XPHB)");
+    mode("JSON");
+    expect(JSON.parse(jsonText("Subclass JSON"))).toEqual({
+      name: "Hearthkeeper",
+      entries: ["Guards the fire."],
+      parent: { name: "Fighter", source: "XPHB" },
+    });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]).toMatchObject({
+      method: "PUT",
+      url: "/api/homebrew/subclasses/s1",
+      body: { parent: { name: "Fighter", source: "XPHB" }, edition: "one" },
+    });
+    expect(writesOf(fetchMock)[0]?.body).not.toHaveProperty("className");
+  });
+
+  it("clears the parent when the edition changes, since a class belongs to one edition", async () => {
+    stubApi(lists);
+    renderPage("subclasses");
+
+    fireEvent.click(await within(subclasses()).findByRole("button", { name: "Edit Hearthkeeper" }));
+    await settled();
+    pick("Rules", "2014");
+    expect(field("combobox", "Parent class")).not.toHaveTextContent("Fighter");
+  });
+
+  it("says why a save failed when the name is already used in the parent class", async () => {
+    stubApi(lists, [
+      {
+        status: 409,
+        body: { error: 'The homebrew subclass s1 is already named "Hearthkeeper"' },
+      },
+    ]);
+    renderPage("subclasses");
+
+    fireEvent.click(within(subclasses()).getByRole("button", { name: "Add subclass" }));
+    await settled();
+    pick("Parent class", "Fighter (XPHB)");
+    click("Save");
+
+    expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
+  });
+
+  it("deletes a subclass, and shows the reason where the API refuses", async () => {
+    const fetchMock = stubApi(lists, [
+      { status: 409, body: { error: "A character holds this subclass" } },
+      { status: 204 },
+    ]);
+    renderPage("subclasses");
+
+    fireEvent.click(
+      await within(subclasses()).findByRole("button", { name: "Delete Hearthkeeper" }),
+    );
+    const dialog = screen.getByRole("dialog", { name: "Delete Hearthkeeper?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(await within(dialog).findByText(/A character holds this subclass/)).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(writesOf(fetchMock).map(({ method, url }) => `${method} ${url}`)).toEqual([
+      "DELETE /api/homebrew/subclasses/s1",
+      "DELETE /api/homebrew/subclasses/s1",
+    ]);
   });
 });
