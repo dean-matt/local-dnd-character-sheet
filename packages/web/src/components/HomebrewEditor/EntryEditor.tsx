@@ -46,8 +46,8 @@ interface HomebrewEditorProps {
  * has no control for survives it. Leaving JSON waits until the text parses. A step holding a
  * problem holds every step after it, and each problem shows beside its field once a step or
  * a save is tried. The Preview tab, or the step past the last, shows the entry as the sheet
- * renders it, and either mode's tab returns to it at the same step. Saving replaces the whole entry; closing with changes
- * asks first.
+ * renders it, and either mode's tab returns to it at the same step. Saving replaces the
+ * whole entry; closing with changes asks first.
  */
 export function EntryEditor({
   collection,

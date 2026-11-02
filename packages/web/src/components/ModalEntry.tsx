@@ -19,7 +19,7 @@ export function ModalEntry({
   badge?: ReactNode;
   meta?: ReactNode;
   footer?: ReactNode;
-  /** The body does not scroll; `children` fill it and scroll what overflows themselves. */
+  /** The body stays fixed; `children` fill it and scroll what overflows themselves. */
   contained?: boolean;
   children: ReactNode;
 }) {
@@ -37,7 +37,9 @@ export function ModalEntry({
       </div>
       <section
         aria-labelledby={titleId}
-        // A scroll container takes focus so the keyboard can scroll it; the dialog opens with focus on the close button, outside it. Its ring sits inside the box, where the dialog does not clip it.
+        // A scroll container takes focus so the keyboard can scroll it; the dialog opens with
+        // focus on the close button, outside it. Its ring sits inside the box, where the dialog
+        // cannot clip it.
         {...(contained ? {} : { tabIndex: 0 })}
         className={`flex min-h-0 flex-1 flex-col gap-2 focus-visible:-outline-offset-2! ${contained ? "overflow-hidden" : "overflow-auto"} px-5 pt-1 text-body leading-normal ${footer ? "pb-3" : "pb-5"}`}
       >

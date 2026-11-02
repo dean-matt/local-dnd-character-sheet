@@ -17,7 +17,8 @@ const BUTTON =
 
 /**
  * What configures or acts on the character as a whole, at a fixed route Manage pages never
- * lists: its house rules, its sources, its portrait, Duplicate and Export, and Delete behind its confirmation.
+ * lists: its house rules, its sources, its portrait, Duplicate and Export, and Delete behind
+ * its confirmation.
  */
 export function CharacterSettings() {
   const { id = "" } = useParams();
