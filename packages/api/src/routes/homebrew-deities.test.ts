@@ -120,6 +120,12 @@ describe("homebrewDeitiesRoutes", () => {
       put(ashgod({ title: "Keeper of embers" })),
     );
     expect(ok.status).toBe(200);
+
+    const recased = await routes.request(
+      `/homebrew/deities/${created.id}`,
+      put(ashgod({ name: "vael", pantheon: "ASHEN" })),
+    );
+    expect(recased.status).toBe(200);
   });
 
   it("deletes an unheld deity", async () => {

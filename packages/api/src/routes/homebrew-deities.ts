@@ -180,7 +180,8 @@ export function homebrewDeitiesRoutes(db: HomebrewDb, charactersDb: CharactersDb
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
     const current = getHomebrewDeity(db, id);
-    if (current && (current.name !== input.name || current.pantheon !== input.pantheon)) {
+    const key = (d: { name: string; pantheon: string }) => `${d.name}\0${d.pantheon}`.toLowerCase();
+    if (current && key(current) !== key(input)) {
       const characters = charactersReferencingHomebrewDeity(charactersDb, current);
       if (characters.length > 0) {
         return c.json(

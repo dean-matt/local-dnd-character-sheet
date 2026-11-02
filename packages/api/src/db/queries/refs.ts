@@ -324,7 +324,9 @@ function redirector(db: Database.Database, find: Find) {
 }
 
 /**
- * The tags a homebrew row answers. A deity is found by its pantheon where the tag names one. A subclass is found by name alone, though only its class
+ * The tags a homebrew row answers.
+ * A deity is found by its pantheon where the tag names one.
+ * A subclass is found by name alone, though only its class
  * scopes the name; a subrace by its full name, `Elf (Moon)`, a race outranking it. A tag names no edition, so where both editions hold
  * the name the classic row answers, the way a sourceless catalog reference defaults to a
  * classic source. An edition on the request is the way out once a block knows its own.
