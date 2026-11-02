@@ -18,8 +18,8 @@ import {
   featRecordSchema,
   HOMEBREW_SOURCE,
   homebrewBackgroundRecordSchema,
+  homebrewClassDetailSchema,
   homebrewClassFeaturesSchema,
-  homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
   homebrewMonsterRecordSchema,
@@ -169,7 +169,7 @@ async function subclassPath(key: Params): Promise<string> {
 /** A `|` or `}` in a name would split or end its tag, so such a feature stays out of the table. */
 const TAG_BREAKERS = /[|}]/;
 
-const homebrewClassRoute = homebrew("classes", "class", homebrewClassRecordSchema, classEntries);
+const homebrewClassRoute = homebrew("classes", "class", homebrewClassDetailSchema, classEntries);
 
 /**
  * A homebrew class stores its features beside its row, so its level table is built from

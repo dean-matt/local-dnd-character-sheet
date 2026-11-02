@@ -69,3 +69,24 @@ describe("a homebrew monster's target", () => {
     expect(JSON.stringify(row?.entries)).toContain("+3 (13)");
   });
 });
+
+describe("a homebrew class's target", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("loads the detail response, which carries the class's resource tables", async () => {
+    const record = {
+      id: "c1",
+      name: "Warden",
+      edition: "one",
+      hitDie: 10,
+      json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 } },
+      createdAt: "2026-01-01T00:00:00.000Z",
+      resources: [{ name: "Wards", maximums: Array.from({ length: 20 }, () => 2) }],
+    };
+    stubFetchByUrl({ "/api/homebrew/classes/c1": record, "/api/homebrew/classes/c1/features": [] });
+
+    const match = matchCatalogTarget("/homebrew/classes/c1");
+    const row = await match?.target.load(match.key);
+    expect(row?.name).toBe("Warden");
+  });
+});

@@ -436,6 +436,7 @@ describe("CatalogDetail", () => {
         hitDie: 10,
         json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 } },
         createdAt: "2026-01-01T00:00:00.000Z",
+        resources: [],
       },
       "/api/homebrew/classes/hb-1/features": features,
     });
@@ -458,6 +459,7 @@ describe("CatalogDetail", () => {
       hitDie: 10,
       json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 } },
       createdAt: "2026-01-01T00:00:00.000Z",
+      resources: [],
     };
     stubFetchByUrl({
       "/api/homebrew/classes/hb-1": warden,
