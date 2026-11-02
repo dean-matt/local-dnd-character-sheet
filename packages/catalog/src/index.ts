@@ -37,6 +37,9 @@ export type {
   HomebrewClassFeature,
   HomebrewClassInput,
   HomebrewClassRecord,
+  HomebrewSubclass,
+  HomebrewSubclassInput,
+  HomebrewSubclassRecord,
   PreparedSpellCount,
   SubclassRecord,
 } from "./class.ts";
@@ -51,11 +54,15 @@ export {
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
   homebrewClassSchema,
+  homebrewSubclassInputSchema,
+  homebrewSubclassRecordSchema,
+  homebrewSubclassSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
   spellbookGainsSchema,
   spellcastingAbilitySchema,
   subclassLevelSchema,
+  subclassListItemSchema,
   subclassRecordSchema,
 } from "./class.ts";
 export { classEntries, subclassEntries } from "./class-entries.ts";

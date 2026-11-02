@@ -8,7 +8,11 @@
  * class's hit die, a cited skill's name) apply to it unchanged. A restore inserts under the
  * row's old id, so a character still resolves it.
  */
-import { homebrewCollectionSchema, homebrewHistorySchema } from "@dnd/catalog";
+import {
+  type HomebrewSubclassInput,
+  homebrewCollectionSchema,
+  homebrewHistorySchema,
+} from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import {
   homebrewBackgrounds,
@@ -20,6 +24,7 @@ import {
   homebrewSpells,
 } from "../db/homebrew.ts";
 import {
+  findHomebrewSubclass,
   getHomebrewBackground,
   getHomebrewClass,
   getHomebrewFeat,
@@ -27,6 +32,7 @@ import {
   getHomebrewRace,
   getHomebrewSkill,
   getHomebrewSpell,
+  getHomebrewSubclass,
   type HomebrewDb,
   insertHomebrewBackground,
   insertHomebrewClass,
@@ -35,50 +41,70 @@ import {
   insertHomebrewRace,
   insertHomebrewSkill,
   insertHomebrewSpell,
+  insertHomebrewSubclass,
   type NamedHomebrewTable,
 } from "../db/queries/homebrew.ts";
 import { catalogSkillNames } from "../db/queries/skills.ts";
 import { errorSchema, notFound } from "./errors.ts";
 import { claimName, holder, idParam, nameTaken, nameTakenError } from "./homebrew.ts";
+import { parentEdition } from "./homebrew-subclasses.ts";
 
 type Collection = z.infer<typeof homebrewCollectionSchema>;
-type Row = { id: string; name: string; edition: "classic" | "one"; json: object };
+type Row = {
+  id: string;
+  name: string;
+  edition: "classic" | "one";
+  json: object;
+  /** Where the row's parent is named outside its entry, as a subclass's class is. */
+  parent?: object;
+};
 
 interface Kind {
   noun: string;
-  table: NamedHomebrewTable;
   get: (db: HomebrewDb, id: string) => Row | undefined;
   insert: (db: HomebrewDb, id: string, input: never) => unknown;
+  /** The row already holding `input`'s name, where a restore would collide. */
+  holder: (db: HomebrewDb, input: never) => () => NameHolder | undefined;
+  /** Why `input` cannot be restored whatever its name, such as a parent class since deleted. */
+  blocked?: (db: HomebrewDb, dataDir: string, input: never) => string | undefined;
 }
 
+type NameHolder = { id: string; name: string; edition: Row["edition"] };
+
+const named = (
+  noun: string,
+  table: NamedHomebrewTable,
+  get: Kind["get"],
+  insert: Kind["insert"],
+): Kind => ({
+  noun,
+  get,
+  insert,
+  holder: (db, input: { name: string; edition: "classic" | "one" }) => holder(db, table, input),
+});
+
 const KINDS: Record<Collection, Kind> = {
-  items: { noun: "item", table: homebrewItems, get: getHomebrewItem, insert: insertHomebrewItem },
-  spells: {
-    noun: "spell",
-    table: homebrewSpells,
-    get: getHomebrewSpell,
-    insert: insertHomebrewSpell,
+  items: named("item", homebrewItems, getHomebrewItem, insertHomebrewItem),
+  spells: named("spell", homebrewSpells, getHomebrewSpell, insertHomebrewSpell),
+  races: named("race", homebrewRaces, getHomebrewRace, insertHomebrewRace),
+  classes: named("class", homebrewClasses, getHomebrewClass, insertHomebrewClass),
+  subclasses: {
+    noun: "subclass",
+    get: getHomebrewSubclass,
+    insert: insertHomebrewSubclass,
+    holder: (db, input: { name: string; parent: HomebrewSubclassInput["parent"] }) => () =>
+      findHomebrewSubclass(db, input.parent, input.name),
+    blocked: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
+      parentEdition(db, dataDir, input.parent) ? undefined : "Its class no longer exists.",
   },
-  races: { noun: "race", table: homebrewRaces, get: getHomebrewRace, insert: insertHomebrewRace },
-  classes: {
-    noun: "class",
-    table: homebrewClasses,
-    get: getHomebrewClass,
-    insert: insertHomebrewClass,
-  },
-  backgrounds: {
-    noun: "background",
-    table: homebrewBackgrounds,
-    get: getHomebrewBackground,
-    insert: insertHomebrewBackground,
-  },
-  feats: { noun: "feat", table: homebrewFeats, get: getHomebrewFeat, insert: insertHomebrewFeat },
-  skills: {
-    noun: "skill",
-    table: homebrewSkills,
-    get: getHomebrewSkill,
-    insert: insertHomebrewSkill,
-  },
+  backgrounds: named(
+    "background",
+    homebrewBackgrounds,
+    getHomebrewBackground,
+    insertHomebrewBackground,
+  ),
+  feats: named("feat", homebrewFeats, getHomebrewFeat, insertHomebrewFeat),
+  skills: named("skill", homebrewSkills, getHomebrewSkill, insertHomebrewSkill),
 };
 
 /**
@@ -90,9 +116,9 @@ const REVERT_HEADER = "x-homebrew-revert";
 const rowParams = idParam.extend({ collection: homebrewCollectionSchema });
 
 /** The input that would save `row` as it stands: its entry without the stamped source. */
-function inputOf({ json, edition }: Row) {
+function inputOf({ json, edition, parent }: Row) {
   const { source: _source, ...entry } = json as { source?: string };
-  return { ...entry, edition };
+  return { ...entry, edition, ...(parent && { parent }) };
 }
 
 const readHistory = createRoute({
@@ -232,9 +258,11 @@ export function homebrewHistoryRoutes(
       );
       if (catalog) return c.json({ error: `${catalog} is already a skill.` }, 409);
     }
+    const blocked = kind.blocked?.(db, dataDir, gone.input as never);
+    if (blocked) return c.json({ error: blocked }, 409);
     const result = claimName(
-      () => kind.insert(db, id, input as never),
-      holder(db, kind.table, input),
+      () => kind.insert(db, id, gone.input as never),
+      kind.holder(db, gone.input as never),
     );
     if ("taken" in result) {
       return c.json(nameTakenError(`homebrew ${kind.noun}`, result.taken), 409);

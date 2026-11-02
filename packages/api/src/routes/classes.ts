@@ -1,6 +1,7 @@
 /**
- * Reads `content.db`'s class and subclass tables, catalog rows alone: `/search` merges
- * homebrew classes with these.
+ * Reads `content.db`'s class and subclass tables. A class list is catalog rows alone, which
+ * `/search` merges homebrew classes with; a subclass list adds the class's homebrew subclasses,
+ * told apart by their `id` and lack of a top-level `source`.
  * `docs/class-tables.md` describes what a resource key means and the traps in the
  * upstream shape it came from; this file does not restate them.
  */
@@ -13,6 +14,7 @@ import {
   classRecordSchema,
   preparedSpellCountSchema,
   type SubclassRecord,
+  subclassListItemSchema,
   subclassRecordSchema,
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
@@ -30,7 +32,9 @@ import {
   listSubclasses,
   type SubclassRow,
 } from "../db/queries/classes.ts";
+import { type HomebrewDb, listHomebrewSubclassesOf } from "../db/queries/homebrew.ts";
 import { catalogOutOfDate, notFound } from "./errors.ts";
+import { toSubclassRecord as toHomebrewSubclassRecord } from "./homebrew.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -172,7 +176,7 @@ const readPreparedSpellCountRoute = createRoute({
 const classParam = z.object({ className: z.string(), classSource: z.string() });
 
 const subclassListResponseSchema = z.object({
-  items: z.array(subclassRecordSchema),
+  items: z.array(subclassListItemSchema),
   total: z.int(),
   limit: z.int(),
   offset: z.int(),
@@ -244,7 +248,7 @@ const readSubclassGrantsRoute = createRoute({
 const CLASS_NOT_FOUND = "No class with that name and source";
 const SUBCLASS_NOT_FOUND = "No subclass with that name, source, class name and class source";
 
-export function classesRoutes(dataDir: string) {
+export function classesRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   const routes = new OpenAPIHono();
 
   routes.openapi(listClassesRoute, (c) => {
@@ -283,9 +287,12 @@ export function classesRoutes(dataDir: string) {
   routes.openapi(listSubclassesRoute, (c) => {
     const { className, classSource } = c.req.valid("param");
     const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
-    const subclasses = listSubclasses(dataDir, className, classSource, edition).map(
-      toSubclassRecord,
-    );
+    const subclasses = [
+      ...listSubclasses(dataDir, className, classSource, edition).map(toSubclassRecord),
+      ...listHomebrewSubclassesOf(homebrewDb, className, classSource, edition).map(
+        toHomebrewSubclassRecord,
+      ),
+    ].sort((a, b) => a.name.localeCompare(b.name));
     return c.json(
       {
         items: subclasses.slice(offset, offset + limit),

@@ -1,7 +1,8 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
  * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
- * `homebrew_classes`, `homebrew_class_features` and `homebrew_skills` tables. `source` never
+ * `homebrew_classes`, `homebrew_class_features`, `homebrew_subclasses` and `homebrew_skills`
+ * tables. `source` never
  * arrives as an argument: every write stamps `HOMEBREW_SOURCE` into `json` here, the one
  * place that builds it. The caller chooses `id` once at creation and never reassigns it, so
  * a rename keeps the id a character already references.
@@ -16,6 +17,7 @@ import type {
   HomebrewRaceInput,
   HomebrewSkillInput,
   HomebrewSpellInput,
+  HomebrewSubclassInput,
 } from "@dnd/catalog";
 import {
   characterOptionEntrySchema,
@@ -23,13 +25,14 @@ import {
   homebrewClassSchema,
   homebrewItemSchema,
   homebrewSkillEntrySchema,
+  homebrewSubclassSchema,
   itemKinds,
   ofWantedKind,
   raceEntrySchema,
   spellEntrySchema,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
-import { and, between, eq, inArray, sql } from "drizzle-orm";
+import { and, between, eq, inArray, type SQL, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type * as homebrewSchema from "../homebrew.ts";
@@ -42,6 +45,7 @@ import {
   homebrewRaces,
   homebrewSkills,
   homebrewSpells,
+  homebrewSubclasses,
 } from "../homebrew.ts";
 import type { SearchFilter } from "./catalog-search.ts";
 import { escapeLikeTerm } from "./search-terms.ts";
@@ -416,15 +420,27 @@ export function insertHomebrewClass(db: HomebrewDb, id: string, input: HomebrewC
     .get();
 }
 
-/** `undefined` where `id` names no row, the way `getHomebrewClass` reads a miss. */
+/**
+ * `undefined` where `id` names no row, the way `getHomebrewClass` reads a miss. A subclass
+ * takes its class's edition, so a changed edition carries to them in the same transaction.
+ */
 export function updateHomebrewClass(db: HomebrewDb, id: string, input: HomebrewClassInput) {
   const json = classJson(input);
-  return db
-    .update(homebrewClasses)
-    .set({ edition: input.edition, ...classColumns(json) })
-    .where(eq(homebrewClasses.id, id))
-    .returning()
-    .get();
+  return db.transaction((tx) => {
+    const row = tx
+      .update(homebrewClasses)
+      .set({ edition: input.edition, ...classColumns(json) })
+      .where(eq(homebrewClasses.id, id))
+      .returning()
+      .get();
+    if (row) {
+      tx.update(homebrewSubclasses)
+        .set({ edition: input.edition })
+        .where(eq(homebrewSubclasses.classId, id))
+        .run();
+    }
+    return row;
+  });
 }
 
 export function deleteHomebrewClass(db: HomebrewDb, id: string): boolean {
@@ -459,6 +475,132 @@ export function replaceHomebrewClassFeatures(
         .run();
     }
   });
+}
+
+/** A subclass's parent as the routes name it: a catalog class by key, a homebrew class by id. */
+type SubclassParent = HomebrewSubclassInput["parent"];
+
+/** A subclass to store: the caller's input and the edition its parent class settled. */
+export type HomebrewSubclassWrite = HomebrewSubclassInput & { edition: Edition };
+
+const subclassColumns = {
+  id: homebrewSubclasses.id,
+  name: homebrewSubclasses.name,
+  edition: homebrewSubclasses.edition,
+  classId: homebrewSubclasses.classId,
+  className: sql<string>`coalesce(${homebrewSubclasses.className}, ${homebrewClasses.name})`,
+  classSource: sql<string>`coalesce(${homebrewSubclasses.classSource}, ${HOMEBREW_SOURCE})`,
+  json: homebrewSubclasses.json,
+  createdAt: homebrewSubclasses.createdAt,
+};
+
+/** A subclass row with its class resolved, and `parent` as a write would name it again. */
+function readSubclasses(db: HomebrewDb, where?: SQL) {
+  return db
+    .select(subclassColumns)
+    .from(homebrewSubclasses)
+    .leftJoin(homebrewClasses, eq(homebrewSubclasses.classId, homebrewClasses.id))
+    .where(where)
+    .all()
+    .map((row) => ({
+      ...row,
+      parent: (row.classId
+        ? { classId: row.classId }
+        : { name: row.className, source: row.classSource }) satisfies SubclassParent,
+    }));
+}
+
+export function listHomebrewSubclasses(db: HomebrewDb) {
+  return readSubclasses(db);
+}
+
+/** The subclasses of one class in one edition: a catalog class by key, or a homebrew one by name (source `HB`). */
+export function listHomebrewSubclassesOf(
+  db: HomebrewDb,
+  className: string,
+  classSource: string,
+  edition: Edition,
+) {
+  return readSubclasses(
+    db,
+    and(
+      sql`${subclassColumns.className} = ${className} COLLATE NOCASE`,
+      sql`${subclassColumns.classSource} = ${classSource} COLLATE NOCASE`,
+      eq(homebrewSubclasses.edition, edition),
+    ),
+  );
+}
+
+export function getHomebrewSubclass(db: HomebrewDb, id: string) {
+  return readSubclasses(db, eq(homebrewSubclasses.id, id))[0];
+}
+
+/** The subclass named `name` under a parent, compared as the unique indexes compare it. */
+export function findHomebrewSubclass(db: HomebrewDb, parent: SubclassParent, name: string) {
+  const row = readSubclasses(
+    db,
+    and(
+      sql`${homebrewSubclasses.name} = ${name} COLLATE NOCASE`,
+      "classId" in parent
+        ? eq(homebrewSubclasses.classId, parent.classId)
+        : and(
+            sql`${homebrewSubclasses.className} = ${parent.name}`,
+            sql`${homebrewSubclasses.classSource} = ${parent.source}`,
+          ),
+    ),
+  )[0];
+  return row && { id: row.id, name: row.name, edition: row.edition };
+}
+
+/** The subclass a `{@subclass}` tag names, ignoring case; the classic row before the 2024 one. */
+export function homebrewSubclassNamed(db: HomebrewDb, name: string) {
+  return readSubclasses(db, sql`${homebrewSubclasses.name} = ${name} COLLATE NOCASE`).sort(
+    (a, b) => Number(a.edition === "one") - Number(b.edition === "one"),
+  )[0];
+}
+
+/** The subclasses a homebrew class still has, which its deletion would orphan. */
+export function subclassesOfHomebrewClass(db: HomebrewDb, classId: string) {
+  return db
+    .select({ id: homebrewSubclasses.id, name: homebrewSubclasses.name })
+    .from(homebrewSubclasses)
+    .where(eq(homebrewSubclasses.classId, classId))
+    .orderBy(homebrewSubclasses.name)
+    .all();
+}
+
+function subclassColumnsOf({ parent, edition, ...entry }: HomebrewSubclassWrite) {
+  const json = homebrewSubclassSchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+  return {
+    name: json.name,
+    edition,
+    json,
+    ...("classId" in parent
+      ? { classId: parent.classId, className: null, classSource: null }
+      : { classId: null, className: parent.name, classSource: parent.source }),
+  };
+}
+
+export function insertHomebrewSubclass(db: HomebrewDb, id: string, input: HomebrewSubclassWrite) {
+  db.insert(homebrewSubclasses)
+    .values({ id, ...subclassColumnsOf(input) })
+    .run();
+  const row = getHomebrewSubclass(db, id);
+  if (!row) throw new Error(`Subclass ${id} was inserted and did not read back`);
+  return row;
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewSubclass` reads a miss. */
+export function updateHomebrewSubclass(db: HomebrewDb, id: string, input: HomebrewSubclassWrite) {
+  db.update(homebrewSubclasses)
+    .set(subclassColumnsOf(input))
+    .where(eq(homebrewSubclasses.id, id))
+    .run();
+  return getHomebrewSubclass(db, id);
+}
+
+export function deleteHomebrewSubclass(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewSubclasses).where(eq(homebrewSubclasses.id, id)).run().changes > 0;
 }
 
 export function listHomebrewSkills(db: HomebrewDb) {

@@ -11,6 +11,7 @@
 import { ABILITIES, CASTER_PROGRESSIONS, EDITIONS, type PreparationRule } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
+import { HOMEBREW_SOURCE } from "./source.ts";
 
 const classEntrySchema = z.looseObject({
   name: z.string().min(1),
@@ -201,6 +202,62 @@ export const homebrewClassRecordSchema = z.strictObject({
 });
 
 export type HomebrewClassRecord = z.infer<typeof homebrewClassRecordSchema>;
+
+/**
+ * A homebrew subclass's `json`: the 5etools entry shape `classEntrySchema` models. The class
+ * it belongs to is a column beside the entry, not a field in it, so renaming a homebrew
+ * class cannot leave the entry naming a class that is gone; a read stamps `className`,
+ * `classSource` and `shortName` in, the way `subclassRecordSchema`'s rows carry them.
+ */
+export const homebrewSubclassSchema = classEntrySchema;
+
+export type HomebrewSubclass = z.infer<typeof homebrewSubclassSchema>;
+
+/**
+ * The class a homebrew subclass belongs to: a catalog class by `(name, source)`, or a
+ * homebrew class by `classId`, which survives that class's rename. A subclass of a
+ * catalog class takes that class's edition, a subclass of a homebrew class takes its own.
+ */
+const homebrewSubclassParentSchema = z.union([
+  z.strictObject({
+    name: z.string().min(1),
+    source: z
+      .string()
+      .min(1)
+      .refine((source) => source.toUpperCase() !== HOMEBREW_SOURCE, {
+        message: "Name a homebrew class by classId",
+      }),
+  }),
+  z.strictObject({ classId: z.string().min(1) }),
+]);
+
+/** What a caller submits to create or replace a homebrew subclass; `source` is stamped, never sent. */
+export const homebrewSubclassInputSchema = homebrewSubclassSchema
+  .omit({ source: true })
+  .extend({ parent: homebrewSubclassParentSchema });
+
+export type HomebrewSubclassInput = z.infer<typeof homebrewSubclassInputSchema>;
+
+/**
+ * A stored homebrew subclass, as an endpoint returns it. It has an `id` and no top-level
+ * `source`, which tells it from `subclassRecordSchema`'s catalog row in a merged list.
+ * `classSource` is `HB` and `classId` is set where the class is a homebrew one.
+ */
+export const homebrewSubclassRecordSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  edition: z.enum(EDITIONS),
+  className: z.string(),
+  classSource: z.string(),
+  classId: z.string().optional(),
+  json: homebrewSubclassSchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type HomebrewSubclassRecord = z.infer<typeof homebrewSubclassRecordSchema>;
+
+/** One row of a subclass list: a catalog subclass, or a homebrew one told apart by its `id`. */
+export const subclassListItemSchema = z.union([subclassRecordSchema, homebrewSubclassRecordSchema]);
 
 /** One feature of a homebrew class: a name, the level it arrives at and its rules text. */
 const homebrewClassFeatureSchema = z.strictObject({

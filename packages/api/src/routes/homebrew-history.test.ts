@@ -15,6 +15,7 @@ import { homebrewItemsRoutes } from "./homebrew-items.ts";
 import { homebrewRacesRoutes } from "./homebrew-races.ts";
 import { homebrewSkillsRoutes } from "./homebrew-skills.ts";
 import { homebrewSpellsRoutes } from "./homebrew-spells.ts";
+import { homebrewSubclassesRoutes } from "./homebrew-subclasses.ts";
 import {
   acidSplash,
   baseDefinition,
@@ -27,6 +28,12 @@ import {
   warden,
 } from "./homebrewFixtures.ts";
 
+const storm = (overrides: Record<string, unknown> = {}) => ({
+  name: "Storm Domain",
+  parent: { name: "Cleric", source: "PHB" },
+  ...overrides,
+});
+
 const put = (body: unknown) => ({ ...json(body), method: "PUT" });
 const post = { method: "POST" };
 
@@ -38,6 +45,15 @@ describe("homebrewHistoryRoutes", () => {
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "homebrew-history-"));
     publishDerivedFixture(dataDir, {
+      classes: [
+        {
+          name: "Cleric",
+          source: "PHB",
+          edition: "classic",
+          hit_die: 8,
+          json: JSON.stringify({ name: "Cleric", source: "PHB" }),
+        },
+      ],
       lookups: [
         {
           kind: "skill",
@@ -68,6 +84,7 @@ describe("homebrewHistoryRoutes", () => {
     app.route("/", homebrewFeatsRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewRacesRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewClassesRoutes(homebrewDb, charactersDb));
+    app.route("/", homebrewSubclassesRoutes(homebrewDb, dataDir));
     app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb, dataDir));
   });
 
@@ -86,6 +103,7 @@ describe("homebrewHistoryRoutes", () => {
     ["feats", ironbound],
     ["races", duskling],
     ["classes", warden],
+    ["subclasses", storm],
     ["skills", sailing],
   ])("%s", (collection, entry) => {
     const path = `/homebrew/${collection}`;
@@ -162,6 +180,21 @@ describe("homebrewHistoryRoutes", () => {
       await app.request(`${path}/${created.id}`, { method: "DELETE" });
       expect((await history()).reversible).toEqual([]);
     });
+  });
+
+  it("restores a subclass of a homebrew class, and refuses once that class is gone", async () => {
+    const cls = await (await app.request("/homebrew/classes", json(warden()))).json();
+    const sub = await (
+      await app.request("/homebrew/subclasses", json(storm({ parent: { classId: cls.id } })))
+    ).json();
+    await app.request(`/homebrew/subclasses/${sub.id}`, { method: "DELETE" });
+    expect((await app.request(`/homebrew/subclasses/${sub.id}/restore`, post)).status).toBe(204);
+
+    await app.request(`/homebrew/subclasses/${sub.id}`, { method: "DELETE" });
+    await app.request(`/homebrew/classes/${cls.id}`, { method: "DELETE" });
+    const res = await app.request(`/homebrew/subclasses/${sub.id}/restore`, post);
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toContain("class");
   });
 
   it("holds nothing for a save the kind's route refused", async () => {

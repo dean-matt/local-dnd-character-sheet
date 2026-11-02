@@ -7,6 +7,7 @@ const HOMEBREW_COLLECTIONS = [
   "spells",
   "races",
   "classes",
+  "subclasses",
   "backgrounds",
   "feats",
   "skills",

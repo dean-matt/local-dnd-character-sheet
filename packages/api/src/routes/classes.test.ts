@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishClasses } from "../db/queries/contentFixture.ts";
+import { insertHomebrewSubclass } from "../db/queries/homebrew.ts";
+import { openTestDatabases } from "../db/testDatabases.ts";
 import { classesRoutes } from "./classes.ts";
 
 const CLERIC = {
@@ -42,6 +44,7 @@ const LIFE_DOMAIN = {
 describe("classesRoutes", () => {
   let dataDir: string;
   let routes: ReturnType<typeof classesRoutes>;
+  let opened: ReturnType<typeof openTestDatabases>;
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "classes-routes-"));
@@ -133,10 +136,12 @@ describe("classesRoutes", () => {
         },
       ],
     });
-    routes = classesRoutes(dataDir);
+    opened = openTestDatabases();
+    routes = classesRoutes(dataDir, opened.homebrewDb);
   });
 
   afterAll(() => {
+    opened.homebrewDb.$client.close();
     rmSync(dataDir, { recursive: true, force: true });
   });
 
@@ -260,6 +265,34 @@ describe("classesRoutes", () => {
       expect(body.items).toEqual([
         expect.objectContaining({ name: "Life Domain", className: "Cleric", classSource: "PHB" }),
       ]);
+    });
+
+    it("lists a class's homebrew subclasses with its catalog ones, told apart by id", async () => {
+      insertHomebrewSubclass(opened.homebrewDb, "storm", {
+        name: "Storm Domain",
+        edition: "classic",
+        parent: { name: "Cleric", source: "PHB" },
+      });
+      insertHomebrewSubclass(opened.homebrewDb, "one", {
+        name: "Sea Domain",
+        edition: "one",
+        parent: { name: "Cleric", source: "XPHB" },
+      });
+
+      const res = await routes.request("/classes/Cleric/PHB/subclasses?edition=classic");
+      const body = await res.json();
+      expect(body.total).toBe(2);
+      expect(body.items).toEqual([
+        expect.objectContaining({ name: "Life Domain", source: "PHB" }),
+        expect.objectContaining({
+          id: "storm",
+          name: "Storm Domain",
+          className: "Cleric",
+          classSource: "PHB",
+          json: expect.objectContaining({ source: "HB", shortName: "Storm Domain" }),
+        }),
+      ]);
+      expect(body.items[1]).not.toHaveProperty("source");
     });
 
     it("reads a subclass by its own name and source and its class's", async () => {
