@@ -67,6 +67,8 @@ interface Kind {
   holder: (db: HomebrewDb, input: never) => () => NameHolder | undefined;
   /** Why `input` cannot be restored whatever its name, such as a parent class since deleted. */
   blocked?: (db: HomebrewDb, dataDir: string, input: never) => string | undefined;
+  /** The edition a restore takes now, where it follows a parent that may have changed since. */
+  editionNow?: (db: HomebrewDb, dataDir: string, input: never) => Row["edition"] | undefined;
 }
 
 type NameHolder = { id: string; name: string; edition: Row["edition"] };
@@ -96,6 +98,8 @@ const KINDS: Record<Collection, Kind> = {
       findHomebrewSubclass(db, input.parent, input.name),
     blocked: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
       parentEdition(db, dataDir, input.parent) ? undefined : "Its class no longer exists.",
+    editionNow: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
+      parentEdition(db, dataDir, input.parent),
   },
   backgrounds: named(
     "background",
@@ -260,9 +264,13 @@ export function homebrewHistoryRoutes(
     }
     const blocked = kind.blocked?.(db, dataDir, gone.input as never);
     if (blocked) return c.json({ error: blocked }, 409);
+    const restored = {
+      ...input,
+      edition: kind.editionNow?.(db, dataDir, gone.input as never) ?? input.edition,
+    };
     const result = claimName(
-      () => kind.insert(db, id, gone.input as never),
-      kind.holder(db, gone.input as never),
+      () => kind.insert(db, id, restored as never),
+      kind.holder(db, restored as never),
     );
     if ("taken" in result) {
       return c.json(nameTakenError(`homebrew ${kind.noun}`, result.taken), 409);

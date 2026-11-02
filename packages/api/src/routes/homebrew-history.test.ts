@@ -197,6 +197,21 @@ describe("homebrewHistoryRoutes", () => {
     expect((await res.json()).error).toContain("class");
   });
 
+  it("restores a subclass under the edition its class has now", async () => {
+    const cls = await (await app.request("/homebrew/classes", json(warden()))).json();
+    const sub = await (
+      await app.request("/homebrew/subclasses", json(storm({ parent: { classId: cls.id } })))
+    ).json();
+    await app.request(`/homebrew/subclasses/${sub.id}`, { method: "DELETE" });
+    const other = cls.edition === "one" ? "classic" : "one";
+    await app.request(`/homebrew/classes/${cls.id}`, put(warden({ edition: other })));
+
+    expect((await app.request(`/homebrew/subclasses/${sub.id}/restore`, post)).status).toBe(204);
+    expect((await (await app.request(`/homebrew/subclasses/${sub.id}`)).json()).edition).toBe(
+      other,
+    );
+  });
+
   it("holds nothing for a save the kind's route refused", async () => {
     await app.request("/homebrew/items", json(sunblade({ name: "Other" })));
     const created = await (await app.request("/homebrew/items", json(sunblade()))).json();
