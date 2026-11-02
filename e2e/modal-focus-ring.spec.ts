@@ -30,11 +30,14 @@ test.beforeEach(async ({ page }) => {
 // The ring is the focus outline's width plus its offset, drawn outside the control's box.
 // The dialog and every scroller between it and the control must contain it on each axis.
 async function clippedRings(page: Page) {
+  // A key press makes :focus-visible match for the scripted focus() calls that follow.
+  await page.keyboard.press("Shift");
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: page.evaluate serializes one function, so its helpers cannot live outside it.
   return page.evaluate(() => {
     const dialog = document.querySelector("dialog[open]");
-    if (!dialog) return ["no open dialog"];
+    if (!dialog) return { clipped: ["no open dialog"], checked: [] as string[] };
     const out: string[] = [];
+    const checked: string[] = [];
     const controls = dialog.querySelectorAll<HTMLElement>(
       'button, input, select, textarea, a[href], [contenteditable="true"], [tabindex]:not([tabindex="-1"])',
     );
@@ -45,6 +48,7 @@ async function clippedRings(page: Page) {
       const style = getComputedStyle(el);
       // A fixed control draws over the backdrop, outside the dialog's clip.
       if (style.outlineStyle === "none" || style.position === "fixed") continue;
+      checked.push(el.tagName.toLowerCase());
       // An inset ring (negative offset) lies inside the box, so only its width can reach out.
       const reach = Math.max(
         0,
@@ -77,7 +81,7 @@ async function clippedRings(page: Page) {
         if (a === dialog) break;
       }
     }
-    return out;
+    return { clipped: out, checked };
   });
 }
 
@@ -90,7 +94,9 @@ for (const width of [1440, 480]) {
     await page.getByRole("combobox", { name: "Search characters and the compendium" }).fill("long");
     await page.getByRole("option", { name: new RegExp(feat.name) }).click();
     await expect(page.getByRole("dialog", { name: feat.name })).toBeVisible();
-    expect(await clippedRings(page)).toEqual([]);
+    const { clipped, checked } = await clippedRings(page);
+    expect(clipped).toEqual([]);
+    expect(checked).toContain("section");
   });
 
   test(`no control in the delete character modal has its focus ring clipped at ${width}px`, async ({
@@ -103,7 +109,9 @@ for (const width of [1440, 480]) {
       await page.goto(`/characters/${id}/settings`);
       await page.getByRole("button", { name: "Delete character" }).click();
       await expect(page.getByRole("dialog")).toBeVisible();
-      expect(await clippedRings(page)).toEqual([]);
+      const { clipped, checked } = await clippedRings(page);
+      expect(clipped).toEqual([]);
+      expect(checked.length).toBeGreaterThan(0);
     } finally {
       await request.delete(`/api/characters/${id}`);
     }
