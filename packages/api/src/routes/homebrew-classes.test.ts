@@ -196,4 +196,53 @@ describe("homebrewClassesRoutes", () => {
       expect((await sheet.request(`/characters/${character.id}`)).status).toBe(200);
     });
   });
+
+  describe("features", () => {
+    const feature = { name: "Second Wind", level: 1, entries: ["Regain hit points."] };
+
+    async function put(id: string, body: unknown) {
+      return routes.request(`/homebrew/classes/${id}/features`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    }
+
+    it("stores a class's features and reads them back by level", async () => {
+      const created = await (await routes.request("/homebrew/classes", json(warden()))).json();
+      const later = { name: "Action Surge", level: 2, entries: ["Take one extra action."] };
+
+      expect((await put(created.id, [later, feature])).status).toBe(200);
+
+      const res = await routes.request(`/homebrew/classes/${created.id}/features`);
+      expect(await res.json()).toEqual([feature, later]);
+    });
+
+    it("replaces the list and drops the features with the class", async () => {
+      const created = await (await routes.request("/homebrew/classes", json(warden()))).json();
+      await put(created.id, [feature]);
+      await put(created.id, []);
+      const res = await routes.request(`/homebrew/classes/${created.id}/features`);
+      expect(await res.json()).toEqual([]);
+
+      await put(created.id, [feature]);
+      await routes.request(`/homebrew/classes/${created.id}`, { method: "DELETE" });
+      expect(
+        opened.homebrewDb.$client
+          .prepare("SELECT count(*) AS n FROM homebrew_class_features")
+          .get(),
+      ).toEqual({ n: 0 });
+    });
+
+    it("rejects a level outside 1 to 20 and a repeated name at a level", async () => {
+      const created = await (await routes.request("/homebrew/classes", json(warden()))).json();
+      expect((await put(created.id, [{ ...feature, level: 21 }])).status).toBe(400);
+      expect((await put(created.id, [feature, feature])).status).toBe(400);
+    });
+
+    it("404s for a class that does not exist", async () => {
+      expect((await routes.request("/homebrew/classes/missing/features")).status).toBe(404);
+      expect((await put("missing", [feature])).status).toBe(404);
+    });
+  });
 });

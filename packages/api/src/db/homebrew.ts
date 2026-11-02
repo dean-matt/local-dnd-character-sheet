@@ -11,6 +11,7 @@
  */
 import type {
   CharacterOptionEntry,
+  Entries,
   HomebrewClass,
   HomebrewItem,
   HomebrewSkillEntry,
@@ -19,7 +20,7 @@ import type {
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const homebrewBackgrounds = sqliteTable(
   "homebrew_backgrounds",
@@ -44,6 +45,19 @@ export const homebrewClasses = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [uniqueIndex("homebrew_classes_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
+);
+
+export const homebrewClassFeatures = sqliteTable(
+  "homebrew_class_features",
+  {
+    classId: text("class_id")
+      .notNull()
+      .references(() => homebrewClasses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    level: integer("level").notNull(),
+    entries: text("entries", { mode: "json" }).$type<Entries>().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.classId, t.level, t.name] })],
 );
 
 export const homebrewFeats = sqliteTable(
