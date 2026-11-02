@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { warlockRecord } from "../test/records.ts";
-import { prerequisiteFacts, prerequisiteNotes } from "./optionalFeaturePrerequisites.ts";
+import {
+  optionalFeatureJudge,
+  prerequisiteFacts,
+  prerequisiteNotes,
+} from "./optionalFeaturePrerequisites.ts";
 
 const NONE = { spells: [], options: [], unjudged: [] };
 const WARLOCK = { name: "Warlock", source: "XPHB" } as const;
@@ -69,5 +73,14 @@ describe("prerequisiteNotes", () => {
     expect(
       prerequisiteNotes([{ ...NONE, unjudged: ["A shield (requires attunement)"] }], facts),
     ).toEqual({ unmet: undefined, unchecked: "Not checked: A shield (requires attunement)" });
+  });
+});
+
+describe("optionalFeatureJudge", () => {
+  it("leaves a homebrew optional feature unavailable until a character can choose one", () => {
+    const hit = { type: "optfeature", id: "hb-1", name: "Ember Lore", edition: "one" } as const;
+    expect(optionalFeatureJudge(facts, new Set()).unavailableReason(hit)).toBe(
+      "homebrew optional features cannot be picked yet",
+    );
   });
 });

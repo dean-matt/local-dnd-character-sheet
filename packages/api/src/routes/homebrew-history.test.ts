@@ -13,6 +13,7 @@ import { homebrewDeitiesRoutes } from "./homebrew-deities.ts";
 import { homebrewFeatsRoutes } from "./homebrew-feats.ts";
 import { homebrewHistoryRoutes } from "./homebrew-history.ts";
 import { homebrewItemsRoutes } from "./homebrew-items.ts";
+import { homebrewOptionalFeaturesRoutes } from "./homebrew-optional-features.ts";
 import { homebrewRacesRoutes } from "./homebrew-races.ts";
 import { homebrewSkillsRoutes } from "./homebrew-skills.ts";
 import { homebrewSpellsRoutes } from "./homebrew-spells.ts";
@@ -23,6 +24,7 @@ import {
   ashgod,
   baseDefinition,
   duskling,
+  ember,
   ironbound,
   json,
   sailing,
@@ -105,6 +107,7 @@ describe("homebrewHistoryRoutes", () => {
     app.route("/", homebrewSubracesRoutes(homebrewDb, dataDir));
     app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb, dataDir));
     app.route("/", homebrewDeitiesRoutes(homebrewDb, charactersDb));
+    app.route("/", homebrewOptionalFeaturesRoutes(homebrewDb, charactersDb));
   });
 
   afterEach(() => {
@@ -125,6 +128,7 @@ describe("homebrewHistoryRoutes", () => {
     ["subclasses", storm],
     ["subraces", moon],
     ["deities", ashgod],
+    ["optional-features", ember],
     ["skills", sailing],
   ])("%s", (collection, entry) => {
     const path = `/homebrew/${collection}`;

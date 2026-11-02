@@ -73,7 +73,7 @@ row is written once and displayed, never edited field by field — the same reas
 `packages/catalog/src/race.ts` and `class.ts`, and requires what a derived block reads: a
 class's `hd`, which `homebrew_classes.hit_die` derives from, and a race's `size` and
 `speed`. A race's subraces are rows of their own, in `docs/homebrew-subraces.md`. A homebrew deity is a row of its own too,
-keyed `(name, pantheon)`, in `docs/homebrew-deities.md`. A class's features live in `homebrew_class_features`, keyed `(class_id, level,
+keyed `(name, pantheon)`, in `docs/homebrew-deities.md`. So is an optional feature, with its feature types beside it, in `docs/homebrew-optional-features.md`. A class's features live in `homebrew_class_features`, keyed `(class_id, level,
 name)` and deleted with the class; the sheet lists those up to the character's level, the detail's level table links them as `{@classFeature Name|Class|HB|Level}`, and `/refs/resolve` answers that tag from this table. A subclass is a row of its own, in `docs/homebrew-subclasses.md`. `race`, `levels[].class` and both
 feat-grantor branches accept a homebrew reference, so a delete refuses while one is held.
 

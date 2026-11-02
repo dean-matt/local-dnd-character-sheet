@@ -85,6 +85,13 @@
       "when": 1793647600816,
       "tag": "0011_homebrew_deities",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1793648813163,
+      "tag": "0012_homebrew_optional_features",
+      "breakpoints": true
     }
   ]
 }
