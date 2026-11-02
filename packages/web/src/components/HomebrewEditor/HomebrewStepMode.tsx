@@ -63,7 +63,7 @@ export function HomebrewStepMode({
         Step {step + 1} of {steps.length}
       </p>
       {current && (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto @3xl:overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto scroll-p-1 p-1 @3xl:overflow-hidden">
           <div
             className={`grid gap-6 @3xl:min-h-0 @3xl:flex-1 @3xl:grid-rows-[minmax(0,1fr)] ${current.sections.length > 1 ? "@3xl:grid-cols-2" : ""}`}
           >
@@ -74,8 +74,8 @@ export function HomebrewStepMode({
                 className="flex min-h-0 min-w-0 flex-col gap-3"
               >
                 <h3 className="shrink-0 font-semibold text-sm">{title}</h3>
-                {/* Padded and pulled back out, so the scroll container does not clip a focus ring. */}
-                <div className="@container -m-1 min-h-0 flex-1 overflow-y-auto p-1">
+                {/* Padded and pulled back out into the padding above, so neither scroller clips a focus ring. */}
+                <div className="@container -m-1 min-h-0 flex-1 scroll-p-1 overflow-y-auto p-1">
                   <Fields
                     key={draft.revision}
                     entry={draft.entry}
