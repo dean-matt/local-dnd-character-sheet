@@ -22,6 +22,7 @@ import {
   homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
+  homebrewMonsterRecordSchema,
   homebrewRaceRecordSchema,
   homebrewSpellRecordSchema,
   itemEntries,
@@ -278,6 +279,18 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   homebrew("backgrounds", "background", homebrewBackgroundRecordSchema),
   homebrew("feats", "feat", homebrewFeatRecordSchema),
   homebrewClass,
+  {
+    path: "homebrew/monsters/:id",
+    label: () => "monster",
+    lookedFor: (key) => `the homebrew monster ${key.id}`,
+    load: async (key) => {
+      const record = await apiGet(
+        `/homebrew/monsters/${segments(key.id)}`,
+        homebrewMonsterRecordSchema,
+      );
+      return toRow(record, (json) => catalogRowEntries("monster", json, record.edition));
+    },
+  },
   {
     path: "homebrew/classes/:id/features/:level/:name",
     label: () => "class feature",

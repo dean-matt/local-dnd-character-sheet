@@ -16,6 +16,7 @@ import {
   type HomebrewDeityRecord,
   type HomebrewFeatRecord,
   type HomebrewItemRecord,
+  type HomebrewMonsterRecord,
   type HomebrewOptionalFeatureRecord,
   type HomebrewRaceRecord,
   type HomebrewSkillRecord,
@@ -27,6 +28,7 @@ import {
   homebrewDeityRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
+  homebrewMonsterRecordSchema,
   homebrewOptionalFeatureRecordSchema,
   homebrewRaceRecordSchema,
   homebrewSkillRecordSchema,
@@ -43,6 +45,7 @@ import {
   type getHomebrewDeity,
   type getHomebrewFeat,
   type getHomebrewItem,
+  type getHomebrewMonster,
   type getHomebrewOptionalFeature,
   type getHomebrewRace,
   type getHomebrewSkill,
@@ -64,6 +67,7 @@ type SubclassRow = NonNullable<ReturnType<typeof getHomebrewSubclass>>;
 type SubraceRow = NonNullable<ReturnType<typeof getHomebrewSubrace>>;
 type SkillRow = NonNullable<ReturnType<typeof getHomebrewSkill>>;
 type OptionalFeatureRow = NonNullable<ReturnType<typeof getHomebrewOptionalFeature>>;
+type MonsterRow = NonNullable<ReturnType<typeof getHomebrewMonster>>;
 type DeityRow = NonNullable<ReturnType<typeof getHomebrewDeity>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
@@ -136,6 +140,10 @@ export function toOptionalFeatureRecord(row: OptionalFeatureRow): HomebrewOption
     ...row,
     createdAt: row.createdAt.toISOString(),
   });
+}
+
+export function toMonsterRecord(row: MonsterRow): HomebrewMonsterRecord {
+  return homebrewMonsterRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
 export const idParam = z.object({ id: z.string() });

@@ -92,6 +92,13 @@
       "when": 1793648813163,
       "tag": "0012_homebrew_optional_features",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1793650034706,
+      "tag": "0013_homebrew_monsters",
+      "breakpoints": true
     }
   ]
 }

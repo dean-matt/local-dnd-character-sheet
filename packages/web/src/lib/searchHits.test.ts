@@ -44,6 +44,12 @@ describe("searchHitAddress", () => {
     },
   );
 
+  it("addresses a homebrew monster by id, though a catalog one opens through the catalog", () => {
+    const address = searchHitAddress({ type: "monster", id: "m1", name: "Imp", edition: "one" });
+    expect(address).toBe("/homebrew/monsters/m1");
+    expect(matchCatalogTarget(address ?? "")?.key).toEqual({ id: "m1" });
+  });
+
   it("addresses a type with no route of its own through the catalog, its qualifier last", () => {
     expect(
       searchHitAddress({ type: "condition", name: "Restrained", source: "XPHB", edition: "one" }),

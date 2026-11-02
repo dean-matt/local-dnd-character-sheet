@@ -30,6 +30,24 @@ export const ironbound = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+export const emberImp = (overrides: Record<string, unknown> = {}) => ({
+  name: "Ember Imp",
+  edition: "one",
+  size: ["T"],
+  type: "fiend",
+  ac: [{ ac: 13 }],
+  hp: { average: 10, formula: "3d4 + 3" },
+  speed: { walk: 20, fly: 40 },
+  str: 6,
+  dex: 17,
+  con: 13,
+  int: 11,
+  wis: 12,
+  cha: 14,
+  cr: "1/2",
+  ...overrides,
+});
+
 export const sailing = (overrides: Record<string, unknown> = {}) => ({
   name: "Sailing",
   edition: "one",

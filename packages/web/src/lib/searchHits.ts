@@ -14,6 +14,9 @@ export const HIT_COLLECTIONS = new Map([
   ["spell", "spells"],
 ]);
 
+/** A hit type whose catalog rows open through `/catalog` but whose homebrew rows have a route of their own. */
+const HOMEBREW_COLLECTIONS = new Map([...HIT_COLLECTIONS, ["monster", "monsters"]]);
+
 const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/");
 
 /**
@@ -22,10 +25,11 @@ const segments = (...parts: string[]) => parts.map(encodeURIComponent).join("/")
  * condition, opens through `/catalog`, its qualifier a last segment where it carries one.
  */
 export function searchHitAddress(hit: SearchHit): string | undefined {
-  const collection = HIT_COLLECTIONS.get(hit.type);
   if ("id" in hit) {
-    return collection && `/homebrew/${collection}/${encodeURIComponent(hit.id)}`;
+    const own = HOMEBREW_COLLECTIONS.get(hit.type);
+    return own && `/homebrew/${own}/${encodeURIComponent(hit.id)}`;
   }
+  const collection = HIT_COLLECTIONS.get(hit.type);
   if (hit.textless) return undefined;
   if (collection) return `/${collection}/${segments(hit.name, hit.source)}`;
   if (hit.parent) {

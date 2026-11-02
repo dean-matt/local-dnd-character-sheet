@@ -1,6 +1,6 @@
 /**
  * Searches the catalog and homebrew together: Tier A's tables, Tier B's rules lookups, Tier
- * C's `entities`, and `homebrew.db`'s items, spells, races, classes, backgrounds, feats and deities,
+ * C's `entities`, and `homebrew.db`'s items, spells, races, classes, backgrounds, feats, monsters and deities,
  * merged into one list ranked by `compareSearchHits`, and lists the sources such a search
  * can leave out and the types it can return.
  * See `packages/api/src/db/queries/catalog-search.ts`'s `searchCatalog` for what each tier's
@@ -29,6 +29,7 @@ import {
   homebrewBackgrounds,
   homebrewClasses,
   homebrewFeats,
+  homebrewMonsters,
   homebrewRaces,
 } from "../db/homebrew.ts";
 import {
@@ -81,13 +82,14 @@ function toHomebrewSpellHit(row: HomebrewSpellRow): SearchHit {
 
 /** The homebrew kinds no `SearchFilter` facet narrows, so a hit of each passes every facet. */
 const NAMED_HOMEBREW: readonly (readonly [
-  "race" | "class" | "background" | "feat",
+  "race" | "class" | "background" | "feat" | "monster",
   NamedSearchTable,
 ])[] = [
   ["race", homebrewRaces],
   ["class", homebrewClasses],
   ["background", homebrewBackgrounds],
   ["feat", homebrewFeats],
+  ["monster", homebrewMonsters],
 ];
 
 const csv = (description: string, example: string) =>

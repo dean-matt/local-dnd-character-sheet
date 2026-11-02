@@ -1,4 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { catalogRowEntries } from "@dnd/catalog";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { stubFetchByUrl } from "../test/stubFetch.ts";
 import { matchCatalogTarget } from "./catalogRows.ts";
 
 describe("matchCatalogTarget", () => {
@@ -27,5 +29,43 @@ describe("matchCatalogTarget", () => {
 
   it.each(["/monsters/Goblin/MM", "/spells/%E0%A4%A/PHB"])("matches nothing at %s", (address) => {
     expect(matchCatalogTarget(address)).toBeUndefined();
+  });
+});
+
+describe("a homebrew monster's target", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("renders the stat block a catalog monster gets, reading the record's edition", async () => {
+    const json = {
+      name: "Ember Imp",
+      source: "HB",
+      size: ["T"],
+      type: "fiend",
+      ac: [13],
+      hp: { average: 10, formula: "3d4 + 3" },
+      speed: { walk: 20 },
+      str: 6,
+      dex: 17,
+      con: 13,
+      int: 11,
+      wis: 12,
+      cha: 14,
+      cr: "1/2",
+    };
+    const record = {
+      id: "m1",
+      name: "Ember Imp",
+      edition: "one",
+      json,
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    stubFetchByUrl({ "/api/homebrew/monsters/m1": record });
+
+    const match = matchCatalogTarget("/homebrew/monsters/m1");
+    const row = await match?.target.load(match.key);
+    expect(row?.name).toBe("Ember Imp");
+    expect(row?.entries).toEqual(catalogRowEntries("monster", json, "one"));
+    expect(JSON.stringify(row?.entries)).toContain("Tiny fiend");
+    expect(JSON.stringify(row?.entries)).toContain("+3 (13)");
   });
 });

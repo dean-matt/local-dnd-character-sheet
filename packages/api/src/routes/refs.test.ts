@@ -11,6 +11,7 @@ import {
   insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewMonster,
   insertHomebrewRace,
   insertHomebrewSpell,
   insertHomebrewSubclass,
@@ -680,6 +681,35 @@ describe("refsRoutes", () => {
       ).toEqual([
         expect.objectContaining({ name: "Vael", path: "/homebrew/deities/b" }),
         expect.objectContaining({ name: "Vael", path: "/homebrew/deities/a" }),
+        null,
+      ]);
+    });
+
+    it("resolves a {@creature} naming source HB to a homebrew monster", async () => {
+      insertHomebrewMonster(opened.homebrewDb, "m", {
+        name: "Ember Imp",
+        edition: "one",
+        size: ["T"],
+        type: "fiend",
+        ac: [13],
+        hp: { average: 10 },
+        speed: { walk: 20 },
+        str: 6,
+        dex: 17,
+        con: 13,
+        int: 11,
+        wis: 12,
+        cha: 14,
+        cr: "1/2",
+      });
+
+      expect(
+        await resolveOk([
+          { tag: "creature", name: "ember imp", source: "HB" },
+          { tag: "creature", name: "Cinder Imp", source: "HB" },
+        ]),
+      ).toEqual([
+        expect.objectContaining({ name: "Ember Imp", path: "/homebrew/monsters/m" }),
         null,
       ]);
     });

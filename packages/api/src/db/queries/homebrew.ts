@@ -2,7 +2,7 @@
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
  * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
  * `homebrew_classes`, `homebrew_class_features`, `homebrew_subclasses`, `homebrew_subraces` and
- * `homebrew_skills`, `homebrew_deities` and `homebrew_optional_features` tables. `source` never
+ * `homebrew_skills`, `homebrew_deities`, `homebrew_optional_features` and `homebrew_monsters` tables. `source` never
  * arrives as an argument: every write stamps `HOMEBREW_SOURCE` into `json` here, the one
  * place that builds it. The caller chooses `id` once at creation and never reassigns it, so
  * a rename keeps the id a character already references.
@@ -15,6 +15,7 @@ import type {
   HomebrewFeatInput,
   HomebrewItem,
   HomebrewItemInput,
+  HomebrewMonsterInput,
   HomebrewOptionalFeatureInput,
   HomebrewRaceInput,
   HomebrewSkillInput,
@@ -28,6 +29,7 @@ import {
   homebrewClassSchema,
   homebrewDeityEntrySchema,
   homebrewItemSchema,
+  homebrewMonsterEntrySchema,
   homebrewOptionalFeatureEntrySchema,
   homebrewSkillEntrySchema,
   homebrewSubclassSchema,
@@ -49,6 +51,7 @@ import {
   homebrewDeities,
   homebrewFeats,
   homebrewItems,
+  homebrewMonsters,
   homebrewOptionalFeatures,
   homebrewOptionalFeatureTypes,
   homebrewRaces,
@@ -89,7 +92,8 @@ export type NamedSearchTable =
   | typeof homebrewRaces
   | typeof homebrewClasses
   | typeof homebrewBackgrounds
-  | typeof homebrewFeats;
+  | typeof homebrewFeats
+  | typeof homebrewMonsters;
 
 export function searchHomebrewNamed(db: HomebrewDb, table: NamedSearchTable, filter: SearchFilter) {
   return db
@@ -113,6 +117,7 @@ const SEARCHED_TABLES = [
   homebrewFeats,
   homebrewDeities,
   homebrewOptionalFeatures,
+  homebrewMonsters,
 ];
 
 /** The sources a homebrew row `/search` can return cites: `HOMEBREW_SOURCE` once any searched row exists. */
@@ -146,7 +151,8 @@ export type NamedHomebrewTable =
   | typeof homebrewFeats
   | typeof homebrewRaces
   | typeof homebrewClasses
-  | typeof homebrewSkills;
+  | typeof homebrewSkills
+  | typeof homebrewMonsters;
 
 /** Classic before the 2024 edition, stated rather than left to how the two values sort. */
 const classicFirst = (table: NamedHomebrewTable) =>
@@ -1029,4 +1035,41 @@ export function searchHomebrewOptionalFeatures(db: HomebrewDb, filter: SearchFil
       ),
     )
     .all();
+}
+
+export function listHomebrewMonsters(db: HomebrewDb) {
+  return db.select().from(homebrewMonsters).all();
+}
+
+export function getHomebrewMonster(db: HomebrewDb, id: string) {
+  return db.select().from(homebrewMonsters).where(eq(homebrewMonsters.id, id)).get();
+}
+
+function monsterJson(input: HomebrewMonsterInput) {
+  const { edition: _edition, ...entry } = input;
+  return homebrewMonsterEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+}
+
+export function insertHomebrewMonster(db: HomebrewDb, id: string, input: HomebrewMonsterInput) {
+  const json = monsterJson(input);
+  return db
+    .insert(homebrewMonsters)
+    .values({ id, edition: input.edition, name: json.name, json })
+    .returning()
+    .get();
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewMonster` reads a miss. */
+export function updateHomebrewMonster(db: HomebrewDb, id: string, input: HomebrewMonsterInput) {
+  const json = monsterJson(input);
+  return db
+    .update(homebrewMonsters)
+    .set({ edition: input.edition, name: json.name, json })
+    .where(eq(homebrewMonsters.id, id))
+    .returning()
+    .get();
+}
+
+export function deleteHomebrewMonster(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewMonsters).where(eq(homebrewMonsters.id, id)).run().changes > 0;
 }
