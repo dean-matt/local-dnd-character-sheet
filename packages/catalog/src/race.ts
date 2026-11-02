@@ -12,6 +12,7 @@
 import { EDITIONS, SIZES, type Size } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
+import { HOMEBREW_SOURCE } from "./source.ts";
 
 export const raceEntrySchema = z.looseObject({
   name: z.string().min(1),
@@ -117,8 +118,8 @@ export type SubraceRecord = z.infer<typeof subraceRecordSchema>;
  * What a caller submits to create or rename a homebrew race. `source` is never here —
  * the server always stamps `HOMEBREW_SOURCE` — and `edition` rides beside the entry
  * rather than inside it, since it is a `homebrew_races` column, not a field the 5etools
- * shape carries. A homebrew race is always full and self-contained: it has no subrace of
- * its own. `size` and `speed` are required because no load step checks a paste before
+ * shape carries. A homebrew race is always full and self-contained; its subraces are rows of
+ * their own, `homebrewSubraceInputSchema` below. `size` and `speed` are required because no load step checks a paste before
  * `raceTraitsSchema` reads them for a derived block.
  */
 export const homebrewRaceInputSchema = raceEntrySchema.omit({ source: true }).extend({
@@ -139,3 +140,62 @@ export const homebrewRaceRecordSchema = z.strictObject({
 });
 
 export type HomebrewRaceRecord = z.infer<typeof homebrewRaceRecordSchema>;
+
+/**
+ * The name a `{@race}` tag gives a subrace: its race's with its own in parens. A race that
+ * is itself a named variant reopens its own closing paren rather than nesting a second.
+ * `content`'s ETL writes the same name for a catalog subrace, which it cannot import.
+ */
+export function subraceFullName(raceName: string, subraceName: string): string {
+  return raceName.endsWith(")")
+    ? `${raceName.slice(0, -1)}; ${subraceName})`
+    : `${raceName} (${subraceName})`;
+}
+
+/**
+ * The race a homebrew subrace belongs to: a catalog race by `(name, source)`, or a homebrew
+ * race by `raceId`, which survives that race's rename. The subrace takes the race's edition.
+ */
+const homebrewSubraceParentSchema = z.union([
+  z.strictObject({
+    name: z.string().min(1),
+    source: z
+      .string()
+      .min(1)
+      .refine((source) => source.toUpperCase() !== HOMEBREW_SOURCE, {
+        message: "Name a homebrew race by raceId",
+      }),
+  }),
+  z.strictObject({ raceId: z.string().min(1) }),
+]);
+
+/**
+ * What a caller submits to create or replace a homebrew subrace; `source` is stamped, never
+ * sent. The entry is the race shape, holding only what the subrace adds to its race.
+ */
+export const homebrewSubraceInputSchema = raceEntrySchema
+  .omit({ source: true })
+  .extend({ parent: homebrewSubraceParentSchema });
+
+export type HomebrewSubraceInput = z.infer<typeof homebrewSubraceInputSchema>;
+
+/**
+ * A stored homebrew subrace, as an endpoint returns it. It has an `id` and no top-level
+ * `source`, which tells it from `subraceRecordSchema`'s catalog row in a merged list.
+ * `raceSource` is `HB` and `raceId` is set where the race is a homebrew one.
+ */
+export const homebrewSubraceRecordSchema = z.strictObject({
+  id: z.string(),
+  name: z.string(),
+  edition: z.enum(EDITIONS),
+  raceName: z.string(),
+  raceSource: z.string(),
+  raceId: z.string().optional(),
+  json: raceEntrySchema,
+  createdAt: z.iso.datetime(),
+});
+
+export type HomebrewSubraceRecord = z.infer<typeof homebrewSubraceRecordSchema>;
+
+/** One row of a subrace list: a catalog subrace, or a homebrew one told apart by its `id`. */
+export const subraceListItemSchema = z.union([subraceRecordSchema, homebrewSubraceRecordSchema]);

@@ -6,6 +6,7 @@ const HOMEBREW_COLLECTIONS = [
   "items",
   "spells",
   "races",
+  "subraces",
   "classes",
   "subclasses",
   "backgrounds",

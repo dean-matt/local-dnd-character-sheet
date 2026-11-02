@@ -1,8 +1,8 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
  * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
- * `homebrew_classes`, `homebrew_class_features`, `homebrew_subclasses` and `homebrew_skills`
- * tables. `source` never
+ * `homebrew_classes`, `homebrew_class_features`, `homebrew_subclasses`, `homebrew_subraces` and
+ * `homebrew_skills` tables. `source` never
  * arrives as an argument: every write stamps `HOMEBREW_SOURCE` into `json` here, the one
  * place that builds it. The caller chooses `id` once at creation and never reassigns it, so
  * a rename keeps the id a character already references.
@@ -18,6 +18,7 @@ import type {
   HomebrewSkillInput,
   HomebrewSpellInput,
   HomebrewSubclassInput,
+  HomebrewSubraceInput,
 } from "@dnd/catalog";
 import {
   characterOptionEntrySchema,
@@ -30,6 +31,7 @@ import {
   ofWantedKind,
   raceEntrySchema,
   spellEntrySchema,
+  subraceFullName,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import { and, between, eq, inArray, type SQL, sql } from "drizzle-orm";
@@ -46,6 +48,7 @@ import {
   homebrewSkills,
   homebrewSpells,
   homebrewSubclasses,
+  homebrewSubraces,
 } from "../homebrew.ts";
 import type { SearchFilter } from "./catalog-search.ts";
 import { escapeLikeTerm } from "./search-terms.ts";
@@ -379,15 +382,27 @@ export function insertHomebrewRace(db: HomebrewDb, id: string, input: HomebrewRa
     .get();
 }
 
-/** `undefined` where `id` names no row, the way `getHomebrewRace` reads a miss. */
+/**
+ * `undefined` where `id` names no row, the way `getHomebrewRace` reads a miss. A subrace
+ * takes its race's edition, so a changed edition carries to them in the same transaction.
+ */
 export function updateHomebrewRace(db: HomebrewDb, id: string, input: HomebrewRaceInput) {
   const json = raceJson(input);
-  return db
-    .update(homebrewRaces)
-    .set({ edition: input.edition, name: json.name, json })
-    .where(eq(homebrewRaces.id, id))
-    .returning()
-    .get();
+  return db.transaction((tx) => {
+    const row = tx
+      .update(homebrewRaces)
+      .set({ edition: input.edition, name: json.name, json })
+      .where(eq(homebrewRaces.id, id))
+      .returning()
+      .get();
+    if (row) {
+      tx.update(homebrewSubraces)
+        .set({ edition: input.edition })
+        .where(eq(homebrewSubraces.raceId, id))
+        .run();
+    }
+    return row;
+  });
 }
 
 export function deleteHomebrewRace(db: HomebrewDb, id: string): boolean {
@@ -601,6 +616,133 @@ export function updateHomebrewSubclass(db: HomebrewDb, id: string, input: Homebr
 
 export function deleteHomebrewSubclass(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewSubclasses).where(eq(homebrewSubclasses.id, id)).run().changes > 0;
+}
+
+/** A subrace's parent as the routes name it: a catalog race by key, a homebrew race by id. */
+type SubraceParent = HomebrewSubraceInput["parent"];
+
+/** A subrace to store: the caller's input and the edition its parent race settled. */
+export type HomebrewSubraceWrite = HomebrewSubraceInput & { edition: Edition };
+
+const subraceColumns = {
+  id: homebrewSubraces.id,
+  name: homebrewSubraces.name,
+  edition: homebrewSubraces.edition,
+  raceId: homebrewSubraces.raceId,
+  raceName: sql<string>`coalesce(${homebrewSubraces.raceName}, ${homebrewRaces.name})`,
+  raceSource: sql<string>`coalesce(${homebrewSubraces.raceSource}, ${HOMEBREW_SOURCE})`,
+  json: homebrewSubraces.json,
+  createdAt: homebrewSubraces.createdAt,
+};
+
+/** A subrace row with its race resolved, and `parent` as a write would name it again. */
+function readSubraces(db: HomebrewDb, where?: SQL) {
+  return db
+    .select(subraceColumns)
+    .from(homebrewSubraces)
+    .leftJoin(homebrewRaces, eq(homebrewSubraces.raceId, homebrewRaces.id))
+    .where(where)
+    .all()
+    .map((row) => ({
+      ...row,
+      parent: (row.raceId
+        ? { raceId: row.raceId }
+        : { name: row.raceName, source: row.raceSource }) satisfies SubraceParent,
+    }));
+}
+
+export function listHomebrewSubraces(db: HomebrewDb) {
+  return readSubraces(db);
+}
+
+/** The subraces of one race in one edition: a catalog race by key, or a homebrew one by name (source `HB`). */
+export function listHomebrewSubracesOf(
+  db: HomebrewDb,
+  raceName: string,
+  raceSource: string,
+  edition: Edition,
+) {
+  return readSubraces(
+    db,
+    and(
+      sql`${subraceColumns.raceName} = ${raceName} COLLATE NOCASE`,
+      sql`${subraceColumns.raceSource} = ${raceSource} COLLATE NOCASE`,
+      eq(homebrewSubraces.edition, edition),
+    ),
+  );
+}
+
+export function getHomebrewSubrace(db: HomebrewDb, id: string) {
+  return readSubraces(db, eq(homebrewSubraces.id, id))[0];
+}
+
+/** The subrace named `name` under a parent, compared as the unique indexes compare it. */
+export function findHomebrewSubrace(db: HomebrewDb, parent: SubraceParent, name: string) {
+  const row = readSubraces(
+    db,
+    and(
+      sql`${homebrewSubraces.name} = ${name} COLLATE NOCASE`,
+      "raceId" in parent
+        ? eq(homebrewSubraces.raceId, parent.raceId)
+        : and(
+            sql`${homebrewSubraces.raceName} = ${parent.name}`,
+            sql`${homebrewSubraces.raceSource} = ${parent.source}`,
+          ),
+    ),
+  )[0];
+  return row && { id: row.id, name: row.name, edition: row.edition };
+}
+
+/**
+ * The subrace a `{@race}` tag names by its full name, ignoring case; the classic row before
+ * the 2024 one. Compared in code, since the full name joins the race's name to the subrace's.
+ */
+export function homebrewSubraceNamed(db: HomebrewDb, fullName: string) {
+  const wanted = fullName.toLowerCase();
+  return readSubraces(db)
+    .filter((row) => subraceFullName(row.raceName, row.name).toLowerCase() === wanted)
+    .sort((a, b) => Number(a.edition === "one") - Number(b.edition === "one"))[0];
+}
+
+/** The subraces a homebrew race still has, which its deletion would orphan. */
+export function subracesOfHomebrewRace(db: HomebrewDb, raceId: string) {
+  return db
+    .select({ id: homebrewSubraces.id, name: homebrewSubraces.name })
+    .from(homebrewSubraces)
+    .where(eq(homebrewSubraces.raceId, raceId))
+    .orderBy(homebrewSubraces.name)
+    .all();
+}
+
+function subraceColumnsOf({ parent, edition, ...entry }: HomebrewSubraceWrite) {
+  const json = raceEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+  return {
+    name: json.name,
+    edition,
+    json,
+    ...("raceId" in parent
+      ? { raceId: parent.raceId, raceName: null, raceSource: null }
+      : { raceId: null, raceName: parent.name, raceSource: parent.source }),
+  };
+}
+
+export function insertHomebrewSubrace(db: HomebrewDb, id: string, input: HomebrewSubraceWrite) {
+  db.insert(homebrewSubraces)
+    .values({ id, ...subraceColumnsOf(input) })
+    .run();
+  const row = getHomebrewSubrace(db, id);
+  if (!row) throw new Error(`Subrace ${id} was inserted and did not read back`);
+  return row;
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewSubrace` reads a miss. */
+export function updateHomebrewSubrace(db: HomebrewDb, id: string, input: HomebrewSubraceWrite) {
+  db.update(homebrewSubraces).set(subraceColumnsOf(input)).where(eq(homebrewSubraces.id, id)).run();
+  return getHomebrewSubrace(db, id);
+}
+
+export function deleteHomebrewSubrace(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewSubraces).where(eq(homebrewSubraces.id, id)).run().changes > 0;
 }
 
 export function listHomebrewSkills(db: HomebrewDb) {

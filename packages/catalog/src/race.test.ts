@@ -4,6 +4,7 @@ import {
   homebrewRaceRecordSchema,
   raceRecordSchema,
   raceTraitsSchema,
+  subraceFullName,
   subraceRecordSchema,
 } from "./index.ts";
 
@@ -118,5 +119,15 @@ describe("raceTraitsSchema", () => {
   it("rejects a race that states no size or speed", () => {
     expect(raceTraitsSchema.safeParse({ speed: 30 }).success).toBe(false);
     expect(raceTraitsSchema.safeParse({ size: ["M"] }).success).toBe(false);
+  });
+});
+
+describe("subraceFullName", () => {
+  it("appends the subrace to its race in parens", () => {
+    expect(subraceFullName("Elf", "High")).toBe("Elf (High)");
+  });
+
+  it("reopens the closing paren of a race that is a named variant", () => {
+    expect(subraceFullName("Elf (Kaladesh)", "Bishatar")).toBe("Elf (Kaladesh; Bishatar)");
   });
 });

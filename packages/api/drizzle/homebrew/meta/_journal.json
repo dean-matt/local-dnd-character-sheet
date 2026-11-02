@@ -71,6 +71,13 @@
       "when": 1793645203687,
       "tag": "0009_homebrew_subclasses",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1793646848470,
+      "tag": "0010_homebrew_subraces",
+      "breakpoints": true
     }
   ]
 }

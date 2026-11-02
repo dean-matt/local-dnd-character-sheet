@@ -13,6 +13,7 @@ import {
   insertHomebrewRace,
   insertHomebrewSpell,
   insertHomebrewSubclass,
+  insertHomebrewSubrace,
   replaceHomebrewClassFeatures,
   updateHomebrewItem,
 } from "../db/queries/homebrew.ts";
@@ -628,6 +629,54 @@ describe("refsRoutes", () => {
         },
         null,
       ]);
+    });
+
+    it("resolves a {@race} naming source HB to a homebrew subrace by its full name", async () => {
+      insertHomebrewSubrace(opened.homebrewDb, "m", {
+        name: "Moon",
+        edition: "classic",
+        entries: ["Pale."],
+        parent: { name: "Elf", source: "PHB" },
+      });
+      insertHomebrewSubrace(opened.homebrewDb, "k", {
+        name: "Sun",
+        edition: "classic",
+        parent: { name: "Elf (Kaladesh)", source: "PHB" },
+      });
+
+      expect(
+        await resolveOk([
+          { tag: "race", name: "elf (moon)", source: "HB" },
+          { tag: "race", name: "Elf (Kaladesh; Sun)", source: "HB" },
+          { tag: "race", name: "Elf (Star)", source: "HB" },
+        ]),
+      ).toEqual([
+        {
+          name: "Elf (Moon)",
+          source: "HB",
+          entries: ["Pale."],
+          path: "/homebrew/subraces/m",
+        },
+        expect.objectContaining({ name: "Elf (Kaladesh; Sun)", path: "/homebrew/subraces/k" }),
+        null,
+      ]);
+    });
+
+    it("answers a homebrew race before a subrace of the same full name", async () => {
+      insertHomebrewRace(opened.homebrewDb, "r", {
+        name: "Elf (Moon)",
+        edition: "classic",
+        size: ["M"],
+        speed: 30,
+      });
+      insertHomebrewSubrace(opened.homebrewDb, "m", {
+        name: "Moon",
+        edition: "classic",
+        parent: { name: "Elf", source: "PHB" },
+      });
+
+      const [row] = await resolveOk([{ tag: "race", name: "Elf (Moon)", source: "HB" }]);
+      expect(row.path).toBe("/homebrew/races/r");
     });
 
     it("answers the classic row where both editions hold the name", async () => {

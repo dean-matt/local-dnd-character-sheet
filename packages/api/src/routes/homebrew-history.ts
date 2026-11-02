@@ -10,6 +10,7 @@
  */
 import {
   type HomebrewSubclassInput,
+  type HomebrewSubraceInput,
   homebrewCollectionSchema,
   homebrewHistorySchema,
 } from "@dnd/catalog";
@@ -25,6 +26,7 @@ import {
 } from "../db/homebrew.ts";
 import {
   findHomebrewSubclass,
+  findHomebrewSubrace,
   getHomebrewBackground,
   getHomebrewClass,
   getHomebrewFeat,
@@ -33,6 +35,7 @@ import {
   getHomebrewSkill,
   getHomebrewSpell,
   getHomebrewSubclass,
+  getHomebrewSubrace,
   type HomebrewDb,
   insertHomebrewBackground,
   insertHomebrewClass,
@@ -42,12 +45,14 @@ import {
   insertHomebrewSkill,
   insertHomebrewSpell,
   insertHomebrewSubclass,
+  insertHomebrewSubrace,
   type NamedHomebrewTable,
 } from "../db/queries/homebrew.ts";
 import { catalogSkillNames } from "../db/queries/skills.ts";
 import { errorSchema, notFound } from "./errors.ts";
 import { claimName, holder, idParam, nameTaken, nameTakenError } from "./homebrew.ts";
 import { parentEdition } from "./homebrew-subclasses.ts";
+import { raceEdition } from "./homebrew-subraces.ts";
 
 type Collection = z.infer<typeof homebrewCollectionSchema>;
 type Row = {
@@ -100,6 +105,17 @@ const KINDS: Record<Collection, Kind> = {
       parentEdition(db, dataDir, input.parent) ? undefined : "Its class no longer exists.",
     editionNow: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
       parentEdition(db, dataDir, input.parent),
+  },
+  subraces: {
+    noun: "subrace",
+    get: getHomebrewSubrace,
+    insert: insertHomebrewSubrace,
+    holder: (db, input: { name: string; parent: HomebrewSubraceInput["parent"] }) => () =>
+      findHomebrewSubrace(db, input.parent, input.name),
+    blocked: (db, dataDir, input: { parent: HomebrewSubraceInput["parent"] }) =>
+      raceEdition(db, dataDir, input.parent) ? undefined : "Its race no longer exists.",
+    editionNow: (db, dataDir, input: { parent: HomebrewSubraceInput["parent"] }) =>
+      raceEdition(db, dataDir, input.parent),
   },
   backgrounds: named(
     "background",

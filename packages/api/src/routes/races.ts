@@ -4,17 +4,20 @@
  * race_name, race_source)`, not `(name, source)` alone; see docs/data-model.md. Its row
  * is already the race merged with the subrace, not a delta this route applies.
  *
- * Catalog rows alone: `/search` merges homebrew races with these, and `/homebrew/races`
- * creates, renames and deletes them.
+ * A race list is catalog rows alone: `/search` merges homebrew races with these, and
+ * `/homebrew/races` creates, renames and deletes them. A subrace list adds the race's homebrew
+ * subraces, told apart by their `id` and lack of a top-level `source`.
  */
 import {
   type RaceRecord,
   raceRecordSchema,
   type SubraceRecord,
+  subraceListItemSchema,
   subraceRecordSchema,
 } from "@dnd/catalog";
 import { EDITIONS } from "@dnd/rules";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { type HomebrewDb, listHomebrewSubracesOf } from "../db/queries/homebrew.ts";
 import {
   getRace,
   getSubrace,
@@ -24,6 +27,7 @@ import {
   type SubraceRow,
 } from "../db/queries/races.ts";
 import { catalogOutOfDate, notFound } from "./errors.ts";
+import { toSubraceRecord as toHomebrewSubraceRecord } from "./homebrew.ts";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -92,7 +96,7 @@ const readRace = createRoute({
 const raceParam = z.object({ raceName: z.string(), raceSource: z.string() });
 
 const subraceListResponseSchema = z.object({
-  items: z.array(subraceRecordSchema),
+  items: z.array(subraceListItemSchema),
   total: z.int(),
   limit: z.int(),
   offset: z.int(),
@@ -139,7 +143,7 @@ const readSubrace = createRoute({
 const RACE_NOT_FOUND = "No race with that name and source";
 const SUBRACE_NOT_FOUND = "No subrace with that name, source, race name and race source";
 
-export function racesRoutes(dataDir: string) {
+export function racesRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   const routes = new OpenAPIHono();
 
   routes.openapi(listRacesRoute, (c) => {
@@ -166,7 +170,12 @@ export function racesRoutes(dataDir: string) {
   routes.openapi(listSubracesRoute, (c) => {
     const { raceName, raceSource } = c.req.valid("param");
     const { edition, limit = DEFAULT_LIMIT, offset = 0 } = c.req.valid("query");
-    const subraces = listSubraces(dataDir, raceName, raceSource, edition).map(toSubraceRecord);
+    const subraces = [
+      ...listSubraces(dataDir, raceName, raceSource, edition).map(toSubraceRecord),
+      ...listHomebrewSubracesOf(homebrewDb, raceName, raceSource, edition).map(
+        toHomebrewSubraceRecord,
+      ),
+    ].sort((a, b) => a.name.localeCompare(b.name));
     return c.json(
       {
         items: subraces.slice(offset, offset + limit),
