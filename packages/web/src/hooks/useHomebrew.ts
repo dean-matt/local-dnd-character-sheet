@@ -6,11 +6,11 @@ import { isRecord } from "../lib/entryGuards.ts";
 
 /**
  * The path segment of each kind's routes, `/homebrew/{collection}`, of the kinds the app
- * edits: there is no subclass or subrace editor yet.
+ * edits: there is no subclass, subrace or deity editor yet.
  */
 export type HomebrewCollection = Exclude<
   z.infer<typeof homebrewCollectionSchema>,
-  "subclasses" | "subraces"
+  "subclasses" | "subraces" | "deities"
 >;
 
 /**

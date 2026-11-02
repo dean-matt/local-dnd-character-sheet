@@ -37,6 +37,16 @@ export const sailing = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+export const ashgod = (overrides: Record<string, unknown> = {}) => ({
+  name: "Vael",
+  pantheon: "Ashen",
+  alignment: ["N", "E"],
+  domains: ["Death"],
+  title: "Lord of cinders",
+  entries: ["Keeps the last ember."],
+  ...overrides,
+});
+
 export const duskling = (overrides: Record<string, unknown> = {}) => ({
   name: "Duskling",
   edition: "one",

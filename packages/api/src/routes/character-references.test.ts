@@ -168,6 +168,12 @@ describe("characterReferencesRoutes", () => {
     expect(await unresolved()).toEqual([]);
   });
 
+  it("leaves a homebrew deity to homebrew.db, which content.db cannot answer for", async () => {
+    publishReferencesFixture(dataDir, CATALOG);
+    store(definitionWith({ deity: { name: "Vael", source: "HB", pantheon: "Ashen" } }));
+    expect(await unresolved()).toEqual([]);
+  });
+
   it("renders a spell the catalog dropped and reports it by field", async () => {
     publishReferencesFixture(dataDir, { ...CATALOG, spells: [] });
     store(definitionWith());

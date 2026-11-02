@@ -13,6 +13,7 @@
 import {
   type HomebrewBackgroundRecord,
   type HomebrewClassRecord,
+  type HomebrewDeityRecord,
   type HomebrewFeatRecord,
   type HomebrewItemRecord,
   type HomebrewRaceRecord,
@@ -22,6 +23,7 @@ import {
   type HomebrewSubraceRecord,
   homebrewBackgroundRecordSchema,
   homebrewClassRecordSchema,
+  homebrewDeityRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
   homebrewRaceRecordSchema,
@@ -36,6 +38,7 @@ import { SqliteError } from "better-sqlite3";
 import {
   type getHomebrewBackground,
   type getHomebrewClass,
+  type getHomebrewDeity,
   type getHomebrewFeat,
   type getHomebrewItem,
   type getHomebrewRace,
@@ -57,6 +60,7 @@ type ClassRow = NonNullable<ReturnType<typeof getHomebrewClass>>;
 type SubclassRow = NonNullable<ReturnType<typeof getHomebrewSubclass>>;
 type SubraceRow = NonNullable<ReturnType<typeof getHomebrewSubrace>>;
 type SkillRow = NonNullable<ReturnType<typeof getHomebrewSkill>>;
+type DeityRow = NonNullable<ReturnType<typeof getHomebrewDeity>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
 export function toItemRecord(row: ItemRow): HomebrewItemRecord {
@@ -117,6 +121,10 @@ export function toSubraceRecord(row: SubraceRow): HomebrewSubraceRecord {
 
 export function toSkillRecord(row: SkillRow): HomebrewSkillRecord {
   return homebrewSkillRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
+}
+
+export function toDeityRecord(row: DeityRow): HomebrewDeityRecord {
+  return homebrewDeityRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
 }
 
 export const idParam = z.object({ id: z.string() });

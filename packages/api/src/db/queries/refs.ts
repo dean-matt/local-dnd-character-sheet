@@ -26,6 +26,7 @@ import {
 } from "../homebrew.ts";
 import {
   type HomebrewDb,
+  homebrewDeityNamed,
   homebrewNamed,
   homebrewSubclassNamed,
   homebrewSubraceNamed,
@@ -323,7 +324,7 @@ function redirector(db: Database.Database, find: Find) {
 }
 
 /**
- * The tags a homebrew row answers. A subclass is found by name alone, though only its class
+ * The tags a homebrew row answers. A deity is found by its pantheon where the tag names one. A subclass is found by name alone, though only its class
  * scopes the name; a subrace by its full name, `Elf (Moon)`, a race outranking it. A tag names no edition, so where both editions hold
  * the name the classic row answers, the way a sourceless catalog reference defaults to a
  * classic source. An edition on the request is the way out once a block knows its own.
@@ -337,7 +338,23 @@ const HOMEBREW: Record<string, { collection: string; table: NamedHomebrewTable }
   class: { collection: "classes", table: homebrewClasses },
 };
 
-function homebrewRow(db: HomebrewDb, tag: string, name: string): ResolvedRow | undefined {
+function homebrewRow(
+  db: HomebrewDb,
+  tag: string,
+  name: string,
+  qualifier?: string,
+): ResolvedRow | undefined {
+  if (tag === "deity") {
+    const row = homebrewDeityNamed(db, name, qualifier);
+    return (
+      row && {
+        name: row.name,
+        source: HOMEBREW_SOURCE,
+        json: row.json,
+        path: `/homebrew/deities/${segments(row.id)}`,
+      }
+    );
+  }
   if (tag === "subclass") {
     const row = homebrewSubclassNamed(db, name);
     return (
@@ -410,7 +427,7 @@ export function resolveRefs(
       if (wanted.source.toUpperCase() === HOMEBREW_SOURCE) {
         return ref.tag === "classFeature"
           ? homebrewFeatureRow(homebrewDb, ref)
-          : homebrewRow(homebrewDb, ref.tag, ref.name);
+          : homebrewRow(homebrewDb, ref.tag, ref.name, ref.qualifier);
       }
       return (
         find(ref.tag, wanted) ??

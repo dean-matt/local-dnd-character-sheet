@@ -67,6 +67,16 @@ export {
 } from "./class.ts";
 export { classEntries, subclassEntries } from "./class-entries.ts";
 export { defenseTraitSchema } from "./defense.ts";
+export type {
+  HomebrewDeity,
+  HomebrewDeityInput,
+  HomebrewDeityRecord,
+} from "./deity.ts";
+export {
+  homebrewDeityEntrySchema,
+  homebrewDeityInputSchema,
+  homebrewDeityRecordSchema,
+} from "./deity.ts";
 export type { Entries } from "./entry.ts";
 export { entriesSchema, rowEntries } from "./entry.ts";
 export { type FeatOffer, featGrantsSchema } from "./feat-grants.ts";

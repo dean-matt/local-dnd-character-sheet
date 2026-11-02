@@ -8,6 +8,7 @@ import {
   deleteHomebrewItem,
   insertHomebrewBackground,
   insertHomebrewClass,
+  insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
   insertHomebrewRace,
@@ -658,6 +659,27 @@ describe("refsRoutes", () => {
           path: "/homebrew/subraces/m",
         },
         expect.objectContaining({ name: "Elf (Kaladesh; Sun)", path: "/homebrew/subraces/k" }),
+        null,
+      ]);
+    });
+
+    it("resolves a {@deity} naming source HB to a homebrew deity, by pantheon where named", async () => {
+      insertHomebrewDeity(opened.homebrewDb, "a", {
+        name: "Vael",
+        pantheon: "Ashen",
+        entries: ["Keeps the last ember."],
+      });
+      insertHomebrewDeity(opened.homebrewDb, "b", { name: "Vael", pantheon: "Dusk" });
+
+      expect(
+        await resolveOk([
+          { tag: "deity", name: "vael", source: "HB", qualifier: "dusk" },
+          { tag: "deity", name: "Vael", source: "HB" },
+          { tag: "deity", name: "Vael", source: "HB", qualifier: "Celtic" },
+        ]),
+      ).toEqual([
+        expect.objectContaining({ name: "Vael", path: "/homebrew/deities/b" }),
+        expect.objectContaining({ name: "Vael", path: "/homebrew/deities/a" }),
         null,
       ]);
     });

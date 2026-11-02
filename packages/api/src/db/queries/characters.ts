@@ -302,6 +302,27 @@ export function charactersReferencingHomebrewSkill(
 }
 
 /**
+ * The characters holding a homebrew deity, which they cite by `(name, source, pantheon)` and
+ * not by id, so a rename, a move to another pantheon or a delete must find them by that key.
+ */
+export function charactersReferencingHomebrewDeity(
+  db: CharactersDb,
+  { name, pantheon }: { name: string; pantheon: string },
+): { id: string; name: string }[] {
+  const [wantedName, wantedPantheon] = [name.toLowerCase(), pantheon.toLowerCase()];
+  return listCharacters(db)
+    .filter(({ definition }) => {
+      const deity = characterDefinitionSchema.safeParse(definition).data?.deity;
+      return (
+        deity?.source === HOMEBREW_SOURCE &&
+        deity.name.toLowerCase() === wantedName &&
+        deity.pantheon.toLowerCase() === wantedPantheon
+      );
+    })
+    .map((row) => ({ id: row.id, name: row.name }));
+}
+
+/**
  * Resets what each character holding a homebrew skill typed over it, for the skill switching
  * between an ability and a flat bonus: the flat number (0 for a new flat skill, none for an
  * ability one) and any override of its modifier. Each reset is that character's own undo

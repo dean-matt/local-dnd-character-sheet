@@ -2,7 +2,7 @@
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
  * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
  * `homebrew_classes`, `homebrew_class_features`, `homebrew_subclasses`, `homebrew_subraces` and
- * `homebrew_skills` tables. `source` never
+ * `homebrew_skills` and `homebrew_deities` tables. `source` never
  * arrives as an argument: every write stamps `HOMEBREW_SOURCE` into `json` here, the one
  * place that builds it. The caller chooses `id` once at creation and never reassigns it, so
  * a rename keeps the id a character already references.
@@ -11,6 +11,7 @@ import type {
   HomebrewBackgroundInput,
   HomebrewClassFeature,
   HomebrewClassInput,
+  HomebrewDeityInput,
   HomebrewFeatInput,
   HomebrewItem,
   HomebrewItemInput,
@@ -24,6 +25,7 @@ import {
   characterOptionEntrySchema,
   HOMEBREW_SOURCE,
   homebrewClassSchema,
+  homebrewDeityEntrySchema,
   homebrewItemSchema,
   homebrewSkillEntrySchema,
   homebrewSubclassSchema,
@@ -42,6 +44,7 @@ import {
   homebrewBackgrounds,
   homebrewClasses,
   homebrewClassFeatures,
+  homebrewDeities,
   homebrewFeats,
   homebrewItems,
   homebrewRaces,
@@ -104,6 +107,7 @@ const SEARCHED_TABLES = [
   homebrewClasses,
   homebrewBackgrounds,
   homebrewFeats,
+  homebrewDeities,
 ];
 
 /** The sources a homebrew row `/search` can return cites: `HOMEBREW_SOURCE` once any searched row exists. */
@@ -797,4 +801,86 @@ export function itemsAdvantagedOnSkill(
         ),
     )
     .map(({ id, name }) => ({ id, name }));
+}
+
+export function listHomebrewDeities(db: HomebrewDb) {
+  return db.select().from(homebrewDeities).all();
+}
+
+export function getHomebrewDeity(db: HomebrewDb, id: string) {
+  return db.select().from(homebrewDeities).where(eq(homebrewDeities.id, id)).get();
+}
+
+/** A deity is keyed by its name and pantheon together, compared as the unique index does. */
+export function findHomebrewDeity(db: HomebrewDb, { name, pantheon }: HomebrewDeityInput) {
+  return db
+    .select()
+    .from(homebrewDeities)
+    .where(
+      and(
+        sql`${homebrewDeities.name} = ${name} COLLATE NOCASE`,
+        sql`${homebrewDeities.pantheon} = ${pantheon} COLLATE NOCASE`,
+      ),
+    )
+    .get();
+}
+
+/**
+ * The deity a `{@deity}` tag names: in `pantheon` where the tag names one, or the first by
+ * pantheon where it does not.
+ */
+export function homebrewDeityNamed(db: HomebrewDb, name: string, pantheon?: string) {
+  return db
+    .select()
+    .from(homebrewDeities)
+    .where(
+      and(
+        sql`${homebrewDeities.name} = ${name} COLLATE NOCASE`,
+        pantheon === undefined
+          ? undefined
+          : sql`${homebrewDeities.pantheon} = ${pantheon} COLLATE NOCASE`,
+      ),
+    )
+    .orderBy(sql`${homebrewDeities.pantheon} COLLATE NOCASE`)
+    .get();
+}
+
+export function searchHomebrewDeities(db: HomebrewDb, filter: SearchFilter) {
+  return db
+    .select({
+      id: homebrewDeities.id,
+      name: homebrewDeities.name,
+      pantheon: homebrewDeities.pantheon,
+    })
+    .from(homebrewDeities)
+    .where(filter.term ? nameHolds(homebrewDeities.name, filter.term) : undefined)
+    .all();
+}
+
+function deityJson(input: HomebrewDeityInput) {
+  return homebrewDeityEntrySchema.parse({ ...input, source: HOMEBREW_SOURCE });
+}
+
+export function insertHomebrewDeity(db: HomebrewDb, id: string, input: HomebrewDeityInput) {
+  const json = deityJson(input);
+  return db
+    .insert(homebrewDeities)
+    .values({ id, name: json.name, pantheon: json.pantheon, json })
+    .returning()
+    .get();
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewDeity` reads a miss. */
+export function updateHomebrewDeity(db: HomebrewDb, id: string, input: HomebrewDeityInput) {
+  const json = deityJson(input);
+  return db
+    .update(homebrewDeities)
+    .set({ name: json.name, pantheon: json.pantheon, json })
+    .where(eq(homebrewDeities.id, id))
+    .returning()
+    .get();
+}
+
+export function deleteHomebrewDeity(db: HomebrewDb, id: string): boolean {
+  return db.delete(homebrewDeities).where(eq(homebrewDeities.id, id)).run().changes > 0;
 }
