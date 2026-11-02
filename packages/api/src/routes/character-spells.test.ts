@@ -73,6 +73,15 @@ const ITEMS: ItemFixtureRow[] = [
       attachedSpellsByDeityAlignment: { "Lawful Good": ["shield|PHB"], NE: ["detect magic|PHB"] },
     }),
   },
+  {
+    ...item("Blade of Faith", undefined),
+    json: JSON.stringify({
+      name: "Blade of Faith",
+      source: "DMG",
+      attachedSpells: ["shield|PHB"],
+      attachedSpellsByDeityAlignment: { LG: ["shield|PHB", "detect magic|PHB"] },
+    }),
+  },
 ];
 
 const DEITIES = [
@@ -361,9 +370,25 @@ describe("characterSpellsRoutes", () => {
       it("reads the alignment from the deity row, not the character's own", async () => {
         worshipping({
           deity: { name: "Bane", source: "PHB", pantheon: "Forgotten Realms" },
-          alignment: "Lawful Good",
+          alignment: "Neutral Evil",
         });
         expect(await spells()).toEqual([]);
+      });
+
+      it("adds none from an item that is not equipped", async () => {
+        store({
+          ...withSpells([], [held("Mace of Judgment", { equipped: false })]),
+          deity: MORADIN,
+        } as CharacterDefinition);
+        expect(await spells()).toEqual([]);
+      });
+
+      it("merges with the item's own spells, listing each once", async () => {
+        store({
+          ...withSpells([], [held("Blade of Faith", { equipped: true })]),
+          deity: MORADIN,
+        } as CharacterDefinition);
+        expect((await spells()).map(({ name }) => name)).toEqual(["Shield", "Detect Magic"]);
       });
 
       it("adds none for a character with no deity", async () => {

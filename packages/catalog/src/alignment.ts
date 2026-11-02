@@ -12,17 +12,14 @@ const WORDS: Readonly<Record<string, string>> = {
  */
 export function alignmentCode(text: string): string | undefined {
   const lower = text.trim().toLowerCase();
-  const letters = /^[lcn][gne]?$/.test(lower)
+  if (lower === "tn" || lower === "neutral" || lower === "true neutral") return "N";
+  const code = /^[lcn][gne]?$/.test(lower)
     ? lower.toUpperCase()
-    : lower === "tn"
-      ? "N"
-      : lower
-          .replace(/^true /, "")
-          .split(/[\s-]+/)
-          .map((word) => WORDS[word] ?? "?")
-          .join("");
-  if (letters === "NN") return "N";
-  return /^[LCN][GNE]?$/.test(letters) ? letters : undefined;
+    : lower
+        .split(/[\s-]+/)
+        .map((word) => WORDS[word] ?? "?")
+        .join("");
+  return /^[LCN][GNE]?$/.test(code) && code !== "NN" ? code : undefined;
 }
 
 /** The alignment a deity row holds, from upstream's letter list such as `["N", "G"]`. */

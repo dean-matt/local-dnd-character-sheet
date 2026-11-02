@@ -107,9 +107,10 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, fromItem?: str
 /**
  * The spells equipped items let the character cast, in inventory order, each marked granted
  * and citing its item. A spell the definition already lists stays as that entry, and one
- * several items attach lists once, citing them all. An item may add spells by the alignment of the
- * character's deity row. An item that waits on attunement lists
- * none until attuned. A name no row answers is left out: no definition entry holds it, so the sheet has nothing to repair.
+ * several items attach lists once, citing them all. An item may add spells by the alignment of
+ * the character's deity row; a character with no deity, or an unknown one, gets none. An item
+ * that waits on attunement lists none until attuned. A name no row answers is left out: no
+ * definition entry holds it, so the sheet has nothing to repair.
  */
 function itemSpells(
   dataDir: string,
@@ -117,16 +118,19 @@ function itemSpells(
   definition: CharacterDefinition,
 ): SheetSpell[] {
   const rows = resolveItemRows(dataDir, homebrewDb, definition.inventory);
-  const deityCode = () => {
+  let deityCode: string | undefined | null = null;
+  const deityAlignment = () => {
+    if (deityCode !== null) return deityCode;
     const { deity } = definition;
     const row = deity && getCatalogRow(dataDir, "deity", deity.name, deity.source, deity.pantheon);
-    return row && deityAlignmentCode(JSON.parse(row.json));
+    deityCode = row ? deityAlignmentCode(JSON.parse(row.json)) : undefined;
+    return deityCode;
   };
   const attached = definition.inventory.flatMap((entry, index) => {
     const row = rows[index];
     if (!row || !entry.equipped || (row.requiresAttunement && !entry.attuned)) return [];
     const byAlignment = attachedSpellsByDeityAlignmentSchema.safeParse(row.json).data;
-    const code = byAlignment && deityCode();
+    const code = byAlignment && deityAlignment();
     const names = [
       ...(attachedSpellsSchema.safeParse(row.json).data ?? []),
       ...((code && byAlignment[code]) || []),
