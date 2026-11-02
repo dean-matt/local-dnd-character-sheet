@@ -4,25 +4,18 @@
  * editions. A character result opens its sheet; a compendium result opens its detail in a
  * modal over the current page, and closing it returns focus to the search with the query
  * kept. A result with no detail stays in the list, reachable by arrow so a screen reader
- * hears it, and Enter or a click on it does nothing. An item, a spell or a feat carries
- * "Add to…" beside its option, reached by Tab rather than the arrows. The buttons sit outside
- * the listbox, which may own only options and groups, and a subgrid lines each up with its
- * option's row. Below the results, a link carries the query to the advanced search page, and
- * from a sheet the character too.
+ * hears it, and Enter or a click on it does nothing. Below the results, a link carries the
+ * query to the advanced search page, and from a sheet the character too.
  */
 import { Search, X } from "lucide-react";
-import { type KeyboardEvent, useCallback, useId, useState } from "react";
+import { type KeyboardEvent, useId, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { AddedToast } from "../../../../components/AddedToast.tsx";
-import { AddTo } from "../../../../components/AddTo/AddTo.tsx";
 import { CatalogDetail } from "../../../../components/CatalogDetail.tsx";
-import type { AddOutcome } from "../../../../hooks/useAddToCharacter.ts";
 import { SEARCH_DEBOUNCE_MS, useCatalogSearch } from "../../../../hooks/useCatalogSearch.ts";
 import { useCharacters } from "../../../../hooks/useCharacters.ts";
 import { useDebounce } from "../../../../hooks/useDebounce.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { SEARCHED_FROM, useSheetCharacter } from "../../../../hooks/useSheetCharacter.ts";
-import { addableHit } from "../../../../lib/addable.ts";
 import { searchHitAddress, searchHitId } from "../../../../lib/searchHits.ts";
 import { SearchResultOption } from "./SearchResultOption.tsx";
 import type { SearchResult } from "./searchResult.ts";
@@ -41,8 +34,6 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | undefined>(undefined);
-  const [added, setAdded] = useState<AddOutcome>();
-  const dismissAdded = useCallback(() => setAdded(undefined), []);
   const characters = useCharacters();
   const sheet = useSheetCharacter();
   const debounced = useDebounce(query, SEARCH_DEBOUNCE_MS);
@@ -116,20 +107,10 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
     return settled && compendium.isSuccess ? `No results for "${query.trim()}".` : "Searching…";
   }
 
-  // The listbox and each group span their rows of the results' grid, so the buttons beside
-  // the listbox share those rows: a group takes one row for its label and one per option.
   const groups = [
     { label: "Characters", rows: characterResults },
     { label: "Compendium", rows: compendiumResults },
   ].filter((g) => g.rows.length > 0);
-  let gridRows = 0;
-  const placed = groups.map((g) => {
-    gridRows += 1;
-    return g.rows.map((result) => {
-      gridRows += 1;
-      return { result, index: results.indexOf(result), gridRow: gridRows };
-    });
-  });
 
   return (
     <>
@@ -206,35 +187,20 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           className="absolute top-full right-0 left-0 mt-2 flex max-h-105 flex-col rounded-xl border border-border bg-surface p-2 shadow-popover"
         >
           {/* The results scroll alone, so the Advanced search link below stays in view. */}
-          <div
-            hidden={results.length === 0}
-            className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-1 overflow-y-auto"
-          >
-            <div
-              id={listboxId}
-              role="listbox"
-              aria-label="Search results"
-              className="col-start-1 grid grid-rows-subgrid"
-              style={{ gridRow: `1 / span ${gridRows}` }}
-            >
-              {groups.map((g, gi) => (
+          <div hidden={results.length === 0} className="min-h-0 flex-1 overflow-y-auto">
+            <div id={listboxId} role="listbox" aria-label="Search results">
+              {groups.map((g) => (
                 // biome-ignore lint/a11y/useSemanticElements: a listbox groups its options with role="group"; <fieldset> groups form controls.
-                <div
-                  key={g.label}
-                  role="group"
-                  aria-label={g.label}
-                  className="grid grid-rows-subgrid"
-                  style={{ gridRow: `span ${g.rows.length + 1}` }}
-                >
+                <div key={g.label} role="group" aria-label={g.label}>
                   <p aria-hidden className={groupLabel}>
                     {g.label}
                   </p>
-                  {placed[gi]?.map(({ result, index }) => (
+                  {g.rows.map((result) => (
                     <SearchResultOption
                       key={result.key}
-                      id={optionId(index)}
+                      id={optionId(results.indexOf(result))}
                       result={result}
-                      active={index === activeIndex}
+                      active={results.indexOf(result) === activeIndex}
                       onPick={() => pick(result)}
                       onPoint={() => setActive(result.key)}
                     />
@@ -242,20 +208,6 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
                 </div>
               ))}
             </div>
-            {placed.flat().map(({ result, gridRow }) => {
-              const addable = "hit" in result ? addableHit(result.hit) : undefined;
-              return (
-                addable && (
-                  <div
-                    key={result.key}
-                    className="col-start-2 self-center pr-1"
-                    style={{ gridRow }}
-                  >
-                    <AddTo row={addable} onAdded={setAdded} look="icon" />
-                  </div>
-                )
-              );
-            })}
           </div>
           <p
             aria-hidden
@@ -282,7 +234,6 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
       {detail !== undefined && (
         <CatalogDetail address={detail} onClose={() => setDetail(undefined)} />
       )}
-      <AddedToast outcome={added} onDismiss={dismissAdded} />
       {/* Mounted outside the hidden panel, so a screen reader hears each change of text. */}
       <p role="status" className="sr-only">
         {showPanel ? status() : undefined}
