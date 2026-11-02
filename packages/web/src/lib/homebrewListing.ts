@@ -8,6 +8,7 @@ import {
   homebrewSkillRecordSchema,
   homebrewSpellRecordSchema,
   homebrewSubclassRecordSchema,
+  homebrewSubraceRecordSchema,
   itemHitFacts,
 } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
@@ -94,6 +95,25 @@ const subclasses: ListingKind<z.infer<typeof subclassRecordSchema>> = {
   chips: (record) => [record.className],
 };
 
+/** A stored subrace as the editor edits it: its parent race moves from the columns into the entry. */
+const subraceRecordSchema = homebrewSubraceRecordSchema.transform((record) => ({
+  ...record,
+  json: {
+    ...record.json,
+    parent: record.raceId
+      ? { raceId: record.raceId }
+      : { name: record.raceName, source: record.raceSource },
+  },
+}));
+
+const subraces: ListingKind<z.infer<typeof subraceRecordSchema>> = {
+  collection: "subraces",
+  noun: "subrace",
+  heading: "Subraces",
+  recordSchema: subraceRecordSchema,
+  chips: (record) => [record.raceName],
+};
+
 /** Each kind, keyed in the order the Homebrew sidebar lists them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
   items,
@@ -105,6 +125,7 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     recordSchema: homebrewRaceRecordSchema,
     chips: factChips(raceFacts),
   },
+  subraces,
   classes: {
     collection: "classes",
     noun: "class",

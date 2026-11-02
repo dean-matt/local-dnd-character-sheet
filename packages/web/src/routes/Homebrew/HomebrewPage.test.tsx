@@ -73,6 +73,8 @@ function sideRoute(
   }
   const catalog = /^\/api\/classes\?edition=(\w+)&limit=200$/.exec(url);
   if (catalog) return json(200, { items: lists[`catalog ${catalog[1]}`] ?? [] });
+  const races = /^\/api\/races\?edition=(\w+)&limit=200$/.exec(url);
+  if (races) return json(200, { items: lists[`races ${races[1]}`] ?? [] });
   if (!/^\/api\/homebrew\/classes\/[^/]+\/features$/.test(url)) return undefined;
   if (method === "GET") return json(200, lists[url] ?? []);
   return method === "PUT" ? json(200, JSON.parse(String(body))) : undefined;
@@ -3435,6 +3437,159 @@ describe("Homebrew subclasses", () => {
     expect(writesOf(fetchMock).map(({ method, url }) => `${method} ${url}`)).toEqual([
       "DELETE /api/homebrew/subclasses/s1",
       "DELETE /api/homebrew/subclasses/s1",
+    ]);
+  });
+});
+
+describe("Homebrew subraces", () => {
+  const elf = {
+    name: "Elf",
+    source: "XPHB",
+    edition: "one",
+    json: { name: "Elf", source: "XPHB" },
+  };
+  const kin = {
+    id: "r1",
+    name: "Hearthkin",
+    edition: "one",
+    json: { name: "Hearthkin", source: "HB" },
+    createdAt: CREATED_AT,
+  };
+  const stored = {
+    id: "u1",
+    name: "Moonlit",
+    edition: "one",
+    raceName: "Elf",
+    raceSource: "XPHB",
+    json: { name: "Moonlit", source: "HB", entries: ["Silver-eyed."] },
+    createdAt: CREATED_AT,
+  };
+  const lists = { "races one": [elf], races: [kin], subraces: [stored] };
+  const subraces = () => screen.getByRole("region", { name: "Subraces" });
+
+  it("lists a subrace with its parent race", async () => {
+    stubApi(lists);
+    renderPage("subraces");
+
+    expect(await within(subraces()).findByText("Moonlit")).toBeInTheDocument();
+    expect(within(subraces()).getByText("Elf")).toBeInTheDocument();
+  });
+
+  it("creates a subrace of a catalog race, and of a homebrew race, from the form and from JSON", async () => {
+    const fetchMock = stubApi(lists, [
+      { status: 201, body: stored },
+      { status: 201, body: stored },
+    ]);
+    renderPage("subraces");
+
+    fireEvent.click(within(subraces()).getByRole("button", { name: "Add subrace" }));
+    await settled();
+    pick("Parent race", "Elf (XPHB)");
+    click("Save");
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    fireEvent.click(within(subraces()).getByRole("button", { name: "Add subrace" }));
+    await settled();
+    mode("JSON");
+    expect(jsonText("Subrace JSON")).not.toContain("parent");
+    typeJson(
+      "Subrace JSON",
+      JSON.stringify({ name: "Moonlit", parent: { raceId: "r1" }, entries: ["Fire."] }),
+    );
+    mode("Step by step");
+    expect(field("combobox", "Parent race")).toHaveTextContent("Hearthkin (Homebrew)");
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(2));
+    const [catalog, homebrew] = writesOf(fetchMock);
+    expect(catalog).toMatchObject({
+      method: "POST",
+      url: "/api/homebrew/subraces",
+      body: { parent: { name: "Elf", source: "XPHB" }, edition: "one" },
+    });
+    expect(homebrew?.body).toMatchObject({ parent: { raceId: "r1" }, edition: "one" });
+  });
+
+  it("refuses a subrace without a parent race, naming the field", async () => {
+    const fetchMock = stubApi(lists);
+    renderPage("subraces");
+
+    fireEvent.click(within(subraces()).getByRole("button", { name: "Add subrace" }));
+    await settled();
+    click("Save");
+
+    expect(
+      await within(editor()).findAllByText(/./, { selector: '[role="alert"]' }),
+    ).not.toHaveLength(0);
+    expect(field("combobox", "Parent race")).toHaveAttribute("aria-invalid", "true");
+    expect(writesOf(fetchMock)).toEqual([]);
+  });
+
+  it("reopens a stored subrace on its parent, and saves it back", async () => {
+    const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
+    renderPage("subraces");
+
+    fireEvent.click(await within(subraces()).findByRole("button", { name: "Edit Moonlit" }));
+    await settled();
+    expect(field("combobox", "Parent race")).toHaveTextContent("Elf (XPHB)");
+    mode("JSON");
+    expect(JSON.parse(jsonText("Subrace JSON"))).toEqual({
+      name: "Moonlit",
+      entries: ["Silver-eyed."],
+      parent: { name: "Elf", source: "XPHB" },
+    });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]).toMatchObject({
+      method: "PUT",
+      url: "/api/homebrew/subraces/u1",
+      body: { parent: { name: "Elf", source: "XPHB" }, edition: "one" },
+    });
+  });
+
+  it("clears the parent when the edition changes, since a race belongs to one edition", async () => {
+    stubApi(lists);
+    renderPage("subraces");
+
+    fireEvent.click(await within(subraces()).findByRole("button", { name: "Edit Moonlit" }));
+    await settled();
+    pick("Rules", "2014");
+    expect(field("combobox", "Parent race")).not.toHaveTextContent("Elf");
+  });
+
+  it("says why a save failed when the name is already used in the parent race", async () => {
+    stubApi(lists, [
+      { status: 409, body: { error: 'The homebrew subrace u1 is already named "Moonlit"' } },
+    ]);
+    renderPage("subraces");
+
+    fireEvent.click(within(subraces()).getByRole("button", { name: "Add subrace" }));
+    await settled();
+    pick("Parent race", "Elf (XPHB)");
+    click("Save");
+
+    expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
+  });
+
+  it("deletes a subrace, and shows the reason where the API refuses", async () => {
+    const fetchMock = stubApi(lists, [
+      { status: 409, body: { error: "A character holds this subrace" } },
+      { status: 204 },
+    ]);
+    renderPage("subraces");
+
+    fireEvent.click(await within(subraces()).findByRole("button", { name: "Delete Moonlit" }));
+    const dialog = screen.getByRole("dialog", { name: "Delete Moonlit?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(await within(dialog).findByText(/A character holds this subrace/)).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(writesOf(fetchMock).map(({ method, url }) => `${method} ${url}`)).toEqual([
+      "DELETE /api/homebrew/subraces/u1",
+      "DELETE /api/homebrew/subraces/u1",
     ]);
   });
 });

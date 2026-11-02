@@ -162,6 +162,16 @@ export const SUBCLASS_STARTERS: HomebrewStarters = [
   },
 ];
 
+export const SUBRACE_STARTERS: HomebrewStarters = [
+  {
+    label: "Subrace",
+    entry: {
+      name: "Hearthborn",
+      entries: ["Descended from those who tended the first fires, you resist the cold."],
+    },
+  },
+];
+
 export const BACKGROUND_STARTERS: HomebrewStarters = [
   {
     label: "Background",

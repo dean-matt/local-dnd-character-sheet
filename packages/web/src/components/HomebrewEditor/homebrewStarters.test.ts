@@ -25,8 +25,13 @@ describe("homebrew starters", () => {
       kind.starters.map(({ label, entry }) => ({ kind, label, entry })),
     ),
   )("saves the $label example as it opens", ({ kind, label, entry }) => {
-    // A subclass opens without a parent, which the user picks.
-    const named = label === "Subclass" ? { ...entry, parent: { classId: "c1" } } : entry;
+    // A subclass or subrace opens without a parent, which the user picks.
+    const named =
+      label === "Subclass"
+        ? { ...entry, parent: { classId: "c1" } }
+        : label === "Subrace"
+          ? { ...entry, parent: { raceId: "r1" } }
+          : entry;
     expect(checkHomebrewEntry(named, "one", kind.inputSchema)).toHaveProperty("input");
   });
 

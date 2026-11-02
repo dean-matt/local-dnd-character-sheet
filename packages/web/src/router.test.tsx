@@ -212,6 +212,7 @@ describe("routing", () => {
       "Items",
       "Spells",
       "Races",
+      "Subraces",
       "Classes",
       "Subclasses",
       "Backgrounds",

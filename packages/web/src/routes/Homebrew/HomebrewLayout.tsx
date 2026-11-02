@@ -9,6 +9,7 @@ import {
   Swords,
   Trash2,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import { Outlet } from "react-router";
 import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
@@ -25,6 +26,7 @@ const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
   feats: Award,
   skills: Dumbbell,
   subclasses: ShieldPlus,
+  subraces: UsersRound,
 };
 
 const SECTIONS: SidebarProps["items"] = [
