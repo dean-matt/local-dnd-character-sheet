@@ -3,6 +3,7 @@ import {
   ammunitionTraitSchema,
   armorBurdenSchema,
   armorTraitSchema,
+  attachedSpellsByDeityAlignmentSchema,
   attachedSpellsSchema,
   containerTraitSchema,
   type HomebrewItem,
@@ -346,5 +347,25 @@ describe("attachedSpellsSchema", () => {
     expect(spellsOf("fireball")).toBeUndefined();
     expect(spellsOf({ ability: "cha" })).toBeUndefined();
     expect(spellsOf([])).toBeUndefined();
+  });
+});
+
+describe("attachedSpellsByDeityAlignmentSchema", () => {
+  const read = (attachedSpellsByDeityAlignment: unknown) =>
+    attachedSpellsByDeityAlignmentSchema.parse({ attachedSpellsByDeityAlignment });
+
+  it("keys the spells by alignment code however the entry spells the alignment", () => {
+    expect(
+      read({ "Lawful Good": ["shield"], LG: ["bless|phb"], "true neutral": ["light"] }),
+    ).toEqual({
+      LG: [{ name: "shield" }, { name: "bless", source: "phb" }],
+      N: [{ name: "light" }],
+    });
+  });
+
+  it("drops a key naming no alignment, and reads nothing from an absent or malformed field", () => {
+    expect(read({ Unaligned: ["shield"] })).toBeUndefined();
+    expect(read("shield")).toBeUndefined();
+    expect(attachedSpellsByDeityAlignmentSchema.parse({})).toBeUndefined();
   });
 });

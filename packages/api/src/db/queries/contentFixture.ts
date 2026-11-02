@@ -111,8 +111,9 @@ export function publishSpells(
   dataDir: string,
   rows: SpellFixtureRow[],
   items: ItemFixtureRow[] = [],
+  lookups: LookupFixtureRow[] = [],
 ): void {
-  publishContent(dataDir, { spells: rows, items });
+  publishContent(dataDir, { spells: rows, items, lookups });
 }
 
 export function publishRaces(dataDir: string, rows: RaceFixtureRow[]): void {
