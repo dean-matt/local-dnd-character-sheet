@@ -158,6 +158,8 @@ export type ItemBonusTrait = {
   grantsLanguage: boolean;
   critThreshold?: number;
   speed?: SpeedModifier;
+  /** Bonuses of equipped items sharing a `group` add up to at most `cap`. */
+  stack?: { group: string; cap: number };
 };
 
 /**

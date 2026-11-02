@@ -569,11 +569,27 @@ function derivedPendingAbilityPicks(
   });
 }
 
-/** One term per item that `pick` gives a nonzero number, labeled with the item's name. */
-const itemTerms = (bonuses: readonly ItemBonusTrait[], pick: (item: ItemBonusTrait) => number) =>
-  bonuses
-    .filter((item) => pick(item) !== 0)
-    .map((item) => ({ label: item.name, value: pick(item) }));
+/**
+ * One term per item that `pick` gives a nonzero number, labeled with the item's name. Items
+ * naming one `stack` group add up to their `cap`, in inventory order: a member
+ * past the cap is cut to what is left, and dropped when nothing is. Picks that feed one roll
+ * share `taken`, so a group's cap holds across them.
+ */
+const itemTerms = (
+  bonuses: readonly ItemBonusTrait[],
+  pick: (item: ItemBonusTrait) => number,
+  taken = new Map<string, number>(),
+) => {
+  return bonuses.flatMap((item) => {
+    let value = pick(item);
+    if (value !== 0 && item.stack) {
+      const running = taken.get(item.stack.group) ?? 0;
+      value = value > 0 ? Math.max(0, Math.min(value, item.stack.cap - running)) : value;
+      taken.set(item.stack.group, running + value);
+    }
+    return value === 0 ? [] : [{ label: item.name, value }];
+  });
+};
 
 /** Each worn item's armor class and save bonuses, attuned where it must be, in inventory order. */
 function equippedBonuses(
@@ -804,20 +820,22 @@ function spellcastingEntries(
     if (ability === undefined) return [];
     const modifier = abilityModifier(scoreOf(definition, catalog, ability));
     const preparation = catalog.casterTables.get(key)?.preparation;
+    const dcTaken = new Map<string, number>();
+    const attackTaken = new Map<string, number>();
     return [
       {
         class: group.class,
         ability,
         saveDc: fromBreakdown(
           spellSaveDc(ability, modifier, characterLevel, [
-            ...itemTerms(bonuses, (item) => item.proficiencyBonus),
-            ...itemTerms(bonuses, (item) => item.spellSaveDc),
+            ...itemTerms(bonuses, (item) => item.proficiencyBonus, dcTaken),
+            ...itemTerms(bonuses, (item) => item.spellSaveDc, dcTaken),
           ]),
         ),
         attackBonus: fromBreakdown(
           spellAttackBonus(ability, modifier, characterLevel, [
-            ...itemTerms(bonuses, (item) => item.proficiencyBonus),
-            ...itemTerms(bonuses, (item) => item.spellAttack),
+            ...itemTerms(bonuses, (item) => item.proficiencyBonus, attackTaken),
+            ...itemTerms(bonuses, (item) => item.spellAttack, attackTaken),
           ]),
         ),
         ...(preparation && { preparedSpells: preparedCount(preparation, modifier, group.level) }),
@@ -909,7 +927,10 @@ export function deriveCharacter(
     }),
   ) as Record<Ability, ComputedField<number>>;
 
-  const concentration = itemTerms(bonuses, (item) => item.concentration);
+  const concentrationTaken = new Map<string, number>();
+  // Seeds the caps with the Con save terms that this roll already includes.
+  itemTerms(bonuses, (item) => item.save, concentrationTaken);
+  const concentration = itemTerms(bonuses, (item) => item.concentration, concentrationTaken);
   const concentrationSave =
     concentration.length === 0
       ? null
