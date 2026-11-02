@@ -17,7 +17,6 @@ export interface JsonEditorProps {
   onChange: (next: string) => void;
   /** Drives suggestions, hovers and in-place marks; without one the editor only highlights. */
   schema?: Parameters<typeof jsonSchema>[0];
-  /** Classes for the element holding the editor. */
   className?: string;
 }
 

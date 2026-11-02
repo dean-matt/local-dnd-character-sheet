@@ -23,7 +23,6 @@ import {
 import { itemMeta } from "./itemKind.ts";
 import { schoolName } from "./spellSchool.ts";
 
-/** What every homebrew record carries, whichever kind it is. */
 export interface HomebrewRow {
   id: string;
   name: string;

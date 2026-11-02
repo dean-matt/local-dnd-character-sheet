@@ -15,7 +15,6 @@ export const homebrewClassQuery = (id: string | undefined) =>
     retry: retryUnlessClientError,
   });
 
-/** The query for one homebrew class's features. */
 export const homebrewClassFeaturesQuery = (id: string) =>
   queryOptions({
     queryKey: [...homebrewClassKey(id), "features"],

@@ -28,7 +28,6 @@ export interface FeatGrantFieldProps {
   noun: string;
   options: Option[];
   spec: GrantSpec;
-  /** The entry's field as it stands. */
   value: unknown;
   onChange: (next: unknown[] | undefined) => void;
   error?: ReactNode;

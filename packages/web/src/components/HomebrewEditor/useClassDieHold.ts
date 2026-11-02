@@ -15,7 +15,6 @@ export interface ClassDieHold {
   characters: { id: string; name: string }[] | undefined;
   /** Reads the holders again; resolves `true` where the read succeeded. */
   retry: () => Promise<boolean>;
-  /** Whether a read of the holders is in flight. */
   checking: boolean;
 }
 

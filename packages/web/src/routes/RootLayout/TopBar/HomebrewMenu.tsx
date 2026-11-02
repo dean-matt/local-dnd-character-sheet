@@ -12,7 +12,6 @@ export interface HomebrewMenuProps {
 
 const entryLink = "block rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle";
 
-/** The top bar's Homebrew menu: each homebrew kind's page, then Recently deleted. */
 export function HomebrewMenu({ open, onToggle, onClose }: HomebrewMenuProps) {
   const here = useMatch({ path: "/homebrew", end: false }) !== null;
 

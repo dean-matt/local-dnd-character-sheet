@@ -3,7 +3,6 @@ import { FEAT_GRANT_SPECS } from "./featGrantShapes.ts";
 import { type HomebrewFormProps, withField } from "./homebrewEntry.ts";
 import { ABILITY_OPTIONS } from "./homebrewOptions.ts";
 
-/** The ability scores a homebrew feat raises and the saving throws it grants. */
 export function FeatAbilityScores({ entry, onChange, errorFor }: HomebrewFormProps) {
   return (
     <div className="flex flex-col gap-4">

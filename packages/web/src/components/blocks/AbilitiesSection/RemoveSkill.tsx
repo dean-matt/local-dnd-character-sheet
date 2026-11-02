@@ -2,7 +2,6 @@ import { type ComponentProps, useContext } from "react";
 import { InModal } from "../../inModalContext.ts";
 import { ConfirmRemoveSkill } from "./ConfirmRemoveSkill.tsx";
 
-/** The button in a skill's detail that opens the confirmation. */
 export function RemoveSkill(props: ComponentProps<typeof ConfirmRemoveSkill>) {
   const modal = useContext(InModal);
   return (

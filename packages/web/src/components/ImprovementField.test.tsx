@@ -82,7 +82,6 @@ function renderField(
 
 const combobox = () => screen.getByRole("combobox", { name: "Level 4 choice" });
 
-/** Opens the select and reads each option's label. */
 const optionLabels = () => {
   fireEvent.click(combobox());
   return within(screen.getByRole("listbox"))
