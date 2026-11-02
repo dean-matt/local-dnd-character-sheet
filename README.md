@@ -131,6 +131,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/homebrew-skills.md`](docs/homebrew-skills.md) | How a character and an item cite a homebrew skill, and why a rename or delete is refused |
 | [`docs/homebrew-subclasses.md`](docs/homebrew-subclasses.md) | How a homebrew subclass names its class, takes its edition, and merges into a class's subclass list |
 | [`docs/homebrew-deities.md`](docs/homebrew-deities.md) | How a homebrew deity is keyed by name and pantheon, held by a character, and merged into search |
+| [`docs/homebrew-optional-features.md`](docs/homebrew-optional-features.md) | How a homebrew optional feature lists its feature types, keeps a name unique within each, and merges into search |
 | [`docs/homebrew-subraces.md`](docs/homebrew-subraces.md) | How a homebrew subrace names its race, takes its edition, and merges into a race's subrace list |
 | [`docs/item-ability-picks.md`](docs/item-ability-picks.md) | How an item stores what the wearer picks: an ability score, a proficiency or a language, and when it grants |
 | [`docs/fluff.md`](docs/fluff.md) | `fluff-*.json`, the `hasFluff` promise, and how a subrace or a subclass is keyed |

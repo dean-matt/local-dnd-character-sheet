@@ -13,11 +13,12 @@ import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 export function RecentlyDeleted() {
   const id = useId();
   const { history, restore } = useHomebrewHistory();
-  // A deleted subclass, subrace or deity waits for its editor; its restore is the API's alone until then.
+  // A deleted subclass, subrace, deity or optional feature waits for its editor; its restore is the API's alone until then.
   const deleted = (history.data?.deleted ?? []).flatMap((row) =>
     row.collection === "subclasses" ||
     row.collection === "subraces" ||
     row.collection === "deities" ||
+    row.collection === "optional-features" ||
     row.edition === undefined
       ? []
       : [{ ...row, collection: row.collection, edition: row.edition }],

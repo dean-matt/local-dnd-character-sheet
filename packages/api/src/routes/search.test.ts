@@ -9,6 +9,7 @@ import {
   insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewOptionalFeature,
   insertHomebrewRace,
   insertHomebrewSpell,
 } from "../db/queries/homebrew.ts";
@@ -79,6 +80,54 @@ describe("searchRoutes", () => {
     expect(items).toEqual([
       { type: "deity", id: "d", name: "Vael", qualifier: "Ashen", edition: null },
     ]);
+  });
+
+  it("lists a homebrew optional feature beside the catalog's, narrowed by feature type", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "search-optfeature-"));
+    try {
+      publishSearchFixture(dir, {
+        optionalFeatures: [
+          { name: "Agonizing Blast", source: "PHB", edition: "classic", json: "{}" },
+        ],
+        optionalFeatureTypes: [{ name: "Agonizing Blast", source: "PHB", feature_type: "EI" }],
+      });
+      const both = searchRoutes(dir, opened.homebrewDb);
+      insertHomebrewOptionalFeature(opened.homebrewDb, "o", {
+        name: "Ember Lore",
+        edition: "classic",
+        featureType: ["EI", "XX"],
+        prerequisite: [{ level: { level: 5, class: { name: "Warlock" } } }],
+      });
+
+      const { items } = await (await both.request("/search?type=optfeature&featureType=EI")).json();
+      expect(items).toEqual([
+        {
+          type: "optfeature",
+          name: "Agonizing Blast",
+          source: "PHB",
+          edition: "classic",
+          optionalFeature: { prerequisites: [] },
+        },
+        {
+          type: "optfeature",
+          id: "o",
+          name: "Ember Lore",
+          edition: "classic",
+          optionalFeature: {
+            prerequisites: [
+              { level: 5, className: "Warlock", spells: [], options: [], unjudged: [] },
+            ],
+          },
+        },
+      ]);
+
+      const unknown = await (await both.request("/search?type=optfeature&featureType=XX")).json();
+      expect(unknown.items.map((hit: { name: string }) => hit.name)).toEqual(["Ember Lore"]);
+      const none = await (await both.request("/search?type=optfeature&featureType=PB")).json();
+      expect(none.items).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("rejects an unknown edition and a spell level past 9", async () => {

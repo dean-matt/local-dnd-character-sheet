@@ -123,6 +123,16 @@ export { armsGroupKinds, ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } fro
 export { itemSkillGrantsSchema } from "./item-skill.ts";
 export type { ScoreMinimums } from "./multiclass.ts";
 export { multiclassEntrySchema, multiclassPrerequisiteSchema } from "./multiclass.ts";
+export type {
+  HomebrewOptionalFeature,
+  HomebrewOptionalFeatureInput,
+  HomebrewOptionalFeatureRecord,
+} from "./optional-feature.ts";
+export {
+  homebrewOptionalFeatureEntrySchema,
+  homebrewOptionalFeatureInputSchema,
+  homebrewOptionalFeatureRecordSchema,
+} from "./optional-feature.ts";
 export {
   type OptionalFeaturePrerequisite,
   optionalFeaturePrerequisitesSchema,

@@ -59,6 +59,7 @@ const HOMEBREW_SEARCH_TYPES = [
   "background",
   "feat",
   "deity",
+  "optfeature",
 ] as const;
 
 /** A homebrew hit, addressed by `id` rather than `(name, source)`. */
@@ -72,6 +73,10 @@ export const homebrewSearchHitSchema = z.strictObject({
   qualifier: z.string().optional(),
   /** Present on an item hit alone. */
   item: itemHitFactsSchema.optional(),
+  /** Present on an optional feature hit alone, as on a catalog one. */
+  optionalFeature: z
+    .strictObject({ prerequisites: z.array(optionalFeaturePrerequisiteSchema) })
+    .optional(),
 });
 
 export const searchHitSchema = z.union([catalogSearchHitSchema, homebrewSearchHitSchema]);

@@ -15,6 +15,7 @@ import {
   homebrewSearchHitSchema,
   ITEM_KINDS,
   itemHitFacts,
+  optionalFeaturePrerequisitesSchema,
   type SearchHit,
   SPELL_GRANTORS,
   type SpellOffer,
@@ -44,6 +45,7 @@ import {
   searchHomebrewDeities,
   searchHomebrewItems,
   searchHomebrewNamed,
+  searchHomebrewOptionalFeatures,
   searchHomebrewSpells,
 } from "../db/queries/homebrew.ts";
 import { catalogOutOfDate } from "./errors.ts";
@@ -268,7 +270,18 @@ function homebrewHits(
         }),
       )
     : [];
-  return [...items, ...spells, ...named, ...deities];
+  const optionalFeatures = reads("optfeature")
+    ? searchHomebrewOptionalFeatures(homebrewDb, filter).map(({ json, ...row }) =>
+        homebrewSearchHitSchema.parse({
+          type: "optfeature",
+          ...row,
+          optionalFeature: {
+            prerequisites: optionalFeaturePrerequisitesSchema.parse(json.prerequisite),
+          },
+        }),
+      )
+    : [];
+  return [...items, ...spells, ...named, ...deities, ...optionalFeatures];
 }
 
 export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {

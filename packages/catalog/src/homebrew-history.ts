@@ -13,6 +13,7 @@ const HOMEBREW_COLLECTIONS = [
   "feats",
   "skills",
   "deities",
+  "optional-features",
 ] as const;
 
 export const homebrewCollectionSchema = z.enum(HOMEBREW_COLLECTIONS);

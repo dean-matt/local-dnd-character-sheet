@@ -289,7 +289,7 @@ function featGroup(
   return { origin: "feat", features };
 }
 
-/** No homebrew table holds an optional feature, so a homebrew pick never resolves. */
+/** A homebrew pick is not resolved yet: choosing one is out of scope. */
 function optionalFeatureGroup(dataDir: string, definition: CharacterDefinition): FeatureGroup {
   const features = definition.optionalFeatures.map(({ ref, featureType }) =>
     rowFeature(

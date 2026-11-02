@@ -1,6 +1,6 @@
 /**
  * Schema for `homebrew.db` — your custom items, spells, backgrounds, feats, races,
- * classes, subclasses, subraces, skills and deities.
+ * classes, subclasses, subraces, skills, deities and optional features.
  *
  * Kept apart from `content.db` so the catalog stays disposable: rebuilding the
  * official content can never touch your homebrew. Rows carry source "HB" and are
@@ -15,6 +15,7 @@ import type {
   HomebrewClass,
   HomebrewDeity,
   HomebrewItem,
+  HomebrewOptionalFeature,
   HomebrewSkillEntry,
   HomebrewSubclass,
   RaceEntry,
@@ -188,6 +189,39 @@ export const homebrewDeities = sqliteTable(
     uniqueIndex("homebrew_deities_by_name").on(
       sql`${t.name} COLLATE NOCASE`,
       sql`${t.pantheon} COLLATE NOCASE`,
+    ),
+  ],
+);
+
+export const homebrewOptionalFeatures = sqliteTable("homebrew_optional_features", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  edition: text("edition", { enum: EDITIONS }).notNull(),
+  json: text("json", { mode: "json" }).$type<HomebrewOptionalFeature>().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+});
+
+/**
+ * A feature's types beside it, as `optional_feature_types` does in content.db. `name` and
+ * `edition` repeat the feature's so one unique index can state that a name is unique within
+ * a type and an edition; the writes in `queries/homebrew.ts` keep them in step.
+ */
+export const homebrewOptionalFeatureTypes = sqliteTable(
+  "homebrew_optional_feature_types",
+  {
+    featureId: text("feature_id")
+      .notNull()
+      .references(() => homebrewOptionalFeatures.id, { onDelete: "cascade" }),
+    featureType: text("feature_type").notNull(),
+    name: text("name").notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.featureId, t.featureType] }),
+    uniqueIndex("homebrew_optional_feature_types_by_name").on(
+      t.featureType,
+      t.edition,
+      sql`${t.name} COLLATE NOCASE`,
     ),
   ],
 );

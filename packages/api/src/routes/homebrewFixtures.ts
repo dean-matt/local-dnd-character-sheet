@@ -47,6 +47,15 @@ export const ashgod = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+export const ember = (overrides: Record<string, unknown> = {}) => ({
+  name: "Ember Lore",
+  edition: "one",
+  featureType: ["EI", "XX"],
+  prerequisite: [{ level: { level: 5, class: { name: "Warlock" } } }],
+  entries: ["Sparks answer your call."],
+  ...overrides,
+});
+
 export const duskling = (overrides: Record<string, unknown> = {}) => ({
   name: "Duskling",
   edition: "one",

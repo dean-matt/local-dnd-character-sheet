@@ -27,6 +27,7 @@ import {
 } from "../db/homebrew.ts";
 import {
   findHomebrewDeity,
+  findHomebrewOptionalFeature,
   findHomebrewSubclass,
   findHomebrewSubrace,
   getHomebrewBackground,
@@ -34,6 +35,7 @@ import {
   getHomebrewDeity,
   getHomebrewFeat,
   getHomebrewItem,
+  getHomebrewOptionalFeature,
   getHomebrewRace,
   getHomebrewSkill,
   getHomebrewSpell,
@@ -45,6 +47,7 @@ import {
   insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewOptionalFeature,
   insertHomebrewRace,
   insertHomebrewSkill,
   insertHomebrewSpell,
@@ -139,6 +142,13 @@ const KINDS: Record<Collection, Kind> = {
       );
       return catalog && `${catalog} is already a skill.`;
     },
+  },
+  "optional-features": {
+    noun: "optional feature",
+    get: getHomebrewOptionalFeature,
+    insert: insertHomebrewOptionalFeature,
+    holder: (db, input: Parameters<typeof findHomebrewOptionalFeature>[1]) => () =>
+      findHomebrewOptionalFeature(db, input),
   },
   deities: {
     noun: "deity",

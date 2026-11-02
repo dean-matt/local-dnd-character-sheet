@@ -2,7 +2,7 @@
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
  * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
  * `homebrew_classes`, `homebrew_class_features`, `homebrew_subclasses`, `homebrew_subraces` and
- * `homebrew_skills` and `homebrew_deities` tables. `source` never
+ * `homebrew_skills`, `homebrew_deities` and `homebrew_optional_features` tables. `source` never
  * arrives as an argument: every write stamps `HOMEBREW_SOURCE` into `json` here, the one
  * place that builds it. The caller chooses `id` once at creation and never reassigns it, so
  * a rename keeps the id a character already references.
@@ -15,6 +15,7 @@ import type {
   HomebrewFeatInput,
   HomebrewItem,
   HomebrewItemInput,
+  HomebrewOptionalFeatureInput,
   HomebrewRaceInput,
   HomebrewSkillInput,
   HomebrewSpellInput,
@@ -27,6 +28,7 @@ import {
   homebrewClassSchema,
   homebrewDeityEntrySchema,
   homebrewItemSchema,
+  homebrewOptionalFeatureEntrySchema,
   homebrewSkillEntrySchema,
   homebrewSubclassSchema,
   itemKinds,
@@ -36,7 +38,7 @@ import {
   subraceFullName,
 } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
-import { and, between, eq, inArray, type SQL, sql } from "drizzle-orm";
+import { and, between, eq, inArray, ne, type SQL, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type { SQLiteColumn } from "drizzle-orm/sqlite-core";
 import type * as homebrewSchema from "../homebrew.ts";
@@ -47,6 +49,8 @@ import {
   homebrewDeities,
   homebrewFeats,
   homebrewItems,
+  homebrewOptionalFeatures,
+  homebrewOptionalFeatureTypes,
   homebrewRaces,
   homebrewSkills,
   homebrewSpells,
@@ -108,6 +112,7 @@ const SEARCHED_TABLES = [
   homebrewBackgrounds,
   homebrewFeats,
   homebrewDeities,
+  homebrewOptionalFeatures,
 ];
 
 /** The sources a homebrew row `/search` can return cites: `HOMEBREW_SOURCE` once any searched row exists. */
@@ -883,4 +888,145 @@ export function updateHomebrewDeity(db: HomebrewDb, id: string, input: HomebrewD
 
 export function deleteHomebrewDeity(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewDeities).where(eq(homebrewDeities.id, id)).run().changes > 0;
+}
+
+export function listHomebrewOptionalFeatures(db: HomebrewDb) {
+  return db.select().from(homebrewOptionalFeatures).all();
+}
+
+export function getHomebrewOptionalFeature(db: HomebrewDb, id: string) {
+  return db
+    .select()
+    .from(homebrewOptionalFeatures)
+    .where(eq(homebrewOptionalFeatures.id, id))
+    .get();
+}
+
+function optionalFeatureJson(input: HomebrewOptionalFeatureInput) {
+  const { edition: _edition, ...entry } = input;
+  return homebrewOptionalFeatureEntrySchema.parse({ ...entry, source: HOMEBREW_SOURCE });
+}
+
+function writeTypes(
+  tx: Pick<HomebrewDb, "insert" | "delete">,
+  id: string,
+  edition: Edition,
+  json: ReturnType<typeof optionalFeatureJson>,
+) {
+  tx.delete(homebrewOptionalFeatureTypes)
+    .where(eq(homebrewOptionalFeatureTypes.featureId, id))
+    .run();
+  tx.insert(homebrewOptionalFeatureTypes)
+    .values(
+      json.featureType.map((featureType) => ({
+        featureId: id,
+        featureType,
+        name: json.name,
+        edition,
+      })),
+    )
+    .run();
+}
+
+export function insertHomebrewOptionalFeature(
+  db: HomebrewDb,
+  id: string,
+  input: HomebrewOptionalFeatureInput,
+) {
+  const json = optionalFeatureJson(input);
+  return db.transaction((tx) => {
+    const row = tx
+      .insert(homebrewOptionalFeatures)
+      .values({ id, edition: input.edition, name: json.name, json })
+      .returning()
+      .get();
+    writeTypes(tx, id, input.edition, json);
+    return row;
+  });
+}
+
+/** `undefined` where `id` names no row, the way `getHomebrewOptionalFeature` reads a miss. */
+export function updateHomebrewOptionalFeature(
+  db: HomebrewDb,
+  id: string,
+  input: HomebrewOptionalFeatureInput,
+) {
+  const json = optionalFeatureJson(input);
+  return db.transaction((tx) => {
+    const row = tx
+      .update(homebrewOptionalFeatures)
+      .set({ edition: input.edition, name: json.name, json })
+      .where(eq(homebrewOptionalFeatures.id, id))
+      .returning()
+      .get();
+    if (row) writeTypes(tx, id, input.edition, json);
+    return row;
+  });
+}
+
+export function deleteHomebrewOptionalFeature(db: HomebrewDb, id: string): boolean {
+  return (
+    db.delete(homebrewOptionalFeatures).where(eq(homebrewOptionalFeatures.id, id)).run().changes > 0
+  );
+}
+
+/**
+ * Another feature already holding one of `input`'s types under its name and edition, compared
+ * as the unique index does; read only once a write collides. `exceptId` is the feature being
+ * replaced, which never collides with itself.
+ */
+export function findHomebrewOptionalFeature(
+  db: HomebrewDb,
+  { name, edition, featureType }: HomebrewOptionalFeatureInput,
+  exceptId?: string,
+) {
+  return db
+    .select({
+      id: homebrewOptionalFeatures.id,
+      name: homebrewOptionalFeatures.name,
+      edition: homebrewOptionalFeatures.edition,
+    })
+    .from(homebrewOptionalFeatureTypes)
+    .innerJoin(
+      homebrewOptionalFeatures,
+      eq(homebrewOptionalFeatures.id, homebrewOptionalFeatureTypes.featureId),
+    )
+    .where(
+      and(
+        sql`${homebrewOptionalFeatureTypes.name} = ${name} COLLATE NOCASE`,
+        eq(homebrewOptionalFeatureTypes.edition, edition),
+        inArray(homebrewOptionalFeatureTypes.featureType, featureType),
+        exceptId === undefined ? undefined : ne(homebrewOptionalFeatures.id, exceptId),
+      ),
+    )
+    .get();
+}
+
+/** Homebrew optional features for `/search`, narrowed to those carrying any one of `featureTypes`. */
+export function searchHomebrewOptionalFeatures(db: HomebrewDb, filter: SearchFilter) {
+  const { edition, term, featureTypes } = filter;
+  return db
+    .select({
+      id: homebrewOptionalFeatures.id,
+      name: homebrewOptionalFeatures.name,
+      edition: homebrewOptionalFeatures.edition,
+      json: homebrewOptionalFeatures.json,
+    })
+    .from(homebrewOptionalFeatures)
+    .where(
+      and(
+        edition ? eq(homebrewOptionalFeatures.edition, edition) : undefined,
+        term ? nameHolds(homebrewOptionalFeatures.name, term) : undefined,
+        featureTypes?.length
+          ? inArray(
+              homebrewOptionalFeatures.id,
+              db
+                .select({ id: homebrewOptionalFeatureTypes.featureId })
+                .from(homebrewOptionalFeatureTypes)
+                .where(inArray(homebrewOptionalFeatureTypes.featureType, [...featureTypes])),
+            )
+          : undefined,
+      ),
+    )
+    .all();
 }
