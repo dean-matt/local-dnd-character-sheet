@@ -36,7 +36,7 @@ export function HomebrewJsonMode({
   const [open, setOpen] = useState(true);
   return (
     <div className="@container flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto @2xl:grid @2xl:grid-cols-[auto_minmax(0,1fr)] @2xl:grid-rows-[minmax(0,1fr)] @2xl:overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto scroll-p-1 p-1 @2xl:grid @2xl:grid-cols-[auto_minmax(0,1fr)] @2xl:grid-rows-[minmax(0,1fr)] @2xl:overflow-hidden">
         {reference &&
           (open ? (
             <section
@@ -75,7 +75,7 @@ export function HomebrewJsonMode({
               </span>
             </button>
           ))}
-        <div className="-m-1 flex min-w-0 flex-1 flex-col p-1 @2xl:min-h-0 @2xl:overflow-y-auto">
+        <div className="-m-1 flex min-w-0 flex-1 scroll-p-1 flex-col p-1 @2xl:min-h-0 @2xl:overflow-y-auto">
           <FormField
             className="@2xl:min-h-0 @2xl:flex-1"
             label={`${noun} JSON`}

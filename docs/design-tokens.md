@@ -90,7 +90,15 @@ cannot leave a stored choice failing its pairs.
 
 A single `:focus-visible` rule in `index.css` outlines the accent color around whatever
 has focus, so a view inherits it instead of each one styling its own outline. `main`, which
-takes focus on every navigation, is the one exception. Contrast is checked once against
+takes focus on every navigation, is the one exception.
+
+The ring reaches 4px past a control's box. A scroll container (`overflow` other than
+`visible`) that holds a control at its edge needs `p-1` and `scroll-p-1`, and a `-m-1`
+pulled back out must sit inside a parent's padding, or a parent that clips cuts it.
+`e2e/homebrew-focus-ring.spec.ts` focuses every control in each homebrew editor and fails on a
+clipped ring.
+
+Contrast is checked once against
 these tokens rather than per view. `packages/web/src/contrast.test.ts`
 holds every pair in both themes and fails a repalette that regresses one:
 

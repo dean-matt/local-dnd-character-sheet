@@ -179,7 +179,7 @@ export function HomebrewEditor({
                 aria-label={`${noun} preview`}
                 // biome-ignore lint/a11y/noNoninteractiveTabindex: the preview holds nothing focusable, so the scroll container takes focus for the keyboard.
                 tabIndex={0}
-                className="min-h-0 flex-1 overflow-y-auto"
+                className="min-h-0 flex-1 scroll-p-1 overflow-y-auto p-1"
               >
                 <HomebrewPreview noun={lower} shown={draft.shown} />
               </section>
