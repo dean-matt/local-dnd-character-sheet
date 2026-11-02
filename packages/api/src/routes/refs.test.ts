@@ -12,6 +12,7 @@ import {
   insertHomebrewItem,
   insertHomebrewRace,
   insertHomebrewSpell,
+  insertHomebrewSubclass,
   replaceHomebrewClassFeatures,
   updateHomebrewItem,
 } from "../db/queries/homebrew.ts";
@@ -601,6 +602,30 @@ describe("refsRoutes", () => {
           path: "/homebrew/classes/c/features/1/Second%20Wind",
         },
         null,
+        null,
+      ]);
+    });
+
+    it("resolves a {@subclass} naming source HB to a homebrew subclass by name", async () => {
+      insertHomebrewSubclass(opened.homebrewDb, "s", {
+        name: "Storm Domain",
+        edition: "classic",
+        entries: ["Thunder."],
+        parent: { name: "Cleric", source: "PHB" },
+      });
+
+      expect(
+        await resolveOk([
+          { tag: "subclass", name: "storm domain", source: "HB" },
+          { tag: "subclass", name: "Sea Domain", source: "HB" },
+        ]),
+      ).toEqual([
+        {
+          name: "Storm Domain",
+          source: "HB",
+          entries: ["Thunder."],
+          path: "/homebrew/subclasses/s",
+        },
         null,
       ]);
     });

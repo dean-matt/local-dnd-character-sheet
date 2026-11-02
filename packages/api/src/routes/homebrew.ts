@@ -1,5 +1,5 @@
 /**
- * What the homebrew routes for items, spells, backgrounds, feats, races and classes share.
+ * What the homebrew routes for items, spells, backgrounds, feats, races, classes and subclasses share.
  * `source` and `id` are never accepted from a request body — the query layer stamps
  * `source` and each route generates `id` once, on create, the same rule `characters.ts`
  * sets for `name`/`level`/`edition`.
@@ -18,6 +18,7 @@ import {
   type HomebrewRaceRecord,
   type HomebrewSkillRecord,
   type HomebrewSpellRecord,
+  type HomebrewSubclassRecord,
   homebrewBackgroundRecordSchema,
   homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
@@ -25,6 +26,7 @@ import {
   homebrewRaceRecordSchema,
   homebrewSkillRecordSchema,
   homebrewSpellRecordSchema,
+  homebrewSubclassRecordSchema,
 } from "@dnd/catalog";
 import { EDITIONS, type Edition } from "@dnd/rules";
 import { z } from "@hono/zod-openapi";
@@ -37,6 +39,7 @@ import {
   type getHomebrewRace,
   type getHomebrewSkill,
   type getHomebrewSpell,
+  type getHomebrewSubclass,
   type HomebrewDb,
   homebrewNamed,
   type NamedHomebrewTable,
@@ -48,6 +51,7 @@ type BackgroundRow = NonNullable<ReturnType<typeof getHomebrewBackground>>;
 type FeatRow = NonNullable<ReturnType<typeof getHomebrewFeat>>;
 type RaceRow = NonNullable<ReturnType<typeof getHomebrewRace>>;
 type ClassRow = NonNullable<ReturnType<typeof getHomebrewClass>>;
+type SubclassRow = NonNullable<ReturnType<typeof getHomebrewSubclass>>;
 type SkillRow = NonNullable<ReturnType<typeof getHomebrewSkill>>;
 
 /** Validates a row read back from SQLite against the same schema its write went through. */
@@ -73,6 +77,25 @@ export function toRaceRecord(row: RaceRow): HomebrewRaceRecord {
 
 export function toClassRecord(row: ClassRow): HomebrewClassRecord {
   return homebrewClassRecordSchema.parse({ ...row, createdAt: row.createdAt.toISOString() });
+}
+
+/** The entry carries the class it sits under and a short name, as a catalog subclass's does. */
+export function toSubclassRecord(row: SubclassRow): HomebrewSubclassRecord {
+  return homebrewSubclassRecordSchema.parse({
+    id: row.id,
+    name: row.name,
+    edition: row.edition,
+    className: row.className,
+    classSource: row.classSource,
+    classId: row.classId ?? undefined,
+    json: {
+      ...row.json,
+      shortName: row.json.shortName ?? row.name,
+      className: row.className,
+      classSource: row.classSource,
+    },
+    createdAt: row.createdAt.toISOString(),
+  });
 }
 
 export function toSkillRecord(row: SkillRow): HomebrewSkillRecord {

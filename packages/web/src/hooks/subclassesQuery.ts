@@ -1,11 +1,17 @@
-import { subclassRecordSchema } from "@dnd/catalog";
+import { subclassListItemSchema, type subclassRecordSchema } from "@dnd/catalog";
 import type { CharacterRecord, ContentRef } from "@dnd/character";
 import { queryOptions, skipToken } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 
-const subclassListSchema = z.object({ items: z.array(subclassRecordSchema), total: z.int() });
+// A homebrew subclass is not yet a pick, so only the catalog rows pass through.
+const subclassListSchema = z
+  .object({ items: z.array(subclassListItemSchema), total: z.int() })
+  .transform(({ items, total }) => ({
+    items: items.filter((item): item is z.infer<typeof subclassRecordSchema> => "source" in item),
+    total,
+  }));
 
 /**
  * The query for every subclass of one catalog class in one edition. 200 is the route's

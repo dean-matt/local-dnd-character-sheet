@@ -4,8 +4,11 @@ import { z } from "zod";
 import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
 import { isRecord } from "../lib/entryGuards.ts";
 
-/** The path segment of each kind's routes, `/homebrew/{collection}`. */
-export type HomebrewCollection = z.infer<typeof homebrewCollectionSchema>;
+/**
+ * The path segment of each kind's routes, `/homebrew/{collection}`, of the kinds the app
+ * edits: there is no subclass editor yet.
+ */
+export type HomebrewCollection = Exclude<z.infer<typeof homebrewCollectionSchema>, "subclasses">;
 
 /**
  * One homebrew collection under `/homebrew/{collection}`: its rows, a save that creates a

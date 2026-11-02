@@ -27,6 +27,7 @@ import {
 import {
   type HomebrewDb,
   homebrewNamed,
+  homebrewSubclassNamed,
   listHomebrewClassFeatures,
   type NamedHomebrewTable,
 } from "./homebrew.ts";
@@ -321,7 +322,8 @@ function redirector(db: Database.Database, find: Find) {
 }
 
 /**
- * The tags a homebrew row answers. A tag names no edition, so where both editions hold
+ * The tags a homebrew row answers. A subclass is found by name alone, though only its class
+ * scopes the name. A tag names no edition, so where both editions hold
  * the name the classic row answers, the way a sourceless catalog reference defaults to a
  * classic source. An edition on the request is the way out once a block knows its own.
  */
@@ -335,6 +337,17 @@ const HOMEBREW: Record<string, { collection: string; table: NamedHomebrewTable }
 };
 
 function homebrewRow(db: HomebrewDb, tag: string, name: string): ResolvedRow | undefined {
+  if (tag === "subclass") {
+    const row = homebrewSubclassNamed(db, name);
+    return (
+      row && {
+        name: row.name,
+        source: HOMEBREW_SOURCE,
+        json: row.json,
+        path: `/homebrew/subclasses/${segments(row.id)}`,
+      }
+    );
+  }
   const target = HOMEBREW[tag];
   if (target === undefined) return undefined;
   const row = homebrewNamed(db, target.table, name);

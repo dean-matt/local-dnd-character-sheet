@@ -1,6 +1,6 @@
 /**
  * Schema for `homebrew.db` — your custom items, spells, backgrounds, feats, races,
- * classes and skills.
+ * classes, subclasses and skills.
  *
  * Kept apart from `content.db` so the catalog stays disposable: rebuilding the
  * official content can never touch your homebrew. Rows carry source "HB" and are
@@ -15,6 +15,7 @@ import type {
   HomebrewClass,
   HomebrewItem,
   HomebrewSkillEntry,
+  HomebrewSubclass,
   RaceEntry,
   SpellEntry,
 } from "@dnd/catalog";
@@ -58,6 +59,28 @@ export const homebrewClassFeatures = sqliteTable(
     entries: text("entries", { mode: "json" }).$type<Entries>().notNull(),
   },
   (t) => [primaryKey({ columns: [t.classId, t.level, t.name] })],
+);
+
+export const homebrewSubclasses = sqliteTable(
+  "homebrew_subclasses",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    edition: text("edition", { enum: EDITIONS }).notNull(),
+    classId: text("class_id").references(() => homebrewClasses.id, { onDelete: "restrict" }),
+    className: text("class_name"),
+    classSource: text("class_source"),
+    json: text("json", { mode: "json" }).$type<HomebrewSubclass>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [
+    uniqueIndex("homebrew_subclasses_by_homebrew_class")
+      .on(t.classId, sql`${t.name} COLLATE NOCASE`)
+      .where(sql`${t.classId} IS NOT NULL`),
+    uniqueIndex("homebrew_subclasses_by_catalog_class")
+      .on(t.className, t.classSource, sql`${t.name} COLLATE NOCASE`, t.edition)
+      .where(sql`${t.classId} IS NULL`),
+  ],
 );
 
 export const homebrewFeats = sqliteTable(

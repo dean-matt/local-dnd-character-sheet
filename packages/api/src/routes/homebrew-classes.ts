@@ -15,6 +15,7 @@ import {
   listHomebrewClasses,
   listHomebrewClassFeatures,
   replaceHomebrewClassFeatures,
+  subclassesOfHomebrewClass,
   updateHomebrewClass,
 } from "../db/queries/homebrew.ts";
 import { notFound } from "./errors.ts";
@@ -39,6 +40,14 @@ const dieHeld = (
 ) => ({
   error: `${name} is held by ${names.format(characters.map((held) => held.name))}, so its hit die stays d${hitDie}. Keep d${hitDie}, or add a class with another name for the new die.`,
   characters,
+});
+
+const subclassesHeld = (
+  { name }: { name: string },
+  subclasses: { id: string; name: string }[],
+) => ({
+  error: `${name} has the subclasses ${names.format(subclasses.map((held) => held.name))}, so it cannot be deleted. Delete them first.`,
+  subclasses,
 });
 
 const listClasses = createRoute({
@@ -125,7 +134,20 @@ const removeClass = createRoute({
   responses: {
     204: { description: "The homebrew class was deleted" },
     404: notFound("homebrew class"),
-    409: referenced("homebrew class"),
+    409: {
+      description: "A character references the class, or it still has subclasses",
+      content: {
+        "application/json": {
+          schema: z.union([
+            referenced("homebrew class").content["application/json"].schema,
+            z.object({
+              error: z.string(),
+              subclasses: z.array(z.object({ id: z.string(), name: z.string() })),
+            }),
+          ]),
+        },
+      },
+    },
   },
 });
 
@@ -220,6 +242,9 @@ export function homebrewClassesRoutes(db: HomebrewDb, charactersDb: CharactersDb
     const { id } = c.req.valid("param");
     const characters = charactersReferencingHomebrew(charactersDb, id);
     if (characters.length > 0) return c.json(referencedError("This class", characters), 409);
+    const current = getHomebrewClass(db, id);
+    const subclasses = current ? subclassesOfHomebrewClass(db, id) : [];
+    if (current && subclasses.length > 0) return c.json(subclassesHeld(current, subclasses), 409);
     if (!deleteHomebrewClass(db, id)) return c.json({ error: CLASS_NOT_FOUND }, 404);
     return c.body(null, 204);
   });

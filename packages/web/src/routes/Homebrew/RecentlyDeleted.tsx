@@ -13,7 +13,10 @@ import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 export function RecentlyDeleted() {
   const id = useId();
   const { history, restore } = useHomebrewHistory();
-  const deleted = history.data?.deleted ?? [];
+  // A deleted subclass waits for the subclass editor; its restore is the API's alone until then.
+  const deleted = (history.data?.deleted ?? []).flatMap((row) =>
+    row.collection === "subclasses" ? [] : [{ ...row, collection: row.collection }],
+  );
   return (
     <section aria-labelledby={`${id}-title`} className="flex flex-col gap-2.5">
       <h2 id={`${id}-title`} className="sr-only">
