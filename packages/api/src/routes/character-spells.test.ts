@@ -65,7 +65,30 @@ const ITEMS: ItemFixtureRow[] = [
   item("Ring of Shielding", { will: ["shield"] }),
   item("Ring of Warding", ["shield|PHB"]),
   item("Staff of Seeing", ["Detect Magic|PHB", "no such spell"], 1),
+  {
+    ...item("Mace of Judgment", undefined),
+    json: JSON.stringify({
+      name: "Mace of Judgment",
+      source: "DMG",
+      attachedSpellsByDeityAlignment: { "Lawful Good": ["shield|PHB"], NE: ["detect magic|PHB"] },
+    }),
+  },
 ];
+
+const DEITIES = [
+  { kind: "deity", name: "Moradin", source: "PHB", qualifier: "Dwarven", alignment: ["L", "G"] },
+  {
+    kind: "deity",
+    name: "Bane",
+    source: "PHB",
+    qualifier: "Forgotten Realms",
+    alignment: ["L", "E"],
+  },
+].map(({ alignment, ...key }) => ({
+  ...key,
+  edition: null,
+  json: JSON.stringify({ name: key.name, source: key.source, alignment }),
+}));
 
 describe("characterSpellsRoutes", () => {
   let dataDir: string;
@@ -137,6 +160,7 @@ describe("characterSpellsRoutes", () => {
         },
       ],
       ITEMS,
+      DEITIES,
     );
   });
 
@@ -319,6 +343,38 @@ describe("characterSpellsRoutes", () => {
       const [shield] = listed;
       expect(listed).toHaveLength(1);
       expect(shield).not.toHaveProperty("fromItem");
+    });
+
+    describe("by the alignment of the character's deity", () => {
+      const worshipping = (extra: object) =>
+        store({
+          ...withSpells([], [held("Mace of Judgment", { equipped: true })]),
+          ...extra,
+        } as CharacterDefinition);
+      const MORADIN = { name: "Moradin", source: "PHB", pantheon: "Dwarven" };
+
+      it("adds the spells whose alignment matches the deity row's", async () => {
+        worshipping({ deity: MORADIN });
+        expect((await spells()).map(({ name }) => name)).toEqual(["Shield"]);
+      });
+
+      it("reads the alignment from the deity row, not the character's own", async () => {
+        worshipping({
+          deity: { name: "Bane", source: "PHB", pantheon: "Forgotten Realms" },
+          alignment: "Lawful Good",
+        });
+        expect(await spells()).toEqual([]);
+      });
+
+      it("adds none for a character with no deity", async () => {
+        worshipping({});
+        expect(await spells()).toEqual([]);
+      });
+
+      it("adds none for a deity no row answers", async () => {
+        worshipping({ deity: { ...MORADIN, name: "Nobody" } });
+        expect(await spells()).toEqual([]);
+      });
     });
 
     it("lists a spell once for the items that attach it, citing each", async () => {

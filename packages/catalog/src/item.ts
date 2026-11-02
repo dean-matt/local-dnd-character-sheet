@@ -16,6 +16,7 @@
  */
 import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
+import { alignmentCode } from "./alignment.ts";
 import { entriesSchema } from "./entry.ts";
 import { itemAdvantageSchema } from "./item-advantage.ts";
 import { senseListSchema } from "./sense.ts";
@@ -183,6 +184,20 @@ function namesIn(value: unknown): string[] {
   return [];
 }
 
+function spellRefs(names: readonly string[]): { name: string; source?: string }[] | undefined {
+  const spells = new Map<string, { name: string; source?: string }>();
+  for (const written of names) {
+    const [name = "", source] = (written.split("#")[0] ?? "").split("|");
+    if (!name.trim()) continue;
+    const spell = {
+      name: name.trim().toLowerCase(),
+      ...(source && { source: source.toLowerCase() }),
+    };
+    spells.set(`${spell.name}|${spell.source ?? ""}`, spell);
+  }
+  return spells.size > 0 ? [...spells.values()] : undefined;
+}
+
 /**
  * The spells an item lets its bearer cast, `undefined` for one that names none. Upstream
  * writes a bare list of names, or an object grouping them by how the item casts them —
@@ -200,23 +215,36 @@ export const attachedSpellsSchema = z
       .optional()
       .catch(undefined),
   })
-  .transform(({ attachedSpells }) => {
-    const names = Array.isArray(attachedSpells)
-      ? attachedSpells
-      : Object.entries(attachedSpells ?? {}).flatMap(([group, value]) =>
-          group === "ability" ? [] : namesIn(value),
-        );
-    const spells = new Map<string, { name: string; source?: string }>();
-    for (const written of names) {
-      const [name = "", source] = (written.split("#")[0] ?? "").split("|");
-      if (!name.trim()) continue;
-      const spell = {
-        name: name.trim().toLowerCase(),
-        ...(source && { source: source.toLowerCase() }),
-      };
-      spells.set(`${spell.name}|${spell.source ?? ""}`, spell);
+  .transform(({ attachedSpells }) =>
+    spellRefs(
+      Array.isArray(attachedSpells)
+        ? attachedSpells
+        : Object.entries(attachedSpells ?? {}).flatMap(([group, value]) =>
+            group === "ability" ? [] : namesIn(value),
+          ),
+    ),
+  );
+
+/**
+ * The spells an item adds for a character whose deity holds a given alignment, keyed by
+ * that alignment's code (`LG`, `N`) however the entry writes it — `LG`, `Lawful Good`.
+ * Names read as `attachedSpells` does; a key naming no alignment is dropped.
+ */
+export const attachedSpellsByDeityAlignmentSchema = z
+  .looseObject({
+    attachedSpellsByDeityAlignment: z
+      .record(z.string(), spellNameListSchema)
+      .optional()
+      .catch(undefined),
+  })
+  .transform(({ attachedSpellsByDeityAlignment }) => {
+    const byCode: Record<string, { name: string; source?: string }[]> = {};
+    for (const [alignment, names] of Object.entries(attachedSpellsByDeityAlignment ?? {})) {
+      const code = alignmentCode(alignment);
+      const spells = spellRefs(names);
+      if (code && spells) byCode[code] = [...(byCode[code] ?? []), ...spells];
     }
-    return spells.size > 0 ? [...spells.values()] : undefined;
+    return Object.keys(byCode).length > 0 ? byCode : undefined;
   });
 
 /** Upstream's one-letter `dmgType` codes, spelled out. */

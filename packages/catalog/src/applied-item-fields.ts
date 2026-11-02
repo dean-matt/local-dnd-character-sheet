@@ -5,6 +5,7 @@ import {
   ammunitionTraitSchema,
   armorBurdenSchema,
   armorTraitSchema,
+  attachedSpellsByDeityAlignmentSchema,
   attachedSpellsSchema,
   containerTraitSchema,
   homebrewItemSchema,
@@ -28,6 +29,7 @@ const shape = {
   ...ammunitionTraitSchema.in.shape,
   ...containerTraitSchema.in.shape,
   ...attachedSpellsSchema.in.shape,
+  ...attachedSpellsByDeityAlignmentSchema.in.shape,
   ...defenseTraitSchema.in.shape,
   ...abilityGrantSchema.in.shape,
   ...itemBonusSchema.in.shape,
@@ -99,6 +101,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   grantsProficiency: "true where the item grants a proficiency its text names.",
   attachedSpells:
     'Spells the item lets its bearer cast, such as ["fireball", "shield|phb"]. A name with no source reads from the character\'s edition. The spells show on the sheet while the item is equipped, attuned where it must be.',
+  attachedSpellsByDeityAlignment:
+    'Spells added when the alignment of the deity the character worships matches, such as {"LG": ["shield"], "Chaotic Evil": ["fireball|phb"]}. Names read as in attachedSpells. A character with no deity, or a deity of another alignment, gets none.',
   skillProficiencies:
     'Skills the item grants proficiency in, such as [{"intimidation": true}]. Granted while the item is equipped, attuned where it must be.',
   expertise:
