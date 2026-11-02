@@ -24,7 +24,12 @@ import {
   homebrewRaces,
   homebrewSpells,
 } from "../homebrew.ts";
-import { type HomebrewDb, homebrewNamed, type NamedHomebrewTable } from "./homebrew.ts";
+import {
+  type HomebrewDb,
+  homebrewNamed,
+  listHomebrewClassFeatures,
+  type NamedHomebrewTable,
+} from "./homebrew.ts";
 
 /** A table row: `name`, `source` and `json`, plus any key column `path` reads. */
 type Row = { name: string; source: string; json: string } & Record<string, string>;
@@ -342,6 +347,27 @@ function homebrewRow(db: HomebrewDb, tag: string, name: string): ResolvedRow | u
   };
 }
 
+/**
+ * A homebrew class feature, keyed by its class's name, the tag's level and its own name.
+ * The class is found by the owner's name alone, as a `{@class}` tag finds it.
+ */
+function homebrewFeatureRow(db: HomebrewDb, ref: RefQuery): ResolvedRow | undefined {
+  if (ref.owner === undefined) return undefined;
+  const cls = homebrewNamed(db, homebrewClasses, ref.owner.className);
+  if (cls === undefined) return undefined;
+  const feature = listHomebrewClassFeatures(db, cls.id).find(
+    ({ name, level }) =>
+      level === ref.owner?.level && name.toLowerCase() === ref.name.toLowerCase(),
+  );
+  if (feature === undefined) return undefined;
+  return {
+    name: feature.name,
+    source: HOMEBREW_SOURCE,
+    json: { entries: feature.entries },
+    path: `/homebrew/classes/${segments(cls.id, "features", String(feature.level), feature.name)}`,
+  };
+}
+
 /** Every reference over one connection, answered in order. */
 export function resolveRefs(
   dataDir: string,
@@ -358,7 +384,9 @@ export function resolveRefs(
       if (target === undefined) return undefined;
       const wanted = { ...ref, source: ref.source ?? target.source };
       if (wanted.source.toUpperCase() === HOMEBREW_SOURCE) {
-        return homebrewRow(homebrewDb, ref.tag, ref.name);
+        return ref.tag === "classFeature"
+          ? homebrewFeatureRow(homebrewDb, ref)
+          : homebrewRow(homebrewDb, ref.tag, ref.name);
       }
       return (
         find(ref.tag, wanted) ??

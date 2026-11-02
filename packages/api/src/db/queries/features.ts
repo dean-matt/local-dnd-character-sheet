@@ -41,6 +41,7 @@ import {
   getHomebrewClass,
   getHomebrewFeat,
   type HomebrewDb,
+  listHomebrewClassFeatures,
 } from "./homebrew.ts";
 
 type Placement = { level?: number; featureType?: string };
@@ -166,9 +167,13 @@ function classGroups(
   return classLevels(definition).flatMap(({ class: ref, level, subclass }): FeatureGroup[] => {
     const name = displayName(ref);
     if ("homebrewId" in ref) {
-      // A homebrew class carries no feature rows, so only a missing one has anything to show.
-      if (getHomebrewClass(homebrewDb, ref.homebrewId)) return [];
-      return [{ origin: "class", name, class: ref, features: [unresolved(ref)] }];
+      if (!getHomebrewClass(homebrewDb, ref.homebrewId)) {
+        return [{ origin: "class", name, class: ref, features: [unresolved(ref)] }];
+      }
+      const features = listHomebrewClassFeatures(homebrewDb, ref.homebrewId)
+        .filter((feature) => feature.level <= level)
+        .map((feature): SheetFeature => ({ resolved: true, ...feature }));
+      return [{ origin: "class", name, class: ref, features }];
     }
     if (!getClass(dataDir, ref.name, ref.source)) {
       return [{ origin: "class", name, class: ref, features: [unresolved(ref)] }];

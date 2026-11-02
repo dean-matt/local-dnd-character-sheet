@@ -16,7 +16,9 @@ import {
   classRecordSchema,
   type Entries,
   featRecordSchema,
+  HOMEBREW_SOURCE,
   homebrewBackgroundRecordSchema,
+  homebrewClassFeaturesSchema,
   homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
@@ -163,6 +165,27 @@ async function subclassPath(key: Params): Promise<string> {
   return `${classPath(key)}/subclasses/${segments(subclass.name, subclass.source)}`;
 }
 
+const homebrewClassRoute = homebrew("classes", "class", homebrewClassRecordSchema, classEntries);
+
+/**
+ * A homebrew class stores its features beside its row, so its level table is built from
+ * them as `{@classFeature}` links the API resolves by the class's name and `HB`.
+ */
+const homebrewClass: CatalogTarget = {
+  ...homebrewClassRoute,
+  load: async (key) => {
+    const row = await homebrewClassRoute.load(key);
+    const features = await apiGet(
+      `/homebrew/classes/${segments(key.id)}/features`,
+      homebrewClassFeaturesSchema,
+    );
+    const classFeatures = features.map(
+      ({ name, level }) => `${name}|${row.name}|${HOMEBREW_SOURCE}|${level}`,
+    );
+    return { ...row, entries: classEntries({ ...row.json, classFeatures }) };
+  },
+};
+
 const CATALOG_TARGETS: CatalogTarget[] = [
   nameSource("spells", "spell", spellRecordSchema),
   nameSource("items", "item", itemRecordSchema, itemEntries),
@@ -251,7 +274,22 @@ const CATALOG_TARGETS: CatalogTarget[] = [
   homebrew("races", "race", homebrewRaceRecordSchema),
   homebrew("backgrounds", "background", homebrewBackgroundRecordSchema),
   homebrew("feats", "feat", homebrewFeatRecordSchema),
-  homebrew("classes", "class", homebrewClassRecordSchema, classEntries),
+  homebrewClass,
+  {
+    path: "homebrew/classes/:id/features/:level/:name",
+    label: () => "class feature",
+    lookedFor: (key) =>
+      `the class feature ${key.name} at level ${key.level} of homebrew class ${key.id}`,
+    load: async (key) => {
+      const features = await apiGet(
+        `/homebrew/classes/${segments(key.id)}/features`,
+        homebrewClassFeaturesSchema,
+      );
+      const match = features.find((f) => f.name === key.name && `${f.level}` === key.level);
+      if (!match) throw new ApiError("No feature with that name and level", 404);
+      return toRow({ ...match, json: { ...match } });
+    },
+  },
 ];
 
 /**

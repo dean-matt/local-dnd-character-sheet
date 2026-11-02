@@ -238,7 +238,10 @@ describe("EditHomebrewButton", () => {
       },
     ],
   ])("shows no Edit, and no footer, on a homebrew row of %s", async (collection, row) => {
-    stubApi({ [`/api/homebrew/${collection}/${row.id}`]: { status: 200, body: row } });
+    stubApi({
+      [`/api/homebrew/${collection}/${row.id}`]: { status: 200, body: row },
+      [`/api/homebrew/${collection}/${row.id}/features`]: { status: 200, body: [] },
+    });
     renderDetail(`/homebrew/${collection}/${row.id}`);
 
     await waitFor(() => expect(titleOf(detail())).toBe(row.name));

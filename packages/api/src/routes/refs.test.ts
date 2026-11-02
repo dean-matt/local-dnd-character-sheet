@@ -12,6 +12,7 @@ import {
   insertHomebrewItem,
   insertHomebrewRace,
   insertHomebrewSpell,
+  replaceHomebrewClassFeatures,
   updateHomebrewItem,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
@@ -572,6 +573,35 @@ describe("refsRoutes", () => {
         { name: "Wanderer", source: "HB", entries: ["Far."], path: "/homebrew/backgrounds/b" },
         expect.objectContaining({ name: "Ironbound", source: "HB", path: "/homebrew/feats/f" }),
         expect.objectContaining({ name: "Warden", source: "HB", path: "/homebrew/classes/c" }),
+      ]);
+    });
+
+    it("resolves a homebrew class feature by its class, level and name", async () => {
+      insertHomebrewClass(opened.homebrewDb, "c", {
+        name: "Warden",
+        edition: "one",
+        hd: { number: 1, faces: 10 },
+      });
+      replaceHomebrewClassFeatures(opened.homebrewDb, "c", [
+        { name: "Second Wind", level: 1, entries: ["Regain hit points."] },
+      ]);
+      const owner = { className: "Warden", classSource: "HB", level: 1 };
+
+      expect(
+        await resolveOk([
+          { tag: "classFeature", name: "second wind", source: "HB", owner },
+          { tag: "classFeature", name: "Second Wind", source: "HB", owner: { ...owner, level: 2 } },
+          { tag: "classFeature", name: "Second Wind", source: "HB" },
+        ]),
+      ).toEqual([
+        {
+          name: "Second Wind",
+          source: "HB",
+          entries: ["Regain hit points."],
+          path: "/homebrew/classes/c/features/1/Second%20Wind",
+        },
+        null,
+        null,
       ]);
     });
 

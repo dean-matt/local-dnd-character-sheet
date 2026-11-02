@@ -14,8 +14,10 @@ import { publishFeaturesFixture } from "../db/queries/contentFixture.ts";
 import { backgroundEntryGroup, rowFeature } from "../db/queries/features.ts";
 import {
   insertHomebrewBackground,
+  insertHomebrewClass,
   insertHomebrewFeat,
   insertHomebrewRace,
+  replaceHomebrewClassFeatures,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { featuresRoutes } from "./features.ts";
@@ -532,6 +534,32 @@ describe("featuresRoutes", () => {
     expect(groups[3]?.features).toEqual([
       { resolved: true, name: "Tavern Brawler Plus", entries: ["You brawl."] },
     ]);
+  });
+
+  it("lists a homebrew class's features up to the character's level, and none once removed", async () => {
+    insertHomebrewClass(opened.homebrewDb, "hc", {
+      name: "Warden",
+      edition: "classic",
+      hd: { number: 1, faces: 10 },
+    });
+    const feature = (name: string, level: number) => ({ name, level, entries: [`${name}.`] });
+    replaceHomebrewClassFeatures(opened.homebrewDb, "hc", [
+      feature("Second Wind", 1),
+      feature("Action Surge", 2),
+      feature("Indomitable", 9),
+    ]);
+    const levels = [{ class: { homebrewId: "hc" } }, { class: { homebrewId: "hc" } }];
+    store(definitionWith({ levels }));
+    const listed = async () =>
+      (await features()).groups.find(({ origin }) => origin === "class")?.features;
+
+    expect(await listed()).toEqual([
+      { resolved: true, name: "Second Wind", level: 1, entries: ["Second Wind."] },
+      { resolved: true, name: "Action Surge", level: 2, entries: ["Action Surge."] },
+    ]);
+
+    replaceHomebrewClassFeatures(opened.homebrewDb, "hc", []);
+    expect(await listed()).toBeUndefined();
   });
 
   it("leaves the stamped source off a homebrew race's traits", async () => {
