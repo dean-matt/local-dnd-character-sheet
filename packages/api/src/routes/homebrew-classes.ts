@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { homebrewClassInputSchema, homebrewClassRecordSchema } from "@dnd/catalog";
+import {
+  homebrewClassFeaturesSchema,
+  homebrewClassInputSchema,
+  homebrewClassRecordSchema,
+} from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { homebrewClasses } from "../db/homebrew.ts";
 import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
@@ -9,6 +13,8 @@ import {
   type HomebrewDb,
   insertHomebrewClass,
   listHomebrewClasses,
+  listHomebrewClassFeatures,
+  replaceHomebrewClassFeatures,
   updateHomebrewClass,
 } from "../db/queries/homebrew.ts";
 import { notFound } from "./errors.ts";
@@ -123,6 +129,39 @@ const removeClass = createRoute({
   },
 });
 
+const readFeatures = createRoute({
+  method: "get",
+  path: "/homebrew/classes/{id}/features",
+  tags: ["homebrew"],
+  summary: "List a homebrew class's features",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The class's features, by level then name",
+      content: { "application/json": { schema: homebrewClassFeaturesSchema } },
+    },
+    404: notFound("homebrew class"),
+  },
+});
+
+const replaceFeatures = createRoute({
+  method: "put",
+  path: "/homebrew/classes/{id}/features",
+  tags: ["homebrew"],
+  summary: "Replace a homebrew class's features",
+  request: {
+    params: idParam,
+    body: { content: { "application/json": { schema: homebrewClassFeaturesSchema } } },
+  },
+  responses: {
+    200: {
+      description: "The class's features as stored",
+      content: { "application/json": { schema: homebrewClassFeaturesSchema } },
+    },
+    404: notFound("homebrew class"),
+  },
+});
+
 export function homebrewClassesRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -132,6 +171,19 @@ export function homebrewClassesRoutes(db: HomebrewDb, charactersDb: CharactersDb
     const row = getHomebrewClass(db, c.req.valid("param").id);
     if (!row) return c.json({ error: CLASS_NOT_FOUND }, 404);
     return c.json(toClassRecord(row), 200);
+  });
+
+  routes.openapi(readFeatures, (c) => {
+    const { id } = c.req.valid("param");
+    if (!getHomebrewClass(db, id)) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    return c.json(listHomebrewClassFeatures(db, id), 200);
+  });
+
+  routes.openapi(replaceFeatures, (c) => {
+    const { id } = c.req.valid("param");
+    if (!getHomebrewClass(db, id)) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    replaceHomebrewClassFeatures(db, id, c.req.valid("json"));
+    return c.json(listHomebrewClassFeatures(db, id), 200);
   });
 
   routes.openapi(createClass, (c) => {

@@ -171,7 +171,8 @@ const hitDieRollSchema = z.strictObject({ number: z.literal(1), faces: z.int().p
  * homebrew class has no `packages/content/src/load/class-rows.ts` load step to reject a
  * missing or malformed roll first — the schema is the only gate a caller's paste meets
  * before `homebrewClassRecordSchema.hitDie` reads `hd.faces` off it. It carries no
- * feature or subclass rows of its own — see `docs/data-model.md`.
+ * feature or subclass rows of its own: features are `homebrewClassFeaturesSchema`, stored
+ * beside the class — see `docs/data-model.md`.
  */
 export const homebrewClassSchema = classEntrySchema.extend({ hd: hitDieRollSchema });
 
@@ -200,6 +201,25 @@ export const homebrewClassRecordSchema = z.strictObject({
 });
 
 export type HomebrewClassRecord = z.infer<typeof homebrewClassRecordSchema>;
+
+/** One feature of a homebrew class: a name, the level it arrives at and its rules text. */
+const homebrewClassFeatureSchema = z.strictObject({
+  name: z.string().min(1),
+  level: z.int().min(1).max(20),
+  entries: entriesSchema,
+});
+
+export type HomebrewClassFeature = z.infer<typeof homebrewClassFeatureSchema>;
+
+/** A homebrew class's whole feature list; a name is unique within a level, as a `{@classFeature}` tag keys it. */
+export const homebrewClassFeaturesSchema = z
+  .array(homebrewClassFeatureSchema)
+  .refine(
+    (features) =>
+      new Set(features.map(({ name, level }) => `${level}|${name.toLowerCase()}`)).size ===
+      features.length,
+    { message: "Two features share a name and level" },
+  );
 
 /** A printed table value at one level — a count, a die, a bonus — stored as text. */
 const classResourceSchema = z.strictObject({

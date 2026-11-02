@@ -72,8 +72,9 @@ row is written once and displayed, never edited field by field — the same reas
 **A homebrew race or class's `json` reuses its catalog record's entry shape**, from
 `packages/catalog/src/race.ts` and `class.ts`, and requires what a derived block reads: a
 class's `hd`, which `homebrew_classes.hit_die` derives from, and a race's `size` and
-`speed`. Neither carries a child row of its own: no subrace until one proves common enough
-to need it, no feature rows and no subclass until its own issue adds one — a homebrew
+`speed`. A race carries no child row of its own: no subrace until one proves common enough
+to need it. A class's features live in `homebrew_class_features`, keyed `(class_id, level,
+name)` and deleted with the class; no subclass until its own issue adds one — a homebrew
 parent has no ETL merge step to build either from. `race`, `levels[].class` and both
 feat-grantor branches accept a homebrew reference, so a delete refuses while one is held.
 

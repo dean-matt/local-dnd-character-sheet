@@ -1,13 +1,14 @@
 /**
  * List, search, read, create, update and delete for `homebrew.db`'s `homebrew_items`,
  * `homebrew_spells`, `homebrew_backgrounds`, `homebrew_feats`, `homebrew_races`,
- * `homebrew_classes` and `homebrew_skills` tables. `source` never arrives as an argument —
+ * `homebrew_classes`, `homebrew_class_features` and `homebrew_skills` tables. `source` never arrives as an argument —
  * every write stamps `HOMEBREW_SOURCE` into `json` here, the one place that builds it, and
  * `id` is chosen by the caller once at creation and never reassigned, so a rename keeps the
  * id a character already references.
  */
 import type {
   HomebrewBackgroundInput,
+  HomebrewClassFeature,
   HomebrewClassInput,
   HomebrewFeatInput,
   HomebrewItem,
@@ -35,6 +36,7 @@ import type * as homebrewSchema from "../homebrew.ts";
 import {
   homebrewBackgrounds,
   homebrewClasses,
+  homebrewClassFeatures,
   homebrewFeats,
   homebrewItems,
   homebrewRaces,
@@ -427,6 +429,36 @@ export function updateHomebrewClass(db: HomebrewDb, id: string, input: HomebrewC
 
 export function deleteHomebrewClass(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewClasses).where(eq(homebrewClasses.id, id)).run().changes > 0;
+}
+
+/** A class's features in the order the level table prints them. */
+export function listHomebrewClassFeatures(db: HomebrewDb, classId: string): HomebrewClassFeature[] {
+  return db
+    .select({
+      name: homebrewClassFeatures.name,
+      level: homebrewClassFeatures.level,
+      entries: homebrewClassFeatures.entries,
+    })
+    .from(homebrewClassFeatures)
+    .where(eq(homebrewClassFeatures.classId, classId))
+    .orderBy(homebrewClassFeatures.level, homebrewClassFeatures.name)
+    .all();
+}
+
+/** Replaces the class's whole feature list in one transaction. */
+export function replaceHomebrewClassFeatures(
+  db: HomebrewDb,
+  classId: string,
+  features: HomebrewClassFeature[],
+) {
+  db.transaction((tx) => {
+    tx.delete(homebrewClassFeatures).where(eq(homebrewClassFeatures.classId, classId)).run();
+    if (features.length > 0) {
+      tx.insert(homebrewClassFeatures)
+        .values(features.map((feature) => ({ classId, ...feature })))
+        .run();
+    }
+  });
 }
 
 export function listHomebrewSkills(db: HomebrewDb) {
