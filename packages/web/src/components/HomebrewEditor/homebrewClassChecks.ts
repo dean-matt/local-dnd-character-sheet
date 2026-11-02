@@ -1,4 +1,8 @@
-import { casterProgressionSchema, homebrewClassInputSchema } from "@dnd/catalog";
+import {
+  casterProgressionSchema,
+  homebrewClassFeaturesSchema,
+  homebrewClassInputSchema,
+} from "@dnd/catalog";
 import { z } from "zod";
 import { CLASS_SKILL_SPEC, proficienciesIn, requirementProblem } from "./classShapes.ts";
 import { grantProblem } from "./featGrantShapes.ts";
@@ -16,6 +20,7 @@ const checked = (problem: (value: unknown) => string | undefined) =>
 /**
  * `homebrewClassInputSchema` with the checks the form adds before a save: the skills a class
  * offers and the minimum scores it asks, which the server takes as written, and the slot table.
+ * `features` is not a field of the class row: a save sends it to the class's features route.
  */
 export const homebrewClassFormSchema = homebrewClassInputSchema.extend({
   startingProficiencies: checked((value) =>
@@ -30,4 +35,5 @@ export const homebrewClassFormSchema = homebrewClassInputSchema.extend({
       grantProblem(proficienciesIn({ multiclassing: value }, true)?.skills, CLASS_SKILL_SPEC),
   ),
   casterProgression: casterProgressionSchema.in.shape.casterProgression,
+  features: homebrewClassFeaturesSchema.optional(),
 });

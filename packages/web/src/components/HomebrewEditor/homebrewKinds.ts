@@ -45,6 +45,7 @@ import { BackgroundFeat } from "./BackgroundFeat.tsx";
 import { BackgroundProficiencies } from "./BackgroundProficiencies.tsx";
 import { ClassBasics } from "./ClassBasics.tsx";
 import { ClassEquipment } from "./ClassEquipment.tsx";
+import { ClassFeatures } from "./ClassFeatures.tsx";
 import { ClassMulticlassing } from "./ClassMulticlassing.tsx";
 import { ClassProficiencies } from "./ClassProficiencies.tsx";
 import { ClassSpellcasting } from "./ClassSpellcasting.tsx";
@@ -269,6 +270,7 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
       Fields: ClassSpellcasting,
       keys: ["spellcastingAbility", "casterProgression"],
     },
+    { title: "Features", Fields: ClassFeatures, keys: ["features"] },
   ],
   reference: createElement(FieldReference, { schema: appliedClassFieldsSchema }),
   shownKeys: () => [
@@ -282,6 +284,7 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
     "multiclassing",
     "spellcastingAbility",
     "casterProgression",
+    "features",
   ],
 };
 
