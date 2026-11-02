@@ -20,7 +20,6 @@ test("the Advanced search link stays in view below the results as they scroll", 
   await expect(results.getByRole("option", { name: /Fire Spell 39/ })).toBeAttached();
   const link = page.getByRole("link", { name: /Advanced search for "fire"/ });
   expect(await results.locator("a").count()).toBe(0);
-  // The listbox scrolls with the "Add to…" buttons beside it, in the element holding both.
   const scroller = results.locator("xpath=..");
   expect(await scroller.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
 
