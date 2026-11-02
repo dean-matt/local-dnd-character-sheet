@@ -9,6 +9,7 @@
  * row's old id, so a character still resolves it.
  */
 import {
+  type HomebrewDeityInput,
   type HomebrewSubclassInput,
   type HomebrewSubraceInput,
   homebrewCollectionSchema,
@@ -25,10 +26,12 @@ import {
   homebrewSpells,
 } from "../db/homebrew.ts";
 import {
+  findHomebrewDeity,
   findHomebrewSubclass,
   findHomebrewSubrace,
   getHomebrewBackground,
   getHomebrewClass,
+  getHomebrewDeity,
   getHomebrewFeat,
   getHomebrewItem,
   getHomebrewRace,
@@ -39,6 +42,7 @@ import {
   type HomebrewDb,
   insertHomebrewBackground,
   insertHomebrewClass,
+  insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
   insertHomebrewRace,
@@ -51,6 +55,7 @@ import {
 import { catalogSkillNames } from "../db/queries/skills.ts";
 import { errorSchema, notFound } from "./errors.ts";
 import { claimName, holder, idParam, nameTaken, nameTakenError } from "./homebrew.ts";
+import { claimDeity, deityNameTaken, deityNameTakenError } from "./homebrew-deities.ts";
 import { parentEdition } from "./homebrew-subclasses.ts";
 import { raceEdition } from "./homebrew-subraces.ts";
 
@@ -58,7 +63,8 @@ type Collection = z.infer<typeof homebrewCollectionSchema>;
 type Row = {
   id: string;
   name: string;
-  edition: "classic" | "one";
+  /** Absent on a deity, which belongs to neither ruleset. */
+  edition?: "classic" | "one";
   json: object;
   /** Where the row's parent is named outside its entry, as a subclass's class is. */
   parent?: object;
@@ -76,7 +82,7 @@ interface Kind {
   editionNow?: (db: HomebrewDb, dataDir: string, input: never) => Row["edition"] | undefined;
 }
 
-type NameHolder = { id: string; name: string; edition: Row["edition"] };
+type NameHolder = { id: string; name: string; edition: NonNullable<Row["edition"]> };
 
 const named = (
   noun: string,
@@ -124,7 +130,23 @@ const KINDS: Record<Collection, Kind> = {
     insertHomebrewBackground,
   ),
   feats: named("feat", homebrewFeats, getHomebrewFeat, insertHomebrewFeat),
-  skills: named("skill", homebrewSkills, getHomebrewSkill, insertHomebrewSkill),
+  skills: {
+    ...named("skill", homebrewSkills, getHomebrewSkill, insertHomebrewSkill),
+    blocked: (_db, dataDir, input: { name: string; edition: NonNullable<Row["edition"]> }) => {
+      const wanted = input.name.toLowerCase();
+      const catalog = catalogSkillNames(dataDir, input.edition).find(
+        (each) => each.toLowerCase() === wanted,
+      );
+      return catalog && `${catalog} is already a skill.`;
+    },
+  },
+  deities: {
+    noun: "deity",
+    get: getHomebrewDeity,
+    insert: insertHomebrewDeity,
+    // A deity's key is its pantheon too, so a restore claims it through `claimDeity`.
+    holder: () => () => undefined,
+  },
 };
 
 /**
@@ -186,6 +208,7 @@ const restoreRow = createRoute({
         "application/json": {
           schema: z.union([
             nameTaken("homebrew row").content["application/json"].schema,
+            deityNameTaken.content["application/json"].schema,
             errorSchema,
           ]),
         },
@@ -193,6 +216,15 @@ const restoreRow = createRoute({
     },
   },
 });
+
+/** The deity already holding `input`'s name and pantheon, or `undefined` once it is back under `id`. */
+function restoreDeity(db: HomebrewDb, id: string, input: HomebrewDeityInput) {
+  const result = claimDeity(
+    () => insertHomebrewDeity(db, id, input),
+    () => findHomebrewDeity(db, input),
+  );
+  return "taken" in result ? result.taken : undefined;
+}
 
 export function homebrewHistoryRoutes(
   db: HomebrewDb,
@@ -270,14 +302,13 @@ export function homebrewHistoryRoutes(
     const gone = deleted.get(key);
     if (!gone) return c.json({ error: "No deleted row with that id" }, 404);
     const kind = KINDS[collection];
-    const input = gone.input as { name: string; edition: Row["edition"] };
-    if (collection === "skills") {
-      const wanted = input.name.toLowerCase();
-      const catalog = catalogSkillNames(dataDir, input.edition).find(
-        (each) => each.toLowerCase() === wanted,
-      );
-      if (catalog) return c.json({ error: `${catalog} is already a skill.` }, 409);
+    if (collection === "deities") {
+      const taken = restoreDeity(db, id, gone.input as HomebrewDeityInput);
+      if (taken) return c.json(deityNameTakenError(taken), 409);
+      deleted.delete(key);
+      return c.body(null, 204);
     }
+    const input = gone.input as { name: string; edition: NonNullable<Row["edition"]> };
     const blocked = kind.blocked?.(db, dataDir, gone.input as never);
     if (blocked) return c.json({ error: blocked }, 409);
     const restored = {

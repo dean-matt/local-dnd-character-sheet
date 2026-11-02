@@ -6,6 +6,7 @@ import { publishSearchFixture, publishSpellLists } from "../db/queries/contentFi
 import {
   insertHomebrewBackground,
   insertHomebrewClass,
+  insertHomebrewDeity,
   insertHomebrewFeat,
   insertHomebrewItem,
   insertHomebrewRace,
@@ -69,6 +70,15 @@ describe("searchRoutes", () => {
   afterEach(() => {
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
+  });
+
+  it("lists a homebrew deity, carrying its pantheon and no edition", async () => {
+    insertHomebrewDeity(opened.homebrewDb, "d", { name: "Vael", pantheon: "Ashen" });
+    const res = await routes.request("/search?type=deity&q=vael&edition=one");
+    const { items } = await res.json();
+    expect(items).toEqual([
+      { type: "deity", id: "d", name: "Vael", qualifier: "Ashen", edition: null },
+    ]);
   });
 
   it("rejects an unknown edition and a spell level past 9", async () => {

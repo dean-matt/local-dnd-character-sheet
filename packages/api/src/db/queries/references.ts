@@ -53,9 +53,10 @@ export function checkCharacterReferences(
   definition: CharacterDefinition,
   state: CharacterState,
 ): CharacterReferences {
-  // A homebrew skill is cited by `(name, source)` yet lives in homebrew.db, not content.db.
+  // A homebrew skill or deity is cited by `(name, source)` yet lives in homebrew.db, not
+  // content.db; the homebrew routes refuse the delete or rename that would orphan one.
   const references = catalogReferences(definition, state).filter(
-    ({ kind, ref }) => !(kind === "skill" && ref.source === HOMEBREW_SOURCE),
+    ({ kind, ref }) => !((kind === "skill" || kind === "deity") && ref.source === HOMEBREW_SOURCE),
   );
   if (references.length === 0) return { unresolved: [] };
   const db = openContentDb(dataDir);

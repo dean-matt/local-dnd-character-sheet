@@ -51,14 +51,25 @@ export const catalogSearchHitSchema = z.strictObject({
 });
 
 /** The homebrew tables a search reads; homebrew skills are not searched. */
-const HOMEBREW_SEARCH_TYPES = ["item", "spell", "race", "class", "background", "feat"] as const;
+const HOMEBREW_SEARCH_TYPES = [
+  "item",
+  "spell",
+  "race",
+  "class",
+  "background",
+  "feat",
+  "deity",
+] as const;
 
 /** A homebrew hit, addressed by `id` rather than `(name, source)`. */
 export const homebrewSearchHitSchema = z.strictObject({
   type: z.enum(HOMEBREW_SEARCH_TYPES),
   id: z.string(),
   name: z.string().min(1),
-  edition: z.enum(EDITIONS),
+  /** Null on a deity hit, as on a catalog deity: it applies to either ruleset. */
+  edition: z.enum(EDITIONS).nullable(),
+  /** A deity hit's pantheon, the rest of its key beside its name. */
+  qualifier: z.string().optional(),
   /** Present on an item hit alone. */
   item: itemHitFactsSchema.optional(),
 });

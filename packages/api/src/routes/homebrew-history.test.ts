@@ -9,6 +9,7 @@ import { insertHomebrewSkill } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { homebrewBackgroundsRoutes } from "./homebrew-backgrounds.ts";
 import { homebrewClassesRoutes } from "./homebrew-classes.ts";
+import { homebrewDeitiesRoutes } from "./homebrew-deities.ts";
 import { homebrewFeatsRoutes } from "./homebrew-feats.ts";
 import { homebrewHistoryRoutes } from "./homebrew-history.ts";
 import { homebrewItemsRoutes } from "./homebrew-items.ts";
@@ -19,6 +20,7 @@ import { homebrewSubclassesRoutes } from "./homebrew-subclasses.ts";
 import { homebrewSubracesRoutes } from "./homebrew-subraces.ts";
 import {
   acidSplash,
+  ashgod,
   baseDefinition,
   duskling,
   ironbound,
@@ -102,6 +104,7 @@ describe("homebrewHistoryRoutes", () => {
     app.route("/", homebrewSubclassesRoutes(homebrewDb, dataDir));
     app.route("/", homebrewSubracesRoutes(homebrewDb, dataDir));
     app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb, dataDir));
+    app.route("/", homebrewDeitiesRoutes(homebrewDb, charactersDb));
   });
 
   afterEach(() => {
@@ -121,6 +124,7 @@ describe("homebrewHistoryRoutes", () => {
     ["classes", warden],
     ["subclasses", storm],
     ["subraces", moon],
+    ["deities", ashgod],
     ["skills", sailing],
   ])("%s", (collection, entry) => {
     const path = `/homebrew/${collection}`;
@@ -165,7 +169,7 @@ describe("homebrewHistoryRoutes", () => {
           collection,
           id: created.id,
           name: created.name,
-          edition: created.edition,
+          ...(created.edition && { edition: created.edition }),
         }),
       ]);
 

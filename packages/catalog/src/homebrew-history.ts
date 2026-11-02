@@ -12,6 +12,7 @@ const HOMEBREW_COLLECTIONS = [
   "backgrounds",
   "feats",
   "skills",
+  "deities",
 ] as const;
 
 export const homebrewCollectionSchema = z.enum(HOMEBREW_COLLECTIONS);
@@ -27,7 +28,8 @@ export const homebrewHistorySchema = z.strictObject({
       collection: homebrewCollectionSchema,
       id: z.string(),
       name: z.string(),
-      edition: z.enum(EDITIONS),
+      /** Absent on a deity, which belongs to neither ruleset. */
+      edition: z.enum(EDITIONS).optional(),
       deletedAt: z.iso.datetime(),
     }),
   ),

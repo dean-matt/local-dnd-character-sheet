@@ -1,6 +1,6 @@
 /**
  * Schema for `homebrew.db` — your custom items, spells, backgrounds, feats, races,
- * classes, subclasses, subraces and skills.
+ * classes, subclasses, subraces, skills and deities.
  *
  * Kept apart from `content.db` so the catalog stays disposable: rebuilding the
  * official content can never touch your homebrew. Rows carry source "HB" and are
@@ -13,6 +13,7 @@ import type {
   CharacterOptionEntry,
   Entries,
   HomebrewClass,
+  HomebrewDeity,
   HomebrewItem,
   HomebrewSkillEntry,
   HomebrewSubclass,
@@ -172,4 +173,21 @@ export const homebrewSkills = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [uniqueIndex("homebrew_skills_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
+);
+
+export const homebrewDeities = sqliteTable(
+  "homebrew_deities",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    pantheon: text("pantheon").notNull(),
+    json: text("json", { mode: "json" }).$type<HomebrewDeity>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [
+    uniqueIndex("homebrew_deities_by_name").on(
+      sql`${t.name} COLLATE NOCASE`,
+      sql`${t.pantheon} COLLATE NOCASE`,
+    ),
+  ],
 );

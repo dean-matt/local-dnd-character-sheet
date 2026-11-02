@@ -6,8 +6,10 @@ import type { SearchHit } from "@dnd/catalog";
 import type { DeityRef, EntryRef } from "@dnd/character";
 
 /** Why `hit` cannot be picked as a deity, or `undefined` where it can. */
-export const deityUnavailable = (hit: SearchHit): string | undefined =>
-  "qualifier" in hit && hit.qualifier ? undefined : "names no pantheon";
+export const deityUnavailable = (hit: SearchHit): string | undefined => {
+  if ("id" in hit) return "homebrew deities cannot be picked yet";
+  return "qualifier" in hit && hit.qualifier ? undefined : "names no pantheon";
+};
 
 /** The deity `ref` and `hit` name, or `undefined` where the hit names no pantheon. */
 export const deityOf = (ref: EntryRef, hit: SearchHit): DeityRef | undefined =>
