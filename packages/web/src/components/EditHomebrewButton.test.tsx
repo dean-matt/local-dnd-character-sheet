@@ -234,6 +234,7 @@ describe("EditHomebrewButton", () => {
       {
         ...option("hb-class", "Tidecaller"),
         hitDie: 8,
+        resources: [],
         json: { name: "Tidecaller", source: "HB", hd: { number: 1, faces: 8 } },
       },
     ],

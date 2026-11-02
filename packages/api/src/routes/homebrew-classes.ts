@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import {
+  homebrewClassDetailSchema,
   homebrewClassFeaturesSchema,
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
+  homebrewClassResourcesSchema,
 } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { homebrewClasses } from "../db/homebrew.ts";
@@ -14,7 +16,9 @@ import {
   insertHomebrewClass,
   listHomebrewClasses,
   listHomebrewClassFeatures,
+  listHomebrewClassResources,
   replaceHomebrewClassFeatures,
+  replaceHomebrewClassResources,
   subclassesOfHomebrewClass,
   updateHomebrewClass,
 } from "../db/queries/homebrew.ts";
@@ -71,8 +75,8 @@ const readClass = createRoute({
   request: { params: idParam },
   responses: {
     200: {
-      description: "The homebrew class",
-      content: { "application/json": { schema: homebrewClassRecordSchema } },
+      description: "The homebrew class and its resource tables",
+      content: { "application/json": { schema: homebrewClassDetailSchema } },
     },
     404: notFound("homebrew class"),
   },
@@ -184,6 +188,39 @@ const replaceFeatures = createRoute({
   },
 });
 
+const readResources = createRoute({
+  method: "get",
+  path: "/homebrew/classes/{id}/resources",
+  tags: ["homebrew"],
+  summary: "List a homebrew class's resource tables",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The class's resource tables, by name",
+      content: { "application/json": { schema: homebrewClassResourcesSchema } },
+    },
+    404: notFound("homebrew class"),
+  },
+});
+
+const replaceResources = createRoute({
+  method: "put",
+  path: "/homebrew/classes/{id}/resources",
+  tags: ["homebrew"],
+  summary: "Replace a homebrew class's resource tables",
+  request: {
+    params: idParam,
+    body: { content: { "application/json": { schema: homebrewClassResourcesSchema } } },
+  },
+  responses: {
+    200: {
+      description: "The class's resource tables as stored",
+      content: { "application/json": { schema: homebrewClassResourcesSchema } },
+    },
+    404: notFound("homebrew class"),
+  },
+});
+
 export function homebrewClassesRoutes(db: HomebrewDb, charactersDb: CharactersDb) {
   const routes = new OpenAPIHono();
 
@@ -192,7 +229,23 @@ export function homebrewClassesRoutes(db: HomebrewDb, charactersDb: CharactersDb
   routes.openapi(readClass, (c) => {
     const row = getHomebrewClass(db, c.req.valid("param").id);
     if (!row) return c.json({ error: CLASS_NOT_FOUND }, 404);
-    return c.json(toClassRecord(row), 200);
+    return c.json(
+      { ...toClassRecord(row), resources: listHomebrewClassResources(db, row.id) },
+      200,
+    );
+  });
+
+  routes.openapi(readResources, (c) => {
+    const { id } = c.req.valid("param");
+    if (!getHomebrewClass(db, id)) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    return c.json(listHomebrewClassResources(db, id), 200);
+  });
+
+  routes.openapi(replaceResources, (c) => {
+    const { id } = c.req.valid("param");
+    if (!getHomebrewClass(db, id)) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    replaceHomebrewClassResources(db, id, c.req.valid("json"));
+    return c.json(listHomebrewClassResources(db, id), 200);
   });
 
   routes.openapi(readFeatures, (c) => {

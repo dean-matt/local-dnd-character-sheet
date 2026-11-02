@@ -64,6 +64,22 @@ export const homebrewClassFeatures = sqliteTable(
   (t) => [primaryKey({ columns: [t.classId, t.level, t.name] })],
 );
 
+/** One resource's maximum at each level 1 to 20, a `null` being a level with no value. */
+export const homebrewClassResources = sqliteTable(
+  "homebrew_class_resources",
+  {
+    classId: text("class_id")
+      .notNull()
+      .references(() => homebrewClasses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    resets: text("resets", { enum: ["short-rest", "long-rest", "none"] }),
+    maximums: text("maximums", { mode: "json" }).$type<(number | null)[]>().notNull(),
+  },
+  (t) => [
+    uniqueIndex("homebrew_class_resources_by_name").on(t.classId, sql`${t.name} COLLATE NOCASE`),
+  ],
+);
+
 export const homebrewSubclasses = sqliteTable(
   "homebrew_subclasses",
   {
