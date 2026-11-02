@@ -45,11 +45,11 @@ export function TopBar() {
   return (
     <div
       ref={containerRef}
-      className="relative flex h-full w-full items-center border-b border-border bg-surface px-3 sm:gap-1.5 sm:px-6"
+      className="relative flex h-full w-full items-center border-b border-border bg-surface px-3 sm:gap-1 sm:px-6"
     >
       <Link
         to="/"
-        className="mr-1 shrink-0 rounded-control text-lg font-bold text-accent-text sm:mr-3.5"
+        className="mr-1 shrink-0 rounded-control text-base font-bold text-accent-text sm:mr-3.5"
       >
         <span className="max-sm:sr-only">Local</span> D&D
       </Link>

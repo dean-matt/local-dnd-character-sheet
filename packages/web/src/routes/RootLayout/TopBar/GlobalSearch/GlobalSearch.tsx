@@ -134,7 +134,7 @@ export function GlobalSearch({ onOpen }: GlobalSearchProps) {
           setOpen(false);
           setActive(null);
         }}
-        className="absolute top-1/2 left-1/2 z-45 w-120 min-w-64 max-w-[min(40vw,calc(100vw-960px))] -translate-x-1/2 -translate-y-1/2"
+        className="absolute top-1/2 left-1/2 z-45 w-160 min-w-64 max-w-[min(50vw,calc(100vw-880px))] -translate-x-1/2 -translate-y-1/2"
       >
         <div
           className={`flex items-center gap-2.5 rounded-pill border px-3.5 py-2 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-accent has-[input:focus-visible]:outline-offset-2 ${open ? "border-accent bg-surface" : "border-border bg-subtle"}`}
