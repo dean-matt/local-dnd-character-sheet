@@ -213,10 +213,10 @@ describe("routing", () => {
       "Spells",
       "Races",
       "Classes",
+      "Subclasses",
       "Backgrounds",
       "Feats",
       "Skills",
-      "Subclasses",
     ]);
     expect(
       within(screen.getByRole("navigation", { name: "Homebrew kinds footer" })).getByRole("link", {

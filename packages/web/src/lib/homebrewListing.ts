@@ -112,6 +112,7 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     recordSchema: homebrewClassRecordSchema,
     chips: factChips(classFacts),
   },
+  subclasses,
   backgrounds: {
     collection: "backgrounds",
     noun: "background",
@@ -133,5 +134,4 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     recordSchema: homebrewSkillRecordSchema,
     chips: factChips(skillFacts),
   },
-  subclasses,
 };
