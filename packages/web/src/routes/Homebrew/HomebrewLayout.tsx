@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Award,
   BookOpen,
+  Church,
   Dumbbell,
   Shield,
   ShieldPlus,
@@ -27,6 +28,7 @@ const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
   skills: Dumbbell,
   subclasses: ShieldPlus,
   subraces: UsersRound,
+  deities: Church,
 };
 
 const SECTIONS: SidebarProps["items"] = [

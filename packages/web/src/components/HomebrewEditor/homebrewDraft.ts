@@ -51,15 +51,15 @@ export function parseHomebrewEntry(
 }
 
 /**
- * Checks `entry`, with `edition` beside it, against the schema the route parses its body
+ * Checks `entry`, with `edition` beside it where the kind has one, against the schema the route parses its body
  * with, so a problem names its field before a request is made.
  */
 export function checkHomebrewEntry<T>(
   entry: HomebrewEntry,
-  edition: CharacterRecord["edition"],
+  edition: CharacterRecord["edition"] | undefined,
   schema: z.ZodType<T>,
 ): HomebrewDraft<T> {
-  const result = schema.safeParse({ ...entry, edition });
+  const result = schema.safeParse(edition === undefined ? entry : { ...entry, edition });
   return result.success
     ? { input: result.data }
     : {

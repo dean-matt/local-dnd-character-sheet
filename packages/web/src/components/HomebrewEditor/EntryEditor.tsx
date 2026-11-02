@@ -122,7 +122,7 @@ export function EntryEditor({
 
   const settings = (
     <HomebrewEntrySettings
-      edition={draft.edition}
+      edition={kind.editionless ? undefined : draft.edition}
       onEdition={draft.pickEdition}
       starters={record ? [] : kind.starters}
       starter={draft.starter.label}

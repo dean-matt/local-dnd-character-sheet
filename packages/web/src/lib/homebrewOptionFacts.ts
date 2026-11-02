@@ -111,3 +111,35 @@ export function featFacts(json: Json): Fact[] {
 export function skillFacts(json: Json): Fact[] {
   return stated([["Ability", typeof json.ability === "string" ? skillBase(json.ability) : ""]]);
 }
+
+/** Upstream's alignment letters on a deity, with the word each stands for. */
+export const ALIGNMENT_WORDS = {
+  L: "Lawful",
+  N: "Neutral",
+  C: "Chaotic",
+  G: "Good",
+  E: "Evil",
+  U: "Unaligned",
+  A: "Any",
+} as const;
+
+const isLetter = (value: unknown): value is keyof typeof ALIGNMENT_WORDS =>
+  typeof value === "string" && value in ALIGNMENT_WORDS;
+
+/** `["N", "G"]` as `Neutral Good`; empty where the deity states none. */
+export function deityAlignment(json: Json): string {
+  const letters = Array.isArray(json.alignment) ? json.alignment.filter(isLetter) : [];
+  return letters.map((letter) => ALIGNMENT_WORDS[letter]).join(" ");
+}
+
+const strings = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((each) => typeof each === "string") : [];
+
+export function deityFacts(json: Json): Fact[] {
+  return stated([
+    ["Pantheon", typeof json.pantheon === "string" ? json.pantheon : ""],
+    ["Title", typeof json.title === "string" ? json.title : ""],
+    ["Alignment", deityAlignment(json)],
+    ["Domains", strings(json.domains).join(", ")],
+  ]);
+}

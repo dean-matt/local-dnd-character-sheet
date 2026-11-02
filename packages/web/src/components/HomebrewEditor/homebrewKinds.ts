@@ -12,6 +12,7 @@ import {
   type HomebrewFeatInput,
   type HomebrewItemInput,
   type HomebrewSpellInput,
+  homebrewDeityInputSchema,
   homebrewSkillInputSchema,
   homebrewSpellInputSchema,
   itemEntries,
@@ -24,6 +25,7 @@ import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
 import {
   backgroundFacts,
   classFacts,
+  deityFacts,
   type Fact,
   featFacts,
   raceFacts,
@@ -32,6 +34,7 @@ import {
 import {
   BACKGROUND_STARTERS,
   CLASS_STARTERS,
+  DEITY_STARTERS,
   FEAT_STARTERS,
   type HomebrewStarters,
   ITEM_STARTERS,
@@ -51,6 +54,8 @@ import { ClassFeatures } from "./ClassFeatures.tsx";
 import { ClassMulticlassing } from "./ClassMulticlassing.tsx";
 import { ClassProficiencies } from "./ClassProficiencies.tsx";
 import { ClassSpellcasting } from "./ClassSpellcasting.tsx";
+import { DeityBasics } from "./DeityBasics.tsx";
+import { DeityStanding } from "./DeityStanding.tsx";
 import { FeatAbilityScores } from "./FeatAbilityScores.tsx";
 import { FeatBasics } from "./FeatBasics.tsx";
 import { FeatPrerequisites } from "./FeatPrerequisites.tsx";
@@ -90,7 +95,7 @@ import { withUpcastNameFor } from "./spellUpcast.ts";
 /** What every kind's input schema accepts, whichever kind it is. */
 export interface HomebrewInput {
   name: string;
-  edition: CharacterRecord["edition"];
+  edition?: CharacterRecord["edition"];
   entries?: Entries;
 }
 
@@ -104,6 +109,8 @@ export interface HomebrewSection {
 /** A kind of homebrew as the editor edits it: its input schema, its form and its preview. */
 export interface EditingKind<I extends HomebrewInput = HomebrewInput> {
   inputSchema: z.ZodType<I>;
+  /** True for a kind with no edition: its form shows no Rules control and its entry carries none. */
+  editionless?: boolean;
   /**
    * What the preview prints ahead of the rules text of an entry `inputSchema` accepted. A
    * method, so a kind of a narrower input still counts as an `EditingKind`.
@@ -401,6 +408,20 @@ const subrace: EditingKind<z.infer<typeof homebrewSubraceFormSchema>> = {
   shownKeys: () => ["name", "parent", "entries"],
 };
 
+const deity: EditingKind<z.infer<typeof homebrewDeityInputSchema>> = {
+  inputSchema: homebrewDeityInputSchema,
+  editionless: true,
+  facts: deityFacts,
+  entries: rowEntries,
+  starters: DEITY_STARTERS,
+  sections: [
+    { title: "Basics", Fields: DeityBasics, keys: ["name", "pantheon", "title"] },
+    { title: "Alignment & domains", Fields: DeityStanding, keys: ["alignment", "domains"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+  ],
+  shownKeys: () => ["name", "pantheon", "title", "domains", "entries"],
+};
+
 /** How the editor edits each kind; `LISTING_KINDS` holds how a list names it. */
 export const EDITING_KINDS: Record<HomebrewCollection, EditingKind> = {
   items: item,
@@ -412,6 +433,7 @@ export const EDITING_KINDS: Record<HomebrewCollection, EditingKind> = {
   skills: skill,
   subclasses: subclass,
   subraces: subrace,
+  deities: deity,
 };
 
 /** How many sections a step sets side by side, which the wide modal holds two of. */

@@ -46,7 +46,9 @@ export function useHomebrewEntryDraft(kind: EditingKind, record: HomebrewRow | u
   );
   const checked = useMemo(
     () =>
-      "entry" in parsed ? checkHomebrewEntry(parsed.entry, edition, kind.inputSchema) : parsed,
+      "entry" in parsed
+        ? checkHomebrewEntry(parsed.entry, kind.editionless ? undefined : edition, kind.inputSchema)
+        : parsed,
     [parsed, edition, kind],
   );
   const shown = useMemo(

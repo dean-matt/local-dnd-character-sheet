@@ -10,7 +10,8 @@ type Starter = HomebrewStarters[number];
 const EDITIONS = Object.entries(EDITION_LABELS).map(([value, label]) => ({ value, label }));
 
 export interface HomebrewEntrySettingsProps {
-  edition: Edition;
+  /** Absent for a kind with no edition, which shows no Rules control. */
+  edition: Edition | undefined;
   onEdition: (next: Edition) => void;
   /** The examples a new entry may start from; offered only where there are several. */
   starters: readonly Starter[];
@@ -29,6 +30,7 @@ export function HomebrewEntrySettings({
   starter,
   onStarter,
 }: HomebrewEntrySettingsProps) {
+  if (edition === undefined && starters.length <= 1) return null;
   return (
     <div className="flex flex-wrap gap-3 *:w-44">
       {starters.length > 1 && (
@@ -46,16 +48,18 @@ export function HomebrewEntrySettings({
           )}
         </FormField>
       )}
-      <FormField label="Rules">
-        {(control) => (
-          <Select
-            {...control}
-            options={EDITIONS}
-            value={edition}
-            onChange={(next) => onEdition(next as Edition)}
-          />
-        )}
-      </FormField>
+      {edition !== undefined && (
+        <FormField label="Rules">
+          {(control) => (
+            <Select
+              {...control}
+              options={EDITIONS}
+              value={edition}
+              onChange={(next) => onEdition(next as Edition)}
+            />
+          )}
+        </FormField>
+      )}
     </div>
   );
 }

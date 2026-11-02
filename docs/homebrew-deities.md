@@ -23,3 +23,11 @@ and nowhere else.
 `/search` merges homebrew deities with the catalog's: a hit with an `id`, no `source`, and the
 pantheon as `qualifier`. `{@deity name|HB|pantheon}` resolves to the deity, the first by
 pantheon where the tag names none.
+
+## Editor
+
+The Homebrew page edits a deity step by step or as JSON, with no Rules control, since a
+deity has no edition and its entry carries none. Alignment is picked as upstream's letters,
+domains typed comma-separated. A delete or a name or pantheon change a character blocks
+shows the API's reason: the delete dialog links each holder, the save footer prints the
+refusal.
