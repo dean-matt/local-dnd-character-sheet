@@ -13,13 +13,15 @@ import {
   type HomebrewItemInput,
   type HomebrewSpellInput,
   homebrewDeityInputSchema,
+  homebrewMonsterInputSchema,
   homebrewOptionalFeatureInputSchema,
   homebrewSkillInputSchema,
   homebrewSpellInputSchema,
   itemEntries,
+  monsterEntries,
   rowEntries,
 } from "@dnd/catalog";
-import type { CharacterRecord } from "@dnd/character";
+import { ABILITIES, type CharacterRecord } from "@dnd/character";
 import { type ComponentType, createElement, type ReactNode } from "react";
 import type { z } from "zod";
 import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
@@ -39,6 +41,7 @@ import {
   FEAT_STARTERS,
   type HomebrewStarters,
   ITEM_STARTERS,
+  MONSTER_STARTERS,
   OPTIONAL_FEATURE_STARTERS,
   RACE_STARTERS,
   SKILL_STARTERS,
@@ -81,6 +84,9 @@ import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
 import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
 import type { JsonEditorProps } from "./JsonEditor.tsx";
+import { MonsterAbilityScores } from "./MonsterAbilityScores.tsx";
+import { MonsterBasics } from "./MonsterBasics.tsx";
+import { MonsterCombat } from "./MonsterCombat.tsx";
 import { OptionalFeatureBasics } from "./OptionalFeatureBasics.tsx";
 import { OptionalFeaturePrerequisites } from "./OptionalFeaturePrerequisites.tsx";
 import { RaceAbilityScores } from "./RaceAbilityScores.tsx";
@@ -439,9 +445,27 @@ const optionalFeature: EditingKind<z.infer<typeof homebrewOptionalFeatureInputSc
   shownKeys: () => ["name", "featureType", "prerequisite", "entries"],
 };
 
+const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
+  inputSchema: homebrewMonsterInputSchema,
+  facts: () => [],
+  entries: (input) => monsterEntries(input, input.edition),
+  starters: MONSTER_STARTERS,
+  sections: [
+    { title: "Basics", Fields: MonsterBasics, keys: ["name", "size", "type", "cr"] },
+    { title: "Combat", Fields: MonsterCombat, keys: ["ac", "hp", "speed"] },
+    {
+      title: "Ability scores",
+      Fields: MonsterAbilityScores,
+      keys: ["str", "dex", "con", "int", "wis", "cha"],
+    },
+  ],
+  shownKeys: () => ["name", "size", "type", "cr", "ac", "hp", "speed", ...ABILITIES],
+};
+
 /** How the editor edits each kind; `LISTING_KINDS` holds how a list names it. */
 export const EDITING_KINDS: Record<HomebrewCollection, EditingKind> = {
   items: item,
+  monsters: monster,
   spells: spell,
   races: race,
   classes: klass,

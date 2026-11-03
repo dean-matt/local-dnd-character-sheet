@@ -210,6 +210,7 @@ describe("routing", () => {
         .map((link) => link.textContent),
     ).toEqual([
       "Items",
+      "Monsters",
       "Spells",
       "Races",
       "Subraces",

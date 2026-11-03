@@ -198,6 +198,44 @@ export const OPTIONAL_FEATURE_STARTERS: HomebrewStarters = [
   },
 ];
 
+export const MONSTER_STARTERS: HomebrewStarters = [
+  {
+    label: "Monster",
+    entry: {
+      name: "Cinder Hound",
+      size: ["M"],
+      type: "monstrosity",
+      alignment: ["U"],
+      ac: [13],
+      hp: { average: 22, formula: "4d8 + 4" },
+      speed: { walk: 40 },
+      str: 14,
+      dex: 14,
+      con: 12,
+      int: 3,
+      wis: 12,
+      cha: 6,
+      senses: ["darkvision 60 ft."],
+      passive: 13,
+      cr: "1",
+      trait: [
+        {
+          name: "Smoldering Coat",
+          entries: ["A creature that touches the hound takes 2 ({@damage 1d4}) fire damage."],
+        },
+      ],
+      action: [
+        {
+          name: "Bite",
+          entries: [
+            "{@atk mw} {@hit 4} to hit, reach 5 ft., one target. {@h}7 ({@damage 1d8 + 2}) piercing damage plus 3 ({@damage 1d6}) fire damage.",
+          ],
+        },
+      ],
+    },
+  },
+];
+
 export const BACKGROUND_STARTERS: HomebrewStarters = [
   {
     label: "Background",
