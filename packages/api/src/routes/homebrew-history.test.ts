@@ -55,6 +55,7 @@ describe("homebrewHistoryRoutes", () => {
   let opened: ReturnType<typeof openTestDatabases>;
   let app: OpenAPIHono;
   let refusePath: string | undefined;
+  let sent: string[] = [];
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "homebrew-history-"));
@@ -99,6 +100,7 @@ describe("homebrewHistoryRoutes", () => {
     app.route(
       "/",
       homebrewHistoryRoutes(homebrewDb, dataDir, async (path, init) => {
+        sent.push(path);
         if (path !== refusePath) return app.request(path, init);
         refusePath = undefined;
         return Response.json({ error: "refused" }, { status: 409 });
@@ -120,6 +122,7 @@ describe("homebrewHistoryRoutes", () => {
 
   afterEach(() => {
     refusePath = undefined;
+    sent = [];
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
   });
@@ -323,7 +326,12 @@ describe("homebrewHistoryRoutes", () => {
       expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Rage")]);
       expect((await history()).reversible).toHaveLength(1);
 
+      sent = [];
       expect((await revert(created.id)).status).toBe(204);
+      expect(sent.slice(0, 2)).toEqual([
+        `/homebrew/classes/${created.id}/features`,
+        `/homebrew/classes/${created.id}/resources`,
+      ]);
       expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
       expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
       expect((await history()).reversible).toEqual([]);

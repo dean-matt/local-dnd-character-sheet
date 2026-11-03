@@ -101,8 +101,9 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 
 `routes/homebrew-history.ts` in `packages/api` holds each row's prior version and each deleted
 row (a class with its features and resource tables) in the API's memory: a reload keeps
-them, a restart loses them, and `homebrew.db` never holds them. A revert goes through the kind's own PUT, so its refusals apply, and a restore
-reinserts under the old id and refuses a name another row now holds.
+them, a restart loses them, and `homebrew.db` never holds them.
+A revert goes through the kind's own PUT, so its refusals apply, and a restore reinserts under
+the old id and refuses a name another row now holds.
 
 ## Settings
 
