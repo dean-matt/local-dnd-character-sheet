@@ -13,6 +13,8 @@ const KINDS = [
   { path: "spells", add: "Add spell", dialog: "New spell" },
   { path: "backgrounds", add: "Add background", dialog: "New background" },
   { path: "classes", add: "Add class", dialog: "New class" },
+  { path: "skills", add: "Add skill", dialog: "New skill" },
+  { path: "feats", add: "Add feat", dialog: "New feat" },
 ];
 
 // The ring is the focus outline's width plus its offset, drawn outside the control's box.
