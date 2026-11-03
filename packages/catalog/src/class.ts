@@ -268,15 +268,29 @@ const homebrewClassFeatureSchema = z.strictObject({
 
 export type HomebrewClassFeature = z.infer<typeof homebrewClassFeatureSchema>;
 
+/** A `|` or `}` in a feature's name would split or end the `{@classFeature}` tag that links it. */
+const TAG_BREAKERS = /[|}]/;
+
 /** A homebrew class's whole feature list; a name is unique within a level, as a `{@classFeature}` tag keys it. */
 export const homebrewClassFeaturesSchema = z
   .array(homebrewClassFeatureSchema)
-  .refine(
-    (features) =>
-      new Set(features.map(({ name, level }) => `${level}|${name.toLowerCase()}`)).size ===
-      features.length,
-    { message: "Two features share a name and level" },
-  );
+  .superRefine((features, context) => {
+    const seen = new Set<string>();
+    features.forEach(({ name, level }, index) => {
+      const breaker = TAG_BREAKERS.exec(name)?.[0];
+      if (breaker) {
+        context.addIssue({
+          code: "custom",
+          path: [index, "name"],
+          message: `Feature "${name}" cannot contain "${breaker}"`,
+        });
+      }
+      seen.add(`${level}|${name.toLowerCase()}`);
+    });
+    if (seen.size !== features.length) {
+      context.addIssue({ code: "custom", message: "Two features share a name and level" });
+    }
+  });
 
 /** When a homebrew resource refreshes; a table that sets none reads as unspecified, not as `none`. */
 const homebrewResourceResetsSchema = z.enum(["short-rest", "long-rest", "none"]);

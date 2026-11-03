@@ -166,7 +166,7 @@ async function subclassPath(key: Params): Promise<string> {
   return `${classPath(key)}/subclasses/${segments(subclass.name, subclass.source)}`;
 }
 
-/** A `|` or `}` in a name would split or end its tag, so such a feature stays out of the table. */
+/** A `|` or `}` in the class's name would split or end its feature tags, so such a class lists none. */
 const TAG_BREAKERS = /[|}]/;
 
 const homebrewClassRoute = homebrew("classes", "class", homebrewClassDetailSchema, classEntries);
@@ -184,7 +184,7 @@ const homebrewClass: CatalogTarget = {
       homebrewClassFeaturesSchema,
     ).catch(() => []);
     const classFeatures = features
-      .filter(({ name }) => !TAG_BREAKERS.test(name) && !TAG_BREAKERS.test(row.name))
+      .filter(() => !TAG_BREAKERS.test(row.name))
       .map(({ name, level }) => `${name}|${row.name}|${HOMEBREW_SOURCE}|${level}`);
     return { ...row, entries: classEntries({ ...row.json, classFeatures }) };
   },
