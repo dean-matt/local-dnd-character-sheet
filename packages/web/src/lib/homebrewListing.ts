@@ -150,27 +150,11 @@ const monsters: ListingKind<z.infer<typeof homebrewMonsterRecordSchema>> = {
   },
 };
 
-/** Each kind, keyed in the order the Homebrew sidebar lists them. */
+/** The kind `/homebrew` opens, whatever the order below. */
+export const DEFAULT_KIND: HomebrewCollection = "items";
+
+/** Each kind, keyed alphabetically by heading, the order the Homebrew menu and sidebar list them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
-  items,
-  monsters,
-  spells,
-  races: {
-    collection: "races",
-    noun: "race",
-    heading: "Races",
-    recordSchema: homebrewRaceRecordSchema,
-    chips: factChips(raceFacts),
-  },
-  subraces,
-  classes: {
-    collection: "classes",
-    noun: "class",
-    heading: "Classes",
-    recordSchema: homebrewClassRecordSchema,
-    chips: factChips(classFacts),
-  },
-  subclasses,
   backgrounds: {
     collection: "backgrounds",
     noun: "background",
@@ -178,12 +162,30 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     recordSchema: homebrewBackgroundRecordSchema,
     chips: factChips(backgroundFacts),
   },
+  classes: {
+    collection: "classes",
+    noun: "class",
+    heading: "Classes",
+    recordSchema: homebrewClassRecordSchema,
+    chips: factChips(classFacts),
+  },
+  deities,
   feats: {
     collection: "feats",
     noun: "feat",
     heading: "Feats",
     recordSchema: homebrewFeatRecordSchema,
     chips: factChips(featFacts),
+  },
+  items,
+  monsters,
+  "optional-features": optionalFeatures,
+  races: {
+    collection: "races",
+    noun: "race",
+    heading: "Races",
+    recordSchema: homebrewRaceRecordSchema,
+    chips: factChips(raceFacts),
   },
   skills: {
     collection: "skills",
@@ -192,6 +194,7 @@ export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
     recordSchema: homebrewSkillRecordSchema,
     chips: factChips(skillFacts),
   },
-  deities,
-  "optional-features": optionalFeatures,
+  spells,
+  subclasses,
+  subraces,
 };

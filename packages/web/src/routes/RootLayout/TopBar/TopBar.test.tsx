@@ -79,6 +79,41 @@ describe("TopBar", () => {
     );
   });
 
+  it("the Homebrew menu lists its kinds alphabetically in two columns, then Recently deleted", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Homebrew/ }));
+    const columns = screen.getByRole("link", { name: "Spells" }).parentElement as HTMLElement;
+    const labels = within(columns)
+      .getAllByRole("link")
+      .map((link) => link.textContent);
+    expect(labels).toHaveLength(12);
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+    expect(columns).toHaveClass("sm:columns-2");
+    const deleted = screen.getByRole("link", { name: "Recently deleted" });
+    expect(columns.contains(deleted)).toBe(false);
+    expect(columns.compareDocumentPosition(deleted)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  it("closes the Homebrew menu on Escape, on a backdrop click and on a link click", () => {
+    stubFetchByUrl(noCharacters);
+    renderTopBar();
+    const homebrew = screen.getByRole("button", { name: /^Homebrew/ });
+
+    fireEvent.click(homebrew);
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    expect(homebrew).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(homebrew);
+    fireEvent.click(document.querySelector(".fixed.inset-0") as HTMLElement);
+    expect(homebrew).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(homebrew);
+    fireEvent.click(screen.getByRole("link", { name: "Spells" }));
+    expect(homebrew).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("Settings links to the Settings page", () => {
     stubFetchByUrl(noCharacters);
     renderTopBar();
@@ -164,12 +199,17 @@ describe("TopBar", () => {
     expect(mechanics).toHaveAttribute("aria-expanded", "true");
 
     const spells = await screen.findByRole("link", { name: "Spells" });
-    const menu = spells.parentElement as HTMLElement;
+    const columns = spells.parentElement as HTMLElement;
+    expect(columns).toHaveAttribute("data-menu-columns");
+    expect(columns).toHaveClass("sm:columns-3");
     expect(
-      within(menu)
+      within(columns)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Armor", "Classes", "Items", "Spells", "Weapons", "All types…"]);
+    ).toEqual(["Armor", "Classes", "Items", "Spells", "Weapons"]);
+    const allTypes = screen.getByRole("link", { name: "All types…" });
+    expect(columns.contains(allTypes)).toBe(false);
+    expect(columns.compareDocumentPosition(allTypes)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(spells).toHaveAttribute("href", "/search?type=spell");
     expect(screen.getByRole("link", { name: "Weapons" })).toHaveAttribute(
       "href",

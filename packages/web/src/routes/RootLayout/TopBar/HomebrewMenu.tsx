@@ -1,6 +1,7 @@
 import { ChevronDown, FlaskConical } from "lucide-react";
 import { Link, useMatch } from "react-router";
 import { LISTING_KINDS } from "../../../lib/homebrewListing.ts";
+import { MenuColumns } from "./MenuColumns.tsx";
 import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
@@ -37,17 +38,19 @@ export function HomebrewMenu({ open, onToggle, onClose }: HomebrewMenuProps) {
           {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
           <div className="fixed inset-0 z-40" onClick={onClose} />
-          <div className="absolute left-0 top-full z-50 mt-2 w-60 rounded-xl border border-border bg-surface p-2 shadow-popover">
-            {Object.values(LISTING_KINDS).map((kind) => (
-              <Link
-                key={kind.collection}
-                to={`/homebrew/${kind.collection}`}
-                onClick={onClose}
-                className={entryLink}
-              >
-                {kind.heading}
-              </Link>
-            ))}
+          <div className="absolute left-0 top-full z-50 mt-2 max-h-[calc(100dvh-var(--spacing-topbar)-1rem)] w-60 overflow-y-auto sm:w-120 rounded-xl border border-border bg-surface p-2 shadow-popover">
+            <MenuColumns layout="sm:columns-2">
+              {Object.values(LISTING_KINDS).map((kind) => (
+                <Link
+                  key={kind.collection}
+                  to={`/homebrew/${kind.collection}`}
+                  onClick={onClose}
+                  className={entryLink}
+                >
+                  {kind.heading}
+                </Link>
+              ))}
+            </MenuColumns>
             <MenuDivider />
             <Link to="/homebrew/deleted" onClick={onClose} className={entryLink}>
               Recently deleted
