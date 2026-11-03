@@ -4169,7 +4169,7 @@ describe("Homebrew monsters", () => {
     click("Save");
 
     expect(field("spinbutton", "Strength")).toHaveAttribute("aria-invalid", "true");
-    expect(within(editor()).getByText(/30/)).toBeInTheDocument();
+    expect(within(editor()).getByText("Too big: expected number to be <=30")).toBeInTheDocument();
     expect(writesOf(fetchMock)).toEqual([]);
   });
 
@@ -4189,7 +4189,7 @@ describe("Homebrew monsters", () => {
     stubApi(lists, [
       {
         status: 409,
-        body: { error: 'The homebrew monster m2 is already named "Cinder Hound" in this edition' },
+        body: { error: "The homebrew monster m2 is already named Cinder Hound in the one edition" },
       },
     ]);
     renderPage("monsters");
@@ -4198,7 +4198,11 @@ describe("Homebrew monsters", () => {
     await settled();
     click("Save");
 
-    expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
+    expect(
+      await within(editor()).findByText(
+        /^Save failed: .*is already named Cinder Hound in the one edition/,
+      ),
+    ).toBeInTheDocument();
   });
 
   it("deletes a monster", async () => {
