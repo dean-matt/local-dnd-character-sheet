@@ -9,6 +9,7 @@
  * row's old id, so a character still resolves it.
  */
 import {
+  type HomebrewClassFeature,
   type HomebrewClassResource,
   type HomebrewDeityInput,
   type HomebrewSubclassInput,
@@ -57,8 +58,10 @@ import {
   insertHomebrewSpell,
   insertHomebrewSubclass,
   insertHomebrewSubrace,
+  listHomebrewClassFeatures,
   listHomebrewClassResources,
   type NamedHomebrewTable,
+  replaceHomebrewClassFeatures,
   replaceHomebrewClassResources,
 } from "../db/queries/homebrew.ts";
 import { catalogSkillNames } from "../db/queries/skills.ts";
@@ -69,8 +72,15 @@ import { parentEdition } from "./homebrew-subclasses.ts";
 import { raceEdition } from "./homebrew-subraces.ts";
 
 type Collection = z.infer<typeof homebrewCollectionSchema>;
-/** A collection of rows that are saved, deleted and restored; `class-resources` is saved only. */
-type RowCollection = Exclude<Collection, typeof RESOURCES>;
+/** A row's input before its latest save; a class also holds the parts saved beside it. */
+type Earlier = {
+  collection: Collection;
+  id: string;
+  /** Absent on a class whose latest save wrote only its features or resource tables. */
+  input?: object;
+  features?: HomebrewClassFeature[];
+  resources?: HomebrewClassResource[];
+};
 type Row = {
   id: string;
   name: string;
@@ -107,13 +117,7 @@ const named = (
   holder: (db, input: { name: string; edition: "classic" | "one" }) => holder(db, table, input),
 });
 
-/**
- * A class's resource tables are not a row: a PUT to `/homebrew/classes/{id}/resources` replaces
- * them, so history holds them under the class's id and reverts through that route.
- */
-const RESOURCES = "class-resources";
-
-const KINDS: Record<RowCollection, Kind> = {
+const KINDS: Record<Collection, Kind> = {
   items: named("item", homebrewItems, getHomebrewItem, insertHomebrewItem),
   spells: named("spell", homebrewSpells, getHomebrewSpell, insertHomebrewSpell),
   races: named("race", homebrewRaces, getHomebrewRace, insertHomebrewRace),
@@ -251,6 +255,18 @@ function restoreDeity(db: HomebrewDb, id: string, input: HomebrewDeityInput) {
   return "taken" in result ? result.taken : undefined;
 }
 
+function restoreClassParts(
+  db: HomebrewDb,
+  id: string,
+  {
+    features,
+    resources,
+  }: { features?: HomebrewClassFeature[]; resources?: HomebrewClassResource[] },
+) {
+  if (features) replaceHomebrewClassFeatures(db, id, features);
+  if (resources) replaceHomebrewClassResources(db, id, resources);
+}
+
 export function homebrewHistoryRoutes(
   db: HomebrewDb,
   dataDir: string,
@@ -258,11 +274,16 @@ export function homebrewHistoryRoutes(
 ) {
   const routes = new OpenAPIHono();
   const keyOf = (collection: string, id: string) => `${collection}/${id}`;
-  const classResources = (collection: Collection, id: string) =>
-    collection === "classes" ? listHomebrewClassResources(db, id) : undefined;
+  const classParts = (collection: Collection, id: string) =>
+    collection === "classes"
+      ? {
+          features: listHomebrewClassFeatures(db, id),
+          resources: listHomebrewClassResources(db, id),
+        }
+      : undefined;
   // Unbounded: one entry per row saved or deleted since the API started. A single user's
   // session keeps these small; cap them like `undo_log` if that stops holding.
-  const earlier = new Map<string, { collection: Collection; id: string; input: object }>();
+  const earlier = new Map<string, Earlier>();
   const deleted = new Map<
     string,
     {
@@ -270,6 +291,7 @@ export function homebrewHistoryRoutes(
       id: string;
       name: string;
       input: object;
+      features?: HomebrewClassFeature[];
       resources?: HomebrewClassResource[];
       deletedAt: Date;
     }
@@ -278,46 +300,45 @@ export function homebrewHistoryRoutes(
   routes.use("/homebrew/:collection/:id", async (c, next) => {
     const collection = homebrewCollectionSchema.safeParse(c.req.param("collection"));
     const id = c.req.param("id");
-    if (
-      !collection.success ||
-      collection.data === RESOURCES ||
-      (c.req.method !== "PUT" && c.req.method !== "DELETE")
-    ) {
+    if (!collection.success || (c.req.method !== "PUT" && c.req.method !== "DELETE")) {
       return next();
     }
     const key = keyOf(collection.data, id);
     const before = KINDS[collection.data].get(db, id);
-    const resources = classResources(collection.data, id);
+    const parts = classParts(collection.data, id);
     await next();
     if (!before) return;
-    if (c.req.method === "PUT" && c.res.status === 200) {
-      if (c.req.header(REVERT_HEADER)) earlier.delete(key);
-      else earlier.set(key, { collection: collection.data, id, input: inputOf(before) });
+    if (c.req.method === "PUT" && c.res.status === 200 && !c.req.header(REVERT_HEADER)) {
+      earlier.set(key, { collection: collection.data, id, input: inputOf(before), ...parts });
     }
     if (c.req.method === "DELETE" && c.res.status === 204) {
       earlier.delete(key);
-      earlier.delete(keyOf(RESOURCES, id));
       deleted.set(key, {
         collection: collection.data,
         id,
         name: before.name,
         input: inputOf(before),
-        resources,
+        ...parts,
         deletedAt: new Date(),
       });
     }
   });
 
-  routes.use("/homebrew/classes/:id/resources", async (c, next) => {
-    if (c.req.method !== "PUT") return next();
-    const id = c.req.param("id");
-    const key = keyOf(RESOURCES, id);
-    const before = listHomebrewClassResources(db, id);
-    await next();
-    if (c.res.status !== 200) return;
-    if (c.req.header(REVERT_HEADER)) earlier.delete(key);
-    else earlier.set(key, { collection: RESOURCES, id, input: before });
-  });
+  // A class's features and resource tables are saved beside its row. A save of either holds
+  // its earlier part unless the row's own save, or an earlier save of that part, already did, so
+  // the three writes of one form save revert together. A later features-only save before any
+  // revert joins the entry: Undo goes back to before the first.
+  for (const part of ["features", "resources"] as const) {
+    routes.use(`/homebrew/classes/:id/${part}`, async (c, next) => {
+      if (c.req.method !== "PUT" || c.req.header(REVERT_HEADER)) return next();
+      const id = c.req.param("id");
+      const parts = classParts("classes", id);
+      await next();
+      if (c.res.status !== 200) return;
+      const key = keyOf("classes", id);
+      earlier.set(key, { collection: "classes", id, [part]: parts?.[part], ...earlier.get(key) });
+    });
+  }
 
   routes.openapi(readHistory, (c) =>
     c.json({
@@ -336,27 +357,46 @@ export function homebrewHistoryRoutes(
 
   routes.openapi(revertRow, async (c) => {
     const { collection, id } = c.req.valid("param");
-    const held = earlier.get(keyOf(collection, id));
+    const key = keyOf(collection, id);
+    const held = earlier.get(key);
     if (!held) return c.json({ error: "No earlier version of this row is held" }, 404);
-    const path =
-      collection === RESOURCES
-        ? `/homebrew/classes/${encodeURIComponent(id)}/resources`
-        : `/homebrew/${collection}/${encodeURIComponent(id)}`;
-    const res = await send(path, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", [REVERT_HEADER]: "1" },
-      body: JSON.stringify(held.input),
-    });
-    if (res.ok) return c.body(null, 204);
-    const body = await res.json().catch(() => ({ error: res.statusText }));
-    return c.json(body, res.status === 404 ? 404 : 409);
+    const base = `/homebrew/${collection}/${encodeURIComponent(id)}`;
+    // The row first, so its refusals stop the revert before the parts change. A part that
+    // reverts leaves the entry, so a retry resumes where this stopped.
+    const writes = [
+      held.input && { path: base, body: held.input, done: () => delete held.input },
+      held.features && {
+        path: `${base}/features`,
+        body: held.features,
+        done: () => delete held.features,
+      },
+      held.resources && {
+        path: `${base}/resources`,
+        body: held.resources,
+        done: () => delete held.resources,
+      },
+    ].filter((write) => write !== undefined);
+    for (const { path, body, done } of writes) {
+      const res = await send(path, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", [REVERT_HEADER]: "1" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: res.statusText }));
+        return c.json(error, res.status === 404 ? 404 : 409);
+      }
+      done();
+    }
+    earlier.delete(key);
+    return c.body(null, 204);
   });
 
   routes.openapi(restoreRow, (c) => {
     const { collection, id } = c.req.valid("param");
     const key = keyOf(collection, id);
     const gone = deleted.get(key);
-    if (!gone || collection === RESOURCES) {
+    if (!gone) {
       return c.json({ error: "No deleted row with that id" }, 404);
     }
     const kind = KINDS[collection];
@@ -380,7 +420,7 @@ export function homebrewHistoryRoutes(
     if ("taken" in result) {
       return c.json(nameTakenError(`homebrew ${kind.noun}`, result.taken), 409);
     }
-    if (gone.resources) replaceHomebrewClassResources(db, id, gone.resources);
+    restoreClassParts(db, id, gone);
     deleted.delete(key);
     return c.body(null, 204);
   });

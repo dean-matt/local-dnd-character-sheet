@@ -14,8 +14,7 @@ export function RecentlyDeleted() {
   const id = useId();
   const { history, restore } = useHomebrewHistory();
   const deleted = (history.data?.deleted ?? []).flatMap((row) =>
-    row.collection === "class-resources" ||
-    (row.edition === undefined && row.collection !== "deities")
+    row.edition === undefined && row.collection !== "deities"
       ? []
       : [{ ...row, collection: row.collection }],
   );

@@ -256,33 +256,64 @@ describe("homebrewHistoryRoutes", () => {
     );
   });
 
-  it("reverts a replace of a class's resource tables, then holds nothing", async () => {
-    const created = await (await app.request("/homebrew/classes", json(warden()))).json();
+  describe("a class's features and resource tables", () => {
+    const feature = (name: string, level = 1) => ({ name, level, entries: [`${name} text`] });
     const table = (name: string) => ({ name, maximums: Array(20).fill(1) });
-    const send = (body: unknown) =>
-      app.request(`/homebrew/classes/${created.id}/resources`, put(body));
-    await send([table("Ki")]);
-    await send([table("Rage")]);
-    expect((await history()).reversible).toContainEqual({
-      collection: "class-resources",
-      id: created.id,
+    const create = async () => (await app.request("/homebrew/classes", json(warden()))).json();
+    const saveFeatures = (id: string, body: unknown) =>
+      app.request(`/homebrew/classes/${id}/features`, put(body));
+    const saveResources = (id: string, body: unknown) =>
+      app.request(`/homebrew/classes/${id}/resources`, put(body));
+    const revert = (id: string) => app.request(`/homebrew/classes/${id}/revert`, post);
+
+    it("reverts the row, features and resources of one save together", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveResources(created.id, [table("Ki")]);
+      const before = await read(`/homebrew/classes/${created.id}`);
+
+      await app.request(`/homebrew/classes/${created.id}`, put({ ...warden(), name: "Renamed" }));
+      await saveFeatures(created.id, [feature("New"), feature("Other", 2)]);
+      await saveResources(created.id, [table("Rage")]);
+
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}`)).toEqual(before);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
+      expect((await history()).reversible).toEqual([]);
     });
 
-    const res = await app.request(`/homebrew/class-resources/${created.id}/revert`, post);
-    expect(res.status).toBe(204);
-    expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
-    expect((await history()).reversible).toEqual([]);
-  });
+    it("reverts a save that changed only the features", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      expect((await history()).reversible).toContainEqual({
+        collection: "classes",
+        id: created.id,
+      });
 
-  it("restores a deleted class with its resource tables and offers no revert meanwhile", async () => {
-    const created = await (await app.request("/homebrew/classes", json(warden()))).json();
-    const tables = [{ name: "Ki", maximums: Array(20).fill(1) }];
-    await app.request(`/homebrew/classes/${created.id}/resources`, put(tables));
-    await app.request(`/homebrew/classes/${created.id}`, { method: "DELETE" });
-    expect((await history()).reversible).toEqual([]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([]);
+      expect((await history()).reversible).toEqual([]);
+    });
 
-    expect((await app.request(`/homebrew/classes/${created.id}/restore`, post)).status).toBe(204);
-    expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual(tables);
+    it("reverts a save that changed only the resource tables", async () => {
+      const created = await create();
+      await saveResources(created.id, [table("Ki")]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([]);
+    });
+
+    it("restores a deleted class with its features and resource tables", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveResources(created.id, [table("Ki")]);
+      await app.request(`/homebrew/classes/${created.id}`, { method: "DELETE" });
+      expect((await history()).reversible).toEqual([]);
+
+      expect((await app.request(`/homebrew/classes/${created.id}/restore`, post)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
+    });
   });
 
   it("holds nothing for a save the kind's route refused", async () => {
