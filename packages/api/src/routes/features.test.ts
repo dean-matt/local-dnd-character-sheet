@@ -17,6 +17,7 @@ import {
   insertHomebrewClass,
   insertHomebrewFeat,
   insertHomebrewRace,
+  insertHomebrewSubrace,
   replaceHomebrewClassFeatures,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
@@ -576,6 +577,29 @@ describe("featuresRoutes", () => {
     expect(groups.find(({ origin }) => origin === "race")?.features).toEqual([
       { resolved: true, name: "Dusksight", entries: ["You see in dusk."] },
     ]);
+  });
+
+  it("names a homebrew subrace beside its race and lists the race row's traits", async () => {
+    insertHomebrewRace(opened.homebrewDb, "hr", {
+      name: "Duskling",
+      edition: "classic",
+      size: ["M"],
+      speed: 30,
+      entries: [{ type: "entries", name: "Dusksight", entries: ["You see in dusk."] }],
+    });
+    insertHomebrewSubrace(opened.homebrewDb, "hs", {
+      name: "Moon",
+      edition: "classic",
+      parent: { raceId: "hr" },
+      entries: [{ type: "entries", name: "Moonlit", entries: ["You glow."] }],
+    });
+    store(definitionWith({ race: { homebrewId: "hr" }, subrace: { homebrewId: "hs" } }));
+
+    expect((await features()).groups.find(({ origin }) => origin === "race")).toEqual({
+      origin: "race",
+      name: "Duskling (Moon)",
+      features: [{ resolved: true, name: "Dusksight", entries: ["You see in dusk."] }],
+    });
   });
 
   it("lists a homebrew background's flagged entries, named or not, as its features", async () => {

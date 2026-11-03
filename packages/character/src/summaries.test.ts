@@ -65,6 +65,13 @@ describe("subrace", () => {
   it("shows a homebrew race as Homebrew beside its subrace", () => {
     expect(raceSummary({ ...elf, race: { homebrewId: "hb_07" } })).toBe("Homebrew (High)");
   });
+
+  it("names a homebrew subrace by its current name, and reads Homebrew once it is gone", () => {
+    const moon = { ...elf, subrace: { homebrewId: "hb_10" } };
+    expect(raceSummary(moon, new Map([["hb_10", "Moon"]]))).toBe("Elf (Moon)");
+    expect(raceSummary(moon, new Map([["hb_10", "Silver"]]))).toBe("Elf (Silver)");
+    expect(raceSummary(moon, names)).toBe("Elf (Homebrew)");
+  });
 });
 
 describe("class levels", () => {

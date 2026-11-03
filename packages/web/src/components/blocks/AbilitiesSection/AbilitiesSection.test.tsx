@@ -129,6 +129,7 @@ function stubRules(entries: unknown[]) {
     "/api/homebrew/backgrounds": [],
     "/api/homebrew/feats": [],
     "/api/homebrew/subclasses": [],
+    "/api/homebrew/subraces": [],
   };
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
     const path = String(url);

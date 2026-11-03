@@ -2,11 +2,12 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { insertCharacter } from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { homebrewRacesRoutes } from "./homebrew-races.ts";
 import { homebrewSubracesRoutes } from "./homebrew-subraces.ts";
-import { duskling, json } from "./homebrewFixtures.ts";
+import { baseDefinition, duskling, json } from "./homebrewFixtures.ts";
 
 const moon = (overrides: Record<string, unknown> = {}) => ({
   name: "Moon",
@@ -43,7 +44,7 @@ describe("homebrewSubracesRoutes", () => {
   beforeEach(() => {
     opened = openTestDatabases();
     races = homebrewRacesRoutes(opened.homebrewDb, opened.charactersDb);
-    subraces = homebrewSubracesRoutes(opened.homebrewDb, dataDir);
+    subraces = homebrewSubracesRoutes(opened.homebrewDb, opened.charactersDb, dataDir);
   });
 
   afterEach(() => {
@@ -209,5 +210,22 @@ describe("homebrewSubracesRoutes", () => {
     expect((await races.request(`/homebrew/races/${race.id}`, { method: "DELETE" })).status).toBe(
       204,
     );
+  });
+
+  it("refuses to delete a subrace a character holds, naming the character", async () => {
+    const created = await (await subraces.request("/homebrew/subraces", json(moon()))).json();
+    const character = insertCharacter(opened.charactersDb, {
+      id: "1",
+      definition: baseDefinition({
+        edition: "classic",
+        race: { name: "Elf", source: "PHB" },
+        subrace: { homebrewId: created.id },
+      }),
+    });
+
+    const res = await subraces.request(`/homebrew/subraces/${created.id}`, { method: "DELETE" });
+    expect(res.status).toBe(409);
+    expect((await res.json()).characters).toEqual([{ id: character.id, name: character.name }]);
+    expect((await subraces.request(`/homebrew/subraces/${created.id}`)).status).toBe(200);
   });
 });

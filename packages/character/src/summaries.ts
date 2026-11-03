@@ -29,7 +29,7 @@ export const displayName = (ref: EntryRef, names?: HomebrewNames): string =>
 
 /** The race with any subrace beside it — `Elf (High)`, or `Half-Elf` taken plain. */
 export function raceSummary(definition: CharacterDefinition, names?: HomebrewNames): string {
-  const subrace = definition.subrace ? ` (${definition.subrace.name})` : "";
+  const subrace = definition.subrace ? ` (${displayName(definition.subrace, names)})` : "";
   return `${displayName(definition.race, names)}${subrace}`;
 }
 

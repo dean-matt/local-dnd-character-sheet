@@ -11,10 +11,12 @@ import type { z } from "zod";
 import { insertCharacter, updateCharacterDefinition } from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
+  deleteHomebrewSubrace,
   insertHomebrewClass,
   insertHomebrewItem,
   insertHomebrewRace,
   insertHomebrewSkill,
+  insertHomebrewSubrace,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { derivedRoutes } from "./derived.ts";
@@ -1101,6 +1103,21 @@ describe("derivedRoutes", () => {
 
     expect(res.status).toBe(422);
     expect(await res.json()).toEqual({ error: "No race Drow (PHB)" });
+  });
+
+  it("reads a homebrew subrace's race from the race row, and 422s once the subrace is gone", async () => {
+    insertHomebrewSubrace(opened.homebrewDb, "s", {
+      name: "Moon",
+      edition: "classic",
+      parent: ELF,
+    });
+    store(definitionWith({ subrace: { homebrewId: "s" } }));
+    expect((await derived()).speed.computed).toEqual({ walk: 30 });
+
+    deleteHomebrewSubrace(opened.homebrewDb, "s");
+    const res = await routes.request("/characters/1/derived");
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "No race homebrew s" });
   });
 
   it("reads a race taken with no subrace from the race row", async () => {

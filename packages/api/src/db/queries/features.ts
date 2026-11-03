@@ -41,6 +41,7 @@ import {
   getHomebrewBackground,
   getHomebrewClass,
   getHomebrewFeat,
+  getHomebrewSubrace,
   type HomebrewDb,
   listHomebrewClassFeatures,
 } from "./homebrew.ts";
@@ -230,8 +231,12 @@ function raceGroup(
 ): FeatureGroup {
   const { race, subrace } = definition;
   const entry = entryOf(raceJson(dataDir, homebrewDb, definition));
-  const raceName = entry && !subrace ? entry.name : displayName(race);
-  const name = subrace ? `${raceName} (${subrace.name})` : raceName;
+  const raceName = entry && !catalogRef(subrace) ? entry.name : displayName(race);
+  const subraceName =
+    subrace && "homebrewId" in subrace
+      ? (getHomebrewSubrace(homebrewDb, subrace.homebrewId)?.name ?? "Homebrew")
+      : subrace?.name;
+  const name = subraceName === undefined ? raceName : `${raceName} (${subraceName})`;
   if (!entry) return { origin: "race", name, features: [unresolved(subrace ?? race)] };
   const features = (entry.entries ?? [])
     .filter(isNode)

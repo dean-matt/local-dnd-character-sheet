@@ -516,9 +516,9 @@ export const characterDefinitionSchema = z.strictObject({
    *
    * An absent `subrace` is a race taken plain, which is all a character can store for
    * the five `PHB` races whose base variant upstream leaves unnamed: their row is keyed
-   * on the empty string, and a reader reaches it from the race.
+   * on the empty string, and a reader reaches it from the race. A homebrew subrace is its id.
    */
-  subrace: contentRefSchema.optional(),
+  subrace: entryRefSchema.optional(),
   /**
    * The size the player picked where the race offers more than one, such as Small or
    * Medium for `Human` (XPHB). Where it is absent or names a size the race does not

@@ -34,6 +34,15 @@ const VERDAN = {
   resist: [{ choose: { from: ["acid", "fire"] } }],
   languageProficiencies: [{ common: true, goblin: true }],
 };
+const homebrewSubrace = (id: string, name: string, raceName: string, raceSource: string) => ({
+  id,
+  name,
+  edition: "classic",
+  raceName,
+  raceSource,
+  json: { name, source: "HB" },
+  createdAt: "2026-10-28T00:00:00.000Z",
+});
 const background = (name: string, skills: Record<string, true>, feats?: unknown[]) => ({
   ...PHB(name),
   edition: "classic",
@@ -83,7 +92,12 @@ const ROWS: Record<string, unknown> = {
   "/api/races/Elf/PHB/subraces?edition=classic&limit=200": page([
     { ...PHB("High"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: HIGH_ELF },
     { ...PHB("Wood"), raceName: "Elf", raceSource: "PHB", edition: "classic", json: ELF },
+    homebrewSubrace("hsr-1", "Moon", "Elf", "PHB"),
   ]),
+  "/api/races/Kenku/HB/subraces?edition=classic&limit=200": page([
+    homebrewSubrace("hsr-2", "Feathered", "Kenku", "HB"),
+  ]),
+  "/api/homebrew/subraces/hsr-2": { id: "hsr-2", name: "Feathered", edition: "classic" },
   "/api/races/Verdan/AI": { name: "Verdan", source: "AI", edition: "classic", json: VERDAN },
   "/api/races/Verdan/AI/subraces?edition=classic&limit=200": page([]),
   "/api/backgrounds?edition=classic&limit=200": page([
@@ -509,6 +523,7 @@ describe("IdentityStep", () => {
       JSON.stringify({
         edition: "classic",
         race: { homebrewId: "hr-1" },
+        subrace: { homebrewId: "hsr-2" },
         background: { homebrewId: "hbg-1" },
         deity: { ...PHB("Oghma"), pantheon: "Celtic" },
         levels: [
@@ -525,6 +540,7 @@ describe("IdentityStep", () => {
     await waitFor(() =>
       expect(Array.from(status.querySelectorAll("li"), (li) => li.textContent)).toEqual([
         "Race: Kenku (homebrew)",
+        "Subrace: Feathered (homebrew)",
         "Background: Smuggler (homebrew)",
         "Class: Blood Hunter (homebrew)",
         "Class: Cleric (PHB)",
@@ -544,6 +560,31 @@ describe("IdentityStep", () => {
     expect(await screen.findByRole("button", { name: "Clear race, Kenku" })).toBeVisible();
     expect(screen.getByText("Homebrew")).toBeVisible();
     expect(screen.queryByText(/^Traits:/)).not.toBeInTheDocument();
+  });
+
+  it("offers a catalog race's homebrew subrace beside its catalog ones, marked, and stores it by id", async () => {
+    renderStep();
+
+    await pick("Race", "elf", /^Elf/);
+    expect(await screen.findByRole("button", { name: "High" })).toBeVisible();
+    click("Moon (homebrew)");
+
+    expect(values.subrace).toEqual({ homebrewId: "hsr-1" });
+    expect(screen.getByRole("button", { name: "Moon (homebrew)" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("offers a homebrew race's homebrew subraces, with None, and stores one by id", async () => {
+    renderStep();
+
+    await pick("Race", "ken", /^Kenku.*Homebrew/);
+    expect(await screen.findByText("Subrace of Kenku")).toBeVisible();
+    expect(screen.getByRole("button", { name: "None" })).toHaveAttribute("aria-pressed", "true");
+    click("Feathered (homebrew)");
+
+    expect(values.subrace).toEqual({ homebrewId: "hsr-2" });
   });
 
   it("names a homebrew feat taken at an improvement whose row carries the other edition", async () => {

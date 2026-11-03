@@ -1,5 +1,4 @@
-import type { SubraceRecord } from "@dnd/catalog";
-import { type CharacterDefinition, displayName, type EntryRef } from "@dnd/character";
+import { type CharacterDefinition, displayName, type EntryRef, entryKey } from "@dnd/character";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogPicker } from "../../components/CatalogPicker/CatalogPicker.tsx";
@@ -9,6 +8,7 @@ import { CUSTOM_RACE_SOURCE } from "../../lib/customRace.ts";
 import { RACE_FIELD, withDeparture } from "../../lib/departures.ts";
 import { titleCase } from "../../lib/proficiencyGrants.ts";
 import { raceChoices } from "../../lib/raceChoices.ts";
+import { subraceLabel, subraceRef, takenPlain } from "../../lib/subraceItems.ts";
 import { ChosenChip } from "./ChosenChip.tsx";
 import { DepartureMark } from "./DepartureMark.tsx";
 import { RaceGrants } from "./RaceGrants.tsx";
@@ -16,8 +16,6 @@ import { TypedEscape } from "./TypedEscape.tsx";
 import { useIdentityCatalog } from "./useIdentityCatalog.ts";
 
 const OPTS = { shouldDirty: true } as const;
-
-const subraceKey = (row: { name: string; source: string }) => `${row.name}|${row.source}`;
 
 /** A race's entry names: the traits the sheet lists under Race Features. */
 function traitNames(json: { entries?: unknown } | undefined): string[] {
@@ -76,8 +74,8 @@ export function RaceField() {
     );
   }
 
-  const rows: SubraceRecord[] = subraces.data?.items ?? [];
-  const plain = rows.some((row) => row.name === "");
+  const rows = subraces.data?.items ?? [];
+  const plain = takenPlain(rows);
   const named = rows.filter((row) => row.name !== "");
   const { sizes, resistances } = raceChoices(raceJson);
   const traits = traitNames(raceJson);
@@ -107,12 +105,15 @@ export function RaceField() {
           prompting={!plain && subrace === undefined}
           options={[
             ...(plain ? [{ value: "", label: "None" }] : []),
-            ...named.map((row) => ({ value: subraceKey(row), label: row.name })),
+            ...named.map((row) => ({
+              value: entryKey(subraceRef(row)),
+              label: subraceLabel(row),
+            })),
           ]}
-          value={subrace ? subraceKey(subrace) : plain ? "" : undefined}
+          value={subrace ? entryKey(subrace) : plain ? "" : undefined}
           onChange={(value) => {
-            const row = named.find((each) => subraceKey(each) === value);
-            setValue("subrace", row && { name: row.name, source: row.source }, OPTS);
+            const row = named.find((each) => entryKey(subraceRef(each)) === value);
+            setValue("subrace", row && subraceRef(row), OPTS);
           }}
         />
       )}

@@ -38,6 +38,7 @@ export function useSpellGrantors(): SpellGrantorRef[] {
   const classLevel = first?.level ?? level;
   const subclass = catalogRef(first?.subclass);
   const catalogRace = catalogRef(race);
+  const catalogSubrace = catalogRef(subrace);
   const catalogBackground = catalogRef(background);
   const at = (
     grantor: SpellGrantorRef["grantor"],
@@ -56,7 +57,7 @@ export function useSpellGrantors(): SpellGrantorRef[] {
     ...(cls && subclass ? [at("subclass", subclass, cls, classLevel)] : []),
     // A subrace's grants already hold its race's.
     ...(catalogRace
-      ? [subrace ? at("subrace", subrace, catalogRace) : at("race", catalogRace)]
+      ? [catalogSubrace ? at("subrace", catalogSubrace, catalogRace) : at("race", catalogRace)]
       : []),
     ...(catalogBackground ? [at("background", catalogBackground)] : []),
     ...catalogRefs(feats).map((ref) => at("feat", ref)),

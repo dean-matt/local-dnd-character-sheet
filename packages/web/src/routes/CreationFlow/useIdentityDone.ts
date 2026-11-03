@@ -1,6 +1,7 @@
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { raceChoices } from "../../lib/raceChoices.ts";
+import { takenPlain } from "../../lib/subraceItems.ts";
 import { heldFromBackground } from "./backgroundFeats.ts";
 import { stepOf } from "./creationSteps.ts";
 import { useBackgroundFeats } from "./useBackgroundFeats.ts";
@@ -30,12 +31,9 @@ export function useIdentityDone(): boolean {
   )
     return false;
   if (!raceRead) return false;
-  const rows = subraces.data?.items ?? [];
   if (
     catalogRace &&
-    (values.subrace
-      ? subraceRow === undefined
-      : rows.length > 0 && !rows.some((row) => row.name === ""))
+    (values.subrace ? subraceRow === undefined : !takenPlain(subraces.data?.items ?? []))
   )
     return false;
   const { sizes, resistances } = raceChoices(raceJson);
