@@ -138,6 +138,8 @@ export interface EditingKind<I extends HomebrewInput = HomebrewInput> {
   entries(input: I): Entries;
   /** What a new entry opens with; the editor offers a choice where there is more than one. */
   starters: HomebrewStarters;
+  /** The kind as `/search` names it, where a new entry can start as a copy of an existing one. */
+  copyType?: string;
   /**
    * The form's sections, in order: each one's fields, and the top-level fields whose problems
    * keep its step from advancing. A field no section names belongs to the last.
@@ -165,6 +167,7 @@ const item: EditingKind<HomebrewItemInput> = {
   facts: itemFacts,
   entries: itemEntries,
   starters: ITEM_STARTERS,
+  copyType: "item",
   sections: [
     {
       title: "Basics",
@@ -230,6 +233,7 @@ const item: EditingKind<HomebrewItemInput> = {
 const spell: EditingKind<HomebrewSpellInput> = {
   inputSchema: homebrewSpellInputSchema,
   starters: SPELL_STARTERS,
+  copyType: "spell",
   sections: [
     { title: "Basics", Fields: SpellBasics, keys: ["name", "level", "school"] },
     {
@@ -263,6 +267,7 @@ const race: EditingKind<z.infer<typeof homebrewRaceFormSchema>> = {
   facts: raceFacts,
   entries: rowEntries,
   starters: RACE_STARTERS,
+  copyType: "race",
   sections: [
     { title: "Basics", Fields: RaceBasics, keys: ["name", "size"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
@@ -290,6 +295,7 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
   facts: (input) => classFacts(input).filter(([label]) => label === "Primary Ability"),
   entries: classEntries,
   starters: CLASS_STARTERS,
+  copyType: "class",
   sections: [
     { title: "Basics", Fields: ClassBasics, keys: ["name", "hd", "proficiency", "primaryAbility"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
@@ -326,6 +332,7 @@ const background: EditingKind<HomebrewBackgroundInput> = {
   facts: backgroundFacts,
   entries: rowEntries,
   starters: BACKGROUND_STARTERS,
+  copyType: "background",
   sections: [
     { title: "Basics", Fields: FeatBasics, keys: ["name"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
@@ -365,6 +372,7 @@ const feat: EditingKind<HomebrewFeatInput> = {
   facts: featFacts,
   entries: rowEntries,
   starters: FEAT_STARTERS,
+  copyType: "feat",
   sections: [
     { title: "Basics", Fields: FeatBasics, keys: ["name"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
@@ -392,6 +400,7 @@ const skill: EditingKind<z.infer<typeof homebrewSkillInputSchema>> = {
   facts: skillFacts,
   entries: rowEntries,
   starters: SKILL_STARTERS,
+  copyType: "skill",
   sections: [
     { title: "Basics", Fields: SkillBasics, keys: ["name", "ability"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
