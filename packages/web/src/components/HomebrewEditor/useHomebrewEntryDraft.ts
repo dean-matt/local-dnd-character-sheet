@@ -108,5 +108,6 @@ export function useHomebrewEntryDraft(kind: EditingKind, record: HomebrewRow | u
       setStarter(picked);
       replace(editable(picked.entry));
     },
+    copy: (copied: HomebrewEntry) => replace(editable(copied)),
   };
 }
