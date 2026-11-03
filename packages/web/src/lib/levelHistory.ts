@@ -1,7 +1,6 @@
 import type { ClassFeatureRecord } from "@dnd/catalog";
 import {
   type CharacterDefinition,
-  type ContentRef,
   displayName,
   type EntryRef,
   entryKey,
@@ -17,7 +16,7 @@ export type LevelHistoryRow = {
   cls: EntryRef;
   /** The class's own level this character level reached. */
   classLevel: number;
-  subclass?: ContentRef;
+  subclass?: EntryRef;
   features: readonly HistoryFeature[];
 };
 
@@ -42,7 +41,7 @@ export function levelHistory(
   names: HomebrewNames,
 ): LevelHistoryRow[] {
   const taken = new Map<string, number>();
-  const chosenAt = new Map<string, { level: number; subclass: ContentRef }>();
+  const chosenAt = new Map<string, { level: number; subclass: EntryRef }>();
   return levels.map(({ class: cls, subclass }, index) => {
     const key = entryKey(cls);
     const classLevel = (taken.get(key) ?? 0) + 1;
@@ -65,7 +64,11 @@ export function levelHistory(
           ? []
           : features.subclass
               .filter((feature) => arrives(feature, chosen.level === classLevel))
-              .map((record) => ({ record, grantor: chosen.subclass.name, subclass: true }))),
+              .map((record) => ({
+                record,
+                grantor: displayName(chosen.subclass, names),
+                subclass: true,
+              }))),
       ],
     };
   });

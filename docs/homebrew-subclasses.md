@@ -13,7 +13,10 @@ class cannot leave an entry naming a class that is gone.
   subclasses in the same transaction.
 - A name is unique within its parent, ignoring case: one index per kind of parent.
 - Deleting a homebrew class that has subclasses is refused with a 409 naming them.
-- A character cannot hold a homebrew subclass yet, so nothing else references one.
+- A character holds one as `levels[].subclass: {homebrewId}`, so a rename keeps it there.
+  Deleting one a character holds is refused with a 409 naming the characters.
+- A held subclass grants no features, spells or optional features yet; the sheet names it
+  from its row, and `Homebrew` once no row holds its id.
 
 ## Reads
 

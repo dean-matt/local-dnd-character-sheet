@@ -19,6 +19,7 @@ import { useWatch } from "react-hook-form";
 import { classQuery } from "../../hooks/classQuery.ts";
 import { homebrewClassQuery } from "../../hooks/homebrewClassQuery.ts";
 import { subclassesQuery } from "../../hooks/subclassesQuery.ts";
+import { catalogSubclassRow, type SubclassItem } from "../../lib/subclassItems.ts";
 import { subclassOf } from "./classLevels.ts";
 
 type Level = CharacterDefinition["levels"][number];
@@ -32,9 +33,14 @@ export interface ClassEntry {
   level: number;
   /** The position in `levels` of the class's first level. */
   firstIndex: number;
-  subclass: ContentRef | undefined;
-  /** The subclasses the class offers in the draft's edition, `undefined` until they load. */
-  subclasses: readonly SubclassRecord[] | undefined;
+  subclass: EntryRef | undefined;
+  /**
+   * The subclasses the class offers in the draft's edition, the homebrew's among them,
+   * `undefined` until they load.
+   */
+  subclasses: readonly SubclassItem[] | undefined;
+  /** The catalog row of `subclass`, which a homebrew subclass has none of. */
+  subclassRow: SubclassRecord | undefined;
   hitDie: number | undefined;
   subclassLevel: number | undefined;
   /** The class's own row, from the catalog or from homebrew, `undefined` until it loads. */
@@ -108,13 +114,15 @@ export function useClassEntries() {
     const json = classRow?.data?.json;
     const own = json ?? homebrew?.data?.json;
     const start = startOf(own, catalogClass !== undefined, index);
+    const subclass = subclassOf(levels, group.cls);
     return {
       ...group,
       catalogClass,
       json: own,
       name: catalogClass?.name ?? homebrew?.data?.name ?? displayName(group.cls),
-      subclass: subclassOf(levels, group.cls),
+      subclass,
       subclasses: subclasses?.data?.items,
+      subclassRow: catalogSubclassRow(subclasses?.data?.items, subclass),
       hitDie: classRow?.data?.hitDie ?? homebrew?.data?.hitDie,
       subclassLevel: json && subclassLevelSchema.parse(json),
       start,

@@ -59,7 +59,7 @@ app.route("/", homebrewBackgroundsRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewFeatsRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewRacesRoutes(homebrewDb, charactersDb));
 app.route("/", homebrewClassesRoutes(homebrewDb, charactersDb));
-app.route("/", homebrewSubclassesRoutes(homebrewDb, DATA_DIR));
+app.route("/", homebrewSubclassesRoutes(homebrewDb, charactersDb, DATA_DIR));
 app.route("/", homebrewSubracesRoutes(homebrewDb, DATA_DIR));
 app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb, DATA_DIR));
 app.route("/", homebrewDeitiesRoutes(homebrewDb, charactersDb));

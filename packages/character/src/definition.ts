@@ -30,9 +30,9 @@ const levelEntrySchema = z.strictObject({
    * tags spell. A character names a row by that row's key, and the short name keys no
    * `subclasses` row; it keys the features instead, and the catalog carries it as
    * `subclasses.short_name` so a sheet reaches them through the subclass. The level's
-   * own class supplies the other two parts of that key.
+   * own class supplies the other two parts of that key. A homebrew subclass is its id.
    */
-  subclass: contentRefSchema.optional(),
+  subclass: entryRefSchema.optional(),
   /**
    * The hit point gain taken in place of the class table's fixed value: a roll of the hit
    * die, or a number the player typed. A gain the die cannot make is a departure to record

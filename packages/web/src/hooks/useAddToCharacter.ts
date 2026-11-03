@@ -2,6 +2,7 @@ import { casterProgressionSchema, featRecordSchema, itemRecordSchema } from "@dn
 import {
   type CharacterDefinition,
   type ContentRef,
+  catalogRef,
   classLevels,
   entryKey,
   totalLevel,
@@ -49,11 +50,14 @@ const rowQuery = <T>(collection: string, ref: ContentRef, schema: z.ZodType<T>) 
     retry: retryUnlessClientError,
   });
 
-/** Each catalog class the character has levels in, with its level and any subclass. */
+/** Each catalog class the character has levels in, with its level and any catalog subclass. */
 const catalogClasses = (definition: CharacterDefinition) =>
-  classLevels(definition).flatMap(({ class: cls, level, subclass }) =>
-    "name" in cls ? [{ class: cls, level, ...(subclass && { subclass }) }] : [],
-  );
+  classLevels(definition).flatMap(({ class: cls, level, subclass }) => {
+    const catalogSubclass = catalogRef(subclass);
+    return "name" in cls
+      ? [{ class: cls, level, ...(catalogSubclass && { subclass: catalogSubclass }) }]
+      : [];
+  });
 
 /** Whether `key` is above the highest level `list`'s class casts, as the sheet's picker reads it. */
 async function aboveCeiling(

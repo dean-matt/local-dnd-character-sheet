@@ -38,6 +38,10 @@ export const featureKeySchema = z.strictObject({
 export const entryRefSchema = z.union([contentRefSchema, homebrewRefSchema]);
 
 export type EntryRef = z.infer<typeof entryRefSchema>;
+
+/** The catalog `(name, source)` a ref names, or `undefined` for a homebrew one. */
+export const catalogRef = (ref: EntryRef | undefined): ContentRef | undefined =>
+  ref === undefined || "homebrewId" in ref ? undefined : { name: ref.name, source: ref.source };
 export type Ability = z.infer<typeof abilitySchema>;
 export type ContentRef = z.infer<typeof contentRefSchema>;
 export type DeityRef = z.infer<typeof deityRefSchema>;

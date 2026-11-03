@@ -1,7 +1,12 @@
-import { catalogRowRecordSchema, homebrewFeatRecordSchema } from "@dnd/catalog";
+import {
+  catalogRowRecordSchema,
+  homebrewFeatRecordSchema,
+  homebrewSubclassRecordSchema,
+} from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type ContentRef,
+  catalogRef,
   type EntryRef,
   IMPROVEMENT_FEAT,
   refKey,
@@ -89,6 +94,11 @@ export function useEditionMismatches(): EditionMismatch[] {
   const { entries } = useClassEntries();
   const featRows = useFeats(edition).data?.items;
   const homebrewFeats = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
+  const homebrewSubclasses = useHomebrew("subclasses", homebrewSubclassRecordSchema).list.data;
+  const homebrewSubclass = (ref: EntryRef | undefined) =>
+    ref && "homebrewId" in ref
+      ? homebrewSubclasses?.find((row) => row.id === ref.homebrewId)
+      : undefined;
   const homebrewRace = useRowAt(homebrewPath("races", race));
   const homebrewBackground = useRowAt(homebrewPath("backgrounds", background));
   const deityRow = useRowAt(
@@ -110,7 +120,16 @@ export function useEditionMismatches(): EditionMismatch[] {
         entry.catalogClass ? named(entry.catalogClass) : homebrewName(entry),
         entry.rowEdition,
       ),
-      missingFrom("Subclass", entry.subclass, entry.subclasses),
+      missingFrom(
+        "Subclass",
+        catalogRef(entry.subclass),
+        entry.subclasses?.filter((row) => "source" in row),
+      ),
+      other(
+        "Subclass",
+        homebrewName(homebrewSubclass(entry.subclass)),
+        homebrewSubclass(entry.subclass)?.edition,
+      ),
     ]),
     ...feats.map(({ ref, grantedBy }) => {
       if (grantedBy?.kind !== "class") return undefined;

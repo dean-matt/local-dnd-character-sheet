@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, identityRecord } from "../../../test/records.ts";
 import { saveToasts } from "../../../test/saveToasts.ts";
-import { stubFetch } from "../../../test/stubFetch.ts";
+import { stubFetch, stubFetchByUrl } from "../../../test/stubFetch.ts";
 import { SaveToasts } from "../../SaveToasts.tsx";
 import { IdentitySection } from "./IdentitySection.tsx";
 
@@ -43,6 +43,38 @@ describe("IdentitySection", () => {
     expect(
       screen.getByRole("button", { name: "Change background, Charlatan" }),
     ).toBeInTheDocument();
+  });
+
+  it("names a homebrew subclass by its row, and reads Homebrew for one deleted", async () => {
+    const record = identityRecord();
+    const character = {
+      ...record,
+      definition: {
+        ...record.definition,
+        levels: [
+          { class: { name: "Warlock", source: "XPHB" }, subclass: { homebrewId: "hb-hex" } },
+          { class: { name: "Fighter", source: "XPHB" }, subclass: { homebrewId: "hb-gone" } },
+        ],
+      },
+    };
+    stubFetchByUrl({
+      "/api/homebrew/subclasses": [
+        {
+          id: "hb-hex",
+          name: "Hexblade Patron",
+          edition: "one",
+          className: "Warlock",
+          classSource: "XPHB",
+          json: { name: "Hexblade Patron", source: "HB" },
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    });
+    renderSeeded(<IdentitySection character={character} />, character);
+
+    await waitFor(() =>
+      expect(chips("Class")).toEqual(["Warlock 1 (Hexblade Patron)", "Fighter 1 (Homebrew)"]),
+    );
   });
 
   it("shows the alignment in its own card", () => {

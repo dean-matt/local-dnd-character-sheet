@@ -1,5 +1,5 @@
 import { type ClassGrants, eitherPicks, offeredPicks } from "@dnd/catalog";
-import { type CharacterDefinition, classLevels, entryKey } from "@dnd/character";
+import { type CharacterDefinition, catalogRef, classLevels, entryKey } from "@dnd/character";
 import { casterFacts } from "../../../lib/casterFacts.ts";
 
 type Table = Pick<ClassGrants, "resources" | "spellSlots">;
@@ -84,9 +84,9 @@ export function spellsUnderClass(
   level: CharacterDefinition["levels"][number],
 ): CharacterDefinition["spells"] {
   const cls = level.class;
-  const subclass = classLevels({ levels }).find(
-    (group) => entryKey(group.class) === entryKey(cls),
-  )?.subclass;
+  const subclass = catalogRef(
+    classLevels({ levels }).find((group) => entryKey(group.class) === entryKey(cls))?.subclass,
+  );
   if (!subclass || !("name" in cls)) return spells;
   return spells.map((spell) =>
     spell.origin?.name === subclass.name && spell.origin.source === subclass.source

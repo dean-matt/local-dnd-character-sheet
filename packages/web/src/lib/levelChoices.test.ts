@@ -61,6 +61,20 @@ describe("levelChoiceRefusals", () => {
     expect(levelChoiceRefusals(newest, changed(3), 3, NO_ROWS, new Map())).toEqual([]);
   });
 
+  it("refuses a changed homebrew subclass as it does a catalog one, by its homebrew name", () => {
+    const storm = { homebrewId: "hb-storm" };
+    const before = definition({
+      levels: [{ class: FIGHTER }, { class: FIGHTER, subclass: storm }, { class: FIGHTER }],
+    });
+    const after = definition({ levels: fighter(3) });
+    const names = new Map([["hb-storm", "Storm Knight"]]);
+
+    expect(levelChoiceRefusals(before, after, 2, NO_ROWS, names)).toEqual([
+      "Level 3 builds on Storm Knight; remove it to change the subclass.",
+    ]);
+    expect(levelChoiceRefusals(before, before, 2, NO_ROWS, names)).toEqual([]);
+  });
+
   it("names the later levels in the old or new starting class, and allows the rest", () => {
     const WIZARD = PHB("Wizard");
     const ROGUE = PHB("Rogue");

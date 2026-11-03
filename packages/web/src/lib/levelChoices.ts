@@ -14,7 +14,6 @@ import {
   entryKey,
   type FeatureKey,
   type HomebrewNames,
-  refKey,
 } from "@dnd/character";
 import { candidateAt } from "./improvementFeats.ts";
 import {
@@ -88,17 +87,17 @@ type Refusal = (
   names: HomebrewNames,
 ) => string[];
 
-const subclassBuiltOn: Refusal = (before, after, level) => {
+const subclassBuiltOn: Refusal = (before, after, level, names) => {
   const was = before.levels[level - 1];
   const now = after.levels[level - 1]?.subclass;
-  if (!was?.subclass || (now && refKey(was.subclass) === refKey(now))) return [];
+  if (!was?.subclass || (now && entryKey(was.subclass) === entryKey(now))) return [];
   const later = before.levels.flatMap((each, index) =>
     index >= level && entryKey(each.class) === entryKey(was.class) ? [String(index + 1)] : [],
   );
   if (later.length === 0) return [];
   const many = later.length > 1;
   return [
-    `${many ? "Levels" : "Level"} ${listed(later)} ${many ? "build" : "builds"} on ${was.subclass.name}; remove ${many ? "them" : "it"} to change the subclass.`,
+    `${many ? "Levels" : "Level"} ${listed(later)} ${many ? "build" : "builds"} on ${displayName(was.subclass, names)}; remove ${many ? "them" : "it"} to change the subclass.`,
   ];
 };
 

@@ -96,6 +96,23 @@ const SEARCH: Record<string, object[]> = {
   })),
 };
 
+/** A homebrew subclass of the catalog Warlock, which the subclass list carries beside the catalog's. */
+const HEXBLADE = {
+  id: "hb_hexblade",
+  name: "Hexblade Patron",
+  edition: "one",
+  className: "Warlock",
+  classSource: "XPHB",
+  json: {
+    name: "Hexblade Patron",
+    source: "HB",
+    shortName: "Hexblade Patron",
+    className: "Warlock",
+    classSource: "XPHB",
+  },
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
 const ROWS: Record<string, unknown> = {
   "/api/homebrew/races": [],
   "/api/homebrew/classes": [],
@@ -153,6 +170,7 @@ const ROWS: Record<string, unknown> = {
       edition: "one",
       json: { name: "Archfey Patron", source: "XPHB", shortName: "Archfey" },
     },
+    HEXBLADE,
   ]),
   // Three from the first level, where the 2024 table has one, so leveling to 2 asks for none.
   "/api/classes/Warlock/XPHB/at/1": grants(1, 3, [feature("Pact Magic", 1)]),
@@ -574,6 +592,21 @@ describe("LevelUp", () => {
     fireEvent.click(applyButton());
     await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
     expect(sent().levels.at(-1)).toEqual({ class: WARLOCK, subclass: XPHB("Fiend Patron") });
+  });
+
+  it("offers a homebrew subclass beside the catalog's, marked, and stores it by id", async () => {
+    renderSeeded(warlock(2));
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+
+    choose("Warlock subclass", "Hexblade Patron (homebrew)");
+    await waitFor(() => expect(applyButton()).not.toHaveAttribute("aria-disabled", "true"));
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().levels.at(-1)).toEqual({
+      class: WARLOCK,
+      subclass: { homebrewId: HEXBLADE.id },
+    });
   });
 
   it("asks for the improvement and each feature's option the level brings", async () => {

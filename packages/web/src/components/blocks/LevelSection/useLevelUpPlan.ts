@@ -159,7 +159,7 @@ export function useLevelUpPlan(
       setValue("levels", withLevel({ class: cls }), dirty);
       restart();
     },
-    setSubclass: (subclass: ContentRef | undefined) => {
+    setSubclass: (subclass: EntryRef | undefined) => {
       const { subclass: _, ...rest } = level;
       setValue("levels", withLevel(subclass ? { ...rest, subclass } : rest), dirty);
       setValue("featureChoices", definition.featureChoices, dirty);

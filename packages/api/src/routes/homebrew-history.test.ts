@@ -112,7 +112,7 @@ describe("homebrewHistoryRoutes", () => {
     app.route("/", homebrewFeatsRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewRacesRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewClassesRoutes(homebrewDb, charactersDb));
-    app.route("/", homebrewSubclassesRoutes(homebrewDb, dataDir));
+    app.route("/", homebrewSubclassesRoutes(homebrewDb, charactersDb, dataDir));
     app.route("/", homebrewSubracesRoutes(homebrewDb, dataDir));
     app.route("/", homebrewSkillsRoutes(homebrewDb, charactersDb, dataDir));
     app.route("/", homebrewDeitiesRoutes(homebrewDb, charactersDb));
