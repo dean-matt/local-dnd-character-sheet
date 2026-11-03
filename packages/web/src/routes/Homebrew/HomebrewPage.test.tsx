@@ -4412,6 +4412,144 @@ describe("Homebrew monsters", () => {
       expect(field("textbox", "Languages 1")).toHaveValue("Draconic");
     });
 
+    describe("traits, actions, reactions and legendary actions", () => {
+      const list = { type: "list", items: ["a", "b"] };
+      const withText = {
+        ...full,
+        json: {
+          ...full.json,
+          trait: [
+            { name: "Nimble", entries: ["Moves well."] },
+            { name: "Pack", entries: ["Intro.", list] },
+            "stray",
+            { name: "Keen", entries: ["Smells {@condition prone}."], hidden: true },
+          ],
+          action: [{ name: "Bite", entries: ["{@atk mw} {@hit 4} to hit."] }],
+        },
+      };
+      const openText = async (writes: Parameters<typeof stubApi>[1] = []) => {
+        const fetchMock = stubApi({ monsters: [withText] }, writes);
+        renderPage("monsters");
+        fireEvent.click(
+          await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }),
+        );
+        await settled();
+        stepTo("Traits");
+        return fetchMock;
+      };
+
+      it("saves a stored monster with them untouched", async () => {
+        const fetchMock = await openText([{ status: 200, body: withText }]);
+        click("Save");
+
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        const { source: _source, ...sent } = withText.json;
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { ...sent, edition: "one" } });
+      });
+
+      it("edits, adds, moves and removes rows without moving the ones it cannot show", async () => {
+        await openText();
+        fireEvent.change(field("textbox", "Traits 1 name"), { target: { value: "Agile" } });
+        fireEvent.change(field("textbox", "Traits 1 rules text"), {
+          target: { value: "First.\n\nSecond {@dice 1d4}." },
+        });
+        click("Move trait 4 up");
+        click("Add a trait");
+        fireEvent.change(field("textbox", "Traits 5 name"), { target: { value: "New" } });
+        click("Remove trait 2");
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).trait).toEqual([
+          { name: "Agile", entries: ["First.", "Second {@dice 1d4}."] },
+          { name: "Keen", entries: ["Smells {@condition prone}."], hidden: true },
+          "stray",
+          { name: "New" },
+        ]);
+      });
+
+      it("edits actions, reactions and legendary actions", async () => {
+        await openText();
+        fireEvent.change(field("textbox", "Actions 1 name"), { target: { value: "Maul" } });
+        stepTo("Reactions");
+        click("Add a reaction");
+        fireEvent.change(field("textbox", "Reactions 1 name"), { target: { value: "Dodge" } });
+        click("Add a legendary action");
+        fireEvent.change(field("textbox", "Legendary actions 1 name"), {
+          target: { value: "Lunge" },
+        });
+        mode("JSON");
+
+        const json = JSON.parse(jsonText("Monster JSON"));
+        expect(json.action[0].name).toBe("Maul");
+        expect(json.reaction).toEqual([{ name: "Dodge" }]);
+        expect(json.legendary).toEqual([{ name: "Lunge" }]);
+      });
+
+      it("drops a group when its last row is removed", async () => {
+        await openText();
+        stepTo("Traits");
+        click("Remove action 1");
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON"))).not.toHaveProperty("action");
+      });
+
+      it("shows a change made in JSON in the form", async () => {
+        await openText();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({ ...withText.json, trait: [{ name: "Fresh", entries: ["Text."] }] }),
+        );
+        mode("Step by step");
+        stepTo("Traits");
+
+        expect(field("textbox", "Traits 1 name")).toHaveValue("Fresh");
+        expect(field("textbox", "Traits 1 rules text")).toHaveValue("Text.");
+      });
+
+      it("leaves a group stored as text alone", async () => {
+        const fetchMock = await openText([{ status: 200, body: withText }]);
+        mode("JSON");
+        typeJson("Monster JSON", JSON.stringify({ ...withText.json, trait: "text" }));
+        mode("Step by step");
+        stepTo("Traits");
+
+        expect(within(editor()).getByText(/shape the form cannot show/)).toBeInTheDocument();
+        click("Save");
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { trait: "text" } });
+      });
+
+      it("keeps a nameless row nameless when its rules text is edited", async () => {
+        await openText();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({ ...withText.json, trait: [{ entries: ["Old."] }] }),
+        );
+        mode("Step by step");
+        stepTo("Traits");
+        fireEvent.change(field("textbox", "Traits 1 rules text"), { target: { value: "New." } });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).trait).toEqual([{ entries: ["New."] }]);
+      });
+
+      it("previews them", async () => {
+        await openText();
+        fireEvent.change(field("textbox", "Actions 1 rules text"), {
+          target: { value: "Bites {@damage 1d6}." },
+        });
+        mode("Preview");
+
+        const preview = within(editor());
+        expect(preview.getByText("Nimble")).toBeInTheDocument();
+        expect(preview.getByText("Bite")).toBeInTheDocument();
+        expect(preview.getByText("1d6")).toBeInTheDocument();
+      });
+    });
+
     it("previews them", async () => {
       await openFull();
       mode("Preview");

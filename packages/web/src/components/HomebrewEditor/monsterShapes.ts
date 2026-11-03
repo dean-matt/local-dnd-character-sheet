@@ -93,12 +93,41 @@ export const stringsIn = (list: unknown): string[] =>
   Array.isArray(list) ? list.filter((each): each is string => typeof each === "string") : [];
 
 /**
- * `list` with its strings replaced by the non-blank `strings`, trimmed; the entries that are
- * not strings, such as a tag with a prefix, stay ahead of them. `undefined` where nothing is left.
+ * `list` with the items `editable` accepts replaced by `next`, each in the slot of the one it
+ * replaces, so an item the form cannot edit keeps its place. Surplus slots are dropped and
+ * surplus replacements follow the last slot.
+ */
+function replaceEditable<T>(
+  list: unknown[],
+  editable: (item: unknown) => boolean,
+  next: T[],
+): unknown[] {
+  const out: unknown[] = [];
+  let used = 0;
+  let after = -1;
+  for (const item of list) {
+    if (editable(item)) {
+      if (used < next.length) out.push(next[used++]);
+      after = out.length;
+    } else {
+      out.push(item);
+    }
+  }
+  out.splice(after < 0 ? out.length : after, 0, ...next.slice(used));
+  return out;
+}
+
+/**
+ * `list` with its strings replaced by the non-blank `strings`, trimmed, in the slots they held;
+ * the entries that are not strings, such as a tag with a prefix, keep their places.
+ * `undefined` where nothing is left.
  */
 export function withStrings(list: unknown, strings: string[]): unknown[] | undefined {
-  const kept = Array.isArray(list) ? list.filter((each) => typeof each !== "string") : [];
-  const next = [...kept, ...strings.map((each) => each.trim()).filter(Boolean)];
+  const next = replaceEditable(
+    Array.isArray(list) ? list : [],
+    (each) => typeof each === "string",
+    strings.map((each) => each.trim()).filter(Boolean),
+  );
   return next.length > 0 ? next : undefined;
 }
 
@@ -163,8 +192,27 @@ export function withExtraArmorClasses(ac: unknown, rows: ExtraArmorClass[]): unk
   });
   const next = [
     ...(first === undefined ? [] : [first]),
-    ...written,
-    ...others.filter((one) => !editableArmorClass(one)),
+    ...replaceEditable(others, editableArmorClass, written),
   ];
   return next.length > 0 ? next : undefined;
+}
+
+/** The groups of text rows a monster's stat block lists, each under the key it is stored at. */
+export type MonsterTextGroup = "trait" | "action" | "reaction" | "legendary";
+
+/** True where a trait or action is a name and plain paragraphs, the shape the form edits. */
+export const isPlainTextRow = (item: unknown): item is { name?: string; entries?: string[] } =>
+  isRecord(item) &&
+  !Array.isArray(item) &&
+  (item.name === undefined || typeof item.name === "string") &&
+  (item.entries === undefined ||
+    (Array.isArray(item.entries) && item.entries.every((each) => typeof each === "string")));
+
+/** `list` with the item at `from` moved to `to`; the list itself where either is out of range. */
+export function moved<T>(list: T[], from: number, to: number): T[] {
+  if (from === to || to < 0 || to >= list.length || from < 0 || from >= list.length) return list;
+  const next = [...list];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item as T);
+  return next;
 }
