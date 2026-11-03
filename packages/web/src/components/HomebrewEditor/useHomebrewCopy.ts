@@ -33,7 +33,12 @@ async function sourceEntry(
   }
   // A catalog skill is a rules lookup, with no route of its own.
   const path = collection === "skills" ? "/catalog/skill" : `/${collection}`;
-  return (await apiGet(`${path}/${segments(ref.name, ref.source)}`, withJson)).json;
+  const { json } = await apiGet(`${path}/${segments(ref.name, ref.source)}`, withJson);
+  if (collection !== "classes") return json;
+  // A catalog class's features are rows of its own that a copy does not bring, so its
+  // references to them would list features the copy lacks.
+  const { classFeatures, subclassTitle, ...copied } = json;
+  return copied;
 }
 
 /**

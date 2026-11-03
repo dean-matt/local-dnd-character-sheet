@@ -174,11 +174,50 @@ describe("copying an entry into a new one", () => {
     fireEvent.click(screen.getByRole("combobox", { name: "Copy from" }));
     const list = await screen.findByRole("listbox", { name: "Copy from" });
     await within(list).findByRole("option", { name: "Athletics (XPHB)" });
+    const sailing = await within(list).findByRole("option", { name: "Sailing (Homebrew)" });
     expect(within(list).queryByRole("option", { name: /Rowing/ })).toBeNull();
-    fireEvent.click(await within(list).findByRole("option", { name: "Sailing (Homebrew)" }));
+    fireEvent.click(sailing);
 
     await waitFor(() => expect(nameField()).toHaveValue("Sailing (copy)"));
     expect(jsonEntry()).toEqual({ name: "Sailing (copy)", ability: "wis" });
+  });
+
+  it("copies a catalog skill from the rules lookup", async () => {
+    stubApi([{ type: "skill", name: "Athletics", source: "XPHB", edition: "one" }], {
+      "/api/homebrew/skills": [],
+      "/api/catalog/skill/Athletics/XPHB": {
+        json: { name: "Athletics", source: "XPHB", page: 14, ability: "str" },
+      },
+    });
+    renderEditor("skills");
+
+    fireEvent.click(screen.getByRole("combobox", { name: "Copy from" }));
+    const list = await screen.findByRole("listbox", { name: "Copy from" });
+    fireEvent.click(await within(list).findByRole("option", { name: "Athletics (XPHB)" }));
+
+    await waitFor(() => expect(nameField()).toHaveValue("Athletics (copy)"));
+    expect(jsonEntry()).toEqual({ name: "Athletics (copy)", ability: "str" });
+  });
+
+  it("copies a catalog class without its references to features it does not bring", async () => {
+    stubApi([{ type: "class", name: "Fighter", source: "XPHB", edition: "one" }], {
+      "/api/classes/Fighter/XPHB": {
+        json: {
+          name: "Fighter",
+          source: "XPHB",
+          hd: { number: 1, faces: 10 },
+          classFeatures: ["Second Wind|Fighter|XPHB|1"],
+          subclassTitle: "Fighter Subclass",
+        },
+      },
+      "/api/homebrew/classes": [],
+    });
+    renderEditor("classes");
+
+    await pickHit(/Fighter/);
+
+    await waitFor(() => expect(nameField()).toHaveValue("Fighter (copy)"));
+    expect(jsonEntry()).toEqual({ name: "Fighter (copy)", hd: { number: 1, faces: 10 } });
   });
 
   it("offers no copy for a row being edited", () => {
