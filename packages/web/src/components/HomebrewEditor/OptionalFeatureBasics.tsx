@@ -15,7 +15,7 @@ import { ROW_BUTTON } from "./homebrewRows.ts";
 export function OptionalFeatureBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const [typed, setTyped] = useState("");
   const types = listAt(entry, "featureType").filter((each) => typeof each === "string");
-  const { data: listed = [] } = useSearchFeatureTypes();
+  const { data: listed = [], isError } = useSearchFeatureTypes();
   const options = [...new Set([...listed, ...types])].map((type) => ({
     value: type,
     label: featureTypeLabel(type),
@@ -47,6 +47,11 @@ export function OptionalFeatureBasics({ entry, onChange, errorFor }: HomebrewFor
           onChange={write}
         />
         {errorFor("featureType")}
+        {isError && (
+          <p role="alert" className="text-error text-row">
+            The feature type list did not load; type a code below.
+          </p>
+        )}
       </div>
       <div className={`${TEXT} flex items-end gap-2`}>
         <InputField

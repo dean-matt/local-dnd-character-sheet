@@ -256,7 +256,7 @@ const featureTypes = createRoute({
   summary: "Every optional-feature type the catalog or homebrew offers",
   description:
     "The catalog's types merged with those homebrew optional features use. Before a catalog " +
-    "is built, only the homebrew types are listed.",
+    "is built, only the homebrew types are listed; a catalog built from another schema is a 503.",
   responses: {
     200: {
       description: "Each type code, sorted",

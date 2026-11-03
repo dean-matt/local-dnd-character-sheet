@@ -2,8 +2,14 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { homebrewMonsterInputSchema } from "@dnd/catalog";
+import { SCHEMA_STAMP } from "@dnd/content/schema";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { publishSearchFixture, publishSpellLists } from "../db/queries/contentFixture.ts";
+import {
+  publishMeta,
+  publishSearchFixture,
+  publishSpellLists,
+} from "../db/queries/contentFixture.ts";
 import {
   deleteHomebrewOptionalFeature,
   insertHomebrewBackground,
@@ -17,6 +23,7 @@ import {
   insertHomebrewSpell,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
+import { onAppError } from "./errors.ts";
 import { emberImp } from "./homebrewFixtures.ts";
 import { searchRoutes } from "./search.ts";
 
@@ -167,6 +174,19 @@ describe("searchRoutes", () => {
       const res = await searchRoutes(dir, opened.homebrewDb).request("/search/feature-types");
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ featureTypes: ["XX"] });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("answers 503 for the feature types of a catalog built from another schema", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "search-feature-types-"));
+    try {
+      publishMeta(dir, [{ key: SCHEMA_STAMP.key, value: "built-from-another-schema" }]);
+      const app = new OpenAPIHono();
+      app.onError(onAppError);
+      app.route("/", searchRoutes(dir, opened.homebrewDb));
+      expect((await app.request("/search/feature-types")).status).toBe(503);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
