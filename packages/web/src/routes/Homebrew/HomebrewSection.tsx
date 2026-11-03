@@ -1,5 +1,5 @@
 import { Pencil, Plus, X } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useContext, useEffect, useId, useRef, useState } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { HomebrewEditor } from "../../components/HomebrewEditor/HomebrewEditor.tsx";
 import { ListRow } from "../../components/ListRow/ListRow.tsx";
@@ -14,6 +14,7 @@ import type { HomebrewRow, ListingKind } from "../../lib/homebrewListing.ts";
 import { firstLine } from "../../lib/rulesProse.ts";
 import { DeletedToast } from "./DeletedToast.tsx";
 import { DeleteHomebrewDialog } from "./DeleteHomebrewDialog.tsx";
+import { ExportSelection } from "./exportSelectionContext.ts";
 
 const ICON_BUTTON =
   "flex size-6 items-center justify-center rounded-control text-muted hover:bg-border";
@@ -26,6 +27,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
   const [deleting, setDeleting] = useState<HomebrewRow>();
   const [justDeleted, setJustDeleted] = useState<HomebrewRow>();
   const { undoOf, restore, resetRevert } = useHomebrewHistory();
+  const selection = useContext(ExportSelection);
   const id = useId();
   const rows = list.data ?? [];
   const edited = rows.find((row) => row.id === editing);
@@ -94,6 +96,15 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
               }
               controls={
                 <>
+                  {selection && (
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${row.name} for export`}
+                      checked={selection.isChosen({ collection: kind.collection, id: row.id })}
+                      onChange={() => selection.toggle({ collection: kind.collection, id: row.id })}
+                      className="size-4"
+                    />
+                  )}
                   <button
                     type="button"
                     aria-label={`Edit ${row.name}`}
@@ -139,6 +150,8 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
           onConfirm={() =>
             remove.mutate(deleting.id, {
               onSuccess: () => {
+                const chosen = { collection: kind.collection, id: deleting.id };
+                if (selection?.isChosen(chosen)) selection.toggle(chosen);
                 setJustDeleted(deleting);
                 restore.reset();
                 closeDelete();

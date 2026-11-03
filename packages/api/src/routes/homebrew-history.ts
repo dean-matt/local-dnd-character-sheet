@@ -188,8 +188,22 @@ const rowParams = idParam.extend({ collection: homebrewCollectionSchema });
 
 /** The input that would save `row` as it stands: its entry without the stamped source. */
 function inputOf({ json, edition, parent }: Row) {
-  const { source: _source, ...entry } = json as { source?: string };
+  const { source: _source, ...entry } = json as { source?: string; name: string };
   return { ...entry, edition, ...(parent && { parent }) };
+}
+
+const classParts = (db: HomebrewDb, collection: Collection, id: string) =>
+  collection === "classes"
+    ? {
+        features: listHomebrewClassFeatures(db, id),
+        resources: listHomebrewClassResources(db, id),
+      }
+    : undefined;
+
+/** A row as its kind's save would write it again, with a class's features and resource tables. */
+export function snapshotOf(db: HomebrewDb, collection: Collection, id: string) {
+  const row = KINDS[collection].get(db, id);
+  return row && { name: row.name, input: inputOf(row), ...classParts(db, collection, id) };
 }
 
 const readHistory = createRoute({
@@ -274,13 +288,6 @@ export function homebrewHistoryRoutes(
 ) {
   const routes = new OpenAPIHono();
   const keyOf = (collection: string, id: string) => `${collection}/${id}`;
-  const classParts = (collection: Collection, id: string) =>
-    collection === "classes"
-      ? {
-          features: listHomebrewClassFeatures(db, id),
-          resources: listHomebrewClassResources(db, id),
-        }
-      : undefined;
   // Unbounded: one entry per row saved or deleted since the API started. A single user's
   // session keeps these small; cap them like `undo_log` if that stops holding.
   const earlier = new Map<string, Earlier>();
@@ -304,23 +311,16 @@ export function homebrewHistoryRoutes(
       return next();
     }
     const key = keyOf(collection.data, id);
-    const before = KINDS[collection.data].get(db, id);
-    const parts = classParts(collection.data, id);
+    const before = snapshotOf(db, collection.data, id);
     await next();
     if (!before) return;
+    const { name, ...held } = before;
     if (c.req.method === "PUT" && c.res.status === 200 && !c.req.header(REVERT_HEADER)) {
-      earlier.set(key, { collection: collection.data, id, input: inputOf(before), ...parts });
+      earlier.set(key, { collection: collection.data, id, ...held });
     }
     if (c.req.method === "DELETE" && c.res.status === 204) {
       earlier.delete(key);
-      deleted.set(key, {
-        collection: collection.data,
-        id,
-        name: before.name,
-        input: inputOf(before),
-        ...parts,
-        deletedAt: new Date(),
-      });
+      deleted.set(key, { collection: collection.data, id, name, ...held, deletedAt: new Date() });
     }
   });
 
@@ -332,7 +332,7 @@ export function homebrewHistoryRoutes(
     routes.use(`/homebrew/classes/:id/${part}`, async (c, next) => {
       if (c.req.method !== "PUT" || c.req.header(REVERT_HEADER)) return next();
       const id = c.req.param("id");
-      const parts = classParts("classes", id);
+      const parts = classParts(db, "classes", id);
       await next();
       if (c.res.status !== 200) return;
       const key = keyOf("classes", id);

@@ -19,6 +19,7 @@ import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
 import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 import { Sidebar, type SidebarProps } from "../Sidebar/Sidebar.tsx";
 import { SidebarFrame } from "../SidebarFrame.tsx";
+import { ExportSelectionProvider } from "./ExportSelectionProvider.tsx";
 
 const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
   items: Swords,
@@ -47,14 +48,19 @@ const FOOTER: SidebarProps["items"] = [
   { to: "/homebrew/deleted", label: "Recently deleted", icon: Trash2 },
 ];
 
-/** The Homebrew page: a rail of its kinds beside the open one, whose list is the outlet. */
+/**
+ * The Homebrew page: a rail of its kinds beside the open kind's list, and an export of the
+ * entries chosen across kinds.
+ */
 export function HomebrewLayout() {
   return (
     <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} footerItems={FOOTER} />}>
       <div className="min-w-0 flex-1 px-gutter py-6">
         <section className="flex max-w-6xl flex-col gap-4">
           <h1 className="sr-only">Homebrew</h1>
-          <Outlet />
+          <ExportSelectionProvider>
+            <Outlet />
+          </ExportSelectionProvider>
         </section>
       </div>
     </SidebarFrame>
