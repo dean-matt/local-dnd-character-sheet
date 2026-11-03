@@ -17,9 +17,9 @@ export interface MechanicsMenuProps {
 const entryLink = "block rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle";
 
 /**
- * The top bar's Mechanics menu: a hand-picked list of the catalog's kinds, each opening the
- * search page filtered to it, then "All types…" opening it unfiltered. Three columns, filled
- * top to bottom, hold the whole list in an ordinary window; a window shorter than the menu scrolls it. From a
+ * The top bar's Mechanics menu: an alphabetical list of the catalog's kinds, each opening the
+ * search page filtered to it, then "All types…" opening it unfiltered. Three columns, filled top to
+ * bottom, hold the whole list in an ordinary window; a window shorter than the menu scrolls it. From a
  * sheet, each link carries the character to the search page, as the search's own link does.
  */
 export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
@@ -71,7 +71,7 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
             <Link
               to={sheet ? `/search?${new URLSearchParams(from)}` : "/search"}
               onClick={onClose}
-              className={`${entryLink}`}
+              className={entryLink}
             >
               All types…
             </Link>

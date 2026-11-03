@@ -1,8 +1,7 @@
 import { Navigate } from "react-router";
-import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
+import { DEFAULT_KIND } from "../../lib/homebrewListing.ts";
 
-/** `/homebrew` opens the kind the sidebar lists first. */
+/** `/homebrew` opens the default kind. */
 export function HomebrewIndex() {
-  const [first] = Object.keys(LISTING_KINDS);
-  return <Navigate to={`/homebrew/${first}`} replace />;
+  return <Navigate to={`/homebrew/${DEFAULT_KIND}`} replace />;
 }

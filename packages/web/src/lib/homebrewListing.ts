@@ -150,6 +150,9 @@ const monsters: ListingKind<z.infer<typeof homebrewMonsterRecordSchema>> = {
   },
 };
 
+/** The kind `/homebrew` opens, whatever the order below. */
+export const DEFAULT_KIND: HomebrewCollection = "items";
+
 /** Each kind, keyed alphabetically by heading, the order the Homebrew menu and sidebar list them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
   backgrounds: {
