@@ -1,13 +1,20 @@
+import { useState } from "react";
 import { InputField } from "../InputField.tsx";
+import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { type HomebrewFormProps, recordAt, typedInteger, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, SHORT, TEXT, WHOLE } from "./homebrewGrid.ts";
+import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
 import {
   armorClassIsProse,
+  type ExtraArmorClass,
+  extraArmorClasses,
   firstArmorClass,
+  hasProseExtraArmorClass,
   MONSTER_SPEED_MODES,
   type MonsterSpeedMode,
   speedFeet,
   withArmorClass,
+  withExtraArmorClasses,
   withSpeed,
 } from "./monsterShapes.ts";
 
@@ -20,9 +27,9 @@ const SPEED_LABELS: Record<MonsterSpeedMode, string> = {
 };
 
 /**
- * A homebrew monster's armor class, hit points and speed. The first armor class and the
- * average hit points are the form's; a list of armor classes, a stated source or hit points
- * written as prose stay as written and are edited in JSON.
+ * A homebrew monster's armor classes, hit points and speed. Armor classes and the average hit
+ * points are the form's; an armor class or hit points written as prose stay as written and
+ * are edited in JSON.
  */
 export function MonsterCombat({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
@@ -34,7 +41,15 @@ export function MonsterCombat({ entry, onChange, errorFor }: HomebrewFormProps) 
     );
     set("hp", Object.keys(next).length > 0 ? next : undefined);
   };
-  const prose = armorClassIsProse(entry.ac) || hp.special !== undefined;
+  const [extras, setExtras] = useState(() => extraArmorClasses(entry.ac));
+  const writeExtras = (next: ExtraArmorClass[]) => {
+    setExtras(next);
+    set("ac", withExtraArmorClasses(entry.ac, next));
+  };
+  const replace = (index: number, change: Partial<ExtraArmorClass>) =>
+    writeExtras(extras.map((row, at) => (at === index ? { ...row, ...change } : row)));
+  const prose =
+    armorClassIsProse(entry.ac) || hasProseExtraArmorClass(entry.ac) || hp.special !== undefined;
   return (
     <div className={FORM_GRID}>
       <div className={SHORT}>
@@ -84,6 +99,41 @@ export function MonsterCombat({ entry, onChange, errorFor }: HomebrewFormProps) 
           />
         </div>
       ))}
+      {extras.map((row, index) => {
+        const label = `Armor class ${index + 2}`;
+        return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: a row has no id, and the list only grows or shrinks at a row the user picked.
+          <div key={index} className={`${WHOLE} ${ROW}`}>
+            <InputField
+              label={label}
+              type="number"
+              min={0}
+              step={1}
+              value={row.ac ?? ""}
+              onChange={(event) => replace(index, { ac: typedInteger(event.target.value) })}
+            />
+            <InputField
+              label={`${label} source`}
+              placeholder="natural armor"
+              value={row.source}
+              onChange={(event) => replace(index, { source: event.target.value })}
+            />
+            <HomebrewRowRemove
+              name={label.toLowerCase()}
+              onRemove={() => writeExtras(extras.filter((_, at) => at !== index))}
+            />
+          </div>
+        );
+      })}
+      <div className={WHOLE}>
+        <button
+          type="button"
+          onClick={() => writeExtras([...extras, { ac: undefined, source: "", stored: undefined }])}
+          className={ROW_BUTTON}
+        >
+          Add an armor class
+        </button>
+      </div>
       {errorFor("speed") && (
         <p role="alert" className={`${WHOLE} text-error text-row`}>
           {errorFor("speed")}

@@ -24,7 +24,9 @@ where a catalog one opens through `/catalog`. `{@creature Name|HB}` resolves to 
 
 The Homebrew page edits a monster step by step or as JSON, and its Preview tab renders the
 stat block through `monsterEntries`, as a catalog monster opens. The form sets the name, sizes,
-creature type, challenge rating, the first armor class, average hit points and hit dice, the
-five speeds and the six scores; the API's reasons show beside the field. Alignment, senses,
-traits, actions and a type's tags stay as written and are edited in JSON. The Rules control
-picks the edition, and the API refuses a repeated name within it.
+creature type and its tags, alignment, challenge rating, every armor class with its source,
+average hit points and hit dice, the five speeds, senses, languages and the six scores; the
+API's reasons show beside the field. An alignment that is a range, a chance or prose, a type's
+swarm size, a prose armor class, a tag with a prefix, the passive Perception score, traits and
+actions stay as written and are edited in JSON. The Rules control picks the edition, and the
+API refuses a repeated name within it.
