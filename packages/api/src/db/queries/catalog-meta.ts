@@ -22,6 +22,16 @@ function readBuiltCatalog<T>(dataDir: string, read: (db: Database.Database) => T
   }
 }
 
+/** Every feature type a catalog optional feature is offered under, sorted; none before a build. */
+export function getCatalogFeatureTypes(dataDir: string): string[] {
+  return (readBuiltCatalog(dataDir, (db) =>
+    db
+      .prepare("SELECT DISTINCT feature_type FROM optional_feature_types ORDER BY feature_type")
+      .pluck()
+      .all(),
+  ) ?? []) as string[];
+}
+
 /** `content.db`'s `meta` table — what `pnpm content:build` stamped it with. */
 export function getCatalogMeta(dataDir: string): CatalogMetaRow[] | undefined {
   return readBuiltCatalog(

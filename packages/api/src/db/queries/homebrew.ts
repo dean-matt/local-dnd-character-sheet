@@ -127,6 +127,15 @@ export function listHomebrewSearchSources(db: HomebrewDb): string[] {
   return held ? [HOMEBREW_SOURCE] : [];
 }
 
+/** Every feature type a homebrew optional feature is offered under, once each. */
+export function listHomebrewFeatureTypes(db: HomebrewDb): string[] {
+  return db
+    .selectDistinct({ featureType: homebrewOptionalFeatureTypes.featureType })
+    .from(homebrewOptionalFeatureTypes)
+    .all()
+    .map((row) => row.featureType);
+}
+
 /**
  * Every homebrew race and class name by id, for the summaries a character list computes on
  * read. Ids are random UUIDs in every table, so one map spans both kinds.

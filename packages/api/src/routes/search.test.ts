@@ -2,9 +2,16 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { homebrewMonsterInputSchema } from "@dnd/catalog";
+import { SCHEMA_STAMP } from "@dnd/content/schema";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { publishSearchFixture, publishSpellLists } from "../db/queries/contentFixture.ts";
 import {
+  publishMeta,
+  publishSearchFixture,
+  publishSpellLists,
+} from "../db/queries/contentFixture.ts";
+import {
+  deleteHomebrewOptionalFeature,
   insertHomebrewBackground,
   insertHomebrewClass,
   insertHomebrewDeity,
@@ -16,6 +23,7 @@ import {
   insertHomebrewSpell,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
+import { onAppError } from "./errors.ts";
 import { emberImp } from "./homebrewFixtures.ts";
 import { searchRoutes } from "./search.ts";
 
@@ -120,6 +128,68 @@ describe("searchRoutes", () => {
       await routes.request("/search?type=monster&source=HB&q=elemental")
     ).json();
     expect(onlyHb.total).toBe(2);
+  });
+
+  it("lists each feature type once, the catalog's and homebrew's merged, and drops a homebrew-only one with its last feature", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "search-feature-types-"));
+    try {
+      publishSearchFixture(dir, {
+        optionalFeatures: [
+          { name: "Agonizing Blast", source: "PHB", edition: "classic", json: "{}" },
+          { name: "Dueling", source: "PHB", edition: "classic", json: "{}" },
+        ],
+        optionalFeatureTypes: [
+          { name: "Agonizing Blast", source: "PHB", feature_type: "EI" },
+          { name: "Dueling", source: "PHB", feature_type: "FS:F" },
+          { name: "Dueling", source: "PHB", feature_type: "FS:P" },
+        ],
+      });
+      const both = searchRoutes(dir, opened.homebrewDb);
+      const list = async () =>
+        (await (await both.request("/search/feature-types")).json()).featureTypes;
+      expect(await list()).toEqual(["EI", "FS:F", "FS:P"]);
+
+      insertHomebrewOptionalFeature(opened.homebrewDb, "o", {
+        name: "Ember Lore",
+        edition: "classic",
+        featureType: ["EI", "XX"],
+      });
+      expect(await list()).toEqual(["EI", "FS:F", "FS:P", "XX"]);
+
+      deleteHomebrewOptionalFeature(opened.homebrewDb, "o");
+      expect(await list()).toEqual(["EI", "FS:F", "FS:P"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("lists only the homebrew feature types while no catalog is built", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "search-feature-types-"));
+    try {
+      insertHomebrewOptionalFeature(opened.homebrewDb, "o", {
+        name: "Ember Lore",
+        edition: "classic",
+        featureType: ["XX"],
+      });
+      const res = await searchRoutes(dir, opened.homebrewDb).request("/search/feature-types");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ featureTypes: ["XX"] });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("answers 503 for the feature types of a catalog built from another schema", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "search-feature-types-"));
+    try {
+      publishMeta(dir, [{ key: SCHEMA_STAMP.key, value: "built-from-another-schema" }]);
+      const app = new OpenAPIHono();
+      app.onError(onAppError);
+      app.route("/", searchRoutes(dir, opened.homebrewDb));
+      expect((await app.request("/search/feature-types")).status).toBe(503);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("lists a homebrew optional feature beside the catalog's, narrowed by feature type", async () => {

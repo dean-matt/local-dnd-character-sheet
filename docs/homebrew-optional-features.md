@@ -31,7 +31,8 @@ catalog hit's are.
 
 The Homebrew page edits a feature step by step or as JSON: a name, feature types,
 prerequisites and rules text, with the Rules control choosing the edition. A type is picked
-from the codes `featureTypeLabel` names or typed as a new one. The prerequisite step shows a
+from `/search/feature-types` (the catalog's types plus homebrew's, homebrew's alone before a
+build), labelled by `featureTypeLabel` where it names one, or typed as a new one. The prerequisite step shows a
 level (in a named class), a pact boon, spells known and options held; any other part stays
 as written and is edited in JSON. A delete a character blocks lists its holders, and a name
 another feature holds in a shared type is refused with the API's reason.

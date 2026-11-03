@@ -210,6 +210,7 @@ export type { CatalogSource } from "./source.ts";
 export {
   catalogSourcesResponseSchema,
   HOMEBREW_SOURCE,
+  searchFeatureTypesResponseSchema,
   searchSourcesResponseSchema,
   searchTypesResponseSchema,
 } from "./source.ts";
