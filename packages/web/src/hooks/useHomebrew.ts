@@ -12,10 +12,7 @@ import { isRecord } from "../lib/entryGuards.ts";
  * The path segment of each kind's routes, `/homebrew/{collection}`, of the kinds the app
  * edits.
  */
-export type HomebrewCollection = Exclude<
-  z.infer<typeof homebrewCollectionSchema>,
-  "class-resources"
->;
+export type HomebrewCollection = z.infer<typeof homebrewCollectionSchema>;
 
 /**
  * One homebrew collection under `/homebrew/{collection}`: its rows, a save that creates a

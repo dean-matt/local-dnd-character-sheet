@@ -54,6 +54,8 @@ describe("homebrewHistoryRoutes", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
   let app: OpenAPIHono;
+  let refusePath: string | undefined;
+  let sent: string[] = [];
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "homebrew-history-"));
@@ -97,7 +99,12 @@ describe("homebrewHistoryRoutes", () => {
     app = new OpenAPIHono();
     app.route(
       "/",
-      homebrewHistoryRoutes(homebrewDb, dataDir, (path, init) => app.request(path, init)),
+      homebrewHistoryRoutes(homebrewDb, dataDir, async (path, init) => {
+        sent.push(path);
+        if (path !== refusePath) return app.request(path, init);
+        refusePath = undefined;
+        return Response.json({ error: "refused" }, { status: 409 });
+      }),
     );
     app.route("/", homebrewItemsRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewSpellsRoutes(homebrewDb, charactersDb));
@@ -114,6 +121,8 @@ describe("homebrewHistoryRoutes", () => {
   });
 
   afterEach(() => {
+    refusePath = undefined;
+    sent = [];
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
   });
@@ -256,33 +265,108 @@ describe("homebrewHistoryRoutes", () => {
     );
   });
 
-  it("reverts a replace of a class's resource tables, then holds nothing", async () => {
-    const created = await (await app.request("/homebrew/classes", json(warden()))).json();
+  describe("a class's features and resource tables", () => {
+    const feature = (name: string, level = 1) => ({ name, level, entries: [`${name} text`] });
     const table = (name: string) => ({ name, maximums: Array(20).fill(1) });
-    const send = (body: unknown) =>
-      app.request(`/homebrew/classes/${created.id}/resources`, put(body));
-    await send([table("Ki")]);
-    await send([table("Rage")]);
-    expect((await history()).reversible).toContainEqual({
-      collection: "class-resources",
-      id: created.id,
+    const create = async () => (await app.request("/homebrew/classes", json(warden()))).json();
+    const saveFeatures = (id: string, body: unknown) =>
+      app.request(`/homebrew/classes/${id}/features`, put(body));
+    const saveResources = (id: string, body: unknown) =>
+      app.request(`/homebrew/classes/${id}/resources`, put(body));
+    const revert = (id: string) => app.request(`/homebrew/classes/${id}/revert`, post);
+
+    it("reverts the row, features and resources of one save together", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveResources(created.id, [table("Ki")]);
+      const before = await read(`/homebrew/classes/${created.id}`);
+
+      await app.request(`/homebrew/classes/${created.id}`, put({ ...warden(), name: "Renamed" }));
+      await saveFeatures(created.id, [feature("New"), feature("Other", 2)]);
+      await saveResources(created.id, [table("Rage")]);
+
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}`)).toEqual(before);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
+      expect((await history()).reversible).toEqual([]);
     });
 
-    const res = await app.request(`/homebrew/class-resources/${created.id}/revert`, post);
-    expect(res.status).toBe(204);
-    expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
-    expect((await history()).reversible).toEqual([]);
-  });
+    it("reverts a save that changed only the features", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      expect((await history()).reversible).toContainEqual({
+        collection: "classes",
+        id: created.id,
+      });
 
-  it("restores a deleted class with its resource tables and offers no revert meanwhile", async () => {
-    const created = await (await app.request("/homebrew/classes", json(warden()))).json();
-    const tables = [{ name: "Ki", maximums: Array(20).fill(1) }];
-    await app.request(`/homebrew/classes/${created.id}/resources`, put(tables));
-    await app.request(`/homebrew/classes/${created.id}`, { method: "DELETE" });
-    expect((await history()).reversible).toEqual([]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([]);
+      expect((await history()).reversible).toEqual([]);
+    });
 
-    expect((await app.request(`/homebrew/classes/${created.id}/restore`, post)).status).toBe(204);
-    expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual(tables);
+    it("reverts a save that changed only the resource tables", async () => {
+      const created = await create();
+      await saveResources(created.id, [table("Ki")]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([]);
+    });
+
+    it("keeps the entry when a part's revert fails, and a retry resumes", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveResources(created.id, [table("Ki")]);
+      await app.request(`/homebrew/classes/${created.id}`, put({ ...warden(), name: "Renamed" }));
+      await saveFeatures(created.id, [feature("New")]);
+      await saveResources(created.id, [table("Rage")]);
+
+      refusePath = `/homebrew/classes/${created.id}/features`;
+      expect((await revert(created.id)).status).toBe(409);
+      expect((await read(`/homebrew/classes/${created.id}`)).name).toBe(warden().name);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Rage")]);
+      expect((await history()).reversible).toHaveLength(1);
+
+      sent = [];
+      expect((await revert(created.id)).status).toBe(204);
+      expect(sent.slice(0, 2)).toEqual([
+        `/homebrew/classes/${created.id}/features`,
+        `/homebrew/classes/${created.id}/resources`,
+      ]);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
+      expect((await history()).reversible).toEqual([]);
+    });
+
+    it("returns to before the first of two part-only saves", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveFeatures(created.id, [feature("Second")]);
+      await saveFeatures(created.id, [feature("Third")]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([]);
+    });
+
+    it("keeps the row save's snapshot through later part-only saves", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await app.request(`/homebrew/classes/${created.id}`, put({ ...warden(), name: "Renamed" }));
+      await saveFeatures(created.id, [feature("Second")]);
+      await saveFeatures(created.id, [feature("Third")]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
+    });
+
+    it("restores a deleted class with its features and resource tables", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveResources(created.id, [table("Ki")]);
+      await app.request(`/homebrew/classes/${created.id}`, { method: "DELETE" });
+      expect((await history()).reversible).toEqual([]);
+
+      expect((await app.request(`/homebrew/classes/${created.id}/restore`, post)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
+    });
   });
 
   it("holds nothing for a save the kind's route refused", async () => {
