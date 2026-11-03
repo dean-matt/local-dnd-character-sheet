@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   homebrewClassDetailSchema,
+  homebrewClassFeaturesInputSchema,
   homebrewClassFeaturesSchema,
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
@@ -177,7 +178,7 @@ const replaceFeatures = createRoute({
   summary: "Replace a homebrew class's features",
   request: {
     params: idParam,
-    body: { content: { "application/json": { schema: homebrewClassFeaturesSchema } } },
+    body: { content: { "application/json": { schema: homebrewClassFeaturesInputSchema } } },
   },
   responses: {
     200: {

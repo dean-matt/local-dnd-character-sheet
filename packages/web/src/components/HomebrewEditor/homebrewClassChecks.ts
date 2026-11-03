@@ -1,6 +1,6 @@
 import {
   casterProgressionSchema,
-  homebrewClassFeaturesSchema,
+  homebrewClassFeaturesInputSchema,
   homebrewClassInputSchema,
   homebrewClassResourcesSchema,
 } from "@dnd/catalog";
@@ -36,6 +36,6 @@ export const homebrewClassFormSchema = homebrewClassInputSchema.extend({
       grantProblem(proficienciesIn({ multiclassing: value }, true)?.skills, CLASS_SKILL_SPEC),
   ),
   casterProgression: casterProgressionSchema.in.shape.casterProgression,
-  features: homebrewClassFeaturesSchema.optional(),
+  features: homebrewClassFeaturesInputSchema.optional(),
   resources: homebrewClassResourcesSchema.optional(),
 });

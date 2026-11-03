@@ -240,6 +240,22 @@ describe("homebrewClassesRoutes", () => {
       expect((await put(created.id, [feature, feature])).status).toBe(400);
     });
 
+    it.each(["|", "}"])("rejects a feature name containing %s and stores nothing", async (bad) => {
+      const created = await (await routes.request("/homebrew/classes", json(warden()))).json();
+      await put(created.id, [feature]);
+
+      const name = `Fury ${bad} Rage`;
+      const res = await put(created.id, [{ ...feature, name }]);
+
+      expect(res.status).toBe(400);
+      const { error } = await res.json();
+      expect(JSON.parse(error.message)[0].message).toBe(
+        `Feature "${name}" cannot contain "${bad}"`,
+      );
+      const stored = await routes.request(`/homebrew/classes/${created.id}/features`);
+      expect(await stored.json()).toEqual([feature]);
+    });
+
     it("404s for a class that does not exist", async () => {
       expect((await routes.request("/homebrew/classes/missing/features")).status).toBe(404);
       expect((await put("missing", [feature])).status).toBe(404);
