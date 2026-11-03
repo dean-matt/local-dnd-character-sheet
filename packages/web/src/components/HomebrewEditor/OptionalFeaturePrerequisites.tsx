@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { isRecord } from "../../lib/entryGuards.ts";
 import { InputField } from "../InputField.tsx";
 import { type HomebrewFormProps, listAt, typedInteger, withField } from "./homebrewEntry.ts";
@@ -32,8 +33,14 @@ function levelOf(part: Alternative): { level?: number; className: string } {
   };
 }
 
-const levelValue = (level: number | undefined, className: string) =>
-  level === undefined ? undefined : className ? { level, class: { name: className } } : level;
+/** The level back as written, keeping whatever else its object or its class carries. */
+function levelValue(part: Alternative, level: number | undefined, className: string) {
+  if (level === undefined) return undefined;
+  if (!className) return level;
+  const written = isRecord(part.level) ? part.level : {};
+  const klass = isRecord(written.class) ? written.class : {};
+  return { ...written, level, class: { ...klass, name: className } };
+}
 
 /**
  * A homebrew optional feature's prerequisites as alternatives, any one of which qualifies:
@@ -42,6 +49,7 @@ const levelValue = (level: number | undefined, className: string) =>
  */
 export function OptionalFeaturePrerequisites({ entry, onChange, errorFor }: HomebrewFormProps) {
   const alternatives = listAt(entry, "prerequisite");
+  const [removals, setRemovals] = useState(0);
   const write = (next: unknown[]) =>
     onChange(withField(entry, "prerequisite", next.length > 0 ? next : undefined));
   const error = errorFor("prerequisite");
@@ -66,8 +74,8 @@ export function OptionalFeaturePrerequisites({ entry, onChange, errorFor }: Home
             ),
           );
         return (
-          // biome-ignore lint/suspicious/noArrayIndexKey: a prerequisite has no id, and the list only grows or shrinks at one the user picked.
-          <fieldset key={at} className={ALTERNATIVE}>
+          // biome-ignore lint/suspicious/noArrayIndexKey: a prerequisite has no id; a removal remounts them so the uncontrolled fields restart from what is stored.
+          <fieldset key={`${removals}-${at}`} className={ALTERNATIVE}>
             <legend className="px-1 font-semibold text-row">Prerequisite {position}</legend>
             <div className={FORM_GRID}>
               <div className={SHORT}>
@@ -79,7 +87,7 @@ export function OptionalFeaturePrerequisites({ entry, onChange, errorFor }: Home
                   step={1}
                   value={level ?? ""}
                   onChange={(event) =>
-                    set("level", levelValue(typedInteger(event.target.value), className))
+                    set("level", levelValue(part, typedInteger(event.target.value), className))
                   }
                 />
               </div>
@@ -89,7 +97,9 @@ export function OptionalFeaturePrerequisites({ entry, onChange, errorFor }: Home
                   placeholder="Warlock"
                   disabled={level === undefined}
                   value={className}
-                  onChange={(event) => set("level", levelValue(level, event.target.value.trim()))}
+                  onChange={(event) =>
+                    set("level", levelValue(part, level, event.target.value.trim()))
+                  }
                 />
               </div>
               <div className={SHORT}>
@@ -124,7 +134,10 @@ export function OptionalFeaturePrerequisites({ entry, onChange, errorFor }: Home
             )}
             <button
               type="button"
-              onClick={() => write(alternatives.filter((_, index) => index !== at))}
+              onClick={() => {
+                setRemovals(removals + 1);
+                write(alternatives.filter((_, index) => index !== at));
+              }}
               className={`self-start ${ROW_BUTTON}`}
             >
               Remove prerequisite {position}

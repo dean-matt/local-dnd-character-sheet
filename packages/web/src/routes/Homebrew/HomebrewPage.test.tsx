@@ -3892,6 +3892,50 @@ describe("Homebrew optional features", () => {
     });
   });
 
+  it("keeps a prerequisite class's source when its level is edited", async () => {
+    const withClass = {
+      ...stored,
+      json: {
+        ...stored.json,
+        prerequisite: [{ level: { level: 5, class: { name: "Warlock", source: "XPHB" } } }],
+      },
+    };
+    const fetchMock = stubApi({ "optional-features": [withClass] }, [
+      { status: 200, body: withClass },
+    ]);
+    renderPage("optional-features");
+
+    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await settled();
+    stepTo("Prerequisites");
+    fireEvent.change(field("spinbutton", "Level"), { target: { value: "9" } });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]?.body).toMatchObject({
+      prerequisite: [{ level: { level: 9, class: { name: "Warlock", source: "XPHB" } } }],
+    });
+  });
+
+  it("shows the remaining prerequisite's spells after another is removed", async () => {
+    const two = {
+      ...stored,
+      json: {
+        ...stored.json,
+        prerequisite: [{ spell: ["hex"] }, { spell: ["eldritch blast#c"] }],
+      },
+    };
+    stubApi({ "optional-features": [two] });
+    renderPage("optional-features");
+
+    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await settled();
+    stepTo("Prerequisites");
+    click("Remove prerequisite 1");
+
+    expect(field("textbox", "Spells known")).toHaveValue("eldritch blast#c");
+  });
+
   it("shows the form's changes in JSON mode and JSON's in the form", async () => {
     stubApi(lists);
     renderPage("optional-features");
