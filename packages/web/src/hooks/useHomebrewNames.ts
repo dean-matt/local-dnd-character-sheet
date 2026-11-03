@@ -3,6 +3,7 @@ import {
   homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
   homebrewRaceRecordSchema,
+  homebrewSubclassRecordSchema,
 } from "@dnd/catalog";
 import type { HomebrewNames } from "@dnd/character";
 import { useMemo } from "react";
@@ -19,8 +20,8 @@ export function useHomebrewNames(): HomebrewNames {
   const classes = useHomebrew("classes", homebrewClassRecordSchema).list.data;
   const backgrounds = useHomebrew("backgrounds", homebrewBackgroundRecordSchema).list.data;
   const feats = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
-  // A query key caches one parse of its rows, so these parse them as the Homebrew page does.
-  const subclasses = useHomebrew("subclasses", LISTING_KINDS.subclasses.recordSchema).list.data;
+  const subclasses = useHomebrew("subclasses", homebrewSubclassRecordSchema).list.data;
+  // A query key caches one parse of its rows, so this parses them as the Homebrew page does.
   const subraces = useHomebrew("subraces", LISTING_KINDS.subraces.recordSchema).list.data;
   return useMemo(
     () =>
