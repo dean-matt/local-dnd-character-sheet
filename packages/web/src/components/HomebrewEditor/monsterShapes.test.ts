@@ -4,6 +4,8 @@ import {
   armorClassIsProse,
   extraArmorClasses,
   firstArmorClass,
+  isPlainTextRow,
+  moved,
   ratingOf,
   speedFeet,
   typeTags,
@@ -75,6 +77,29 @@ describe("monster shapes", () => {
     expect(withStrings(["a"], [])).toBeUndefined();
   });
 
+  it("keeps the places of entries the form does not edit", () => {
+    const prefixed = { tag: "dwarf", prefix: "shield" };
+    expect(withStrings(["a", prefixed, "b"], ["x", "y"])).toEqual(["x", prefixed, "y"]);
+    expect(withStrings(["a", prefixed, "b"], ["x"])).toEqual(["x", prefixed]);
+    expect(withStrings([prefixed, "a"], ["a", "b"])).toEqual([prefixed, "a", "b"]);
+    expect(withStrings([prefixed], ["a"])).toEqual([prefixed, "a"]);
+  });
+
+  it("tells a plain text row from one the form leaves to JSON", () => {
+    expect(isPlainTextRow({ name: "Bite", entries: ["a"], hidden: true })).toBe(true);
+    expect(isPlainTextRow({ name: "Bite" })).toBe(true);
+    expect(isPlainTextRow({ name: "Bite", entries: [{ type: "list", items: [] }] })).toBe(false);
+    expect(isPlainTextRow("Bite")).toBe(false);
+    expect(isPlainTextRow({ name: 3 })).toBe(false);
+  });
+
+  it("moves a row, leaving the list alone where there is nowhere to go", () => {
+    expect(moved(["a", "b", "c"], 0, 1)).toEqual(["b", "a", "c"]);
+    const list = ["a", "b"];
+    expect(moved(list, 0, -1)).toBe(list);
+    expect(moved(list, 1, 2)).toBe(list);
+  });
+
   it("edits the armor classes after the first with their sources", () => {
     const ac = [
       { ac: 13, from: ["natural armor"] },
@@ -90,8 +115,8 @@ describe("monster shapes", () => {
     expect(withExtraArmorClasses(ac, rows)).toEqual([
       { ac: 13, from: ["natural armor"] },
       { ac: 17, from: ["mage armor"], braces: true },
-      9,
       { special: "x" },
+      9,
     ]);
     expect(
       withExtraArmorClasses(ac, [{ ac: 12, source: "leather, shield", stored: undefined }]),

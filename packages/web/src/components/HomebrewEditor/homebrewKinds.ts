@@ -89,6 +89,12 @@ import { MonsterAbilityScores } from "./MonsterAbilityScores.tsx";
 import { MonsterBasics } from "./MonsterBasics.tsx";
 import { MonsterCombat } from "./MonsterCombat.tsx";
 import { MonsterSenses } from "./MonsterSenses.tsx";
+import {
+  MonsterActions,
+  MonsterLegendaryActions,
+  MonsterReactions,
+  MonsterTraits,
+} from "./MonsterTextBlocks.tsx";
 import { OptionalFeatureBasics } from "./OptionalFeatureBasics.tsx";
 import { OptionalFeaturePrerequisites } from "./OptionalFeaturePrerequisites.tsx";
 import { RaceAbilityScores } from "./RaceAbilityScores.tsx";
@@ -463,6 +469,10 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
       Fields: MonsterAbilityScores,
       keys: ["str", "dex", "con", "int", "wis", "cha"],
     },
+    { title: "Traits", Fields: MonsterTraits, keys: ["trait"] },
+    { title: "Actions", Fields: MonsterActions, keys: ["action"] },
+    { title: "Reactions", Fields: MonsterReactions, keys: ["reaction"] },
+    { title: "Legendary actions", Fields: MonsterLegendaryActions, keys: ["legendary"] },
   ],
   shownKeys: () => [
     "name",
@@ -475,6 +485,10 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
     "speed",
     "senses",
     "languages",
+    "trait",
+    "action",
+    "reaction",
+    "legendary",
     ...ABILITIES,
   ],
 };
