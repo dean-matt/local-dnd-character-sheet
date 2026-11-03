@@ -1,5 +1,6 @@
 import {
   catalogRowRecordSchema,
+  HOMEBREW_SOURCE,
   homebrewFeatRecordSchema,
   homebrewSubclassRecordSchema,
 } from "@dnd/catalog";
@@ -102,9 +103,11 @@ export function useEditionMismatches(): EditionMismatch[] {
   const homebrewRace = useRowAt(homebrewPath("races", race));
   const homebrewSubrace = useRowAt(homebrewPath("subraces", subrace));
   const homebrewBackground = useRowAt(homebrewPath("backgrounds", background));
+  // A homebrew deity has no edition, so it never mismatches.
   const deityRow = useRowAt(
-    deity &&
-      `/catalog/deity/${encodeURIComponent(deity.name)}/${encodeURIComponent(deity.source)}?qualifier=${encodeURIComponent(deity.pantheon)}`,
+    deity && deity.source !== HOMEBREW_SOURCE
+      ? `/catalog/deity/${encodeURIComponent(deity.name)}/${encodeURIComponent(deity.source)}?qualifier=${encodeURIComponent(deity.pantheon)}`
+      : undefined,
   );
   const other = otherThan(edition);
   const featsAllowed = takesFeats({ edition, houseRules });

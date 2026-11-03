@@ -24,6 +24,10 @@ and nowhere else.
 pantheon as `qualifier`. `{@deity name|HB|pantheon}` resolves to the deity, the first by
 pantheon where the tag names none.
 
+The deity picker, in creation and on Identity, offers these hits beside the catalog's and
+stores the `(name, "HB", pantheon)` citation. Identity tags a cited deity that
+`/homebrew/deities` lacks `Not found in homebrew`.
+
 ## Editor
 
 The Homebrew page edits a deity step by step or as JSON, with no Rules control, since a

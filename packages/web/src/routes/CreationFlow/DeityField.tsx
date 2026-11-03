@@ -29,8 +29,8 @@ export function DeityField() {
         placeholder="Choose a deity…"
         focusOnMount={moved}
         unavailableReason={deityUnavailable}
-        onPick={(ref, hit) => {
-          const deity = deityOf(ref, hit);
+        onPick={(_ref, hit) => {
+          const deity = deityOf(hit);
           if (deity) choose(deity);
         }}
       />
