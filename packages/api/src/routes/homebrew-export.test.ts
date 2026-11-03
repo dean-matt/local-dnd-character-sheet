@@ -96,6 +96,20 @@ describe("homebrewExportRoutes", () => {
     expect(homebrewFileSchema.parse(body).entries).toHaveLength(2);
   });
 
+  it("adds nothing for a subclass whose parent is a catalog class", async () => {
+    insertHomebrewSubclass(db, "sc1", {
+      name: "Oath of Ash",
+      parent: { name: "Paladin", source: "XPHB" },
+      edition: "one",
+    } as never);
+
+    const { body } = await exportRows([{ collection: "subclasses", id: "sc1" }]);
+
+    expect(
+      homebrewFileSchema.parse(body).entries.map(({ collection, id }) => `${collection}/${id}`),
+    ).toEqual(["subclasses/sc1"]);
+  });
+
   it("answers 404 naming a row that does not exist", async () => {
     const { status, body } = await exportRows([{ collection: "items", id: "gone" }]);
     expect(status).toBe(404);

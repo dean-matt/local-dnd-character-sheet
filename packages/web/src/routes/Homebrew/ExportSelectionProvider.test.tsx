@@ -58,10 +58,10 @@ const file = {
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
-function stubApi(exported: Response) {
+function stubApi(exported: Response | Promise<Response>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url === "/api/homebrew/export") return exported.clone();
+    if (url === "/api/homebrew/export") return (await exported).clone();
     if (init?.method === "DELETE") return new Response(null, { status: 204 });
     if (url === "/api/homebrew/items") return json(200, [sunblade]);
     if (url === "/api/homebrew/subclasses") return json(200, [hearthkeeper]);
@@ -122,7 +122,12 @@ describe("ExportSelectionProvider", () => {
     expect(screen.getByText("2 selected")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Export" }));
 
-    await waitFor(() => expect(click).toHaveBeenCalledOnce());
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Exported 3 entries to homebrew.json. Also added Warden (class), which a chosen entry needs as a parent.",
+      ),
+    );
+    expect(click).toHaveBeenCalledOnce();
     const post = fetchMock.mock.calls.find(([url]) => String(url) === "/api/homebrew/export");
     expect(JSON.parse(String(post?.[1]?.body))).toEqual({
       entries: [
@@ -134,9 +139,6 @@ describe("ExportSelectionProvider", () => {
     expect(link.download).toBe("homebrew.json");
     const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
     expect(JSON.parse(await blob.text())).toEqual(file);
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Exported 3 entries to homebrew.json. Also added Warden (class), which a chosen entry needs as a parent.",
-    );
     expect(screen.queryByText(/selected$/)).not.toBeInTheDocument();
   });
 
@@ -147,9 +149,31 @@ describe("ExportSelectionProvider", () => {
     await choose("Sunblade");
     fireEvent.click(screen.getByRole("button", { name: "Export" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Export failed: disk full");
+    expect(await screen.findByText("Export failed: disk full")).toBeInTheDocument();
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(click).not.toHaveBeenCalled();
+
+    await choose("Sunblade");
+    expect(screen.getByRole("alert")).toBeEmptyDOMElement();
+  });
+
+  it("keeps an entry chosen while the export was pending", async () => {
+    let resolve = (_res: Response) => {};
+    stubApi(new Promise<Response>((settle) => (resolve = settle)));
+    renderPage();
+
+    await choose("Sunblade");
+    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    await screen.findByRole("button", { name: "Exporting…" });
+    fireEvent.click(screen.getByRole("link", { name: "Subclasses" }));
+    await choose("Hearthkeeper");
+    resolve(json(200, { ...file, entries: [file.entries[0]] }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Exported 1 entry to homebrew.json."),
+    );
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Select Hearthkeeper for export" })).toBeChecked();
   });
 
   it("drops an entry from the choice once it is deleted", async () => {

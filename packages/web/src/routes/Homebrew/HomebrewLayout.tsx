@@ -48,7 +48,10 @@ const FOOTER: SidebarProps["items"] = [
   { to: "/homebrew/deleted", label: "Recently deleted", icon: Trash2 },
 ];
 
-/** The Homebrew page: a rail of its kinds beside the open one, whose list is the outlet, and the export of entries chosen across them. */
+/**
+ * The Homebrew page: a rail of its kinds beside the open kind's list, and an export of the
+ * entries chosen across kinds.
+ */
 export function HomebrewLayout() {
   return (
     <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} footerItems={FOOTER} />}>

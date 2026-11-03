@@ -8,9 +8,9 @@ import { type ChosenEntry, ExportSelection } from "./exportSelectionContext.ts";
 const keyOf = ({ collection, id }: ChosenEntry) => `${collection}/${id}`;
 
 /** What the export added that was not chosen: the homebrew parents of chosen subclasses and subraces. */
-function addedNote(file: HomebrewFile, chosen: Map<string, ChosenEntry>) {
+function addedNote(file: HomebrewFile, sent: Set<string>) {
   const added = file.entries
-    .filter((entry) => !chosen.has(keyOf(entry)))
+    .filter((entry) => !sent.has(keyOf(entry)))
     .map(({ collection, input }) => `${input.name} (${LISTING_KINDS[collection].noun})`);
   return added.length === 0
     ? ""
@@ -26,10 +26,16 @@ export function ExportSelectionProvider({ children }: { children: ReactNode }) {
   const [done, setDone] = useState("");
   const exportFile = useExportHomebrew();
 
+  // A reset while pending would detach the export's onSuccess, so only a failure is reset.
+  const clearError = () => {
+    if (exportFile.isError) exportFile.reset();
+  };
+
   const selection = {
     isChosen: (row: ChosenEntry) => chosen.has(keyOf(row)),
     toggle: (row: ChosenEntry) => {
       setDone("");
+      clearError();
       setChosen((before) => {
         const next = new Map(before);
         if (!next.delete(keyOf(row))) next.set(keyOf(row), row);
@@ -38,16 +44,24 @@ export function ExportSelectionProvider({ children }: { children: ReactNode }) {
     },
   };
 
-  const onExport = () =>
+  const clear = () => {
+    clearError();
+    setChosen(new Map());
+  };
+
+  const onExport = () => {
+    const sent = new Set(chosen.keys());
     exportFile.mutate([...chosen.values()], {
       onSuccess: (file) => {
         const count = file.entries.length;
         setDone(
-          `Exported ${count} ${count === 1 ? "entry" : "entries"} to homebrew.json.${addedNote(file, chosen)}`,
+          `Exported ${count} ${count === 1 ? "entry" : "entries"} to homebrew.json.${addedNote(file, sent)}`,
         );
-        setChosen(new Map());
+        // Entries chosen while the request was pending are not in the file, so they stay chosen.
+        setChosen((before) => new Map([...before].filter(([key]) => !sent.has(key))));
       },
     });
+  };
 
   return (
     <ExportSelection.Provider value={selection}>
@@ -65,7 +79,7 @@ export function ExportSelectionProvider({ children }: { children: ReactNode }) {
           </button>
           <button
             type="button"
-            onClick={() => setChosen(new Map())}
+            onClick={clear}
             className="rounded-control px-3 py-1 font-semibold text-muted hover:bg-subtle"
           >
             Clear
