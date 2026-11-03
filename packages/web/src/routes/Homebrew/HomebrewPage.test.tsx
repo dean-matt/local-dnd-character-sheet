@@ -4313,6 +4313,117 @@ describe("Homebrew monsters", () => {
     expect(field("spinbutton", "Hit points")).toHaveValue(40);
   });
 
+  describe("alignment, senses, languages, type tags and extra armor classes", () => {
+    const full = {
+      ...stored,
+      json: {
+        ...stored.json,
+        type: { type: "humanoid", tags: ["goblinoid"] },
+        alignment: ["NX", "E"],
+        ac: [
+          { ac: 13, from: ["natural armor"] },
+          { ac: 17, from: ["mage armor"] },
+        ],
+        senses: ["darkvision 60 ft."],
+        languages: ["Common", "Goblin"],
+        trait: [{ name: "Nimble", entries: ["Moves well."] }],
+      },
+    };
+    const openFull = async (writes: Parameters<typeof stubApi>[1] = []) => {
+      const fetchMock = stubApi({ monsters: [full] }, writes);
+      renderPage("monsters");
+      fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+      await settled();
+      return fetchMock;
+    };
+
+    it("saves a stored monster untouched", async () => {
+      const fetchMock = await openFull([{ status: 200, body: full }]);
+      click("Save");
+
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      const { source: _source, ...sent } = full.json;
+      expect(writesOf(fetchMock)[0]).toMatchObject({ body: { ...sent, edition: "one" } });
+    });
+
+    it("sets alignment and tags, and JSON mode shows them", async () => {
+      await openFull();
+      pick("Alignment", "Chaotic evil");
+      click("Add a type tag");
+      fireEvent.change(field("textbox", "Type tags 2"), { target: { value: "orc" } });
+      click("Remove type tag 1");
+      mode("JSON");
+
+      expect(JSON.parse(jsonText("Monster JSON"))).toMatchObject({
+        alignment: ["C", "E"],
+        type: { type: "humanoid", tags: ["orc"] },
+      });
+    });
+
+    it("clears the alignment", async () => {
+      await openFull();
+      pick("Alignment", "None");
+      mode("JSON");
+
+      expect(JSON.parse(jsonText("Monster JSON"))).not.toHaveProperty("alignment");
+    });
+
+    it("edits senses and languages", async () => {
+      await openFull();
+      stepTo("Senses and languages");
+      fireEvent.change(field("textbox", "Senses 1"), { target: { value: "blindsight 30 ft." } });
+      click("Add a language");
+      fireEvent.change(field("textbox", "Languages 3"), { target: { value: "Worg" } });
+      click("Remove language 1");
+      mode("JSON");
+
+      expect(JSON.parse(jsonText("Monster JSON"))).toMatchObject({
+        senses: ["blindsight 30 ft."],
+        languages: ["Goblin", "Worg"],
+      });
+    });
+
+    it("edits and removes an extra armor class", async () => {
+      await openFull();
+      fireEvent.change(field("spinbutton", "Armor class 2"), { target: { value: "18" } });
+      fireEvent.change(field("textbox", "Armor class 2 source"), { target: { value: "" } });
+      click("Add an armor class");
+      fireEvent.change(field("spinbutton", "Armor class 3"), { target: { value: "11" } });
+      mode("JSON");
+
+      expect(JSON.parse(jsonText("Monster JSON")).ac).toEqual([
+        { ac: 13, from: ["natural armor"] },
+        18,
+        11,
+      ]);
+    });
+
+    it("shows a change made in JSON in the form", async () => {
+      await openFull();
+      mode("JSON");
+      typeJson(
+        "Monster JSON",
+        JSON.stringify({ ...full.json, alignment: ["U"], languages: ["Draconic"] }),
+      );
+      mode("Step by step");
+
+      expect(field("combobox", "Alignment")).toHaveTextContent("Unaligned");
+      stepTo("Senses and languages");
+      expect(field("textbox", "Languages 1")).toHaveValue("Draconic");
+    });
+
+    it("previews them", async () => {
+      await openFull();
+      mode("Preview");
+
+      const preview = within(editor());
+      expect(preview.getByText("Medium humanoid (goblinoid), neutral evil")).toBeInTheDocument();
+      expect(preview.getByText(/13 \(natural armor\), 17 \(mage armor\)/)).toBeInTheDocument();
+      expect(preview.getByText(/darkvision 60 ft\./)).toBeInTheDocument();
+      expect(preview.getByText(/Common, Goblin/)).toBeInTheDocument();
+    });
+  });
+
   it("previews the stat block as the catalog renders it", async () => {
     stubApi(lists);
     renderPage("monsters");

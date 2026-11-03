@@ -88,6 +88,7 @@ import type { JsonEditorProps } from "./JsonEditor.tsx";
 import { MonsterAbilityScores } from "./MonsterAbilityScores.tsx";
 import { MonsterBasics } from "./MonsterBasics.tsx";
 import { MonsterCombat } from "./MonsterCombat.tsx";
+import { MonsterSenses } from "./MonsterSenses.tsx";
 import { OptionalFeatureBasics } from "./OptionalFeatureBasics.tsx";
 import { OptionalFeaturePrerequisites } from "./OptionalFeaturePrerequisites.tsx";
 import { RaceAbilityScores } from "./RaceAbilityScores.tsx";
@@ -454,15 +455,28 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
   entries: (input) => monsterEntries(input, input.edition),
   starters: MONSTER_STARTERS,
   sections: [
-    { title: "Basics", Fields: MonsterBasics, keys: ["name", "size", "type", "cr"] },
+    { title: "Basics", Fields: MonsterBasics, keys: ["name", "size", "type", "alignment", "cr"] },
     { title: "Combat", Fields: MonsterCombat, keys: ["ac", "hp", "speed"] },
+    { title: "Senses and languages", Fields: MonsterSenses, keys: ["senses", "languages"] },
     {
       title: "Ability scores",
       Fields: MonsterAbilityScores,
       keys: ["str", "dex", "con", "int", "wis", "cha"],
     },
   ],
-  shownKeys: () => ["name", "size", "type", "cr", "ac", "hp", "speed", ...ABILITIES],
+  shownKeys: () => [
+    "name",
+    "size",
+    "type",
+    "alignment",
+    "cr",
+    "ac",
+    "hp",
+    "speed",
+    "senses",
+    "languages",
+    ...ABILITIES,
+  ],
 };
 
 /** How the editor edits each kind; `LISTING_KINDS` holds how a list names it. */

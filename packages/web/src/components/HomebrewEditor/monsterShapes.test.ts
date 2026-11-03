@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  alignmentLabel,
   armorClassIsProse,
+  extraArmorClasses,
   firstArmorClass,
   ratingOf,
   speedFeet,
+  typeTags,
   withArmorClass,
+  withExtraArmorClasses,
   withRating,
   withSpeed,
+  withStrings,
+  withTypeTags,
 } from "./monsterShapes.ts";
 
 describe("monster shapes", () => {
@@ -35,5 +41,65 @@ describe("monster shapes", () => {
     expect(ratingOf({ cr: "1/2", lair: "2" })).toBe("1/2");
     expect(withRating({ cr: "1", lair: "2" }, "3")).toEqual({ cr: "3", lair: "2" });
     expect(withRating("1", "1/4")).toBe("1/4");
+  });
+
+  it("names an offered alignment and leaves a range to JSON", () => {
+    expect(alignmentLabel(["NX", "G"], undefined)).toBe("Neutral good");
+    expect(alignmentLabel(undefined, undefined)).toBe("");
+    expect(alignmentLabel(["C", "G", "L", "NX"], undefined)).toBeUndefined();
+    expect(alignmentLabel([{ alignment: ["E"], chance: 50 }], undefined)).toBeUndefined();
+    expect(alignmentLabel(["U"], "typically ")).toBeUndefined();
+  });
+
+  it("writes type tags, returning to a plain type when none are left", () => {
+    expect(withTypeTags("humanoid", ["goblinoid"])).toEqual({
+      type: "humanoid",
+      tags: ["goblinoid"],
+    });
+    expect(withTypeTags({ type: "humanoid", tags: ["goblinoid"] }, [])).toBe("humanoid");
+    expect(withTypeTags({ type: "beast", swarmSize: "T", tags: ["x"] }, [])).toEqual({
+      type: "beast",
+      swarmSize: "T",
+    });
+    const prefixed = { tag: "dwarf", prefix: "shield" };
+    expect(withTypeTags({ type: "humanoid", tags: [prefixed, "a"] }, ["b"])).toEqual({
+      type: "humanoid",
+      tags: [prefixed, "b"],
+    });
+    expect(typeTags({ type: "humanoid", tags: [prefixed, "a"] })).toEqual(["a"]);
+  });
+
+  it("drops blank strings from a list and keeps its other entries", () => {
+    expect(withStrings(["Common"], [" Elvish ", ""])).toEqual(["Elvish"]);
+    expect(withStrings([{ special: "x" }], [])).toEqual([{ special: "x" }]);
+    expect(withStrings(["a"], [])).toBeUndefined();
+  });
+
+  it("edits the armor classes after the first with their sources", () => {
+    const ac = [
+      { ac: 13, from: ["natural armor"] },
+      { ac: 17, from: ["mage armor"], braces: true },
+      { special: "x" },
+      9,
+    ];
+    const rows = extraArmorClasses(ac);
+    expect(rows.map(({ ac: value, source }) => [value, source])).toEqual([
+      [17, "mage armor"],
+      [9, ""],
+    ]);
+    expect(withExtraArmorClasses(ac, rows)).toEqual([
+      { ac: 13, from: ["natural armor"] },
+      { ac: 17, from: ["mage armor"], braces: true },
+      9,
+      { special: "x" },
+    ]);
+    expect(
+      withExtraArmorClasses(ac, [{ ac: 12, source: "leather, shield", stored: undefined }]),
+    ).toEqual([
+      { ac: 13, from: ["natural armor"] },
+      { ac: 12, from: ["leather", "shield"] },
+      { special: "x" },
+    ]);
+    expect(withExtraArmorClasses([12, 14], [])).toEqual([12]);
   });
 });
