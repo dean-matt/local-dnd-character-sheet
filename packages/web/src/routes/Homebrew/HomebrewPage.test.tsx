@@ -4508,6 +4508,34 @@ describe("Homebrew monsters", () => {
         expect(field("textbox", "Traits 1 rules text")).toHaveValue("Text.");
       });
 
+      it("leaves a group stored as text alone", async () => {
+        const fetchMock = await openText([{ status: 200, body: withText }]);
+        mode("JSON");
+        typeJson("Monster JSON", JSON.stringify({ ...withText.json, trait: "text" }));
+        mode("Step by step");
+        stepTo("Traits");
+
+        expect(within(editor()).getByText(/shape the form cannot show/)).toBeInTheDocument();
+        click("Save");
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { trait: "text" } });
+      });
+
+      it("keeps a nameless row nameless when its rules text is edited", async () => {
+        await openText();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({ ...withText.json, trait: [{ entries: ["Old."] }] }),
+        );
+        mode("Step by step");
+        stepTo("Traits");
+        fireEvent.change(field("textbox", "Traits 1 rules text"), { target: { value: "New." } });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).trait).toEqual([{ entries: ["New."] }]);
+      });
+
       it("previews them", async () => {
         await openText();
         fireEvent.change(field("textbox", "Actions 1 rules text"), {

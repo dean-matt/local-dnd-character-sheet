@@ -44,6 +44,11 @@ function monsterTextBlocks({ key, noun, legend }: Group): ComponentType<Homebrew
           <p className="text-muted text-row">
             These are stated in a shape the form cannot show. Edit them in JSON.
           </p>
+          {error && (
+            <p role="alert" className="text-error text-row">
+              {error}
+            </p>
+          )}
         </div>
       );
     }
@@ -55,6 +60,7 @@ function monsterTextBlocks({ key, noun, legend }: Group): ComponentType<Homebrew
           if (at !== index) return row;
           const merged = { ...(row as Record<string, unknown>), ...change };
           if (merged.entries === undefined) delete merged.entries;
+          if (merged.name === "") delete merged.name;
           return merged;
         }),
       );
