@@ -200,8 +200,8 @@ describe("routing", () => {
 
   it("opens /homebrew on the first kind, with the sidebar marking it", async () => {
     const router = renderAt("/homebrew");
-    await waitFor(() => expect(router.state.location.pathname).toBe("/homebrew/items"));
-    await screen.findByRole("region", { name: "Items" });
+    await waitFor(() => expect(router.state.location.pathname).toBe("/homebrew/backgrounds"));
+    await screen.findByRole("region", { name: "Backgrounds" });
 
     const nav = screen.getByRole("navigation", { name: "Homebrew kinds" });
     expect(
@@ -209,25 +209,25 @@ describe("routing", () => {
         .getAllByRole("link")
         .map((link) => link.textContent),
     ).toEqual([
+      "Backgrounds",
+      "Classes",
+      "Deities",
+      "Feats",
       "Items",
       "Monsters",
-      "Spells",
-      "Races",
-      "Subraces",
-      "Classes",
-      "Subclasses",
-      "Backgrounds",
-      "Feats",
-      "Skills",
-      "Deities",
       "Optional features",
+      "Races",
+      "Skills",
+      "Spells",
+      "Subclasses",
+      "Subraces",
     ]);
     expect(
       within(screen.getByRole("navigation", { name: "Homebrew kinds footer" })).getByRole("link", {
         name: "Recently deleted",
       }),
     ).toHaveAttribute("href", "/homebrew/deleted");
-    expect(within(nav).getByRole("link", { name: "Items" })).toHaveAttribute(
+    expect(within(nav).getByRole("link", { name: "Backgrounds" })).toHaveAttribute(
       "aria-current",
       "page",
     );

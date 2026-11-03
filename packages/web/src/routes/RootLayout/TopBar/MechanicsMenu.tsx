@@ -4,6 +4,7 @@ import { useSearchTypes } from "../../../hooks/useSearchTypes.ts";
 import { SEARCHED_FROM, useSheetCharacter } from "../../../hooks/useSheetCharacter.ts";
 import { isCatalogOutOfDate } from "../../../lib/api.ts";
 import { MECHANICS_ENTRIES, mechanicsHref } from "../../../lib/mechanicsEntries.ts";
+import { MenuColumns } from "./MenuColumns.tsx";
 import { MenuDivider } from "./MenuDivider.tsx";
 import { CURRENT, ELSEWHERE, TRIGGER } from "./topBarTrigger.ts";
 
@@ -13,12 +14,12 @@ export interface MechanicsMenuProps {
   onClose: () => void;
 }
 
-const entryLink = "rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle";
+const entryLink = "block rounded-lg px-2.5 py-2 text-body font-medium text-ink hover:bg-subtle";
 
 /**
  * The top bar's Mechanics menu: a hand-picked list of the catalog's kinds, each opening the
- * search page filtered to it, then "All types…" opening it unfiltered. Three columns hold
- * the whole list in an ordinary window; a window shorter than the menu scrolls it. From a
+ * search page filtered to it, then "All types…" opening it unfiltered. Three columns, filled
+ * top to bottom, hold the whole list in an ordinary window; a window shorter than the menu scrolls it. From a
  * sheet, each link carries the character to the search page, as the search's own link does.
  */
 export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
@@ -50,27 +51,27 @@ export function MechanicsMenu({ open, onToggle, onClose }: MechanicsMenuProps) {
           {/* biome-ignore lint/a11y/noStaticElementInteractions: pointer-only backdrop; Escape and Tab handled on the container */}
           {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only backdrop; Escape and Tab handled on the container */}
           <div className="fixed inset-0 z-40" onClick={onClose} />
-          <div className="absolute left-0 top-full z-50 mt-2 grid max-h-[calc(100dvh-var(--spacing-topbar)-1rem)] w-160 grid-cols-3 gap-0.5 overflow-y-auto rounded-xl border border-border bg-surface p-2 shadow-popover">
+          <div className="absolute left-0 top-full z-50 mt-2 max-h-[calc(100dvh-var(--spacing-topbar)-1rem)] w-60 overflow-y-auto sm:w-160 rounded-xl border border-border bg-surface p-2 shadow-popover">
             {types.isError && !isCatalogOutOfDate(types.error) && (
-              <p className="col-span-3 px-2.5 py-2 text-body text-error">
-                The catalog's types did not load.
-              </p>
+              <p className="px-2.5 py-2 text-body text-error">The catalog's types did not load.</p>
             )}
-            {entries.map((entry) => (
-              <Link
-                key={entry.label}
-                to={mechanicsHref(entry, from)}
-                onClick={onClose}
-                className={entryLink}
-              >
-                {entry.label}
-              </Link>
-            ))}
-            <MenuDivider className="col-span-3" />
+            <MenuColumns layout="sm:columns-3">
+              {entries.map((entry) => (
+                <Link
+                  key={entry.label}
+                  to={mechanicsHref(entry, from)}
+                  onClick={onClose}
+                  className={entryLink}
+                >
+                  {entry.label}
+                </Link>
+              ))}
+            </MenuColumns>
+            <MenuDivider />
             <Link
               to={sheet ? `/search?${new URLSearchParams(from)}` : "/search"}
               onClick={onClose}
-              className={`${entryLink} col-span-3`}
+              className={`${entryLink}`}
             >
               All types…
             </Link>
