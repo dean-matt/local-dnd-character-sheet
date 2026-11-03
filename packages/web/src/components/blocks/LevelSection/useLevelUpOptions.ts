@@ -1,5 +1,6 @@
 import {
   type CharacterDefinition,
+  catalogRef,
   type EntryRef,
   entryKey,
   grantorKey,
@@ -34,7 +35,7 @@ export function useLevelUpOptions(
 ) {
   const { setValue } = useFormContext<CharacterDefinition>();
   const catalog = "name" in cls ? cls : undefined;
-  const { subclass } = target;
+  const subclass = catalogRef(target.subclass);
   const gains: OptionGain[] = catalog
     ? [
         ...optionsGained(target.before, target.after).map((gain) => ({

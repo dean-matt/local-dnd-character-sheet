@@ -33,6 +33,18 @@ describe("homebrew names", () => {
     expect(classLevelLabel({ class: { homebrewId: "hb_08" }, level: 2 }, names)).toBe("Warden 2");
     expect(classLevelLabel({ class: { homebrewId: "hb_99" }, level: 2 }, names)).toBe("Homebrew 2");
   });
+
+  it("names a homebrew subclass by its current name, and reads Homebrew once it is gone", () => {
+    const cleric = { name: "Cleric", source: "PHB" };
+    const storm = { class: cleric, level: 1, subclass: { homebrewId: "hb_09" } };
+    expect(classLevelLabel(storm, new Map([["hb_09", "Storm Domain"]]))).toBe(
+      "Cleric 1 (Storm Domain)",
+    );
+    expect(classLevelLabel(storm, new Map([["hb_09", "Tempest Domain"]]))).toBe(
+      "Cleric 1 (Tempest Domain)",
+    );
+    expect(classLevelLabel(storm, names)).toBe("Cleric 1 (Homebrew)");
+  });
 });
 
 describe("race", () => {

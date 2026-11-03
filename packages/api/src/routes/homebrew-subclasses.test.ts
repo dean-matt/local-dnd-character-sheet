@@ -2,11 +2,12 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { insertCharacter } from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { homebrewClassesRoutes } from "./homebrew-classes.ts";
 import { homebrewSubclassesRoutes } from "./homebrew-subclasses.ts";
-import { json, warden } from "./homebrewFixtures.ts";
+import { baseDefinition, json, warden } from "./homebrewFixtures.ts";
 
 const storm = (overrides: Record<string, unknown> = {}) => ({
   name: "Storm Domain",
@@ -51,7 +52,7 @@ describe("homebrewSubclassesRoutes", () => {
   beforeEach(() => {
     opened = openTestDatabases();
     classes = homebrewClassesRoutes(opened.homebrewDb, opened.charactersDb);
-    subclasses = homebrewSubclassesRoutes(opened.homebrewDb, dataDir);
+    subclasses = homebrewSubclassesRoutes(opened.homebrewDb, opened.charactersDb, dataDir);
   });
 
   afterEach(() => {
@@ -226,5 +227,25 @@ describe("homebrewSubclassesRoutes", () => {
     expect(
       (await classes.request(`/homebrew/classes/${cls.id}`, { method: "DELETE" })).status,
     ).toBe(204);
+  });
+
+  it("refuses to delete a subclass a character holds, naming the character", async () => {
+    const created = await (await subclasses.request("/homebrew/subclasses", json(storm()))).json();
+    const character = insertCharacter(opened.charactersDb, {
+      id: "1",
+      definition: baseDefinition({
+        edition: "classic",
+        levels: [
+          { class: { name: "Cleric", source: "PHB" }, subclass: { homebrewId: created.id } },
+        ],
+      }),
+    });
+
+    const res = await subclasses.request(`/homebrew/subclasses/${created.id}`, {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(409);
+    expect((await res.json()).characters).toEqual([{ id: character.id, name: character.name }]);
+    expect((await subclasses.request(`/homebrew/subclasses/${created.id}`)).status).toBe(200);
   });
 });

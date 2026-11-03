@@ -1,7 +1,7 @@
 import { experienceThreshold } from "@dnd/rules";
 import type { CharacterDefinition } from "./definition.ts";
 import { entryKey } from "./keys.ts";
-import type { ContentRef, EntryRef } from "./refs.ts";
+import type { EntryRef } from "./refs.ts";
 
 export const totalLevel = (definition: Pick<CharacterDefinition, "levels">): number =>
   definition.levels.length;
@@ -34,7 +34,7 @@ export function raceSummary(definition: CharacterDefinition, names?: HomebrewNam
 }
 
 /** One class a character has levels in, with the subclass named on any of those levels. */
-type ClassLevels = { class: EntryRef; level: number; subclass?: ContentRef };
+type ClassLevels = { class: EntryRef; level: number; subclass?: EntryRef };
 
 /** `levels` grouped by class, in the order each class was first taken. */
 export function classLevels(definition: {
@@ -53,7 +53,7 @@ export function classLevels(definition: {
 
 /** One `classLevels` group with its count and any subclass — `Wizard 3 (Evoker)`. */
 export function classLevelLabel(group: ClassLevels, names?: HomebrewNames): string {
-  const subclass = group.subclass ? ` (${group.subclass.name})` : "";
+  const subclass = group.subclass ? ` (${displayName(group.subclass, names)})` : "";
   return `${displayName(group.class, names)} ${group.level}${subclass}`;
 }
 

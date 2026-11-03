@@ -147,6 +147,7 @@ export {
 export {
   type Ability,
   type ContentRef,
+  catalogRef,
   type DeityRef,
   type EntryRef,
   entryRefSchema,

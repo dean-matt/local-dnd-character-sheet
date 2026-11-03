@@ -19,6 +19,7 @@ import {
 import {
   type CharacterDefinition,
   type ContentRef,
+  catalogRef,
   classLevels,
   displayName,
   type EntryRef,
@@ -184,7 +185,10 @@ function classGroups(
       definition,
     );
     const groups: FeatureGroup[] = [{ origin: "class", name, class: ref, features }];
-    if (subclass) groups.push(subclassGroup(dataDir, definition, ref, subclass, level));
+    const catalogSubclass = catalogRef(subclass);
+    if (catalogSubclass) {
+      groups.push(subclassGroup(dataDir, definition, ref, catalogSubclass, level));
+    }
     return groups;
   });
 }

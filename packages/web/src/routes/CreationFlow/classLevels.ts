@@ -1,4 +1,4 @@
-import { type CharacterDefinition, type ContentRef, type EntryRef, entryKey } from "@dnd/character";
+import { type CharacterDefinition, type EntryRef, entryKey } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 
 type Level = CharacterDefinition["levels"][number];
@@ -59,7 +59,7 @@ export function withClassCount(levels: readonly Level[], cls: EntryRef, count: n
 export function withSubclass(
   levels: readonly Level[],
   cls: EntryRef,
-  subclass: ContentRef | undefined,
+  subclass: EntryRef | undefined,
   at: number,
 ): Level[] {
   const key = entryKey(cls);
@@ -83,5 +83,5 @@ export function rerolled(levels: readonly Level[], roll?: (index: number) => num
   });
 }
 
-export const subclassOf = (levels: readonly Level[], cls: EntryRef): ContentRef | undefined =>
+export const subclassOf = (levels: readonly Level[], cls: EntryRef): EntryRef | undefined =>
   levels.find((level) => level.subclass && entryKey(level.class) === entryKey(cls))?.subclass;

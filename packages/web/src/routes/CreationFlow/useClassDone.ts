@@ -1,7 +1,8 @@
-import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
+import { type CharacterDefinition, characterDefinitionSchema, entryKey } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { takenOption } from "../../lib/featureChoices.ts";
 import type { FeatureOffering } from "../../lib/featureOfferings.ts";
+import { subclassRef } from "../../lib/subclassItems.ts";
 import { stepOf } from "./creationSteps.ts";
 import { type ClassEntry, useClassEntries } from "./useClassEntries.ts";
 import { useFeatureOfferings } from "./useFeatureOfferings.ts";
@@ -15,9 +16,7 @@ function classDone(entry: ClassEntry): boolean {
   if (subclassLevel === undefined || level < subclassLevel) return true;
   return (
     subclasses.length === 0 ||
-    subclasses.some(
-      (row) => subclass && row.name === subclass.name && row.source === subclass.source,
-    )
+    subclasses.some((row) => subclass && entryKey(subclassRef(row)) === entryKey(subclass))
   );
 }
 

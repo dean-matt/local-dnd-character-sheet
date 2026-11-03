@@ -88,7 +88,7 @@ export function listOptionalFeatureEntitlements(
             ),
           },
         );
-        if (!subclass) return own;
+        if (!subclass || "homebrewId" in subclass) return own;
         const keyed = [subclass.name, subclass.source, cls.name, cls.source];
         return [
           ...own,

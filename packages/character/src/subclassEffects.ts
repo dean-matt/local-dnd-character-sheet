@@ -2,7 +2,7 @@ import { ABILITY_LABEL, type Term } from "@dnd/rules";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { refKey } from "./keys.ts";
-import type { Ability, ContentRef } from "./refs.ts";
+import { type Ability, type ContentRef, catalogRef } from "./refs.ts";
 import { classLevels } from "./summaries.ts";
 
 type InitiativeBonus = {
@@ -80,8 +80,9 @@ export function subclassInitiativeTerms(
   proficiencyBonus: number,
 ): Term<TermReference>[] {
   return classLevels(definition).flatMap((group) => {
-    if ("homebrewId" in group.class || !group.subclass) return [];
-    const bonus = SUBCLASS_INITIATIVE.get(`${refKey(group.class)}|${refKey(group.subclass)}`);
+    const subclass = catalogRef(group.subclass);
+    if ("homebrewId" in group.class || !subclass) return [];
+    const bonus = SUBCLASS_INITIATIVE.get(`${refKey(group.class)}|${refKey(subclass)}`);
     if (!bonus || group.level < bonus.level) return [];
     const value = bonus.addend === "proficiency" ? proficiencyBonus : modifierOf(bonus.addend);
     const label =

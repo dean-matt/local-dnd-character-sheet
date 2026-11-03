@@ -59,7 +59,7 @@ import {
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
-import type { Ability, ContentRef, EntryRef } from "./refs.ts";
+import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
@@ -226,11 +226,6 @@ const DEXTERITY_CAP: Record<Exclude<ArmorTrait["category"], "shield">, number | 
   heavy: "none",
 };
 
-/** `undefined` for a homebrew ref: `TermReference` names only a catalog `(name, source)`. */
-function catalogReference(ref: EntryRef): ContentRef | undefined {
-  return "homebrewId" in ref ? undefined : ref;
-}
-
 type WornArmor = {
   category: Exclude<ArmorTrait["category"], "shield">;
   armorClass: number;
@@ -289,17 +284,17 @@ function derivedArmorClass(
   const bonus = [
     ...(unarmored ? [unarmored] : []),
     ...(untrainedShield
-      ? [{ label: "Shield (not proficient)", value: 0, reference: catalogReference(shield.ref) }]
+      ? [{ label: "Shield (not proficient)", value: 0, reference: catalogRef(shield.ref) }]
       : []),
     ...itemTerms(equippedBonuses(definition, catalog), (item) => item.ac),
   ];
   const result = armorClass<TermReference>({
-    base: worn ? { value: worn.armorClass, reference: catalogReference(worn.ref) } : { value: 10 },
+    base: worn ? { value: worn.armorClass, reference: catalogRef(worn.ref) } : { value: 10 },
     dexterityModifier: { value: abilityModifier(scoreOf(definition, catalog, "dex")) },
     dexterityCap: worn ? DEXTERITY_CAP[worn.category] : "all",
     shield:
       shield && !untrainedShield
-        ? { value: shield.armorClass, reference: catalogReference(shield.ref) }
+        ? { value: shield.armorClass, reference: catalogRef(shield.ref) }
         : undefined,
     bonus,
   });

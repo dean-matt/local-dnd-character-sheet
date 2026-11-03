@@ -5,6 +5,7 @@ import {
   homebrewSubclassRecordSchema,
 } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
 import { getClass } from "../db/queries/classes.ts";
 import {
   deleteHomebrewSubclass,
@@ -17,7 +18,15 @@ import {
   updateHomebrewSubclass,
 } from "../db/queries/homebrew.ts";
 import { errorSchema, notFound } from "./errors.ts";
-import { claimName, idParam, nameTaken, nameTakenError, toSubclassRecord } from "./homebrew.ts";
+import {
+  claimName,
+  idParam,
+  nameTaken,
+  nameTakenError,
+  referenced,
+  referencedError,
+  toSubclassRecord,
+} from "./homebrew.ts";
 
 const SUBCLASS_NOT_FOUND = "No homebrew subclass with that id";
 const CLASS_NOT_FOUND = "No class with that name and source, or homebrew class with that id";
@@ -102,6 +111,7 @@ const removeSubclass = createRoute({
   responses: {
     204: { description: "The homebrew subclass was deleted" },
     404: notFound("homebrew subclass"),
+    409: referenced("homebrew subclass"),
   },
 });
 
@@ -116,7 +126,11 @@ export function parentEdition(
     : getClass(dataDir, parent.name, parent.source)?.edition;
 }
 
-export function homebrewSubclassesRoutes(db: HomebrewDb, dataDir: string) {
+export function homebrewSubclassesRoutes(
+  db: HomebrewDb,
+  charactersDb: CharactersDb,
+  dataDir: string,
+) {
   const routes = new OpenAPIHono();
 
   routes.openapi(listSubclasses, (c) => c.json(listHomebrewSubclasses(db).map(toSubclassRecord)));
@@ -155,7 +169,10 @@ export function homebrewSubclassesRoutes(db: HomebrewDb, dataDir: string) {
   });
 
   routes.openapi(removeSubclass, (c) => {
-    if (!deleteHomebrewSubclass(db, c.req.valid("param").id)) {
+    const { id } = c.req.valid("param");
+    const characters = charactersReferencingHomebrew(charactersDb, id);
+    if (characters.length > 0) return c.json(referencedError("This subclass", characters), 409);
+    if (!deleteHomebrewSubclass(db, id)) {
       return c.json({ error: SUBCLASS_NOT_FOUND }, 404);
     }
     return c.body(null, 204);

@@ -1,4 +1,10 @@
-import { type CharacterDefinition, classLevels, type EntryRef, entryKey } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  catalogRef,
+  classLevels,
+  type EntryRef,
+  entryKey,
+} from "@dnd/character";
 import { useQueries } from "@tanstack/react-query";
 import type { ClassFeatures } from "../lib/classFeatures.ts";
 import { classGrantsQuery } from "./classGrantsQuery.ts";
@@ -18,7 +24,7 @@ export function useClassFeatures(levels: readonly Level[]): {
   failed: boolean;
 } {
   const classes = classLevels({ levels }).flatMap(({ class: cls, level, subclass }) =>
-    "name" in cls ? [{ cls, level, subclass }] : [],
+    "name" in cls ? [{ cls, level, subclass: catalogRef(subclass) }] : [],
   );
   const results = useQueries({
     queries: classes.map(({ cls, level }) => classGrantsQuery(cls, level)),

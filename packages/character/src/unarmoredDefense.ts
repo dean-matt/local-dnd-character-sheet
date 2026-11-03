@@ -2,7 +2,7 @@ import { ABILITY_LABEL, type Term } from "@dnd/rules";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { refKey } from "./keys.ts";
-import type { Ability, ContentRef } from "./refs.ts";
+import { type Ability, catalogRef } from "./refs.ts";
 import { classLevels } from "./summaries.ts";
 
 /**
@@ -51,7 +51,7 @@ function reachedFormulas(definition: CharacterDefinition): Formula[] {
     const classKey = refKey(group.class);
     const own = CLASS_FORMULAS.get(classKey);
     if (own && group.level >= own.level) reached.push(own);
-    const chosen = group.subclass as ContentRef | undefined;
+    const chosen = catalogRef(group.subclass);
     const subclass = chosen && SUBCLASS_FORMULAS.get(`${classKey}|${refKey(chosen)}`);
     if (subclass && group.level >= subclass.level) reached.push(subclass);
   }

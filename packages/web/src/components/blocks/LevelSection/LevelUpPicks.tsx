@@ -1,10 +1,10 @@
-import type { SubclassRecord } from "@dnd/catalog";
 import { type CharacterDefinition, entryKey, featureKey, refKey } from "@dnd/character";
 import { useId } from "react";
 import { useDisabledSources } from "../../../hooks/useDisabledSources.ts";
 import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { shownOptions } from "../../../lib/featureChoices.ts";
 import { grantTitle } from "../../../lib/improvementGrants.ts";
+import { subclassLabel, subclassRef } from "../../../lib/subclassItems.ts";
 import { FormField } from "../../FormField.tsx";
 import { ImprovementField } from "../../ImprovementField.tsx";
 import { Select } from "../../Select.tsx";
@@ -13,7 +13,6 @@ import { LevelUpSpells } from "./LevelUpSpells.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 
 const UNCHOSEN = "Choose one";
-const subclassKey = (row: Pick<SubclassRecord, "name" | "source">) => `${row.name}|${row.source}`;
 
 export interface LevelUpPicksProps {
   edition: CharacterDefinition["edition"];
@@ -38,13 +37,15 @@ export function LevelUpPicks({ edition, plan }: LevelUpPicksProps) {
             <Select
               {...control}
               options={target.subclasses.map((each) => ({
-                value: subclassKey(each),
-                label: each.name,
+                value: entryKey(subclassRef(each)),
+                label: subclassLabel(each),
               }))}
-              value={level.subclass ? subclassKey(level.subclass) : UNCHOSEN}
+              value={level.subclass ? entryKey(level.subclass) : UNCHOSEN}
               onChange={(value) => {
-                const each = target.subclasses.find((option) => subclassKey(option) === value);
-                plan.setSubclass(each && { name: each.name, source: each.source });
+                const each = target.subclasses.find(
+                  (option) => entryKey(subclassRef(option)) === value,
+                );
+                plan.setSubclass(each && subclassRef(each));
               }}
             />
           )}

@@ -41,6 +41,7 @@ import {
   type CharacterDefinition,
   type ContainerTrait,
   type ContentRef,
+  catalogRef,
   type DefenseTrait,
   type EntryRef,
   entryKey,
@@ -133,7 +134,7 @@ function castingAbility(
     const start = getFirstSpellSlotLevel(dataDir, ref.name, ref.source) ?? 1;
     return classLevels.length < start ? undefined : own;
   }
-  const subclass = classLevels.find((level) => level.subclass)?.subclass;
+  const subclass = catalogRef(classLevels.find((level) => level.subclass)?.subclass);
   if (!subclass) return undefined;
   const row = getSubclass(dataDir, subclass.name, subclass.source, ref.name, ref.source);
   if (!row) return undefined;
@@ -162,7 +163,7 @@ function casterTable(
   if ("homebrewId" in ref) return undefined;
   const key = entryKey(ref);
   const classLevels = definition.levels.filter((level) => entryKey(level.class) === key);
-  const subclass = classLevels.find((entry) => entry.subclass)?.subclass;
+  const subclass = catalogRef(classLevels.find((entry) => entry.subclass)?.subclass);
   const rows = getCasterRows(dataDir, ref, subclass, classLevels.length);
   const rule = parseJson(preparationRuleSchema, classJson);
   const prepares = rule ? { rule } : printedPreparation(rows.prepared);

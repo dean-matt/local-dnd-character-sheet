@@ -1,10 +1,9 @@
-import type { CharacterDefinition, ContentRef } from "@dnd/character";
+import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useFormContext } from "react-hook-form";
 import { ChoicePills } from "../../components/ChoicePills.tsx";
+import { subclassLabel, subclassRef } from "../../lib/subclassItems.ts";
 import { withSubclass } from "./classLevels.ts";
 import type { ClassEntry } from "./useClassEntries.ts";
-
-const subclassKey = (row: ContentRef) => `${row.name}|${row.source}`;
 
 /**
  * A class's subclass, offered once its level reaches the one the class grants it at — 1st
@@ -24,18 +23,20 @@ export function SubclassField({ entry, legend }: { entry: ClassEntry; legend: st
   }
   const rows = entry.subclasses ?? [];
   if (rows.length === 0) return null;
+  const key = (row: (typeof rows)[number]) => entryKey(subclassRef(row));
   return (
     <ChoicePills
       legend={legend}
-      prompting={!rows.some((row) => subclass && subclassKey(row) === subclassKey(subclass))}
-      options={rows.map((row) => ({ value: subclassKey(row), label: row.name }))}
-      value={subclass && subclassKey(subclass)}
+      prompting={!rows.some((row) => subclass && key(row) === entryKey(subclass))}
+      options={rows.map((row) => ({ value: key(row), label: subclassLabel(row) }))}
+      value={subclass && entryKey(subclass)}
       onChange={(value) => {
-        const row = rows.find((each) => subclassKey(each) === value);
-        const ref = row && { name: row.name, source: row.source };
-        setValue("levels", withSubclass(getValues("levels"), entry.cls, ref, subclassLevel), {
-          shouldDirty: true,
-        });
+        const row = rows.find((each) => key(each) === value);
+        setValue(
+          "levels",
+          withSubclass(getValues("levels"), entry.cls, row && subclassRef(row), subclassLevel),
+          { shouldDirty: true },
+        );
       }}
     />
   );

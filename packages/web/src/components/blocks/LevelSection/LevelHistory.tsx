@@ -92,7 +92,7 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
                     )}
                   </td>
                   <td className={CELL}>
-                    {row.subclass && <p>Subclass: {row.subclass.name}</p>}
+                    {row.subclass && <p>Subclass: {displayName(row.subclass, names)}</p>}
                     {row.features.map((feature) => {
                       const { name, source, level, json } = feature.record;
                       return (

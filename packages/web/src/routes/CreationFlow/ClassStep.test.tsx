@@ -1,4 +1,4 @@
-import type { CharacterDefinition } from "@dnd/character";
+import { type CharacterDefinition, displayName } from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { useWatch } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -97,6 +97,17 @@ const BLOOD_HUNTER = {
   createdAt: "2026-10-06T00:00:00.000Z",
 };
 
+/** A homebrew subclass of the catalog Cleric, which the subclass list carries beside the catalog's. */
+const STORM_DOMAIN = {
+  id: "hb-storm",
+  name: "Storm Domain",
+  edition: "classic",
+  className: "Cleric",
+  classSource: "PHB",
+  json: { name: "Storm Domain", source: "HB", shortName: "Storm Domain" },
+  createdAt: "2026-10-06T00:00:00.000Z",
+};
+
 const ROWS: Record<string, unknown> = {
   "/api/classes/Cleric/PHB": CLERIC,
   "/api/classes/Cleric/XPHB": CLERIC_2024,
@@ -108,6 +119,7 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Cleric/PHB/subclasses?edition=classic&limit=200": page([
     subclass("Life Domain", CLERIC),
     subclass("War Domain", CLERIC),
+    STORM_DOMAIN,
   ]),
   "/api/classes/Cleric/XPHB/subclasses?edition=one&limit=200": page([
     subclass("Light Domain", CLERIC_2024),
@@ -256,6 +268,25 @@ describe("ClassStep", () => {
         subclass: { name: "Life Domain", source: "PHB" },
       },
     ]);
+  });
+
+  it("offers a homebrew subclass beside the catalog's, marked, and drops it with its class", async () => {
+    renderStep();
+
+    await pickClass("cle", /^Cleric/);
+    fireEvent.click(await screen.findByRole("button", { name: "Storm Domain (homebrew)" }));
+
+    expect(values.levels).toEqual([
+      { class: { name: "Cleric", source: "PHB" }, subclass: { homebrewId: STORM_DOMAIN.id } },
+    ]);
+    expect(screen.getByRole("button", { name: "Storm Domain (homebrew)" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    click("Clear class, Cleric");
+    await pickClass("fig", /^Fighter/);
+    expect(values.levels).toEqual([{ class: { name: "Fighter", source: "PHB" } }]);
   });
 
   describe("a feature that offers a choice of features", () => {
@@ -572,7 +603,7 @@ describe("ClassStep", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Champion" }));
     fireEvent.click(await screen.findByRole("button", { name: "School of Evocation" }));
-    expect(values.levels?.map((level) => level.subclass?.name)).toEqual([
+    expect(values.levels?.map((level) => level.subclass && displayName(level.subclass))).toEqual([
       undefined,
       undefined,
       "Champion",
@@ -588,7 +619,9 @@ describe("ClassStep", () => {
 
     setLevel(1, "Fighter level");
     expect(classesOf()).toEqual(["Fighter", "Wizard", "Wizard"]);
-    expect(values.levels?.some((level) => level.subclass?.name === "Champion")).toBe(false);
+    expect(
+      values.levels?.some((level) => level.subclass && displayName(level.subclass) === "Champion"),
+    ).toBe(false);
     expect(values.levels?.map((level) => level.rolled)).toEqual([undefined, 6, 6]);
   });
 

@@ -1,7 +1,7 @@
 import type { SpellLookup } from "@dnd/catalog";
 import {
   type CharacterDefinition,
-  type ContentRef,
+  catalogRef,
   displayName,
   type EntryRef,
   entryKey,
@@ -32,7 +32,7 @@ export function useLevelUpSpells(
   cls: EntryRef,
   target: ReturnType<typeof useLevelUpClass>,
   spells: readonly Spell[],
-  saved?: { subclass: ContentRef | undefined; picks: readonly Spell[] },
+  saved?: { subclass: EntryRef | undefined; picks: readonly Spell[] },
 ) {
   const { setValue } = useFormContext<CharacterDefinition>();
   const catalog = "name" in cls ? cls : undefined;
@@ -42,7 +42,9 @@ export function useLevelUpSpells(
     [target.after, target.subclassAfter],
     spellbook,
   );
-  const { subclass, subclassRow } = target;
+  const { subclassRow } = target;
+  // A homebrew subclass offers no spells, so it reads here as none.
+  const subclass = catalogRef(target.subclass);
   const offered =
     catalog && subclass && subclassRow
       ? subclassSpellsGained(
@@ -67,7 +69,7 @@ export function useLevelUpSpells(
     entryKey(spell.origin) === entryKey(subclass);
   const list = catalog && {
     class: catalog,
-    ...(target.subclass && { subclass: target.subclass }),
+    ...(subclass && { subclass }),
     level: target.next,
   };
   const known = new Set(definition.spells.map((spell) => entryKey(spell.ref)));
@@ -82,8 +84,7 @@ export function useLevelUpSpells(
   );
   const sameSubclass =
     saved !== undefined &&
-    saved.subclass?.name === subclass?.name &&
-    saved.subclass?.source === subclass?.source;
+    (saved.subclass && entryKey(saved.subclass)) === (target.subclass && entryKey(target.subclass));
   const held = sameSubclass ? saved.picks : [];
   const prior = useSpellLookup(
     held.map((spell) => spell.ref),

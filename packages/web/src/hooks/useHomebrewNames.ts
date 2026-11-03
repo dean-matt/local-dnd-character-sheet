@@ -3,13 +3,14 @@ import {
   homebrewClassRecordSchema,
   homebrewFeatRecordSchema,
   homebrewRaceRecordSchema,
+  homebrewSubclassRecordSchema,
 } from "@dnd/catalog";
 import type { HomebrewNames } from "@dnd/character";
 import { useMemo } from "react";
 import { useHomebrew } from "./useHomebrew.ts";
 
 /**
- * Every homebrew race, class, background and feat name by id, for `displayName` and the
+ * Every homebrew race, class, subclass, background and feat name by id, for `displayName` and the
  * summaries. A save to any homebrew row refreshes these queries, so a rename shows at once;
  * a row still loading is absent and reads `Homebrew`.
  */
@@ -18,13 +19,14 @@ export function useHomebrewNames(): HomebrewNames {
   const classes = useHomebrew("classes", homebrewClassRecordSchema).list.data;
   const backgrounds = useHomebrew("backgrounds", homebrewBackgroundRecordSchema).list.data;
   const feats = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
+  const subclasses = useHomebrew("subclasses", homebrewSubclassRecordSchema).list.data;
   return useMemo(
     () =>
       new Map(
-        [races, classes, backgrounds, feats].flatMap(
+        [races, classes, backgrounds, feats, subclasses].flatMap(
           (rows) => rows?.map(({ id, name }): [string, string] => [id, name]) ?? [],
         ),
       ),
-    [races, classes, backgrounds, feats],
+    [races, classes, backgrounds, feats, subclasses],
   );
 }

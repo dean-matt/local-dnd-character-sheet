@@ -14,22 +14,18 @@ export function useFeatureOfferings(entries: readonly ClassEntry[]): {
   read: boolean;
 } {
   const level = (entry: ClassEntry) => Math.max(entry.level, 1);
-  const subclassRow = (entry: ClassEntry) =>
-    entry.subclasses?.find(
-      (row) => row.name === entry.subclass?.name && row.source === entry.subclass?.source,
-    );
   const classes = useQueries({
     queries: entries.map((entry) => classGrantsQuery(entry.catalogClass, level(entry))),
   });
   const subclasses = useQueries({
     queries: entries.map((entry) =>
-      subclassGrantsQuery(entry.catalogClass, subclassRow(entry), level(entry)),
+      subclassGrantsQuery(entry.catalogClass, entry.subclassRow, level(entry)),
     ),
   });
   const offerings = entries.map((entry, index) => {
     if (entry.catalogClass === undefined) return [];
     const owner = { className: entry.catalogClass.name, classSource: entry.catalogClass.source };
-    const row = subclassRow(entry);
+    const row = entry.subclassRow;
     return [
       ...featureOfferings(classes[index]?.data?.features ?? [], owner),
       ...(row
@@ -44,7 +40,7 @@ export function useFeatureOfferings(entries: readonly ClassEntry[]): {
     (entry, index) =>
       entry.catalogClass === undefined ||
       (classes[index]?.isPending === false &&
-        (subclassRow(entry) === undefined || subclasses[index]?.isPending === false)),
+        (entry.subclassRow === undefined || subclasses[index]?.isPending === false)),
   );
   return { offerings, read };
 }

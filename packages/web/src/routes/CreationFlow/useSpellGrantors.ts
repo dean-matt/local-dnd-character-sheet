@@ -36,7 +36,7 @@ export function useSpellGrantors(): SpellGrantorRef[] {
   const first = useClassEntries().entries[0];
   const cls = first?.catalogClass;
   const classLevel = first?.level ?? level;
-  const subclass = first?.subclass;
+  const subclass = catalogRef(first?.subclass);
   const catalogRace = catalogRef(race);
   const catalogBackground = catalogRef(background);
   const at = (

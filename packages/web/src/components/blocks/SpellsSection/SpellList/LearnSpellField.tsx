@@ -3,6 +3,7 @@ import {
   type CharacterDerived,
   type CharacterRecord,
   type ContentRef,
+  catalogRef,
   classLevels,
   displayName,
   type EntryRef,
@@ -93,10 +94,11 @@ export function LearnSpellField({
   const cls = caster && "name" in caster.class ? caster.class : undefined;
   const group =
     cls && classLevels(definition).find((each) => entryKey(each.class) === entryKey(cls));
+  const subclass = catalogRef(group?.subclass);
   const list = cls &&
     group && {
       class: cls,
-      ...(group.subclass && { subclass: group.subclass }),
+      ...(subclass && { subclass }),
       level: group.level,
     };
   const listed = useClassSpellList(definition.edition, list);

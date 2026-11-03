@@ -89,13 +89,10 @@ export function useCasterFacts() {
   const first = useClassEntries().entries[0];
   const catalogClass = first?.catalogClass;
   const level = Math.max(1, first?.level ?? 0);
-  const subclass = first?.subclass;
-  const subclassRow = first?.subclasses?.find(
-    (row) => subclass && row.name === subclass.name && row.source === subclass.source,
-  );
+  const subclassRow = first?.subclassRow;
   const catalog = useCatalogCaster(
     catalogClass,
-    subclass,
+    subclassRow,
     level,
     subclassRow?.json,
     catalogClass && first.json,
@@ -114,6 +111,10 @@ export function useCasterFacts() {
     className: first?.name ?? "The class",
     level,
     facts,
-    list: catalogClass && { class: catalogClass, ...(subclass && { subclass }), level },
+    list: catalogClass && {
+      class: catalogClass,
+      ...(subclassRow && { subclass: { name: subclassRow.name, source: subclassRow.source } }),
+      level,
+    },
   };
 }

@@ -1,7 +1,12 @@
-import { catalogRowRecordSchema, homebrewFeatRecordSchema } from "@dnd/catalog";
+import {
+  catalogRowRecordSchema,
+  homebrewFeatRecordSchema,
+  homebrewSubclassRecordSchema,
+} from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type ContentRef,
+  catalogRef,
   type EntryRef,
   IMPROVEMENT_FEAT,
   refKey,
@@ -72,7 +77,7 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
 
 /**
  * Each choice made so far that the character's edition does not hold: a race, class or
- * deity row, or a homebrew race, background or class, of the other edition; or a subrace,
+ * deity row, or a homebrew race, background, class or subclass, of the other edition; or a subrace,
  * background or subclass absent from the edition's list, or a feat a class granted at an
  * improvement that the edition's list lacks, a homebrew one of the other edition, or either
  * that a 2014 character took with feats not allowed. `Ability Score Improvement` (XPHB) is never named: an
@@ -89,6 +94,11 @@ export function useEditionMismatches(): EditionMismatch[] {
   const { entries } = useClassEntries();
   const featRows = useFeats(edition).data?.items;
   const homebrewFeats = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
+  const homebrewSubclasses = useHomebrew("subclasses", homebrewSubclassRecordSchema).list.data;
+  const homebrewSubclass = (ref: EntryRef | undefined) =>
+    ref && "homebrewId" in ref
+      ? homebrewSubclasses?.find((row) => row.id === ref.homebrewId)
+      : undefined;
   const homebrewRace = useRowAt(homebrewPath("races", race));
   const homebrewBackground = useRowAt(homebrewPath("backgrounds", background));
   const deityRow = useRowAt(
@@ -110,7 +120,16 @@ export function useEditionMismatches(): EditionMismatch[] {
         entry.catalogClass ? named(entry.catalogClass) : homebrewName(entry),
         entry.rowEdition,
       ),
-      missingFrom("Subclass", entry.subclass, entry.subclasses),
+      missingFrom(
+        "Subclass",
+        catalogRef(entry.subclass),
+        entry.subclasses?.filter((row) => "source" in row),
+      ),
+      other(
+        "Subclass",
+        homebrewName(homebrewSubclass(entry.subclass)),
+        homebrewSubclass(entry.subclass)?.edition,
+      ),
     ]),
     ...feats.map(({ ref, grantedBy }) => {
       if (grantedBy?.kind !== "class") return undefined;

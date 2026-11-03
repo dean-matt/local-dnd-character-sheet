@@ -1,7 +1,7 @@
-import { type SubclassRecord, subclassLevelSchema } from "@dnd/catalog";
+import { subclassLevelSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
-  type ContentRef,
+  catalogRef,
   classLevels,
   type EntryRef,
   entryKey,
@@ -12,16 +12,14 @@ import { classQuery } from "../../../hooks/classQuery.ts";
 import { homebrewClassQuery } from "../../../hooks/homebrewClassQuery.ts";
 import { subclassesQuery } from "../../../hooks/subclassesQuery.ts";
 import { subclassGrantsQuery } from "../../../hooks/subclassGrantsQuery.ts";
-
-const sameRef = (row: ContentRef, ref: ContentRef | undefined) =>
-  ref !== undefined && row.name === ref.name && row.source === ref.source;
+import { catalogSubclassRow, type SubclassItem } from "../../../lib/subclassItems.ts";
 
 /**
  * The subclass level, where level `next` asks for a subclass: the class holds none, offers
  * some, and reaches its subclass level at `next` or reached it earlier without one.
  */
 function subclassFrom(
-  held: ContentRef | undefined,
+  held: EntryRef | undefined,
   subclassLevel: number | undefined,
   next: number,
   offered: boolean,
@@ -40,7 +38,7 @@ function subclassFrom(
 export function useLevelUpClass(
   definition: CharacterDefinition,
   cls: EntryRef,
-  picked: ContentRef | undefined,
+  picked: EntryRef | undefined,
 ) {
   const held = classLevels(definition).find((group) => entryKey(group.class) === entryKey(cls));
   const level = held?.level ?? 0;
@@ -50,14 +48,14 @@ export function useLevelUpClass(
   const homebrew = useQuery(homebrewClassQuery("homebrewId" in cls ? cls.homebrewId : undefined));
   const subclassList = useQuery(subclassesQuery(catalog, definition.edition));
   const subclassLevel = row.data && subclassLevelSchema.parse(row.data.json);
-  const subclasses: readonly SubclassRecord[] = subclassList.data?.items ?? [];
+  const subclasses: readonly SubclassItem[] = subclassList.data?.items ?? [];
   const from = subclassFrom(held?.subclass, subclassLevel, next, subclasses.length > 0);
   const asksSubclass = from !== undefined;
   const subclass = held?.subclass ?? (asksSubclass ? picked : undefined);
   const before = useQuery(classGrantsQuery(level > 0 ? catalog : undefined, level));
   const after = useQuery(classGrantsQuery(catalog, next));
-  const subclassBefore = useQuery(subclassGrantsQuery(catalog, held?.subclass, level));
-  const subclassAfter = useQuery(subclassGrantsQuery(catalog, subclass, next));
+  const subclassBefore = useQuery(subclassGrantsQuery(catalog, catalogRef(held?.subclass), level));
+  const subclassAfter = useQuery(subclassGrantsQuery(catalog, catalogRef(subclass), next));
   const pending = [row, after, subclassList, subclassAfter, before, subclassBefore].some(
     (query) => query.isLoading,
   );
@@ -74,7 +72,8 @@ export function useLevelUpClass(
     subclassFrom: from ?? next,
     subclasses,
     subclass,
-    subclassRow: subclasses.find((each) => sameRef(each, subclass)),
+    /** The catalog row of `subclass`, which a homebrew subclass has none of. */
+    subclassRow: catalogSubclassRow(subclasses, subclass),
     before: before.data,
     after: after.data,
     subclassBefore: subclassBefore.data,
