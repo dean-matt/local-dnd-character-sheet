@@ -19,6 +19,7 @@ import {
   type SearchHit,
   SPELL_GRANTORS,
   type SpellOffer,
+  searchFeatureTypesResponseSchema,
   searchResponseSchema,
   searchSourcesResponseSchema,
   searchTypesResponseSchema,
@@ -32,6 +33,7 @@ import {
   homebrewMonsters,
   homebrewRaces,
 } from "../db/homebrew.ts";
+import { getCatalogFeatureTypes } from "../db/queries/catalog-meta.ts";
 import {
   type CatalogSearchRow,
   listSearchSources,
@@ -41,6 +43,7 @@ import {
 } from "../db/queries/catalog-search.ts";
 import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import {
+  listHomebrewFeatureTypes,
   listHomebrewSearchSources,
   type NamedSearchTable,
   searchHomebrewDeities,
@@ -246,6 +249,23 @@ const types = createRoute({
   },
 });
 
+const featureTypes = createRoute({
+  method: "get",
+  path: "/search/feature-types",
+  tags: ["search"],
+  summary: "Every optional-feature type the catalog or homebrew offers",
+  description:
+    "The catalog's types merged with those homebrew optional features use. Before a catalog " +
+    "is built, only the homebrew types are listed.",
+  responses: {
+    200: {
+      description: "Each type code, sorted",
+      content: { "application/json": { schema: searchFeatureTypesResponseSchema } },
+    },
+    503: catalogOutOfDate,
+  },
+});
+
 /** `homebrew.db`'s hits for `filter`, of each kind `reads` admits. */
 function homebrewHits(
   homebrewDb: HomebrewDb,
@@ -338,6 +358,14 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
   routes.openapi(sources, (c) => {
     const merged = [...listSearchSources(dataDir), ...listHomebrewSearchSources(homebrewDb)];
     return c.json({ sources: merged.sort((a, b) => a.localeCompare(b)) }, 200);
+  });
+
+  routes.openapi(featureTypes, (c) => {
+    const merged = new Set([
+      ...getCatalogFeatureTypes(dataDir),
+      ...listHomebrewFeatureTypes(homebrewDb),
+    ]);
+    return c.json({ featureTypes: [...merged].sort((a, b) => a.localeCompare(b)) }, 200);
   });
 
   routes.openapi(types, (c) => c.json({ types: listSearchTypes(dataDir) }, 200));

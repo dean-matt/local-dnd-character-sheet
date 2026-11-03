@@ -73,6 +73,9 @@ function sideRoute(
   }
   const catalog = /^\/api\/classes\?edition=(\w+)&limit=200$/.exec(url);
   if (catalog) return json(200, { items: lists[`catalog ${catalog[1]}`] ?? [] });
+  if (url === "/api/search/feature-types") {
+    return json(200, { featureTypes: lists["feature-types"] ?? [] });
+  }
   const races = /^\/api\/races\?edition=(\w+)&limit=200$/.exec(url);
   if (races) return json(200, { items: lists[`races ${races[1]}`] ?? [] });
   if (!/^\/api\/homebrew\/classes\/[^/]+\/(?:features|resources)$/.test(url)) return undefined;
@@ -4028,6 +4031,22 @@ describe("Homebrew optional features", () => {
         prerequisite: [{ level: { level: 7, class: { name: "Warlock" } } }],
       },
     });
+  });
+
+  it("offers the listed feature types, labelled where the app has a name, and keeps one the list lacks", async () => {
+    stubApi({ ...lists, "feature-types": ["EI", "MM", "RP"] });
+    renderPage("optional-features");
+
+    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await settled();
+    fireEvent.click(within(editor()).getByRole("button", { name: /^Feature types/ }));
+
+    const boxes = (name: string) => within(editor()).getByRole("checkbox", { name });
+    expect(boxes("Metamagic")).not.toBeChecked();
+    expect(boxes("RP")).not.toBeChecked();
+    expect(boxes("Eldritch Invocation")).toBeChecked();
+    expect(boxes("XYZ")).toBeChecked();
+    expect(within(editor()).queryByRole("checkbox", { name: "Pact Boon" })).toBeNull();
   });
 
   it("keeps a prerequisite class's source when its level is edited", async () => {

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FEATURE_TYPE_OPTIONS, featureTypeLabel } from "../../lib/featureTypeLabel.ts";
+import { useSearchFeatureTypes } from "../../hooks/useSearchFeatureTypes.ts";
+import { featureTypeLabel } from "../../lib/featureTypeLabel.ts";
 import { InputField } from "../InputField.tsx";
 import { MultiSelect } from "../MultiSelect.tsx";
 import { type HomebrewFormProps, listAt, textAt, withField } from "./homebrewEntry.ts";
@@ -8,17 +9,17 @@ import { ROW_BUTTON } from "./homebrewRows.ts";
 
 /**
  * A homebrew optional feature's name and the feature types that offer it. A type is picked
- * from the ones the app names, or typed as a new code, which the API accepts as it is.
+ * from the ones the catalog and homebrew use, or typed as a new code, which the API accepts as
+ * it is. A type the feature holds stays offered even when the list lacks it.
  */
 export function OptionalFeatureBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
   const [typed, setTyped] = useState("");
   const types = listAt(entry, "featureType").filter((each) => typeof each === "string");
-  const options = [
-    ...FEATURE_TYPE_OPTIONS,
-    ...types
-      .filter((type) => !FEATURE_TYPE_OPTIONS.some(({ value }) => value === type))
-      .map((type) => ({ value: type, label: featureTypeLabel(type) })),
-  ];
+  const { data: listed = [] } = useSearchFeatureTypes();
+  const options = [...new Set([...listed, ...types])].map((type) => ({
+    value: type,
+    label: featureTypeLabel(type),
+  }));
   const write = (next: string[]) =>
     onChange(withField(entry, "featureType", next.length > 0 ? next : undefined));
   const code = typed.trim();

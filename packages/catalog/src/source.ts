@@ -17,6 +17,11 @@ export const catalogSourcesResponseSchema = z.object({ sources: z.array(catalogS
 
 export type CatalogSource = z.infer<typeof catalogSourceSchema>;
 
+/** Every optional-feature type code a search can filter on, one each, sorted. */
+export const searchFeatureTypesResponseSchema = z.object({
+  featureTypes: z.array(z.string().min(1)),
+});
+
 /** The source every homebrew row cites, which the server stamps and Settings groups on. */
 export const HOMEBREW_SOURCE = "HB";
 

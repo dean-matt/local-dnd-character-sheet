@@ -5,6 +5,7 @@ import { homebrewMonsterInputSchema } from "@dnd/catalog";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishSearchFixture, publishSpellLists } from "../db/queries/contentFixture.ts";
 import {
+  deleteHomebrewOptionalFeature,
   insertHomebrewBackground,
   insertHomebrewClass,
   insertHomebrewDeity,
@@ -120,6 +121,55 @@ describe("searchRoutes", () => {
       await routes.request("/search?type=monster&source=HB&q=elemental")
     ).json();
     expect(onlyHb.total).toBe(2);
+  });
+
+  it("lists each feature type once, the catalog's and homebrew's merged, and drops a homebrew-only one with its last feature", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "search-feature-types-"));
+    try {
+      publishSearchFixture(dir, {
+        optionalFeatures: [
+          { name: "Agonizing Blast", source: "PHB", edition: "classic", json: "{}" },
+          { name: "Dueling", source: "PHB", edition: "classic", json: "{}" },
+        ],
+        optionalFeatureTypes: [
+          { name: "Agonizing Blast", source: "PHB", feature_type: "EI" },
+          { name: "Dueling", source: "PHB", feature_type: "FS:F" },
+          { name: "Dueling", source: "PHB", feature_type: "FS:P" },
+        ],
+      });
+      const both = searchRoutes(dir, opened.homebrewDb);
+      const list = async () =>
+        (await (await both.request("/search/feature-types")).json()).featureTypes;
+      expect(await list()).toEqual(["EI", "FS:F", "FS:P"]);
+
+      insertHomebrewOptionalFeature(opened.homebrewDb, "o", {
+        name: "Ember Lore",
+        edition: "classic",
+        featureType: ["EI", "XX"],
+      });
+      expect(await list()).toEqual(["EI", "FS:F", "FS:P", "XX"]);
+
+      deleteHomebrewOptionalFeature(opened.homebrewDb, "o");
+      expect(await list()).toEqual(["EI", "FS:F", "FS:P"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("lists only the homebrew feature types while no catalog is built", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "search-feature-types-"));
+    try {
+      insertHomebrewOptionalFeature(opened.homebrewDb, "o", {
+        name: "Ember Lore",
+        edition: "classic",
+        featureType: ["XX"],
+      });
+      const res = await searchRoutes(dir, opened.homebrewDb).request("/search/feature-types");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ featureTypes: ["XX"] });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("lists a homebrew optional feature beside the catalog's, narrowed by feature type", async () => {
