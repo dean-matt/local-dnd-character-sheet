@@ -1,6 +1,7 @@
 import {
   type CharacterDefinition,
   type CharacterRecord,
+  catalogRef,
   entryKey,
   houseRule,
   raceSummary,
@@ -12,6 +13,7 @@ import { RACE_FIELD, withDeparture } from "../../../lib/departures.ts";
 import { increaseSource } from "../../../lib/grantorIncreases.ts";
 import { titleCase } from "../../../lib/proficiencyGrants.ts";
 import { raceChoices } from "../../../lib/raceChoices.ts";
+import { subraceLabel, subraceRef, takenPlain } from "../../../lib/subraceItems.ts";
 import { Card } from "../../Card.tsx";
 import { ChoicePills } from "../../ChoicePills.tsx";
 import { FormField } from "../../FormField.tsx";
@@ -20,10 +22,8 @@ import { ChangeablePick } from "./ChangeablePick.tsx";
 import { OriginIncreases } from "./OriginIncreases.tsx";
 import { OriginSpellBlocks } from "./OriginSpellBlocks.tsx";
 
-const subraceKey = (row: { name: string; source: string }) => `${row.name}|${row.source}`;
-
 /**
- * The race, changed through the picker, its subrace where the catalog race has named ones,
+ * The race, changed through the picker, its subrace where the race has named ones,
  * and what the race leaves open: its size, its resistance, its increases and which of its
  * spell blocks applies. A new race drops the subrace and any note that the old one was
  * typed past the catalog; what it grants is left for the player to apply.
@@ -38,10 +38,11 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
     subrace,
     definition.edition,
   );
+  const catalogSubrace = catalogRef(subrace);
   // True once the row `json` is read from has loaded, or where no row is read.
-  const ready = catalogRace ? (subrace ? subraces.isSuccess : raceRow.isSuccess) : read;
+  const ready = catalogRace ? (catalogSubrace ? subraces.isSuccess : raceRow.isSuccess) : read;
   const rows = subraces.data?.items ?? [];
-  const plain = rows.some((row) => row.name === "");
+  const plain = takenPlain(rows);
   const named = rows.filter((row) => row.name !== "");
   const { sizes, resistances } = raceChoices(json);
 
@@ -70,14 +71,17 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
                 {...control}
                 options={[
                   { value: "", label: plain ? "None" : "Choose a subrace" },
-                  ...named.map((row) => ({ value: subraceKey(row), label: row.name })),
+                  ...named.map((row) => ({
+                    value: entryKey(subraceRef(row)),
+                    label: subraceLabel(row),
+                  })),
                 ]}
-                value={subrace ? subraceKey(subrace) : ""}
+                value={subrace ? entryKey(subrace) : ""}
                 onChange={(value) => {
-                  const row = named.find((each) => subraceKey(each) === value);
+                  const row = named.find((each) => entryKey(subraceRef(each)) === value);
                   write("subrace", (latest) => ({
                     ...latest,
-                    subrace: row && { name: row.name, source: row.source },
+                    subrace: row && subraceRef(row),
                   }));
                 }}
               />
@@ -125,8 +129,8 @@ export function RaceCard({ character }: { character: CharacterRecord }) {
           definition={definition}
           row={
             catalogRace &&
-            (subrace
-              ? { grantor: "subrace", ref: subrace, parent: catalogRace }
+            (catalogSubrace
+              ? { grantor: "subrace", ref: catalogSubrace, parent: catalogRace }
               : { grantor: "race", ref: catalogRace })
           }
           kinds={["race", "subrace"]}

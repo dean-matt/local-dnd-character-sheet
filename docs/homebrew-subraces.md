@@ -5,8 +5,8 @@ A homebrew subrace lives in `homebrew_subraces`. Its `json` is the 5etools race 
 parent is columns beside it: `race_id` for a homebrew race, restricted on delete, or
 `race_name` and `race_source` for a catalog race.
 
-A catalog subrace row is the race and the subrace merged by the ETL; a homebrew one is not.
-Merging a homebrew subrace over its race is for whatever first reads one.
+A catalog subrace row is the race and the subrace merged by the ETL; a homebrew one is not,
+and nothing merges it yet: the sheet reads a held homebrew subrace's race row alone.
 
 ## Rules
 
@@ -14,7 +14,10 @@ Merging a homebrew subrace over its race is for whatever first reads one.
   subraces in the same transaction.
 - A name is unique within its parent, ignoring case: one index per kind of parent.
 - Deleting a homebrew race that has subraces is refused with a 409 naming them.
-- A character cannot hold a homebrew subrace yet, so nothing else references one.
+- A character holds one as `subrace: {homebrewId}`, so a rename keeps it there. Deleting
+  one a character holds is refused with a 409 naming the characters.
+- A held subrace grants no traits or increases yet; the sheet names it from its row, and
+  `Homebrew` once no row holds its id, when the derived block answers 422.
 
 ## Reads
 

@@ -77,7 +77,7 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
 
 /**
  * Each choice made so far that the character's edition does not hold: a race, class or
- * deity row, or a homebrew race, background, class or subclass, of the other edition; or a subrace,
+ * deity row, or a homebrew race, subrace, background, class or subclass, of the other edition; or a subrace,
  * background or subclass absent from the edition's list, or a feat a class granted at an
  * improvement that the edition's list lacks, a homebrew one of the other edition, or either
  * that a 2014 character took with feats not allowed. `Ability Score Improvement` (XPHB) is never named: an
@@ -100,6 +100,7 @@ export function useEditionMismatches(): EditionMismatch[] {
       ? homebrewSubclasses?.find((row) => row.id === ref.homebrewId)
       : undefined;
   const homebrewRace = useRowAt(homebrewPath("races", race));
+  const homebrewSubrace = useRowAt(homebrewPath("subraces", subrace));
   const homebrewBackground = useRowAt(homebrewPath("backgrounds", background));
   const deityRow = useRowAt(
     deity &&
@@ -111,7 +112,12 @@ export function useEditionMismatches(): EditionMismatch[] {
   return [
     other("Race", catalogRace && named(catalogRace), raceRow.data?.edition),
     other("Race", homebrewName(homebrewRace), homebrewRace?.edition),
-    missingFrom("Subrace", subrace, subraces.data?.items),
+    missingFrom(
+      "Subrace",
+      catalogRef(subrace),
+      subraces.data?.items.filter((row) => "source" in row),
+    ),
+    other("Subrace", homebrewName(homebrewSubrace), homebrewSubrace?.edition),
     missingFrom("Background", catalogBackground, backgrounds.data?.items),
     other("Background", homebrewName(homebrewBackground), homebrewBackground?.edition),
     ...entries.flatMap((entry) => [

@@ -137,12 +137,16 @@ export function listHomebrewFeatureTypes(db: HomebrewDb): string[] {
 }
 
 /**
- * Every homebrew race and class name by id, for the summaries a character list computes on
- * read. Ids are random UUIDs in every table, so one map spans both kinds.
+ * Every homebrew race, subrace and class name by id, for the summaries a character list
+ * computes on read. Ids are random UUIDs in every table, so one map spans the kinds.
  */
 export function homebrewNames(db: HomebrewDb): Map<string, string> {
   const rows = [
     ...db.select({ id: homebrewRaces.id, name: homebrewRaces.name }).from(homebrewRaces).all(),
+    ...db
+      .select({ id: homebrewSubraces.id, name: homebrewSubraces.name })
+      .from(homebrewSubraces)
+      .all(),
     ...db
       .select({ id: homebrewClasses.id, name: homebrewClasses.name })
       .from(homebrewClasses)

@@ -15,9 +15,12 @@ import { openDatabases } from "../db/client.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
   deleteHomebrewRace,
+  deleteHomebrewSubrace,
   insertHomebrewClass,
   insertHomebrewRace,
+  insertHomebrewSubrace,
   updateHomebrewClass,
+  updateHomebrewSubrace,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
@@ -119,6 +122,28 @@ describe("charactersRoutes", () => {
 
     deleteHomebrewRace(opened.homebrewDb, "race-1");
     expect(await listed()).toMatchObject({ raceSummary: "Homebrew" });
+  });
+
+  it("names a homebrew subrace in the race summary, following a rename and a delete", async () => {
+    const moon = {
+      name: "Moon",
+      edition: "one" as const,
+      parent: { name: "Half-Elf", source: "XPHB" },
+    };
+    insertHomebrewSubrace(opened.homebrewDb, "subrace-1", moon);
+    await routes.request(
+      "/characters",
+      json(baseDefinition({ subrace: { homebrewId: "subrace-1" } })),
+    );
+    const listed = async () => (await (await routes.request("/characters")).json())[0];
+
+    expect(await listed()).toMatchObject({ raceSummary: "Half-Elf (Moon)" });
+
+    updateHomebrewSubrace(opened.homebrewDb, "subrace-1", { ...moon, name: "Silver" });
+    expect(await listed()).toMatchObject({ raceSummary: "Half-Elf (Silver)" });
+
+    deleteHomebrewSubrace(opened.homebrewDb, "subrace-1");
+    expect(await listed()).toMatchObject({ raceSummary: "Half-Elf (Homebrew)" });
   });
 
   it("rejects a definition missing a required field, naming which one failed", async () => {

@@ -1,6 +1,6 @@
 import type { CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
 import { identityRecord } from "../../../test/records.ts";
@@ -281,5 +281,94 @@ describe("RaceCard with a homebrew race", () => {
     ).toBeInTheDocument();
     fireEvent.click(within(size).getByRole("button", { name: "Small" }));
     await waitFor(() => expect(written(fetchMock)?.size).toBe("small"));
+  });
+});
+
+describe("RaceCard with a homebrew subrace", () => {
+  const moon = (raceName = "Elf", raceSource = "XPHB", name = "Moon") => ({
+    id: "hb_s",
+    name,
+    edition: "one",
+    raceName,
+    raceSource,
+    json: { name, source: "HB" },
+    createdAt: "2026-01-01T00:00:00.000Z",
+  });
+  const holding = () => {
+    const record = identityRecord();
+    record.definition.subrace = { homebrewId: "hb_s" };
+    return record;
+  };
+
+  it("offers a catalog race's homebrew subrace beside its catalog ones, marked, and saves it by id", async () => {
+    const fetchMock = stubServer(identityRecord(), (url) =>
+      url.startsWith("/api/races/Elf/XPHB/subraces")
+        ? page([subrace("", "Elf"), subrace("High", "Elf"), moon()])
+        : undefined,
+    );
+    renderCard(identityRecord());
+
+    fireEvent.click(await screen.findByRole("combobox", { name: "Subrace" }));
+    expect(screen.getByRole("option", { name: "High" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "Moon (homebrew)" }));
+
+    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+    expect(written(fetchMock).subrace).toEqual({ homebrewId: "hb_s" });
+  });
+
+  it("offers a homebrew race's subraces, with None, and saves one by id", async () => {
+    const record = identityRecord();
+    record.definition.race = { homebrewId: "hb_1" };
+    record.definition.subrace = undefined;
+    const fetchMock = stubServer(record, (url) => {
+      if (url === "/api/homebrew/races")
+        return [
+          {
+            id: "hb_1",
+            name: "Stoneborn",
+            edition: "one",
+            json: { name: "Stoneborn", source: "HB", size: ["M"], speed: 30 },
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ];
+      if (url.startsWith("/api/races/Stoneborn/HB/subraces"))
+        return page([moon("Stoneborn", "HB", "Deep")]);
+      return undefined;
+    });
+    renderCard(record);
+
+    fireEvent.click(await screen.findByRole("combobox", { name: "Subrace" }));
+    expect(screen.getByRole("option", { name: "None" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "Deep (homebrew)" }));
+
+    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+    expect(written(fetchMock).subrace).toEqual({ homebrewId: "hb_s" });
+  });
+
+  it("names the held subrace by its row, and Homebrew once the row is gone", async () => {
+    stubServer(holding(), (url) => (url === "/api/homebrew/subraces" ? [moon()] : undefined));
+    renderCard(holding());
+    expect(
+      await screen.findByRole("button", { name: "Change race, Elf (Moon)" }),
+    ).toBeInTheDocument();
+    cleanup();
+
+    stubServer(holding(), (url) => (url === "/api/homebrew/subraces" ? [] : undefined));
+    renderCard(holding());
+    expect(
+      await screen.findByRole("button", { name: "Change race, Elf (Homebrew)" }),
+    ).toBeInTheDocument();
+  });
+
+  it("drops the homebrew subrace when the race changes", async () => {
+    const fetchMock = stubServer(holding());
+    renderCard(holding());
+
+    fireEvent.click(screen.getByRole("button", { name: /^Change race/ }));
+    fireEvent.click(await screen.findByRole("option", { name: /Dwarf/ }));
+
+    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+    expect(written(fetchMock).race).toEqual(XPHB("Dwarf"));
+    expect(written(fetchMock)).not.toHaveProperty("subrace");
   });
 });

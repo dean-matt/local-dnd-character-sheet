@@ -1,21 +1,17 @@
-import { subraceListItemSchema, type subraceRecordSchema } from "@dnd/catalog";
+import { subraceListItemSchema } from "@dnd/catalog";
 import type { CharacterRecord, ContentRef } from "@dnd/character";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 
-// A homebrew subrace is not yet a pick, so only the catalog rows pass through.
-const subraceListSchema = z
-  .object({ items: z.array(subraceListItemSchema), total: z.int() })
-  .transform(({ items, total }) => ({
-    items: items.filter((item): item is z.infer<typeof subraceRecordSchema> => "source" in item),
-    total,
-  }));
+const subraceListSchema = z.object({ items: z.array(subraceListItemSchema), total: z.int() });
 
 /**
- * Every subrace of one catalog race in one edition, each row already merged with its race.
- * 200 is the route's ceiling, far past the most subraces any upstream race carries.
+ * Every subrace of one race in one edition, catalog and homebrew together. A catalog row is
+ * already merged with its race; a homebrew one holds only what it adds. A homebrew race is
+ * named by its name and source `HB`. 200 is the route's ceiling, far past the most subraces
+ * any upstream race carries.
  */
 export function useSubraces(race: ContentRef | undefined, edition: CharacterRecord["edition"]) {
   return useQuery({

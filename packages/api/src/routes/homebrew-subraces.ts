@@ -5,6 +5,7 @@ import {
   homebrewSubraceRecordSchema,
 } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
 import {
   deleteHomebrewSubrace,
   findHomebrewSubrace,
@@ -17,7 +18,15 @@ import {
 } from "../db/queries/homebrew.ts";
 import { getRace } from "../db/queries/races.ts";
 import { errorSchema, notFound } from "./errors.ts";
-import { claimName, idParam, nameTaken, nameTakenError, toSubraceRecord } from "./homebrew.ts";
+import {
+  claimName,
+  idParam,
+  nameTaken,
+  nameTakenError,
+  referenced,
+  referencedError,
+  toSubraceRecord,
+} from "./homebrew.ts";
 
 const SUBRACE_NOT_FOUND = "No homebrew subrace with that id";
 const RACE_NOT_FOUND = "No race with that name and source, or homebrew race with that id";
@@ -102,6 +111,7 @@ const removeSubrace = createRoute({
   responses: {
     204: { description: "The homebrew subrace was deleted" },
     404: notFound("homebrew subrace"),
+    409: referenced("homebrew subrace"),
   },
 });
 
@@ -116,7 +126,11 @@ export function raceEdition(
     : getRace(dataDir, parent.name, parent.source)?.edition;
 }
 
-export function homebrewSubracesRoutes(db: HomebrewDb, dataDir: string) {
+export function homebrewSubracesRoutes(
+  db: HomebrewDb,
+  charactersDb: CharactersDb,
+  dataDir: string,
+) {
   const routes = new OpenAPIHono();
 
   routes.openapi(listSubraces, (c) => c.json(listHomebrewSubraces(db).map(toSubraceRecord)));
@@ -155,7 +169,10 @@ export function homebrewSubracesRoutes(db: HomebrewDb, dataDir: string) {
   });
 
   routes.openapi(removeSubrace, (c) => {
-    if (!deleteHomebrewSubrace(db, c.req.valid("param").id)) {
+    const { id } = c.req.valid("param");
+    const characters = charactersReferencingHomebrew(charactersDb, id);
+    if (characters.length > 0) return c.json(referencedError("This subrace", characters), 409);
+    if (!deleteHomebrewSubrace(db, id)) {
       return c.json({ error: SUBRACE_NOT_FOUND }, 404);
     }
     return c.body(null, 204);

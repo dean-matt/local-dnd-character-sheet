@@ -71,6 +71,7 @@ import {
   getHomebrewClass,
   getHomebrewFeat,
   getHomebrewRace,
+  getHomebrewSubrace,
   type HomebrewDb,
   listHomebrewSkills,
 } from "./homebrew.ts";
@@ -188,9 +189,14 @@ export function raceJson(
   definition: CharacterDefinition,
 ): unknown {
   const { race, subrace } = definition;
+  // A homebrew subrace adds nothing to its race's row, so that row answers once it exists.
+  if (subrace && "homebrewId" in subrace && !getHomebrewSubrace(homebrewDb, subrace.homebrewId))
+    return undefined;
   if ("homebrewId" in race) return getHomebrewRace(homebrewDb, race.homebrewId)?.json;
-  if (subrace)
-    return getSubrace(dataDir, subrace.name, subrace.source, race.name, race.source)?.json;
+  const catalogSubrace = catalogRef(subrace);
+  if (catalogSubrace)
+    return getSubrace(dataDir, catalogSubrace.name, catalogSubrace.source, race.name, race.source)
+      ?.json;
   return getRace(dataDir, race.name, race.source)?.json;
 }
 

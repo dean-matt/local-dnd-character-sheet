@@ -50,7 +50,7 @@ export type Candidate = {
   held: readonly EntryRef[];
   /** The feats held before this level, keyed `name|source` lowercased, which a feat may need. */
   earlier: readonly string[];
-  /** The race, and any subrace, lowercased; `undefined` while unset or homebrew, which names none. */
+  /** The race, and any catalog subrace, lowercased; `undefined` while unset or homebrew, which names none. */
   race: { name: string; subrace?: string } | undefined;
   /** Armor and weapon proficiencies, folded as `proficiencyKey` folds them; `undefined` while unset. */
   armor: readonly string[] | undefined;
@@ -221,6 +221,6 @@ function raceOf({ race, subrace }: Drafted): Candidate["race"] {
   if (race === undefined || !("name" in race)) return undefined;
   return {
     name: race.name.toLowerCase(),
-    ...(subrace ? { subrace: subrace.name.toLowerCase() } : {}),
+    ...(subrace && "name" in subrace ? { subrace: subrace.name.toLowerCase() } : {}),
   };
 }
