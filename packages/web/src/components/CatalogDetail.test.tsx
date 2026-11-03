@@ -451,7 +451,7 @@ describe("CatalogDetail", () => {
     expect(await screen.findByText("Regain hit points.")).toBeInTheDocument();
   });
 
-  it("survives a failed features request", async () => {
+  it("leaves a feature whose name would break its tag out of the level table, and survives a failed features request", async () => {
     const warden = {
       id: "hb-1",
       name: "Warden",
@@ -461,6 +461,19 @@ describe("CatalogDetail", () => {
       createdAt: "2026-01-01T00:00:00.000Z",
       resources: [],
     };
+    stubFetchByUrl({
+      "/api/homebrew/classes/hb-1": warden,
+      "/api/homebrew/classes/hb-1/features": [
+        { name: "Bad|Name", level: 1, entries: ["x"] },
+        { name: "Good", level: 1, entries: ["y"] },
+      ],
+    });
+    renderAt("/homebrew/classes/hb-1");
+    await dialogNamed("Warden");
+    expect(await screen.findByText("Good")).toBeInTheDocument();
+    expect(screen.queryByText("Bad|Name")).not.toBeInTheDocument();
+    cleanup();
+
     stubFetchByUrl({ "/api/homebrew/classes/hb-1": warden });
     renderAt("/homebrew/classes/hb-1");
     await dialogNamed("Warden");

@@ -52,6 +52,7 @@ export {
   classGrantsSchema,
   classRecordSchema,
   homebrewClassDetailSchema,
+  homebrewClassFeaturesInputSchema,
   homebrewClassFeaturesSchema,
   homebrewClassInputSchema,
   homebrewClassRecordSchema,

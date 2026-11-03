@@ -4,6 +4,8 @@ import {
   castingStartLevelSchema,
   classGrantsSchema,
   classRecordSchema,
+  homebrewClassFeaturesInputSchema,
+  homebrewClassFeaturesSchema,
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
   preparationRuleSchema,
@@ -59,6 +61,19 @@ describe("classGrantsSchema", () => {
       ],
     };
     expect(classGrantsSchema.parse(grants)).toEqual(grants);
+  });
+});
+
+describe("homebrew class feature lists", () => {
+  const legacy = [{ name: "Fury | Rage", level: 1, entries: ["x"] }];
+
+  it("reads a stored name containing | or } and refuses it on input", () => {
+    expect(homebrewClassFeaturesSchema.parse(legacy)).toEqual(legacy);
+    const result = homebrewClassFeaturesInputSchema.safeParse(legacy);
+    expect(result.error?.issues[0]?.message).toBe('Feature "Fury | Rage" cannot contain "|"');
+    expect(homebrewClassFeaturesInputSchema.safeParse([{ ...legacy[0], name: "A}" }]).success).toBe(
+      false,
+    );
   });
 });
 

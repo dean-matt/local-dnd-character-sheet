@@ -268,16 +268,25 @@ const homebrewClassFeatureSchema = z.strictObject({
 
 export type HomebrewClassFeature = z.infer<typeof homebrewClassFeatureSchema>;
 
-/** A `|` or `}` in a feature's name would split or end the `{@classFeature}` tag that links it. */
-const TAG_BREAKERS = /[|}]/;
-
-/** A homebrew class's whole feature list; a name is unique within a level, as a `{@classFeature}` tag keys it. */
+/**
+ * A homebrew class's whole feature list as stored; a name is unique within a level, as a
+ * `{@classFeature}` tag keys it. Reads parse with this, so a name stored before `|` and `}` were
+ * refused still loads.
+ */
 export const homebrewClassFeaturesSchema = z
   .array(homebrewClassFeatureSchema)
-  .superRefine((features, context) => {
-    const seen = new Set<string>();
-    features.forEach(({ name, level }, index) => {
-      const breaker = TAG_BREAKERS.exec(name)?.[0];
+  .refine(
+    (features) =>
+      new Set(features.map(({ name, level }) => `${level}|${name.toLowerCase()}`)).size ===
+      features.length,
+    { message: "Two features share a name and level" },
+  );
+
+/** A feature list a writer submits: a `|` or `}` in a name would split or end the `{@classFeature}` tag that links it. */
+export const homebrewClassFeaturesInputSchema = homebrewClassFeaturesSchema.superRefine(
+  (features, context) => {
+    features.forEach(({ name }, index) => {
+      const breaker = /[|}]/.exec(name)?.[0];
       if (breaker) {
         context.addIssue({
           code: "custom",
@@ -285,12 +294,9 @@ export const homebrewClassFeaturesSchema = z
           message: `Feature "${name}" cannot contain "${breaker}"`,
         });
       }
-      seen.add(`${level}|${name.toLowerCase()}`);
     });
-    if (seen.size !== features.length) {
-      context.addIssue({ code: "custom", message: "Two features share a name and level" });
-    }
-  });
+  },
+);
 
 /** When a homebrew resource refreshes; a table that sets none reads as unspecified, not as `none`. */
 const homebrewResourceResetsSchema = z.enum(["short-rest", "long-rest", "none"]);
