@@ -77,7 +77,7 @@ const homebrewName = (row: { name: string } | undefined) => row && `${row.name} 
 
 /**
  * Each choice made so far that the character's edition does not hold: a race, class or
- * deity row, or a homebrew race, background or class, of the other edition; or a subrace,
+ * deity row, or a homebrew race, background, class or subclass, of the other edition; or a subrace,
  * background or subclass absent from the edition's list, or a feat a class granted at an
  * improvement that the edition's list lacks, a homebrew one of the other edition, or either
  * that a 2014 character took with feats not allowed. `Ability Score Improvement` (XPHB) is never named: an

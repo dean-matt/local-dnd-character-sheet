@@ -52,6 +52,17 @@ const ROWS: Record<string, unknown> = {
   ],
   "/api/homebrew/classes": [],
   "/api/homebrew/backgrounds": [],
+  "/api/homebrew/subclasses": [
+    {
+      id: "hs-1",
+      name: "Storm Domain",
+      edition: "classic",
+      className: "Cleric",
+      classSource: "PHB",
+      json: { name: "Storm Domain", source: "HB" },
+      createdAt: "2026-10-28T00:00:00.000Z",
+    },
+  ],
   "/api/homebrew/feats": [
     {
       id: "hf-1",
@@ -500,7 +511,10 @@ describe("IdentityStep", () => {
         race: { homebrewId: "hr-1" },
         background: { homebrewId: "hbg-1" },
         deity: { ...PHB("Oghma"), pantheon: "Celtic" },
-        levels: [{ class: { homebrewId: "hc-1" } }],
+        levels: [
+          { class: { homebrewId: "hc-1" } },
+          { class: PHB("Cleric"), subclass: { homebrewId: "hs-1" } },
+        ],
       }),
     );
     renderStep();
@@ -513,6 +527,8 @@ describe("IdentityStep", () => {
         "Race: Kenku (homebrew)",
         "Background: Smuggler (homebrew)",
         "Class: Blood Hunter (homebrew)",
+        "Class: Cleric (PHB)",
+        "Subclass: Storm Domain (homebrew)",
         "Deity: Oghma · Celtic",
       ]),
     );
