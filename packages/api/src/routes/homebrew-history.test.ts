@@ -54,6 +54,7 @@ describe("homebrewHistoryRoutes", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
   let app: OpenAPIHono;
+  let refusePath: string | undefined;
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "homebrew-history-"));
@@ -97,7 +98,11 @@ describe("homebrewHistoryRoutes", () => {
     app = new OpenAPIHono();
     app.route(
       "/",
-      homebrewHistoryRoutes(homebrewDb, dataDir, (path, init) => app.request(path, init)),
+      homebrewHistoryRoutes(homebrewDb, dataDir, async (path, init) => {
+        if (path !== refusePath) return app.request(path, init);
+        refusePath = undefined;
+        return Response.json({ error: "refused" }, { status: 409 });
+      }),
     );
     app.route("/", homebrewItemsRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewSpellsRoutes(homebrewDb, charactersDb));
@@ -114,6 +119,7 @@ describe("homebrewHistoryRoutes", () => {
   });
 
   afterEach(() => {
+    refusePath = undefined;
     opened.charactersDb.$client.close();
     opened.homebrewDb.$client.close();
   });
@@ -301,6 +307,45 @@ describe("homebrewHistoryRoutes", () => {
       await saveResources(created.id, [table("Ki")]);
       expect((await revert(created.id)).status).toBe(204);
       expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([]);
+    });
+
+    it("keeps the entry when a part's revert fails, and a retry resumes", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveResources(created.id, [table("Ki")]);
+      await app.request(`/homebrew/classes/${created.id}`, put({ ...warden(), name: "Renamed" }));
+      await saveFeatures(created.id, [feature("New")]);
+      await saveResources(created.id, [table("Rage")]);
+
+      refusePath = `/homebrew/classes/${created.id}/features`;
+      expect((await revert(created.id)).status).toBe(409);
+      expect((await read(`/homebrew/classes/${created.id}`)).name).toBe(warden().name);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Rage")]);
+      expect((await history()).reversible).toHaveLength(1);
+
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
+      expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
+      expect((await history()).reversible).toEqual([]);
+    });
+
+    it("returns to before the first of two part-only saves", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await saveFeatures(created.id, [feature("Second")]);
+      await saveFeatures(created.id, [feature("Third")]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([]);
+    });
+
+    it("keeps the row save's snapshot through later part-only saves", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await app.request(`/homebrew/classes/${created.id}`, put({ ...warden(), name: "Renamed" }));
+      await saveFeatures(created.id, [feature("Second")]);
+      await saveFeatures(created.id, [feature("Third")]);
+      expect((await revert(created.id)).status).toBe(204);
+      expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
     });
 
     it("restores a deleted class with its features and resource tables", async () => {
