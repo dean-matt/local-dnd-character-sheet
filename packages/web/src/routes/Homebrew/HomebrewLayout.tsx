@@ -6,6 +6,7 @@ import {
   Dumbbell,
   Shield,
   ShieldPlus,
+  Skull,
   Sparkles,
   Swords,
   Trash2,
@@ -21,6 +22,7 @@ import { SidebarFrame } from "../SidebarFrame.tsx";
 
 const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
   items: Swords,
+  monsters: Skull,
   spells: Sparkles,
   races: UserRound,
   classes: Shield,

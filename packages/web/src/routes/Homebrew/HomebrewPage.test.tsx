@@ -4045,3 +4045,208 @@ describe("Homebrew optional features", () => {
     );
   });
 });
+
+describe("Homebrew monsters", () => {
+  const stored = {
+    id: "m1",
+    name: "Cinder Hound",
+    edition: "one",
+    json: {
+      name: "Cinder Hound",
+      source: "HB",
+      size: ["M"],
+      type: "monstrosity",
+      ac: [{ ac: 13, from: ["natural armor"] }],
+      hp: { average: 22, formula: "4d8 + 4" },
+      speed: { walk: 40 },
+      str: 14,
+      dex: 14,
+      con: 12,
+      int: 3,
+      wis: 12,
+      cha: 6,
+      cr: "1",
+    },
+    createdAt: CREATED_AT,
+  };
+  const lists = { monsters: [stored] };
+  const monsters = () => screen.getByRole("region", { name: "Monsters" });
+
+  it("lists a monster with its type and challenge rating", async () => {
+    stubApi(lists);
+    renderPage("monsters");
+
+    expect(await within(monsters()).findByText("Cinder Hound")).toBeInTheDocument();
+    expect(within(monsters()).getByText("Monstrosity")).toBeInTheDocument();
+    expect(within(monsters()).getByText("CR 1")).toBeInTheDocument();
+  });
+
+  it("creates a monster from the starter, edited in the form", async () => {
+    const fetchMock = stubApi(lists, [{ status: 201, body: stored }]);
+    renderPage("monsters");
+
+    fireEvent.click(within(monsters()).getByRole("button", { name: "Add monster" }));
+    await settled();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Ash Hound" } });
+    pick("Challenge rating", "1/2");
+    fireEvent.change(field("spinbutton", "Armor class"), { target: { value: "15" } });
+    fireEvent.change(field("spinbutton", "Flying (ft.)"), { target: { value: "30" } });
+    stepTo("Ability scores");
+    fireEvent.change(field("spinbutton", "Strength"), { target: { value: "18" } });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]).toMatchObject({
+      method: "POST",
+      url: "/api/homebrew/monsters",
+      body: {
+        name: "Ash Hound",
+        edition: "one",
+        cr: "1/2",
+        ac: [15],
+        speed: { walk: 40, fly: 30 },
+        str: 18,
+      },
+    });
+  });
+
+  it("keeps a stated armor source when the number is edited", async () => {
+    const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
+    renderPage("monsters");
+
+    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await settled();
+    fireEvent.change(field("spinbutton", "Armor class"), { target: { value: "14" } });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]).toMatchObject({
+      method: "PUT",
+      url: "/api/homebrew/monsters/m1",
+      body: { ac: [{ ac: 14, from: ["natural armor"] }] },
+    });
+  });
+
+  it("shows the form's changes in JSON mode and JSON's in the form", async () => {
+    stubApi(lists);
+    renderPage("monsters");
+
+    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await settled();
+    fireEvent.change(field("textbox", "Name"), { target: { value: "Ember Hound" } });
+    mode("JSON");
+    expect(JSON.parse(jsonText("Monster JSON"))).toMatchObject({ name: "Ember Hound", cr: "1" });
+    typeJson(
+      "Monster JSON",
+      JSON.stringify({ ...stored.json, name: "Ember Hound", hp: { average: 40 } }),
+    );
+    mode("Step by step");
+    expect(field("spinbutton", "Hit points")).toHaveValue(40);
+  });
+
+  it("previews the stat block as the catalog renders it", async () => {
+    stubApi(lists);
+    renderPage("monsters");
+
+    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await settled();
+    mode("Preview");
+
+    const preview = within(editor());
+    expect(preview.getByText("Medium monstrosity")).toBeInTheDocument();
+    expect(preview.getByText("Armor Class")).toBeInTheDocument();
+    expect(preview.getByText(/22 \(4d8 \+ 4\)/)).toBeInTheDocument();
+  });
+
+  it("refuses a score above 30, naming the reason", async () => {
+    const fetchMock = stubApi(lists);
+    renderPage("monsters");
+
+    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await settled();
+    stepTo("Ability scores");
+    fireEvent.change(field("spinbutton", "Strength"), { target: { value: "31" } });
+    click("Save");
+
+    expect(field("spinbutton", "Strength")).toHaveAttribute("aria-invalid", "true");
+    expect(within(editor()).getByText("Too big: expected number to be <=30")).toBeInTheDocument();
+    expect(writesOf(fetchMock)).toEqual([]);
+  });
+
+  it("refuses an empty speed with its reason", async () => {
+    stubApi(lists);
+    renderPage("monsters");
+
+    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await settled();
+    fireEvent.change(field("spinbutton", "Walking (ft.)"), { target: { value: "" } });
+    click("Save");
+
+    expect(await within(editor()).findByText("A speed")).toBeInTheDocument();
+  });
+
+  it("says why a save failed when the name is used in the edition", async () => {
+    stubApi(lists, [
+      {
+        status: 409,
+        body: { error: "The homebrew monster m2 is already named Cinder Hound in the one edition" },
+      },
+    ]);
+    renderPage("monsters");
+
+    fireEvent.click(within(monsters()).getByRole("button", { name: "Add monster" }));
+    await settled();
+    click("Save");
+
+    expect(
+      await within(editor()).findByText(
+        /^Save failed: .*is already named Cinder Hound in the one edition/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("deletes a monster", async () => {
+    const fetchMock = stubApi(lists, [{ status: 204 }]);
+    renderPage("monsters");
+
+    fireEvent.click(await within(monsters()).findByRole("button", { name: "Delete Cinder Hound" }));
+    const dialog = screen.getByRole("dialog", { name: "Delete Cinder Hound?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(writesOf(fetchMock)).toEqual([
+      { url: "/api/homebrew/monsters/m1", method: "DELETE", body: undefined },
+    ]);
+  });
+
+  it("lists a deleted monster and restores it", async () => {
+    const fetchMock = stubApi(
+      {
+        history: {
+          reversible: [],
+          deleted: [
+            {
+              collection: "monsters",
+              id: "m9",
+              name: "Cinder Hound",
+              edition: "one",
+              deletedAt: CREATED_AT,
+            },
+          ],
+        },
+      },
+      [{ status: 204 }],
+    );
+    renderPage("deleted");
+
+    const section = screen.getByRole("region", { name: "Recently deleted" });
+    expect(await within(section).findByText("Cinder Hound")).toBeVisible();
+    fireEvent.click(within(section).getByRole("button", { name: "Restore Cinder Hound" }));
+
+    await waitFor(() =>
+      expect(writesOf(fetchMock)).toEqual([
+        { url: "/api/homebrew/monsters/m9/restore", method: "POST", body: undefined },
+      ]),
+    );
+  });
+});

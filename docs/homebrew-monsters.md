@@ -19,3 +19,12 @@ the unique index.
 `/search?type=monster` returns catalog and homebrew monsters together, filtered by name, source,
 edition and exclude. A homebrew hit has an `id` and no `source`, and opens at `/homebrew/monsters/{id}`
 where a catalog one opens through `/catalog`. `{@creature Name|HB}` resolves to the monster.
+
+## Editor
+
+The Homebrew page edits a monster step by step or as JSON, and its Preview tab renders the
+stat block through `monsterEntries`, as a catalog monster opens. The form sets the name, sizes,
+creature type, challenge rating, the first armor class, average hit points and hit dice, the
+five speeds and the six scores; the API's reasons show beside the field. Alignment, senses,
+traits, actions and a type's tags stay as written and are edited in JSON. The Rules control
+picks the edition, and the API refuses a repeated name within it.

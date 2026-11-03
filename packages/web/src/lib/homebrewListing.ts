@@ -5,6 +5,7 @@ import {
   homebrewDeityRecordSchema,
   homebrewFeatRecordSchema,
   homebrewItemRecordSchema,
+  homebrewMonsterRecordSchema,
   homebrewOptionalFeatureRecordSchema,
   homebrewRaceRecordSchema,
   homebrewSkillRecordSchema,
@@ -16,6 +17,7 @@ import {
 import type { CharacterRecord } from "@dnd/character";
 import type { z } from "zod";
 import type { HomebrewCollection } from "../hooks/useHomebrew.ts";
+import { capitalize } from "./capitalize.ts";
 import { featureTypeLabel } from "./featureTypeLabel.ts";
 import {
   backgroundFacts,
@@ -34,7 +36,7 @@ export interface HomebrewRow {
   name: string;
   /** Absent on a kind with no edition, such as a deity. */
   edition?: CharacterRecord["edition"];
-  json: { entries?: Entries };
+  json: { entries?: Entries; [field: string]: unknown };
 }
 
 /** A kind of homebrew as a list of its rows names it: its route, its record schema and its chips. */
@@ -136,9 +138,22 @@ const optionalFeatures: ListingKind<z.infer<typeof homebrewOptionalFeatureRecord
   chips: ({ json }) => json.featureType.map(featureTypeLabel),
 };
 
+const monsters: ListingKind<z.infer<typeof homebrewMonsterRecordSchema>> = {
+  collection: "monsters",
+  noun: "monster",
+  heading: "Monsters",
+  recordSchema: homebrewMonsterRecordSchema,
+  chips: ({ json }) => {
+    const type = typeof json.type === "string" ? json.type : json.type.type;
+    const rating = typeof json.cr === "string" ? json.cr : json.cr.cr;
+    return [typeof type === "string" ? capitalize(type) : "", `CR ${rating}`].filter(Boolean);
+  },
+};
+
 /** Each kind, keyed in the order the Homebrew sidebar lists them. */
 export const LISTING_KINDS: Record<HomebrewCollection, ListingKind> = {
   items,
+  monsters,
   spells,
   races: {
     collection: "races",

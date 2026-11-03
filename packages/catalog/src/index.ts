@@ -134,6 +134,7 @@ export { itemEntries } from "./item-entries.ts";
 export type { ItemHitFacts, ItemKind, ToolType } from "./item-kind.ts";
 export { armsGroupKinds, ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
 export { itemSkillGrantsSchema } from "./item-skill.ts";
+export { monsterEntries } from "./monster.ts";
 export type { ScoreMinimums } from "./multiclass.ts";
 export { multiclassEntrySchema, multiclassPrerequisiteSchema } from "./multiclass.ts";
 export type {
