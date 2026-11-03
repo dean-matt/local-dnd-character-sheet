@@ -189,7 +189,11 @@ const SEARCHES: Record<string, unknown[]> = {
     hit("background", "Ruined"),
     hit("background", "Hermit"),
   ],
-  deity: [hit("deity", "Oghma", "PHB", "Celtic"), hit("deity", "Oghma", "PHB", "Forgotten Realms")],
+  deity: [
+    hit("deity", "Oghma", "PHB", "Celtic"),
+    hit("deity", "Oghma", "PHB", "Forgotten Realms"),
+    { type: "deity", id: "hb-1", name: "Oghma", edition: null, qualifier: "Starfall" },
+  ],
   "skill,language": [
     ...["Perception", "Arcana", "History", "Insight", "Religion"].map((name) => hit("skill", name)),
     hit("language", "Common", "ERLW"),
@@ -424,6 +428,25 @@ describe("IdentityStep", () => {
     expect(values.deity).toBeUndefined();
     expect(combobox("Deity (optional)")).toHaveFocus();
   });
+
+  it.each([
+    ["Celtic", "PHB", "/api/catalog/deity/Oghma/PHB?qualifier=Celtic"],
+    ["Starfall", "HB", undefined],
+  ])(
+    "stores the deity of %s as %s, and reads a catalog row only for a catalog deity",
+    async (pantheon, source, row) => {
+      renderStep();
+
+      await pick("Deity (optional)", "oghma", new RegExp(`Oghma · ${pantheon}`));
+
+      expect(values.deity).toEqual({ name: "Oghma", source, pantheon });
+      const deityRows = vi
+        .mocked(fetch)
+        .mock.calls.map(([input]) => String(input))
+        .filter((url) => url.startsWith("/api/catalog/deity/"));
+      expect(deityRows).toEqual(row ? [row] : []);
+    },
+  );
 
   it("asks the rules first, and names each choice a change leaves behind without clearing it", async () => {
     localStorage.setItem(

@@ -64,9 +64,10 @@ const written = (fetchMock: ReturnType<typeof stubServer>) =>
     String(fetchMock.mock.calls.find(([, init]) => init?.method === "PUT")?.[1]?.body ?? "null"),
   );
 
-function renderCard(character: CharacterRecord) {
+function renderCard(character: CharacterRecord, homebrew?: ReturnType<typeof deityRecord>[]) {
   const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   client.setQueryData(characterKey(character.id), character);
+  if (homebrew) client.setQueryData(["homebrew", "deities"], homebrew);
   const tree = (shown: CharacterRecord) => (
     <QueryClientProvider client={client}>
       <DeityCard character={shown} />
@@ -139,30 +140,29 @@ describe("DeityCard", () => {
     for (const option of options) expect(option).not.toHaveAttribute("aria-disabled");
   });
 
-  it.each([
-    ["Starfall", "hb-1"],
-    ["Duskmere", "hb-2"],
-  ])("saves the homebrew deity of %s by name, HB and pantheon", async (pantheon) => {
-    const fetchMock = stubServer();
-    renderCard(identityRecord());
+  it.each(["Starfall", "Duskmere"])(
+    "saves the homebrew deity of %s by name, HB and pantheon",
+    async (pantheon) => {
+      const fetchMock = stubServer();
+      renderCard(identityRecord());
 
-    fireEvent.click(screen.getByRole("button", { name: "Change deity, None" }));
-    fireEvent.click(await screen.findByRole("option", { name: new RegExp(`Oghma · ${pantheon}`) }));
+      fireEvent.click(screen.getByRole("button", { name: "Change deity, None" }));
+      fireEvent.click(
+        await screen.findByRole("option", { name: new RegExp(`Oghma · ${pantheon}`) }),
+      );
 
-    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
-    expect(written(fetchMock).deity).toEqual({ name: "Oghma", source: "HB", pantheon });
-  });
+      await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+      expect(written(fetchMock).deity).toEqual({ name: "Oghma", source: "HB", pantheon });
+    },
+  );
 
   it("shows a held homebrew deity with its pantheon, and no not-found tag while it exists", async () => {
     stubServer();
     const record = identityRecord();
     record.definition.deity = { name: "oghma", source: "HB", pantheon: "starfall" };
-    const { client } = renderCard(record);
+    renderCard(record, [deityRecord("hb-1", "Starfall")]);
 
     expect(screen.getByRole("button", { name: "Change deity, oghma · starfall" })).toBeVisible();
-    await waitFor(() =>
-      expect(client.getQueryState(["homebrew", "deities"])?.status).toBe("success"),
-    );
     expect(screen.queryByText("Not found in homebrew")).toBeNull();
   });
 
