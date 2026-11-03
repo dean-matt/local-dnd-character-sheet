@@ -13,6 +13,7 @@ import {
   type HomebrewItemInput,
   type HomebrewSpellInput,
   homebrewDeityInputSchema,
+  homebrewOptionalFeatureInputSchema,
   homebrewSkillInputSchema,
   homebrewSpellInputSchema,
   itemEntries,
@@ -38,6 +39,7 @@ import {
   FEAT_STARTERS,
   type HomebrewStarters,
   ITEM_STARTERS,
+  OPTIONAL_FEATURE_STARTERS,
   RACE_STARTERS,
   SKILL_STARTERS,
   SPELL_STARTERS,
@@ -79,6 +81,8 @@ import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
 import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
 import type { JsonEditorProps } from "./JsonEditor.tsx";
+import { OptionalFeatureBasics } from "./OptionalFeatureBasics.tsx";
+import { OptionalFeaturePrerequisites } from "./OptionalFeaturePrerequisites.tsx";
 import { RaceAbilityScores } from "./RaceAbilityScores.tsx";
 import { RaceBasics } from "./RaceBasics.tsx";
 import { RaceProficiencies } from "./RaceProficiencies.tsx";
@@ -422,6 +426,19 @@ const deity: EditingKind<z.infer<typeof homebrewDeityInputSchema>> = {
   shownKeys: () => ["name", "pantheon", "title", "domains", "entries"],
 };
 
+const optionalFeature: EditingKind<z.infer<typeof homebrewOptionalFeatureInputSchema>> = {
+  inputSchema: homebrewOptionalFeatureInputSchema,
+  facts: () => [],
+  entries: rowEntries,
+  starters: OPTIONAL_FEATURE_STARTERS,
+  sections: [
+    { title: "Basics", Fields: OptionalFeatureBasics, keys: ["name", "featureType"] },
+    { title: "Prerequisites", Fields: OptionalFeaturePrerequisites, keys: ["prerequisite"] },
+    { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+  ],
+  shownKeys: () => ["name", "featureType", "prerequisite", "entries"],
+};
+
 /** How the editor edits each kind; `LISTING_KINDS` holds how a list names it. */
 export const EDITING_KINDS: Record<HomebrewCollection, EditingKind> = {
   items: item,
@@ -434,6 +451,7 @@ export const EDITING_KINDS: Record<HomebrewCollection, EditingKind> = {
   subclasses: subclass,
   subraces: subrace,
   deities: deity,
+  "optional-features": optionalFeature,
 };
 
 /** How many sections a step sets side by side, which the wide modal holds two of. */
