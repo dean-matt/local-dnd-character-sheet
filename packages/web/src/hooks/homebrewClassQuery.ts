@@ -1,4 +1,8 @@
-import { homebrewClassDetailSchema, homebrewClassFeaturesSchema } from "@dnd/catalog";
+import {
+  homebrewClassDetailSchema,
+  homebrewClassFeaturesSchema,
+  homebrewClassResourcesSchema,
+} from "@dnd/catalog";
 import { queryOptions, skipToken } from "@tanstack/react-query";
 import { apiGet } from "../lib/api.ts";
 import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
@@ -20,5 +24,13 @@ export const homebrewClassFeaturesQuery = (id: string) =>
     queryKey: [...homebrewClassKey(id), "features"],
     queryFn: () =>
       apiGet(`/homebrew/classes/${encodeURIComponent(id)}/features`, homebrewClassFeaturesSchema),
+    retry: retryUnlessClientError,
+  });
+
+export const homebrewClassResourcesQuery = (id: string) =>
+  queryOptions({
+    queryKey: [...homebrewClassKey(id), "resources"],
+    queryFn: () =>
+      apiGet(`/homebrew/classes/${encodeURIComponent(id)}/resources`, homebrewClassResourcesSchema),
     retry: retryUnlessClientError,
   });

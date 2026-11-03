@@ -1,4 +1,8 @@
-import { homebrewClassFeaturesSchema, type homebrewCollectionSchema } from "@dnd/catalog";
+import {
+  homebrewClassFeaturesSchema,
+  homebrewClassResourcesSchema,
+  type homebrewCollectionSchema,
+} from "@dnd/catalog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
@@ -42,9 +46,10 @@ export function useHomebrew<R>(
           ? apiMutate("POST", path, schema, body)
           : apiMutate("PUT", rowPath(id), schema, body);
       if (collection !== "classes" || !isRecord(input)) return write(input);
-      // A class's features live beside its row, so the save is two writes. A new class whose
-      // features fail is deleted again, so a second try does not conflict with the first.
-      const { features = [], ...row } = input;
+      // A class's features and resource tables live beside its row, so the save is three
+      // writes. A new class whose later write fails is deleted again, so a second try does not
+      // conflict with the first.
+      const { features = [], resources = [], ...row } = input;
       const saved = await write(row);
       const savedId = id ?? z.object({ id: z.string() }).parse(saved).id;
       try {
@@ -53,6 +58,12 @@ export function useHomebrew<R>(
           `${rowPath(savedId)}/features`,
           homebrewClassFeaturesSchema,
           features,
+        );
+        await apiMutate(
+          "PUT",
+          `${rowPath(savedId)}/resources`,
+          homebrewClassResourcesSchema,
+          resources,
         );
       } catch (error) {
         if (id === undefined) await apiDelete(rowPath(savedId)).catch(() => undefined);

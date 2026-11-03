@@ -75,7 +75,7 @@ function sideRoute(
   if (catalog) return json(200, { items: lists[`catalog ${catalog[1]}`] ?? [] });
   const races = /^\/api\/races\?edition=(\w+)&limit=200$/.exec(url);
   if (races) return json(200, { items: lists[`races ${races[1]}`] ?? [] });
-  if (!/^\/api\/homebrew\/classes\/[^/]+\/features$/.test(url)) return undefined;
+  if (!/^\/api\/homebrew\/classes\/[^/]+\/(?:features|resources)$/.test(url)) return undefined;
   if (method === "GET") return json(200, lists[url] ?? []);
   return method === "PUT" ? json(200, JSON.parse(String(body))) : undefined;
 }
@@ -121,13 +121,15 @@ function renderPage(kind = "items") {
   return client;
 }
 
-const writesOf = (fetchMock: ReturnType<typeof stubApi>, features = false) =>
+const writesOf = (fetchMock: ReturnType<typeof stubApi>, beside?: "features" | "resources") =>
   fetchMock.mock.calls
     .filter(
       ([url, init]) =>
         String(url).startsWith("/api/homebrew") &&
         init?.method &&
-        String(url).endsWith("/features") === features,
+        (beside
+          ? String(url).endsWith(`/${beside}`)
+          : !/\/(features|resources)$/.test(String(url))),
     )
     .map(([url, init]) => ({
       url: String(url),
@@ -3012,7 +3014,7 @@ describe("Homebrew kind page", () => {
         "Basics & Rules text",
         "Proficiencies & Equipment",
         "Multiclassing & Spellcasting",
-        "Features",
+        "Features & Resources",
         "Preview",
       ]);
       expect(field("textbox", "Name")).toHaveValue("Warden");
@@ -3109,8 +3111,8 @@ describe("Homebrew kind page", () => {
       fireEvent.change(field("textbox", "Feature 2 rules text"), { target: { value: "Dash." } });
       click("Save");
 
-      await waitFor(() => expect(writesOf(fetchMock, true)).toHaveLength(1));
-      expect(writesOf(fetchMock, true)[0]).toMatchObject({
+      await waitFor(() => expect(writesOf(fetchMock, "features")).toHaveLength(1));
+      expect(writesOf(fetchMock, "features")[0]).toMatchObject({
         method: "PUT",
         url: "/api/homebrew/classes/c1/features",
         body: [
@@ -3146,7 +3148,7 @@ describe("Homebrew kind page", () => {
       await waitFor(() =>
         expect(fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")).toBe(true),
       );
-      expect(writesOf(fetchMock, true)[0]).toMatchObject({
+      expect(writesOf(fetchMock, "features")[0]).toMatchObject({
         method: "PUT",
         url: "/api/homebrew/classes/c9/features",
         body: [{ name: "Ward", level: 1, entries: ["x"] }],
@@ -3194,6 +3196,142 @@ describe("Homebrew kind page", () => {
       click("Next");
 
       expect(within(editor()).getByText("Two features share a name and level")).toBeInTheDocument();
+    });
+
+    describe("resources", () => {
+      const warden = {
+        id: "c1",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB" },
+        createdAt: CREATED_AT,
+      };
+      const table = (name: string, at: Record<number, number>, resets?: string) => ({
+        name,
+        ...(resets ? { resets } : {}),
+        maximums: Array.from({ length: 20 }, (_, level) => at[level + 1] ?? null),
+      });
+
+      it("adds, renames, edits and removes resource tables, saving them as a whole beside the row", async () => {
+        const fetchMock = stubApi(
+          {
+            classes: [warden],
+            "/api/homebrew/classes/c1/resources": [
+              table("Ki", { 2: 2, 3: 3 }),
+              table("Rage", { 1: 2 }, "long-rest"),
+            ],
+          },
+          [{ status: 200, body: warden }],
+        );
+        renderPage("classes");
+
+        fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+        await loaded();
+        stepTo("Resources");
+        expect(field("textbox", "Resource 1 name")).toHaveValue("Ki");
+        expect(field("spinbutton", "Resource 1 level 1 maximum")).toHaveValue(null);
+        expect(field("spinbutton", "Resource 1 level 3 maximum")).toHaveValue(3);
+        expect(field("combobox", "Resource 2 resets")).toHaveTextContent("Long rest");
+        fireEvent.change(field("textbox", "Resource 1 name"), { target: { value: "Focus" } });
+        fireEvent.change(field("spinbutton", "Resource 1 level 3 maximum"), {
+          target: { value: "" },
+        });
+        fireEvent.change(field("spinbutton", "Resource 1 level 20 maximum"), {
+          target: { value: "9" },
+        });
+        pick("Resource 1 resets", "Short rest");
+        click("Remove Rage");
+        click("Add a resource");
+        fireEvent.change(field("textbox", "Resource 2 name"), { target: { value: "Surge" } });
+        fireEvent.change(field("spinbutton", "Resource 2 level 5 maximum"), {
+          target: { value: "1" },
+        });
+        click("Save");
+
+        await waitFor(() => expect(writesOf(fetchMock, "resources")).toHaveLength(1));
+        expect(writesOf(fetchMock, "resources")[0]).toMatchObject({
+          method: "PUT",
+          url: "/api/homebrew/classes/c1/resources",
+          body: [table("Focus", { 2: 2, 20: 9 }, "short-rest"), table("Surge", { 5: 1 })],
+        });
+        expect(writesOf(fetchMock)[0]?.body).not.toHaveProperty("resources");
+      });
+
+      it("shows the same tables in the step and in JSON", async () => {
+        stubApi({
+          classes: [warden],
+          "/api/homebrew/classes/c1/resources": [table("Ki", { 2: 2 })],
+        });
+        renderPage("classes");
+
+        fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+        await loaded();
+        stepTo("Resources");
+        fireEvent.change(field("spinbutton", "Resource 1 level 4 maximum"), {
+          target: { value: "4" },
+        });
+        mode("JSON");
+        expect(JSON.parse(jsonText("Class JSON")).resources).toEqual([table("Ki", { 2: 2, 4: 4 })]);
+
+        typeJson(
+          "Class JSON",
+          JSON.stringify({
+            ...JSON.parse(jsonText("Class JSON")),
+            resources: [table("Pool", { 1: 6 }, "none")],
+          }),
+        );
+        mode("Step by step");
+        stepTo("Resources");
+        expect(field("textbox", "Resource 1 name")).toHaveValue("Pool");
+        expect(field("spinbutton", "Resource 1 level 1 maximum")).toHaveValue(6);
+        expect(field("combobox", "Resource 1 resets")).toHaveTextContent("Never");
+      });
+
+      it("removes a new class again when its resources fail to save", async () => {
+        const stored = { ...warden, id: "c9" };
+        const fetchMock = stubApi(
+          { "PUT /api/homebrew/classes/c9/resources": { status: 500, body: { error: "down" } } },
+          [{ status: 201, body: stored }, { status: 204 }],
+        );
+        renderPage("classes");
+
+        addClass();
+        stepTo("Resources");
+        click("Add a resource");
+        fireEvent.change(field("textbox", "Resource 1 name"), { target: { value: "Ki" } });
+        click("Save");
+
+        await waitFor(() =>
+          expect(fetchMock).toHaveBeenCalledWith(
+            "/api/homebrew/classes/c9",
+            expect.objectContaining({ method: "DELETE" }),
+          ),
+        );
+        expect(writesOf(fetchMock, "resources")[0]).toMatchObject({
+          url: "/api/homebrew/classes/c9/resources",
+          body: [table("Ki", {})],
+        });
+        expect(editor()).toBeInTheDocument();
+      });
+
+      it("refuses a name another resource holds, ignoring case, and says why", () => {
+        stubApi({});
+        renderPage("classes");
+
+        addClass();
+        stepTo("Resources");
+        for (const [at, name] of [
+          [1, "Ki"],
+          [2, "KI"],
+        ] as const) {
+          click("Add a resource");
+          fireEvent.change(field("textbox", `Resource ${at} name`), { target: { value: name } });
+        }
+        click("Save");
+
+        expect(within(editor()).getByText("Two resources share a name")).toBeInTheDocument();
+      });
     });
 
     it("holds a step while a field it shows has a problem, and shows it beside the field", () => {

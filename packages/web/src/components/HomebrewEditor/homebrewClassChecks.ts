@@ -2,6 +2,7 @@ import {
   casterProgressionSchema,
   homebrewClassFeaturesSchema,
   homebrewClassInputSchema,
+  homebrewClassResourcesSchema,
 } from "@dnd/catalog";
 import { z } from "zod";
 import { CLASS_SKILL_SPEC, proficienciesIn, requirementProblem } from "./classShapes.ts";
@@ -20,7 +21,7 @@ const checked = (problem: (value: unknown) => string | undefined) =>
 /**
  * `homebrewClassInputSchema` with the checks the form adds before a save: the skills a class
  * offers and the minimum scores it asks, which the server takes as written, and the slot table.
- * `features` is not a field of the class row: a save sends it to the class's features route.
+ * `features` and `resources` are not fields of the class row: a save sends each to its own route.
  */
 export const homebrewClassFormSchema = homebrewClassInputSchema.extend({
   startingProficiencies: checked((value) =>
@@ -36,4 +37,5 @@ export const homebrewClassFormSchema = homebrewClassInputSchema.extend({
   ),
   casterProgression: casterProgressionSchema.in.shape.casterProgression,
   features: homebrewClassFeaturesSchema.optional(),
+  resources: homebrewClassResourcesSchema.optional(),
 });

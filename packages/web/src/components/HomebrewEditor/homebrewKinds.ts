@@ -58,6 +58,7 @@ import { ClassEquipment } from "./ClassEquipment.tsx";
 import { ClassFeatures } from "./ClassFeatures.tsx";
 import { ClassMulticlassing } from "./ClassMulticlassing.tsx";
 import { ClassProficiencies } from "./ClassProficiencies.tsx";
+import { ClassResources } from "./ClassResources.tsx";
 import { ClassSpellcasting } from "./ClassSpellcasting.tsx";
 import { DeityBasics } from "./DeityBasics.tsx";
 import { DeityStanding } from "./DeityStanding.tsx";
@@ -294,6 +295,7 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
       keys: ["spellcastingAbility", "casterProgression"],
     },
     { title: "Features", Fields: ClassFeatures, keys: ["features"] },
+    { title: "Resources", Fields: ClassResources, keys: ["resources"] },
   ],
   reference: createElement(FieldReference, { schema: appliedClassFieldsSchema }),
   shownKeys: () => [
@@ -308,6 +310,7 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
     "spellcastingAbility",
     "casterProgression",
     "features",
+    "resources",
   ],
 };
 
