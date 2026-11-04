@@ -295,19 +295,39 @@ const isPlainList = (entry: unknown): entry is Record<string, unknown> & { items
   Array.isArray(entry.items) &&
   entry.items.every((each) => typeof each === "string");
 
-/** One part of a row's rules text as the form edits it: paragraphs, or a list of plain items. */
+const isPlainSection = (
+  entry: unknown,
+): entry is Record<string, unknown> & { name?: string; entries?: string[] } =>
+  isRecord(entry) &&
+  !Array.isArray(entry) &&
+  entry.type === "entries" &&
+  (entry.name === undefined || typeof entry.name === "string") &&
+  (entry.entries === undefined ||
+    (Array.isArray(entry.entries) && entry.entries.every((each) => typeof each === "string")));
+
+/**
+ * One part of a row's rules text as the form edits it: paragraphs, a list of plain items, or a
+ * named section of paragraphs.
+ */
 export type RulesPart =
   | { text: string }
   | {
       items: string[];
       /** The list as stored, so its style survives an edit. */
       stored: Record<string, unknown>;
+    }
+  | {
+      name: string;
+      /** The section's paragraphs, a blank line between each. */
+      body: string;
+      /** The section as stored, so its other fields survive an edit. */
+      stored: Record<string, unknown>;
     };
 
 /**
- * The parts `entries` states, paragraphs first and after every list, blank where none are
- * stored, so text can be written on either side of each list. `undefined` where an entry is
- * neither a string nor a list of strings.
+ * The parts `entries` states, paragraphs first and after every list or section, blank where none
+ * are stored, so text can be written on either side of each. `undefined` where an entry is
+ * neither a string, a list of strings nor a section of strings.
  */
 export function rulesParts(entries: unknown): RulesPart[] | undefined {
   if (entries === undefined) return [{ text: "" }];
@@ -315,26 +335,48 @@ export function rulesParts(entries: unknown): RulesPart[] | undefined {
   const parts: RulesPart[] = [];
   let text: string[] = [];
   for (const entry of entries) {
-    if (typeof entry === "string") text.push(entry);
-    else if (isPlainList(entry)) {
+    if (typeof entry === "string") {
+      text.push(entry);
+      continue;
+    }
+    if (isPlainList(entry))
       parts.push({ text: text.join("\n\n") }, { items: entry.items, stored: entry });
-      text = [];
-    } else return undefined;
+    else if (isPlainSection(entry))
+      parts.push(
+        { text: text.join("\n\n") },
+        { name: entry.name ?? "", body: (entry.entries ?? []).join("\n\n"), stored: entry },
+      );
+    else return undefined;
+    text = [];
   }
   return [...parts, { text: text.join("\n\n") }];
 }
 
-/** The `entries` `parts` state; blank text, a blank item and a list with no items write nothing. */
+/**
+ * The `entries` `parts` state. Blank text, a blank item, a list with no items and a section with
+ * neither name nor paragraphs write nothing.
+ */
 export function entriesOfParts(parts: RulesPart[]): unknown[] | undefined {
   const entries = parts.flatMap((part): unknown[] => {
     if ("text" in part) return entriesOf(part.text) ?? [];
-    const items = part.items.map((each) => each.trim()).filter(Boolean);
-    return items.length > 0 ? [{ ...part.stored, items }] : [];
+    if ("items" in part) {
+      const items = part.items.map((each) => each.trim()).filter(Boolean);
+      return items.length > 0 ? [{ ...part.stored, items }] : [];
+    }
+    const name = part.name.trim();
+    const body = entriesOf(part.body);
+    if (!name && !body) return [];
+    const section: Record<string, unknown> = { ...part.stored, name, entries: body ?? [] };
+    if (!name) delete section.name;
+    return [section];
   });
   return entries.length > 0 ? entries : undefined;
 }
 
-/** True where a trait or action is a name and rules text of paragraphs and lists of plain items, the shape the form edits. */
+/**
+ * True where a trait or action is a name and rules text of paragraphs, lists of plain items and
+ * sections of paragraphs, the shape the form edits.
+ */
 export const isPlainTextRow = (item: unknown): item is { name?: string; entries?: unknown[] } =>
   isRecord(item) &&
   !Array.isArray(item) &&

@@ -4864,6 +4864,7 @@ describe("Homebrew monsters", () => {
 
     describe("traits, actions, reactions and legendary actions", () => {
       const list = { type: "list", style: "list-hang-notitle", items: ["a", "b"] };
+      const section = { type: "entries", name: "Heartstone", entries: ["Turns ethereal."] };
       const withText = {
         ...full,
         json: {
@@ -4874,7 +4875,7 @@ describe("Homebrew monsters", () => {
             "stray",
             { name: "Keen", entries: ["Smells {@condition prone}."], hidden: true },
           ],
-          action: [{ name: "Bite", entries: ["{@atk mw} {@hit 4} to hit."] }],
+          action: [{ name: "Bite", entries: ["{@atk mw} {@hit 4} to hit.", section] }],
         },
       };
       const openText = async (writes: Parameters<typeof stubApi>[1] = []) => {
@@ -5038,6 +5039,79 @@ describe("Homebrew monsters", () => {
         });
         mode("Preview");
         expect(within(editor()).getByText("Gore.")).toBeInTheDocument();
+      });
+
+      it("adds, edits, moves and removes a nested section", async () => {
+        await openText();
+        expect(field("textbox", "Actions 1 section 1 name")).toHaveValue("Heartstone");
+        expect(field("textbox", "Actions 1 section 1 rules text")).toHaveValue("Turns ethereal.");
+
+        fireEvent.change(field("textbox", "Actions 1 section 1 name"), {
+          target: { value: "Soul Bag" },
+        });
+        fireEvent.change(field("textbox", "Actions 1 section 1 rules text"), {
+          target: { value: "Holds a soul.\n\nOne at a time." },
+        });
+        click("Add a list to action 1");
+        fireEvent.change(field("textbox", "Actions 1 list 1 item 1"), { target: { value: "x" } });
+        click("Add a section to action 1");
+        fireEvent.change(field("textbox", "Actions 1 section 2 name"), {
+          target: { value: "Heartstone" },
+        });
+        fireEvent.change(field("textbox", "Actions 1 rules text after section 2"), {
+          target: { value: "Outro." },
+        });
+        click("Move section 2 of action 1 up");
+        click("Move section 2 of action 1 up");
+        expect(field("textbox", "Actions 1 section 1 name")).toHaveValue("Heartstone");
+        mode("JSON");
+
+        const soulBag = {
+          type: "entries",
+          name: "Soul Bag",
+          entries: ["Holds a soul.", "One at a time."],
+        };
+        expect(JSON.parse(jsonText("Monster JSON")).action[0].entries).toEqual([
+          "{@atk mw} {@hit 4} to hit.",
+          { type: "entries", name: "Heartstone", entries: [] },
+          soulBag,
+          { type: "list", items: ["x"] },
+          "Outro.",
+        ]);
+
+        mode("Step by step");
+        stepTo("Traits");
+        click("Remove section 1 of action 1");
+        mode("JSON");
+        expect(JSON.parse(jsonText("Monster JSON")).action[0].entries).toEqual([
+          "{@atk mw} {@hit 4} to hit.",
+          soulBag,
+          { type: "list", items: ["x"] },
+          "Outro.",
+        ]);
+      });
+
+      it("shows a nested section changed in JSON in the form and the preview", async () => {
+        await openText();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({
+            ...withText.json,
+            trait: [{ name: "Items", entries: ["Carries two.", { ...section, name: "Soul Bag" }] }],
+          }),
+        );
+        mode("Step by step");
+        stepTo("Traits");
+
+        expect(field("textbox", "Traits 1 section 1 name")).toHaveValue("Soul Bag");
+        fireEvent.change(field("textbox", "Traits 1 section 1 rules text"), {
+          target: { value: "Holds a soul." },
+        });
+        mode("Preview");
+        const preview = within(editor());
+        expect(preview.getByText(/Soul Bag/)).toBeInTheDocument();
+        expect(preview.getByText("Holds a soul.")).toBeInTheDocument();
       });
 
       it("previews them", async () => {

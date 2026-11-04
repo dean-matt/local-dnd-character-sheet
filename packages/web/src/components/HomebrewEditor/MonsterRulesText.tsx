@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { InputField } from "../InputField.tsx";
+import { HomebrewRowMove } from "./HomebrewRowMove.tsx";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
@@ -19,9 +20,13 @@ type Part = RulesPart & { id: number };
 
 const join = (...texts: string[]) => texts.filter((text) => text.trim()).join("\n\n");
 
+const kindOf = (part: RulesPart) => ("items" in part ? "list" : "section");
+
 /**
- * A row's rules text: paragraphs, then each list with its items one to a line and the paragraphs
- * after it. A blank item or paragraph stays on screen but writes nothing.
+ * A row's rules text: paragraphs, then each list or named section with the paragraphs after it.
+ * A list shows its items one to a line; a section its name and paragraphs, and it can be moved
+ * past the list or section beside it. A blank item, paragraph or section stays on screen but
+ * writes nothing.
  */
 export function MonsterRulesText({ label, name, entries, onEntries }: MonsterRulesTextProps) {
   const next = useRef(0);
@@ -34,100 +39,154 @@ export function MonsterRulesText({ label, name, entries, onEntries }: MonsterRul
   };
   const change = (index: number, part: RulesPart) =>
     write(parts.map((each, at) => (at === index ? { ...part, id: each.id } : each)));
-  const lists = parts.length > 1;
+  const remove = (index: number) => {
+    const before = parts[index - 1];
+    const after = parts[index + 1];
+    write([
+      ...parts.slice(0, index - 1),
+      {
+        text: join(
+          before && "text" in before ? before.text : "",
+          after && "text" in after ? after.text : "",
+        ),
+        id: next.current++,
+      },
+      ...parts.slice(index + 2),
+    ]);
+  };
+  const move = (from: number, to: number) => {
+    const changed = [...parts];
+    [changed[from], changed[to]] = [changed[to] as Part, changed[from] as Part];
+    write(changed);
+  };
+  const add = (block: RulesPart) =>
+    write([...parts, { ...block, id: next.current++ }, { text: "", id: next.current++ }]);
+  const counts = { list: 0, section: 0 };
+  const numbers = parts.map((part) => ("text" in part ? 0 : ++counts[kindOf(part)]));
+  const blocks = parts.length > 1;
   return (
     <div className="flex flex-col gap-2">
       {parts.map((part, index) => {
-        const list = Math.ceil(index / 2);
         if ("text" in part) {
+          const before = parts[index - 1];
           return (
             <HomebrewRulesText
               key={part.id}
-              label={index === 0 ? `${label} rules text` : `${label} rules text after list ${list}`}
+              label={
+                before
+                  ? `${label} rules text after ${kindOf(before)} ${numbers[index - 1]}`
+                  : `${label} rules text`
+              }
               text={part.text}
               onText={(text) => change(index, { text })}
-              rows={lists ? 3 : 8}
+              rows={blocks ? 3 : 8}
             />
           );
         }
-        const of = `list ${list} of ${name}`;
-        const before = parts[index - 1];
-        const after = parts[index + 1];
+        const kind = kindOf(part);
+        const of = `${kind} ${numbers[index]} of ${name}`;
+        const title = `${label} ${kind} ${numbers[index]}`;
+        const removeButton = (
+          <button
+            type="button"
+            aria-label={`Remove ${of}`}
+            onClick={() => remove(index)}
+            className={ROW_BUTTON}
+          >
+            Remove {kind}
+          </button>
+        );
+        if ("items" in part) {
+          return (
+            <fieldset
+              key={part.id}
+              className="flex min-w-0 flex-col gap-2 border-border border-l-2 pl-2"
+            >
+              <legend className="mb-1 text-muted text-row">{title}</legend>
+              {part.items.map((item, at) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: an item has no id, and the list only grows or shrinks at an item the user picked.
+                <div key={at} className={ROW}>
+                  <InputField
+                    label={`${title} item ${at + 1}`}
+                    labelHidden
+                    value={item}
+                    onChange={(event) =>
+                      change(index, {
+                        ...part,
+                        items: part.items.map((each, i) => (i === at ? event.target.value : each)),
+                      })
+                    }
+                  />
+                  <HomebrewRowRemove
+                    name={`item ${at + 1} of ${of}`}
+                    onRemove={() =>
+                      change(index, { ...part, items: part.items.filter((_, i) => i !== at) })
+                    }
+                  />
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  aria-label={`Add an item to ${of}`}
+                  onClick={() => change(index, { ...part, items: [...part.items, ""] })}
+                  className={ROW_BUTTON}
+                >
+                  Add an item
+                </button>
+                {removeButton}
+              </div>
+            </fieldset>
+          );
+        }
         return (
           <fieldset
             key={part.id}
             className="flex min-w-0 flex-col gap-2 border-border border-l-2 pl-2"
           >
-            <legend className="mb-1 text-muted text-row">{`${label} list ${list}`}</legend>
-            {part.items.map((item, at) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: an item has no id, and the list only grows or shrinks at an item the user picked.
-              <div key={at} className={ROW}>
+            <legend className="mb-1 text-muted text-row">{title}</legend>
+            <div className="flex items-end gap-2">
+              <div className="min-w-0 flex-1">
                 <InputField
-                  label={`${label} list ${list} item ${at + 1}`}
-                  labelHidden
-                  value={item}
-                  onChange={(event) =>
-                    change(index, {
-                      ...part,
-                      items: part.items.map((each, i) => (i === at ? event.target.value : each)),
-                    })
-                  }
-                />
-                <HomebrewRowRemove
-                  name={`item ${at + 1} of ${of}`}
-                  onRemove={() =>
-                    change(index, { ...part, items: part.items.filter((_, i) => i !== at) })
-                  }
+                  label={`${title} name`}
+                  value={part.name}
+                  onChange={(event) => change(index, { ...part, name: event.target.value })}
                 />
               </div>
-            ))}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                aria-label={`Add an item to ${of}`}
-                onClick={() => change(index, { ...part, items: [...part.items, ""] })}
-                className={ROW_BUTTON}
-              >
-                Add an item
-              </button>
-              <button
-                type="button"
-                aria-label={`Remove ${of}`}
-                onClick={() =>
-                  write([
-                    ...parts.slice(0, index - 1),
-                    {
-                      text: join(
-                        before && "text" in before ? before.text : "",
-                        after && "text" in after ? after.text : "",
-                      ),
-                      id: next.current++,
-                    },
-                    ...parts.slice(index + 2),
-                  ])
-                }
-                className={ROW_BUTTON}
-              >
-                Remove list
-              </button>
+              <HomebrewRowMove
+                name={of}
+                onUp={index > 1 ? () => move(index, index - 2) : undefined}
+                onDown={index + 2 < parts.length ? () => move(index, index + 2) : undefined}
+              />
             </div>
+            <HomebrewRulesText
+              label={`${title} rules text`}
+              text={part.body}
+              onText={(body) => change(index, { ...part, body })}
+              rows={3}
+            />
+            <div className="flex gap-2">{removeButton}</div>
           </fieldset>
         );
       })}
-      <button
-        type="button"
-        aria-label={`Add a list to ${name}`}
-        onClick={() =>
-          write([
-            ...parts,
-            { items: [""], stored: { type: "list" }, id: next.current++ },
-            { text: "", id: next.current++ },
-          ])
-        }
-        className={`self-start ${ROW_BUTTON}`}
-      >
-        Add a list
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          aria-label={`Add a list to ${name}`}
+          onClick={() => add({ items: [""], stored: { type: "list" } })}
+          className={ROW_BUTTON}
+        >
+          Add a list
+        </button>
+        <button
+          type="button"
+          aria-label={`Add a section to ${name}`}
+          onClick={() => add({ name: "", body: "", stored: { type: "entries" } })}
+          className={ROW_BUTTON}
+        >
+          Add a section
+        </button>
+      </div>
     </div>
   );
 }

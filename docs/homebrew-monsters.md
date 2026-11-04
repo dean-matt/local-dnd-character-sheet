@@ -30,9 +30,10 @@ armor class with its source, average hit points and hit dice, the five speeds, s
 languages, the six scores, its traits, actions, bonus actions, reactions, legendary actions and
 mythic actions, the legendary action uses, and the text introducing the reactions, legendary
 actions and mythic actions; the API's reasons show beside the field. Each of those rows is a name
-and rules text of paragraphs and lists of plain items, which `{@tag}`s may fill; a row can be
-moved or removed, and a list added, removed or edited an item to a line, keeping its style. A row
-whose text holds a table, a nested section or a list of named items, or that is not a name and
+and rules text of paragraphs, lists of plain items and named sections of paragraphs, which
+`{@tag}`s may fill; a row can be moved or removed, a list added, removed or edited an item to a
+line, keeping its style, and a section added, moved, removed or edited, its name and paragraphs. A row whose text holds a
+table, a list of named items or a section holding more than paragraphs, or that is not a name and
 entries, shows as read-only and is edited in JSON, as are lair actions and spellcasting blocks. A type's swarm
 size, a prose armor class, a tag with a prefix and the passive Perception score stay as written
 and are edited in JSON. A form edit keeps every entry it cannot show in

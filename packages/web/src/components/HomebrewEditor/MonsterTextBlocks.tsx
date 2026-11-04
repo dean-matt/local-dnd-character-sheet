@@ -1,15 +1,12 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
 import { type ComponentType, useRef } from "react";
 import { InputField } from "../InputField.tsx";
+import { HomebrewRowMove } from "./HomebrewRowMove.tsx";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { type HomebrewFormProps, listAt, withField } from "./homebrewEntry.ts";
 import { ROW_BUTTON } from "./homebrewRows.ts";
 import { MonsterGroupLead, type MonsterGroupLeadProps } from "./MonsterGroupLead.tsx";
 import { MonsterRulesText } from "./MonsterRulesText.tsx";
 import { isPlainTextRow, type MonsterTextGroup, moved } from "./monsterShapes.ts";
-
-const MOVE =
-  "flex w-8 items-center justify-center self-stretch rounded-control text-muted hover:bg-subtle disabled:opacity-40";
 
 interface Group extends Pick<MonsterGroupLeadProps, "legend" | "header" | "uses"> {
   key: MonsterTextGroup;
@@ -19,8 +16,8 @@ interface Group extends Pick<MonsterGroupLeadProps, "legend" | "header" | "uses"
 
 /**
  * The form for one group of a monster's stat block, such as its traits: any fields the stat block
- * prints above the group, then a row each with a name and rules text written as paragraphs and
- * lists, which can be moved and removed. A row holding a table or any other shape stays as
+ * prints above the group, then a row each with a name and rules text written as paragraphs, lists
+ * and named sections, which can be moved and removed. A row holding a table or any other shape stays as
  * stored, can still be moved or removed, and is edited in JSON. Every row stays where it was stored, so an edit never reorders the list.
  */
 function monsterTextBlocks({
@@ -99,26 +96,11 @@ function monsterTextBlocks({
                       </p>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    aria-label={`Move ${noun} ${index + 1} up`}
-                    title="Move up"
-                    disabled={index === 0}
-                    onClick={() => move(index, index - 1)}
-                    className={MOVE}
-                  >
-                    <ArrowUp aria-hidden size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`Move ${noun} ${index + 1} down`}
-                    title="Move down"
-                    disabled={index === list.length - 1}
-                    onClick={() => move(index, index + 1)}
-                    className={MOVE}
-                  >
-                    <ArrowDown aria-hidden size={16} />
-                  </button>
+                  <HomebrewRowMove
+                    name={`${noun} ${index + 1}`}
+                    onUp={index > 0 ? () => move(index, index - 1) : undefined}
+                    onDown={index < list.length - 1 ? () => move(index, index + 1) : undefined}
+                  />
                   <HomebrewRowRemove
                     name={`${noun} ${index + 1}`}
                     onRemove={() => {
