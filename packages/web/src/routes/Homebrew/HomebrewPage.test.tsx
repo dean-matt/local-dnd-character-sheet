@@ -5384,6 +5384,26 @@ describe("Homebrew monsters", () => {
         expect(writesOf(fetchMock)).toEqual([]);
       });
 
+      it("hides a control whose stored value the form cannot read", async () => {
+        await openSpells();
+        mode("JSON");
+        const [block] = withSpells.json.spellcasting;
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({ ...withSpells.json, spellcasting: [{ ...block, name: 3, will: "x" }] }),
+        );
+        mode("Step by step");
+
+        expect(screen.queryByRole("textbox", { name: "Spellcasting 1 name" })).toBeNull();
+        expect(
+          screen.queryByRole("combobox", { name: "Add a spell to Spellcasting 1 at will" }),
+        ).toBeNull();
+        expect(field("combobox", "Spellcasting 1 ability")).toBeInTheDocument();
+        expect(
+          within(editor()).getByText(/also holds what the form cannot show/),
+        ).toBeInTheDocument();
+      });
+
       it("shows a change made in JSON in the form and the preview", async () => {
         await openSpells();
         mode("JSON");

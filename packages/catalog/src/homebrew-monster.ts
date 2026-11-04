@@ -67,7 +67,6 @@ export const homebrewMonsterEntrySchema = z.looseObject({
   cha: score,
   cr: z.union([rating, z.looseObject({ cr: rating })]),
   legendaryActions: z.number().int().min(1, "At least 1").optional(),
-  spellcasting: spellcasting.optional(),
 });
 
 export type HomebrewMonster = z.infer<typeof homebrewMonsterEntrySchema>;
@@ -75,7 +74,7 @@ export type HomebrewMonster = z.infer<typeof homebrewMonsterEntrySchema>;
 /** What a caller submits to create or replace a homebrew monster; the server stamps `source`. */
 export const homebrewMonsterInputSchema = homebrewMonsterEntrySchema
   .omit({ source: true })
-  .extend({ edition: z.enum(EDITIONS) });
+  .extend({ edition: z.enum(EDITIONS), spellcasting: spellcasting.optional() });
 
 export type HomebrewMonsterInput = z.infer<typeof homebrewMonsterInputSchema>;
 

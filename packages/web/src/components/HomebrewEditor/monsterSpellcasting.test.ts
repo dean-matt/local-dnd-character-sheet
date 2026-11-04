@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   holdsUnread,
   readSpellcasting,
+  reads,
   spellTag,
   writeSpellcasting,
 } from "./monsterSpellcasting.ts";
@@ -129,6 +130,8 @@ describe("monster spellcasting", () => {
       spells: "none",
     };
     expect(holdsUnread(odd)).toBe(true);
+    expect(reads(odd, "name")).toBe(false);
+    expect(reads(odd, "ability")).toBe(true);
     expect(holdsUnread(block)).toBe(false);
     expect(writeSpellcasting(odd, { ...readSpellcasting(odd), name: "Psionics" })).toEqual(odd);
   });

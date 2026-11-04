@@ -110,17 +110,30 @@ export function readSpellcasting(block: Record<string, unknown>): SpellcastingFo
 
 const isString = (value: unknown) => typeof value === "string";
 
+/** The shape the form reads each field in; a control shows only where the stored value has it. */
+const READS: Record<string, (stored: unknown) => boolean> = {
+  name: isString,
+  ability: isString,
+  displayAs: isString,
+  will: Array.isArray,
+  ritual: Array.isArray,
+  daily: isObject,
+  rest: isObject,
+  restLong: isObject,
+  charges: isObject,
+  spells: isObject,
+};
+
+/** True where `block` holds `key` absent or in a shape the form reads. */
+export const reads = (block: Record<string, unknown>, key: string) =>
+  block[key] === undefined || (READS[key]?.(block[key]) ?? true);
+
 /**
  * `record` with `key` set to `value`, or dropped where `value` is `undefined`; a stored value
- * the form could not read, as `reads` says, stays.
+ * the form could not read stays.
  */
-function set(
-  record: Record<string, unknown>,
-  key: string,
-  value: unknown,
-  reads: (stored: unknown) => boolean,
-) {
-  if (record[key] !== undefined && !reads(record[key])) return;
+function set(record: Record<string, unknown>, key: string, value: unknown) {
+  if (!reads(record, key)) return;
   if (value === undefined) delete record[key];
   else record[key] = value;
 }
@@ -179,33 +192,23 @@ export function writeSpellcasting(
   form: SpellcastingForm,
 ): Record<string, unknown> {
   const next = { ...block };
-  set(next, "name", form.name.trim() || undefined, isString);
-  set(next, "ability", form.ability || undefined, isString);
-  set(next, "displayAs", form.displayAs === "trait" ? undefined : form.displayAs, isString);
-  const always = () => true;
-  if (form.header !== undefined) set(next, "headerEntries", entriesOf(form.header), always);
-  if (form.footer !== undefined) set(next, "footerEntries", entriesOf(form.footer), always);
-  set(next, "will", form.will.length > 0 ? form.will : undefined, Array.isArray);
-  set(next, "ritual", form.ritual.length > 0 ? form.ritual : undefined, Array.isArray);
+  set(next, "name", form.name.trim() || undefined);
+  set(next, "ability", form.ability || undefined);
+  set(next, "displayAs", form.displayAs === "trait" ? undefined : form.displayAs);
+  if (form.header !== undefined) set(next, "headerEntries", entriesOf(form.header));
+  if (form.footer !== undefined) set(next, "footerEntries", entriesOf(form.footer));
+  set(next, "will", form.will.length > 0 ? form.will : undefined);
+  set(next, "ritual", form.ritual.length > 0 ? form.ritual : undefined);
   for (const key of FREQUENCY_KEYS)
-    set(next, key, writeFrequency(block[key], key, form.frequencies), isObject);
-  set(next, "spells", writeLevels(block.spells, form.levels), isObject);
+    set(next, key, writeFrequency(block[key], key, form.frequencies));
+  set(next, "spells", writeLevels(block.spells, form.levels));
   return next;
 }
 
 /** True where `block` holds a field, frequency or level the form neither shows nor changes. */
 export function holdsUnread(block: Record<string, unknown>): boolean {
-  const unreadable: [string, (stored: unknown) => boolean][] = [
-    ["name", isString],
-    ["ability", isString],
-    ["displayAs", isString],
-    ["will", Array.isArray],
-    ["ritual", Array.isArray],
-    ...FREQUENCY_KEYS.map((key): [string, (stored: unknown) => boolean] => [key, isObject]),
-    ["spells", isObject],
-  ];
   return (
-    unreadable.some(([key, reads]) => block[key] !== undefined && !reads(block[key])) ||
+    Object.keys(READS).some((key) => !reads(block, key)) ||
     FREQUENCY_KEYS.some((key) => Object.keys(unread(block[key], readableUses)).length > 0) ||
     Object.keys(unread(block.spells, readableLevel)).length > 0
   );

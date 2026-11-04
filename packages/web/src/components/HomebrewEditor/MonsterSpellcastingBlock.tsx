@@ -13,6 +13,7 @@ import { MonsterSpellList } from "./MonsterSpellList.tsx";
 import {
   holdsUnread,
   readSpellcasting,
+  reads,
   SPELL_FREQUENCIES,
   type SpellcastingForm,
   type SpellFrequency,
@@ -121,20 +122,24 @@ export function MonsterSpellcastingBlock({
     <>
       <div className="flex items-end gap-2">
         <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 @2xl:grid-cols-4">
-          <div className="col-span-2">
-            <InputField
-              label={`${label} name`}
-              value={form.name}
-              placeholder="Spellcasting"
-              onChange={(event) => write({ name: event.target.value })}
-            />
-          </div>
-          {select(`${label} ability`, ABILITY_OPTIONS, form.ability, (ability) =>
-            write({ ability }),
+          {reads(block, "name") && (
+            <div className="col-span-2">
+              <InputField
+                label={`${label} name`}
+                value={form.name}
+                placeholder="Spellcasting"
+                onChange={(event) => write({ name: event.target.value })}
+              />
+            </div>
           )}
-          {select(`${label} shows as`, asOptions, form.displayAs, (displayAs) =>
-            write({ displayAs }),
-          )}
+          {reads(block, "ability") &&
+            select(`${label} ability`, ABILITY_OPTIONS, form.ability, (ability) =>
+              write({ ability }),
+            )}
+          {reads(block, "displayAs") &&
+            select(`${label} shows as`, asOptions, form.displayAs, (displayAs) =>
+              write({ displayAs }),
+            )}
         </div>
         <HomebrewRowRemove name={name} onRemove={onRemove} />
       </div>
@@ -144,24 +149,28 @@ export function MonsterSpellcastingBlock({
         onText={(header) => write({ header })}
         rows={3}
       />
-      <fieldset className={sub}>
-        <legend className="mb-1 text-muted text-row">At will</legend>
-        <MonsterSpellList
-          label={`${label} at will`}
-          spells={form.will}
-          edition={edition}
-          onSpells={(will) => write({ will })}
-        />
-      </fieldset>
-      <fieldset className={sub}>
-        <legend className="mb-1 text-muted text-row">Rituals</legend>
-        <MonsterSpellList
-          label={`${label} rituals`}
-          spells={form.ritual}
-          edition={edition}
-          onSpells={(ritual) => write({ ritual })}
-        />
-      </fieldset>
+      {reads(block, "will") && (
+        <fieldset className={sub}>
+          <legend className="mb-1 text-muted text-row">At will</legend>
+          <MonsterSpellList
+            label={`${label} at will`}
+            spells={form.will}
+            edition={edition}
+            onSpells={(will) => write({ will })}
+          />
+        </fieldset>
+      )}
+      {reads(block, "ritual") && (
+        <fieldset className={sub}>
+          <legend className="mb-1 text-muted text-row">Rituals</legend>
+          <MonsterSpellList
+            label={`${label} rituals`}
+            spells={form.ritual}
+            edition={edition}
+            onSpells={(ritual) => write({ ritual })}
+          />
+        </fieldset>
+      )}
       {form.frequencies.map((row, index) => {
         const title = `${label} frequency ${index + 1}`;
         return (
