@@ -11,26 +11,35 @@ import {
   withField,
 } from "./homebrewEntry.ts";
 import { ROW_BUTTON } from "./homebrewRows.ts";
+import { MonsterGroupLead, type MonsterGroupLeadProps } from "./MonsterGroupLead.tsx";
 import { isPlainTextRow, type MonsterTextGroup, moved } from "./monsterShapes.ts";
 
 const MOVE =
   "flex w-8 items-center justify-center self-stretch rounded-control text-muted hover:bg-subtle disabled:opacity-40";
 
-interface Group {
+interface Group extends Pick<MonsterGroupLeadProps, "legend" | "header" | "uses"> {
   key: MonsterTextGroup;
   /** What one row is, singular and lowercase: `trait`. */
   noun: string;
-  legend: string;
 }
 
 /**
- * The form for one group of a monster's stat block, such as its traits: a row each with a name
- * and rules text written as paragraphs, which can be moved and removed. A row holding a list,
+ * The form for one group of a monster's stat block, such as its traits: any fields the stat block
+ * prints above the group, then a row each with a name and rules text written as paragraphs,
+ * which can be moved and removed. A row holding a list,
  * a table or any other shape stays as stored, can still be moved or removed, and is edited in
  * JSON. Every row stays where it was stored, so an edit never reorders the list.
  */
-function monsterTextBlocks({ key, noun, legend }: Group): ComponentType<HomebrewFormProps> {
-  return function MonsterTextBlocks({ entry, onChange, errorFor }: HomebrewFormProps) {
+function monsterTextBlocks({
+  key,
+  noun,
+  legend,
+  header,
+  uses,
+}: Group): ComponentType<HomebrewFormProps> {
+  return function MonsterTextBlocks(props: HomebrewFormProps) {
+    const { entry, onChange, errorFor } = props;
+    const lead = <MonsterGroupLead {...props} legend={legend} header={header} uses={uses} />;
     const stored = entry[key];
     const list = listAt(entry, key);
     const ids = useRef<number[]>([]);
@@ -39,8 +48,9 @@ function monsterTextBlocks({ key, noun, legend }: Group): ComponentType<Homebrew
     const error = errorFor(key);
     if (stored !== undefined && !Array.isArray(stored)) {
       return (
-        <div className="flex flex-col">
-          <span className="mb-1 text-muted text-row">{legend}</span>
+        <div className="flex flex-col gap-3">
+          {lead}
+          <span className="text-muted text-row">{legend}</span>
           <p className="text-muted text-row">
             These are stated in a shape the form cannot show. Edit them in JSON.
           </p>
@@ -71,6 +81,7 @@ function monsterTextBlocks({ key, noun, legend }: Group): ComponentType<Homebrew
     return (
       <fieldset className="flex min-w-0 flex-col gap-3">
         <legend className="sr-only">{legend}</legend>
+        {lead}
         <ul className="flex flex-col gap-3">
           {list.map((row, index) => {
             const label = `${legend} ${index + 1}`;
@@ -157,13 +168,27 @@ export const MonsterActions = monsterTextBlocks({
   noun: "action",
   legend: "Actions",
 });
+export const MonsterBonusActions = monsterTextBlocks({
+  key: "bonus",
+  noun: "bonus action",
+  legend: "Bonus actions",
+});
 export const MonsterReactions = monsterTextBlocks({
   key: "reaction",
   noun: "reaction",
   legend: "Reactions",
+  header: "reactionHeader",
 });
 export const MonsterLegendaryActions = monsterTextBlocks({
   key: "legendary",
   noun: "legendary action",
   legend: "Legendary actions",
+  header: "legendaryHeader",
+  uses: true,
+});
+export const MonsterMythicActions = monsterTextBlocks({
+  key: "mythic",
+  noun: "mythic action",
+  legend: "Mythic actions",
+  header: "mythicHeader",
 });

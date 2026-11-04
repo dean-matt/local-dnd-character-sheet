@@ -285,7 +285,7 @@ export function withExtraArmorClasses(ac: unknown, rows: ExtraArmorClass[]): unk
 }
 
 /** The groups of text rows a monster's stat block lists, each under the key it is stored at. */
-export type MonsterTextGroup = "trait" | "action" | "reaction" | "legendary";
+export type MonsterTextGroup = "trait" | "action" | "bonus" | "reaction" | "legendary" | "mythic";
 
 /** True where a trait or action is a name and plain paragraphs, the shape the form edits. */
 export const isPlainTextRow = (item: unknown): item is { name?: string; entries?: string[] } =>

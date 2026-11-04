@@ -91,7 +91,9 @@ import { MonsterCombat } from "./MonsterCombat.tsx";
 import { MonsterSenses } from "./MonsterSenses.tsx";
 import {
   MonsterActions,
+  MonsterBonusActions,
   MonsterLegendaryActions,
+  MonsterMythicActions,
   MonsterReactions,
   MonsterTraits,
 } from "./MonsterTextBlocks.tsx";
@@ -502,8 +504,14 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
     },
     { title: "Traits", Fields: MonsterTraits, keys: ["trait"] },
     { title: "Actions", Fields: MonsterActions, keys: ["action"] },
-    { title: "Reactions", Fields: MonsterReactions, keys: ["reaction"] },
-    { title: "Legendary actions", Fields: MonsterLegendaryActions, keys: ["legendary"] },
+    { title: "Bonus actions", Fields: MonsterBonusActions, keys: ["bonus"] },
+    { title: "Reactions", Fields: MonsterReactions, keys: ["reaction", "reactionHeader"] },
+    {
+      title: "Legendary actions",
+      Fields: MonsterLegendaryActions,
+      keys: ["legendary", "legendaryHeader", "legendaryActions"],
+    },
+    { title: "Mythic actions", Fields: MonsterMythicActions, keys: ["mythic", "mythicHeader"] },
   ],
   shownKeys: () => [
     "name",
@@ -518,8 +526,14 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
     "languages",
     "trait",
     "action",
+    "bonus",
     "reaction",
+    "reactionHeader",
     "legendary",
+    "legendaryHeader",
+    "legendaryActions",
+    "mythic",
+    "mythicHeader",
     ...ABILITIES,
   ],
 };
