@@ -3,8 +3,8 @@ import type { EntryRef } from "@dnd/character";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import {
-  homebrewClassFeaturesQuery,
   homebrewClassResourcesQuery,
+  homebrewFeaturesQuery,
 } from "../../hooks/homebrewClassQuery.ts";
 import type { HomebrewCollection } from "../../hooks/useHomebrew.ts";
 import { apiGet } from "../../lib/api.ts";
@@ -26,7 +26,7 @@ async function sourceEntry(
     if (collection !== "classes") return json;
     // A class's features and resource tables live beside its row, so they are read apart.
     const [features, resources] = await Promise.all([
-      queryClient.fetchQuery(homebrewClassFeaturesQuery(ref.homebrewId)),
+      queryClient.fetchQuery(homebrewFeaturesQuery("classes", ref.homebrewId)),
       queryClient.fetchQuery(homebrewClassResourcesQuery(ref.homebrewId)),
     ]);
     return { ...json, features, resources };

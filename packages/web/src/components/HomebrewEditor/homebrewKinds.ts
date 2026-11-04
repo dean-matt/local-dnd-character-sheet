@@ -55,7 +55,6 @@ import { BackgroundFeat } from "./BackgroundFeat.tsx";
 import { BackgroundProficiencies } from "./BackgroundProficiencies.tsx";
 import { ClassBasics } from "./ClassBasics.tsx";
 import { ClassEquipment } from "./ClassEquipment.tsx";
-import { ClassFeatures } from "./ClassFeatures.tsx";
 import { ClassMulticlassing } from "./ClassMulticlassing.tsx";
 import { ClassProficiencies } from "./ClassProficiencies.tsx";
 import { ClassResources } from "./ClassResources.tsx";
@@ -85,6 +84,7 @@ import { ItemMagic } from "./ItemMagic.tsx";
 import { ItemRulesText } from "./ItemRulesText.tsx";
 import { ITEM_JSON_SCHEMA } from "./itemJsonSchema.ts";
 import type { JsonEditorProps } from "./JsonEditor.tsx";
+import { ClassFeatures, SubclassFeatures } from "./LevelFeatures.tsx";
 import { MonsterAbilityScores } from "./MonsterAbilityScores.tsx";
 import { MonsterBasics } from "./MonsterBasics.tsx";
 import { MonsterCombat } from "./MonsterCombat.tsx";
@@ -417,10 +417,11 @@ const subclass: EditingKind<z.infer<typeof homebrewSubclassFormSchema>> = {
   sections: [
     { title: "Basics", Fields: SubclassBasics, keys: ["name", "parent"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
+    { title: "Features", Fields: SubclassFeatures, keys: ["features"] },
   ],
   // A parent class belongs to one edition, so the next edition's list does not hold it.
   forEdition: ({ parent: _parent, ...rest }) => rest,
-  shownKeys: () => ["name", "parent", "entries"],
+  shownKeys: () => ["name", "parent", "entries", "features"],
 };
 
 const subrace: EditingKind<z.infer<typeof homebrewSubraceFormSchema>> = {

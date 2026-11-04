@@ -19,11 +19,15 @@ export const homebrewClassQuery = (id: string | undefined) =>
     retry: retryUnlessClientError,
   });
 
-export const homebrewClassFeaturesQuery = (id: string) =>
+/** The features a homebrew class or subclass saves beside its row. */
+export const homebrewFeaturesQuery = (collection: "classes" | "subclasses", id: string) =>
   queryOptions({
-    queryKey: [...homebrewClassKey(id), "features"],
+    queryKey: ["homebrew", collection, id, "features"],
     queryFn: () =>
-      apiGet(`/homebrew/classes/${encodeURIComponent(id)}/features`, homebrewClassFeaturesSchema),
+      apiGet(
+        `/homebrew/${collection}/${encodeURIComponent(id)}/features`,
+        homebrewClassFeaturesSchema,
+      ),
     retry: retryUnlessClientError,
   });
 
