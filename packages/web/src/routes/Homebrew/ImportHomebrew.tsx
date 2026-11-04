@@ -1,25 +1,29 @@
 import { Upload } from "lucide-react";
-import { useRef, useState } from "react";
-import { useImportHomebrew } from "../../hooks/useImportHomebrew.ts";
+import { useContext, useRef } from "react";
+import { ExportSelection } from "./exportSelectionContext.ts";
 
-/** Imports a homebrew file, then says how many entries it created or why it was refused. */
+/**
+ * Imports a homebrew file, then says how many entries it created or why it was refused, on a
+ * row of its own below the row it sits in.
+ */
 export function ImportHomebrew() {
   const picker = useRef<HTMLInputElement>(null);
-  const importFile = useImportHomebrew();
-  const [done, setDone] = useState("");
+  const selection = useContext(ExportSelection);
+  if (!selection) return null;
+  const { importing } = selection;
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <>
       <button
         type="button"
-        aria-disabled={importFile.isPending}
+        aria-disabled={importing}
         onClick={() => {
-          if (!importFile.isPending) picker.current?.click();
+          if (!importing) picker.current?.click();
         }}
         className="flex items-center gap-1 rounded-control border border-border bg-surface px-3 py-1.5 font-semibold text-ink text-row hover:bg-subtle aria-disabled:cursor-wait aria-disabled:opacity-60"
       >
         <Upload aria-hidden="true" size={12} strokeWidth={2.5} />
-        {importFile.isPending ? "Importing…" : "Import"}
+        {importing ? "Importing…" : "Import"}
       </button>
       <input
         ref={picker}
@@ -30,24 +34,17 @@ export function ImportHomebrew() {
         onChange={(event) => {
           const file = event.currentTarget.files?.[0];
           event.currentTarget.value = "";
-          if (!file) return;
-          setDone("");
-          importFile.mutate(file, {
-            onSuccess: ({ created }) =>
-              setDone(
-                `Imported ${created} ${created === 1 ? "entry" : "entries"} from ${file.name}.`,
-              ),
-          });
+          if (file) selection.importFile(file);
         }}
       />
-      <p role="status" className="text-row empty:hidden">
-        {done}
+      <p role="status" className="order-last basis-full text-row empty:hidden">
+        {selection.imported}
       </p>
-      {importFile.isError && (
-        <p role="alert" className="max-w-md text-error text-row">
-          Import failed: {importFile.error.message}
+      {selection.importFailure && (
+        <p role="alert" className="order-last basis-full text-error text-row">
+          Import failed: {selection.importFailure}
         </p>
       )}
-    </div>
+    </>
   );
 }

@@ -145,12 +145,20 @@ const writesOf = (fetchMock: ReturnType<typeof stubApi>, beside?: "features" | "
 
 const spells = () => screen.getByRole("region", { name: "Spells" });
 const items = () => screen.getByRole("region", { name: "Items" });
-/** The open dialog by tag: `getByRole("dialog")` walks the whole page's accessibility tree on every helper call. */
+/**
+ * The topmost open dialog by tag, the editor over a row's detail: `getByRole("dialog")` walks the
+ * whole page's accessibility tree on every helper call.
+ */
 const editor = () => {
-  const open = document.querySelector<HTMLElement>("dialog[open]");
+  const open = [...document.querySelectorAll<HTMLElement>("dialog[open]")].at(-1);
   if (!open) throw new Error("no dialog is open");
   return open;
 };
+/** Opens a row's detail from its name, then the editor from Edit in the detail's footer. */
+async function editRow(region: HTMLElement, name: string) {
+  fireEvent.click(await within(region).findByRole("button", { name }));
+  fireEvent.click(within(region).getByRole("button", { name: `Edit ${name}` }));
+}
 const FIELD_SELECTOR = {
   textbox: '[role="textbox"], textarea, input:not([type]), input[type="text"]',
   combobox: '[role="combobox"], select',
@@ -231,6 +239,33 @@ describe("Homebrew kind page", () => {
     expect(row).toHaveTextContent("2024 rules");
     expect(row).toHaveTextContent("Martial melee weapon • Rare");
     expect(row).toHaveTextContent("A blade of radiance.");
+  });
+
+  it("puts Delete on the card's name line and Edit in the footer of its detail", async () => {
+    stubApi({ items: [sunblade] });
+    renderPage();
+
+    const name = await within(items()).findByRole("button", { name: "Sunblade" });
+    const nameLine = name.parentElement as HTMLElement;
+    expect(within(nameLine).getByRole("button", { name: "Delete Sunblade" })).toBeInTheDocument();
+    expect(within(items()).queryByRole("button", { name: "Edit Sunblade" })).toBeNull();
+
+    fireEvent.click(name);
+    const detail = screen.getByRole("dialog", { name: "Sunblade" });
+    expect(within(detail).getByRole("button", { name: "Edit Sunblade" })).toHaveTextContent("Edit");
+  });
+
+  it("opens the detail of a row with no rules text, so it can still be edited", async () => {
+    const { entries: _entries, ...bare } = sunblade.json;
+    stubApi({ items: [{ ...sunblade, json: bare }] });
+    renderPage();
+
+    await editRow(items(), "Sunblade");
+
+    expect(
+      within(screen.getByRole("dialog", { name: "Sunblade" })).getByText("No description."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Edit Sunblade" })).toBeInTheDocument();
   });
 
   it("chips a spell row with its level, school, concentration and ritual", async () => {
@@ -835,7 +870,7 @@ describe("Homebrew kind page", () => {
     stubApi({ items: [sunblade] });
     renderPage();
 
-    fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+    await editRow(items(), "Sunblade");
     expect(within(editor()).queryByRole("combobox", { name: "Start from" })).toBeNull();
   });
 
@@ -992,7 +1027,7 @@ describe("Homebrew kind page", () => {
     const fetchMock = stubApi({ items: [charged] }, [{ status: 200, body: charged }]);
     renderPage();
 
-    fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+    await editRow(items(), "Sunblade");
     fireEvent.change(field("textbox", "Name"), { target: { value: "Moonblade" } });
     mode("JSON");
     const entry = JSON.parse(jsonText("Item JSON"));
@@ -1099,7 +1134,8 @@ describe("Homebrew kind page", () => {
     const fetchMock = stubApi({ items: [sunblade] }, [{ status: 200, body: sunblade }]);
     renderPage();
 
-    const edit = await within(items()).findByRole("button", { name: "Edit Sunblade" });
+    fireEvent.click(await within(items()).findByRole("button", { name: "Sunblade" }));
+    const edit = within(items()).getByRole("button", { name: "Edit Sunblade" });
     edit.focus();
     fireEvent.click(edit);
     expect(screen.getByRole("dialog", { name: "Edit Sunblade" })).toBeInTheDocument();
@@ -1178,11 +1214,7 @@ describe("Homebrew kind page", () => {
         : record;
     };
     const editWarden = async (faces: number) => {
-      fireEvent.click(
-        await within(screen.getByRole("region", { name: "Classes" })).findByRole("button", {
-          name: "Edit Warden",
-        }),
-      );
+      await editRow(screen.getByRole("region", { name: "Classes" }), "Warden");
       await loaded();
       const draft = JSON.stringify({ ...entry, hd: { number: 1, faces } });
       mode("JSON");
@@ -1255,7 +1287,8 @@ describe("Homebrew kind page", () => {
       expect(note()).toBeNull();
       expect(save()).not.toHaveAttribute("aria-disabled", "true");
       fireEvent.click(save());
-      await waitFor(() => expect(document.querySelector("dialog[open]")).toBeNull());
+      // The row's detail stays open beneath the editor that closed.
+      await waitFor(() => expect(document.querySelectorAll("dialog[open]")).toHaveLength(1));
       expect(writesOf(fetchMock)).toMatchObject([
         { method: "PUT", url: "/api/homebrew/classes/c1" },
       ]);
@@ -1342,11 +1375,7 @@ describe("Homebrew kind page", () => {
       stubApi(lists);
       const client = renderPage("classes");
 
-      fireEvent.click(
-        await within(screen.getByRole("region", { name: "Classes" })).findByRole("button", {
-          name: "Edit Warden",
-        }),
-      );
+      await editRow(screen.getByRole("region", { name: "Classes" }), "Warden");
       await charactersRead(client, "success");
       lists.characters = [holder("c", "Bram"), holder("x1", "Vex", "c1")];
       mode("JSON");
@@ -1469,7 +1498,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ items: [sunblade] });
       renderPage();
 
-      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+      await editRow(items(), "Sunblade");
 
       expect(within(editor()).getByRole("button", { name: "Save" })).toBeVisible();
       expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/characters")).toBe(false);
@@ -1600,11 +1629,7 @@ describe("Homebrew kind page", () => {
 
   describe("a skill's Ability select", () => {
     const openSailing = async () => {
-      fireEvent.click(
-        await within(screen.getByRole("region", { name: "Skills" })).findByRole("button", {
-          name: "Edit Sailing",
-        }),
-      );
+      await editRow(screen.getByRole("region", { name: "Skills" }), "Sailing");
       return field("combobox", "Ability");
     };
     const holdersNote = async () => {
@@ -1726,7 +1751,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ items: [sunblade], ...history([]) });
       renderPage();
 
-      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+      await editRow(items(), "Sunblade");
       const undo = within(editor()).getByRole("button", { name: "Undo" });
       expect(undo).toHaveAttribute("aria-disabled", "true");
       fireEvent.click(undo);
@@ -1750,12 +1775,14 @@ describe("Homebrew kind page", () => {
       );
       renderPage();
 
-      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+      await editRow(items(), "Sunblade");
       const undo = within(editor()).getByRole("button", { name: "Undo" });
       await waitFor(() => expect(undo).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(undo);
 
-      await waitFor(() => expect(document.querySelector("dialog[open]")).toBeNull());
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", { name: "Edit Sunblade" })).not.toBeInTheDocument(),
+      );
       expect(writesOf(fetchMock)).toEqual([
         { url: "/api/homebrew/items/i1/revert", method: "POST", body: undefined },
       ]);
@@ -1767,7 +1794,7 @@ describe("Homebrew kind page", () => {
       ]);
       renderPage();
 
-      fireEvent.click(await within(items()).findByRole("button", { name: "Edit Sunblade" }));
+      await editRow(items(), "Sunblade");
       const undo = within(editor()).getByRole("button", { name: "Undo" });
       await waitFor(() => expect(undo).toHaveAttribute("aria-disabled", "false"));
       fireEvent.click(undo);
@@ -1785,11 +1812,13 @@ describe("Homebrew kind page", () => {
           name: "Delete",
         }),
       );
-      const toast = await screen.findByRole("status");
-      expect(toast).toHaveTextContent("Deleted Sunblade.");
+      const toast = (await screen.findByText("Deleted Sunblade.")).closest<HTMLElement>(
+        '[role="status"]',
+      );
+      if (!toast) throw new Error("the toast is no status");
       fireEvent.click(within(toast).getByRole("button", { name: "Undo" }));
 
-      await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+      await waitFor(() => expect(toast).not.toBeInTheDocument());
       expect(writesOf(fetchMock).map(({ url, method }) => `${method} ${url}`)).toEqual([
         "DELETE /api/homebrew/items/i1",
         "POST /api/homebrew/items/i1/restore",
@@ -2502,7 +2531,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ feats: [stored] }, [{ status: 200, body: stored }]);
       renderPage("feats");
 
-      fireEvent.click(await within(feats()).findByRole("button", { name: "Edit Marked" }));
+      await editRow(feats(), "Marked");
       fireEvent.change(field("textbox", "Name"), { target: { value: "Twice Marked" } });
       stepTo("Prerequisites");
       expect(group("Prerequisite 1").getByText(/cannot show/)).toBeInTheDocument();
@@ -2691,7 +2720,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ backgrounds: [stored] }, [{ status: 200, body: stored }]);
       renderPage("backgrounds");
 
-      fireEvent.click(await within(backgrounds()).findByRole("button", { name: "Edit Marked" }));
+      await editRow(backgrounds(), "Marked");
       fireEvent.change(field("textbox", "Name"), { target: { value: "Twice Marked" } });
       stepTo("Proficiencies");
       expect(within(editor()).getByText(/tools as alternatives/)).toBeInTheDocument();
@@ -2733,7 +2762,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ backgrounds: [stored] }, [{ status: 200, body: stored }]);
       renderPage("backgrounds");
 
-      fireEvent.click(await within(backgrounds()).findByRole("button", { name: "Edit Classic" }));
+      await editRow(backgrounds(), "Classic");
       stepTo("Feat");
       expect(field("spinbutton", "Rope quantity")).toHaveValue(2);
       fireEvent.change(field("spinbutton", "Rope quantity"), { target: { value: "" } });
@@ -2913,7 +2942,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ races: [stored] }, [{ status: 200, body: stored }]);
       renderPage("races");
 
-      fireEvent.click(await within(races()).findByRole("button", { name: "Edit Marked" }));
+      await editRow(races(), "Marked");
       fireEvent.change(field("textbox", "Name"), { target: { value: "Twice Marked" } });
       stepTo("Speed");
       expect(
@@ -2949,7 +2978,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ races: [stored] }, [{ status: 200, body: stored }]);
       renderPage("races");
 
-      fireEvent.click(await within(races()).findByRole("button", { name: "Edit Odd" }));
+      await editRow(races(), "Odd");
       stepTo("Senses");
       fireEvent.change(field("spinbutton", "Blindsight (ft.)"), { target: { value: "15" } });
       click("Save");
@@ -3101,7 +3130,7 @@ describe("Homebrew kind page", () => {
       );
       renderPage("classes");
 
-      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+      await editRow(classes(), "Warden");
       await loaded();
       stepTo("Features");
       expect(field("textbox", "Feature 1 name")).toHaveValue("Grove Ward");
@@ -3181,11 +3210,13 @@ describe("Homebrew kind page", () => {
       });
       renderPage("classes");
 
-      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+      await editRow(classes(), "Warden");
 
       expect(await screen.findByText(/bad/)).toBeInTheDocument();
       click("Close");
-      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog", { name: "Edit Warden" })).not.toBeInTheDocument(),
+      );
     });
 
     it("holds a feature that shares a name and level with another", () => {
@@ -3232,7 +3263,7 @@ describe("Homebrew kind page", () => {
         );
         renderPage("classes");
 
-        fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+        await editRow(classes(), "Warden");
         await loaded();
         stepTo("Resources");
         expect(field("textbox", "Resource 1 name")).toHaveValue("Ki");
@@ -3271,7 +3302,7 @@ describe("Homebrew kind page", () => {
         });
         renderPage("classes");
 
-        fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+        await editRow(classes(), "Warden");
         await loaded();
         stepTo("Resources");
         fireEvent.change(field("spinbutton", "Resource 1 level 4 maximum"), {
@@ -3383,7 +3414,7 @@ describe("Homebrew kind page", () => {
       });
       renderPage("classes");
 
-      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Warden" }));
+      await editRow(classes(), "Warden");
       await loaded();
       pick("Hit die", "d8");
 
@@ -3432,7 +3463,7 @@ describe("Homebrew kind page", () => {
       const fetchMock = stubApi({ classes: [stored] }, [{ status: 200, body: stored }]);
       renderPage("classes");
 
-      fireEvent.click(await within(classes()).findByRole("button", { name: "Edit Odd" }));
+      await editRow(classes(), "Odd");
       await loaded();
       expect(within(editor()).getByText(/primary ability in a shape/)).toBeInTheDocument();
       fireEvent.change(field("textbox", "Name"), { target: { value: "Odder" } });
@@ -3570,7 +3601,7 @@ describe("Homebrew subclasses", () => {
     const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
     renderPage("subclasses");
 
-    fireEvent.click(await within(subclasses()).findByRole("button", { name: "Edit Hearthkeeper" }));
+    await editRow(subclasses(), "Hearthkeeper");
     await settled();
     expect(field("combobox", "Parent class")).toHaveTextContent("Fighter (XPHB)");
     mode("JSON");
@@ -3610,7 +3641,7 @@ describe("Homebrew subclasses", () => {
     );
     renderPage("subclasses");
 
-    fireEvent.click(await within(subclasses()).findByRole("button", { name: "Edit Hearthkeeper" }));
+    await editRow(subclasses(), "Hearthkeeper");
     await settled();
     stepTo("Features");
     expect(field("textbox", "Feature 1 name")).toHaveValue("Kindle");
@@ -3639,7 +3670,7 @@ describe("Homebrew subclasses", () => {
     stubApi(lists);
     renderPage("subclasses");
 
-    fireEvent.click(await within(subclasses()).findByRole("button", { name: "Edit Hearthkeeper" }));
+    await editRow(subclasses(), "Hearthkeeper");
     await settled();
     pick("Rules", "2014");
     expect(field("combobox", "Parent class")).not.toHaveTextContent("Fighter");
@@ -3774,7 +3805,7 @@ describe("Homebrew subraces", () => {
     const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
     renderPage("subraces");
 
-    fireEvent.click(await within(subraces()).findByRole("button", { name: "Edit Moonlit" }));
+    await editRow(subraces(), "Moonlit");
     await settled();
     expect(field("combobox", "Parent race")).toHaveTextContent("Elf (XPHB)");
     mode("JSON");
@@ -3797,7 +3828,7 @@ describe("Homebrew subraces", () => {
     stubApi(lists);
     renderPage("subraces");
 
-    fireEvent.click(await within(subraces()).findByRole("button", { name: "Edit Moonlit" }));
+    await editRow(subraces(), "Moonlit");
     await settled();
     pick("Rules", "2014");
     expect(field("combobox", "Parent race")).not.toHaveTextContent("Elf");
@@ -3894,7 +3925,7 @@ describe("Homebrew deities", () => {
     stubApi(lists);
     renderPage("deities");
 
-    fireEvent.click(await within(deities()).findByRole("button", { name: "Edit Hestrel" }));
+    await editRow(deities(), "Hestrel");
     await settled();
     fireEvent.change(field("textbox", "Name"), { target: { value: "Hestrelle" } });
     mode("JSON");
@@ -3928,7 +3959,7 @@ describe("Homebrew deities", () => {
     const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
     renderPage("deities");
 
-    fireEvent.click(await within(deities()).findByRole("button", { name: "Edit Hestrel" }));
+    await editRow(deities(), "Hestrel");
     await settled();
     expect(field("textbox", "Pantheon")).toHaveValue("Hearthlands");
     click("Save");
@@ -3976,7 +4007,7 @@ describe("Homebrew deities", () => {
     ]);
     renderPage("deities");
 
-    fireEvent.click(await within(deities()).findByRole("button", { name: "Edit Hestrel" }));
+    await editRow(deities(), "Hestrel");
     await settled();
     fireEvent.change(field("textbox", "Name"), { target: { value: "Hestrelle" } });
     click("Save");
@@ -4085,7 +4116,7 @@ describe("Homebrew optional features", () => {
     stubApi({ ...lists, "feature-types": ["EI", "MM", "RP"] });
     renderPage("optional-features");
 
-    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await editRow(features(), "Ember Sight");
     await settled();
     fireEvent.click(within(editor()).getByRole("button", { name: /^Feature types/ }));
 
@@ -4101,7 +4132,7 @@ describe("Homebrew optional features", () => {
     stubApi({ ...lists, "feature-types failed": true });
     renderPage("optional-features");
 
-    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await editRow(features(), "Ember Sight");
     await settled();
 
     expect(await within(editor()).findByText(/feature type list did not load/)).toBeInTheDocument();
@@ -4121,7 +4152,7 @@ describe("Homebrew optional features", () => {
     ]);
     renderPage("optional-features");
 
-    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await editRow(features(), "Ember Sight");
     await settled();
     stepTo("Prerequisites");
     fireEvent.change(field("spinbutton", "Level"), { target: { value: "9" } });
@@ -4144,7 +4175,7 @@ describe("Homebrew optional features", () => {
     stubApi({ "optional-features": [two] });
     renderPage("optional-features");
 
-    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await editRow(features(), "Ember Sight");
     await settled();
     stepTo("Prerequisites");
     click("Remove prerequisite 1");
@@ -4156,7 +4187,7 @@ describe("Homebrew optional features", () => {
     stubApi(lists);
     renderPage("optional-features");
 
-    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await editRow(features(), "Ember Sight");
     await settled();
     fireEvent.change(field("textbox", "Name"), { target: { value: "Ember Gaze" } });
     mode("JSON");
@@ -4176,7 +4207,7 @@ describe("Homebrew optional features", () => {
     const fetchMock = stubApi(lists);
     renderPage("optional-features");
 
-    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await editRow(features(), "Ember Sight");
     await settled();
     mode("JSON");
     typeJson(
@@ -4199,7 +4230,7 @@ describe("Homebrew optional features", () => {
     ]);
     renderPage("optional-features");
 
-    fireEvent.click(await within(features()).findByRole("button", { name: "Edit Ember Sight" }));
+    await editRow(features(), "Ember Sight");
     await settled();
     click("Save");
 
@@ -4330,7 +4361,7 @@ describe("Homebrew monsters", () => {
     const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
     renderPage("monsters");
 
-    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await editRow(monsters(), "Cinder Hound");
     await settled();
     fireEvent.change(field("spinbutton", "Armor class"), { target: { value: "14" } });
     click("Save");
@@ -4347,7 +4378,7 @@ describe("Homebrew monsters", () => {
     stubApi(lists);
     renderPage("monsters");
 
-    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await editRow(monsters(), "Cinder Hound");
     await settled();
     fireEvent.change(field("textbox", "Name"), { target: { value: "Ember Hound" } });
     mode("JSON");
@@ -4379,7 +4410,7 @@ describe("Homebrew monsters", () => {
     const openFull = async (writes: Parameters<typeof stubApi>[1] = []) => {
       const fetchMock = stubApi({ monsters: [full] }, writes);
       renderPage("monsters");
-      fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+      await editRow(monsters(), "Cinder Hound");
       await settled();
       return fetchMock;
     };
@@ -4477,9 +4508,7 @@ describe("Homebrew monsters", () => {
       const openText = async (writes: Parameters<typeof stubApi>[1] = []) => {
         const fetchMock = stubApi({ monsters: [withText] }, writes);
         renderPage("monsters");
-        fireEvent.click(
-          await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }),
-        );
+        await editRow(monsters(), "Cinder Hound");
         await settled();
         stepTo("Traits");
         return fetchMock;
@@ -4613,7 +4642,7 @@ describe("Homebrew monsters", () => {
     stubApi(lists);
     renderPage("monsters");
 
-    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await editRow(monsters(), "Cinder Hound");
     await settled();
     mode("Preview");
 
@@ -4627,7 +4656,7 @@ describe("Homebrew monsters", () => {
     const fetchMock = stubApi(lists);
     renderPage("monsters");
 
-    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await editRow(monsters(), "Cinder Hound");
     await settled();
     stepTo("Ability scores");
     fireEvent.change(field("spinbutton", "Strength"), { target: { value: "31" } });
@@ -4642,7 +4671,7 @@ describe("Homebrew monsters", () => {
     stubApi(lists);
     renderPage("monsters");
 
-    fireEvent.click(await within(monsters()).findByRole("button", { name: "Edit Cinder Hound" }));
+    await editRow(monsters(), "Cinder Hound");
     await settled();
     fireEvent.change(field("spinbutton", "Walking (ft.)"), { target: { value: "" } });
     click("Save");

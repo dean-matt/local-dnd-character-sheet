@@ -77,6 +77,24 @@ describe("ListRow", () => {
     expect(screen.getByRole("listitem").children).toHaveLength(2);
   });
 
+  it("draws `select` outside the card, at its left", () => {
+    renderWithClient(
+      <ul>
+        <ListRow
+          name="Rope"
+          source="PHB"
+          select={<input type="checkbox" aria-label="Choose Rope" />}
+        />
+      </ul>,
+    );
+
+    const [outside, card] = [...screen.getByRole("listitem").children];
+    expect(outside).toContainElement(screen.getByRole("checkbox"));
+    expect(card).toHaveClass("bg-subtle");
+    expect(card).toHaveTextContent("Rope");
+    expect(card).not.toContainElement(screen.getByRole("checkbox"));
+  });
+
   it("keeps the preview off the printed page", () => {
     renderRow();
 
