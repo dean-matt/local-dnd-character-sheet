@@ -60,7 +60,8 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
       <h2 id={`${id}-title`} className="sr-only">
         {kind.heading}
       </h2>
-      <div className="flex flex-wrap items-center gap-2">
+      {/* pl-6 is the export checkbox's column beside each card: its size-4 and ListRow's gap-2. */}
+      <div className={`flex flex-wrap items-center gap-2 ${selection ? "pl-6 print:pl-0" : ""}`}>
         <ImportHomebrew />
         <ExportHomebrew />
         <button
