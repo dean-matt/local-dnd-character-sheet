@@ -3581,7 +3581,7 @@ describe("Homebrew subclasses", () => {
 
   it("keeps each subclass's parent where a sheet's names read the list first", async () => {
     const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
-    // A list that never goes stale shows the cached parse, as the page does before its refetch lands.
+    // Infinite staleTime keeps the names hook's parse in the cache when the page mounts.
     const cached = new QueryClient({
       defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
     });
