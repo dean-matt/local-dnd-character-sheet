@@ -188,6 +188,39 @@ describe("monster shapes", () => {
     expect(entriesOfParts([{ text: "" }])).toBeUndefined();
   });
 
+  it("reads a nested section as its name and paragraphs, and writes it back unchanged", () => {
+    const section = { type: "entries", name: "Heartstone", entries: ["One.", "Two."] };
+    const entries = ["Intro.", section, { type: "entries", entries: ["Three."] }];
+    const parts = rulesParts(entries);
+
+    expect(parts).toEqual([
+      { text: "Intro." },
+      { name: "Heartstone", body: "One.\n\nTwo.", stored: section },
+      { text: "" },
+      { name: "", body: "Three.", stored: { type: "entries", entries: ["Three."] } },
+      { text: "" },
+    ]);
+    expect(entriesOfParts(parts ?? [])).toEqual(entries);
+    expect(isPlainTextRow({ name: "Items", entries })).toBe(true);
+    expect(
+      rulesParts([{ type: "entries", entries: [{ type: "list", items: [] }] }]),
+    ).toBeUndefined();
+    expect(rulesParts([{ type: "entries", name: 3 }])).toBeUndefined();
+  });
+
+  it("writes nothing for a section with neither name nor paragraphs", () => {
+    const stored = { type: "entries" };
+    expect(
+      entriesOfParts([
+        { text: "" },
+        { name: " ", body: " ", stored },
+        { text: "" },
+        { name: " Named ", body: "", stored },
+        { text: "" },
+      ]),
+    ).toEqual([{ type: "entries", name: "Named", entries: [] }]);
+  });
+
   it("moves a row, leaving the list alone where there is nowhere to go", () => {
     expect(moved(["a", "b", "c"], 0, 1)).toEqual(["b", "a", "c"]);
     const list = ["a", "b"];
