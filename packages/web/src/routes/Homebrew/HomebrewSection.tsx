@@ -34,6 +34,8 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
   const id = useId();
   const rows = list.data ?? [];
   const edited = rows.find((row) => row.id === editing);
+  // The export checkbox's column beside each card: its size-4 and ListRow's gap-2.
+  const inset = selection ? "pl-6 print:pl-0" : "";
 
   const opener = useRef<HTMLElement | null>(null);
 
@@ -60,8 +62,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
       <h2 id={`${id}-title`} className="sr-only">
         {kind.heading}
       </h2>
-      {/* pl-6 is the export checkbox's column beside each card: its size-4 and ListRow's gap-2. */}
-      <div className={`flex flex-wrap items-center gap-2 ${selection ? "pl-6 print:pl-0" : ""}`}>
+      <div className={`flex flex-wrap items-center gap-2 ${inset}`}>
         <ImportHomebrew />
         <ExportHomebrew />
         <button
@@ -76,7 +77,9 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
       {list.isPending && <LoadingState label={`Loading homebrew ${kind.heading.toLowerCase()}…`} />}
       {list.isError && <ErrorState error={list.error} />}
       {list.isSuccess && rows.length === 0 && (
-        <EmptyState>No homebrew {kind.heading.toLowerCase()} yet.</EmptyState>
+        <div className={inset}>
+          <EmptyState>No homebrew {kind.heading.toLowerCase()} yet.</EmptyState>
+        </div>
       )}
       {rows.length > 0 && (
         <ul className="flex flex-col gap-2">

@@ -3,7 +3,7 @@ import { box } from "./box.ts";
 
 test.beforeEach(({ page }) => page.setViewportSize({ width: 1280, height: 800 }));
 
-test("the Homebrew page's Import button starts at the cards' left edge, with or without entries", async ({
+test("the Homebrew page's Import button, cards and empty state share one left edge", async ({
   page,
   request,
 }) => {
@@ -27,8 +27,10 @@ test("the Homebrew page's Import button starts at the cards' left edge, with or 
       route.request().method() === "GET" ? route.fulfill({ json: [] }) : route.fallback(),
     );
     await page.reload();
-    await expect(section.getByText("No homebrew feats yet.")).toBeVisible();
+    const empty = section.getByText("No homebrew feats yet.");
+    await expect(empty).toBeVisible();
     expect(Math.abs((await box(importButton)).x - card.x)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs((await box(empty)).x - card.x)).toBeLessThanOrEqual(0.5);
   } finally {
     await request.delete(`/api/homebrew/feats/${(await saved.json()).id}`);
   }
