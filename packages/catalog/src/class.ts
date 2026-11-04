@@ -239,6 +239,29 @@ export const homebrewSubclassInputSchema = homebrewSubclassSchema
 export type HomebrewSubclassInput = z.infer<typeof homebrewSubclassInputSchema>;
 
 /**
+ * Whether two parents name the same class. A catalog class compares exactly, as the stored
+ * columns a sheet looks a subclass up by do, so a change of case counts as a move.
+ */
+export function sameSubclassParent(
+  a: HomebrewSubclassInput["parent"],
+  b: HomebrewSubclassInput["parent"],
+): boolean {
+  if ("classId" in a || "classId" in b) {
+    return "classId" in a && "classId" in b && a.classId === b.classId;
+  }
+  return a.name === b.name && a.source === b.source;
+}
+
+/** A subclass's parent class as the editor's class picker labels it, such as `Cleric (PHB)`. */
+export function subclassParentLabel(record: {
+  className: string;
+  classSource: string;
+  classId?: string | null;
+}): string {
+  return `${record.className} (${record.classId ? "Homebrew" : record.classSource})`;
+}
+
+/**
  * A stored homebrew subclass, as an endpoint returns it. It has an `id` and no top-level
  * `source`, which tells it from `subclassRecordSchema`'s catalog row in a merged list.
  * `classSource` is `HB` and `classId` is set where the class is a homebrew one.

@@ -63,10 +63,12 @@ export {
   homebrewSubclassSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
+  sameSubclassParent,
   spellbookGainsSchema,
   spellcastingAbilitySchema,
   subclassLevelSchema,
   subclassListItemSchema,
+  subclassParentLabel,
   subclassRecordSchema,
 } from "./class.ts";
 export { classEntries, subclassEntries } from "./class-entries.ts";

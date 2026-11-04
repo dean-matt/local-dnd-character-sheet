@@ -5,6 +5,8 @@ import {
   homebrewClassFeaturesSchema,
   homebrewSubclassInputSchema,
   homebrewSubclassRecordSchema,
+  sameSubclassParent,
+  subclassParentLabel,
 } from "@dnd/catalog";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
@@ -34,6 +36,19 @@ import {
 
 const SUBCLASS_NOT_FOUND = "No homebrew subclass with that id";
 const CLASS_NOT_FOUND = "No class with that name and source, or homebrew class with that id";
+
+const names = new Intl.ListFormat("en", { type: "conjunction" });
+
+const parentHeld = (
+  subclass: { name: string; className: string; classSource: string; classId: string | null },
+  characters: { id: string; name: string }[],
+) => {
+  const parent = subclassParentLabel(subclass);
+  return {
+    error: `${subclass.name} is held by ${names.format(characters.map((held) => held.name))}, so it stays a subclass of ${parent}. Keep ${parent}, or add a new subclass to the other class.`,
+    characters,
+  };
+};
 
 const listSubclasses = createRoute({
   method: "get",
@@ -102,7 +117,18 @@ const updateSubclass = createRoute({
       description: "No homebrew subclass with that id, or the parent class does not exist",
       content: { "application/json": { schema: errorSchema } },
     },
-    409: nameTaken("homebrew subclass"),
+    409: {
+      description:
+        "Another subclass of the parent class has this name, or a character holds the subclass and its parent class would change",
+      content: {
+        "application/json": {
+          schema: z.union([
+            nameTaken("homebrew subclass").content["application/json"].schema,
+            referenced("homebrew subclass").content["application/json"].schema,
+          ]),
+        },
+      },
+    },
   },
 });
 
@@ -206,9 +232,17 @@ export function homebrewSubclassesRoutes(
   routes.openapi(updateSubclass, (c) => {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
-    if (!getHomebrewSubclass(db, id)) return c.json({ error: SUBCLASS_NOT_FOUND }, 404);
+    const current = getHomebrewSubclass(db, id);
+    if (!current) return c.json({ error: SUBCLASS_NOT_FOUND }, 404);
     const edition = parentEdition(db, dataDir, input.parent);
     if (!edition) return c.json({ error: CLASS_NOT_FOUND }, 404);
+    // A holder keeps the subclass by id on a level of its own class, which a move would leave
+    // holding another class's subclass. The check and the write share no transaction across
+    // the two files, as with a held class's hit die.
+    if (!sameSubclassParent(current.parent, input.parent)) {
+      const characters = charactersReferencingHomebrew(charactersDb, id);
+      if (characters.length > 0) return c.json(parentHeld(current, characters), 409);
+    }
     const result = claimName(
       () => updateHomebrewSubclass(db, id, { ...input, edition }),
       () => findHomebrewSubclass(db, input.parent, input.name),
