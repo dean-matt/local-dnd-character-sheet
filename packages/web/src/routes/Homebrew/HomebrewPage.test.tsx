@@ -4916,7 +4916,7 @@ describe("Homebrew monsters", () => {
         expect(field("textbox", "Alignment note")).toHaveValue("when calm");
         expect(field("combobox", "Alignment 2")).toHaveTextContent("Neutral evil");
         expect(field("textbox", "Alignment prefix")).toHaveValue("typically");
-        expect(within(editor()).queryByText(/Edit it in JSON/)).not.toBeInTheDocument();
+        expect(within(editor()).queryByText(/cannot show/)).not.toBeInTheDocument();
         click("Save");
 
         await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
@@ -5058,6 +5058,21 @@ describe("Homebrew monsters", () => {
         expect(field("textbox", "Armor class in words")).toHaveValue("equal to 10 + level");
         expect(field("spinbutton", "Armor class 2")).toHaveValue(15);
         expect(field("textbox", "Armor class 3 in words")).toHaveValue("15 with a shield");
+      });
+
+      it("notes hit points written as prose", async () => {
+        stubApi({
+          monsters: [{ ...prose, json: { ...prose.json, hp: { special: "half its maximum" } } }],
+        });
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+
+        expect(
+          within(editor()).getByText(
+            "The hit points are stated in a way the form cannot show. Edit them in JSON.",
+          ),
+        ).toBeInTheDocument();
       });
     });
 

@@ -28,7 +28,7 @@ const SPEED_LABELS: Record<MonsterSpeedMode, string> = {
 
 /**
  * A homebrew monster's armor classes, hit points and speed. An armor class is a number with its
- * source or words; hit points written as prose stay as written and are edited in JSON.
+ * source, or words; hit points written as prose stay as written and are edited in JSON.
  */
 export function MonsterCombat({ entry, onChange, errorFor }: HomebrewFormProps) {
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
