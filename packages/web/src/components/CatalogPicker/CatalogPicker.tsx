@@ -29,6 +29,8 @@ const RESULT_LIMIT = 20;
 
 export interface CatalogPickerProps {
   label: string;
+  /** Keeps the label for a screen reader where the surrounding layout already names the picker. */
+  labelHidden?: boolean;
   edition: CharacterRecord["edition"];
   /** The one kind of row offered, such as `spell` or `feat`. */
   type: string;
@@ -58,6 +60,7 @@ function statusText(showList: boolean, searching: boolean, shown: number, total:
 
 export function CatalogPicker({
   label,
+  labelHidden,
   edition,
   type,
   filters,
@@ -132,6 +135,7 @@ export function CatalogPicker({
   return (
     <FormField
       label={label}
+      labelHidden={labelHidden}
       status={statusText(showList, open && search.isFetching, hits.length, search.data?.total ?? 0)}
       error={
         search.isError &&

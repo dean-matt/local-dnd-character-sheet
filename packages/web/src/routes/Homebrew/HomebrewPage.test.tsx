@@ -5245,6 +5245,156 @@ describe("Homebrew monsters", () => {
       });
     });
 
+    describe("spellcasting", () => {
+      const withSpells = {
+        ...full,
+        json: {
+          ...full.json,
+          spellcasting: [
+            {
+              name: "Innate Spellcasting",
+              type: "spellcasting",
+              ability: "cha",
+              headerEntries: ["The hound casts these spells."],
+              will: ["{@spell light}", { entry: "{@spell shield}", hidden: true }],
+              daily: { "1e": ["{@spell fly}"] },
+              spells: { "3": { lower: 1, slots: 2, spells: ["{@spell fireball}"] } },
+              weekly: { "1": ["{@spell scrying}"] },
+              hidden: ["weekly"],
+            },
+          ],
+        },
+      };
+      const openSpells = async (writes: Parameters<typeof stubApi>[1] = []) => {
+        const fetchMock = stubApi({ monsters: [withSpells] }, writes);
+        vi.stubGlobal(
+          "fetch",
+          vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+            if (!String(input).startsWith("/api/search?")) return fetchMock(input, init);
+            const hit = { type: "spell", name: "Misty Step", source: "XPHB", edition: "one" };
+            return json(200, { items: [hit], total: 1, limit: 20, offset: 0 });
+          }),
+        );
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+        stepTo("Spellcasting");
+        return fetchMock;
+      };
+      const pickSpell = async (list: string) => {
+        fireEvent.change(field("combobox", `Add a spell to ${list}`), {
+          target: { value: "misty" },
+        });
+        fireEvent.click(await screen.findByRole("option", { name: /^Misty Step/ }));
+      };
+      const spellcasting = () => {
+        mode("JSON");
+        const text = jsonText("Monster JSON");
+        mode("Step by step");
+        return JSON.parse(text).spellcasting;
+      };
+
+      it("saves a stored monster with them untouched", async () => {
+        const fetchMock = await openSpells([{ status: 200, body: withSpells }]);
+        click("Save");
+
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        const { source: _source, ...sent } = withSpells.json;
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { ...sent, edition: "one" } });
+      });
+
+      it("adds, edits and removes a block", async () => {
+        await openSpells();
+        click("Add a spellcasting block");
+        fireEvent.change(field("textbox", "Spellcasting 2 name"), {
+          target: { value: "Spellcasting" },
+        });
+        pick("Spellcasting 2 ability", "Wisdom");
+        pick("Spellcasting 2 shows as", "Action");
+        fireEvent.change(field("textbox", "Spellcasting 2 header"), {
+          target: { value: "The hound casts {@spell sleep}." },
+        });
+        fireEvent.change(field("textbox", "Spellcasting 2 footer"), {
+          target: { value: "It needs no components." },
+        });
+        click("Remove spellcasting block 1");
+
+        expect(spellcasting()).toEqual([
+          {
+            name: "Spellcasting",
+            type: "spellcasting",
+            ability: "wis",
+            displayAs: "action",
+            headerEntries: ["The hound casts {@spell sleep}."],
+            footerEntries: ["It needs no components."],
+          },
+        ]);
+      });
+
+      it("edits spells at will, by frequency and by level, picked from the catalog", async () => {
+        await openSpells();
+        expect(field("textbox", "Spellcasting 1 header")).toHaveValue(
+          "The hound casts these spells.",
+        );
+        await pickSpell("Spellcasting 1 rituals");
+        click("Remove light from Spellcasting 1 at will");
+        fireEvent.change(field("spinbutton", "Spellcasting 1 frequency 1 uses"), {
+          target: { value: "3" },
+        });
+        fireEvent.click(field("checkbox", "Each"));
+        pick("Spellcasting 1 frequency 1 kind", "Per long rest");
+        click("Add a frequency to Spellcasting 1");
+        await pickSpell("Spellcasting 1 frequency 2");
+        fireEvent.change(field("spinbutton", "Spellcasting 1 spell level 1 slots"), {
+          target: { value: "4" },
+        });
+        click("Add a spell level to Spellcasting 1");
+        pick("Spellcasting 1 spell level 2 level", "Cantrips");
+        await pickSpell("Spellcasting 1 spell level 2");
+
+        expect(spellcasting()).toEqual([
+          {
+            name: "Innate Spellcasting",
+            type: "spellcasting",
+            ability: "cha",
+            headerEntries: ["The hound casts these spells."],
+            will: [{ entry: "{@spell shield}", hidden: true }],
+            daily: { "1e": ["{@spell misty step|XPHB}"] },
+            spells: {
+              "0": { spells: ["{@spell misty step|XPHB}"] },
+              "3": { lower: 1, slots: 4, spells: ["{@spell fireball}"] },
+            },
+            weekly: { "1": ["{@spell scrying}"] },
+            hidden: ["weekly"],
+            ritual: ["{@spell misty step|XPHB}"],
+            restLong: { "3": ["{@spell fly}"] },
+          },
+        ]);
+      });
+
+      it("shows a change made in JSON in the form and the preview", async () => {
+        await openSpells();
+        mode("JSON");
+        const [block] = withSpells.json.spellcasting;
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({
+            ...withSpells.json,
+            spellcasting: [{ ...block, name: "Psionics", displayAs: "action" }],
+          }),
+        );
+        mode("Step by step");
+        expect(field("textbox", "Spellcasting 1 name")).toHaveValue("Psionics");
+        expect(field("combobox", "Spellcasting 1 shows as")).toHaveTextContent("Action");
+        mode("Preview");
+
+        const preview = within(editor());
+        expect(preview.getByText("Psionics")).toBeInTheDocument();
+        expect(preview.getByText("The hound casts these spells.")).toBeInTheDocument();
+        expect(preview.getByText("1st-3rd level (2 3rd-level slots):")).toBeInTheDocument();
+      });
+    });
+
     it("previews them", async () => {
       await openFull();
       mode("Preview");
