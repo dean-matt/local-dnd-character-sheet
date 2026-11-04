@@ -222,11 +222,7 @@ describe("routing", () => {
       "Subclasses",
       "Subraces",
     ]);
-    expect(
-      within(screen.getByRole("navigation", { name: "Homebrew kinds footer" })).getByRole("link", {
-        name: "Recently deleted",
-      }),
-    ).toHaveAttribute("href", "/homebrew/deleted");
+    expect(nav.closest("aside")).not.toHaveTextContent("Recently deleted");
     expect(within(nav).getByRole("link", { name: "Items" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -234,7 +230,7 @@ describe("routing", () => {
     expect(screen.queryByRole("region", { name: "Spells" })).not.toBeInTheDocument();
   });
 
-  it("switches kind from the sidebar, and opens Recently deleted at /homebrew/deleted", async () => {
+  it("switches kind from the sidebar, and opens Recently deleted at /homebrew/deleted from the top bar", async () => {
     const router = renderAt("/homebrew/items");
     const nav = await screen.findByRole("navigation", { name: "Homebrew kinds" });
 
@@ -243,6 +239,7 @@ describe("routing", () => {
     expect(router.state.location.pathname).toBe("/homebrew/spells");
     expect(screen.queryByRole("region", { name: "Items" })).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: /^Homebrew/ }));
     fireEvent.click(screen.getByRole("link", { name: "Recently deleted" }));
     await screen.findByRole("region", { name: "Recently deleted" });
     expect(router.state.location.pathname).toBe("/homebrew/deleted");
