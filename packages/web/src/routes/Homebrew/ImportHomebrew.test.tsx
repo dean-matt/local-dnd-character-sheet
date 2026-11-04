@@ -8,7 +8,7 @@ import { HomebrewLayout } from "./HomebrewLayout.tsx";
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
-function stubApi(imported: Response) {
+function stubApi(imported: Response | Promise<Response>) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url === "/api/homebrew/import") return imported;
@@ -62,6 +62,28 @@ describe("ImportHomebrew", () => {
       format: "local-dnd-character-sheet/homebrew",
     });
     await waitFor(() => expect(listCalls(fetchMock)).toBe(2));
+  });
+
+  it("keeps an import's guard and result across a change of kind", async () => {
+    let respond = (_: Response) => {};
+    stubApi(new Promise<Response>((resolve) => (respond = resolve)));
+    renderPage();
+
+    pick("{}");
+    expect(await screen.findByRole("button", { name: "Importing…" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("link", { name: "Feats" }));
+    await screen.findByRole("region", { name: "Feats" });
+
+    const openPicker = vi.spyOn(HTMLInputElement.prototype, "click");
+    fireEvent.click(screen.getByRole("button", { name: "Importing…" }));
+    expect(openPicker).not.toHaveBeenCalled();
+    openPicker.mockRestore();
+    respond(json(201, { created: 2 }));
+
+    expect(await screen.findByText("Imported 2 entries from homebrew.json.")).toHaveRole("status");
   });
 
   it("says why the API refused the file", async () => {

@@ -1,6 +1,7 @@
 import type { HomebrewFile } from "@dnd/catalog";
 import { type ReactNode, useState } from "react";
 import { useExportHomebrew } from "../../hooks/useExportHomebrew.ts";
+import { useImportHomebrew } from "../../hooks/useImportHomebrew.ts";
 import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 import { type ChosenEntry, ExportSelection } from "./exportSelectionContext.ts";
 
@@ -18,12 +19,15 @@ function addedNote(file: HomebrewFile, sent: Set<string>) {
 
 /**
  * Holds the entries chosen for export across the page's tabs and exports them as one file.
- * After an export, `done` says what the file holds beyond the choice.
+ * After an export, `done` says what the file holds beyond the choice. Holds the import too, so
+ * a change of tab neither drops its result nor lifts its guard against a second send.
  */
 export function ExportSelectionProvider({ children }: { children: ReactNode }) {
   const [chosen, setChosen] = useState(() => new Map<string, ChosenEntry>());
   const [done, setDone] = useState("");
   const exportFile = useExportHomebrew();
+  const upload = useImportHomebrew();
+  const [imported, setImported] = useState("");
 
   // A reset while pending would detach the export's onSuccess, so only a failure is reset.
   const clearError = () => {
@@ -62,6 +66,18 @@ export function ExportSelectionProvider({ children }: { children: ReactNode }) {
     exporting: exportFile.isPending,
     done,
     failure: exportFile.error?.message,
+    importFile: (file: File) => {
+      setImported("");
+      upload.mutate(file, {
+        onSuccess: ({ created }) =>
+          setImported(
+            `Imported ${created} ${created === 1 ? "entry" : "entries"} from ${file.name}.`,
+          ),
+      });
+    },
+    importing: upload.isPending,
+    imported,
+    importFailure: upload.error?.message,
   };
 
   return <ExportSelection.Provider value={value}>{children}</ExportSelection.Provider>;

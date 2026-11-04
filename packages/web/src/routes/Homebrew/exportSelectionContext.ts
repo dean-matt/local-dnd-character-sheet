@@ -7,9 +7,10 @@ export interface ChosenEntry {
 }
 
 /**
- * The entries chosen for export and the export of them, held by the Homebrew page so a choice
- * survives a change of tab. `done` says what the last export wrote. `null` where a list renders
- * outside that page, which offers no export.
+ * The entries chosen for export, the export of them and the import of a file, held by the
+ * Homebrew page so each survives a change of tab. `done` says what the last export wrote and
+ * `imported` what the last import created. `null` where a list renders outside that page, which
+ * offers neither.
  */
 export const ExportSelection = createContext<{
   isChosen: (entry: ChosenEntry) => boolean;
@@ -20,4 +21,8 @@ export const ExportSelection = createContext<{
   exporting: boolean;
   done: string;
   failure: string | undefined;
+  importFile: (file: File) => void;
+  importing: boolean;
+  imported: string;
+  importFailure: string | undefined;
 } | null>(null);

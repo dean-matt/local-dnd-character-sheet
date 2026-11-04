@@ -1,8 +1,9 @@
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useContext, useEffect, useId, useRef, useState } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { HomebrewEditor } from "../../components/HomebrewEditor/HomebrewEditor.tsx";
 import { ListRow } from "../../components/ListRow/ListRow.tsx";
+import { RemoveButton } from "../../components/RemoveButton.tsx";
 import { RulesEntries } from "../../components/RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../components/Tag.tsx";
 import { EmptyState } from "../../EmptyState.tsx";
@@ -98,6 +99,7 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
                   <button
                     type="button"
                     aria-label={`Edit ${row.name}`}
+                    aria-haspopup="dialog"
                     onClick={() => openEditor(row.id)}
                     className="rounded-control border border-border bg-surface px-3.5 py-2 font-semibold text-ink text-row hover:bg-subtle"
                   >
@@ -112,15 +114,12 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
                   ),
               }}
               remove={
-                <button
-                  type="button"
-                  aria-label={`Delete ${row.name}`}
-                  title="Delete"
-                  onClick={() => setDeleting(row)}
-                  className="relative flex size-4.5 shrink-0 items-center justify-center text-muted before:absolute before:-inset-1 hover:text-ink"
-                >
-                  <X aria-hidden="true" size={12} />
-                </button>
+                <RemoveButton
+                  name={row.name}
+                  verb="Delete"
+                  onRemove={() => setDeleting(row)}
+                  busy={false}
+                />
               }
               select={
                 selection && (
