@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  type AlignmentRow,
+  alignmentIsEditable,
   alignmentLabel,
+  alignmentRows,
   armorClassIsProse,
   extraArmorClasses,
   firstArmorClass,
   isPlainTextRow,
   moved,
+  prefixText,
   ratingOf,
   speedFeet,
   typeTags,
+  withAlignmentRows,
   withArmorClass,
   withExtraArmorClasses,
+  withPrefix,
   withRating,
   withSpeed,
   withStrings,
@@ -45,12 +51,59 @@ describe("monster shapes", () => {
     expect(withRating("1", "1/4")).toBe("1/4");
   });
 
-  it("names an offered alignment and leaves a range to JSON", () => {
-    expect(alignmentLabel(["NX", "G"], undefined)).toBe("Neutral good");
-    expect(alignmentLabel(undefined, undefined)).toBe("");
-    expect(alignmentLabel(["C", "G", "L", "NX"], undefined)).toBeUndefined();
-    expect(alignmentLabel([{ alignment: ["E"], chance: 50 }], undefined)).toBeUndefined();
-    expect(alignmentLabel(["U"], "typically ")).toBeUndefined();
+  it("labels letters that read alike the same, and a range by its words", () => {
+    expect(alignmentLabel(["NX", "E"])).toBe("Neutral evil");
+    expect(alignmentLabel(["N", "E"])).toBe("Neutral evil");
+    expect(alignmentLabel(["C", "G", "NY", "E"])).toBe("Any chaotic alignment");
+  });
+
+  it("reads an alignment's letters, chances, notes and prose as rows", () => {
+    expect(alignmentRows(undefined)).toEqual([]);
+    expect(alignmentRows(["L", "NX", "C", "E"])).toEqual([
+      { letters: ["L", "NX", "C", "E"], note: "", stored: ["L", "NX", "C", "E"] },
+    ]);
+    const choice = [
+      { alignment: ["C", "G"], chance: 75, note: "when calm" },
+      { special: "lawful grumpy" },
+    ];
+    expect(alignmentRows(choice)).toEqual([
+      { letters: ["C", "G"], chance: 75, note: "when calm", stored: choice[0] },
+      { special: "lawful grumpy", note: "", stored: choice[1] },
+    ]);
+    expect(alignmentIsEditable("LG")).toBe(false);
+    expect(alignmentIsEditable([{ chance: 50 }])).toBe(false);
+  });
+
+  it("writes rows back as letters, a choice or prose", () => {
+    const row = (change: Partial<AlignmentRow>): AlignmentRow => ({
+      note: "",
+      stored: undefined,
+      ...change,
+    });
+    expect(withAlignmentRows([row({ letters: ["U"] })])).toEqual(["U"]);
+    expect(withAlignmentRows([row({ letters: ["U"], stored: { alignment: ["N"] } })])).toEqual([
+      "U",
+    ]);
+    expect(
+      withAlignmentRows([
+        row({ letters: ["C", "G"], chance: 75, note: " calm " }),
+        row({ letters: ["N", "E"], chance: 25 }),
+        row({}),
+      ]),
+    ).toEqual([
+      { alignment: ["C", "G"], chance: 75, note: "calm" },
+      { alignment: ["N", "E"], chance: 25 },
+    ]);
+    expect(withAlignmentRows([row({ special: " neutral oozy " })])).toEqual([
+      { special: "neutral oozy" },
+    ]);
+    expect(withAlignmentRows([row({ special: "" }), row({})])).toBeUndefined();
+  });
+
+  it("writes a prefix with the space the stat block reads it with", () => {
+    expect(prefixText("typically ")).toBe("typically");
+    expect(withPrefix(" usually")).toBe("usually ");
+    expect(withPrefix(" ")).toBeUndefined();
   });
 
   it("writes type tags, returning to a plain type when none are left", () => {

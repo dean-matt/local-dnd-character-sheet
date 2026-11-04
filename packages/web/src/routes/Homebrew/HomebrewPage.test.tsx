@@ -4769,6 +4769,85 @@ describe("Homebrew monsters", () => {
       expect(field("textbox", "Languages 1")).toHaveValue("Draconic");
     });
 
+    describe("a range, a chance, a prefix and prose", () => {
+      const choice = {
+        ...full,
+        json: {
+          ...full.json,
+          alignmentPrefix: "typically ",
+          alignment: [
+            { alignment: ["C", "G"], chance: 75, note: "when calm" },
+            { alignment: ["N", "E"], chance: 25 },
+          ],
+        },
+      };
+      const openChoice = async (writes: Parameters<typeof stubApi>[1] = []) => {
+        const fetchMock = stubApi({ monsters: [choice] }, writes);
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+        return fetchMock;
+      };
+
+      it("shows them in the form with no note, and saves them untouched", async () => {
+        const fetchMock = await openChoice([{ status: 200, body: choice }]);
+
+        expect(field("combobox", "Alignment")).toHaveTextContent("Chaotic good");
+        expect(field("spinbutton", "Alignment chance (%)")).toHaveValue(75);
+        expect(field("textbox", "Alignment note")).toHaveValue("when calm");
+        expect(field("combobox", "Alignment 2")).toHaveTextContent("Neutral evil");
+        expect(field("textbox", "Alignment prefix")).toHaveValue("typically");
+        expect(within(editor()).queryByText(/Edit it in JSON/)).not.toBeInTheDocument();
+        click("Save");
+
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        const { source: _source, ...sent } = choice.json;
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { ...sent, edition: "one" } });
+      });
+
+      it("edits them, and JSON mode and the preview show the change", async () => {
+        await openChoice();
+        fireEvent.change(field("spinbutton", "Alignment chance (%)"), { target: { value: "60" } });
+        pick("Alignment 2", "Described in words");
+        fireEvent.change(field("textbox", "Alignment 2 in words"), {
+          target: { value: "neutral oozy" },
+        });
+        fireEvent.change(field("textbox", "Alignment prefix"), { target: { value: "usually" } });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON"))).toMatchObject({
+          alignmentPrefix: "usually ",
+          alignment: [
+            { alignment: ["C", "G"], chance: 60, note: "when calm" },
+            { special: "neutral oozy" },
+          ],
+        });
+        mode("Preview");
+        expect(
+          within(editor()).getByText(
+            "Medium humanoid (goblinoid), usually chaotic good (60%) when calm or neutral oozy",
+          ),
+        ).toBeInTheDocument();
+      });
+
+      it("picks a range, and shows one written in JSON", async () => {
+        await openChoice();
+        click("Remove alignment 2");
+        pick("Alignment", "Any evil alignment");
+        fireEvent.change(field("spinbutton", "Alignment chance (%)"), { target: { value: "" } });
+        fireEvent.change(field("textbox", "Alignment note"), { target: { value: "" } });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).alignment).toEqual(["L", "NX", "C", "E"]);
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({ ...choice.json, alignment: ["C", "G", "NY", "E"] }),
+        );
+        mode("Step by step");
+        expect(field("combobox", "Alignment")).toHaveTextContent("Any chaotic alignment");
+      });
+    });
+
     describe("traits, actions, reactions and legendary actions", () => {
       const list = { type: "list", items: ["a", "b"] };
       const withText = {

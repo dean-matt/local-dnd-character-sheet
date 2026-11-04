@@ -488,7 +488,11 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
   entries: (input) => monsterEntries(input, input.edition),
   starters: MONSTER_STARTERS,
   sections: [
-    { title: "Basics", Fields: MonsterBasics, keys: ["name", "size", "type", "alignment", "cr"] },
+    {
+      title: "Basics",
+      Fields: MonsterBasics,
+      keys: ["name", "size", "type", "alignment", "alignmentPrefix", "cr"],
+    },
     { title: "Combat", Fields: MonsterCombat, keys: ["ac", "hp", "speed"] },
     { title: "Senses and languages", Fields: MonsterSenses, keys: ["senses", "languages"] },
     {

@@ -5,15 +5,9 @@ import { MultiSelect } from "../MultiSelect.tsx";
 import { Select } from "../Select.tsx";
 import { type HomebrewFormProps, listAt, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT, WHOLE } from "./homebrewGrid.ts";
+import { MonsterAlignment } from "./MonsterAlignment.tsx";
 import { MonsterTextRows } from "./MonsterTextRows.tsx";
-import {
-  alignmentLabel,
-  MONSTER_ALIGNMENTS,
-  ratingOf,
-  typeTags,
-  withRating,
-  withTypeTags,
-} from "./monsterShapes.ts";
+import { ratingOf, typeTags, withRating, withTypeTags } from "./monsterShapes.ts";
 import { RACE_SIZES } from "./raceSizes.ts";
 
 const SIZES = RACE_SIZES.filter(({ value }) => value !== "V");
@@ -43,13 +37,9 @@ const RATINGS = [
   ...Array.from({ length: 30 }, (_, at) => `${at + 1}`),
 ].map((value) => ({ value, label: value }));
 
-const ALIGNMENT_OPTIONS = [
-  { value: "", label: "None" },
-  ...MONSTER_ALIGNMENTS.map(({ label }) => ({ value: label, label })),
-];
-
 /** A homebrew monster's name, size, creature type and tags, alignment and challenge rating. */
-export function MonsterBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
+export function MonsterBasics(props: HomebrewFormProps) {
+  const { entry, onChange, errorFor } = props;
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const sizes = listAt(entry, "size").filter((code): code is string => typeof code === "string");
   const { type } = entry;
@@ -61,7 +51,6 @@ export function MonsterBasics({ entry, onChange, errorFor }: HomebrewFormProps) 
   const ratingOptions = RATINGS.some(({ value }) => value === rating)
     ? RATINGS
     : [...RATINGS, ...(rating ? [{ value: rating, label: rating }] : [])];
-  const alignment = alignmentLabel(entry.alignment, entry.alignmentPrefix);
   return (
     <div className={FORM_GRID}>
       <div className={PAIRED}>
@@ -112,22 +101,6 @@ export function MonsterBasics({ entry, onChange, errorFor }: HomebrewFormProps) 
           )}
         </FormField>
       </div>
-      <div className={SHORT}>
-        <FormField label="Alignment" error={errorFor("alignment")}>
-          {(control) => (
-            <Select
-              {...control}
-              aria-disabled={alignment === undefined || undefined}
-              options={ALIGNMENT_OPTIONS}
-              value={alignment ?? ""}
-              onChange={(next) =>
-                alignment !== undefined &&
-                set("alignment", MONSTER_ALIGNMENTS.find(({ label }) => label === next)?.letters)
-              }
-            />
-          )}
-        </FormField>
-      </div>
       <div className={WHOLE}>
         <MonsterTextRows
           noun="type tag"
@@ -136,11 +109,7 @@ export function MonsterBasics({ entry, onChange, errorFor }: HomebrewFormProps) 
           onChange={(next) => set("type", withTypeTags(type, next))}
         />
       </div>
-      {alignment === undefined && (
-        <p className={`${WHOLE} text-muted text-row`}>
-          The alignment is a range, a chance or prose. Edit it in JSON.
-        </p>
-      )}
+      <MonsterAlignment {...props} />
       {isRecord(type) && Object.keys(type).some((key) => key !== "type" && key !== "tags") && (
         <p className={`${WHOLE} text-muted text-row`}>
           The type carries a swarm size or a choice of types. Edit those in JSON.
