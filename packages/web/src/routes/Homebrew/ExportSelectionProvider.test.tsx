@@ -198,7 +198,9 @@ describe("the Homebrew page's export", () => {
     renderPage();
 
     const add = await screen.findByRole("button", { name: "Add item" });
-    const row = [...(add.parentElement?.children ?? [])].filter((el) => el.tagName === "BUTTON");
+    const row = [...(add.parentElement?.children ?? [])].filter(
+      (el) => el.tagName === "BUTTON" && !el.hasAttribute("aria-hidden"),
+    );
     expect(row.map((button) => button.textContent)).toEqual(["Import", "Export", "Add item"]);
     expect(add).toHaveClass("ml-auto");
   });
@@ -210,6 +212,11 @@ describe("the Homebrew page's export", () => {
     const idle = await screen.findByRole("button", { name: "Export" });
     expect(idle).toHaveAttribute("aria-disabled", "true");
     expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+    const reserved = [...(idle.parentElement?.children ?? [])].find(
+      (el) => el.textContent === "Clear",
+    );
+    expect(reserved).toHaveClass("invisible");
+    expect(reserved).toHaveAttribute("inert");
     fireEvent.click(idle);
     expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/homebrew/export")).toBe(
       false,
@@ -219,13 +226,9 @@ describe("the Homebrew page's export", () => {
     expect(screen.getByRole("button", { name: "Export (1)" })).not.toHaveAttribute("aria-disabled");
     expect(screen.queryByText(/selected/)).toBeNull();
     const clear = screen.getByRole("button", { name: "Clear" });
-    expect(clear).toHaveClass(
-      "border-error",
-      "text-error",
-      "px-3.5",
-      "py-2",
-      "font-semibold",
-      "text-row",
+    const add = screen.getByRole("button", { name: "Add item" });
+    expect([...clear.classList].sort()).toEqual(
+      [...add.classList].filter((name) => name !== "ml-auto").sort(),
     );
     fireEvent.click(clear);
 
