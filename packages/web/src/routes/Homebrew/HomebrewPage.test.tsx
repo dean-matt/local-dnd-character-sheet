@@ -5010,7 +5010,7 @@ describe("Homebrew monsters", () => {
         expect(field("spinbutton", "Armor class 2")).toHaveValue(17);
         expect(field("textbox", "Armor class 3 in words")).toHaveValue("11 + the spell's level");
         expect(field("spinbutton", "Armor class 4")).toHaveValue(12);
-        expect(within(editor()).queryByText(/Edit it in JSON/)).not.toBeInTheDocument();
+        expect(within(editor()).queryByText(/cannot show/)).not.toBeInTheDocument();
         click("Save");
 
         await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
