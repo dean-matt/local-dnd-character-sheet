@@ -3,25 +3,36 @@ import { useContext } from "react";
 import { ExportSelection } from "./exportSelectionContext.ts";
 
 /**
- * Export for the entries chosen across the page's tabs, with their count, and Clear while any
- * are chosen. Its status and alert lines take a row of their own below the row it sits in.
+ * Export for the entries chosen across the page's tabs, badged with their count, and Clear while
+ * any are chosen. Its status and alert lines take a row of their own below the row it sits in.
  */
 export function ExportHomebrew() {
   const selection = useContext(ExportSelection);
   if (!selection) return null;
   const { count, exporting } = selection;
   const blocked = count === 0 || exporting;
+  const label = exporting ? "Exporting…" : "Export";
 
   return (
     <>
       <button
         type="button"
         aria-disabled={blocked || undefined}
+        aria-label={count > 0 ? `${label}, ${count} selected` : undefined}
         onClick={() => !blocked && selection.exportChosen()}
-        className="flex items-center gap-1 rounded-control border border-border bg-surface px-3 py-1.5 font-semibold text-ink text-row hover:bg-subtle aria-disabled:opacity-50 aria-disabled:hover:bg-surface"
+        className="relative flex items-center gap-1 rounded-control border border-border bg-surface px-3 py-1.5 font-semibold text-ink text-row hover:bg-subtle aria-disabled:opacity-50 aria-disabled:hover:bg-surface"
       >
         <Download aria-hidden="true" size={12} strokeWidth={2.5} />
-        {exporting ? "Exporting…" : count > 0 ? `Export (${count})` : "Export"}
+        {label}
+        {/* Overlaid rather than inline, so the count never widens Export and wraps the row. */}
+        {count > 0 && (
+          <span
+            aria-hidden
+            className="absolute -top-2 -right-2 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-semibold text-white"
+          >
+            {count}
+          </span>
+        )}
       </button>
       {/* Hidden rather than unmounted, so a wrapped row keeps its height when Clear appears. */}
       <button

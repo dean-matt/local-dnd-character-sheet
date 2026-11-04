@@ -119,7 +119,7 @@ describe("the Homebrew page's export", () => {
     await choose("Sunblade");
     fireEvent.click(screen.getByRole("link", { name: "Subclasses" }));
     await choose("Hearthkeeper");
-    fireEvent.click(screen.getByRole("button", { name: "Export (2)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export, 2 selected" }));
 
     await waitFor(() =>
       expect(
@@ -148,10 +148,10 @@ describe("the Homebrew page's export", () => {
     renderPage();
 
     await choose("Sunblade");
-    fireEvent.click(screen.getByRole("button", { name: "Export (1)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export, 1 selected" }));
 
     expect(await screen.findByText("Export failed: disk full")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Export (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export, 1 selected" })).toBeInTheDocument();
     expect(click).not.toHaveBeenCalled();
 
     await choose("Sunblade");
@@ -164,8 +164,8 @@ describe("the Homebrew page's export", () => {
     renderPage();
 
     await choose("Sunblade");
-    fireEvent.click(screen.getByRole("button", { name: "Export (1)" }));
-    await screen.findByRole("button", { name: "Exporting…" });
+    fireEvent.click(screen.getByRole("button", { name: "Export, 1 selected" }));
+    await screen.findByRole("button", { name: "Exporting…, 1 selected" });
     fireEvent.click(screen.getByRole("link", { name: "Subclasses" }));
     await choose("Hearthkeeper");
     resolve(json(200, { ...file, entries: [file.entries[0]] }));
@@ -173,7 +173,7 @@ describe("the Homebrew page's export", () => {
     await waitFor(() =>
       expect(screen.getByText("Exported 1 entry to homebrew.json.")).toHaveRole("status"),
     );
-    expect(screen.getByRole("button", { name: "Export (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export, 1 selected" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select Hearthkeeper for export" })).toBeChecked();
   });
 
@@ -222,8 +222,12 @@ describe("the Homebrew page's export", () => {
       false,
     );
 
+    expect(idle).toHaveTextContent(/^Export$/);
     await choose("Sunblade");
-    expect(screen.getByRole("button", { name: "Export (1)" })).not.toHaveAttribute("aria-disabled");
+    const chosen = screen.getByRole("button", { name: "Export, 1 selected" });
+    expect(chosen).not.toHaveAttribute("aria-disabled");
+    expect(chosen).toHaveTextContent(/^Export1$/);
+    expect(within(chosen).getByText("1")).toHaveClass("absolute", "rounded-full", "bg-accent");
     expect(screen.queryByText(/selected/)).toBeNull();
     const clear = screen.getByRole("button", { name: "Clear" });
     const add = screen.getByRole("button", { name: "Add item" });
