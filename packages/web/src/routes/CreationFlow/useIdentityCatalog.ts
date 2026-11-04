@@ -13,7 +13,7 @@ const sameRow = (row: ContentRef, ref: ContentRef | undefined) =>
  * The catalog rows the Identity step's choices name: the race, its subraces and the chosen
  * one, every background of the edition, and the skill and language rows a grant resolves
  * against. `raceJson` is the chosen subrace's row, which already holds its race's, or the
- * race's own, or a homebrew race's. A typed or homebrew race names no catalog row, so
+ * race's own, or a homebrew race's, with a homebrew subrace merged over either. A typed or homebrew race names no catalog row, so
  * `catalogRace` is absent. A homebrew background grants its skills alone, as `backgroundSkills`;
  * `backgroundRead` is true once the row they come from has loaded, or where none is read.
  */

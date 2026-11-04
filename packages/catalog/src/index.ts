@@ -111,7 +111,6 @@ export {
   homebrewMonsterInputSchema,
   homebrewMonsterRecordSchema,
 } from "./homebrew-monster.ts";
-export { mergeHomebrewSubrace } from "./homebrew-subrace-merge.ts";
 export type { CharacterInventory, SheetItem } from "./inventory.ts";
 export { characterInventorySchema } from "./inventory.ts";
 export type {
@@ -264,5 +263,6 @@ export {
   backgroundStartingEquipmentSchema,
   classStartingEquipmentSchema,
 } from "./starting-equipment.ts";
+export { mergeHomebrewSubrace, mergeSubrace } from "./subrace-merge.ts";
 export type { ToolChoice } from "./tool-choice.ts";
 export { backgroundToolChoicesSchema, classToolChoicesSchema } from "./tool-choice.ts";

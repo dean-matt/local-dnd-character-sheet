@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeHomebrewSubrace } from "./homebrew-subrace-merge.ts";
+import { mergeHomebrewSubrace, mergeSubrace } from "./subrace-merge.ts";
 
 const RACE = {
   name: "Elf",
@@ -70,6 +70,33 @@ describe("mergeHomebrewSubrace", () => {
     expect(mergeHomebrewSubrace(RACE, sub({ languageProficiencies: choice }))).toMatchObject({
       languageProficiencies: choice,
     });
+  });
+
+  it("replaces the race's languages where a trait stands in for its Languages, as the ETL does", () => {
+    const merged = mergeHomebrewSubrace(
+      { ...RACE, entries: [{ type: "entries", name: "Languages", entries: ["A"] }] },
+      sub({
+        entries: [{ type: "entries", name: "Languages", data: { overwrite: "Languages" } }],
+        languageProficiencies: [{ aquan: true }],
+      }),
+    );
+
+    expect(merged.languageProficiencies).toEqual([{ aquan: true }]);
+  });
+
+  it("appends the subrace's trait tags to the race's", () => {
+    const merged = mergeHomebrewSubrace(
+      { ...RACE, traitTags: ["Trance"] },
+      sub({ traitTags: ["Amphibious"] }),
+    );
+
+    expect(merged.traitTags).toEqual(["Trance", "Amphibious"]);
+  });
+
+  it("throws where lists cannot combine and the caller names the row", () => {
+    expect(() => mergeSubrace(RACE, { ability: [{ int: 1 }, { wis: 1 }] }, "row")).toThrow(
+      /row: the race offers 1 ability entries and the subrace 2/,
+    );
   });
 
   it("replaces every other field it states, and drops one it sets to null", () => {

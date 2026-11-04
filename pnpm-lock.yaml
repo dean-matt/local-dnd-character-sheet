@@ -279,6 +279,9 @@ importers:
 
   packages/content:
     dependencies:
+      '@dnd/catalog':
+        specifier: workspace:*
+        version: link:../catalog
       '@dnd/rules':
         specifier: workspace:*
         version: link:../rules
@@ -289,9 +292,6 @@ importers:
         specifier: ^13.0.3
         version: 13.0.3
     devDependencies:
-      '@dnd/catalog':
-        specifier: workspace:*
-        version: link:../catalog
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13

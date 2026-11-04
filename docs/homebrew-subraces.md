@@ -6,9 +6,9 @@ parent is columns beside it: `race_id` for a homebrew race, restricted on delete
 `race_name` and `race_source` for a catalog race.
 
 A catalog subrace row is the race and the subrace merged by the ETL; a homebrew one is merged
-over its race's row when read, by `mergeHomebrewSubrace` in `@dnd/catalog`. Where its
-increases or proficiencies cannot combine with the race's, which the ETL refuses, its list
-replaces the race's.
+over its race's row when read. Both run `mergeSubrace` in `@dnd/catalog`. Where a homebrew
+subrace's increases or proficiencies cannot combine with the race's, which the ETL refuses,
+its list replaces the race's.
 
 ## Rules
 
