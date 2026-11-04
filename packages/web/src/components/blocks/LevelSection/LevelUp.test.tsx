@@ -113,7 +113,30 @@ const HEXBLADE = {
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 
+/** A homebrew class that gains its subclass at 3rd level, and a homebrew subclass of it. */
+const WARDEN = {
+  id: "hb_warden",
+  name: "Warden",
+  edition: "one",
+  hitDie: 10,
+  json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 }, subclassLevel: 3 },
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
+const OATH_OF_ROOTS = {
+  id: "hb_roots",
+  name: "Oath of Roots",
+  edition: "one",
+  className: "Warden",
+  classSource: "HB",
+  classId: WARDEN.id,
+  json: { name: "Oath of Roots", source: "HB", shortName: "Oath of Roots" },
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
 const ROWS: Record<string, unknown> = {
+  "/api/homebrew/classes/hb_warden": { ...WARDEN, resources: [] },
+  "/api/classes/Warden/HB/subclasses?edition=one&limit=200": page([OATH_OF_ROOTS]),
   "/api/homebrew/races": [],
   "/api/homebrew/classes": [],
   "/api/homebrew/backgrounds": [],
@@ -606,6 +629,22 @@ describe("LevelUp", () => {
     expect(sent().levels.at(-1)).toEqual({
       class: WARLOCK,
       subclass: { homebrewId: HEXBLADE.id },
+    });
+  });
+
+  it("offers a homebrew class's homebrew subclasses at the level it names", async () => {
+    const warden = { class: { homebrewId: WARDEN.id } };
+    renderSeeded(warlock(2, { levels: [warden, warden] }));
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+
+    choose("Warden subclass", "Oath of Roots (homebrew)");
+    await waitFor(() => expect(applyButton()).not.toHaveAttribute("aria-disabled", "true"));
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().levels.at(-1)).toEqual({
+      ...warden,
+      subclass: { homebrewId: OATH_OF_ROOTS.id },
     });
   });
 

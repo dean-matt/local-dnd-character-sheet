@@ -31,6 +31,8 @@ character's level in its class.
 `/classes/{name}/{source}/subclasses` returns the catalog and homebrew subclasses together,
 sorted by name. A homebrew row has an `id` and no top-level `source`, which is how a merged
 list tells it from a catalog row. A homebrew class is named there by its name and source `HB`.
+Creation and level-up offer a homebrew class's subclasses from the level its entry's
+`subclassLevel` names, and none where it names none.
 
 A `{@subclass}` tag naming source `HB` finds a subclass by name alone, the classic row first,
 because a tag carries no class.

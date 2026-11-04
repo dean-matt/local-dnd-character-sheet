@@ -8,8 +8,8 @@ import { retryUnlessClientError } from "../lib/retryUnlessClientError.ts";
 const subclassListSchema = z.object({ items: z.array(subclassListItemSchema), total: z.int() });
 
 /**
- * The query for every subclass of one catalog class in one edition, the catalog's and the
- * homebrew's together. 200 is the route's ceiling, past the 19 that the most-served class
+ * The query for every subclass of one class in one edition, the catalog's and the homebrew's
+ * together; a homebrew class is named by its name and `HB`. 200 is the route's ceiling, past the 19 that the most-served class
  * carries.
  */
 export const subclassesQuery = (cls: ContentRef | undefined, edition: CharacterRecord["edition"]) =>

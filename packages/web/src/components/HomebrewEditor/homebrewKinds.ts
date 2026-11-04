@@ -297,7 +297,11 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
   starters: CLASS_STARTERS,
   copyType: "class",
   sections: [
-    { title: "Basics", Fields: ClassBasics, keys: ["name", "hd", "proficiency", "primaryAbility"] },
+    {
+      title: "Basics",
+      Fields: ClassBasics,
+      keys: ["name", "hd", "subclassLevel", "proficiency", "primaryAbility"],
+    },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
     { title: "Proficiencies", Fields: ClassProficiencies, keys: ["startingProficiencies"] },
     { title: "Equipment", Fields: ClassEquipment, keys: ["startingEquipment"] },
@@ -314,6 +318,7 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
   shownKeys: () => [
     "name",
     "hd",
+    "subclassLevel",
     "proficiency",
     "primaryAbility",
     "entries",

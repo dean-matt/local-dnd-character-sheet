@@ -10,10 +10,9 @@ import { useFeatureOfferings } from "./useFeatureOfferings.ts";
 /** A class resolves, and a level that has reached its subclass names one of the class's own. */
 function classDone(entry: ClassEntry): boolean {
   if (!entry.read) return false;
-  if (entry.catalogClass === undefined) return true;
   const { subclasses, subclass, subclassLevel, level } = entry;
-  if (subclasses === undefined) return false;
   if (subclassLevel === undefined || level < subclassLevel) return true;
+  if (subclasses === undefined) return false;
   return (
     subclasses.length === 0 ||
     subclasses.some((row) => subclass && entryKey(subclassRef(row)) === entryKey(subclass))

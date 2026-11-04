@@ -108,6 +108,27 @@ const STORM_DOMAIN = {
   createdAt: "2026-10-06T00:00:00.000Z",
 };
 
+/** A homebrew class that gains its subclass at 3rd level, and a homebrew subclass of it. */
+const WARDEN = {
+  id: "hb-warden",
+  name: "Warden",
+  edition: "classic",
+  hitDie: 10,
+  json: { name: "Warden", source: "HB", hd: { number: 1, faces: 10 }, subclassLevel: 3 },
+  createdAt: "2026-10-06T00:00:00.000Z",
+};
+
+const OATH_OF_ROOTS = {
+  id: "hb-roots",
+  name: "Oath of Roots",
+  edition: "classic",
+  className: "Warden",
+  classSource: "HB",
+  classId: WARDEN.id,
+  json: { name: "Oath of Roots", source: "HB", shortName: "Oath of Roots" },
+  createdAt: "2026-10-06T00:00:00.000Z",
+};
+
 const ROWS: Record<string, unknown> = {
   "/api/classes/Cleric/PHB": CLERIC,
   "/api/classes/Cleric/XPHB": CLERIC_2024,
@@ -145,7 +166,10 @@ const ROWS: Record<string, unknown> = {
   "/api/backgrounds?edition=classic&limit=200": page([]),
   "/api/backgrounds?edition=one&limit=200": page([]),
   "/api/homebrew/classes": [],
-  "/api/homebrew/classes/hb-1": BLOOD_HUNTER,
+  "/api/homebrew/classes/hb-1": { ...BLOOD_HUNTER, resources: [] },
+  "/api/homebrew/classes/hb-warden": { ...WARDEN, resources: [] },
+  "/api/classes/Warden/HB/subclasses?edition=classic&limit=200": page([OATH_OF_ROOTS]),
+  "/api/classes/Blood%20Hunter/HB/subclasses?edition=classic&limit=200": page([]),
 };
 
 const hit = (name: string, source: string) => ({
@@ -364,6 +388,31 @@ describe("ClassStep", () => {
 
     expect(values.levels).toHaveLength(2);
     expect(values.levels?.some((level) => level.subclass)).toBe(false);
+  });
+
+  it("offers a homebrew class's homebrew subclasses, marked, from the level it names", async () => {
+    renderStep("classic", { levels: [{ class: { homebrewId: WARDEN.id } }] });
+
+    expect(await screen.findByText("Warden chooses a subclass at level 3.")).toBeVisible();
+
+    setLevel(3);
+    fireEvent.click(await screen.findByRole("button", { name: "Oath of Roots (homebrew)" }));
+
+    expect(values.levels?.map((level) => level.subclass)).toEqual([
+      undefined,
+      undefined,
+      { homebrewId: OATH_OF_ROOTS.id },
+    ]);
+  });
+
+  it("offers no subclass for a homebrew class that names no subclass level", async () => {
+    const hunter = { class: { homebrewId: BLOOD_HUNTER.id } };
+    renderStep("classic", { levels: [hunter, hunter, hunter] });
+
+    expect(await screen.findByText(/Blood Hunter/)).toBeVisible();
+    await waitFor(() => expect(values.levels).toHaveLength(3));
+    expect(screen.queryByText(/chooses a subclass/)).toBeNull();
+    expect(screen.queryByRole("group", { name: /Subclass/ })).toBeNull();
   });
 
   it("says a typed level must be 1 to 20, and keeps the stored one", async () => {

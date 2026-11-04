@@ -1,4 +1,3 @@
-import { subclassLevelSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   catalogRef,
@@ -12,7 +11,12 @@ import { classQuery } from "../../../hooks/classQuery.ts";
 import { homebrewClassQuery } from "../../../hooks/homebrewClassQuery.ts";
 import { subclassesQuery } from "../../../hooks/subclassesQuery.ts";
 import { subclassGrantsQuery } from "../../../hooks/subclassGrantsQuery.ts";
-import { catalogSubclassRow, type SubclassItem } from "../../../lib/subclassItems.ts";
+import {
+  catalogSubclassRow,
+  type SubclassItem,
+  subclassLevelOf,
+  subclassParent,
+} from "../../../lib/subclassItems.ts";
 
 /**
  * The subclass level, where level `next` asks for a subclass: the class holds none, offers
@@ -33,7 +37,7 @@ function subclassFrom(
  * subclass, at the class's subclass level or past it for a class that reached it without one,
  * and which ones it offers, and the class's and subclass's grants at its level now
  * and at the next. `picked` is the subclass chosen this level, read where the class holds
- * none yet. A homebrew class carries a hit die and nothing else.
+ * none yet. A homebrew class carries a hit die, its subclass level and subclasses, and no grants.
  */
 export function useLevelUpClass(
   definition: CharacterDefinition,
@@ -46,8 +50,10 @@ export function useLevelUpClass(
   const catalog = "name" in cls ? cls : undefined;
   const row = useQuery(classQuery(catalog));
   const homebrew = useQuery(homebrewClassQuery("homebrewId" in cls ? cls.homebrewId : undefined));
-  const subclassList = useQuery(subclassesQuery(catalog, definition.edition));
-  const subclassLevel = row.data && subclassLevelSchema.parse(row.data.json);
+  const subclassList = useQuery(
+    subclassesQuery(subclassParent(cls, homebrew.data), definition.edition),
+  );
+  const subclassLevel = subclassLevelOf(row.data?.json, homebrew.data);
   const subclasses: readonly SubclassItem[] = subclassList.data?.items ?? [];
   const from = subclassFrom(held?.subclass, subclassLevel, next, subclasses.length > 0);
   const asksSubclass = from !== undefined;
