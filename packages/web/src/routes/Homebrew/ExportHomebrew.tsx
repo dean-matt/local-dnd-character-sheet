@@ -1,5 +1,6 @@
 import { Download } from "lucide-react";
 import { useContext } from "react";
+import { CountBadge } from "../../components/CountBadge.tsx";
 import { ExportSelection } from "./exportSelectionContext.ts";
 
 /**
@@ -25,14 +26,7 @@ export function ExportHomebrew() {
         <Download aria-hidden="true" size={12} strokeWidth={2.5} />
         {label}
         {/* Overlaid rather than inline, so the count never widens Export and wraps the row. */}
-        {count > 0 && (
-          <span
-            aria-hidden
-            className="absolute -top-2 -right-2 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-semibold text-white"
-          >
-            {count}
-          </span>
-        )}
+        <CountBadge count={count} className="-top-2 -right-2" />
       </button>
       {/* Hidden rather than unmounted, so a wrapped row keeps its height when Clear appears. */}
       <button
