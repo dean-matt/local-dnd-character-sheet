@@ -4,7 +4,7 @@ import { ExportSelection } from "./exportSelectionContext.ts";
 
 /**
  * Export for the entries chosen across the page's tabs, with their count, and Clear while any
- * are chosen; Clear keeps its space while hidden. Its status and alert lines take a row of their own below the row it sits in.
+ * are chosen. Its status and alert lines take a row of their own below the row it sits in.
  */
 export function ExportHomebrew() {
   const selection = useContext(ExportSelection);
