@@ -24,6 +24,7 @@ import {
   itemAdvantagesOf,
   itemBonusSchema,
   itemSkillGrantsSchema,
+  mergeHomebrewSubrace,
   type PreparedSpellCount,
   preparationRuleSchema,
   raceTraitsSchema,
@@ -189,15 +190,18 @@ export function raceJson(
   definition: CharacterDefinition,
 ): unknown {
   const { race, subrace } = definition;
-  // A homebrew subrace adds nothing to its race's row, so that row answers once it exists.
-  if (subrace && "homebrewId" in subrace && !getHomebrewSubrace(homebrewDb, subrace.homebrewId))
-    return undefined;
-  if ("homebrewId" in race) return getHomebrewRace(homebrewDb, race.homebrewId)?.json;
   const catalogSubrace = catalogRef(subrace);
-  if (catalogSubrace)
+  if (!("homebrewId" in race) && catalogSubrace)
     return getSubrace(dataDir, catalogSubrace.name, catalogSubrace.source, race.name, race.source)
       ?.json;
-  return getRace(dataDir, race.name, race.source)?.json;
+  const raceRow =
+    "homebrewId" in race
+      ? getHomebrewRace(homebrewDb, race.homebrewId)?.json
+      : getRace(dataDir, race.name, race.source)?.json;
+  if (!subrace || !("homebrewId" in subrace)) return raceRow;
+  const subraceRow = getHomebrewSubrace(homebrewDb, subrace.homebrewId)?.json;
+  const raceEntry = typeof raceRow === "string" ? JSON.parse(raceRow) : raceRow;
+  return raceEntry && subraceRow && mergeHomebrewSubrace(raceEntry, subraceRow);
 }
 
 /**

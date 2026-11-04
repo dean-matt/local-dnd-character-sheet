@@ -1,6 +1,7 @@
 import {
   HOMEBREW_SOURCE,
   homebrewRaceRecordSchema,
+  mergeHomebrewSubrace,
   type RaceRecord,
   type SubraceRecord,
 } from "@dnd/catalog";
@@ -11,22 +12,27 @@ import { useHomebrew } from "./useHomebrew.ts";
 import { useRace } from "./useRace.ts";
 import { useSubraces } from "./useSubraces.ts";
 
-/** A catalog subrace's row, which holds its race's, or the race's own where none is held. */
-const catalogJson = (
+/**
+ * A catalog subrace's row, which holds its race's; a homebrew subrace's merged over its race's;
+ * or the race's own where none is held or a held homebrew one is not read.
+ */
+const subraceJson = (
   subrace: CharacterDefinition["subrace"],
   subraceRow: SubraceItem | undefined,
   raceJson: RaceRecord["json"] | undefined,
 ): RaceRecord["json"] | SubraceRecord["json"] | undefined => {
+  if (subraceRow && "id" in subraceRow)
+    return raceJson && (mergeHomebrewSubrace(raceJson, subraceRow.json) as RaceRecord["json"]);
   if (!subrace || "homebrewId" in subrace) return raceJson;
-  return subraceRow && "source" in subraceRow ? subraceRow.json : undefined;
+  return subraceRow?.json;
 };
 
 /**
  * A character's race read from the catalog or from homebrew: the race's row, its catalog
  * and homebrew subraces and the chosen one, and `json`, a catalog subrace's row, which
- * already holds its race's, or the race's own, or a homebrew race's. A homebrew subrace adds
- * nothing to its race's `json`. `name` is the race's row name and `read` is true once the
- * row `json` comes from has loaded, or where none is read. A typed race names no row, so
+ * already holds its race's, or the race's own, or a homebrew race's, with a homebrew subrace
+ * merged over either. `name` is the race's row name and `read` is true once the rows `json`
+ * comes from have loaded, or where none is read. A typed race names no row, so
  * `catalogRace` is absent and nothing is fetched.
  */
 export function useRaceRows(
@@ -56,8 +62,8 @@ export function useRaceRows(
     name: catalogRace?.name ?? homebrewRow?.name,
     read:
       homebrewId !== undefined
-        ? homebrew.isSuccess
+        ? homebrew.isSuccess && (subrace === undefined || subraces.isSuccess)
         : catalogRace === undefined || (raceRow.isSuccess && subraces.isSuccess),
-    json: homebrewRow ? homebrewRow.json : catalogJson(subrace, subraceRow, raceRow.data?.json),
+    json: subraceJson(subrace, subraceRow, homebrewRow ? homebrewRow.json : raceRow.data?.json),
   };
 }

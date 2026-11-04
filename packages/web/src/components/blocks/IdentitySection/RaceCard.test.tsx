@@ -345,6 +345,43 @@ describe("RaceCard with a homebrew subrace", () => {
     expect(written(fetchMock).subrace).toEqual({ homebrewId: "hb_s" });
   });
 
+  it("adds the subrace's increases to its race's and applies them", async () => {
+    const record = identityRecord();
+    record.definition.race = { homebrewId: "hb_1" };
+    record.definition.subrace = { homebrewId: "hb_s" };
+    const deep = moon("Stoneborn", "HB", "Deep");
+    const fetchMock = stubServer(record, (url) => {
+      if (url === "/api/homebrew/races")
+        return [
+          {
+            id: "hb_1",
+            name: "Stoneborn",
+            edition: "one",
+            json: {
+              name: "Stoneborn",
+              source: "HB",
+              size: ["M"],
+              speed: 30,
+              ability: [{ con: 2 }],
+            },
+            createdAt: "2026-01-01T00:00:00.000Z",
+          },
+        ];
+      if (url.startsWith("/api/races/Stoneborn/HB/subraces"))
+        return page([{ ...deep, json: { ...deep.json, ability: [{ wis: 1 }] } }]);
+      return undefined;
+    });
+    renderCard(record);
+
+    fireEvent.click(await screen.findByRole("button", { name: /^Apply .*'s increases$/ }));
+
+    await waitFor(() => expect(written(fetchMock)).not.toBeNull());
+    expect(written(fetchMock).abilityIncreases).toEqual([
+      { ability: "con", amount: 2, grantedBy: "race" },
+      { ability: "wis", amount: 1, grantedBy: "race" },
+    ]);
+  });
+
   it("names the held subrace by its row, and Homebrew once the row is gone", async () => {
     stubServer(holding(), (url) => (url === "/api/homebrew/subraces" ? [moon()] : undefined));
     renderCard(holding());
