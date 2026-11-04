@@ -5,23 +5,13 @@ import { MultiSelect } from "../MultiSelect.tsx";
 import { Select } from "../Select.tsx";
 import { type HomebrewFormProps, listAt, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT, WHOLE } from "./homebrewGrid.ts";
+import { withCurrent } from "./homebrewOptions.ts";
 import { MonsterAlignment } from "./MonsterAlignment.tsx";
 import { MonsterTypeTags } from "./MonsterTypeTags.tsx";
 import { ratingOf, withRating, withTypeField } from "./monsterShapes.ts";
 import { RACE_SIZES } from "./raceSizes.ts";
 
 const SIZES = RACE_SIZES.filter(({ value }) => value !== "V");
-
-interface Option {
-  value: string;
-  label: string;
-}
-
-/** `options`, with `value` offered as written where it is stated and none of them. */
-const offering = (options: Option[], value: string): Option[] =>
-  !value || options.some((option) => option.value === value)
-    ? options
-    : [...options, { value, label: value }];
 
 const SWARM_SIZES = [{ value: "", label: "None" }, ...SIZES];
 
@@ -92,7 +82,7 @@ export function MonsterBasics(props: HomebrewFormProps) {
           {(control) => (
             <Select
               {...control}
-              options={offering(CREATURE_TYPES, typeText)}
+              options={withCurrent(CREATURE_TYPES, typeText)}
               value={typeText}
               onChange={(next) => set("type", isRecord(type) ? { ...type, type: next } : next)}
             />
@@ -104,7 +94,7 @@ export function MonsterBasics(props: HomebrewFormProps) {
           {(control) => (
             <Select
               {...control}
-              options={offering(SWARM_SIZES, swarm)}
+              options={withCurrent(SWARM_SIZES, swarm)}
               value={swarm}
               onChange={(next) => set("type", withTypeField(type, "swarmSize", next || undefined))}
             />
@@ -116,7 +106,7 @@ export function MonsterBasics(props: HomebrewFormProps) {
           {(control) => (
             <Select
               {...control}
-              options={offering(RATINGS, rating)}
+              options={withCurrent(RATINGS, rating)}
               value={rating}
               onChange={(next) => set("cr", withRating(entry.cr, next))}
             />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isRecord } from "../../lib/entryGuards.ts";
 import { InputField } from "../InputField.tsx";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
 import { ROW, ROW_BUTTON } from "./homebrewRows.ts";
@@ -49,6 +50,11 @@ export function MonsterTypeTags({ type, onChange }: MonsterTypeTagsProps) {
       >
         Add a type tag
       </button>
+      {rows.some(({ stored }) => isRecord(stored) && stored.prefixHidden === true) && (
+        <p className="text-muted text-row">
+          A tag marks its prefix hidden, so the stat block leaves it out. Edit that in JSON.
+        </p>
+      )}
     </fieldset>
   );
 }

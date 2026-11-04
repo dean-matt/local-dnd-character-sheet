@@ -207,7 +207,7 @@ function replaceEditable<T>(
 
 /**
  * `list` with its strings replaced by the non-blank `strings`, trimmed, in the slots they held;
- * the entries that are not strings, such as a tag with a prefix, keep their places.
+ * the entries that are not strings keep their places.
  * `undefined` where nothing is left.
  */
 export function withStrings(list: unknown, strings: string[]): unknown[] | undefined {
@@ -219,7 +219,7 @@ export function withStrings(list: unknown, strings: string[]): unknown[] | undef
   return next.length > 0 ? next : undefined;
 }
 
-/** A creature type tag as the form edits it: `dwarf`, or `{tag: "dwarf", prefix: "shield"}`. */
+/** A creature type tag as the form edits it, with a blank `prefix` where it has none. */
 export interface TypeTagRow {
   tag: string;
   prefix: string;

@@ -4796,7 +4796,7 @@ describe("Homebrew monsters", () => {
         expect(field("textbox", "Type tag 2")).toHaveValue("dwarf");
         expect(field("textbox", "Type tag 2 prefix")).toHaveValue("shield");
         expect(field("textbox", "Type tag 3")).toHaveValue("orc");
-        expect(within(editor()).queryByText(/Edit those in JSON/)).not.toBeInTheDocument();
+        expect(within(editor()).queryByText(/Edit th(ose|at) in JSON/)).not.toBeInTheDocument();
         click("Save");
 
         await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
@@ -4852,6 +4852,26 @@ describe("Homebrew monsters", () => {
         expect(field("combobox", "Swarm size")).toHaveTextContent("Medium");
         expect(field("textbox", "Type tag 1")).toHaveValue("elf");
         expect(field("textbox", "Type tag 1 prefix")).toHaveValue("wood");
+      });
+
+      it("notes a prefix the stat block hides", async () => {
+        const hidden = {
+          ...swarm,
+          json: {
+            ...swarm.json,
+            type: {
+              type: "humanoid",
+              tags: [{ tag: "dwarf", prefix: "hill", prefixHidden: true }],
+            },
+          },
+        };
+        stubApi({ monsters: [hidden] });
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+
+        expect(field("textbox", "Type tag 1 prefix")).toHaveValue("hill");
+        expect(within(editor()).getByText(/marks its prefix hidden/)).toBeInTheDocument();
       });
 
       it("leaves a choice of types to JSON with its note", async () => {
