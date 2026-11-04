@@ -41,6 +41,7 @@ export const homebrewMonsterEntrySchema = z.looseObject({
   wis: score,
   cha: score,
   cr: z.union([rating, z.looseObject({ cr: rating })]),
+  legendaryActions: z.number().int().min(1, "At least 1").optional(),
 });
 
 export type HomebrewMonster = z.infer<typeof homebrewMonsterEntrySchema>;

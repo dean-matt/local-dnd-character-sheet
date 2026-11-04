@@ -4921,6 +4921,7 @@ describe("Homebrew monsters", () => {
         stepTo("Reactions");
         click("Add a reaction");
         fireEvent.change(field("textbox", "Reactions 1 name"), { target: { value: "Dodge" } });
+        stepTo("Legendary actions");
         click("Add a legendary action");
         fireEvent.change(field("textbox", "Legendary actions 1 name"), {
           target: { value: "Lunge" },
@@ -4995,6 +4996,123 @@ describe("Homebrew monsters", () => {
         expect(preview.getByText("Nimble")).toBeInTheDocument();
         expect(preview.getByText("Bite")).toBeInTheDocument();
         expect(preview.getByText("1d6")).toBeInTheDocument();
+      });
+    });
+
+    describe("bonus actions, mythic actions and their headers", () => {
+      const withGroups = {
+        ...full,
+        json: {
+          ...full.json,
+          bonus: [
+            { name: "Dash", entries: ["Moves."] },
+            { name: "Hide", entries: ["Hides."] },
+          ],
+          reactionHeader: ["Reacts twice a round."],
+          reaction: [{ name: "Parry", entries: ["Adds 2 to its AC."] }],
+          legendary: [{ name: "Lunge", entries: ["Lunges."] }],
+          legendaryActions: 2,
+          mythicHeader: ["Once bloodied, it acts again."],
+          mythic: [{ name: "Flare", entries: ["Burns."] }],
+        },
+      };
+      const openGroups = async (writes: Parameters<typeof stubApi>[1] = []) => {
+        const fetchMock = stubApi({ monsters: [withGroups] }, writes);
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+        return fetchMock;
+      };
+
+      it("saves a stored monster with them untouched", async () => {
+        const fetchMock = await openGroups([{ status: 200, body: withGroups }]);
+        stepTo("Mythic actions");
+        click("Save");
+
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        const { source: _source, ...sent } = withGroups.json;
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { ...sent, edition: "one" } });
+      });
+
+      it("adds, edits, moves and removes bonus actions", async () => {
+        await openGroups();
+        stepTo("Bonus actions");
+        fireEvent.change(field("textbox", "Bonus actions 1 rules text"), {
+          target: { value: "Moves {@dice 1d4} feet." },
+        });
+        click("Move bonus action 2 up");
+        click("Add a bonus action");
+        fireEvent.change(field("textbox", "Bonus actions 3 name"), { target: { value: "Leap" } });
+        click("Remove bonus action 1");
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).bonus).toEqual([
+          { name: "Dash", entries: ["Moves {@dice 1d4} feet."] },
+          { name: "Leap" },
+        ]);
+      });
+
+      it("edits mythic actions, the headers and the legendary action uses", async () => {
+        await openGroups();
+        stepTo("Reactions");
+        fireEvent.change(field("textbox", "Reactions introduction"), {
+          target: { value: "Reacts thrice a round." },
+        });
+        stepTo("Legendary actions");
+        fireEvent.change(field("spinbutton", "Legendary action uses"), { target: { value: "4" } });
+        fireEvent.change(field("textbox", "Legendary actions introduction"), {
+          target: { value: "Acts between turns.\n\nOne at a time." },
+        });
+        fireEvent.change(field("textbox", "Mythic actions introduction"), {
+          target: { value: "" },
+        });
+        click("Add a mythic action");
+        fireEvent.change(field("textbox", "Mythic actions 2 name"), { target: { value: "Nova" } });
+        mode("JSON");
+
+        const json = JSON.parse(jsonText("Monster JSON"));
+        expect(json.reactionHeader).toEqual(["Reacts thrice a round."]);
+        expect(json.legendaryActions).toBe(4);
+        expect(json.legendaryHeader).toEqual(["Acts between turns.", "One at a time."]);
+        expect(json).not.toHaveProperty("mythicHeader");
+        expect(json.mythic).toEqual([{ name: "Flare", entries: ["Burns."] }, { name: "Nova" }]);
+      });
+
+      it("shows a change made in JSON in the form", async () => {
+        await openGroups();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({
+            ...withGroups.json,
+            bonus: [{ name: "Skulk", entries: ["Sneaks."] }],
+            legendaryActions: 1,
+            mythicHeader: ["Fresh."],
+          }),
+        );
+        mode("Step by step");
+        stepTo("Bonus actions");
+        expect(field("textbox", "Bonus actions 1 name")).toHaveValue("Skulk");
+        expect(field("textbox", "Reactions introduction")).toHaveValue("Reacts twice a round.");
+        stepTo("Mythic actions");
+
+        expect(field("spinbutton", "Legendary action uses")).toHaveValue(1);
+        expect(field("textbox", "Mythic actions introduction")).toHaveValue("Fresh.");
+      });
+
+      it("previews them", async () => {
+        await openGroups();
+        stepTo("Legendary actions");
+        fireEvent.change(field("spinbutton", "Legendary action uses"), { target: { value: "5" } });
+        mode("Preview");
+
+        const preview = within(editor());
+        expect(preview.getByText("Bonus Actions")).toBeInTheDocument();
+        expect(preview.getByText("Hide")).toBeInTheDocument();
+        expect(preview.getByText("Reacts twice a round.")).toBeInTheDocument();
+        expect(preview.getByText("Legendary action uses: 5.")).toBeInTheDocument();
+        expect(preview.getByText("Once bloodied, it acts again.")).toBeInTheDocument();
+        expect(preview.getByText("Flare")).toBeInTheDocument();
       });
     });
 
