@@ -9,7 +9,6 @@ import {
   Skull,
   Sparkles,
   Swords,
-  Trash2,
   UserRound,
   UsersRound,
   WandSparkles,
@@ -44,17 +43,13 @@ const SECTIONS: SidebarProps["items"] = [
   })),
 ];
 
-const FOOTER: SidebarProps["items"] = [
-  { to: "/homebrew/deleted", label: "Recently deleted", icon: Trash2 },
-];
-
 /**
  * The Homebrew page: a rail of its kinds beside the open kind's list, and the entries chosen
  * for export across kinds.
  */
 export function HomebrewLayout() {
   return (
-    <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} footerItems={FOOTER} />}>
+    <SidebarFrame rail={<Sidebar label="Homebrew kinds" items={SECTIONS} />}>
       <div className="min-w-0 flex-1 px-gutter py-6">
         <section className="flex max-w-6xl flex-col gap-4">
           <h1 className="sr-only">Homebrew</h1>
