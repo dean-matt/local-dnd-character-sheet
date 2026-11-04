@@ -1,5 +1,6 @@
 import { ChevronLeft, SlidersHorizontal } from "lucide-react";
 import { useId, useState } from "react";
+import { CountBadge } from "../../components/CountBadge.tsx";
 import { MultiSelect } from "../../components/MultiSelect.tsx";
 import { useCatalogSources } from "../../hooks/useCatalogSources.ts";
 import { useDisabledSources } from "../../hooks/useDisabledSources.ts";
@@ -86,14 +87,7 @@ export function SearchFilterPanel({ filters, onChange }: SearchFilterPanelProps)
           className="relative flex justify-center rounded-control px-2.5 py-2.5 text-muted hover:bg-subtle"
         >
           <SlidersHorizontal size={16} aria-hidden />
-          {active > 0 && (
-            <span
-              aria-hidden
-              className="absolute top-0.5 right-1.5 min-w-4 rounded-full bg-accent px-1 text-center text-[10px] leading-4 font-semibold text-white"
-            >
-              {active}
-            </span>
-          )}
+          <CountBadge count={active} className="top-0.5 right-1.5" />
         </button>
       )}
       {!collapsed && (
