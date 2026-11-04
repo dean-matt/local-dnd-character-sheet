@@ -27,7 +27,7 @@ block through `monsterEntries`, as a catalog monster opens. The form sets the na
 creature type, its swarm size and its tags with any prefix such as `shield` before `dwarf`,
 alignment — one of the nine, unaligned, any, a range, a choice with chances and notes, or
 prose, under a prefix such as `typically` — challenge rating, every armor class with its
-source, average hit points and hit dice, the five speeds, senses, languages, the six scores,
+source or in words, average hit points and hit dice, the five speeds, senses, languages, the six scores,
 its traits, actions, bonus actions, reactions, legendary actions and mythic actions, the
 legendary action uses, and the text introducing the reactions, legendary actions and mythic
 actions; the API's reasons show beside the field. Each of those rows is a name and rules text
@@ -42,7 +42,7 @@ day, per rest, per long rest, for charges and by level with slots, each picked f
 catalog; the API refuses a count of uses below 1 or left blank. A block's spells by week, year,
 legendary action, recharge or an item's charges, which lists it hides, and a count, level or
 field in a shape the form cannot read stay as written and are edited in JSON. A choice of
-types, whether a tag hides its prefix, a prose armor class and the passive Perception score
+types, whether a tag hides its prefix, prose hit points and the passive Perception score
 stay as written and are edited in JSON. A form edit keeps every entry it cannot show in the
 place it was stored. The Rules control picks the edition, and the API refuses a repeated name
 within it.

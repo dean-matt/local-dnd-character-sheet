@@ -39,11 +39,18 @@ export function firstArmorClass(ac: unknown): number | undefined {
   return finite(first) ? first : isRecord(first) && finite(first.ac) ? first.ac : undefined;
 }
 
-/** True where the first armor class is stated as prose, which the form leaves to JSON. */
-export const armorClassIsProse = (ac: unknown): boolean => {
-  const [first] = Array.isArray(ac) ? ac : [];
-  return isRecord(first) && first.special !== undefined && !finite(first.ac);
-};
+const proseOf = (one: unknown): string | undefined =>
+  isRecord(one) && typeof one.special === "string" && !finite(one.ac) ? one.special : undefined;
+
+/** The first armor class's words where it is stated as prose: `13 + PB (natural armor)`. */
+export const firstArmorClassWords = (ac: unknown): string | undefined =>
+  proseOf(Array.isArray(ac) ? ac[0] : undefined);
+
+/** `ac` with its first entry's words set to `words`, keeping the rest of the list. */
+export function withArmorClassWords(ac: unknown, words: string): unknown[] {
+  const [first, ...rest] = Array.isArray(ac) ? ac : [];
+  return [{ ...(isRecord(first) ? first : {}), special: words }, ...rest];
+}
 
 /**
  * `ac` with its first entry's number set to `value`, keeping the rest of the list and any
@@ -275,33 +282,34 @@ export interface ExtraArmorClass {
   ac: number | undefined;
   /** What it comes from, as written beside the number: `natural armor`. */
   source: string;
+  /** The armor class in words where it is stated as prose, in place of a number and source. */
+  special?: string;
   /** The entry as stored, so a condition or brackets it carries survive an edit. */
   stored: unknown;
 }
 
 const editableArmorClass = (one: unknown): boolean =>
-  finite(one) || (isRecord(one) && finite(one.ac));
+  finite(one) || (isRecord(one) && finite(one.ac)) || proseOf(one) !== undefined;
 
-/** The armor classes after the first that hold a number; prose ones are left to JSON. */
+/** The armor classes after the first that hold a number or prose, in their stored order. */
 export function extraArmorClasses(ac: unknown): ExtraArmorClass[] {
   return (Array.isArray(ac) ? ac.slice(1) : []).filter(editableArmorClass).map((one) => ({
-    ac: finite(one) ? one : (one as { ac: number }).ac,
+    ac: finite(one) ? one : isRecord(one) && finite(one.ac) ? one.ac : undefined,
     source: isRecord(one) ? stringsIn(one.from).join(", ") : "",
+    special: proseOf(one),
     stored: one,
   }));
 }
 
-/** True where armor classes after the first are prose, which the form leaves to JSON. */
-export const hasProseExtraArmorClass = (ac: unknown): boolean =>
-  Array.isArray(ac) && ac.slice(1).some((one) => !editableArmorClass(one));
-
 /**
- * `ac` with the editable armor classes after the first replaced by `rows`, the prose ones
- * kept behind them. A row with no number yet writes nothing; one with no source is a plain number.
+ * `ac` with the editable armor classes after the first replaced by `rows`, in their slots. A
+ * prose row writes its words; a row with no number yet writes nothing; one with no source is a
+ * plain number.
  */
 export function withExtraArmorClasses(ac: unknown, rows: ExtraArmorClass[]): unknown[] | undefined {
   const [first, ...others] = Array.isArray(ac) ? ac : [];
-  const written = rows.flatMap(({ ac: value, source, stored }) => {
+  const written = rows.flatMap(({ ac: value, source, special, stored }): unknown[] => {
+    if (special !== undefined) return [{ ...(isRecord(stored) ? stored : {}), special }];
     if (value === undefined) return [];
     const { from: _from, ac: _ac, ...rest } = isRecord(stored) ? stored : {};
     const keep = source
