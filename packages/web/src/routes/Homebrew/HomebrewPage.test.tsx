@@ -5,11 +5,21 @@ import {
   appliedSpellFieldsSchema,
 } from "@dnd/catalog";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { EditorView } from "codemirror";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { charactersKey } from "../../hooks/characterKeys.ts";
+import { useHomebrewNames } from "../../hooks/useHomebrewNames.ts";
 import {
   BACKGROUND_STARTERS,
   CLASS_STARTERS,
@@ -112,8 +122,11 @@ function stubApi(lists: Record<string, unknown>, writes: Answer[] = [], holders?
 const json = (status: number, body: unknown) =>
   new Response(status === 204 ? null : JSON.stringify(body), { status });
 
-function renderPage(kind = "items") {
-  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function renderPage(
+  kind = "items",
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+) {
+  client = queryClient;
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[`/homebrew/${kind}`]}>
@@ -3564,6 +3577,32 @@ describe("Homebrew subclasses", () => {
     const row = await within(subclasses()).findByText("Hearthkeeper");
     expect(row).toBeInTheDocument();
     expect(within(subclasses()).getByText("Fighter")).toBeInTheDocument();
+  });
+
+  it("keeps each subclass's parent where a sheet's names read the list first", async () => {
+    const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
+    // Infinite staleTime keeps the names hook's parse in the cache when the page mounts.
+    const cached = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
+    });
+    const names = renderHook(useHomebrewNames, {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={cached}>{children}</QueryClientProvider>
+      ),
+    });
+    await waitFor(() => expect(names.result.current.get("s1")).toBe("Hearthkeeper"));
+    names.unmount();
+    renderPage("subclasses", cached);
+
+    await editRow(subclasses(), "Hearthkeeper");
+    await settled();
+    expect(field("combobox", "Parent class")).toHaveTextContent("Fighter (XPHB)");
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]?.body).toMatchObject({
+      parent: { name: "Fighter", source: "XPHB" },
+    });
   });
 
   it("creates a subclass of a catalog class, and of a homebrew class, from the form and from JSON", async () => {
