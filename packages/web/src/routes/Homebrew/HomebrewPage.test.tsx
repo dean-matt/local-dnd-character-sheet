@@ -4830,6 +4830,20 @@ describe("Homebrew monsters", () => {
         ).toBeInTheDocument();
       });
 
+      it("holds a chance between 0 and 100", async () => {
+        await openChoice();
+        fireEvent.change(field("spinbutton", "Alignment chance (%)"), { target: { value: "500" } });
+        fireEvent.change(field("spinbutton", "Alignment 2 chance (%)"), {
+          target: { value: "-10" },
+        });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).alignment).toMatchObject([
+          { chance: 100 },
+          { chance: 0 },
+        ]);
+      });
+
       it("picks a range, and shows one written in JSON", async () => {
         await openChoice();
         click("Remove alignment 2");

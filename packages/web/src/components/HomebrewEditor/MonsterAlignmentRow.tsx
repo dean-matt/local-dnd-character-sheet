@@ -8,6 +8,9 @@ import { WHOLE } from "./homebrewGrid.ts";
 import { ROW } from "./homebrewRows.ts";
 import { ALIGNMENT_IN_WORDS, type AlignmentRow, alignmentLabel } from "./monsterShapes.ts";
 
+const percent = (value: number | undefined) =>
+  value === undefined ? undefined : Math.min(100, Math.max(0, value));
+
 interface MonsterAlignmentRowProps {
   index: number;
   row: AlignmentRow;
@@ -52,7 +55,7 @@ export function MonsterAlignmentRow({
             max={100}
             step={1}
             value={row.chance ?? ""}
-            onChange={(event) => onChange({ chance: typedInteger(event.target.value) })}
+            onChange={(event) => onChange({ chance: percent(typedInteger(event.target.value)) })}
           />
           <InputField
             label={`${label} note`}

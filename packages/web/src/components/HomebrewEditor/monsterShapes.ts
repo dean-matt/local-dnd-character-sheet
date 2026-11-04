@@ -1,4 +1,5 @@
 import { alignmentWords } from "@dnd/catalog";
+import { capitalize } from "../../lib/capitalize.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
 
 export const MONSTER_SPEED_MODES = ["walk", "burrow", "climb", "fly", "swim"] as const;
@@ -88,10 +89,7 @@ export const MONSTER_ALIGNMENTS: string[][] = [
  * `letters` as the stat block reads them, in sentence case. Letters that read alike share a
  * label, so `["N", "E"]` and `["NX", "E"]` are both "Neutral evil".
  */
-export const alignmentLabel = (letters: string[]): string => {
-  const words = alignmentWords(letters);
-  return words.charAt(0).toUpperCase() + words.slice(1);
-};
+export const alignmentLabel = (letters: string[]): string => capitalize(alignmentWords(letters));
 
 /** The option that states an alignment in words rather than letters. */
 export const ALIGNMENT_IN_WORDS = "Described in words";
