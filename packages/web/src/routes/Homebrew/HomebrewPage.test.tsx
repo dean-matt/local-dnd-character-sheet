@@ -3693,6 +3693,77 @@ describe("Homebrew subclasses", () => {
     expect(await within(editor()).findByText(/^Save failed: .*already named/)).toBeInTheDocument();
   });
 
+  describe("a held subclass's parent class", () => {
+    const holder = (id: string, name: string) => {
+      const record = characterRecord(id, name);
+      return {
+        ...record,
+        definition: {
+          ...record.definition,
+          levels: [{ class: { name: "Fighter", source: "XPHB" }, subclass: { homebrewId: "s1" } }],
+        },
+      };
+    };
+    const save = () => within(editor()).getByRole("button", { name: "Save" });
+    const note = () => within(editor()).queryByRole("button", { name: "Why Save is unavailable" });
+
+    it("holds Save on a move to another class, naming and linking the character that holds it", async () => {
+      const fetchMock = stubApi({ ...lists, characters: [holder("x1", "Vex")] });
+      renderPage("subclasses");
+
+      await editRow(subclasses(), "Hearthkeeper");
+      await settled();
+      pick("Parent class", "Warden (Homebrew)");
+      await waitFor(() => expect(save()).toHaveAttribute("aria-disabled", "true"));
+      fireEvent.click(save());
+      fireEvent.click(note() as HTMLElement);
+
+      expect(
+        within(editor()).getByText(
+          "Hearthkeeper is held by this character, so it stays a subclass of Fighter (XPHB). Keep Fighter (XPHB), or add a new subclass to the other class.",
+        ),
+      ).toBeVisible();
+      expect(within(editor()).getByRole("link", { name: "Vex" })).toHaveAttribute(
+        "href",
+        "/characters/x1",
+      );
+      expect(writesOf(fetchMock)).toEqual([]);
+    });
+
+    it("leaves Save to a held subclass that keeps its class", async () => {
+      const fetchMock = stubApi({ ...lists, characters: [holder("x1", "Vex")] }, [
+        { status: 200, body: stored },
+      ]);
+      renderPage("subclasses");
+
+      await editRow(subclasses(), "Hearthkeeper");
+      await settled();
+      fireEvent.change(field("textbox", "Name"), { target: { value: "Hearthwarden" } });
+
+      expect(note()).toBeNull();
+      fireEvent.click(save());
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    });
+
+    it("moves a subclass no character holds", async () => {
+      const record = characterRecord("c", "Bram");
+      const fetchMock = stubApi({ ...lists, characters: [record] }, [
+        { status: 200, body: stored },
+      ]);
+      renderPage("subclasses");
+
+      await editRow(subclasses(), "Hearthkeeper");
+      await settled();
+      pick("Parent class", "Warden (Homebrew)");
+      await settled();
+
+      expect(note()).toBeNull();
+      fireEvent.click(save());
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      expect(writesOf(fetchMock)[0]?.body).toMatchObject({ parent: { classId: "c1" } });
+    });
+  });
+
   it("deletes a subclass, and shows the reason where the API refuses", async () => {
     const fetchMock = stubApi(lists, [
       { status: 409, body: { error: "A character holds this subclass" } },
