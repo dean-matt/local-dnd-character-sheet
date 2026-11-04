@@ -121,12 +121,6 @@ export const subclassLevelSchema = z
   });
 
 /**
- * How many options of one feature type a homebrew class or subclass knows, in the shape
- * upstream's `optionalfeatureProgression` writes a block: `progression` a count for each of
- * levels 1 to 20, or keyed by the levels the count changes at, as a copied `Sorcerer` (PHB)
- * carries it. `docs/optional-features.md` has both shapes.
- */
-/**
  * A level from 1 to 20 as a progression keys it: exactly the 20 spellings, so no two keys reach
  * one level and overwrite it, as `Number` would land "03", " 3" and "1e1" on one.
  */
@@ -144,6 +138,12 @@ export function carryForward(changes: Readonly<Record<string, number>>): number[
   });
 }
 
+/**
+ * How many options of one feature type a homebrew class or subclass knows, in the shape
+ * upstream's `optionalfeatureProgression` writes a block: `progression` a count for each of
+ * levels 1 to 20, or keyed by the levels the count changes at, as a copied `Sorcerer` (PHB)
+ * carries it. `docs/optional-features.md` has both shapes.
+ */
 const progressionSchema = z.union([
   z.array(z.int().min(0)).length(20),
   z.record(z.string().regex(LEVEL_KEY, "A level is 1 to 20"), z.int().min(0)),

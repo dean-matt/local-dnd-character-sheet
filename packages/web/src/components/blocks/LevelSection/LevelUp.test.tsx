@@ -134,14 +134,9 @@ const OATH_OF_ROOTS = {
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 
-const maneuvers = (from: number, count: number) => [
-  {
-    featureType: ["MV:B"],
-    progression: Array.from({ length: 20 }, (_, at) => (at + 1 >= from ? count : 0)),
-  },
-];
+const maneuvers = (progression: Record<string, number>) => [{ featureType: ["MV:B"], progression }];
 
-/** A homebrew class with no subclass that knows a maneuver from 2nd level. */
+/** A homebrew class with no subclass that knows a maneuver from 2nd level and two from 5th. */
 const MARSHAL = {
   id: "hb_marshal",
   name: "Marshal",
@@ -151,12 +146,12 @@ const MARSHAL = {
     name: "Marshal",
     source: "HB",
     hd: { number: 1, faces: 10 },
-    optionalfeatureProgression: maneuvers(2, 1),
+    optionalfeatureProgression: maneuvers({ "2": 1, "5": 2 }),
   },
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 
-/** A homebrew subclass of the catalog Warlock that knows two maneuvers from 3rd level. */
+/** A homebrew subclass of the catalog Warlock that knows two maneuvers from 3rd level and three from 4th. */
 const BLADEWARD = {
   ...HEXBLADE,
   id: "hb_bladeward",
@@ -165,7 +160,7 @@ const BLADEWARD = {
     ...HEXBLADE.json,
     name: "Bladeward Patron",
     shortName: "Bladeward",
-    optionalfeatureProgression: maneuvers(3, 2),
+    optionalfeatureProgression: maneuvers({ "3": 2, "4": 3 }),
   },
 };
 
@@ -709,6 +704,34 @@ describe("LevelUp", () => {
         level: 2,
       },
     ]);
+  });
+
+  it("asks only for the options a homebrew class's count rises by", async () => {
+    const marshal = { class: { homebrewId: MARSHAL.id } };
+    const parry = {
+      ref: { name: "Parry", source: "PHB" },
+      featureType: "MV:B",
+      grantedBy: { kind: "class" as const, ref: marshal.class },
+      level: 2,
+    };
+    renderSeeded(
+      warlock(4, { levels: [marshal, marshal, marshal, marshal], optionalFeatures: [parry] }),
+    );
+    await open();
+    const region = await within(dialog()).findByRole("region", {
+      name: "New Maneuver (Battle Master)",
+    });
+    expect(region).toHaveTextContent("Choose 1 — 0 selected");
+  });
+
+  it("asks only for the options a held homebrew subclass's count rises by", async () => {
+    const held = { class: WARLOCK, subclass: { homebrewId: BLADEWARD.id } };
+    renderSeeded(warlock(3, { levels: [{ class: WARLOCK }, { class: WARLOCK }, held] }));
+    await open();
+    const region = await within(dialog()).findByRole("region", {
+      name: "New Maneuver (Battle Master)",
+    });
+    expect(region).toHaveTextContent("Choose 1 — 0 selected");
   });
 
   it("asks for the options a homebrew subclass picked this level counts, under it and its class", async () => {
