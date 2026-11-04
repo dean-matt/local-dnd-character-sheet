@@ -9,14 +9,14 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   mockup draws it. Below the `sm` breakpoint it narrows to fit a 320px phone: 12px padding,
   tighter triggers with no gap between them, the app name cut to "D&D", and Feedback and
   Settings cut to their icons, each keeping its full text for screen readers.
-- **Sidebar** fills its column, sticky under the top bar, and scrolls its own rows in a
-  window too short to hold them, with its scrollbar hidden so the collapsed icons stay
-  centered and `scroll-shadow` shading the clipped edge instead. Its widths are
-  `--spacing-sidebar` and `--spacing-sidebar-collapsed`.
-  The character sheet, Settings and the creation flow share one collapsible rail, `Rail` in
-  `src/routes/Rail.tsx`, one collapsed state, and one row around it, `SidebarFrame` in
-  `src/routes/SidebarFrame.tsx`. The first two fill it with `Sidebar` in
-  `src/routes/Sidebar/Sidebar.tsx`.
+- **Sidebar** fills its column, sticky under the top bar. In a window too short to hold its
+  rows, they scroll above the collapse toggle, which stays pinned at the foot. The scrollbar
+  is hidden so the collapsed icons stay centered, and `scroll-shadow` shades the clipped
+  edge instead. Its widths are `--spacing-sidebar` and `--spacing-sidebar-collapsed`.
+  The character sheet, Settings, Homebrew and the creation flow share one collapsible rail,
+  `Rail` in `src/routes/Rail.tsx`, one collapsed state, and one row around it,
+  `SidebarFrame` in `src/routes/SidebarFrame.tsx`. All but the creation flow fill it with
+  `Sidebar` in `src/routes/Sidebar/Sidebar.tsx`.
 - **Character header** fills the content column, so it grows and shrinks with the side
   panels. Its height is `--spacing-header`, which the name and subtitle hold by truncating.
   It is pinned under the top bar in a window at least 36rem tall, the `tall` variant in

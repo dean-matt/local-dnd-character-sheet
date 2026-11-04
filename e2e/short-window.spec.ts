@@ -5,6 +5,9 @@ import { createCharacter, scrollToBottom } from "./character";
 // Headless Chromium hides every scrollbar unless this flag goes.
 test.use({ launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] } });
 
+/** The rail's scroll region, the first child of the column `Rail` draws in the aside. */
+const ROWS = "> * > :first-child";
+
 test("in a window shorter than the rail, every rail row scrolls into view and the rail stays pinned", async ({
   page,
   request,
@@ -18,7 +21,7 @@ test("in a window shorter than the rail, every rail row scrolls into view and th
     await scrollToBottom(page, rail.locator("xpath=following-sibling::*"));
     // The page rows arrive after the first paint, so the rail scrolls again until they hold.
     await expect(async () => {
-      await rail.locator("> *").evaluate((element) => {
+      await rail.locator(ROWS).evaluate((element) => {
         element.scrollTop = element.scrollHeight;
       });
       const railBox = await edges(rail);
@@ -30,7 +33,7 @@ test("in a window shorter than the rail, every rail row scrolls into view and th
     }).toPass();
 
     // A strip of the rail's left padding, where no row draws, so only the shadow changes it.
-    const container = rail.locator("> *");
+    const container = rail.locator(ROWS);
     const strip = async (edge: "top" | "bottom") => {
       const b = await box(container);
       const y = edge === "top" ? b.y + 2 : b.y + b.height - 6;
@@ -67,3 +70,53 @@ test("in a window shorter than the rail, every rail row scrolls into view and th
     await request.delete(`/api/characters/${id}`);
   }
 });
+
+for (const [name, path] of [
+  ["character sheet", "stats"],
+  ["Settings", "/settings"],
+  ["Homebrew", "/homebrew/items"],
+  ["creation flow", "/characters/new"],
+] as const) {
+  test(`on the ${name} page, a rail too short for its rows scrolls them under a pinned collapse toggle`, async ({
+    page,
+    request,
+  }) => {
+    const id =
+      path === "stats" ? await createCharacter(request, `E2E Pinned ${Date.now()}`) : undefined;
+    try {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.setViewportSize({ width: 1280, height: 200 });
+      await page.goto(id ? `/characters/${id}/p/stats` : path);
+      await page.evaluate(() => localStorage.removeItem("sidebar-collapsed"));
+      await page.reload();
+      const rail = page.locator("aside");
+      const rows = rail.locator(ROWS);
+
+      for (const label of ["Collapse sidebar", "Expand sidebar"]) {
+        const toggle = page.getByRole("button", { name: label });
+        const divider = toggle.locator("..");
+        const scrollRows = (top: boolean) =>
+          rows.evaluate((element, top) => {
+            element.scrollTop = top ? 0 : element.scrollHeight;
+          }, top);
+        // The page rows arrive after the first paint, so this holds once they have.
+        await expect(async () => {
+          expect(
+            await rows.evaluate((element) => element.scrollHeight > element.clientHeight),
+          ).toBe(true);
+          await scrollRows(true);
+          const railBox = await edges(rail);
+          const atTop = await edges(divider);
+          expect(atTop.top).toBeGreaterThanOrEqual(railBox.top);
+          expect(atTop.bottom).toBeLessThanOrEqual(railBox.bottom);
+          await scrollRows(false);
+          expect(await edges(divider)).toEqual(atTop);
+          expect(await rows.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+        }).toPass();
+        await toggle.click();
+      }
+    } finally {
+      if (id) await request.delete(`/api/characters/${id}`);
+    }
+  });
+}
