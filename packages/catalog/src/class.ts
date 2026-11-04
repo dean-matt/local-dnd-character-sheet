@@ -120,6 +120,61 @@ export const subclassLevelSchema = z
     return Number.isInteger(level) && level >= 1 && level <= 20 ? level : undefined;
   });
 
+/**
+ * How many options of one feature type a homebrew class or subclass knows, in the shape
+ * upstream's `optionalfeatureProgression` writes a block: `progression` a count for each of
+ * levels 1 to 20, or keyed by the levels the count changes at, as a copied `Sorcerer` (PHB)
+ * carries it. `docs/optional-features.md` has both shapes.
+ */
+const progressionSchema = z.union([
+  z.array(z.int().min(0)).length(20),
+  z.record(z.string().regex(/^(?:[1-9]|1\d|20)$/, "A level is 1 to 20"), z.int().min(0)),
+]);
+
+const optionalFeatureBlockSchema = z.looseObject({
+  name: z.string().optional(),
+  featureType: z.array(z.string().min(1)).length(1, "A count names one feature type"),
+  progression: progressionSchema,
+});
+
+const optionalFeatureProgressionSchema = z
+  .array(optionalFeatureBlockSchema)
+  .refine(
+    (blocks) => new Set(blocks.map(({ featureType }) => featureType[0])).size === blocks.length,
+    { message: "Two counts name the same feature type" },
+  );
+
+/**
+ * A block's `progression` as a count at each of levels 1 to 20, a sparse one carrying its
+ * count forward; `undefined` where it is neither shape.
+ */
+export function knownByLevel(progression: unknown): number[] | undefined {
+  const read = progressionSchema.safeParse(progression);
+  if (!read.success) return undefined;
+  const changes = read.data;
+  if (Array.isArray(changes)) return changes;
+  let held = 0;
+  return Array.from({ length: 20 }, (_, at) => {
+    held = changes[String(at + 1)] ?? held;
+    return held;
+  });
+}
+
+/**
+ * The options of each feature type a homebrew class or subclass knows at levels 1 to 20,
+ * `known[0]` being level 1. An entry stored in a shape this cannot read counts none.
+ */
+export const optionalFeatureCountsSchema = z
+  .looseObject({
+    optionalfeatureProgression: optionalFeatureProgressionSchema.optional().catch(undefined),
+  })
+  .transform((entry) =>
+    (entry.optionalfeatureProgression ?? []).map((block) => ({
+      featureType: block.featureType[0] as string,
+      known: knownByLevel(block.progression) ?? [],
+    })),
+  );
+
 /** A class row from `content.db`'s `classes` table, addressed by `(name, source)`. */
 export const classRecordSchema = z.strictObject({
   name: z.string().min(1),
@@ -175,11 +230,13 @@ const hitDieRollSchema = z.strictObject({ number: z.literal(1), faces: z.int().p
  * feature or subclass rows of its own: features are `homebrewClassFeaturesSchema`, stored
  * beside the class — see `docs/data-model.md`. `subclassLevel` is the class level that grants
  * a subclass, absent where it grants none: a catalog class marks it on a feature row, which
- * a homebrew class has none of.
+ * a homebrew class has none of. `optionalfeatureProgression` is the option counts
+ * `optionalFeatureCountsSchema` reads.
  */
 export const homebrewClassSchema = classEntrySchema.extend({
   hd: hitDieRollSchema,
   subclassLevel: z.int().min(1).max(20).optional(),
+  optionalfeatureProgression: optionalFeatureProgressionSchema.optional(),
 });
 
 export type HomebrewClass = z.infer<typeof homebrewClassSchema>;
@@ -209,12 +266,15 @@ export const homebrewClassRecordSchema = z.strictObject({
 export type HomebrewClassRecord = z.infer<typeof homebrewClassRecordSchema>;
 
 /**
- * A homebrew subclass's `json`: the 5etools entry shape `classEntrySchema` models. The class
+ * A homebrew subclass's `json`: the 5etools entry shape `classEntrySchema` models, with the
+ * option counts a homebrew class states too. The class
  * it belongs to is a column beside the entry, not a field in it, so renaming a homebrew
  * class cannot leave the entry naming a class that is gone; a read stamps `className`,
  * `classSource` and `shortName` in, the way `subclassRecordSchema`'s rows carry them.
  */
-export const homebrewSubclassSchema = classEntrySchema;
+export const homebrewSubclassSchema = classEntrySchema.extend({
+  optionalfeatureProgression: optionalFeatureProgressionSchema.optional(),
+});
 
 export type HomebrewSubclass = z.infer<typeof homebrewSubclassSchema>;
 

@@ -6,6 +6,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { insertCharacter } from "../db/queries/characters.ts";
 import { publishEntitlementsFixture } from "../db/queries/contentFixture.ts";
+import { insertHomebrewClass, insertHomebrewSubclass } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { optionalFeaturesRoutes } from "./optional-features.ts";
 
@@ -92,7 +93,7 @@ describe("optionalFeaturesRoutes", () => {
 
   beforeEach(() => {
     opened = openTestDatabases();
-    routes = optionalFeaturesRoutes(opened.charactersDb, dataDir);
+    routes = optionalFeaturesRoutes(opened.charactersDb, dataDir, opened.homebrewDb);
   });
 
   it("reads the class and subclass rows at the level held, and a grant for each feat and option held", async () => {
@@ -133,6 +134,69 @@ describe("optionalFeaturesRoutes", () => {
         featureType: "MV:B",
         known: 1,
         grantedBy: { kind: "optionalFeature", ref: SUPERIOR_TECHNIQUE },
+        edition: "classic",
+      },
+    ]);
+  });
+
+  it("reads a homebrew class's and subclass's counts at the level held, as a catalog row's", async () => {
+    insertHomebrewClass(opened.homebrewDb, "hc", {
+      name: "Warden",
+      edition: "one",
+      hd: { number: 1, faces: 10 },
+      subclassLevel: 1,
+      optionalfeatureProgression: [
+        { featureType: ["EI"], progression: [1, 2, 2, ...Array<number>(17).fill(3)] },
+        { featureType: ["MM"], progression: [0, 0, 0, ...Array<number>(17).fill(1)] },
+      ],
+    });
+    insertHomebrewSubclass(opened.homebrewDb, "hs", {
+      name: "Grove",
+      edition: "one",
+      parent: { classId: "hc" },
+      optionalfeatureProgression: [{ featureType: ["EI"], progression: { "2": 1, "10": 2 } }],
+    });
+    insertHomebrewSubclass(opened.homebrewDb, "storm", {
+      name: "Storm Knight",
+      edition: "classic",
+      parent: FIGHTER,
+      optionalfeatureProgression: [{ featureType: ["MV:B"], progression: { "3": 4 } }],
+    });
+    const warden = { homebrewId: "hc" };
+    const grove = { homebrewId: "hs" };
+    const storm = { homebrewId: "storm" };
+
+    expect(
+      await entitlements(
+        definition({
+          levels: [
+            { class: warden, subclass: grove },
+            { class: warden },
+            { class: warden },
+            { class: FIGHTER },
+            { class: FIGHTER },
+            { class: FIGHTER, subclass: storm },
+          ],
+        }),
+      ),
+    ).toEqual([
+      { featureType: "EI", known: 2, grantedBy: { kind: "class", ref: warden }, edition: "one" },
+      {
+        featureType: "EI",
+        known: 1,
+        grantedBy: { kind: "subclass", ref: grove, class: warden },
+        edition: "one",
+      },
+      {
+        featureType: "FS:F",
+        known: 1,
+        grantedBy: { kind: "class", ref: FIGHTER },
+        edition: "classic",
+      },
+      {
+        featureType: "MV:B",
+        known: 4,
+        grantedBy: { kind: "subclass", ref: storm, class: FIGHTER },
         edition: "classic",
       },
     ]);

@@ -61,6 +61,8 @@ export {
   homebrewSubclassInputSchema,
   homebrewSubclassRecordSchema,
   homebrewSubclassSchema,
+  knownByLevel,
+  optionalFeatureCountsSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
   sameSubclassParent,

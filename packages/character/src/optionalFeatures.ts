@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { type CharacterDefinition, optionalFeatureGrantorSchema } from "./definition.ts";
-import { entryKey, refKey } from "./keys.ts";
+import { entryKey } from "./keys.ts";
 import { editionSchema } from "./refs.ts";
 
 /**
@@ -27,7 +27,7 @@ type Pick = CharacterDefinition["optionalFeatures"][number];
 /** A grantor flattened for comparison: a subclass is keyed with its class. */
 export const grantorKey = (grantor: Grantor): string =>
   grantor.kind === "subclass"
-    ? `subclass|${refKey(grantor.ref)}|${entryKey(grantor.class)}`
+    ? `subclass|${entryKey(grantor.ref)}|${entryKey(grantor.class)}`
     : `${grantor.kind}|${entryKey(grantor.ref)}`;
 
 /** One option type: what entitles the character to it, the total, and the picks made. */

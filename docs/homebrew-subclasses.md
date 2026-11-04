@@ -15,8 +15,9 @@ class cannot leave an entry naming a class that is gone.
 - Deleting a homebrew class that has subclasses is refused with a 409 naming them.
 - A character holds one as `levels[].subclass: {homebrewId}`, so a rename keeps it there.
   Deleting one a character holds is refused with a 409 naming the characters.
-- A held subclass grants no spells or optional features yet; the sheet names it from its
-  row, and `Homebrew` once no row holds its id.
+- A held subclass grants no spells yet; the sheet names it from its row, and `Homebrew` once
+  no row holds its id. It entitles the options its `optionalfeatureProgression` counts, as
+  `docs/homebrew-optional-features.md` says.
 
 ## Features
 
