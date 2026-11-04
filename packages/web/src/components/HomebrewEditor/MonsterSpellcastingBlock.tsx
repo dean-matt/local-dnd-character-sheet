@@ -11,6 +11,7 @@ import { typedInteger } from "./homebrewEntry.ts";
 import { ROW_BUTTON } from "./homebrewRows.ts";
 import { MonsterSpellList } from "./MonsterSpellList.tsx";
 import {
+  holdsUnread,
   readSpellcasting,
   SPELL_FREQUENCIES,
   type SpellcastingForm,
@@ -64,6 +65,9 @@ const LEVEL_OPTIONS = Array.from({ length: 10 }, (_, level) => ({
 
 /** Keys a block may carry that the form neither shows nor changes. */
 const UNSHOWN = ["weekly", "yearly", "legendary", "recharge", "chargesItem", "hidden"];
+
+const holdsUnshown = (block: Record<string, unknown>) =>
+  UNSHOWN.some((key) => block[key] !== undefined) || holdsUnread(block);
 
 const sub = "flex min-w-0 flex-col gap-2 border-border border-l-2 pl-2";
 
@@ -180,6 +184,7 @@ export function MonsterSpellcastingBlock({
               <div className="pb-2">
                 <HomebrewCheckbox
                   label="Each"
+                  name={`${title} each`}
                   checked={row.each}
                   onChange={(each) => frequency(index, { each })}
                 />
@@ -281,10 +286,11 @@ export function MonsterSpellcastingBlock({
         onText={(footer) => write({ footer })}
         rows={3}
       />
-      {UNSHOWN.some((key) => block[key] !== undefined) && (
+      {holdsUnshown(block) && (
         <p className="text-muted text-row">
-          {label} also holds spells by week, year, legendary action or recharge, or a list the stat
-          block hides. Edit those in JSON.
+          {label} also holds what the form cannot show, such as spells by week, year, legendary
+          action, recharge or an item's charges, a list the stat block hides, or a count or level in
+          another shape. Edit those in JSON.
         </p>
       )}
     </>

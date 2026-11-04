@@ -37,8 +37,10 @@ table, a list of named items or a section holding more than paragraphs, or that 
 entries, shows as read-only and is edited in JSON, as are lair actions. The form adds, edits and
 removes spellcasting blocks: a block's name, ability, whether it shows as a trait or an action, its
 header and footer paragraphs, and its spells at will, as rituals, per day, per rest, per long rest,
-for charges and by level with slots, each picked from the catalog. A block's spells by week, year,
-legendary action or recharge, and which lists it hides, stay as written and are edited in JSON. A type's swarm
+for charges and by level with slots, each picked from the catalog; the API refuses a count of uses
+below 1 or left blank. A block's spells by week, year, legendary action, recharge or an item's
+charges, which lists it hides, and a count, level or field in a shape the form cannot read stay as
+written and are edited in JSON. A type's swarm
 size, a prose armor class, a tag with a prefix and the passive Perception score stay as written
 and are edited in JSON. A form edit keeps every entry it cannot show in
 the place it was stored. The Rules control picks the edition, and the API refuses a repeated

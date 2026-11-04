@@ -5341,7 +5341,7 @@ describe("Homebrew monsters", () => {
         fireEvent.change(field("spinbutton", "Spellcasting 1 frequency 1 uses"), {
           target: { value: "3" },
         });
-        fireEvent.click(field("checkbox", "Each"));
+        fireEvent.click(field("checkbox", "Spellcasting 1 frequency 1 each"));
         pick("Spellcasting 1 frequency 1 kind", "Per long rest");
         click("Add a frequency to Spellcasting 1");
         await pickSpell("Spellcasting 1 frequency 2");
@@ -5370,6 +5370,18 @@ describe("Homebrew monsters", () => {
             restLong: { "3": ["{@spell fly}"] },
           },
         ]);
+      });
+
+      it("refuses a frequency with no uses, naming the reason", async () => {
+        const fetchMock = await openSpells();
+        fireEvent.change(field("spinbutton", "Spellcasting 1 frequency 1 uses"), {
+          target: { value: "" },
+        });
+        click("Save");
+
+        expect(within(editor()).getByText(/Uses of 1 or more/)).toBeInTheDocument();
+        expect(field("spinbutton", "Spellcasting 1 frequency 1 uses")).toHaveValue(null);
+        expect(writesOf(fetchMock)).toEqual([]);
       });
 
       it("shows a change made in JSON in the form and the preview", async () => {

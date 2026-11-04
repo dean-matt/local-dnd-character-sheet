@@ -6,6 +6,7 @@
  */
 import { EDITIONS } from "@dnd/rules";
 import { z } from "zod";
+import { isRecord } from "./entry-text.ts";
 
 const SIZES = ["T", "S", "M", "L", "H", "G"] as const;
 
@@ -14,6 +15,30 @@ const armorClass = z.number().int().min(0);
 
 /** Upstream writes a rating as a string, a fraction below 1. */
 const rating = z.string().regex(/^(0|1\/[248]|[1-9]|[12]\d|30)$/, "A rating from 0 to 30");
+
+/** A key a per-use spell list counts its uses with, as `2` or `2e`, whatever its count. */
+const COUNTED = /^-?\d*e?$/;
+const USES = /^[1-9]\d*e?$/;
+
+/**
+ * Refuses a per-use list counted below 1 or not at all. A list keyed in words, and a block
+ * in any other shape, pass through as upstream may write them.
+ */
+const spellcasting = z.unknown().superRefine((blocks, ctx) => {
+  if (!Array.isArray(blocks)) return;
+  blocks.forEach((block, index) => {
+    if (!isRecord(block)) return;
+    for (const key of ["daily", "rest", "restLong", "charges"]) {
+      const lists = block[key];
+      if (!isRecord(lists)) continue;
+      for (const uses of Object.keys(lists)) {
+        if (COUNTED.test(uses) && !USES.test(uses)) {
+          ctx.addIssue({ code: "custom", message: "Uses of 1 or more", path: [index, key, uses] });
+        }
+      }
+    }
+  });
+});
 
 export const homebrewMonsterEntrySchema = z.looseObject({
   name: z.string().min(1),
@@ -42,6 +67,7 @@ export const homebrewMonsterEntrySchema = z.looseObject({
   cha: score,
   cr: z.union([rating, z.looseObject({ cr: rating })]),
   legendaryActions: z.number().int().min(1, "At least 1").optional(),
+  spellcasting: spellcasting.optional(),
 });
 
 export type HomebrewMonster = z.infer<typeof homebrewMonsterEntrySchema>;

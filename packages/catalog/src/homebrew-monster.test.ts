@@ -22,6 +22,10 @@ describe("homebrewMonsterInputSchema", () => {
   it("accepts upstream's richer shapes and keeps fields it does not name", () => {
     const parsed = homebrewMonsterInputSchema.parse({ ...imp, alignment: ["C", "E"] });
     expect(parsed).toMatchObject({ alignment: ["C", "E"], cr: { cr: "1/2" } });
+    const spellcasting = [{ daily: { "2e": [], often: [] } }, "odd"];
+    expect(homebrewMonsterInputSchema.parse({ ...imp, spellcasting }).spellcasting).toEqual(
+      spellcasting,
+    );
   });
 
   it.each([
@@ -32,6 +36,9 @@ describe("homebrewMonsterInputSchema", () => {
     ["an unknown edition", { edition: "2014" }],
     ["no legendary action uses", { legendaryActions: 0 }],
     ["negative legendary action uses", { legendaryActions: -2 }],
+    ["spells with no uses", { spellcasting: [{ daily: { e: ["{@spell fly}"] } }] }],
+    ["spells used 0 times", { spellcasting: [{ rest: { "0": ["{@spell fly}"] } }] }],
+    ["spells used -1 times", { spellcasting: [{ charges: { "-1e": ["{@spell fly}"] } }] }],
   ])("refuses %s", (_label, change) => {
     expect(homebrewMonsterInputSchema.safeParse({ ...imp, ...change }).success).toBe(false);
   });

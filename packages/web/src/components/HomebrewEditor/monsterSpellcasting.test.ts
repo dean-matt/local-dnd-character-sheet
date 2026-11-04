@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { readSpellcasting, spellTag, writeSpellcasting } from "./monsterSpellcasting.ts";
+import {
+  holdsUnread,
+  readSpellcasting,
+  spellTag,
+  writeSpellcasting,
+} from "./monsterSpellcasting.ts";
 
 const block = {
   name: "Innate Spellcasting",
@@ -55,7 +60,6 @@ describe("monster spellcasting", () => {
       frequencies: [
         { key: "daily", uses: 1, each: true, spells: ["{@spell fly}"] },
         { key: "daily", uses: 1, each: true, spells: ["{@spell jump}"] },
-        { key: "rest", uses: undefined, each: false, spells: ["{@spell haste}"] },
         { key: "charges", uses: 3, each: false, spells: [] },
       ],
       levels: [
@@ -91,6 +95,50 @@ describe("monster spellcasting", () => {
       type: "spellcasting",
       daily: { often: ["{@spell fly}"], "1": ["{@spell jump}"] },
       spells: { x: 1 },
+    });
+  });
+
+  it("writes a blank or non-positive count, so the API refuses it, and reads it back", () => {
+    const written = writeSpellcasting(
+      { type: "spellcasting" },
+      {
+        ...readSpellcasting({}),
+        frequencies: [
+          { key: "rest", uses: undefined, each: false, spells: ["{@spell haste}"] },
+          { key: "daily", uses: -1, each: true, spells: ["{@spell fly}"] },
+        ],
+      },
+    );
+    expect(written).toMatchObject({
+      rest: { "": ["{@spell haste}"] },
+      daily: { "-1e": ["{@spell fly}"] },
+    });
+    expect(readSpellcasting(written).frequencies).toMatchObject([
+      { key: "daily", uses: -1, each: true },
+      { key: "rest", uses: undefined, each: false },
+    ]);
+  });
+
+  it("keeps a field in a shape it cannot read", () => {
+    const odd = {
+      type: "spellcasting",
+      name: 3,
+      displayAs: ["action"],
+      will: "{@spell light}",
+      daily: ["{@spell fly}"],
+      spells: "none",
+    };
+    expect(holdsUnread(odd)).toBe(true);
+    expect(holdsUnread(block)).toBe(false);
+    expect(writeSpellcasting(odd, { ...readSpellcasting(odd), name: "Psionics" })).toEqual(odd);
+  });
+
+  it("drops a level's lower bound that is not below it", () => {
+    const form = readSpellcasting(block);
+    const levels = form.levels.map((level) => ({ ...level, level: level.level === 5 ? 1 : 0 }));
+    expect(writeSpellcasting(block, { ...form, levels }).spells).toEqual({
+      "0": { spells: ["{@spell light}"] },
+      "1": { slots: 2, spells: ["{@spell cone of cold}"] },
     });
   });
 
