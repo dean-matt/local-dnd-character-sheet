@@ -371,6 +371,39 @@ describe("homebrewHistoryRoutes", () => {
     });
   });
 
+  describe("a subclass's features", () => {
+    const feature = (name: string, level = 3) => ({ name, level, entries: [`${name} text`] });
+    const create = async () => (await app.request("/homebrew/subclasses", json(storm()))).json();
+    const saveFeatures = (id: string, body: unknown) =>
+      app.request(`/homebrew/subclasses/${id}/features`, put(body));
+
+    it("reverts the row and features of one save together", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+
+      await app.request(`/homebrew/subclasses/${created.id}`, put(storm({ name: "Renamed" })));
+      await saveFeatures(created.id, [feature("New"), feature("Other", 6)]);
+
+      expect((await app.request(`/homebrew/subclasses/${created.id}/revert`, post)).status).toBe(
+        204,
+      );
+      expect((await read(`/homebrew/subclasses/${created.id}`)).name).toBe("Storm Domain");
+      expect(await read(`/homebrew/subclasses/${created.id}/features`)).toEqual([feature("Old")]);
+      expect((await history()).reversible).toEqual([]);
+    });
+
+    it("restores a deleted subclass with its features", async () => {
+      const created = await create();
+      await saveFeatures(created.id, [feature("Old")]);
+      await app.request(`/homebrew/subclasses/${created.id}`, { method: "DELETE" });
+
+      expect((await app.request(`/homebrew/subclasses/${created.id}/restore`, post)).status).toBe(
+        204,
+      );
+      expect(await read(`/homebrew/subclasses/${created.id}/features`)).toEqual([feature("Old")]);
+    });
+  });
+
   it("holds nothing for a save the kind's route refused", async () => {
     await app.request("/homebrew/items", json(sunblade({ name: "Other" })));
     const created = await (await app.request("/homebrew/items", json(sunblade()))).json();

@@ -60,9 +60,11 @@ import {
   insertHomebrewSubrace,
   listHomebrewClassFeatures,
   listHomebrewClassResources,
+  listHomebrewSubclassFeatures,
   type NamedHomebrewTable,
   replaceHomebrewClassFeatures,
   replaceHomebrewClassResources,
+  replaceHomebrewSubclassFeatures,
 } from "../db/queries/homebrew.ts";
 import { catalogSkillNames } from "../db/queries/skills.ts";
 import { errorSchema, notFound } from "./errors.ts";
@@ -72,14 +74,16 @@ import { parentEdition } from "./homebrew-subclasses.ts";
 import { raceEdition } from "./homebrew-subraces.ts";
 
 type Collection = z.infer<typeof homebrewCollectionSchema>;
-/** A row's input before its latest save; a class also holds the parts saved beside it. */
-type Earlier = {
+
+/** What a class or subclass saves beside its row, each part through a route of its own. */
+type Parts = { features?: HomebrewClassFeature[]; resources?: HomebrewClassResource[] };
+
+/** A row's input before its latest save; a class or subclass also holds the parts saved beside it. */
+type Earlier = Parts & {
   collection: Collection;
   id: string;
-  /** Absent on a class whose latest save wrote only its features or resource tables. */
+  /** Absent on a row whose latest save wrote only a part saved beside it. */
   input?: object;
-  features?: HomebrewClassFeature[];
-  resources?: HomebrewClassResource[];
 };
 type Row = {
   id: string;
@@ -199,18 +203,38 @@ function inputOf({ json, edition, parent }: Row) {
   return { ...entry, edition, ...(parent && { parent }) };
 }
 
-const classParts = (db: HomebrewDb, collection: Collection, id: string) =>
-  collection === "classes"
-    ? {
-        features: listHomebrewClassFeatures(db, id),
-        resources: listHomebrewClassResources(db, id),
-      }
-    : undefined;
+/** Each kind's parts, by the route segment that saves it. */
+const PART_ROUTES = [
+  ["classes", "features"],
+  ["classes", "resources"],
+  ["subclasses", "features"],
+] as const;
 
-/** A row as its kind's save would write it again, with a class's features and resource tables. */
+function partsOf(db: HomebrewDb, collection: Collection, id: string): Parts | undefined {
+  if (collection === "classes") {
+    return {
+      features: listHomebrewClassFeatures(db, id),
+      resources: listHomebrewClassResources(db, id),
+    };
+  }
+  if (collection === "subclasses") return { features: listHomebrewSubclassFeatures(db, id) };
+  return undefined;
+}
+
+function replaceParts(db: HomebrewDb, collection: Collection, id: string, parts: Parts) {
+  if (collection === "classes") {
+    if (parts.features) replaceHomebrewClassFeatures(db, id, parts.features);
+    if (parts.resources) replaceHomebrewClassResources(db, id, parts.resources);
+  }
+  if (collection === "subclasses" && parts.features) {
+    replaceHomebrewSubclassFeatures(db, id, parts.features);
+  }
+}
+
+/** A row as its kind's save would write it again, with the parts saved beside it. */
 export function snapshotOf(db: HomebrewDb, collection: Collection, id: string) {
   const row = KINDS[collection].get(db, id);
-  return row && { name: row.name, input: inputOf(row), ...classParts(db, collection, id) };
+  return row && { name: row.name, input: inputOf(row), ...partsOf(db, collection, id) };
 }
 
 const readHistory = createRoute({
@@ -277,23 +301,17 @@ function restoreDeity(db: HomebrewDb, id: string, input: HomebrewDeityInput) {
 }
 
 /** A row to write under the id it had, as `snapshotOf` holds it. */
-export type HeldRow = {
-  collection: Collection;
-  id: string;
-  input: object;
-  features?: HomebrewClassFeature[];
-  resources?: HomebrewClassResource[];
-};
+export type HeldRow = Parts & { collection: Collection; id: string; input: object };
 
 /**
- * Inserts `row` under its id, with a class's features and resource tables, as its kind's
+ * Inserts `row` under its id, with the parts saved beside it, as its kind's
  * save would write it. Answers why its kind refuses it instead, writing nothing: a parent
  * gone, a catalog skill's name, or a name another row holds.
  */
 export function insertUnderId(
   db: HomebrewDb,
   dataDir: string,
-  { collection, id, input: held, features, resources }: HeldRow,
+  { collection, id, input: held, ...parts }: HeldRow,
 ) {
   if (collection === "deities") {
     const taken = restoreDeity(db, id, held as HomebrewDeityInput);
@@ -312,8 +330,7 @@ export function insertUnderId(
     kind.holder(db, restored as never),
   );
   if ("taken" in result) return nameTakenError(`homebrew ${kind.noun}`, result.taken);
-  if (features) replaceHomebrewClassFeatures(db, id, features);
-  if (resources) replaceHomebrewClassResources(db, id, resources);
+  replaceParts(db, collection, id, parts);
   return undefined;
 }
 
@@ -327,18 +344,7 @@ export function homebrewHistoryRoutes(
   // Unbounded: one entry per row saved or deleted since the API started. A single user's
   // session keeps these small; cap them like `undo_log` if that stops holding.
   const earlier = new Map<string, Earlier>();
-  const deleted = new Map<
-    string,
-    {
-      collection: Collection;
-      id: string;
-      name: string;
-      input: object;
-      features?: HomebrewClassFeature[];
-      resources?: HomebrewClassResource[];
-      deletedAt: Date;
-    }
-  >();
+  const deleted = new Map<string, HeldRow & { name: string; deletedAt: Date }>();
 
   routes.use("/homebrew/:collection/:id", async (c, next) => {
     const collection = homebrewCollectionSchema.safeParse(c.req.param("collection"));
@@ -360,19 +366,18 @@ export function homebrewHistoryRoutes(
     }
   });
 
-  // A class's features and resource tables are saved beside its row. A save of either holds
-  // its earlier part unless the row's own save, or an earlier save of that part, already did, so
-  // the three writes of one form save revert together. A later features-only save before any
-  // revert joins the entry: Undo goes back to before the first.
-  for (const part of ["features", "resources"] as const) {
-    routes.use(`/homebrew/classes/:id/${part}`, async (c, next) => {
+  // A save of a part holds its earlier version unless the row's own save, or an earlier save of
+  // that part, already did, so the writes of one form save revert together. A later
+  // features-only save before any revert joins the entry: Undo goes back to before the first.
+  for (const [collection, part] of PART_ROUTES) {
+    routes.use(`/homebrew/${collection}/:id/${part}`, async (c, next) => {
       if (c.req.method !== "PUT" || c.req.header(REVERT_HEADER)) return next();
       const id = c.req.param("id");
-      const parts = classParts(db, "classes", id);
+      const parts = partsOf(db, collection, id);
       await next();
       if (c.res.status !== 200) return;
-      const key = keyOf("classes", id);
-      earlier.set(key, { collection: "classes", id, [part]: parts?.[part], ...earlier.get(key) });
+      const key = keyOf(collection, id);
+      earlier.set(key, { collection, id, [part]: parts?.[part], ...earlier.get(key) });
     });
   }
 

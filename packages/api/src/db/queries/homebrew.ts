@@ -57,6 +57,7 @@ import {
   homebrewSkills,
   homebrewSpells,
   homebrewSubclasses,
+  homebrewSubclassFeatures,
   homebrewSubraces,
 } from "../homebrew.ts";
 import type { SearchFilter } from "./catalog-search.ts";
@@ -679,6 +680,41 @@ export function updateHomebrewSubclass(db: HomebrewDb, id: string, input: Homebr
 
 export function deleteHomebrewSubclass(db: HomebrewDb, id: string): boolean {
   return db.delete(homebrewSubclasses).where(eq(homebrewSubclasses.id, id)).run().changes > 0;
+}
+
+/** A subclass's features in the order a level table prints them. */
+export function listHomebrewSubclassFeatures(
+  db: HomebrewDb,
+  subclassId: string,
+): HomebrewClassFeature[] {
+  return db
+    .select({
+      name: homebrewSubclassFeatures.name,
+      level: homebrewSubclassFeatures.level,
+      entries: homebrewSubclassFeatures.entries,
+    })
+    .from(homebrewSubclassFeatures)
+    .where(eq(homebrewSubclassFeatures.subclassId, subclassId))
+    .orderBy(homebrewSubclassFeatures.level, homebrewSubclassFeatures.name)
+    .all();
+}
+
+/** Replaces the subclass's whole feature list in one transaction. */
+export function replaceHomebrewSubclassFeatures(
+  db: HomebrewDb,
+  subclassId: string,
+  features: HomebrewClassFeature[],
+) {
+  db.transaction((tx) => {
+    tx.delete(homebrewSubclassFeatures)
+      .where(eq(homebrewSubclassFeatures.subclassId, subclassId))
+      .run();
+    if (features.length > 0) {
+      tx.insert(homebrewSubclassFeatures)
+        .values(features.map((feature) => ({ subclassId, ...feature })))
+        .run();
+    }
+  });
 }
 
 /** A subrace's parent as the routes name it: a catalog race by key, a homebrew race by id. */

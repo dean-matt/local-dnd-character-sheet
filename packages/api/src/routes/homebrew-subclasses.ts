@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import {
   type HomebrewSubclassInput,
+  homebrewClassFeaturesInputSchema,
+  homebrewClassFeaturesSchema,
   homebrewSubclassInputSchema,
   homebrewSubclassRecordSchema,
 } from "@dnd/catalog";
@@ -15,6 +17,8 @@ import {
   type HomebrewDb,
   insertHomebrewSubclass,
   listHomebrewSubclasses,
+  listHomebrewSubclassFeatures,
+  replaceHomebrewSubclassFeatures,
   updateHomebrewSubclass,
 } from "../db/queries/homebrew.ts";
 import { errorSchema, notFound } from "./errors.ts";
@@ -115,6 +119,39 @@ const removeSubclass = createRoute({
   },
 });
 
+const readFeatures = createRoute({
+  method: "get",
+  path: "/homebrew/subclasses/{id}/features",
+  tags: ["homebrew"],
+  summary: "List a homebrew subclass's features",
+  request: { params: idParam },
+  responses: {
+    200: {
+      description: "The subclass's features, by level then name",
+      content: { "application/json": { schema: homebrewClassFeaturesSchema } },
+    },
+    404: notFound("homebrew subclass"),
+  },
+});
+
+const replaceFeatures = createRoute({
+  method: "put",
+  path: "/homebrew/subclasses/{id}/features",
+  tags: ["homebrew"],
+  summary: "Replace a homebrew subclass's features",
+  request: {
+    params: idParam,
+    body: { content: { "application/json": { schema: homebrewClassFeaturesInputSchema } } },
+  },
+  responses: {
+    200: {
+      description: "The subclass's features as stored",
+      content: { "application/json": { schema: homebrewClassFeaturesSchema } },
+    },
+    404: notFound("homebrew subclass"),
+  },
+});
+
 /** The edition a subclass takes from its parent class, or undefined where no such class exists. */
 export function parentEdition(
   db: HomebrewDb,
@@ -139,6 +176,19 @@ export function homebrewSubclassesRoutes(
     const row = getHomebrewSubclass(db, c.req.valid("param").id);
     if (!row) return c.json({ error: SUBCLASS_NOT_FOUND }, 404);
     return c.json(toSubclassRecord(row), 200);
+  });
+
+  routes.openapi(readFeatures, (c) => {
+    const { id } = c.req.valid("param");
+    if (!getHomebrewSubclass(db, id)) return c.json({ error: SUBCLASS_NOT_FOUND }, 404);
+    return c.json(listHomebrewSubclassFeatures(db, id), 200);
+  });
+
+  routes.openapi(replaceFeatures, (c) => {
+    const { id } = c.req.valid("param");
+    if (!getHomebrewSubclass(db, id)) return c.json({ error: SUBCLASS_NOT_FOUND }, 404);
+    replaceHomebrewSubclassFeatures(db, id, c.req.valid("json"));
+    return c.json(listHomebrewSubclassFeatures(db, id), 200);
   });
 
   routes.openapi(createSubclass, (c) => {

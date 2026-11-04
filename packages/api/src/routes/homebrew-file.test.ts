@@ -21,8 +21,10 @@ import {
   insertHomebrewSubclass,
   insertHomebrewSubrace,
   listHomebrewItems,
+  listHomebrewSubclassFeatures,
   replaceHomebrewClassFeatures,
   replaceHomebrewClassResources,
+  replaceHomebrewSubclassFeatures,
 } from "../db/queries/homebrew.ts";
 import { resolveRefs } from "../db/queries/refs.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
@@ -175,9 +177,13 @@ describe("homebrewFileRoutes export", () => {
 });
 
 const VIGIL = [{ name: "Vigil", level: 1, entries: ["Watch."] }];
+const THUNDER = [{ name: "Thunder Strike", level: 3, entries: ["Push."] }];
 const WARD_RESOURCE = { name: "Wards", resets: "long-rest", maximums: Array(20).fill(2) };
 
-/** One row of every kind, a class with features and a resource table, and subkinds under homebrew parents. */
+/**
+ * One row of every kind, a class with features and a resource table, a subclass with features,
+ * and subkinds under homebrew parents.
+ */
 function seedEveryKind(db: HomebrewDb) {
   insertHomebrewItem(db, "i1", sunblade() as never);
   insertHomebrewSpell(db, "s1", acidSplash() as never);
@@ -202,6 +208,7 @@ function seedEveryKind(db: HomebrewDb) {
     parent: { name: "Cleric", source: "PHB" },
     edition: "classic",
   } as never);
+  replaceHomebrewSubclassFeatures(db, "sc2", THUNDER);
   insertHomebrewSkill(db, "k1", sailing() as never);
   insertHomebrewDeity(db, "d1", ashgod() as never);
   insertHomebrewOptionalFeature(db, "o1", ember() as never);
@@ -254,7 +261,7 @@ describe("homebrewFileRoutes import", () => {
     entries,
   });
 
-  it("recreates every row under its id, a class with its features and resource table", async () => {
+  it("recreates every row under its id, with a class's and a subclass's parts", async () => {
     seedEveryKind(source);
     const exported = await exportFrom(from);
 
@@ -265,6 +272,8 @@ describe("homebrewFileRoutes import", () => {
     expect(await exportFrom(to)).toEqual(exported);
     expect(getHomebrewItem(target, "i1")?.json.source).toBe("HB");
     expect(getHomebrewClass(target, "c1")?.name).toBe("Warden");
+    expect(exported.entries.find(({ id }) => id === "sc2")?.features).toEqual(THUNDER);
+    expect(listHomebrewSubclassFeatures(target, "sc2")).toEqual(THUNDER);
   });
 
   it("lets a character cite an imported row by name and source", async () => {

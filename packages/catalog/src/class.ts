@@ -259,7 +259,7 @@ export type HomebrewSubclassRecord = z.infer<typeof homebrewSubclassRecordSchema
 /** One row of a subclass list: a catalog subclass, or a homebrew one told apart by its `id`. */
 export const subclassListItemSchema = z.union([subclassRecordSchema, homebrewSubclassRecordSchema]);
 
-/** One feature of a homebrew class: a name, the level it arrives at and its rules text. */
+/** One feature of a homebrew class or subclass: a name, the level it arrives at and its rules text. */
 const homebrewClassFeatureSchema = z.strictObject({
   name: z.string().min(1),
   level: z.int().min(1).max(20),
@@ -269,7 +269,7 @@ const homebrewClassFeatureSchema = z.strictObject({
 export type HomebrewClassFeature = z.infer<typeof homebrewClassFeatureSchema>;
 
 /**
- * A homebrew class's whole feature list as stored; a name is unique within a level, as a
+ * A homebrew class's or subclass's whole feature list as stored; a name is unique within a level, as a
  * `{@classFeature}` tag keys it. Reads parse with this, so a name stored before `|` and `}` were
  * refused still loads.
  */

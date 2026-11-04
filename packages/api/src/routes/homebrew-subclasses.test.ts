@@ -248,4 +248,50 @@ describe("homebrewSubclassesRoutes", () => {
     expect((await res.json()).characters).toEqual([{ id: character.id, name: character.name }]);
     expect((await subclasses.request(`/homebrew/subclasses/${created.id}`)).status).toBe(200);
   });
+
+  describe("features", () => {
+    const feature = { name: "Thunder Strike", level: 3, entries: ["Push a creature."] };
+    const later = { name: "Eye of the Storm", level: 6, entries: ["Fly in the storm."] };
+    const create = async () =>
+      (await subclasses.request("/homebrew/subclasses", json(storm()))).json();
+    const putFeatures = (id: string, body: unknown) =>
+      subclasses.request(`/homebrew/subclasses/${id}/features`, put(body));
+    const read = async (id: string) =>
+      (await subclasses.request(`/homebrew/subclasses/${id}/features`)).json();
+
+    it("reads none for a subclass whose features were never saved", async () => {
+      expect(await read((await create()).id)).toEqual([]);
+    });
+
+    it("stores, replaces and reads back a subclass's features by level", async () => {
+      const created = await create();
+      expect((await putFeatures(created.id, [later, feature])).status).toBe(200);
+      expect(await read(created.id)).toEqual([feature, later]);
+
+      await putFeatures(created.id, [later]);
+      expect(await read(created.id)).toEqual([later]);
+    });
+
+    it("drops the features with the subclass", async () => {
+      const created = await create();
+      await putFeatures(created.id, [feature]);
+      await subclasses.request(`/homebrew/subclasses/${created.id}`, { method: "DELETE" });
+      expect(
+        opened.homebrewDb.$client
+          .prepare("SELECT count(*) AS n FROM homebrew_subclass_features")
+          .get(),
+      ).toEqual({ n: 0 });
+    });
+
+    it("rejects a level outside 1 to 20, and a name that would break its tag", async () => {
+      const created = await create();
+      expect((await putFeatures(created.id, [{ ...feature, level: 21 }])).status).toBe(400);
+      expect((await putFeatures(created.id, [{ ...feature, name: "A|B" }])).status).toBe(400);
+    });
+
+    it("404s for a subclass that does not exist", async () => {
+      expect((await subclasses.request("/homebrew/subclasses/missing/features")).status).toBe(404);
+      expect((await putFeatures("missing", [feature])).status).toBe(404);
+    });
+  });
 });
