@@ -1,4 +1,3 @@
-import { homebrewClassRecordSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   catalogRef,
@@ -12,7 +11,7 @@ import { classQuery } from "../../../hooks/classQuery.ts";
 import { homebrewClassQuery } from "../../../hooks/homebrewClassQuery.ts";
 import { subclassesQuery } from "../../../hooks/subclassesQuery.ts";
 import { subclassGrantsQuery } from "../../../hooks/subclassGrantsQuery.ts";
-import { useHomebrew } from "../../../hooks/useHomebrew.ts";
+import { useHomebrewClassIds } from "../../../hooks/useHomebrewClassIds.ts";
 import { ApiError } from "../../../lib/api.ts";
 import { catalogClass, homebrewClassByName } from "../../../lib/catalogClass.ts";
 import {
@@ -23,27 +22,12 @@ import {
   subclassParent,
 } from "../../../lib/subclassItems.ts";
 
-const sameName = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
-
-/**
- * The homebrew class `cls` cites, by id or by `(name, "HB")`, the second in `edition` before
- * the other. `missing` holds once neither finds it.
- */
+/** The homebrew class `cls` cites. `missing` holds once neither its id nor its name finds one. */
 function useHomebrewClass(cls: EntryRef, edition: CharacterDefinition["edition"]) {
-  const byName = homebrewClassByName(cls);
-  const listed = useHomebrew("classes", homebrewClassRecordSchema, {
-    listed: byName !== undefined,
-  }).list;
-  const named = byName && listed.data?.filter((each) => sameName(each.name, byName.name));
-  const id =
-    "homebrewId" in cls
-      ? cls.homebrewId
-      : (named?.find((each) => each.edition === edition) ?? named?.[0])?.id;
-  const row = useQuery(homebrewClassQuery(id));
-  const missing =
-    (byName !== undefined && listed.isSuccess && id === undefined) ||
-    (row.error instanceof ApiError && row.error.status === 404);
-  return { row, loading: listed.isLoading, missing, name: byName?.name };
+  const cited = useHomebrewClassIds([cls], edition);
+  const row = useQuery(homebrewClassQuery(cited.ids[0]));
+  const missing = cited.unmatched[0] || (row.error instanceof ApiError && row.error.status === 404);
+  return { row, loading: cited.loading, missing, name: homebrewClassByName(cls)?.name };
 }
 
 /**
