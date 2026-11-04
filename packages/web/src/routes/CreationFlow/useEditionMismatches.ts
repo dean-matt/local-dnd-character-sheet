@@ -1,9 +1,4 @@
-import {
-  catalogRowRecordSchema,
-  HOMEBREW_SOURCE,
-  homebrewFeatRecordSchema,
-  homebrewSubclassRecordSchema,
-} from "@dnd/catalog";
+import { catalogRowRecordSchema, HOMEBREW_SOURCE, homebrewFeatRecordSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type ContentRef,
@@ -18,6 +13,7 @@ import { z } from "zod";
 import { useFeats } from "../../hooks/useFeats.ts";
 import { useHomebrew } from "../../hooks/useHomebrew.ts";
 import { apiGet } from "../../lib/api.ts";
+import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 import { takesFeats } from "../../lib/improvementFeats.ts";
 import { retryUnlessClientError } from "../../lib/retryUnlessClientError.ts";
 import { useClassEntries } from "./useClassEntries.ts";
@@ -95,7 +91,9 @@ export function useEditionMismatches(): EditionMismatch[] {
   const { entries } = useClassEntries();
   const featRows = useFeats(edition).data?.items;
   const homebrewFeats = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
-  const homebrewSubclasses = useHomebrew("subclasses", homebrewSubclassRecordSchema).list.data;
+  // Parsed as the Homebrew page parses them, since a query key caches one parse.
+  const homebrewSubclasses = useHomebrew("subclasses", LISTING_KINDS.subclasses.recordSchema).list
+    .data;
   const homebrewSubclass = (ref: EntryRef | undefined) =>
     ref && "homebrewId" in ref
       ? homebrewSubclasses?.find((row) => row.id === ref.homebrewId)
