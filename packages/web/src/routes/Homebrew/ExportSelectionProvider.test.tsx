@@ -123,9 +123,11 @@ describe("ExportSelectionProvider", () => {
     fireEvent.click(screen.getByRole("button", { name: "Export" }));
 
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent(
-        "Exported 3 entries to homebrew.json. Also added Warden (class), which a chosen entry needs as a parent.",
-      ),
+      expect(
+        screen.getByText(
+          "Exported 3 entries to homebrew.json. Also added Warden (class), which a chosen entry needs as a parent.",
+        ),
+      ).toHaveRole("status"),
     );
     expect(click).toHaveBeenCalledOnce();
     const post = fetchMock.mock.calls.find(([url]) => String(url) === "/api/homebrew/export");
@@ -170,7 +172,7 @@ describe("ExportSelectionProvider", () => {
     resolve(json(200, { ...file, entries: [file.entries[0]] }));
 
     await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("Exported 1 entry to homebrew.json."),
+      expect(screen.getByText("Exported 1 entry to homebrew.json.")).toHaveRole("status"),
     );
     expect(screen.getByText("1 selected")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select Hearthkeeper for export" })).toBeChecked();

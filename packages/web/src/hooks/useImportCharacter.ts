@@ -1,6 +1,7 @@
 import { type CharacterRecord, characterRecordSchema } from "@dnd/character";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiMutate } from "../lib/api.ts";
+import { readJsonFile } from "../lib/readJsonFile.ts";
 import { characterKey, charactersKey } from "./characterKeys.ts";
 
 /**
@@ -12,15 +13,8 @@ export function useImportCharacter() {
   const queryClient = useQueryClient();
 
   return useMutation<CharacterRecord, Error, File>({
-    mutationFn: async (file) => {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(await file.text());
-      } catch {
-        throw new Error(`${file.name} is not a JSON file.`);
-      }
-      return apiMutate("POST", "/characters/import", characterRecordSchema, parsed);
-    },
+    mutationFn: async (file) =>
+      apiMutate("POST", "/characters/import", characterRecordSchema, await readJsonFile(file)),
     onSuccess: (record) => {
       queryClient.setQueryData(characterKey(record.id), record);
       queryClient.invalidateQueries({ queryKey: charactersKey, exact: true });

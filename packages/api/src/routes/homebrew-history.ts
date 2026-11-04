@@ -129,7 +129,9 @@ const KINDS: Record<Collection, Kind> = {
     holder: (db, input: { name: string; parent: HomebrewSubclassInput["parent"] }) => () =>
       findHomebrewSubclass(db, input.parent, input.name),
     blocked: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
-      parentEdition(db, dataDir, input.parent) ? undefined : "Its class no longer exists.",
+      parentEdition(db, dataDir, input.parent)
+        ? undefined
+        : "Its class is in neither the catalog nor homebrew.",
     editionNow: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
       parentEdition(db, dataDir, input.parent),
   },
@@ -140,7 +142,9 @@ const KINDS: Record<Collection, Kind> = {
     holder: (db, input: { name: string; parent: HomebrewSubraceInput["parent"] }) => () =>
       findHomebrewSubrace(db, input.parent, input.name),
     blocked: (db, dataDir, input: { parent: HomebrewSubraceInput["parent"] }) =>
-      raceEdition(db, dataDir, input.parent) ? undefined : "Its race no longer exists.",
+      raceEdition(db, dataDir, input.parent)
+        ? undefined
+        : "Its race is in neither the catalog nor homebrew.",
     editionNow: (db, dataDir, input: { parent: HomebrewSubraceInput["parent"] }) =>
       raceEdition(db, dataDir, input.parent),
   },
@@ -177,6 +181,9 @@ const KINDS: Record<Collection, Kind> = {
     holder: () => () => undefined,
   },
 };
+
+/** What one row of `collection` is called in a message, such as "optional feature". */
+export const nounOf = (collection: Collection) => KINDS[collection].noun;
 
 /**
  * Marks a PUT as a revert, so the middleware clears the held version instead of replacing it.
@@ -269,16 +276,45 @@ function restoreDeity(db: HomebrewDb, id: string, input: HomebrewDeityInput) {
   return "taken" in result ? result.taken : undefined;
 }
 
-function restoreClassParts(
+/** A row to write under the id it had, as `snapshotOf` holds it. */
+export type HeldRow = {
+  collection: Collection;
+  id: string;
+  input: object;
+  features?: HomebrewClassFeature[];
+  resources?: HomebrewClassResource[];
+};
+
+/**
+ * Inserts `row` under its id, with a class's features and resource tables, as its kind's
+ * save would write it. Answers why its kind refuses it instead, writing nothing: a parent
+ * gone, a catalog skill's name, or a name another row holds.
+ */
+export function insertUnderId(
   db: HomebrewDb,
-  id: string,
-  {
-    features,
-    resources,
-  }: { features?: HomebrewClassFeature[]; resources?: HomebrewClassResource[] },
+  dataDir: string,
+  { collection, id, input: held, features, resources }: HeldRow,
 ) {
+  if (collection === "deities") {
+    const taken = restoreDeity(db, id, held as HomebrewDeityInput);
+    return taken && deityNameTakenError(taken);
+  }
+  const kind = KINDS[collection];
+  const blocked = kind.blocked?.(db, dataDir, held as never);
+  if (blocked) return { error: blocked };
+  const input = held as { name: string; edition: NonNullable<Row["edition"]> };
+  const restored = {
+    ...input,
+    edition: kind.editionNow?.(db, dataDir, held as never) ?? input.edition,
+  };
+  const result = claimName(
+    () => kind.insert(db, id, restored as never),
+    kind.holder(db, restored as never),
+  );
+  if ("taken" in result) return nameTakenError(`homebrew ${kind.noun}`, result.taken);
   if (features) replaceHomebrewClassFeatures(db, id, features);
   if (resources) replaceHomebrewClassResources(db, id, resources);
+  return undefined;
 }
 
 export function homebrewHistoryRoutes(
@@ -340,8 +376,16 @@ export function homebrewHistoryRoutes(
     });
   }
 
-  routes.openapi(readHistory, (c) =>
-    c.json({
+  // An import can bring a deleted row back under its id, which leaves it nothing to restore.
+  const pruneDeleted = () => {
+    for (const [key, { collection, id }] of deleted) {
+      if (snapshotOf(db, collection, id)) deleted.delete(key);
+    }
+  };
+
+  routes.openapi(readHistory, (c) => {
+    pruneDeleted();
+    return c.json({
       reversible: [...earlier.values()].map(({ collection, id }) => ({ collection, id })),
       deleted: [...deleted.values()]
         .map(({ collection, id, name, input, deletedAt }) => ({
@@ -352,8 +396,8 @@ export function homebrewHistoryRoutes(
           deletedAt: deletedAt.toISOString(),
         }))
         .reverse(),
-    }),
-  );
+    });
+  });
 
   routes.openapi(revertRow, async (c) => {
     const { collection, id } = c.req.valid("param");
@@ -395,32 +439,13 @@ export function homebrewHistoryRoutes(
   routes.openapi(restoreRow, (c) => {
     const { collection, id } = c.req.valid("param");
     const key = keyOf(collection, id);
+    pruneDeleted();
     const gone = deleted.get(key);
     if (!gone) {
       return c.json({ error: "No deleted row with that id" }, 404);
     }
-    const kind = KINDS[collection];
-    if (collection === "deities") {
-      const taken = restoreDeity(db, id, gone.input as HomebrewDeityInput);
-      if (taken) return c.json(deityNameTakenError(taken), 409);
-      deleted.delete(key);
-      return c.body(null, 204);
-    }
-    const input = gone.input as { name: string; edition: NonNullable<Row["edition"]> };
-    const blocked = kind.blocked?.(db, dataDir, gone.input as never);
-    if (blocked) return c.json({ error: blocked }, 409);
-    const restored = {
-      ...input,
-      edition: kind.editionNow?.(db, dataDir, gone.input as never) ?? input.edition,
-    };
-    const result = claimName(
-      () => kind.insert(db, id, restored as never),
-      kind.holder(db, restored as never),
-    );
-    if ("taken" in result) {
-      return c.json(nameTakenError(`homebrew ${kind.noun}`, result.taken), 409);
-    }
-    restoreClassParts(db, id, gone);
+    const refusal = insertUnderId(db, dataDir, gone);
+    if (refusal) return c.json(refusal, 409);
     deleted.delete(key);
     return c.body(null, 204);
   });

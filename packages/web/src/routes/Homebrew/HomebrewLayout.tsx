@@ -20,6 +20,7 @@ import { LISTING_KINDS } from "../../lib/homebrewListing.ts";
 import { Sidebar, type SidebarProps } from "../Sidebar/Sidebar.tsx";
 import { SidebarFrame } from "../SidebarFrame.tsx";
 import { ExportSelectionProvider } from "./ExportSelectionProvider.tsx";
+import { ImportHomebrew } from "./ImportHomebrew.tsx";
 
 const KIND_ICONS: Record<HomebrewCollection, LucideIcon> = {
   items: Swords,
@@ -49,8 +50,8 @@ const FOOTER: SidebarProps["items"] = [
 ];
 
 /**
- * The Homebrew page: a rail of its kinds beside the open kind's list, and an export of the
- * entries chosen across kinds.
+ * The Homebrew page: a rail of its kinds beside the open kind's list, an import of a homebrew
+ * file, and an export of the entries chosen across kinds.
  */
 export function HomebrewLayout() {
   return (
@@ -58,6 +59,7 @@ export function HomebrewLayout() {
       <div className="min-w-0 flex-1 px-gutter py-6">
         <section className="flex max-w-6xl flex-col gap-4">
           <h1 className="sr-only">Homebrew</h1>
+          <ImportHomebrew />
           <ExportSelectionProvider>
             <Outlet />
           </ExportSelectionProvider>
