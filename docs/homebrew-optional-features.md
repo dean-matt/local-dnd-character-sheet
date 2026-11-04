@@ -7,8 +7,9 @@ A homebrew optional feature lives in `homebrew_optional_features`; its types sit
 list. The edition is a column.
 
 This is the pool half of the join in `docs/optional-features.md`. The count half, a class's or
-subclass's `optionalfeatureProgression`, has no homebrew table, so a homebrew class cannot grant one
-and a table cannot add an invocation to Warlock yet.
+subclass's `optionalfeatureProgression`, rides in a homebrew class's or subclass's own `json` in
+upstream's shape, dense or sparse, one type to a block and each type once. A count a catalog class
+states has no homebrew home, so a table cannot add an invocation to Warlock yet.
 
 ## Rules
 
@@ -20,7 +21,9 @@ and a table cannot add an invocation to Warlock yet.
 - Deleting a feature a character holds is refused with a 409 naming the characters. A character
   cites one by `{homebrewId}`, so a rename never orphans it.
 - A character chooses one where it chooses a catalog feature of its type and edition, counted
-  against the same entitlements; a homebrew feature entitles nothing.
+  against the same entitlements; a homebrew feature entitles nothing. A homebrew class or subclass
+  entitles its count at the character's level in the class, in its own row's edition, beside the
+  catalog's, and the level-up dialog asks for the picks a level adds to it.
 
 ## Reads
 

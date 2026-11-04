@@ -51,6 +51,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
     'Such as {"default": ["(a) a longsword or (b) two handaxes"], "goldAlternative": "125"}, printed in the class\'s detail, the gold in gp. The sheet adds none of it to the inventory.',
   subclassLevel:
     "The class level, 1 to 20, at which the class gains its subclass, such as 3. Creation and level-up offer the class's homebrew subclasses from that level. Absent, the class grants no subclass.",
+  optionalfeatureProgression:
+    'How many options of a feature type the class knows by each level, such as [{"featureType": ["EI"], "progression": [0, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8]}], one count to a type. "progression" is the running total at each of levels 1 to 20, or the levels it changes at, such as {"3": 2, "10": 3}, holding each count until the next. The sheet\'s Chosen Features card offers that many options of the type, homebrew and catalog alike, in the class\'s edition.',
   classFeatures:
     'Features by level, such as ["Second Wind|Warden|Homebrew|1"], printed as the level table in the class\'s detail. A homebrew class has no feature entries, so each link finds nothing, and the sheet lists none of them.',
 };

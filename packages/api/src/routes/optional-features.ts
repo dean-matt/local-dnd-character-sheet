@@ -3,6 +3,7 @@ import { characterDefinitionSchema, optionalFeatureEntitlementsSchema } from "@d
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import { getCharacter } from "../db/queries/characters.ts";
+import type { HomebrewDb } from "../db/queries/homebrew.ts";
 import { listOptionalFeatureEntitlements } from "../db/queries/optional-features.ts";
 import { catalogOutOfDate, notFound } from "./errors.ts";
 
@@ -12,7 +13,7 @@ const read = createRoute({
   tags: ["characters"],
   summary: "List what entitles a character to optional features, per grantor and type",
   description:
-    "Each class and subclass at the level the character holds it, and each feat and option " +
+    "Each class and subclass at the level the character holds it, homebrew among them, and each feat and option " +
     "held that grants one. `known` is the grantor's running total, not what its last level added.",
   request: { params: z.object({ id: z.string() }) },
   responses: {
@@ -25,14 +26,21 @@ const read = createRoute({
   },
 });
 
-export function optionalFeaturesRoutes(charactersDb: CharactersDb, dataDir: string) {
+export function optionalFeaturesRoutes(
+  charactersDb: CharactersDb,
+  dataDir: string,
+  homebrewDb: HomebrewDb,
+) {
   const routes = new OpenAPIHono();
 
   routes.openapi(read, (c) => {
     const row = getCharacter(charactersDb, c.req.valid("param").id);
     if (!row) return c.json({ error: "No character with that id" }, 404);
     const definition = characterDefinitionSchema.parse(row.definition);
-    return c.json({ entitlements: listOptionalFeatureEntitlements(dataDir, definition) }, 200);
+    return c.json(
+      { entitlements: listOptionalFeatureEntitlements(dataDir, homebrewDb, definition) },
+      200,
+    );
   });
 
   return routes;

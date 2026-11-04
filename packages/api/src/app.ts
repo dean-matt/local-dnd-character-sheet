@@ -44,7 +44,7 @@ app.route("/", characterPortraitRoutes(charactersDb));
 app.route("/", pagesRoutes(charactersDb));
 app.route("/", derivedRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", featuresRoutes(charactersDb, DATA_DIR, homebrewDb));
-app.route("/", optionalFeaturesRoutes(charactersDb, DATA_DIR));
+app.route("/", optionalFeaturesRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", characterSpellsRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", characterInventoryRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", characterReferencesRoutes(charactersDb, DATA_DIR));

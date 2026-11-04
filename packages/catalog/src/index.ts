@@ -45,6 +45,7 @@ export type {
   SubclassRecord,
 } from "./class.ts";
 export {
+  carryForward,
   casterProgressionSchema,
   castingStartLevelSchema,
   classFeatureRecordSchema,
@@ -61,6 +62,9 @@ export {
   homebrewSubclassInputSchema,
   homebrewSubclassRecordSchema,
   homebrewSubclassSchema,
+  knownByLevel,
+  LEVEL_KEY,
+  optionalFeatureCountsSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
   sameSubclassParent,

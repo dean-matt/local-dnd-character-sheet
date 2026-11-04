@@ -4,9 +4,11 @@
  * and a grant row for every feat and option held. `docs/optional-features.md` sums the
  * three tables in one query; this keeps them apart so a pick can name what entitled it.
  *
- * A grantor with no row, homebrew among them, entitles nothing: no homebrew table holds an
- * option count.
+ * A homebrew class or subclass reads its counts off its own entry's `optionalfeatureProgression`
+ * in `homebrew.db`. A grantor with no row entitles nothing.
  */
+
+import { optionalFeatureCountsSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type ContentRef,
@@ -17,6 +19,7 @@ import {
 } from "@dnd/character";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
+import { getHomebrewClass, getHomebrewSubclass, type HomebrewDb } from "./homebrew.ts";
 
 type Count = { featureType: string; known: number };
 
@@ -30,8 +33,23 @@ const held = (entries: readonly { ref: EntryRef }[]): ContentRef[] => [
   ).values(),
 ];
 
+/** A homebrew row's counts at `level`, or no edition where `row` is gone. */
+function homebrewCounts(
+  row: { edition: Edition; json: unknown } | undefined,
+  level: number,
+): { edition: Edition | undefined; counts: Count[] } {
+  if (!row) return { edition: undefined, counts: [] };
+  const counts = optionalFeatureCountsSchema
+    .parse(row.json)
+    .map(({ featureType, known }) => ({ featureType, known: known[level - 1] ?? 0 }))
+    .filter(({ known }) => known > 0)
+    .sort((a, b) => a.featureType.localeCompare(b.featureType));
+  return { edition: row.edition, counts };
+}
+
 export function listOptionalFeatureEntitlements(
   dataDir: string,
+  homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
 ): OptionalFeatureEntitlement[] {
   const db = openContentDb(dataDir);
@@ -71,24 +89,35 @@ export function listOptionalFeatureEntitlements(
 
     return [
       ...classLevels(definition).flatMap(({ class: cls, level, subclass }) => {
-        if (!("name" in cls)) return [];
         const own = each(
           { kind: "class", ref: cls },
-          {
-            edition: edition(
-              "SELECT edition FROM classes WHERE name = ? AND source = ?",
-              cls.name,
-              cls.source,
-            ),
-            counts: counts(
-              "class_optional_features WHERE class_name = ? AND class_source = ? AND level = ?",
-              cls.name,
-              cls.source,
-              level,
-            ),
-          },
+          "homebrewId" in cls
+            ? homebrewCounts(getHomebrewClass(homebrewDb, cls.homebrewId), level)
+            : {
+                edition: edition(
+                  "SELECT edition FROM classes WHERE name = ? AND source = ?",
+                  cls.name,
+                  cls.source,
+                ),
+                counts: counts(
+                  "class_optional_features WHERE class_name = ? AND class_source = ? AND level = ?",
+                  cls.name,
+                  cls.source,
+                  level,
+                ),
+              },
         );
-        if (!subclass || "homebrewId" in subclass) return own;
+        if (!subclass) return own;
+        if ("homebrewId" in subclass) {
+          return [
+            ...own,
+            ...each(
+              { kind: "subclass", ref: subclass, class: cls },
+              homebrewCounts(getHomebrewSubclass(homebrewDb, subclass.homebrewId), level),
+            ),
+          ];
+        }
+        if (!("name" in cls)) return own;
         const keyed = [subclass.name, subclass.source, cls.name, cls.source];
         return [
           ...own,

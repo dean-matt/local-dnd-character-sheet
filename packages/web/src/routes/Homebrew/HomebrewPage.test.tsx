@@ -2120,6 +2120,7 @@ describe("Homebrew kind page", () => {
       "hd",
       "multiclassing",
       "name",
+      "optionalfeatureProgression",
       "primaryAbility",
       "proficiency",
       "spellcastingAbility",
@@ -3065,6 +3066,7 @@ describe("Homebrew kind page", () => {
         "Proficiencies & Equipment",
         "Multiclassing & Spellcasting",
         "Features & Resources",
+        "Optional features",
         "Preview",
       ]);
       expect(field("textbox", "Name")).toHaveValue("Warden");
@@ -3249,6 +3251,82 @@ describe("Homebrew kind page", () => {
       click("Next");
 
       expect(within(editor()).getByText("Two features share a name and level")).toBeInTheDocument();
+    });
+
+    it("states option counts by level in the step and in JSON, saving them on the row", async () => {
+      const fetchMock = stubApi({ "feature-types": ["EI", "MM"] }, [
+        {
+          status: 201,
+          body: {
+            id: "c1",
+            name: "Warden",
+            edition: "one",
+            hitDie: 8,
+            json: {},
+            createdAt: CREATED_AT,
+          },
+        },
+      ]);
+      renderPage("classes");
+
+      addClass();
+      stepTo("Optional features");
+      click("Add an option count");
+      await settled();
+      pick("Count 1 feature type", "Eldritch Invocation");
+      fireEvent.change(field("spinbutton", "Count 1 level 2 known"), { target: { value: "2" } });
+      mode("JSON");
+      expect(JSON.parse(jsonText("Class JSON")).optionalfeatureProgression).toEqual([
+        { featureType: ["EI"], progression: [0, 2, ...Array<number>(18).fill(0)] },
+      ]);
+
+      typeJson(
+        "Class JSON",
+        JSON.stringify({
+          ...JSON.parse(jsonText("Class JSON")),
+          optionalfeatureProgression: [{ featureType: ["MM"], progression: { "3": 2 } }],
+        }),
+      );
+      mode("Step by step");
+      stepTo("Optional features");
+      expect(field("combobox", "Count 1 feature type")).toHaveTextContent("Metamagic");
+      expect(field("spinbutton", "Count 1 level 2 known")).toHaveValue(null);
+      expect(field("spinbutton", "Count 1 level 9 known")).toHaveValue(2);
+      click("Save");
+
+      await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+      expect(writesOf(fetchMock)[0]?.body.optionalfeatureProgression).toEqual([
+        { featureType: ["MM"], progression: { "3": 2 } },
+      ]);
+    });
+
+    it("holds a count that names no feature type", () => {
+      stubApi({});
+      renderPage("classes");
+
+      addClass();
+      stepTo("Optional features");
+      click("Add an option count");
+      click("Save");
+
+      expect(within(editor()).getByText(/A count names one feature type/)).toBeInTheDocument();
+    });
+
+    it("shows counts stored as other than a list as a shape the form cannot show", () => {
+      stubApi({});
+      renderPage("classes");
+
+      addClass();
+      mode("JSON");
+      typeJson(
+        "Class JSON",
+        JSON.stringify({ ...JSON.parse(jsonText("Class JSON")), optionalfeatureProgression: {} }),
+      );
+      mode("Step by step");
+      stepTo("Optional features");
+
+      expect(within(editor()).getByText(/shape the form cannot show/)).toBeInTheDocument();
+      expect(within(editor()).queryByRole("button", { name: "Add an option count" })).toBeNull();
     });
 
     describe("resources", () => {
@@ -3639,6 +3717,28 @@ describe("Homebrew subclasses", () => {
       body: { parent: { name: "Fighter", source: "XPHB" }, edition: "one" },
     });
     expect(homebrew?.body).toMatchObject({ parent: { classId: "c1" }, edition: "one" });
+  });
+
+  it("states a subclass's option counts by level, saving them on the row", async () => {
+    const fetchMock = stubApi({ ...lists, "feature-types": ["MV:B"] }, [
+      { status: 201, body: stored },
+    ]);
+    renderPage("subclasses");
+
+    fireEvent.click(within(subclasses()).getByRole("button", { name: "Add subclass" }));
+    await settled();
+    pick("Parent class", "Fighter (XPHB)");
+    stepTo("Optional features");
+    click("Add an option count");
+    await settled();
+    pick("Count 1 feature type", "Maneuver (Battle Master)");
+    fireEvent.change(field("spinbutton", "Count 1 level 3 known"), { target: { value: "3" } });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    expect(writesOf(fetchMock)[0]?.body.optionalfeatureProgression).toEqual([
+      { featureType: ["MV:B"], progression: [0, 0, 3, ...Array<number>(17).fill(0)] },
+    ]);
   });
 
   it("refuses a subclass without a parent class, naming the field", async () => {

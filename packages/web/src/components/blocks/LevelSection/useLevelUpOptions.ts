@@ -1,6 +1,6 @@
+import { optionalFeatureCountsSchema } from "@dnd/catalog";
 import {
   type CharacterDefinition,
-  catalogRef,
   type EntryRef,
   entryKey,
   grantorKey,
@@ -18,10 +18,17 @@ export type OptionGain = Omit<OptionalFeatureEntitlement, "known"> & { count: nu
 
 const pickKey = (pick: Pick) => `${pick.featureType}|${entryKey(pick.ref)}`;
 
+/** A homebrew entry's counts at `level` as a grants table holds them; none below level 1. */
+const homebrewTable = (json: unknown, level: number) => ({
+  optionalFeatures: optionalFeatureCountsSchema
+    .parse(json)
+    .map(({ featureType, known }) => ({ featureType, known: known[level - 1] ?? 0 })),
+});
+
 /**
- * The options the level adds under `cls` and its subclass, and the picks the draft's
- * `optionalFeatures` holds past `definition`'s for each, each stating the character level it
- * was picked at. A homebrew class counts none.
+ * The options the level adds under `cls` and its subclass, catalog or homebrew, and the picks
+ * the draft's `optionalFeatures` holds past `definition`'s for each, each stating the
+ * character level it was picked at.
  *
  * A feat taken at this level that grants options, as `Martial Adept` (PHB) does, asks
  * nothing here: the Chosen Features card offers its picks once the level is applied.
@@ -34,24 +41,40 @@ export function useLevelUpOptions(
   optionalFeatures: readonly Pick[],
 ) {
   const { setValue } = useFormContext<CharacterDefinition>();
-  const catalog = "name" in cls ? cls : undefined;
-  const subclass = catalogRef(target.subclass);
-  const gains: OptionGain[] = catalog
-    ? [
-        ...optionsGained(target.before, target.after).map((gain) => ({
+  const { homebrew, homebrewSubclass, subclass } = target;
+  const classGained =
+    "name" in cls
+      ? optionsGained(target.before, target.after)
+      : homebrew
+        ? optionsGained(
+            homebrewTable(homebrew.json, target.level),
+            homebrewTable(homebrew.json, target.next),
+          )
+        : [];
+  // A subclass picked at this level held no options before it.
+  const subclassGained =
+    subclass === undefined
+      ? []
+      : homebrewSubclass
+        ? optionsGained(
+            target.asksSubclass ? undefined : homebrewTable(homebrewSubclass.json, target.level),
+            homebrewTable(homebrewSubclass.json, target.next),
+          )
+        : optionsGained(target.subclassBefore, target.subclassAfter);
+  const gains: OptionGain[] = [
+    ...classGained.map((gain) => ({
+      ...gain,
+      grantedBy: { kind: "class" as const, ref: cls },
+      edition: target.edition ?? homebrew?.edition ?? definition.edition,
+    })),
+    ...(subclass
+      ? subclassGained.map((gain) => ({
           ...gain,
-          grantedBy: { kind: "class" as const, ref: catalog },
-          edition: target.edition ?? definition.edition,
-        })),
-        ...(subclass
-          ? optionsGained(target.subclassBefore, target.subclassAfter).map((gain) => ({
-              ...gain,
-              grantedBy: { kind: "subclass" as const, ref: subclass, class: catalog },
-              edition: target.subclassRow?.edition ?? definition.edition,
-            }))
-          : []),
-      ]
-    : [];
+          grantedBy: { kind: "subclass" as const, ref: subclass, class: cls },
+          edition: target.subclassRow?.edition ?? homebrewSubclass?.edition ?? definition.edition,
+        }))
+      : []),
+  ];
   const prior = new Set(definition.optionalFeatures.map(pickKey));
   const added = optionalFeatures.filter((pick) => !prior.has(pickKey(pick)));
   const picked = (gain: OptionGain) =>

@@ -96,6 +96,7 @@ import {
   MonsterTraits,
 } from "./MonsterTextBlocks.tsx";
 import { OptionalFeatureBasics } from "./OptionalFeatureBasics.tsx";
+import { OptionalFeatureCounts } from "./OptionalFeatureCounts.tsx";
 import { OptionalFeaturePrerequisites } from "./OptionalFeaturePrerequisites.tsx";
 import { RaceAbilityScores } from "./RaceAbilityScores.tsx";
 import { RaceBasics } from "./RaceBasics.tsx";
@@ -313,6 +314,11 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
     },
     { title: "Features", Fields: ClassFeatures, keys: ["features"] },
     { title: "Resources", Fields: ClassResources, keys: ["resources"] },
+    {
+      title: "Optional features",
+      Fields: OptionalFeatureCounts,
+      keys: ["optionalfeatureProgression"],
+    },
   ],
   reference: createElement(FieldReference, { schema: appliedClassFieldsSchema }),
   shownKeys: () => [
@@ -329,6 +335,7 @@ const klass: EditingKind<z.infer<typeof homebrewClassFormSchema>> = {
     "casterProgression",
     "features",
     "resources",
+    "optionalfeatureProgression",
   ],
 };
 
@@ -423,10 +430,15 @@ const subclass: EditingKind<z.infer<typeof homebrewSubclassFormSchema>> = {
     { title: "Basics", Fields: SubclassBasics, keys: ["name", "parent"] },
     { title: "Rules text", Fields: ItemRulesText, keys: ["entries"] },
     { title: "Features", Fields: SubclassFeatures, keys: ["features"] },
+    {
+      title: "Optional features",
+      Fields: OptionalFeatureCounts,
+      keys: ["optionalfeatureProgression"],
+    },
   ],
   // A parent class belongs to one edition, so the next edition's list does not hold it.
   forEdition: ({ parent: _parent, ...rest }) => rest,
-  shownKeys: () => ["name", "parent", "entries", "features"],
+  shownKeys: () => ["name", "parent", "entries", "features", "optionalfeatureProgression"],
 };
 
 const subrace: EditingKind<z.infer<typeof homebrewSubraceFormSchema>> = {

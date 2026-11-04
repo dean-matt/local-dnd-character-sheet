@@ -1,5 +1,6 @@
 import {
   HOMEBREW_SOURCE,
+  type HomebrewSubclassRecord,
   type SubclassRecord,
   subclassLevelSchema,
   type subclassListItemSchema,
@@ -28,6 +29,17 @@ export const catalogSubclassRow = (
     : items?.find(
         (item): item is SubclassRecord =>
           "source" in item && entryKey(subclassRef(item)) === entryKey(ref),
+      );
+
+/** The homebrew row `ref` names among `items`; a catalog subclass has none. */
+export const homebrewSubclassRow = (
+  items: readonly SubclassItem[] | undefined,
+  ref: EntryRef | undefined,
+): HomebrewSubclassRecord | undefined =>
+  ref === undefined || !("homebrewId" in ref)
+    ? undefined
+    : items?.find(
+        (item): item is HomebrewSubclassRecord => !("source" in item) && item.id === ref.homebrewId,
       );
 
 /**

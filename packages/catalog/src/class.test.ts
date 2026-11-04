@@ -8,6 +8,8 @@ import {
   homebrewClassFeaturesSchema,
   homebrewClassInputSchema,
   homebrewClassRecordSchema,
+  homebrewSubclassInputSchema,
+  optionalFeatureCountsSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
   sameSubclassParent,
@@ -271,5 +273,49 @@ describe("sameSubclassParent", () => {
     expect(sameSubclassParent(cleric, { name: "cleric", source: "PHB" })).toBe(false);
     expect(sameSubclassParent({ classId: "c1" }, { classId: "c2" })).toBe(false);
     expect(sameSubclassParent(cleric, { classId: "c1" })).toBe(false);
+  });
+});
+
+describe("optionalFeatureCountsSchema", () => {
+  const block = (progression: unknown, featureType = ["EI"]) => ({ featureType, progression });
+
+  it("reads a count per level, carrying a sparse progression's count forward", () => {
+    const dense = [0, 2, ...Array<number>(18).fill(3)];
+    expect(
+      optionalFeatureCountsSchema.parse({
+        optionalfeatureProgression: [block(dense), block({ "3": 2, "10": 3 }, ["MM"])],
+      }),
+    ).toEqual([
+      { featureType: "EI", known: dense },
+      {
+        featureType: "MM",
+        known: [0, 0, ...Array<number>(7).fill(2), ...Array<number>(11).fill(3)],
+      },
+    ]);
+  });
+
+  it("counts none for an entry stating none, or one stored in a shape it cannot read", () => {
+    expect(optionalFeatureCountsSchema.parse({})).toEqual([]);
+    expect(optionalFeatureCountsSchema.parse({ optionalfeatureProgression: "EI" })).toEqual([]);
+  });
+
+  it("holds a homebrew class or subclass to 20 levels, one type a count, each type once", () => {
+    const parent = { name: "Fighter", source: "PHB" };
+    const accepts = (optionalfeatureProgression: unknown) =>
+      homebrewSubclassInputSchema.safeParse({ name: "Grove", parent, optionalfeatureProgression })
+        .success;
+    expect(accepts([block({ "1": 1 })])).toBe(true);
+    expect(accepts([block([1, 2])])).toBe(false);
+    expect(accepts([block({ "21": 1 })])).toBe(false);
+    expect(accepts([block({ "1": 1 }, ["EI", "MM"])])).toBe(false);
+    expect(accepts([block({ "1": 1 }), block({ "5": 2 })])).toBe(false);
+    expect(
+      homebrewClassInputSchema.safeParse({
+        name: "Warden",
+        edition: "one",
+        hd: { number: 1, faces: 10 },
+        optionalfeatureProgression: [block({ "1": 1 })],
+      }).success,
+    ).toBe(true);
   });
 });

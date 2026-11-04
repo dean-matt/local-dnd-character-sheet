@@ -220,7 +220,8 @@ const subclassGrantor = z.strictObject({
  */
 export const optionalFeatureGrantorSchema = z.discriminatedUnion("kind", [
   classGrantor,
-  subclassGrantor,
+  // A homebrew subclass states its own counts, under a catalog class or a homebrew one.
+  subclassGrantor.extend({ ref: entryRefSchema, class: entryRefSchema }),
   z.strictObject({ kind: z.literal("feat"), ref: entryRefSchema }),
   z.strictObject({ kind: z.literal("optionalFeature"), ref: entryRefSchema }),
 ]);
