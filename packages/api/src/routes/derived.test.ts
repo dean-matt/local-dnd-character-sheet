@@ -1120,6 +1120,23 @@ describe("derivedRoutes", () => {
     expect(await res.json()).toEqual({ error: "No race homebrew s" });
   });
 
+  it("reads a field a homebrew subrace states over its race's", async () => {
+    insertHomebrewSubrace(opened.homebrewDb, "s", {
+      name: "Swift",
+      edition: "classic",
+      parent: ELF,
+      speed: 40,
+      darkvision: 60,
+    });
+    store(definitionWith({ subrace: { homebrewId: "s" } }));
+    const swift = await derived();
+
+    expect(swift.speed.computed).toEqual({ walk: 40 });
+    expect(swift.senses.computed).toEqual([
+      expect.objectContaining({ name: "darkvision", range: 60 }),
+    ]);
+  });
+
   it("reads a race taken with no subrace from the race row", async () => {
     store(definitionWith({ subrace: undefined }));
     expect((await derived()).speed.computed).toEqual({ walk: 30 });

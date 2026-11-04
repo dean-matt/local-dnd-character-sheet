@@ -111,6 +111,7 @@ export {
   homebrewMonsterInputSchema,
   homebrewMonsterRecordSchema,
 } from "./homebrew-monster.ts";
+export { mergeHomebrewSubrace } from "./homebrew-subrace-merge.ts";
 export type { CharacterInventory, SheetItem } from "./inventory.ts";
 export { characterInventorySchema } from "./inventory.ts";
 export type {

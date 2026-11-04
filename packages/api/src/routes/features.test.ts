@@ -636,7 +636,7 @@ describe("featuresRoutes", () => {
     ]);
   });
 
-  it("names a homebrew subrace beside its race and lists the race row's traits", async () => {
+  it("names a homebrew subrace beside its race and lists its traits after the race's", async () => {
     insertHomebrewRace(opened.homebrewDb, "hr", {
       name: "Duskling",
       edition: "classic",
@@ -655,8 +655,41 @@ describe("featuresRoutes", () => {
     expect((await features()).groups.find(({ origin }) => origin === "race")).toEqual({
       origin: "race",
       name: "Duskling (Moon)",
-      features: [{ resolved: true, name: "Dusksight", entries: ["You see in dusk."] }],
+      features: [
+        { resolved: true, name: "Dusksight", entries: ["You see in dusk."] },
+        { resolved: true, name: "Moonlit", entries: ["You glow."] },
+      ],
     });
+  });
+
+  it("puts a homebrew subrace's trait in place of the race trait it stands in for", async () => {
+    insertHomebrewRace(opened.homebrewDb, "hr", {
+      name: "Duskling",
+      edition: "classic",
+      size: ["M"],
+      speed: 30,
+      entries: [
+        { type: "entries", name: "Dusksight", entries: ["You see in dusk."] },
+        { type: "entries", name: "Hardy", entries: ["You endure."] },
+      ],
+    });
+    insertHomebrewSubrace(opened.homebrewDb, "hs", {
+      name: "Keen",
+      edition: "classic",
+      parent: { raceId: "hr" },
+      entries: [
+        {
+          type: "entries",
+          name: "Nightsight",
+          data: { overwrite: "Dusksight" },
+          entries: ["You see in the dark."],
+        },
+      ],
+    });
+    store(definitionWith({ race: { homebrewId: "hr" }, subrace: { homebrewId: "hs" } }));
+
+    const traits = (await features()).groups.find(({ origin }) => origin === "race")?.features;
+    expect(traits?.map((trait) => trait.name)).toEqual(["Nightsight", "Hardy"]);
   });
 
   it("lists a homebrew background's flagged entries, named or not, as its features", async () => {
