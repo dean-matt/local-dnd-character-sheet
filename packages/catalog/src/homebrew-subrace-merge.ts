@@ -1,8 +1,9 @@
 /**
- * A homebrew subrace's `json` over its race's, the merge `content`'s ETL runs on a catalog
- * subrace, which it cannot import. Where the two cannot combine, the ETL refuses the row and
- * this lets the subrace's list replace the race's, so a sheet still opens. A homebrew
- * subrace's entry carries no `overwrite` flags.
+ * A homebrew subrace's `json` over its race's, after the merge `content`'s ETL runs on a
+ * catalog subrace, which it cannot import. Traits, increases, languages and skills combine;
+ * every other field the subrace states replaces the race's. Where two lists cannot combine,
+ * the ETL refuses the row and this lets the subrace's replace the race's, so a sheet still
+ * opens.
  */
 import { isRecord } from "./entry-text.ts";
 
@@ -56,14 +57,10 @@ const MERGE: Record<string, (mine: unknown, theirs: unknown[]) => unknown[]> = {
 
 export function mergeHomebrewSubrace(race: Entry, subrace: Entry): Entry {
   const merged: Entry = structuredClone(race);
-  const traits = Array.isArray(subrace.entries) ? subrace.entries : [];
-  // A subrace whose Languages trait stands in for the race's replaces its languages too.
-  const restatesLanguages = traits.some((trait) => standsInFor(trait) === "languages");
   for (const [field, value] of Object.entries(subrace)) {
     if (OWN.has(field)) continue;
     const rule = MERGE[field];
-    const replaced = field === "languageProficiencies" && restatesLanguages;
-    merged[field] = rule && Array.isArray(value) && !replaced ? rule(merged[field], value) : value;
+    merged[field] = rule && Array.isArray(value) ? rule(merged[field], value) : value;
   }
   for (const [field, value] of Object.entries(merged)) {
     if (value === null) delete merged[field];

@@ -72,18 +72,6 @@ describe("mergeHomebrewSubrace", () => {
     });
   });
 
-  it("replaces the languages where a trait stands in for the race's Languages", () => {
-    const merged = mergeHomebrewSubrace(
-      { ...RACE, entries: [{ type: "entries", name: "Languages", entries: ["D"] }] },
-      sub({
-        languageProficiencies: [{ aquan: true }],
-        entries: [{ type: "entries", name: "Tongues", data: { overwrite: "Languages" } }],
-      }),
-    );
-
-    expect(merged.languageProficiencies).toEqual([{ aquan: true }]);
-  });
-
   it("replaces every other field it states, and drops one it sets to null", () => {
     const merged = mergeHomebrewSubrace(RACE, sub({ speed: 35, size: ["S"], darkvision: null }));
 
