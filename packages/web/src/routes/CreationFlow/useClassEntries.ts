@@ -95,8 +95,8 @@ const homebrewOf = (cls: EntryRef) => ("homebrewId" in cls ? cls.homebrewId : un
 
 /**
  * Every class the draft holds, in the order each was first taken, with the rows its
- * choices read: the catalog or homebrew class, and its subclasses in the character's
- * edition. A homebrew class needs no score to multiclass.
+ * choices read: the catalog or homebrew class, and its subclasses in the character's edition,
+ * or a homebrew class's own. A homebrew class needs no score to multiclass.
  */
 export function useClassEntries() {
   const [edition = "one", levels = []] = useWatch<CharacterDefinition, ["edition", "levels"]>({
@@ -109,7 +109,10 @@ export function useClassEntries() {
   });
   const subclassLists = useQueries({
     queries: groups.map(({ cls }, index) =>
-      subclassesQuery(subclassParent(cls, homebrews[index]?.data), edition),
+      subclassesQuery(
+        subclassParent(cls, homebrews[index]?.data),
+        homebrews[index]?.data?.edition ?? edition,
+      ),
     ),
   });
   const entries = groups.map((group, index): ClassEntry => {

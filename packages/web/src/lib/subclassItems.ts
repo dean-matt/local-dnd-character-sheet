@@ -40,7 +40,10 @@ export const subclassParent = (
 ): ContentRef | undefined =>
   "name" in cls ? cls : homebrew && { name: homebrew.name, source: HOMEBREW_SOURCE };
 
-/** The level a class gains its subclass at, off the catalog row or the homebrew one, whichever loaded. */
+/**
+ * The level a class gains its subclass at, off the catalog row or the homebrew one, whichever
+ * loaded.
+ */
 export const subclassLevelOf = (
   catalogJson: unknown,
   homebrew: { json: { subclassLevel?: number } } | undefined,

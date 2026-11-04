@@ -637,7 +637,7 @@ describe("LevelUp", () => {
     renderSeeded(warlock(2, { levels: [warden, warden] }));
     await open();
     fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
-
+    await within(dialog()).findByRole("combobox", { name: "Warden subclass" });
     choose("Warden subclass", "Oath of Roots (homebrew)");
     await waitFor(() => expect(applyButton()).not.toHaveAttribute("aria-disabled", "true"));
     fireEvent.click(applyButton());

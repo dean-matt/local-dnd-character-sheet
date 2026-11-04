@@ -51,7 +51,10 @@ export function useLevelUpClass(
   const row = useQuery(classQuery(catalog));
   const homebrew = useQuery(homebrewClassQuery("homebrewId" in cls ? cls.homebrewId : undefined));
   const subclassList = useQuery(
-    subclassesQuery(subclassParent(cls, homebrew.data), definition.edition),
+    subclassesQuery(
+      subclassParent(cls, homebrew.data),
+      homebrew.data?.edition ?? definition.edition,
+    ),
   );
   const subclassLevel = subclassLevelOf(row.data?.json, homebrew.data);
   const subclasses: readonly SubclassItem[] = subclassList.data?.items ?? [];
