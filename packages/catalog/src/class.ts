@@ -126,9 +126,27 @@ export const subclassLevelSchema = z
  * levels 1 to 20, or keyed by the levels the count changes at, as a copied `Sorcerer` (PHB)
  * carries it. `docs/optional-features.md` has both shapes.
  */
+/**
+ * A level from 1 to 20 as a progression keys it: exactly the 20 spellings, so no two keys reach
+ * one level and overwrite it, as `Number` would land "03", " 3" and "1e1" on one.
+ */
+export const LEVEL_KEY = /^(?:[1-9]|1\d|20)$/;
+
+/**
+ * A count at each of levels 1 to 20 from one keyed by the levels it changes at, each count
+ * carried forward to the next change: `{"3":2,"10":3}` knows two at level 9, not none.
+ */
+export function carryForward(changes: Readonly<Record<string, number>>): number[] {
+  let held = 0;
+  return Array.from({ length: 20 }, (_, at) => {
+    held = changes[String(at + 1)] ?? held;
+    return held;
+  });
+}
+
 const progressionSchema = z.union([
   z.array(z.int().min(0)).length(20),
-  z.record(z.string().regex(/^(?:[1-9]|1\d|20)$/, "A level is 1 to 20"), z.int().min(0)),
+  z.record(z.string().regex(LEVEL_KEY, "A level is 1 to 20"), z.int().min(0)),
 ]);
 
 const optionalFeatureBlockSchema = z.looseObject({
@@ -151,13 +169,7 @@ const optionalFeatureProgressionSchema = z
 export function knownByLevel(progression: unknown): number[] | undefined {
   const read = progressionSchema.safeParse(progression);
   if (!read.success) return undefined;
-  const changes = read.data;
-  if (Array.isArray(changes)) return changes;
-  let held = 0;
-  return Array.from({ length: 20 }, (_, at) => {
-    held = changes[String(at + 1)] ?? held;
-    return held;
-  });
+  return Array.isArray(read.data) ? read.data : carryForward(read.data);
 }
 
 /**
@@ -267,10 +279,10 @@ export type HomebrewClassRecord = z.infer<typeof homebrewClassRecordSchema>;
 
 /**
  * A homebrew subclass's `json`: the 5etools entry shape `classEntrySchema` models, with the
- * option counts a homebrew class states too. The class
- * it belongs to is a column beside the entry, not a field in it, so renaming a homebrew
- * class cannot leave the entry naming a class that is gone; a read stamps `className`,
- * `classSource` and `shortName` in, the way `subclassRecordSchema`'s rows carry them.
+ * option counts a homebrew class states too. The class it belongs to is a column beside the
+ * entry, not a field in it, so renaming a homebrew class cannot leave the entry naming a class
+ * that is gone; a read stamps `className`, `classSource` and `shortName` in, the way
+ * `subclassRecordSchema`'s rows carry them.
  */
 export const homebrewSubclassSchema = classEntrySchema.extend({
   optionalfeatureProgression: optionalFeatureProgressionSchema.optional(),

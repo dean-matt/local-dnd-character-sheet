@@ -30,7 +30,8 @@ const typeOf = (block: Block): string =>
 export function OptionalFeatureCounts({ entry, onChange, errorFor }: HomebrewFormProps) {
   const rows = listAt(entry, KEY);
   const shown =
-    entry[KEY] === undefined || rows.every((row) => isRecord(row) && !Array.isArray(row));
+    entry[KEY] === undefined ||
+    (Array.isArray(entry[KEY]) && rows.every((row) => isRecord(row) && !Array.isArray(row)));
   const ids = useRef<number[]>([]);
   const next = useRef(0);
   const { data: listed = [], isError } = useSearchFeatureTypes();

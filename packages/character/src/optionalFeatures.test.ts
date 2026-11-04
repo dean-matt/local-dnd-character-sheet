@@ -47,6 +47,20 @@ describe("spare entitlement", () => {
     expect(tally && spareEntitlement(tally)?.grantedBy).toEqual(MARTIAL_ADEPT);
   });
 
+  it("tells two homebrew subclasses apart, and a subclass from its class", () => {
+    const warden = { kind: "class", ref: { homebrewId: "hb_08" } } as const;
+    const subclass = (homebrewId: string) =>
+      ({ kind: "subclass", ref: { homebrewId }, class: warden.ref }) as const;
+    const granted: OptionalFeatureEntitlement[] = [
+      { featureType: "MV:B", known: 1, grantedBy: warden, edition: "one" },
+      { featureType: "MV:B", known: 1, grantedBy: subclass("hb_09"), edition: "one" },
+      { featureType: "MV:B", known: 1, grantedBy: subclass("hb_10"), edition: "one" },
+    ];
+    const picks = [maneuver("Parry", warden), maneuver("Riposte", subclass("hb_09"))];
+    const [tally] = optionalFeatureTallies(picks, granted);
+    expect(tally && spareEntitlement(tally)?.grantedBy).toEqual(subclass("hb_10"));
+  });
+
   it("names the first grantor once every one is spent", () => {
     const picks = [
       ...["Parry", "Riposte", "Feint"].map((name) => maneuver(name, BATTLE_MASTER)),

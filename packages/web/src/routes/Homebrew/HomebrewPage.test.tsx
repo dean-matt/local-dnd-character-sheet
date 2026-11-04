@@ -3312,6 +3312,23 @@ describe("Homebrew kind page", () => {
       expect(within(editor()).getByText(/A count names one feature type/)).toBeInTheDocument();
     });
 
+    it("shows counts stored as other than a list as a shape the form cannot show", () => {
+      stubApi({});
+      renderPage("classes");
+
+      addClass();
+      mode("JSON");
+      typeJson(
+        "Class JSON",
+        JSON.stringify({ ...JSON.parse(jsonText("Class JSON")), optionalfeatureProgression: {} }),
+      );
+      mode("Step by step");
+      stepTo("Optional features");
+
+      expect(within(editor()).getByText(/shape the form cannot show/)).toBeInTheDocument();
+      expect(within(editor()).queryByRole("button", { name: "Add an option count" })).toBeNull();
+    });
+
     describe("resources", () => {
       const warden = {
         id: "c1",

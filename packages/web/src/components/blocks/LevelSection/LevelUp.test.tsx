@@ -134,8 +134,45 @@ const OATH_OF_ROOTS = {
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 
+const maneuvers = (from: number, count: number) => [
+  {
+    featureType: ["MV:B"],
+    progression: Array.from({ length: 20 }, (_, at) => (at + 1 >= from ? count : 0)),
+  },
+];
+
+/** A homebrew class with no subclass that knows a maneuver from 2nd level. */
+const MARSHAL = {
+  id: "hb_marshal",
+  name: "Marshal",
+  edition: "one",
+  hitDie: 10,
+  json: {
+    name: "Marshal",
+    source: "HB",
+    hd: { number: 1, faces: 10 },
+    optionalfeatureProgression: maneuvers(2, 1),
+  },
+  createdAt: "2026-01-01T00:00:00.000Z",
+};
+
+/** A homebrew subclass of the catalog Warlock that knows two maneuvers from 3rd level. */
+const BLADEWARD = {
+  ...HEXBLADE,
+  id: "hb_bladeward",
+  name: "Bladeward Patron",
+  json: {
+    ...HEXBLADE.json,
+    name: "Bladeward Patron",
+    shortName: "Bladeward",
+    optionalfeatureProgression: maneuvers(3, 2),
+  },
+};
+
 const ROWS: Record<string, unknown> = {
   "/api/homebrew/classes/hb_warden": { ...WARDEN, resources: [] },
+  "/api/homebrew/classes/hb_marshal": { ...MARSHAL, resources: [] },
+  "/api/classes/Marshal/HB/subclasses?edition=one&limit=200": page([]),
   "/api/classes/Warden/HB/subclasses?edition=one&limit=200": page([OATH_OF_ROOTS]),
   "/api/homebrew/races": [],
   "/api/homebrew/classes": [],
@@ -194,6 +231,7 @@ const ROWS: Record<string, unknown> = {
       json: { name: "Archfey Patron", source: "XPHB", shortName: "Archfey" },
     },
     HEXBLADE,
+    BLADEWARD,
   ]),
   // Three from the first level, where the 2024 table has one, so leveling to 2 asks for none.
   "/api/classes/Warlock/XPHB/at/1": grants(1, 3, [feature("Pact Magic", 1)]),
@@ -646,6 +684,58 @@ describe("LevelUp", () => {
       ...warden,
       subclass: { homebrewId: OATH_OF_ROOTS.id },
     });
+  });
+
+  it("asks for the options a homebrew class's count adds, and writes them under the class", async () => {
+    const marshal = { class: { homebrewId: MARSHAL.id } };
+    renderSeeded(warlock(1, { levels: [marshal] }));
+    await open();
+    const region = await within(dialog()).findByRole("region", {
+      name: "New Maneuver (Battle Master)",
+    });
+    expect(region).toHaveTextContent("Choose 1 — 0 selected");
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+    expect(applyButton()).toHaveAttribute("aria-disabled", "true");
+
+    await pickSpell("Add a maneuver", "Parry");
+    await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().optionalFeatures).toEqual([
+      {
+        ref: { name: "Parry", source: "PHB" },
+        featureType: "MV:B",
+        grantedBy: { kind: "class", ref: marshal.class },
+        level: 2,
+      },
+    ]);
+  });
+
+  it("asks for the options a homebrew subclass picked this level counts, under it and its class", async () => {
+    renderSeeded(warlock(2));
+    await open();
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (5)" }));
+    choose("Warlock subclass", "Bladeward Patron (homebrew)");
+    const region = await within(dialog()).findByRole("region", {
+      name: "New Maneuver (Battle Master)",
+    });
+    expect(region).toHaveTextContent("Choose 2 — 0 selected");
+
+    for (const name of ["Parry", "Riposte"]) {
+      await pickSpell("Add a maneuver", name);
+      await within(dialog()).findByRole("button", { name: `Remove ${name}` });
+    }
+    await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().optionalFeatures).toEqual(
+      ["Parry", "Riposte"].map((name) => ({
+        ref: { name, source: "PHB" },
+        featureType: "MV:B",
+        grantedBy: { kind: "subclass", ref: { homebrewId: BLADEWARD.id }, class: WARLOCK },
+        level: 3,
+      })),
+    );
   });
 
   it("asks for the improvement and each feature's option the level brings", async () => {

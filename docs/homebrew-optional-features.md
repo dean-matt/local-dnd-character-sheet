@@ -23,7 +23,7 @@ states has no homebrew home, so a table cannot add an invocation to Warlock yet.
 - A character chooses one where it chooses a catalog feature of its type and edition, counted
   against the same entitlements; a homebrew feature entitles nothing. A homebrew class or subclass
   entitles its count at the character's level in the class, in its own row's edition, beside the
-  catalog's.
+  catalog's, and the level-up dialog asks for the picks a level adds to it.
 
 ## Reads
 

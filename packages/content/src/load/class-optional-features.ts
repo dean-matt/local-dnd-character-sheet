@@ -3,6 +3,7 @@
  * and the checks holding those counts to the table columns that print them
  * and to the pool of options carrying each type.
  */
+import { carryForward, LEVEL_KEY } from "@dnd/catalog";
 import { ANY_LEVEL, optionCount, reachesPool } from "./character-options.ts";
 import { display, LEVELS, type Owner, resourceKey } from "./class-table.ts";
 import type { Edition } from "./edition.ts";
@@ -25,7 +26,7 @@ function stated(cells: unknown[], context: string): number[] {
  * every count at three levels and loses the other 15.
  */
 function carried(progression: Entry, context: string): number[] {
-  const changes = new Map<number, number>();
+  const changes: Record<string, number> = {};
   for (const [key, cell] of Object.entries(progression)) {
     // Four feats and one optional feature key a progression `*`, for "at any
     // level", since neither has one. No class or subclass entry does, and these
@@ -35,21 +36,12 @@ function carried(progression: Entry, context: string): number[] {
         `${context}: a progression keyed ${JSON.stringify(ANY_LEVEL)} has no level to file a count at`,
       );
     }
-    // Exactly the 20 spellings, so no two keys reach one level and overwrite it:
-    // Number would take "03", " 3" and "1e1" and land all three on a level.
-    const level = /^(?:[1-9]|1\d|20)$/.test(key) ? Number(key) : Number.NaN;
-    if (!Number.isInteger(level) || level < 1 || level > LEVELS) {
+    if (!LEVEL_KEY.test(key)) {
       throw new Error(`${context}: ${JSON.stringify(key)} is not a level from 1 to ${LEVELS}`);
     }
-    changes.set(level, optionCount(cell, `${context} level ${level}`));
+    changes[key] = optionCount(cell, `${context} level ${key}`);
   }
-  const counts: number[] = [];
-  let held = 0;
-  for (let level = 1; level <= LEVELS; level += 1) {
-    held = changes.get(level) ?? held;
-    counts.push(held);
-  }
-  return counts;
+  return carryForward(changes);
 }
 
 function progression(raw: unknown, context: string): number[] {

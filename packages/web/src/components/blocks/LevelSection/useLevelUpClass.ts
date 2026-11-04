@@ -13,6 +13,7 @@ import { subclassesQuery } from "../../../hooks/subclassesQuery.ts";
 import { subclassGrantsQuery } from "../../../hooks/subclassGrantsQuery.ts";
 import {
   catalogSubclassRow,
+  homebrewSubclassRow,
   type SubclassItem,
   subclassLevelOf,
   subclassParent,
@@ -83,6 +84,10 @@ export function useLevelUpClass(
     subclass,
     /** The catalog row of `subclass`, which a homebrew subclass has none of. */
     subclassRow: catalogSubclassRow(subclasses, subclass),
+    /** The homebrew class's row, which a catalog class has none of. */
+    homebrew: homebrew.data,
+    /** The homebrew row of `subclass`, which a catalog subclass has none of. */
+    homebrewSubclass: homebrewSubclassRow(subclasses, subclass),
     before: before.data,
     after: after.data,
     subclassBefore: subclassBefore.data,

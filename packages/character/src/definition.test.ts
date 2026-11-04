@@ -538,6 +538,14 @@ describe("optional features", () => {
       { kind: "subclass", ref: CHAMPION, class: FIGHTER },
     ],
     ["a feat", { kind: "feat", ref: { name: "Fighting Initiate", source: "TCE" } }],
+    [
+      "a homebrew subclass of a catalog class",
+      { kind: "subclass", ref: { homebrewId: "hb_09" }, class: FIGHTER },
+    ],
+    [
+      "a homebrew subclass of a homebrew class",
+      { kind: "subclass", ref: { homebrewId: "hb_09" }, class: { homebrewId: "hb_08" } },
+    ],
   ])("records %s as the grantor of a fighting style", (_kind, grantedBy) => {
     const picked = { ...definition, optionalFeatures: [pick("FS:F", grantedBy)] };
     expect(characterDefinitionSchema.parse(structuredClone(picked))).toEqual(picked);
