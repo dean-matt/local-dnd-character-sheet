@@ -24,7 +24,7 @@ where a catalog one opens through `/catalog`. `{@creature Name|HB}` resolves to 
 
 The Homebrew page edits a monster step by step or as JSON, and its Preview tab renders the
 stat block through `monsterEntries`, as a catalog monster opens. The form sets the name, sizes,
-creature type and its tags, alignment — one of the nine, unaligned, any, a range, a choice
+creature type, its swarm size and its tags with any prefix such as `shield` before `dwarf`, alignment — one of the nine, unaligned, any, a range, a choice
 with chances and notes, or prose, under a prefix such as `typically` — challenge rating, every
 armor class with its source, average hit points and hit dice, the five speeds, senses,
 languages, the six scores, its traits, actions, bonus actions, reactions, legendary actions and
@@ -40,8 +40,7 @@ header and footer paragraphs, and its spells at will, as rituals, per day, per r
 for charges and by level with slots, each picked from the catalog; the API refuses a count of uses
 below 1 or left blank. A block's spells by week, year, legendary action, recharge or an item's
 charges, which lists it hides, and a count, level or field in a shape the form cannot read stay as
-written and are edited in JSON. A type's swarm
-size, a prose armor class, a tag with a prefix and the passive Perception score stay as written
-and are edited in JSON. A form edit keeps every entry it cannot show in
+written and are edited in JSON. A choice of types, a prose armor class and the passive Perception
+score stay as written and are edited in JSON. A form edit keeps every entry it cannot show in
 the place it was stored. The Rules control picks the edition, and the API refuses a repeated
 name within it.

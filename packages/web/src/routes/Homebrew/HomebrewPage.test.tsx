@@ -4707,7 +4707,7 @@ describe("Homebrew monsters", () => {
       await openFull();
       pick("Alignment", "Chaotic evil");
       click("Add a type tag");
-      fireEvent.change(field("textbox", "Type tags 2"), { target: { value: "orc" } });
+      fireEvent.change(field("textbox", "Type tag 2"), { target: { value: "orc" } });
       click("Remove type tag 1");
       mode("JSON");
 
@@ -4767,6 +4767,105 @@ describe("Homebrew monsters", () => {
       expect(field("combobox", "Alignment")).toHaveTextContent("Unaligned");
       stepTo("Senses and languages");
       expect(field("textbox", "Languages 1")).toHaveValue("Draconic");
+    });
+
+    describe("prefixed type tags and a swarm size", () => {
+      const swarm = {
+        ...full,
+        json: {
+          ...full.json,
+          type: {
+            type: "humanoid",
+            swarmSize: "T",
+            tags: ["goblinoid", { tag: "dwarf", prefix: "shield" }, "orc"],
+          },
+        },
+      };
+      const openSwarm = async (writes: Parameters<typeof stubApi>[1] = []) => {
+        const fetchMock = stubApi({ monsters: [swarm] }, writes);
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+        return fetchMock;
+      };
+
+      it("shows them in the form with no note, and saves them untouched", async () => {
+        const fetchMock = await openSwarm([{ status: 200, body: swarm }]);
+
+        expect(field("combobox", "Swarm size")).toHaveTextContent("Tiny");
+        expect(field("textbox", "Type tag 2")).toHaveValue("dwarf");
+        expect(field("textbox", "Type tag 2 prefix")).toHaveValue("shield");
+        expect(field("textbox", "Type tag 3")).toHaveValue("orc");
+        expect(within(editor()).queryByText(/Edit those in JSON/)).not.toBeInTheDocument();
+        click("Save");
+
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        const { source: _source, ...sent } = swarm.json;
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { ...sent, edition: "one" } });
+      });
+
+      it("edits them in place, and JSON mode and the preview show the change", async () => {
+        await openSwarm();
+        fireEvent.change(field("textbox", "Type tag 2 prefix"), { target: { value: "hill" } });
+        fireEvent.change(field("textbox", "Type tag 1 prefix"), { target: { value: "red" } });
+        fireEvent.change(field("textbox", "Type tag 3"), { target: { value: "orcs" } });
+        pick("Swarm size", "Small");
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).type).toEqual({
+          type: "humanoid",
+          swarmSize: "S",
+          tags: [{ tag: "goblinoid", prefix: "red" }, { tag: "dwarf", prefix: "hill" }, "orcs"],
+        });
+        mode("Preview");
+        expect(
+          within(editor()).getByText(
+            /^Medium swarm of Small humanoids \(red goblinoid, hill dwarf, orcs\)/,
+          ),
+        ).toBeInTheDocument();
+      });
+
+      it("clears the swarm size and a prefix", async () => {
+        await openSwarm();
+        pick("Swarm size", "None");
+        fireEvent.change(field("textbox", "Type tag 2 prefix"), { target: { value: "" } });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).type).toEqual({
+          type: "humanoid",
+          tags: ["goblinoid", "dwarf", "orc"],
+        });
+      });
+
+      it("shows a change made in JSON in the form", async () => {
+        await openSwarm();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({
+            ...swarm.json,
+            type: { type: "beast", swarmSize: "M", tags: [{ tag: "elf", prefix: "wood" }] },
+          }),
+        );
+        mode("Step by step");
+
+        expect(field("combobox", "Swarm size")).toHaveTextContent("Medium");
+        expect(field("textbox", "Type tag 1")).toHaveValue("elf");
+        expect(field("textbox", "Type tag 1 prefix")).toHaveValue("wood");
+      });
+
+      it("leaves a choice of types to JSON with its note", async () => {
+        const choice = {
+          ...swarm,
+          json: { ...swarm.json, type: { type: { choose: ["beast", "fey"] } } },
+        };
+        stubApi({ monsters: [choice] });
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+
+        expect(within(editor()).getByText(/a choice of types/)).toBeInTheDocument();
+      });
     });
 
     describe("a range, a chance, a prefix and prose", () => {

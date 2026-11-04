@@ -219,19 +219,55 @@ export function withStrings(list: unknown, strings: string[]): unknown[] | undef
   return next.length > 0 ? next : undefined;
 }
 
-/** The tags a type states: its strings only; a tag with a prefix is left to JSON. */
-export const typeTags = (type: unknown): string[] => (isRecord(type) ? stringsIn(type.tags) : []);
+/** A creature type tag as the form edits it: `dwarf`, or `{tag: "dwarf", prefix: "shield"}`. */
+export interface TypeTagRow {
+  tag: string;
+  prefix: string;
+  /** The tag as stored, so a key the form does not edit survives an edit. */
+  stored: unknown;
+}
+
+const isTypeTag = (item: unknown): boolean =>
+  typeof item === "string" || (isRecord(item) && typeof item.tag === "string");
+
+/** The tags a type states, plain or prefixed; any other shape is left to JSON. */
+export function typeTagRows(type: unknown): TypeTagRow[] {
+  if (!isRecord(type) || !Array.isArray(type.tags)) return [];
+  return type.tags.filter(isTypeTag).map((item) =>
+    isRecord(item)
+      ? {
+          tag: String(item.tag),
+          prefix: typeof item.prefix === "string" ? item.prefix : "",
+          stored: item,
+        }
+      : { tag: String(item), prefix: "", stored: item },
+  );
+}
+
+/** The tag `row` states: a string where nothing but the tag is left; nothing where it is blank. */
+function typeTag({ tag, prefix, stored }: TypeTagRow): unknown[] {
+  if (!tag.trim()) return [];
+  const { tag: _tag, prefix: _prefix, ...rest } = isRecord(stored) ? stored : {};
+  if (!prefix.trim() && Object.keys(rest).length === 0) return [tag.trim()];
+  return [{ ...rest, tag: tag.trim(), ...(prefix.trim() ? { prefix: prefix.trim() } : {}) }];
+}
 
 /**
- * `type` with its string tags replaced by `tags`. A plain type becomes `{type, tags}` for its
- * first tag, and goes back to plain when nothing else is left on it.
+ * `type` with `key` set to `value`, or removed where it is `undefined`. A plain type becomes
+ * `{type, key}`, and goes back to plain when nothing else is left on it.
  */
-export function withTypeTags(type: unknown, tags: string[]): unknown {
+export function withTypeField(type: unknown, key: string, value: unknown): unknown {
   const stated = isRecord(type) ? type : { type };
-  const next = withStrings(stated.tags, tags);
-  const { tags: _old, ...rest } = stated;
-  if (next) return { ...rest, tags: next };
+  const { [key]: _old, ...rest } = stated;
+  if (value !== undefined) return { ...rest, [key]: value };
   return Object.keys(rest).length === 1 && typeof rest.type === "string" ? rest.type : rest;
+}
+
+/** `type` with its tags replaced by `rows`, in their slots, so a tag in another shape keeps its place. */
+export function withTypeTags(type: unknown, rows: TypeTagRow[]): unknown {
+  const stated = isRecord(type) && Array.isArray(type.tags) ? type.tags : [];
+  const next = replaceEditable(stated, isTypeTag, rows.flatMap(typeTag));
+  return withTypeField(type, "tags", next.length > 0 ? next : undefined);
 }
 
 /** An armor class beyond the first as the form edits it. */

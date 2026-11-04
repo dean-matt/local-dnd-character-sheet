@@ -6,11 +6,26 @@ import { Select } from "../Select.tsx";
 import { type HomebrewFormProps, listAt, textAt, withField } from "./homebrewEntry.ts";
 import { FORM_GRID, PAIRED, SHORT, WHOLE } from "./homebrewGrid.ts";
 import { MonsterAlignment } from "./MonsterAlignment.tsx";
-import { MonsterTextRows } from "./MonsterTextRows.tsx";
-import { ratingOf, typeTags, withRating, withTypeTags } from "./monsterShapes.ts";
+import { MonsterTypeTags } from "./MonsterTypeTags.tsx";
+import { ratingOf, withRating, withTypeField } from "./monsterShapes.ts";
 import { RACE_SIZES } from "./raceSizes.ts";
 
 const SIZES = RACE_SIZES.filter(({ value }) => value !== "V");
+
+interface Option {
+  value: string;
+  label: string;
+}
+
+/** `options`, with `value` offered as written where it is stated and none of them. */
+const offering = (options: Option[], value: string): Option[] =>
+  !value || options.some((option) => option.value === value)
+    ? options
+    : [...options, { value, label: value }];
+
+const SWARM_SIZES = [{ value: "", label: "None" }, ...SIZES];
+
+const TYPE_KEYS = new Set(["type", "tags", "swarmSize"]);
 
 const CREATURE_TYPES = [
   "aberration",
@@ -37,20 +52,15 @@ const RATINGS = [
   ...Array.from({ length: 30 }, (_, at) => `${at + 1}`),
 ].map((value) => ({ value, label: value }));
 
-/** A homebrew monster's name, size, creature type and tags, alignment and challenge rating. */
+/** A homebrew monster's name, size, creature type, swarm size and tags, alignment and challenge rating. */
 export function MonsterBasics(props: HomebrewFormProps) {
   const { entry, onChange, errorFor } = props;
   const set = (key: string, value: unknown) => onChange(withField(entry, key, value));
   const sizes = listAt(entry, "size").filter((code): code is string => typeof code === "string");
   const { type } = entry;
   const typeText = typeof type === "string" ? type : isRecord(type) ? String(type.type ?? "") : "";
-  const typeOptions = CREATURE_TYPES.some(({ value }) => value === typeText)
-    ? CREATURE_TYPES
-    : [...CREATURE_TYPES, ...(typeText ? [{ value: typeText, label: typeText }] : [])];
+  const swarm = isRecord(type) && typeof type.swarmSize === "string" ? type.swarmSize : "";
   const rating = ratingOf(entry.cr);
-  const ratingOptions = RATINGS.some(({ value }) => value === rating)
-    ? RATINGS
-    : [...RATINGS, ...(rating ? [{ value: rating, label: rating }] : [])];
   return (
     <div className={FORM_GRID}>
       <div className={PAIRED}>
@@ -82,9 +92,21 @@ export function MonsterBasics(props: HomebrewFormProps) {
           {(control) => (
             <Select
               {...control}
-              options={typeOptions}
+              options={offering(CREATURE_TYPES, typeText)}
               value={typeText}
               onChange={(next) => set("type", isRecord(type) ? { ...type, type: next } : next)}
+            />
+          )}
+        </FormField>
+      </div>
+      <div className={SHORT}>
+        <FormField label="Swarm size">
+          {(control) => (
+            <Select
+              {...control}
+              options={offering(SWARM_SIZES, swarm)}
+              value={swarm}
+              onChange={(next) => set("type", withTypeField(type, "swarmSize", next || undefined))}
             />
           )}
         </FormField>
@@ -94,7 +116,7 @@ export function MonsterBasics(props: HomebrewFormProps) {
           {(control) => (
             <Select
               {...control}
-              options={ratingOptions}
+              options={offering(RATINGS, rating)}
               value={rating}
               onChange={(next) => set("cr", withRating(entry.cr, next))}
             />
@@ -102,19 +124,16 @@ export function MonsterBasics(props: HomebrewFormProps) {
         </FormField>
       </div>
       <div className={WHOLE}>
-        <MonsterTextRows
-          noun="type tag"
-          legend="Type tags"
-          initial={typeTags(type)}
-          onChange={(next) => set("type", withTypeTags(type, next))}
-        />
+        <MonsterTypeTags type={type} onChange={(next) => set("type", next)} />
       </div>
       <MonsterAlignment {...props} />
-      {isRecord(type) && Object.keys(type).some((key) => key !== "type" && key !== "tags") && (
-        <p className={`${WHOLE} text-muted text-row`}>
-          The type carries a swarm size or a choice of types. Edit those in JSON.
-        </p>
-      )}
+      {isRecord(type) &&
+        (isRecord(type.type) || Object.keys(type).some((key) => !TYPE_KEYS.has(key))) && (
+          <p className={`${WHOLE} text-muted text-row`}>
+            The type carries a choice of types or a field the form does not edit. Edit those in
+            JSON.
+          </p>
+        )}
     </div>
   );
 }
