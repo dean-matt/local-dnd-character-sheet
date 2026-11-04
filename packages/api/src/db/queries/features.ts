@@ -41,9 +41,11 @@ import {
   getHomebrewBackground,
   getHomebrewClass,
   getHomebrewFeat,
+  getHomebrewSubclass,
   getHomebrewSubrace,
   type HomebrewDb,
   listHomebrewClassFeatures,
+  listHomebrewSubclassFeatures,
 } from "./homebrew.ts";
 
 type Placement = { level?: number; featureType?: string };
@@ -189,6 +191,8 @@ function classGroups(
     const catalogSubclass = catalogRef(subclass);
     if (catalogSubclass) {
       groups.push(subclassGroup(dataDir, definition, ref, catalogSubclass, level));
+    } else if (subclass && "homebrewId" in subclass) {
+      groups.push(homebrewSubclassGroup(homebrewDb, ref, subclass, level));
     }
     return groups;
   });
@@ -221,6 +225,28 @@ function subclassGroup(
       )
     : [unresolved(subclass)];
   return { origin: "subclass", name: subclass.name, class: classRef, features };
+}
+
+/** A homebrew subclass's features up to `level`, or one unresolved where its row is gone. */
+function homebrewSubclassGroup(
+  homebrewDb: HomebrewDb,
+  classRef: ContentRef,
+  ref: { homebrewId: string },
+  level: number,
+): FeatureGroup {
+  const row = getHomebrewSubclass(homebrewDb, ref.homebrewId);
+  if (!row) {
+    return {
+      origin: "subclass",
+      name: displayName(ref),
+      class: classRef,
+      features: [unresolved(ref)],
+    };
+  }
+  const features = listHomebrewSubclassFeatures(homebrewDb, ref.homebrewId)
+    .filter((feature) => feature.level <= level)
+    .map((feature): SheetFeature => ({ resolved: true, ...feature }));
+  return { origin: "subclass", name: row.name, class: classRef, features };
 }
 
 /** Every named node the race or subrace row carries — `Darkvision`, `Fey Ancestry`. */

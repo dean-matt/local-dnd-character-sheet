@@ -15,8 +15,16 @@ class cannot leave an entry naming a class that is gone.
 - Deleting a homebrew class that has subclasses is refused with a 409 naming them.
 - A character holds one as `levels[].subclass: {homebrewId}`, so a rename keeps it there.
   Deleting one a character holds is refused with a 409 naming the characters.
-- A held subclass grants no features, spells or optional features yet; the sheet names it
-  from its row, and `Homebrew` once no row holds its id.
+- A held subclass grants no spells or optional features yet; the sheet names it from its
+  row, and `Homebrew` once no row holds its id.
+
+## Features
+
+A subclass's features live in `homebrew_subclass_features`, keyed `(subclass_id, level, name)`
+and deleted with the subclass. `/homebrew/subclasses/{id}/features` reads and replaces them
+as `/homebrew/classes/{id}/features` does a class's, and the editor saves them there after the
+row. An export carries them. The sheet lists a held subclass's features up to the
+character's level in its class.
 
 ## Reads
 
@@ -29,8 +37,8 @@ because a tag carries no class.
 
 ## History
 
-`/homebrew/subclasses` joins revert and restore. A restore is refused with a 409 when the
-subclass's homebrew class has since been deleted.
+`/homebrew/subclasses` joins revert and restore, which carry its features as a class's do. A
+restore is refused with a 409 when the subclass's homebrew class has since been deleted.
 
 ## Editor
 

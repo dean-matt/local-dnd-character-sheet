@@ -58,7 +58,7 @@ const ward = {
   entries: ["Brine deals {@damage 2d6} cold damage."],
 };
 
-/** The answer to a skill's holders, or to a read or write of a class's features: the list the stub holds, or the body echoed back. */
+/** The answer to a skill's holders, or to a read or write of a class's or subclass's features: the list the stub holds, or the body echoed back. */
 function sideRoute(
   url: string,
   method: string,
@@ -79,7 +79,9 @@ function sideRoute(
   }
   const races = /^\/api\/races\?edition=(\w+)&limit=200$/.exec(url);
   if (races) return json(200, { items: lists[`races ${races[1]}`] ?? [] });
-  if (!/^\/api\/homebrew\/classes\/[^/]+\/(?:features|resources)$/.test(url)) return undefined;
+  if (!/^\/api\/homebrew\/(?:sub)?classes\/[^/]+\/(?:features|resources)$/.test(url)) {
+    return undefined;
+  }
   if (method === "GET") return json(200, lists[url] ?? []);
   return method === "PUT" ? json(200, JSON.parse(String(body))) : undefined;
 }
@@ -3564,7 +3566,7 @@ describe("Homebrew subclasses", () => {
     expect(writesOf(fetchMock)).toEqual([]);
   });
 
-  it("reopens a stored subclass on its parent, and saves it without the stamped class fields", async () => {
+  it("reopens a stored subclass on its parent with no features, and saves it without the stamped class fields", async () => {
     const fetchMock = stubApi(lists, [{ status: 200, body: stored }]);
     renderPage("subclasses");
 
@@ -3576,16 +3578,61 @@ describe("Homebrew subclasses", () => {
       name: "Hearthkeeper",
       entries: ["Guards the fire."],
       parent: { name: "Fighter", source: "XPHB" },
+      features: [],
     });
     click("Save");
 
-    await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+    await waitFor(() => expect(writesOf(fetchMock, "features")).toHaveLength(1));
     expect(writesOf(fetchMock)[0]).toMatchObject({
       method: "PUT",
       url: "/api/homebrew/subclasses/s1",
       body: { parent: { name: "Fighter", source: "XPHB" }, edition: "one" },
     });
     expect(writesOf(fetchMock)[0]?.body).not.toHaveProperty("className");
+    expect(writesOf(fetchMock)[0]?.body).not.toHaveProperty("features");
+    expect(writesOf(fetchMock, "features")[0]).toMatchObject({
+      url: "/api/homebrew/subclasses/s1/features",
+      body: [],
+    });
+    expect(writesOf(fetchMock, "resources")).toEqual([]);
+  });
+
+  it("adds, edits and removes a subclass's features per level, saving them beside the row", async () => {
+    const fetchMock = stubApi(
+      {
+        ...lists,
+        "/api/homebrew/subclasses/s1/features": [
+          { name: "Kindle", level: 3, entries: ["A spark."] },
+          { name: "Hearth Ward", level: 7, entries: ["Warm."] },
+        ],
+      },
+      [{ status: 200, body: stored }],
+    );
+    renderPage("subclasses");
+
+    fireEvent.click(await within(subclasses()).findByRole("button", { name: "Edit Hearthkeeper" }));
+    await settled();
+    stepTo("Features");
+    expect(field("textbox", "Feature 1 name")).toHaveValue("Kindle");
+    expect(field("spinbutton", "Feature 2 level")).toHaveValue(7);
+    fireEvent.change(field("textbox", "Feature 2 rules text"), { target: { value: "Warmer." } });
+    click("Remove Kindle");
+    click("Add a feature");
+    fireEvent.change(field("textbox", "Feature 2 name"), { target: { value: "Pyre" } });
+    fireEvent.change(field("spinbutton", "Feature 2 level"), { target: { value: "15" } });
+    fireEvent.change(field("textbox", "Feature 2 rules text"), { target: { value: "Burn." } });
+    click("Save");
+
+    await waitFor(() => expect(writesOf(fetchMock, "features")).toHaveLength(1));
+    expect(writesOf(fetchMock, "features")[0]).toMatchObject({
+      method: "PUT",
+      url: "/api/homebrew/subclasses/s1/features",
+      body: [
+        { name: "Hearth Ward", level: 7, entries: ["Warmer."] },
+        { name: "Pyre", level: 15, entries: ["Burn."] },
+      ],
+    });
+    expect(writesOf(fetchMock)[0]?.body).not.toHaveProperty("features");
   });
 
   it("clears the parent when the edition changes, since a class belongs to one edition", async () => {

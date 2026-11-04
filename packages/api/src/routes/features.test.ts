@@ -17,8 +17,10 @@ import {
   insertHomebrewClass,
   insertHomebrewFeat,
   insertHomebrewRace,
+  insertHomebrewSubclass,
   insertHomebrewSubrace,
   replaceHomebrewClassFeatures,
+  replaceHomebrewSubclassFeatures,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { featuresRoutes } from "./features.ts";
@@ -561,6 +563,61 @@ describe("featuresRoutes", () => {
 
     replaceHomebrewClassFeatures(opened.homebrewDb, "hc", []);
     expect(await listed()).toBeUndefined();
+  });
+
+  it("lists a homebrew subclass's features up to the class's level, each at its own", async () => {
+    insertHomebrewSubclass(opened.homebrewDb, "hs", {
+      name: "Storm Knight",
+      edition: "classic",
+      parent: FIGHTER,
+    });
+    const feature = (name: string, level: number) => ({ name, level, entries: [`${name}.`] });
+    replaceHomebrewSubclassFeatures(opened.homebrewDb, "hs", [
+      feature("Thunder Strike", 3),
+      feature("Gale Step", 4),
+      feature("Eye of the Storm", 7),
+    ]);
+    const subclass = { homebrewId: "hs" };
+    store(
+      definitionWith({
+        levels: [
+          { class: FIGHTER },
+          { class: FIGHTER },
+          { class: FIGHTER, subclass },
+          { class: FIGHTER },
+          { class: BARBARIAN },
+        ],
+      }),
+    );
+
+    expect((await features()).groups.find(({ origin }) => origin === "subclass")).toEqual({
+      origin: "subclass",
+      name: "Storm Knight",
+      class: FIGHTER,
+      features: [
+        { resolved: true, name: "Thunder Strike", level: 3, entries: ["Thunder Strike."] },
+        { resolved: true, name: "Gale Step", level: 4, entries: ["Gale Step."] },
+      ],
+    });
+  });
+
+  it("marks a homebrew subclass whose row is gone unresolved", async () => {
+    store(
+      definitionWith({
+        levels: [
+          { class: FIGHTER },
+          { class: FIGHTER },
+          { class: FIGHTER, subclass: { homebrewId: "gone" } },
+        ],
+      }),
+    );
+
+    expect((await features()).groups.find(({ origin }) => origin === "subclass")).toEqual({
+      origin: "subclass",
+      name: "Homebrew",
+      class: FIGHTER,
+      features: [{ resolved: false, name: "Homebrew" }],
+    });
   });
 
   it("leaves the stamped source off a homebrew race's traits", async () => {

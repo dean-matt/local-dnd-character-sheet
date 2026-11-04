@@ -14,7 +14,8 @@ export type HomebrewExportRequest = z.infer<typeof homebrewExportRequestSchema>;
 /**
  * One homebrew row as its kind's save would write it again, under the id it had here: a
  * subclass or subrace names a homebrew parent by that id. A class carries its features and
- * resource tables beside it. `input` is checked by the kind's own schema on the way back in.
+ * resource tables beside it, and a subclass its features. `input` is checked by the kind's
+ * own schema on the way back in.
  */
 const homebrewFileEntrySchema = homebrewRefSchema.extend({
   input: z.looseObject({ name: z.string() }),

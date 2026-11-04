@@ -102,6 +102,19 @@ export const homebrewSubclasses = sqliteTable(
   ],
 );
 
+export const homebrewSubclassFeatures = sqliteTable(
+  "homebrew_subclass_features",
+  {
+    subclassId: text("subclass_id")
+      .notNull()
+      .references(() => homebrewSubclasses.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    level: integer("level").notNull(),
+    entries: text("entries", { mode: "json" }).$type<Entries>().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.subclassId, t.level, t.name] })],
+);
+
 export const homebrewFeats = sqliteTable(
   "homebrew_feats",
   {

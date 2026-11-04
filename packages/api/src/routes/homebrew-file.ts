@@ -43,7 +43,8 @@ const exportFile = createRoute({
   summary: "Export homebrew rows as one file",
   description:
     "Each row as its kind's save would write it, a class with its features and resource " +
-    "tables. A subclass or subrace whose homebrew parent is not listed adds that parent.",
+    "tables, a subclass with its features. A subclass or subrace whose homebrew parent is " +
+    "not listed adds that parent.",
   request: {
     body: { content: { "application/json": { schema: homebrewExportRequestSchema } } },
   },
@@ -129,10 +130,10 @@ function heldRows(file: HomebrewFile): HeldRow[] | z.ZodError {
       collection,
       id,
       input: check(INPUTS[collection], input, at("input")) ?? input,
-      ...(collection === "classes" && {
+      ...((collection === "classes" || collection === "subclasses") && {
         features: features && check(homebrewClassFeaturesInputSchema, features, at("features")),
-        resources,
       }),
+      ...(collection === "classes" && { resources }),
     };
   });
   return issues.length > 0 ? new z.ZodError(issues) : rows;
