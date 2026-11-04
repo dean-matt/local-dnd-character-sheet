@@ -7,6 +7,7 @@ export interface HomebrewRulesTextProps {
   text: string | undefined;
   onText: (text: string) => void;
   error?: ReactNode;
+  rows?: number;
 }
 
 /**
@@ -16,7 +17,13 @@ export interface HomebrewRulesTextProps {
  * The area keeps its own text, read once on mount, so a blank line typed between two
  * paragraphs is not trimmed away under the cursor; a parent replacing the entry remounts it.
  */
-export function HomebrewRulesText({ label, text, onText, error }: HomebrewRulesTextProps) {
+export function HomebrewRulesText({
+  label,
+  text,
+  onText,
+  error,
+  rows = 8,
+}: HomebrewRulesTextProps) {
   const [draft, setDraft] = useState(text ?? "");
 
   if (text === undefined) {
@@ -44,7 +51,7 @@ export function HomebrewRulesText({ label, text, onText, error }: HomebrewRulesT
             setDraft(event.target.value);
             onText(event.target.value);
           }}
-          rows={8}
+          rows={rows}
           className="resize-y rounded-control border border-border bg-surface px-2 py-1 text-row aria-invalid:border-error"
         />
       )}

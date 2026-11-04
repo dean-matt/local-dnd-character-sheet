@@ -2,16 +2,10 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { type ComponentType, useRef } from "react";
 import { InputField } from "../InputField.tsx";
 import { HomebrewRowRemove } from "./HomebrewRowRemove.tsx";
-import { HomebrewRulesText } from "./HomebrewRulesText.tsx";
-import {
-  entriesOf,
-  type HomebrewFormProps,
-  listAt,
-  paragraphsOf,
-  withField,
-} from "./homebrewEntry.ts";
+import { type HomebrewFormProps, listAt, withField } from "./homebrewEntry.ts";
 import { ROW_BUTTON } from "./homebrewRows.ts";
 import { MonsterGroupLead, type MonsterGroupLeadProps } from "./MonsterGroupLead.tsx";
+import { MonsterRulesText } from "./MonsterRulesText.tsx";
 import { isPlainTextRow, type MonsterTextGroup, moved } from "./monsterShapes.ts";
 
 const MOVE =
@@ -25,8 +19,8 @@ interface Group extends Pick<MonsterGroupLeadProps, "legend" | "header" | "uses"
 
 /**
  * The form for one group of a monster's stat block, such as its traits: any fields the stat block
- * prints above the group, then a row each with a name and rules text written as paragraphs,
- * which can be moved and removed. A row holding a list, a table or any other shape stays as
+ * prints above the group, then a row each with a name and rules text written as paragraphs and
+ * lists, which can be moved and removed. A row holding a table or any other shape stays as
  * stored, can still be moved or removed, and is edited in JSON. Every row stays where it was stored, so an edit never reorders the list.
  */
 function monsterTextBlocks({
@@ -134,10 +128,11 @@ function monsterTextBlocks({
                   />
                 </div>
                 {plain && (
-                  <HomebrewRulesText
-                    label={`${label} rules text`}
-                    text={paragraphsOf(row.entries)}
-                    onText={(text) => replace(index, { entries: entriesOf(text) })}
+                  <MonsterRulesText
+                    label={label}
+                    name={`${noun} ${index + 1}`}
+                    entries={row.entries}
+                    onEntries={(entries) => replace(index, { entries })}
                   />
                 )}
               </li>

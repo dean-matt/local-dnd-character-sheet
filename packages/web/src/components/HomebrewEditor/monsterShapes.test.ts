@@ -5,12 +5,14 @@ import {
   alignmentLabel,
   alignmentRows,
   armorClassIsProse,
+  entriesOfParts,
   extraArmorClasses,
   firstArmorClass,
   isPlainTextRow,
   moved,
   prefixText,
   ratingOf,
+  rulesParts,
   speedFeet,
   typeTags,
   withAlignmentRows,
@@ -141,9 +143,49 @@ describe("monster shapes", () => {
   it("tells a plain text row from one the form leaves to JSON", () => {
     expect(isPlainTextRow({ name: "Bite", entries: ["a"], hidden: true })).toBe(true);
     expect(isPlainTextRow({ name: "Bite" })).toBe(true);
-    expect(isPlainTextRow({ name: "Bite", entries: [{ type: "list", items: [] }] })).toBe(false);
+    expect(isPlainTextRow({ name: "Bite", entries: ["a", { type: "list", items: ["b"] }] })).toBe(
+      true,
+    );
+    expect(isPlainTextRow({ name: "Bite", entries: [{ type: "table", rows: [] }] })).toBe(false);
+    expect(
+      isPlainTextRow({
+        name: "Bite",
+        entries: [{ type: "list", items: [{ type: "item", name: "a", entry: "b" }] }],
+      }),
+    ).toBe(false);
     expect(isPlainTextRow("Bite")).toBe(false);
     expect(isPlainTextRow({ name: 3 })).toBe(false);
+  });
+
+  it("reads rules text as paragraphs around each list, and writes it back unchanged", () => {
+    const list = { type: "list", style: "list-hang-notitle", items: ["a", "b"] };
+    const entries = ["One.", "Two.", list, { type: "list", items: ["c"] }, "Three."];
+    const parts = rulesParts(entries);
+
+    expect(parts).toEqual([
+      { text: "One.\n\nTwo." },
+      { items: ["a", "b"], stored: list },
+      { text: "" },
+      { items: ["c"], stored: { type: "list", items: ["c"] } },
+      { text: "Three." },
+    ]);
+    expect(entriesOfParts(parts ?? [])).toEqual(entries);
+    expect(rulesParts(undefined)).toEqual([{ text: "" }]);
+    expect(rulesParts(["a", { type: "table" }])).toBeUndefined();
+  });
+
+  it("writes nothing for a blank item, blank text or a list left with no items", () => {
+    const stored = { type: "list", style: "list-hang-notitle", items: ["a"] };
+    expect(
+      entriesOfParts([
+        { text: " " },
+        { items: [" x ", ""], stored },
+        { text: "" },
+        { items: [""], stored: { type: "list" } },
+        { text: "" },
+      ]),
+    ).toEqual([{ type: "list", style: "list-hang-notitle", items: ["x"] }]);
+    expect(entriesOfParts([{ text: "" }])).toBeUndefined();
   });
 
   it("moves a row, leaving the list alone where there is nowhere to go", () => {
