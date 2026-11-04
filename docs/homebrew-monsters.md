@@ -32,7 +32,8 @@ mythic actions, the legendary action uses, and the text introducing the reaction
 actions and mythic actions; the API's reasons show beside the field. Each of those rows is a name
 and rules text in plain paragraphs, which `{@tag}`s may fill; a row can be moved or removed. A row
 whose text holds a list, a table or a nested section, or that is not a name and entries, shows as
-read-only and is edited in JSON, as are lair actions and spellcasting blocks. A type's swarm size, a prose armor class, a tag with a prefix and the passive Perception
-score stay as written and are edited in JSON. A form edit keeps every entry it cannot show in
+read-only and is edited in JSON, as are lair actions and spellcasting blocks. A type's swarm
+size, a prose armor class, a tag with a prefix and the passive Perception score stay as written
+and are edited in JSON. A form edit keeps every entry it cannot show in
 the place it was stored. The Rules control picks the edition, and the API refuses a repeated
 name within it.

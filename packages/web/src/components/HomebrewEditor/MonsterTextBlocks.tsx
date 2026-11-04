@@ -26,9 +26,8 @@ interface Group extends Pick<MonsterGroupLeadProps, "legend" | "header" | "uses"
 /**
  * The form for one group of a monster's stat block, such as its traits: any fields the stat block
  * prints above the group, then a row each with a name and rules text written as paragraphs,
- * which can be moved and removed. A row holding a list,
- * a table or any other shape stays as stored, can still be moved or removed, and is edited in
- * JSON. Every row stays where it was stored, so an edit never reorders the list.
+ * which can be moved and removed. A row holding a list, a table or any other shape stays as
+ * stored, can still be moved or removed, and is edited in JSON. Every row stays where it was stored, so an edit never reorders the list.
  */
 function monsterTextBlocks({
   key,

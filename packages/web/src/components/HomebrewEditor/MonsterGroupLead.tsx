@@ -14,7 +14,10 @@ export interface MonsterGroupLeadProps extends HomebrewFormProps {
   legend: string;
   /** The key of the paragraphs the stat block prints above the rows: `reactionHeader`. */
   header?: string;
-  /** True for the legendary actions, whose uses per round the stat block states. */
+  /**
+   * True for the legendary actions, whose uses per round the stat block states unless an
+   * introduction replaces that line.
+   */
   uses?: boolean;
 }
 

@@ -30,6 +30,8 @@ describe("homebrewMonsterInputSchema", () => {
     ["a score of 0", { str: 0 }],
     ["a rating of 31", { cr: "31" }],
     ["an unknown edition", { edition: "2014" }],
+    ["no legendary action uses", { legendaryActions: 0 }],
+    ["negative legendary action uses", { legendaryActions: -2 }],
   ])("refuses %s", (_label, change) => {
     expect(homebrewMonsterInputSchema.safeParse({ ...imp, ...change }).success).toBe(false);
   });
