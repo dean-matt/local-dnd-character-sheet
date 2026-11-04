@@ -10,9 +10,9 @@ import { useHomebrew } from "./useHomebrew.ts";
 import { useHomebrewRows } from "./useHomebrewRows.ts";
 
 /**
- * Every homebrew race, subrace, class, subclass, background and feat name by id, for `displayName` and the
- * summaries. A save to any homebrew row refreshes these queries, so a rename shows at once;
- * a row still loading is absent and reads `Homebrew`.
+ * Every homebrew race, subrace, class, subclass, background, feat and optional feature name by
+ * id, for `displayName` and the summaries. A save to any homebrew row refreshes these queries,
+ * so a rename shows at once; a row still loading is absent and reads `Homebrew`.
  */
 export function useHomebrewNames(): HomebrewNames {
   const races = useHomebrew("races", homebrewRaceRecordSchema).list.data;
@@ -21,13 +21,14 @@ export function useHomebrewNames(): HomebrewNames {
   const feats = useHomebrew("feats", homebrewFeatRecordSchema).list.data;
   const subclasses = useHomebrewRows("subclasses").data;
   const subraces = useHomebrewRows("subraces").data;
+  const optionalFeatures = useHomebrewRows("optional-features").data;
   return useMemo(
     () =>
       new Map(
-        [races, subraces, classes, backgrounds, feats, subclasses].flatMap(
+        [races, subraces, classes, backgrounds, feats, subclasses, optionalFeatures].flatMap(
           (rows) => rows?.map(({ id, name }): [string, string] => [id, name]) ?? [],
         ),
       ),
-    [races, subraces, classes, backgrounds, feats, subclasses],
+    [races, subraces, classes, backgrounds, feats, subclasses, optionalFeatures],
   );
 }

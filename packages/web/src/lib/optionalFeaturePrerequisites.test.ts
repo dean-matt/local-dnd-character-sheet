@@ -77,10 +77,19 @@ describe("prerequisiteNotes", () => {
 });
 
 describe("optionalFeatureJudge", () => {
-  it("leaves a homebrew optional feature unavailable until a character can choose one", () => {
-    const hit = { type: "optfeature", id: "hb-1", name: "Ember Lore", edition: "one" } as const;
-    expect(optionalFeatureJudge(facts, new Set()).unavailableReason(hit)).toBe(
-      "homebrew optional features cannot be picked yet",
-    );
+  it("judges a homebrew optional feature as it does a catalog one", () => {
+    const hit = (prerequisites: object[] = []) =>
+      ({
+        type: "optfeature",
+        id: "hb-1",
+        name: "Ember Lore",
+        edition: "one",
+        optionalFeature: { prerequisites: prerequisites.map((part) => ({ ...NONE, ...part })) },
+      }) as const;
+    const judge = optionalFeatureJudge(facts, new Set(["homebrew|hb-2"]));
+
+    expect(judge.unavailableReason(hit())).toBeUndefined();
+    expect(judge.unavailableReason({ ...hit(), id: "hb-2" })).toBe("Chosen already");
+    expect(judge.unavailableReason(hit([{ level: 20 }]))).toBe("Needs Level 20");
   });
 });

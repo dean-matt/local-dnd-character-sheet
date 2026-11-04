@@ -42,10 +42,31 @@ const hit = (name: string, prerequisites: object[] = []): SearchHit => ({
   },
 });
 
+const GRAVE_SIGHT = { homebrewId: "hb-grave" };
+
+const HOMEBREW_HIT: SearchHit = {
+  type: "optfeature",
+  id: GRAVE_SIGHT.homebrewId,
+  name: "Grave Sight",
+  edition: "classic",
+  optionalFeature: { prerequisites: [] },
+};
+
+const HOMEBREW_ROWS = [
+  {
+    id: GRAVE_SIGHT.homebrewId,
+    name: "Grave Sight",
+    edition: "classic",
+    json: { name: "Grave Sight", source: "HB", featureType: ["EI"] },
+    createdAt: "2026-01-01T00:00:00.000Z",
+  },
+];
+
 const HITS = [
   hit("Agonizing Blast"),
   hit("Thirsting Blade", [{ level: 5, className: "Warlock" }]),
   hit("Armor of Shadows"),
+  HOMEBREW_HIT,
 ];
 
 function holding(picks: ReturnType<typeof invocation>[]): CharacterRecord {
@@ -53,7 +74,10 @@ function holding(picks: ReturnType<typeof invocation>[]): CharacterRecord {
   return { ...record, definition: { ...record.definition, optionalFeatures: picks } };
 }
 
-/** Answers a search with `HITS`, a homebrew read with none, and a write with the record it sent. */
+/**
+ * Answers a search with `HITS`, the homebrew optional features with `HOMEBREW_ROWS` and every
+ * other homebrew read with none, and a write with the record it sent.
+ */
 function stubApi() {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -65,9 +89,13 @@ function stubApi() {
     const definition = JSON.parse(String(init?.body));
     return new Response(JSON.stringify({ ...warlockRecord(), definition }));
   });
-  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) =>
-    String(input).startsWith("/api/homebrew/") ? new Response("[]") : fetchMock(input, init),
-  );
+  vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    if (url === "/api/homebrew/optional-features") {
+      return new Response(JSON.stringify(HOMEBREW_ROWS));
+    }
+    return url.startsWith("/api/homebrew/") ? new Response("[]") : fetchMock(input, init);
+  });
   return fetchMock;
 }
 
@@ -136,7 +164,7 @@ describe("OptionalFeaturePicks", () => {
     fireEvent.focus(screen.getByRole("combobox", { name: "Add an eldritch invocation" }));
 
     const list = await screen.findByRole("listbox");
-    await waitFor(() => expect(within(list).getAllByRole("option")).toHaveLength(3));
+    await waitFor(() => expect(within(list).getAllByRole("option")).toHaveLength(4));
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
       "/api/search?edition=classic&limit=20&type=optfeature&featureType=EI",
     );
@@ -158,6 +186,22 @@ describe("OptionalFeaturePicks", () => {
       invocation("Agonizing Blast", FROM_WARLOCK),
       invocation("Armor of Shadows", FROM_ADEPT),
     ]);
+  });
+
+  it("offers a homebrew option beside the catalog's, marked homebrew, and names it once picked", async () => {
+    const fetchMock = stubApi();
+    renderSeeded(holding([invocation("Agonizing Blast", FROM_WARLOCK)]));
+
+    fireEvent.focus(screen.getByRole("combobox", { name: "Add an eldritch invocation" }));
+    const option = await screen.findByRole("option", { name: /Grave Sight/ });
+    expect(option).toHaveTextContent("Homebrew");
+    fireEvent.click(option);
+
+    expect(await written(fetchMock)).toEqual([
+      invocation("Agonizing Blast", FROM_WARLOCK),
+      { ref: GRAVE_SIGHT, featureType: "EI", grantedBy: FROM_ADEPT },
+    ]);
+    expect(await screen.findByRole("button", { name: "Remove Grave Sight" })).toBeInTheDocument();
   });
 
   it("swaps a pick through the picker in its own grantor's edition, keeping what entitled it", async () => {
