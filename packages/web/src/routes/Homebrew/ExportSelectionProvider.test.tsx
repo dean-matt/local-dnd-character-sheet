@@ -218,7 +218,9 @@ describe("the Homebrew page's export", () => {
     await choose("Sunblade");
     expect(screen.getByRole("button", { name: "Export (1)" })).not.toHaveAttribute("aria-disabled");
     expect(screen.queryByText(/selected/)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    const clear = screen.getByRole("button", { name: "Clear" });
+    expect(clear).toHaveClass("text-error", "border-error");
+    fireEvent.click(clear);
 
     expect(screen.getByRole("button", { name: "Export" })).toHaveAttribute("aria-disabled", "true");
     expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();

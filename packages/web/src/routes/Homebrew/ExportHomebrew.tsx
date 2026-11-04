@@ -27,7 +27,7 @@ export function ExportHomebrew() {
         <button
           type="button"
           onClick={selection.clear}
-          className="rounded-control px-3 py-1.5 font-semibold text-muted text-row hover:bg-subtle"
+          className="rounded-control border border-error bg-surface px-3 py-1.5 font-semibold text-error text-row hover:bg-subtle"
         >
           Clear
         </button>
