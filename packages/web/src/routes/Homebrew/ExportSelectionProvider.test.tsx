@@ -219,13 +219,9 @@ describe("the Homebrew page's export", () => {
     expect(screen.getByRole("button", { name: "Export (1)" })).not.toHaveAttribute("aria-disabled");
     expect(screen.queryByText(/selected/)).toBeNull();
     const clear = screen.getByRole("button", { name: "Clear" });
-    expect(clear).toHaveClass(
-      "border-error",
-      "text-error",
-      "px-3.5",
-      "py-2",
-      "font-semibold",
-      "text-row",
+    const add = screen.getByRole("button", { name: "Add item" });
+    expect([...clear.classList].sort()).toEqual(
+      [...add.classList].filter((name) => name !== "ml-auto").sort(),
     );
     fireEvent.click(clear);
 
