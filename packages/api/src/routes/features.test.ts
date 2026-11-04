@@ -601,6 +601,25 @@ describe("featuresRoutes", () => {
     });
   });
 
+  it("marks a homebrew subclass whose row is gone unresolved", async () => {
+    store(
+      definitionWith({
+        levels: [
+          { class: FIGHTER },
+          { class: FIGHTER },
+          { class: FIGHTER, subclass: { homebrewId: "gone" } },
+        ],
+      }),
+    );
+
+    expect((await features()).groups.find(({ origin }) => origin === "subclass")).toEqual({
+      origin: "subclass",
+      name: "Homebrew",
+      class: FIGHTER,
+      features: [{ resolved: false, name: "Homebrew" }],
+    });
+  });
+
   it("leaves the stamped source off a homebrew race's traits", async () => {
     insertHomebrewRace(opened.homebrewDb, "hr", {
       name: "Duskling",
