@@ -593,6 +593,7 @@ beforeEach(() => localStorage.clear());
 afterEach(() => {
   vi.unstubAllGlobals();
   ROWS["/api/homebrew/races"] = [];
+  ROWS["/api/homebrew/classes"] = [];
 });
 
 describe("LevelUp", () => {
@@ -722,6 +723,33 @@ describe("LevelUp", () => {
       name: "New Maneuver (Battle Master)",
     });
     expect(region).toHaveTextContent("Choose 1 — 0 selected");
+  });
+
+  it("levels a homebrew class cited by name and source as one cited by id, keeping the citation", async () => {
+    ROWS["/api/homebrew/classes"] = [MARSHAL];
+    const marshal = { class: { name: "Marshal", source: "HB" } };
+    renderSeeded(warlock(1, { levels: [marshal] }));
+    await open();
+    const region = await within(dialog()).findByRole("region", {
+      name: "New Maneuver (Battle Master)",
+    });
+    expect(region).toHaveTextContent("Choose 1 — 0 selected");
+    fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+    await pickSpell("Add a maneuver", "Parry");
+    await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+    fireEvent.click(applyButton());
+    await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+    expect(sent().levels.at(-1)).toEqual(marshal);
+  });
+
+  it.each([
+    ["by name and source", { name: "Nobody", source: "HB" }],
+    ["by an id no row holds", { homebrewId: "hb_gone" }],
+  ])("says a homebrew class cited %s cannot take the level", async (_, cls) => {
+    renderSeeded(warlock(1, { levels: [{ class: cls }] }));
+    fireEvent.click(screen.getByRole("button", { name: "Level up" }));
+    expect(await within(dialog()).findByText(/has no hit die the sheet can read/)).toBeVisible();
+    expect(within(dialog()).queryByText("Loading the class…")).toBeNull();
   });
 
   it("asks only for the options a held homebrew subclass's count rises by", async () => {
