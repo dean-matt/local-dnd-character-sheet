@@ -4863,7 +4863,7 @@ describe("Homebrew monsters", () => {
     });
 
     describe("traits, actions, reactions and legendary actions", () => {
-      const list = { type: "list", items: ["a", "b"] };
+      const list = { type: "list", style: "list-hang-notitle", items: ["a", "b"] };
       const withText = {
         ...full,
         json: {
@@ -4983,6 +4983,61 @@ describe("Homebrew monsters", () => {
         mode("JSON");
 
         expect(JSON.parse(jsonText("Monster JSON")).trait).toEqual([{ entries: ["New."] }]);
+      });
+
+      it("shows a row's paragraphs and each list item on its own line", async () => {
+        await openText();
+
+        expect(field("textbox", "Traits 2 rules text")).toHaveValue("Intro.");
+        expect(field("textbox", "Traits 2 list 1 item 1")).toHaveValue("a");
+        expect(field("textbox", "Traits 2 list 1 item 2")).toHaveValue("b");
+        expect(field("textbox", "Traits 2 rules text after list 1")).toHaveValue("");
+      });
+
+      it("adds, edits and removes lists and their items", async () => {
+        await openText();
+        fireEvent.change(field("textbox", "Traits 2 list 1 item 1"), { target: { value: "A" } });
+        click("Remove item 2 of list 1 of trait 2");
+        click("Add an item to list 1 of trait 2");
+        fireEvent.change(field("textbox", "Traits 2 list 1 item 2"), { target: { value: "C" } });
+        fireEvent.change(field("textbox", "Traits 2 rules text after list 1"), {
+          target: { value: "Outro." },
+        });
+        click("Add a list to trait 1");
+        fireEvent.change(field("textbox", "Traits 1 list 1 item 1"), { target: { value: "x" } });
+        mode("JSON");
+
+        const [nimble, pack] = JSON.parse(jsonText("Monster JSON")).trait;
+        expect(pack.entries).toEqual(["Intro.", { ...list, items: ["A", "C"] }, "Outro."]);
+        expect(nimble.entries).toEqual(["Moves well.", { type: "list", items: ["x"] }]);
+
+        mode("Step by step");
+        stepTo("Traits");
+        click("Remove list 1 of trait 2");
+        mode("JSON");
+        expect(JSON.parse(jsonText("Monster JSON")).trait[1].entries).toEqual(["Intro.", "Outro."]);
+      });
+
+      it("shows a list changed in JSON in the form and the preview", async () => {
+        await openText();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({
+            ...withText.json,
+            trait: [{ name: "Fresh", entries: [{ type: "list", items: ["Claw.", "Bite."] }] }],
+          }),
+        );
+        mode("Step by step");
+        stepTo("Traits");
+
+        expect(field("textbox", "Traits 1 rules text")).toHaveValue("");
+        expect(field("textbox", "Traits 1 list 1 item 2")).toHaveValue("Bite.");
+        fireEvent.change(field("textbox", "Traits 1 list 1 item 2"), {
+          target: { value: "Gore." },
+        });
+        mode("Preview");
+        expect(within(editor()).getByText("Gore.")).toBeInTheDocument();
       });
 
       it("previews them", async () => {

@@ -1,6 +1,7 @@
 import { alignmentWords } from "@dnd/catalog";
 import { capitalize } from "../../lib/capitalize.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
+import { entriesOf } from "./homebrewEntry.ts";
 
 export const MONSTER_SPEED_MODES = ["walk", "burrow", "climb", "fly", "swim"] as const;
 
@@ -287,13 +288,58 @@ export function withExtraArmorClasses(ac: unknown, rows: ExtraArmorClass[]): unk
 /** The groups of text rows a monster's stat block lists, each under the key it is stored at. */
 export type MonsterTextGroup = "trait" | "action" | "bonus" | "reaction" | "legendary" | "mythic";
 
-/** True where a trait or action is a name and plain paragraphs, the shape the form edits. */
-export const isPlainTextRow = (item: unknown): item is { name?: string; entries?: string[] } =>
+const isPlainList = (entry: unknown): entry is Record<string, unknown> & { items: string[] } =>
+  isRecord(entry) &&
+  !Array.isArray(entry) &&
+  entry.type === "list" &&
+  Array.isArray(entry.items) &&
+  entry.items.every((each) => typeof each === "string");
+
+/** One part of a row's rules text as the form edits it: paragraphs, or a list of plain items. */
+export type RulesPart =
+  | { text: string }
+  | {
+      items: string[];
+      /** The list as stored, so its style survives an edit. */
+      stored: Record<string, unknown>;
+    };
+
+/**
+ * The parts `entries` states, paragraphs first and after every list, blank where none are
+ * stored, so text can be written on either side of each list. `undefined` where an entry is
+ * neither a string nor a list of strings.
+ */
+export function rulesParts(entries: unknown): RulesPart[] | undefined {
+  if (entries === undefined) return [{ text: "" }];
+  if (!Array.isArray(entries)) return undefined;
+  const parts: RulesPart[] = [];
+  let text: string[] = [];
+  for (const entry of entries) {
+    if (typeof entry === "string") text.push(entry);
+    else if (isPlainList(entry)) {
+      parts.push({ text: text.join("\n\n") }, { items: entry.items, stored: entry });
+      text = [];
+    } else return undefined;
+  }
+  return [...parts, { text: text.join("\n\n") }];
+}
+
+/** The `entries` `parts` state; blank text, a blank item and a list with no items write nothing. */
+export function entriesOfParts(parts: RulesPart[]): unknown[] | undefined {
+  const entries = parts.flatMap((part): unknown[] => {
+    if ("text" in part) return entriesOf(part.text) ?? [];
+    const items = part.items.map((each) => each.trim()).filter(Boolean);
+    return items.length > 0 ? [{ ...part.stored, items }] : [];
+  });
+  return entries.length > 0 ? entries : undefined;
+}
+
+/** True where a trait or action is a name and rules text of paragraphs and lists of plain items, the shape the form edits. */
+export const isPlainTextRow = (item: unknown): item is { name?: string; entries?: unknown[] } =>
   isRecord(item) &&
   !Array.isArray(item) &&
   (item.name === undefined || typeof item.name === "string") &&
-  (item.entries === undefined ||
-    (Array.isArray(item.entries) && item.entries.every((each) => typeof each === "string")));
+  rulesParts(item.entries) !== undefined;
 
 /** `list` with the item at `from` moved to `to`; the list itself where either is out of range. */
 export function moved<T>(list: T[], from: number, to: number): T[] {
