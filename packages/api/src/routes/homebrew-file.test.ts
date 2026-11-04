@@ -90,7 +90,7 @@ describe("homebrewFileRoutes export", () => {
   it("writes rows of several kinds to one versioned file, each as its save would write it", async () => {
     insertHomebrewItem(db, "i1", sunblade() as never);
     insertHomebrewSpell(db, "s1", acidSplash() as never);
-    insertHomebrewClass(db, "c1", warden() as never);
+    insertHomebrewClass(db, "c1", warden({ subclassLevel: 3 }) as never);
     replaceHomebrewClassFeatures(db, "c1", [{ name: "Vigil", level: 1, entries: ["Watch."] }]);
 
     const { status, body } = await exportRows([
@@ -110,6 +110,7 @@ describe("homebrewFileRoutes export", () => {
     expect(file.entries[0]?.input).toMatchObject({ name: "Sunblade", edition: "one" });
     expect(file.entries[0]?.input).not.toHaveProperty("source");
     expect(file.entries[2]).toMatchObject({
+      input: { subclassLevel: 3 },
       features: [{ name: "Vigil", level: 1 }],
       resources: [],
     });

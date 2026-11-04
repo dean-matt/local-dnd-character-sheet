@@ -49,6 +49,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
     'Such as {"requirements": {"str": 13}, "proficienciesGained": {"armor": ["light"]}}, printed in the class\'s detail. The sheet checks no score and grants no proficiency when a character multiclasses into a homebrew class.',
   startingEquipment:
     'Such as {"default": ["(a) a longsword or (b) two handaxes"], "goldAlternative": "125"}, printed in the class\'s detail, the gold in gp. The sheet adds none of it to the inventory.',
+  subclassLevel:
+    "The class level, 1 to 20, at which the class gains its subclass, such as 3. Creation and level-up offer the class's homebrew subclasses from that level. Absent, the class grants no subclass.",
   classFeatures:
     'Features by level, such as ["Second Wind|Warden|Homebrew|1"], printed as the level table in the class\'s detail. A homebrew class has no feature entries, so each link finds nothing, and the sheet lists none of them.',
 };

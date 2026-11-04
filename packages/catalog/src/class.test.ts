@@ -114,6 +114,15 @@ describe("homebrewClassInputSchema", () => {
     expect(result.error?.issues[0]?.path).toEqual(["hd", "number"]);
   });
 
+  it("takes a subclass level of 1 to 20, and none", () => {
+    const warden = { name: "Warden", hd: { number: 1, faces: 10 }, edition: "one" };
+    expect(homebrewClassInputSchema.parse({ ...warden, subclassLevel: 20 }).subclassLevel).toBe(20);
+    expect(homebrewClassInputSchema.parse(warden).subclassLevel).toBeUndefined();
+    for (const subclassLevel of [0, 21, 2.5, "3"]) {
+      expect(homebrewClassInputSchema.safeParse({ ...warden, subclassLevel }).success).toBe(false);
+    }
+  });
+
   it("rejects an edition outside the two rulesets", () => {
     const result = homebrewClassInputSchema.safeParse({
       name: "Warden",
