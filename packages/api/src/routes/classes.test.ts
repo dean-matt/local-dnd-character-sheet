@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishClasses } from "../db/queries/contentFixture.ts";
-import { insertHomebrewSubclass } from "../db/queries/homebrew.ts";
+import { insertHomebrewClass, insertHomebrewSubclass } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { classesRoutes } from "./classes.ts";
 
@@ -293,6 +293,26 @@ describe("classesRoutes", () => {
         }),
       ]);
       expect(body.items[1]).not.toHaveProperty("source");
+    });
+
+    it("lists a homebrew class's homebrew subclasses under its name and HB", async () => {
+      insertHomebrewClass(opened.homebrewDb, "warden", {
+        name: "Warden",
+        edition: "classic",
+        hd: { number: 1, faces: 10 },
+        subclassLevel: 3,
+      });
+      insertHomebrewSubclass(opened.homebrewDb, "roots", {
+        name: "Oath of Roots",
+        edition: "classic",
+        parent: { classId: "warden" },
+      });
+
+      const res = await routes.request("/classes/Warden/HB/subclasses?edition=classic");
+      const body = await res.json();
+      expect(body.items).toEqual([
+        expect.objectContaining({ id: "roots", className: "Warden", classSource: "HB" }),
+      ]);
     });
 
     it("reads a subclass by its own name and source and its class's", async () => {

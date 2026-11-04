@@ -12,12 +12,12 @@ import type { ClassEntry } from "./useClassEntries.ts";
  */
 export function SubclassField({ entry, legend }: { entry: ClassEntry; legend: string }) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
-  const { catalogClass, subclassLevel, level, subclass } = entry;
-  if (catalogClass === undefined || subclassLevel === undefined) return null;
+  const { name, subclassLevel, level, subclass } = entry;
+  if (subclassLevel === undefined) return null;
   if (level < subclassLevel) {
     return (
       <p className="text-muted text-row">
-        {catalogClass.name} chooses a subclass at level {subclassLevel}.
+        {name} chooses a subclass at level {subclassLevel}.
       </p>
     );
   }

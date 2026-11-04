@@ -278,7 +278,9 @@ describe("homebrewHistoryRoutes", () => {
     const revert = (id: string) => app.request(`/homebrew/classes/${id}/revert`, post);
 
     it("reverts the row, features and resources of one save together", async () => {
-      const created = await create();
+      const created = await (
+        await app.request("/homebrew/classes", json(warden({ subclassLevel: 3 })))
+      ).json();
       await saveFeatures(created.id, [feature("Old")]);
       await saveResources(created.id, [table("Ki")]);
       const before = await read(`/homebrew/classes/${created.id}`);
@@ -289,6 +291,7 @@ describe("homebrewHistoryRoutes", () => {
 
       expect((await revert(created.id)).status).toBe(204);
       expect(await read(`/homebrew/classes/${created.id}`)).toEqual(before);
+      expect(before.json.subclassLevel).toBe(3);
       expect(await read(`/homebrew/classes/${created.id}/features`)).toEqual([feature("Old")]);
       expect(await read(`/homebrew/classes/${created.id}/resources`)).toEqual([table("Ki")]);
       expect((await history()).reversible).toEqual([]);

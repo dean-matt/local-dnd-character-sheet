@@ -124,12 +124,12 @@ describe("copying an entry into a new one", () => {
     expect(fetchMock.mock.calls.every(([, init]) => init?.method === undefined)).toBe(true);
   });
 
-  it("carries a homebrew class's features and resources, and edits the copy in either mode", async () => {
+  it("carries a homebrew class's subclass level, features and resources, and edits the copy in either mode", async () => {
     const features = [{ name: "Second Wind", level: 1, entries: ["Breathe."] }];
     const resources = [{ name: "Grit", maximums: Array(20).fill(2) }];
     stubApi([{ type: "class", id: "c1", name: "Sunwarden", edition: "one" }], {
       "/api/homebrew/classes/c1": {
-        json: { name: "Sunwarden", source: "HB", hd: { number: 1, faces: 10 } },
+        json: { name: "Sunwarden", source: "HB", hd: { number: 1, faces: 10 }, subclassLevel: 3 },
       },
       "/api/homebrew/classes/c1/features": features,
       "/api/homebrew/classes/c1/resources": resources,
@@ -144,6 +144,7 @@ describe("copying an entry into a new one", () => {
     expect(jsonEntry()).toEqual({
       name: "Moonwarden",
       hd: { number: 1, faces: 10 },
+      subclassLevel: 3,
       features,
       resources,
     });

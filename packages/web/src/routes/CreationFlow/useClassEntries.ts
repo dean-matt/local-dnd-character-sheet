@@ -5,7 +5,6 @@ import {
   multiclassPrerequisiteSchema,
   type ScoreMinimums,
   type SubclassRecord,
-  subclassLevelSchema,
 } from "@dnd/catalog";
 import {
   type CharacterDefinition,
@@ -19,7 +18,12 @@ import { useWatch } from "react-hook-form";
 import { classQuery } from "../../hooks/classQuery.ts";
 import { homebrewClassQuery } from "../../hooks/homebrewClassQuery.ts";
 import { subclassesQuery } from "../../hooks/subclassesQuery.ts";
-import { catalogSubclassRow, type SubclassItem } from "../../lib/subclassItems.ts";
+import {
+  catalogSubclassRow,
+  type SubclassItem,
+  subclassLevelOf,
+  subclassParent,
+} from "../../lib/subclassItems.ts";
 import { subclassOf } from "./classLevels.ts";
 
 type Level = CharacterDefinition["levels"][number];
@@ -91,8 +95,8 @@ const homebrewOf = (cls: EntryRef) => ("homebrewId" in cls ? cls.homebrewId : un
 
 /**
  * Every class the draft holds, in the order each was first taken, with the rows its
- * choices read: the catalog or homebrew class, and a catalog class's subclasses in the
- * character's edition. A homebrew class grants no subclass and needs no score to multiclass.
+ * choices read: the catalog or homebrew class, and its subclasses in the character's edition,
+ * or a homebrew class's own. A homebrew class needs no score to multiclass.
  */
 export function useClassEntries() {
   const [edition = "one", levels = []] = useWatch<CharacterDefinition, ["edition", "levels"]>({
@@ -100,11 +104,16 @@ export function useClassEntries() {
   });
   const groups = classGroups(levels);
   const classRows = useQueries({ queries: groups.map(({ cls }) => classQuery(catalogOf(cls))) });
-  const subclassLists = useQueries({
-    queries: groups.map(({ cls }) => subclassesQuery(catalogOf(cls), edition)),
-  });
   const homebrews = useQueries({
     queries: groups.map(({ cls }) => homebrewClassQuery(homebrewOf(cls))),
+  });
+  const subclassLists = useQueries({
+    queries: groups.map(({ cls }, index) =>
+      subclassesQuery(
+        subclassParent(cls, homebrews[index]?.data),
+        homebrews[index]?.data?.edition ?? edition,
+      ),
+    ),
   });
   const entries = groups.map((group, index): ClassEntry => {
     const catalogClass = catalogOf(group.cls);
@@ -124,7 +133,7 @@ export function useClassEntries() {
       subclasses: subclasses?.data?.items,
       subclassRow: catalogSubclassRow(subclasses?.data?.items, subclass),
       hitDie: classRow?.data?.hitDie ?? homebrew?.data?.hitDie,
-      subclassLevel: json && subclassLevelSchema.parse(json),
+      subclassLevel: subclassLevelOf(json, homebrew?.data),
       start,
       grants: start && classProficiencyGrantsSchema.parse(start),
       prerequisite: catalogClass ? json && multiclassPrerequisiteSchema.parse(json) : [],

@@ -173,9 +173,14 @@ const hitDieRollSchema = z.strictObject({ number: z.literal(1), faces: z.int().p
  * missing or malformed roll first — the schema is the only gate a caller's paste meets
  * before `homebrewClassRecordSchema.hitDie` reads `hd.faces` off it. It carries no
  * feature or subclass rows of its own: features are `homebrewClassFeaturesSchema`, stored
- * beside the class — see `docs/data-model.md`.
+ * beside the class — see `docs/data-model.md`. `subclassLevel` is the class level that grants
+ * a subclass, absent where it grants none: a catalog class marks it on a feature row, which
+ * a homebrew class has none of.
  */
-export const homebrewClassSchema = classEntrySchema.extend({ hd: hitDieRollSchema });
+export const homebrewClassSchema = classEntrySchema.extend({
+  hd: hitDieRollSchema,
+  subclassLevel: z.int().min(1).max(20).optional(),
+});
 
 export type HomebrewClass = z.infer<typeof homebrewClassSchema>;
 

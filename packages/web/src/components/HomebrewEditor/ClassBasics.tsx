@@ -10,6 +10,14 @@ import { ABILITY_OPTIONS, withCurrent } from "./homebrewOptions.ts";
 
 const HIT_DICE = [6, 8, 10, 12].map((faces) => ({ value: String(faces), label: `d${faces}` }));
 
+const SUBCLASS_LEVELS = [
+  { value: "", label: "None" },
+  ...Array.from({ length: 20 }, (_, index) => ({
+    value: String(index + 1),
+    label: `Level ${index + 1}`,
+  })),
+];
+
 const NEEDS = [
   { value: "any", label: "Any one of them" },
   { value: "all", label: "All of them" },
@@ -22,6 +30,7 @@ export function ClassBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
     (ability): ability is string => typeof ability === "string",
   );
   const primary = readPrimaryAbility(entry.primaryAbility);
+  const subclassLevel = String(entry.subclassLevel ?? "");
   return (
     <div className={FORM_GRID}>
       <div className={PAIRED}>
@@ -42,6 +51,18 @@ export function ClassBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
               onChange={(next) =>
                 set("hd", { ...recordAt(entry, "hd"), number: 1, faces: Number(next) })
               }
+            />
+          )}
+        </FormField>
+      </div>
+      <div className={SHORT}>
+        <FormField label="Subclass at" error={errorFor("subclassLevel")}>
+          {(control) => (
+            <Select
+              {...control}
+              options={withCurrent(SUBCLASS_LEVELS, subclassLevel)}
+              value={subclassLevel}
+              onChange={(next) => set("subclassLevel", next ? Number(next) : undefined)}
             />
           )}
         </FormField>

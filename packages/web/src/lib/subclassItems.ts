@@ -1,5 +1,10 @@
-import type { SubclassRecord, subclassListItemSchema } from "@dnd/catalog";
-import { type EntryRef, entryKey } from "@dnd/character";
+import {
+  HOMEBREW_SOURCE,
+  type SubclassRecord,
+  subclassLevelSchema,
+  type subclassListItemSchema,
+} from "@dnd/catalog";
+import { type ContentRef, type EntryRef, entryKey } from "@dnd/character";
 import type { z } from "zod";
 
 /** One subclass a class offers: a catalog row, or a homebrew one carrying its id. */
@@ -24,3 +29,23 @@ export const catalogSubclassRow = (
         (item): item is SubclassRecord =>
           "source" in item && entryKey(subclassRef(item)) === entryKey(ref),
       );
+
+/**
+ * The class a subclass list is read under: a catalog class as it is, a homebrew one by its
+ * name and `HB` once its row loads, as the subclass list route names it.
+ */
+export const subclassParent = (
+  cls: EntryRef,
+  homebrew: { name: string } | undefined,
+): ContentRef | undefined =>
+  "name" in cls ? cls : homebrew && { name: homebrew.name, source: HOMEBREW_SOURCE };
+
+/**
+ * The level a class gains its subclass at, off the catalog row or the homebrew one, whichever
+ * loaded.
+ */
+export const subclassLevelOf = (
+  catalogJson: unknown,
+  homebrew: { json: { subclassLevel?: number } } | undefined,
+): number | undefined =>
+  catalogJson ? subclassLevelSchema.parse(catalogJson) : homebrew?.json.subclassLevel;

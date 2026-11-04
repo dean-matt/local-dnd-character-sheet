@@ -2112,6 +2112,7 @@ describe("Homebrew kind page", () => {
       "spellcastingAbility",
       "startingEquipment",
       "startingProficiencies",
+      "subclassLevel",
     ]);
     expect(within(reference).getByText("entries").nextSibling).toHaveTextContent(/rules text/);
     expect(within(reference).getByText("spellcastingAbility").nextSibling).toHaveTextContent(
@@ -3010,6 +3011,7 @@ describe("Homebrew kind page", () => {
     const built = {
       name: "Warden",
       hd: { number: 1, faces: 8 },
+      subclassLevel: 3,
       proficiency: ["str", "con", "wis"],
       primaryAbility: [{ str: true, dex: true }],
       entries: CLASS_STARTERS[0].entry.entries,
@@ -3073,6 +3075,7 @@ describe("Homebrew kind page", () => {
 
       addClass();
       pick("Hit die", "d8");
+      pick("Subclass at", "Level 3");
       tick("Saving throws", "Wisdom");
       tick("Primary ability", "Dexterity");
       pick("Primary ability needs", "All of them");
@@ -3391,6 +3394,23 @@ describe("Homebrew kind page", () => {
         group("Skills").getByLabelText("Granted as", { selector: FIELD_SELECTOR.combobox }),
       ).toHaveAccessibleDescription("Pick at least one to choose from");
       expect(within(editor()).getByRole("heading", { name: "Proficiencies" })).toBeInTheDocument();
+    });
+
+    it("shows a saved class's subclass level on reopening it", async () => {
+      const warden = {
+        id: "c1",
+        name: "Warden",
+        edition: "one",
+        hitDie: 10,
+        json: { ...CLASS_STARTERS[0].entry, source: "HB", subclassLevel: 3 },
+        createdAt: CREATED_AT,
+      };
+      stubApi({ classes: [warden] });
+      renderPage("classes");
+
+      await editRow(classes(), "Warden");
+      await loaded();
+      expect(field("combobox", "Subclass at")).toHaveTextContent("Level 3");
     });
 
     it("holds Save on a new hit die chosen in the form while a character holds the class", async () => {
