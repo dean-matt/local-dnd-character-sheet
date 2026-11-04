@@ -1,4 +1,4 @@
-import { Pencil, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useContext, useEffect, useId, useRef, useState } from "react";
 import { EditionTag } from "../../components/EditionTag.tsx";
 import { HomebrewEditor } from "../../components/HomebrewEditor/HomebrewEditor.tsx";
@@ -14,12 +14,14 @@ import type { HomebrewRow, ListingKind } from "../../lib/homebrewListing.ts";
 import { firstLine } from "../../lib/rulesProse.ts";
 import { DeletedToast } from "./DeletedToast.tsx";
 import { DeleteHomebrewDialog } from "./DeleteHomebrewDialog.tsx";
+import { ExportHomebrew } from "./ExportHomebrew.tsx";
 import { ExportSelection } from "./exportSelectionContext.ts";
+import { ImportHomebrew } from "./ImportHomebrew.tsx";
 
-const ICON_BUTTON =
-  "flex size-6 items-center justify-center rounded-control text-muted hover:bg-border";
-
-/** One kind of homebrew: its rows, each editable and deletable, and a way to add one. */
+/**
+ * One kind of homebrew: the page's import, export and add on one row, then its rows, each
+ * deletable from the card and editable from its detail.
+ */
 export function HomebrewSection({ kind }: { kind: ListingKind }) {
   const { list, save, remove } = useHomebrew(kind.collection, kind.recordSchema);
   // `"new"` while adding a row, a row's id while editing it.
@@ -54,14 +56,16 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
 
   return (
     <section aria-labelledby={`${id}-title`} className="flex scroll-mt-20 flex-col gap-2.5">
-      <div className="flex justify-end">
-        <h2 id={`${id}-title`} className="sr-only">
-          {kind.heading}
-        </h2>
+      <h2 id={`${id}-title`} className="sr-only">
+        {kind.heading}
+      </h2>
+      <div className="flex flex-wrap items-center gap-2">
+        <ImportHomebrew />
+        <ExportHomebrew />
         <button
           type="button"
           onClick={() => openEditor("new")}
-          className="flex items-center gap-1 rounded-control border border-accent px-3 py-1.5 font-semibold text-accent-text text-row hover:bg-subtle"
+          className="ml-auto flex items-center gap-1 rounded-control border border-accent px-3 py-1.5 font-semibold text-accent-text text-row hover:bg-subtle"
         >
           <Plus aria-hidden="true" size={12} strokeWidth={2.5} />
           Add {kind.noun}
@@ -89,39 +93,45 @@ export function HomebrewSection({ kind }: { kind: ListingKind }) {
                 </>
               }
               preview={firstLine(row.json.entries)}
-              detail={
-                row.json.entries && row.json.entries.length > 0
-                  ? { children: <RulesEntries entries={row.json.entries} /> }
-                  : undefined
-              }
-              controls={
-                <>
-                  {selection && (
-                    <input
-                      type="checkbox"
-                      aria-label={`Select ${row.name} for export`}
-                      checked={selection.isChosen({ collection: kind.collection, id: row.id })}
-                      onChange={() => selection.toggle({ collection: kind.collection, id: row.id })}
-                      className="size-4"
-                    />
-                  )}
+              detail={{
+                footer: (
                   <button
                     type="button"
                     aria-label={`Edit ${row.name}`}
                     onClick={() => openEditor(row.id)}
-                    className={ICON_BUTTON}
+                    className="rounded-control border border-border bg-surface px-3.5 py-2 font-semibold text-ink text-row hover:bg-subtle"
                   >
-                    <Pencil aria-hidden="true" size={12} />
+                    Edit
                   </button>
-                  <button
-                    type="button"
-                    aria-label={`Delete ${row.name}`}
-                    onClick={() => setDeleting(row)}
-                    className={ICON_BUTTON}
-                  >
-                    <X aria-hidden="true" size={12} />
-                  </button>
-                </>
+                ),
+                children:
+                  row.json.entries && row.json.entries.length > 0 ? (
+                    <RulesEntries entries={row.json.entries} />
+                  ) : (
+                    <p className="text-muted">No description.</p>
+                  ),
+              }}
+              remove={
+                <button
+                  type="button"
+                  aria-label={`Delete ${row.name}`}
+                  title="Delete"
+                  onClick={() => setDeleting(row)}
+                  className="relative flex size-4.5 shrink-0 items-center justify-center text-muted before:absolute before:-inset-1 hover:text-ink"
+                >
+                  <X aria-hidden="true" size={12} />
+                </button>
+              }
+              select={
+                selection && (
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${row.name} for export`}
+                    checked={selection.isChosen({ collection: kind.collection, id: row.id })}
+                    onChange={() => selection.toggle({ collection: kind.collection, id: row.id })}
+                    className="size-4"
+                  />
+                )
               }
             />
           ))}

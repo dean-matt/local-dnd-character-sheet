@@ -14,3 +14,51 @@ for (const width of [320, 390]) {
     );
   });
 }
+
+for (const width of [320, 390]) {
+  test(`at ${width}px wide the Homebrew page's actions and cards wrap, each control in reach of Tab`, async ({
+    page,
+    request,
+  }) => {
+    const name = `Phone Width Feat With A Long Name ${test.info().retry}${Date.now()}`;
+    const saved = await request.post("/api/homebrew/feats", {
+      data: { edition: "one", name, category: "O", entries: ["A long line of rules text."] },
+    });
+    expect(saved.ok()).toBe(true);
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/homebrew/feats");
+    // The expanded rail leaves a phone too little room for any page; the page is judged beside the collapsed one.
+    await page.getByRole("button", { name: "Collapse sidebar" }).click();
+    const section = page.getByRole("region", { name: "Feats" });
+    await expect(section.getByRole("button", { name, exact: true })).toBeVisible();
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    const controls = [
+      section.getByRole("button", { name: "Import" }),
+      section.getByRole("button", { name: "Export" }),
+      section.getByRole("button", { name: "Add feat" }),
+      section.getByRole("checkbox", { name: `Select ${name} for export` }),
+      section.getByRole("button", { name, exact: true }),
+      section.getByRole("button", { name: `Delete ${name}` }),
+    ];
+    for (const control of controls) {
+      const b = await box(control);
+      expect(b.x).toBeGreaterThanOrEqual(0);
+      expect(b.x + b.width).toBeLessThanOrEqual(width);
+    }
+    await page.keyboard.press("Tab");
+    for (const control of controls) {
+      for (
+        let i = 0;
+        i < 40 && !(await control.evaluate((el) => el === document.activeElement));
+        i++
+      ) {
+        await page.keyboard.press("Tab");
+      }
+      await expect(control).toBeFocused();
+    }
+    await request.delete(`/api/homebrew/feats/${(await saved.json()).id}`);
+  });
+}

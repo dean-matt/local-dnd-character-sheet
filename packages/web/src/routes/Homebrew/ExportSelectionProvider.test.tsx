@@ -90,7 +90,7 @@ function renderPage() {
 const choose = async (name: string) =>
   fireEvent.click(await screen.findByRole("checkbox", { name: `Select ${name} for export` }));
 
-describe("ExportSelectionProvider", () => {
+describe("the Homebrew page's export", () => {
   let click: ReturnType<typeof vi.spyOn>;
   const createObjectURL = vi.fn((_blob: Blob) => "blob:homebrew");
 
@@ -119,8 +119,7 @@ describe("ExportSelectionProvider", () => {
     await choose("Sunblade");
     fireEvent.click(screen.getByRole("link", { name: "Subclasses" }));
     await choose("Hearthkeeper");
-    expect(screen.getByText("2 selected")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export (2)" }));
 
     await waitFor(() =>
       expect(
@@ -141,7 +140,7 @@ describe("ExportSelectionProvider", () => {
     expect(link.download).toBe("homebrew.json");
     const blob = createObjectURL.mock.calls[0]?.[0] as Blob;
     expect(JSON.parse(await blob.text())).toEqual(file);
-    expect(screen.queryByText(/selected$/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export" })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("keeps the choice and says why when the export fails", async () => {
@@ -149,10 +148,10 @@ describe("ExportSelectionProvider", () => {
     renderPage();
 
     await choose("Sunblade");
-    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export (1)" }));
 
     expect(await screen.findByText("Export failed: disk full")).toBeInTheDocument();
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export (1)" })).toBeInTheDocument();
     expect(click).not.toHaveBeenCalled();
 
     await choose("Sunblade");
@@ -165,7 +164,7 @@ describe("ExportSelectionProvider", () => {
     renderPage();
 
     await choose("Sunblade");
-    fireEvent.click(screen.getByRole("button", { name: "Export" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export (1)" }));
     await screen.findByRole("button", { name: "Exporting…" });
     fireEvent.click(screen.getByRole("link", { name: "Subclasses" }));
     await choose("Hearthkeeper");
@@ -174,7 +173,7 @@ describe("ExportSelectionProvider", () => {
     await waitFor(() =>
       expect(screen.getByText("Exported 1 entry to homebrew.json.")).toHaveRole("status"),
     );
-    expect(screen.getByText("1 selected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export (1)" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Select Hearthkeeper for export" })).toBeChecked();
   });
 
@@ -186,6 +185,54 @@ describe("ExportSelectionProvider", () => {
     fireEvent.click(screen.getByRole("button", { name: "Delete Sunblade" }));
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" }));
 
-    await waitFor(() => expect(screen.queryByText("1 selected")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Export" })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      ),
+    );
+  });
+
+  it("puts Import and Export on the left of the row Add ends", async () => {
+    stubApi(json(200, file));
+    renderPage();
+
+    const add = await screen.findByRole("button", { name: "Add item" });
+    const row = [...(add.parentElement?.children ?? [])].filter((el) => el.tagName === "BUTTON");
+    expect(row.map((button) => button.textContent)).toEqual(["Import", "Export", "Add item"]);
+    expect(add).toHaveClass("ml-auto");
+  });
+
+  it("holds Export until an entry is chosen, and offers Clear only while one is", async () => {
+    const fetchMock = stubApi(json(200, file));
+    renderPage();
+
+    const idle = await screen.findByRole("button", { name: "Export" });
+    expect(idle).toHaveAttribute("aria-disabled", "true");
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+    fireEvent.click(idle);
+    expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/homebrew/export")).toBe(
+      false,
+    );
+
+    await choose("Sunblade");
+    expect(screen.getByRole("button", { name: "Export (1)" })).not.toHaveAttribute("aria-disabled");
+    expect(screen.queryByText(/selected/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+
+    expect(screen.getByRole("button", { name: "Export" })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+  });
+
+  it("sets each entry's checkbox outside its card, to the left", async () => {
+    stubApi(json(200, file));
+    renderPage();
+
+    const checkbox = await screen.findByRole("checkbox", { name: "Select Sunblade for export" });
+    const row = checkbox.closest("li") as HTMLElement;
+    const [outside, card] = [...row.children] as HTMLElement[];
+    expect(outside).toContainElement(checkbox);
+    expect(card).toContainElement(within(row).getByRole("button", { name: "Sunblade" }));
+    expect(card).not.toContainElement(checkbox);
   });
 });

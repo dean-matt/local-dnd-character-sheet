@@ -12,7 +12,8 @@ import { SourceChip } from "../SourceChip.tsx";
  * `detail` opens it in a modal from its name; one without is plain text, since there is
  * nothing to open. `source` is absent on a homebrew row.
  * `priceNote` says where an estimated price comes from. `remove` sits at the end of the
- * first line, such as the button taking the row off a list.
+ * first line, such as the button taking the row off a list. `select` sits outside the card at
+ * its left, such as a checkbox choosing the row.
  */
 export function ListRow({
   name,
@@ -24,6 +25,7 @@ export function ListRow({
   actions,
   controls,
   remove,
+  select,
   detail,
 }: {
   name: string;
@@ -35,11 +37,14 @@ export function ListRow({
   actions?: ReactNode;
   controls?: ReactNode;
   remove?: ReactNode;
+  select?: ReactNode;
   detail?: { meta?: ReactNode; footer?: ReactNode; children: ReactNode };
 }) {
   const nameClass = "min-w-0 truncate font-semibold print:overflow-visible print:whitespace-normal";
-  return (
-    <li className="flex min-w-0 flex-col gap-1 rounded-control bg-subtle px-3 py-2.5 text-sm print:break-inside-avoid print:bg-transparent print:px-0">
+  const card =
+    "flex min-w-0 flex-col gap-1 rounded-control bg-subtle px-3 py-2.5 text-sm print:break-inside-avoid print:bg-transparent print:px-0";
+  const body = (
+    <>
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
         {detail ? (
           <DetailTrigger
@@ -81,6 +86,13 @@ export function ListRow({
           )}
         </div>
       )}
+    </>
+  );
+  if (!select) return <li className={card}>{body}</li>;
+  return (
+    <li className="flex min-w-0 items-center gap-2">
+      <span className="flex shrink-0 print:hidden">{select}</span>
+      <div className={`${card} flex-1`}>{body}</div>
     </li>
   );
 }

@@ -7,10 +7,17 @@ export interface ChosenEntry {
 }
 
 /**
- * The entries chosen for export, held by the Homebrew page so a choice survives a change of
- * tab. `null` where a list renders outside that page, which offers no export.
+ * The entries chosen for export and the export of them, held by the Homebrew page so a choice
+ * survives a change of tab. `done` says what the last export wrote. `null` where a list renders
+ * outside that page, which offers no export.
  */
 export const ExportSelection = createContext<{
   isChosen: (entry: ChosenEntry) => boolean;
   toggle: (entry: ChosenEntry) => void;
+  count: number;
+  clear: () => void;
+  exportChosen: () => void;
+  exporting: boolean;
+  done: string;
+  failure: string | undefined;
 } | null>(null);

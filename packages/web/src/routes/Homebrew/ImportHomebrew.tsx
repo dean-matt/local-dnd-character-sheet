@@ -2,14 +2,17 @@ import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useImportHomebrew } from "../../hooks/useImportHomebrew.ts";
 
-/** Imports a homebrew file, then says how many entries it created or why it was refused. */
+/**
+ * Imports a homebrew file, then says how many entries it created or why it was refused, on a
+ * row of its own below the row it sits in.
+ */
 export function ImportHomebrew() {
   const picker = useRef<HTMLInputElement>(null);
   const importFile = useImportHomebrew();
   const [done, setDone] = useState("");
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <>
       <button
         type="button"
         aria-disabled={importFile.isPending}
@@ -40,14 +43,14 @@ export function ImportHomebrew() {
           });
         }}
       />
-      <p role="status" className="text-row empty:hidden">
+      <p role="status" className="order-last basis-full text-row empty:hidden">
         {done}
       </p>
       {importFile.isError && (
-        <p role="alert" className="max-w-md text-error text-row">
+        <p role="alert" className="order-last basis-full text-error text-row">
           Import failed: {importFile.error.message}
         </p>
       )}
-    </div>
+    </>
   );
 }
