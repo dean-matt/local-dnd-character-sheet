@@ -46,7 +46,7 @@ export function ClassBasics({ entry, onChange, errorFor }: HomebrewFormProps) {
           {(control) => (
             <Select
               {...control}
-              options={faces ? withCurrent(HIT_DICE, faces) : HIT_DICE}
+              options={withCurrent(HIT_DICE, faces)}
               value={faces}
               onChange={(next) =>
                 set("hd", { ...recordAt(entry, "hd"), number: 1, faces: Number(next) })

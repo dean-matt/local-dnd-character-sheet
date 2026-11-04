@@ -12,9 +12,9 @@ export const ABILITY_OPTIONS: Option[] = ABILITIES.map((value) => ({
   label: ABILITY_LABEL[value],
 }));
 
-/** A Select's options, with `current` added under its own spelling where none lists it. */
+/** A Select's options, with a stated `current` added under its own spelling where none lists it. */
 export function withCurrent(options: Option[], current: string) {
-  return options.some((option) => option.value === current)
+  return !current || options.some((option) => option.value === current)
     ? options
     : [...options, { value: current, label: current }];
 }

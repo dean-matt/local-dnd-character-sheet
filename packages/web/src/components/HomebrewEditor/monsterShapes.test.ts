@@ -14,7 +14,8 @@ import {
   ratingOf,
   rulesParts,
   speedFeet,
-  typeTags,
+  type TypeTagRow,
+  typeTagRows,
   withAlignmentRows,
   withArmorClass,
   withExtraArmorClasses,
@@ -22,6 +23,7 @@ import {
   withRating,
   withSpeed,
   withStrings,
+  withTypeField,
   withTypeTags,
 } from "./monsterShapes.ts";
 
@@ -109,7 +111,12 @@ describe("monster shapes", () => {
   });
 
   it("writes type tags, returning to a plain type when none are left", () => {
-    expect(withTypeTags("humanoid", ["goblinoid"])).toEqual({
+    const row = (tag: string, prefix = "", stored?: unknown): TypeTagRow => ({
+      tag,
+      prefix,
+      stored,
+    });
+    expect(withTypeTags("humanoid", [row("goblinoid")])).toEqual({
       type: "humanoid",
       tags: ["goblinoid"],
     });
@@ -118,12 +125,45 @@ describe("monster shapes", () => {
       type: "beast",
       swarmSize: "T",
     });
-    const prefixed = { tag: "dwarf", prefix: "shield" };
-    expect(withTypeTags({ type: "humanoid", tags: [prefixed, "a"] }, ["b"])).toEqual({
+    expect(withTypeTags("humanoid", [row(" dwarf ", " shield "), row(" ")])).toEqual({
       type: "humanoid",
-      tags: [prefixed, "b"],
+      tags: [{ tag: "dwarf", prefix: "shield" }],
     });
-    expect(typeTags({ type: "humanoid", tags: [prefixed, "a"] })).toEqual(["a"]);
+    const hidden = { tag: "elf", prefix: "high", prefixHidden: true };
+    expect(withTypeTags("humanoid", [row("elf", "", hidden)])).toEqual({
+      type: "humanoid",
+      tags: [{ tag: "elf", prefixHidden: true }],
+    });
+    expect(withTypeTags("humanoid", [row("elf", "", { tag: "elf", prefix: "high" })])).toEqual({
+      type: "humanoid",
+      tags: ["elf"],
+    });
+  });
+
+  it("reads plain and prefixed tags as rows, in their stored order", () => {
+    const prefixed = { tag: "dwarf", prefix: "shield" };
+    const stored = { type: "humanoid", tags: ["a", prefixed, "b"] };
+    const rows = typeTagRows(stored);
+    expect(rows).toEqual([
+      { tag: "a", prefix: "", stored: "a" },
+      { tag: "dwarf", prefix: "shield", stored: prefixed },
+      { tag: "b", prefix: "", stored: "b" },
+    ]);
+    expect(withTypeTags(stored, rows)).toEqual(stored);
+    const edited = rows.map((each, at) => (at === 1 ? { ...each, prefix: "hill" } : each));
+    expect(withTypeTags(stored, edited)).toEqual({
+      type: "humanoid",
+      tags: ["a", { tag: "dwarf", prefix: "hill" }, "b"],
+    });
+    expect(withTypeTags({ type: "x", tags: [1, "a"] }, [])).toEqual({ type: "x", tags: [1] });
+  });
+
+  it("sets and clears a field on the type", () => {
+    expect(withTypeField("beast", "swarmSize", "T")).toEqual({ type: "beast", swarmSize: "T" });
+    expect(withTypeField({ type: "beast", swarmSize: "T" }, "swarmSize", undefined)).toBe("beast");
+    expect(withTypeField({ type: "beast", swarmSize: "T", tags: ["x"] }, "swarmSize", "S")).toEqual(
+      { type: "beast", swarmSize: "S", tags: ["x"] },
+    );
   });
 
   it("drops blank strings from a list and keeps its other entries", () => {
