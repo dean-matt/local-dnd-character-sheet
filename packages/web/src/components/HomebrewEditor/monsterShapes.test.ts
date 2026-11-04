@@ -4,10 +4,10 @@ import {
   alignmentIsEditable,
   alignmentLabel,
   alignmentRows,
-  armorClassIsProse,
   entriesOfParts,
   extraArmorClasses,
   firstArmorClass,
+  firstArmorClassWords,
   isPlainTextRow,
   moved,
   prefixText,
@@ -18,6 +18,7 @@ import {
   typeTagRows,
   withAlignmentRows,
   withArmorClass,
+  withArmorClassWords,
   withExtraArmorClasses,
   withPrefix,
   withRating,
@@ -46,7 +47,14 @@ describe("monster shapes", () => {
     ]);
     expect(withArmorClass([12], undefined)).toBeUndefined();
     expect(withArmorClass(undefined, 11)).toEqual([11]);
-    expect(armorClassIsProse([{ special: "equal to 10 + level" }])).toBe(true);
+    expect(firstArmorClassWords([{ special: "equal to 10 + level" }, 12])).toBe(
+      "equal to 10 + level",
+    );
+    expect(firstArmorClassWords([12])).toBeUndefined();
+    expect(withArmorClassWords([{ special: "x", note: "kept" }, 12], "13 + PB")).toEqual([
+      { special: "13 + PB", note: "kept" },
+      12,
+    ]);
   });
 
   it("reads and writes a rating in either form", () => {
@@ -268,7 +276,7 @@ describe("monster shapes", () => {
     expect(moved(list, 1, 2)).toBe(list);
   });
 
-  it("edits the armor classes after the first with their sources", () => {
+  it("edits the armor classes after the first with their sources and words, in their slots", () => {
     const ac = [
       { ac: 13, from: ["natural armor"] },
       { ac: 17, from: ["mage armor"], braces: true },
@@ -276,9 +284,10 @@ describe("monster shapes", () => {
       9,
     ];
     const rows = extraArmorClasses(ac);
-    expect(rows.map(({ ac: value, source }) => [value, source])).toEqual([
-      [17, "mage armor"],
-      [9, ""],
+    expect(rows.map(({ ac: value, source, special }) => [value, source, special])).toEqual([
+      [17, "mage armor", undefined],
+      [undefined, "", "x"],
+      [9, "", undefined],
     ]);
     expect(withExtraArmorClasses(ac, rows)).toEqual([
       { ac: 13, from: ["natural armor"] },
@@ -287,11 +296,21 @@ describe("monster shapes", () => {
       9,
     ]);
     expect(
+      withExtraArmorClasses(
+        ac,
+        rows.map((row, at) => (at === 1 ? { ...row, special: "11 + PB" } : row)),
+      ),
+    ).toEqual([
+      { ac: 13, from: ["natural armor"] },
+      { ac: 17, from: ["mage armor"], braces: true },
+      { special: "11 + PB" },
+      9,
+    ]);
+    expect(
       withExtraArmorClasses(ac, [{ ac: 12, source: "leather, shield", stored: undefined }]),
     ).toEqual([
       { ac: 13, from: ["natural armor"] },
       { ac: 12, from: ["leather", "shield"] },
-      { special: "x" },
     ]);
     expect(withExtraArmorClasses([12, 14], [])).toEqual([12]);
   });

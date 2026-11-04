@@ -4916,7 +4916,7 @@ describe("Homebrew monsters", () => {
         expect(field("textbox", "Alignment note")).toHaveValue("when calm");
         expect(field("combobox", "Alignment 2")).toHaveTextContent("Neutral evil");
         expect(field("textbox", "Alignment prefix")).toHaveValue("typically");
-        expect(within(editor()).queryByText(/Edit it in JSON/)).not.toBeInTheDocument();
+        expect(within(editor()).queryByText(/cannot show/)).not.toBeInTheDocument();
         click("Save");
 
         await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
@@ -4978,6 +4978,101 @@ describe("Homebrew monsters", () => {
         );
         mode("Step by step");
         expect(field("combobox", "Alignment")).toHaveTextContent("Any chaotic alignment");
+      });
+    });
+
+    describe("prose armor classes", () => {
+      const prose = {
+        ...full,
+        json: {
+          ...full.json,
+          ac: [
+            { special: "13 + PB (natural armor)" },
+            { ac: 17, from: ["mage armor"] },
+            { special: "11 + the spell's level" },
+            12,
+          ],
+        },
+      };
+      const openProse = async (writes: Parameters<typeof stubApi>[1] = []) => {
+        const fetchMock = stubApi({ monsters: [prose] }, writes);
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+        return fetchMock;
+      };
+
+      it("shows them in the form with no note, and saves them untouched", async () => {
+        const fetchMock = await openProse([{ status: 200, body: prose }]);
+
+        expect(field("textbox", "Armor class in words")).toHaveValue("13 + PB (natural armor)");
+        expect(screen.queryByRole("spinbutton", { name: "Armor class" })).not.toBeInTheDocument();
+        expect(field("spinbutton", "Armor class 2")).toHaveValue(17);
+        expect(field("textbox", "Armor class 3 in words")).toHaveValue("11 + the spell's level");
+        expect(field("spinbutton", "Armor class 4")).toHaveValue(12);
+        expect(within(editor()).queryByText(/cannot show/)).not.toBeInTheDocument();
+        click("Save");
+
+        await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
+        const { source: _source, ...sent } = prose.json;
+        expect(writesOf(fetchMock)[0]).toMatchObject({ body: { ...sent, edition: "one" } });
+      });
+
+      it("edits them in their places, and JSON mode and the preview show the change", async () => {
+        await openProse();
+        fireEvent.change(field("textbox", "Armor class in words"), {
+          target: { value: "14 + PB (natural armor)" },
+        });
+        fireEvent.change(field("textbox", "Armor class 3 in words"), {
+          target: { value: "10 + the spell's level" },
+        });
+        fireEvent.change(field("spinbutton", "Armor class 4"), { target: { value: "11" } });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).ac).toEqual([
+          { special: "14 + PB (natural armor)" },
+          { ac: 17, from: ["mage armor"] },
+          { special: "10 + the spell's level" },
+          11,
+        ]);
+        mode("Preview");
+        expect(
+          within(editor()).getByText(
+            "14 + PB (natural armor), 17 (mage armor), 10 + the spell's level, 11",
+          ),
+        ).toBeInTheDocument();
+      });
+
+      it("shows a change made in JSON in the form", async () => {
+        await openProse();
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({
+            ...prose.json,
+            ac: [{ special: "equal to 10 + level" }, 15, { special: "15 with a shield" }],
+          }),
+        );
+        mode("Step by step");
+
+        expect(field("textbox", "Armor class in words")).toHaveValue("equal to 10 + level");
+        expect(field("spinbutton", "Armor class 2")).toHaveValue(15);
+        expect(field("textbox", "Armor class 3 in words")).toHaveValue("15 with a shield");
+      });
+
+      it("notes hit points written as prose", async () => {
+        stubApi({
+          monsters: [{ ...prose, json: { ...prose.json, hp: { special: "half its maximum" } } }],
+        });
+        renderPage("monsters");
+        await editRow(monsters(), "Cinder Hound");
+        await settled();
+
+        expect(
+          within(editor()).getByText(
+            "The hit points are stated in a way the form cannot show. Edit them in JSON.",
+          ),
+        ).toBeInTheDocument();
       });
     });
 
