@@ -4,7 +4,7 @@ import { ExportSelection } from "./exportSelectionContext.ts";
 
 /**
  * Export for the entries chosen across the page's tabs, with their count, and Clear while any
- * are chosen. Its status and alert lines take a row of their own below the row it sits in.
+ * are chosen; Clear keeps its space while hidden. Its status and alert lines take a row of their own below the row it sits in.
  */
 export function ExportHomebrew() {
   const selection = useContext(ExportSelection);
@@ -23,15 +23,16 @@ export function ExportHomebrew() {
         <Download aria-hidden="true" size={12} strokeWidth={2.5} />
         {exporting ? "Exporting…" : count > 0 ? `Export (${count})` : "Export"}
       </button>
-      {count > 0 && (
-        <button
-          type="button"
-          onClick={selection.clear}
-          className="flex items-center gap-1 rounded-control border border-accent px-3 py-1.5 font-semibold text-accent-text text-row hover:bg-subtle"
-        >
-          Clear
-        </button>
-      )}
+      {/* Hidden rather than unmounted, so a wrapped row keeps its height when Clear appears. */}
+      <button
+        type="button"
+        onClick={selection.clear}
+        inert={count === 0}
+        aria-hidden={count === 0 || undefined}
+        className={`flex items-center gap-1 rounded-control border border-accent px-3 py-1.5 font-semibold text-accent-text text-row hover:bg-subtle ${count === 0 ? "invisible" : ""}`}
+      >
+        Clear
+      </button>
       <p role="status" className="order-last basis-full text-row empty:hidden">
         {selection.done}
       </p>
