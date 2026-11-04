@@ -41,7 +41,7 @@ export function useLevelUpPlan(
   definition: CharacterDefinition,
   method: HitPointMethod | undefined,
   /** A reopened past level's subclass and stamped spell picks, as saved. */
-  saved?: Parameters<typeof useLevelUpSpells>[4],
+  saved?: Parameters<typeof useLevelUpSpells>[3],
 ) {
   const { setValue, getValues } = useFormContext<CharacterDefinition>();
   const [
@@ -78,7 +78,7 @@ export function useLevelUpPlan(
   const level = (levels.at(-1) ?? definition.levels.at(-1)) as Level;
   const target = useLevelUpClass(definition, level.class, level.subclass);
   const entry = useMulticlassEntry(definition, level.class, target.name, target.json);
-  const spellPicks = useLevelUpSpells(definition, level.class, target, spells, saved);
+  const spellPicks = useLevelUpSpells(definition, target, spells, saved);
   const optionPicks = useLevelUpOptions(definition, level.class, target, optionalFeatures);
   const pickedSkills = (entry.skillPick?.options ?? []).filter((ref) =>
     proficiencies.skills.some((skill) => refKey(skill.ref) === refKey(ref)),
@@ -94,7 +94,7 @@ export function useLevelUpPlan(
   const candidate = grant && candidateAt(draft, grant);
   const improvement = grant && improvementAt(draft, grant.level);
   const featRows = featList.rows;
-  const offerings = offeringsAt(level.class, target);
+  const offerings = offeringsAt(target);
   const chosen = (offering: FeatureOffering) =>
     takenOption(featureChoices, offering.feature, offering.options);
 
@@ -234,8 +234,9 @@ export function useLevelUpPlan(
  * its features through the edition's subclass list, so one from the other edition offers
  * nothing here; reading its row by reference is the way out.
  */
-function offeringsAt(cls: EntryRef, target: ReturnType<typeof useLevelUpClass>) {
-  if (!("name" in cls)) return [];
+function offeringsAt(target: ReturnType<typeof useLevelUpClass>) {
+  const cls = target.catalog;
+  if (!cls) return [];
   const owner = { className: cls.name, classSource: cls.source };
   const row = target.subclassRow;
   const own = featureOfferings(target.after?.features ?? [], owner).filter(

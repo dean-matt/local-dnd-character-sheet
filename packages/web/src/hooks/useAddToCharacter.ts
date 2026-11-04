@@ -13,6 +13,7 @@ import type { Addable } from "../lib/addable.ts";
 import { withFeat, withItem, withSpell } from "../lib/addedEntries.ts";
 import { apiGet } from "../lib/api.ts";
 import { castableCeiling } from "../lib/casterFacts.ts";
+import { catalogClass } from "../lib/catalogClass.ts";
 import { withDeparture } from "../lib/departures.ts";
 import { alternativesOf } from "../lib/improvementChoice.ts";
 import { candidateAt, featBarrier } from "../lib/improvementFeats.ts";
@@ -53,9 +54,10 @@ const rowQuery = <T>(collection: string, ref: ContentRef, schema: z.ZodType<T>) 
 /** Each catalog class the character has levels in, with its level and any catalog subclass. */
 const catalogClasses = (definition: CharacterDefinition) =>
   classLevels(definition).flatMap(({ class: cls, level, subclass }) => {
+    const catalog = catalogClass(cls);
     const catalogSubclass = catalogRef(subclass);
-    return "name" in cls
-      ? [{ class: cls, level, ...(catalogSubclass && { subclass: catalogSubclass }) }]
+    return catalog
+      ? [{ class: catalog, level, ...(catalogSubclass && { subclass: catalogSubclass }) }]
       : [];
   });
 

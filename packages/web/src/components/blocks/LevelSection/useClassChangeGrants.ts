@@ -18,6 +18,7 @@ import { useBackgrounds } from "../../../hooks/useBackgrounds.ts";
 import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
 import { useRaceRows } from "../../../hooks/useRaceRows.ts";
 import { ApiError } from "../../../lib/api.ts";
+import { catalogClass } from "../../../lib/catalogClass.ts";
 import { NO_GRANTS, resolveGrants, swapGrants } from "../../../lib/proficiencyGrants.ts";
 import {
   chosenPicks,
@@ -28,7 +29,6 @@ import {
   withPicks,
 } from "./startingPicks.ts";
 
-const catalogOf = (cls: EntryRef) => ("name" in cls ? cls : undefined);
 const sameRow = (row: ContentRef, ref: ContentRef | undefined) =>
   ref !== undefined && row.name === ref.name && row.source === ref.source;
 /** A row the catalog does not hold, as a typed race's, grants nothing rather than lock Apply. */
@@ -113,7 +113,7 @@ function trade(definition: CharacterDefinition, change: Change, rows: Rows) {
   const read = (json: unknown) => (json && !first ? multiclassEntrySchema.parse(json) : json);
   const grantsOf = (cls: EntryRef, json: unknown) =>
     resolveGrants(
-      catalogOf(cls) && json ? [classProficiencyGrantsSchema.parse(read(json))] : [],
+      catalogClass(cls) && json ? [classProficiencyGrantsSchema.parse(read(json))] : [],
       [],
       edition,
     );
@@ -128,7 +128,7 @@ function trade(definition: CharacterDefinition, change: Change, rows: Rows) {
   const nowGranted = newComes ? grantsOf(now, rows.next) : NO_GRANTS;
   const taken = takenPicks({
     edition,
-    old: oldGoes && catalogOf(was) ? read(rows.old) : undefined,
+    old: oldGoes && catalogClass(was) ? read(rows.old) : undefined,
     background: rows.background,
     race: rows.race,
     skillHits,
@@ -144,7 +144,7 @@ function trade(definition: CharacterDefinition, change: Change, rows: Rows) {
     still,
     ...offeredPicks({
       edition,
-      json: newComes && catalogOf(now) ? read(rows.next) : undefined,
+      json: newComes && catalogClass(now) ? read(rows.next) : undefined,
       skillHits,
       toolHits,
       held: left,
@@ -173,8 +173,8 @@ export function useClassChangeGrants(
   const { edition, race, subrace, background } = definition;
   const change = classChange(definition, level, now);
   const swapping = change !== undefined;
-  const old = useQuery(classQuery(change?.oldGoes ? catalogOf(change.was) : undefined));
-  const next = useQuery(classQuery(change?.newComes ? catalogOf(change.now) : undefined));
+  const old = useQuery(classQuery(change?.oldGoes ? catalogClass(change.was) : undefined));
+  const next = useQuery(classQuery(change?.newComes ? catalogClass(change.now) : undefined));
   const {
     raceRow,
     subraces,
@@ -187,7 +187,7 @@ export function useClassChangeGrants(
     (group) => change !== undefined && entryKey(group.class) !== entryKey(change.was),
   );
   const otherRows = useQueries({
-    queries: others.map((group) => classQuery(swapping ? catalogOf(group.class) : undefined)),
+    queries: others.map((group) => classQuery(swapping ? catalogClass(group.class) : undefined)),
   });
   // One edition holds at most 168 skill and language rows, and some fifty mundane tools,
   // each under the route's 200. Past that, a list leaves out the rows beyond the page.

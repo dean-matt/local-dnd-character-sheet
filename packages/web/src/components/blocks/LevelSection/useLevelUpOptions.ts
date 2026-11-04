@@ -42,15 +42,14 @@ export function useLevelUpOptions(
 ) {
   const { setValue } = useFormContext<CharacterDefinition>();
   const { homebrew, homebrewSubclass, subclass } = target;
-  const classGained =
-    "name" in cls
-      ? optionsGained(target.before, target.after)
-      : homebrew
-        ? optionsGained(
-            homebrewTable(homebrew.json, target.level),
-            homebrewTable(homebrew.json, target.next),
-          )
-        : [];
+  const classGained = target.catalog
+    ? optionsGained(target.before, target.after)
+    : homebrew
+      ? optionsGained(
+          homebrewTable(homebrew.json, target.level),
+          homebrewTable(homebrew.json, target.next),
+        )
+      : [];
   // A subclass picked at this level held no options before it.
   const subclassGained =
     subclass === undefined

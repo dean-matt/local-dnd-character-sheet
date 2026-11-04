@@ -17,7 +17,7 @@ type Spell = CharacterDefinition["spells"][number];
 const SPELLBOOK_SOURCES = ["PHB", "XPHB"];
 
 /**
- * The cantrips and spells the level adds to what `cls` knows, and those its subclass's
+ * The cantrips and spells the level adds to what `target`'s class knows, and those its subclass's
  * features let the character choose, and the picks the draft's `spells` holds past
  * `definition`'s, split by the level each lookup found. A pick still loading is left out and
  * keeps `ready` false. A pick lands unprepared, as a known spell or a cantrip is, with the
@@ -29,13 +29,12 @@ const SPELLBOOK_SOURCES = ["PHB", "XPHB"];
  */
 export function useLevelUpSpells(
   definition: CharacterDefinition,
-  cls: EntryRef,
   target: ReturnType<typeof useLevelUpClass>,
   spells: readonly Spell[],
   saved?: { subclass: EntryRef | undefined; picks: readonly Spell[] },
 ) {
   const { setValue } = useFormContext<CharacterDefinition>();
-  const catalog = "name" in cls ? cls : undefined;
+  const { catalog } = target;
   const spellbook = catalog?.name === "Wizard" && SPELLBOOK_SOURCES.includes(catalog.source);
   const gained = spellsGained(
     [target.before, target.subclassBefore],

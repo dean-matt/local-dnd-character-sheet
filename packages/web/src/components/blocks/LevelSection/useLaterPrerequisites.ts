@@ -5,6 +5,7 @@ import { classQuery } from "../../../hooks/classQuery.ts";
 import { useFeats } from "../../../hooks/useFeats.ts";
 import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { ApiError, apiGet } from "../../../lib/api.ts";
+import { catalogClass } from "../../../lib/catalogClass.ts";
 import { levelChoiceDepartures, type PrerequisiteRows } from "../../../lib/levelChoices.ts";
 import { retryUnlessClientError } from "../../../lib/retryUnlessClientError.ts";
 import { prerequisiteOf } from "./useMulticlassEntry.ts";
@@ -31,7 +32,7 @@ export function useLaterPrerequisites(definition: CharacterDefinition, after: Ch
   const feats = useFeats(definition.edition);
   const groups = classLevels(after);
   const classRows = useQueries({
-    queries: groups.map((group) => classQuery("name" in group.class ? group.class : undefined)),
+    queries: groups.map((group) => classQuery(catalogClass(group.class))),
   });
 
   const rows: PrerequisiteRows = {
@@ -57,7 +58,7 @@ export function useLaterPrerequisites(definition: CharacterDefinition, after: Ch
     read:
       (feats.isSuccess || !definition.feats.some((feat) => feat.level !== undefined)) &&
       optionRows.every((row) => row.isSuccess || gone(row)) &&
-      groups.every((group, index) => !("name" in group.class) || classRows[index]?.isSuccess),
+      groups.every((group, index) => !catalogClass(group.class) || classRows[index]?.isSuccess),
     failed:
       optionRows.some((row) => row.isError && !gone(row)) ||
       (feats.isError && definition.feats.some((feat) => feat.level !== undefined)) ||

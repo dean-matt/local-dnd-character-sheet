@@ -18,6 +18,8 @@ import { useWatch } from "react-hook-form";
 import { classQuery } from "../../hooks/classQuery.ts";
 import { homebrewClassQuery } from "../../hooks/homebrewClassQuery.ts";
 import { subclassesQuery } from "../../hooks/subclassesQuery.ts";
+import { useHomebrewClassIds } from "../../hooks/useHomebrewClassIds.ts";
+import { catalogClass } from "../../lib/catalogClass.ts";
 import {
   catalogSubclassRow,
   type SubclassItem,
@@ -90,9 +92,6 @@ function startOf(own: unknown, catalog: boolean, index: number) {
   return catalog ? multiclassEntrySchema.parse(own) : undefined;
 }
 
-const catalogOf = (cls: EntryRef) => ("name" in cls ? cls : undefined);
-const homebrewOf = (cls: EntryRef) => ("homebrewId" in cls ? cls.homebrewId : undefined);
-
 /**
  * Every class the draft holds, in the order each was first taken, with the rows its
  * choices read: the catalog or homebrew class, and its subclasses in the character's edition,
@@ -103,10 +102,14 @@ export function useClassEntries() {
     name: ["edition", "levels"],
   });
   const groups = classGroups(levels);
-  const classRows = useQueries({ queries: groups.map(({ cls }) => classQuery(catalogOf(cls))) });
-  const homebrews = useQueries({
-    queries: groups.map(({ cls }) => homebrewClassQuery(homebrewOf(cls))),
+  const classRows = useQueries({
+    queries: groups.map(({ cls }) => classQuery(catalogClass(cls))),
   });
+  const { ids, unmatched } = useHomebrewClassIds(
+    groups.map(({ cls }) => cls),
+    edition,
+  );
+  const homebrews = useQueries({ queries: ids.map((id) => homebrewClassQuery(id)) });
   const subclassLists = useQueries({
     queries: groups.map(({ cls }, index) =>
       subclassesQuery(
@@ -116,19 +119,19 @@ export function useClassEntries() {
     ),
   });
   const entries = groups.map((group, index): ClassEntry => {
-    const catalogClass = catalogOf(group.cls);
+    const catalog = catalogClass(group.cls);
     const classRow = classRows[index];
     const homebrew = homebrews[index];
     const subclasses = subclassLists[index];
     const json = classRow?.data?.json;
     const own = json ?? homebrew?.data?.json;
-    const start = startOf(own, catalogClass !== undefined, index);
+    const start = startOf(own, catalog !== undefined, index);
     const subclass = subclassOf(levels, group.cls);
     return {
       ...group,
-      catalogClass,
+      catalogClass: catalog,
       json: own,
-      name: catalogClass?.name ?? homebrew?.data?.name ?? displayName(group.cls),
+      name: catalog?.name ?? homebrew?.data?.name ?? displayName(group.cls),
       subclass,
       subclasses: subclasses?.data?.items,
       subclassRow: catalogSubclassRow(subclasses?.data?.items, subclass),
@@ -136,11 +139,13 @@ export function useClassEntries() {
       subclassLevel: subclassLevelOf(json, homebrew?.data),
       start,
       grants: start && classProficiencyGrantsSchema.parse(start),
-      prerequisite: catalogClass ? json && multiclassPrerequisiteSchema.parse(json) : [],
+      prerequisite: catalog ? json && multiclassPrerequisiteSchema.parse(json) : [],
       rowEdition: classRow?.data?.edition ?? homebrew?.data?.edition,
-      read: (catalogClass ? classRow : homebrew)?.isSuccess === true,
-      awaited: catalogClass ? classRow?.isSuccess !== true : homebrew?.isSuccess !== true,
-      failed: Boolean(classRow?.isError || subclasses?.isError || homebrew?.isError),
+      read: (catalog ? classRow : homebrew)?.isSuccess === true,
+      awaited: catalog ? classRow?.isSuccess !== true : homebrew?.isSuccess !== true,
+      failed: Boolean(
+        classRow?.isError || subclasses?.isError || homebrew?.isError || unmatched[index],
+      ),
     };
   });
   return { edition, levels, entries };

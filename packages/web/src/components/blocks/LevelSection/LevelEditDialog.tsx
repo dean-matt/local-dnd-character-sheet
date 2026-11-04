@@ -50,7 +50,7 @@ export function LevelEditDialog({
   const [removing, setRemoving] = useState(false);
   const queryClient = useQueryClient();
   const update = useUpdateCharacterDefinition(character.id);
-  const dice = useLevelDice(character.definition.levels);
+  const dice = useLevelDice(character.definition.levels, character.definition.edition);
   const { definition } = opened;
   const stale = update.error instanceof ApiError && update.error.status === 412;
   const applied = useRef<{ swap: ClassSwap | undefined; die: HitDie | undefined }>({

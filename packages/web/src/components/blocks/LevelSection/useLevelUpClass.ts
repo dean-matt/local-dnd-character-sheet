@@ -11,6 +11,9 @@ import { classQuery } from "../../../hooks/classQuery.ts";
 import { homebrewClassQuery } from "../../../hooks/homebrewClassQuery.ts";
 import { subclassesQuery } from "../../../hooks/subclassesQuery.ts";
 import { subclassGrantsQuery } from "../../../hooks/subclassGrantsQuery.ts";
+import { useHomebrewClassIds } from "../../../hooks/useHomebrewClassIds.ts";
+import { ApiError } from "../../../lib/api.ts";
+import { catalogClass, homebrewClassByName } from "../../../lib/catalogClass.ts";
 import {
   catalogSubclassRow,
   homebrewSubclassRow,
@@ -18,6 +21,14 @@ import {
   subclassLevelOf,
   subclassParent,
 } from "../../../lib/subclassItems.ts";
+
+/** The homebrew class `cls` cites. `missing` holds once neither its id nor its name finds one. */
+function useHomebrewClass(cls: EntryRef, edition: CharacterDefinition["edition"]) {
+  const cited = useHomebrewClassIds([cls], edition);
+  const row = useQuery(homebrewClassQuery(cited.ids[0]));
+  const missing = cited.unmatched[0] || (row.error instanceof ApiError && row.error.status === 404);
+  return { row, loading: cited.loading, missing, name: homebrewClassByName(cls)?.name };
+}
 
 /**
  * The subclass level, where level `next` asks for a subclass: the class holds none, offers
@@ -39,6 +50,8 @@ function subclassFrom(
  * and which ones it offers, and the class's and subclass's grants at its level now
  * and at the next. `picked` is the subclass chosen this level, read where the class holds
  * none yet. A homebrew class carries a hit die, its subclass level and subclasses, and no grants.
+ * `read` holds once the class is read, or once a homebrew one is known missing, which leaves
+ * `hitDie` absent.
  */
 export function useLevelUpClass(
   definition: CharacterDefinition,
@@ -48,9 +61,10 @@ export function useLevelUpClass(
   const held = classLevels(definition).find((group) => entryKey(group.class) === entryKey(cls));
   const level = held?.level ?? 0;
   const next = level + 1;
-  const catalog = "name" in cls ? cls : undefined;
+  const catalog = catalogClass(cls);
   const row = useQuery(classQuery(catalog));
-  const homebrew = useQuery(homebrewClassQuery("homebrewId" in cls ? cls.homebrewId : undefined));
+  const cited = useHomebrewClass(cls, definition.edition);
+  const homebrew = cited.row;
   const subclassList = useQuery(
     subclassesQuery(
       subclassParent(cls, homebrew.data),
@@ -66,13 +80,17 @@ export function useLevelUpClass(
   const after = useQuery(classGrantsQuery(catalog, next));
   const subclassBefore = useQuery(subclassGrantsQuery(catalog, catalogRef(held?.subclass), level));
   const subclassAfter = useQuery(subclassGrantsQuery(catalog, catalogRef(subclass), next));
-  const pending = [row, after, subclassList, subclassAfter, before, subclassBefore].some(
-    (query) => query.isLoading,
-  );
+  const pending =
+    cited.loading ||
+    [row, after, subclassList, subclassAfter, before, subclassBefore].some(
+      (query) => query.isLoading,
+    );
   return {
     level,
     next,
-    name: catalog?.name ?? homebrew.data?.name ?? "Homebrew",
+    name: catalog?.name ?? homebrew.data?.name ?? cited.name ?? "Homebrew",
+    /** `cls` where it names a catalog class, which a homebrew class cited either way is not. */
+    catalog,
     /** The catalog class's row, which a homebrew class has none of. */
     json: row.data?.json,
     edition: row.data?.edition,
@@ -93,6 +111,9 @@ export function useLevelUpClass(
     subclassBefore: subclassBefore.data,
     subclassAfter: subclassAfter.data,
     read:
-      !pending && (catalog === undefined ? homebrew.isSuccess : row.isSuccess && after.isSuccess),
+      !pending &&
+      (catalog === undefined
+        ? homebrew.isSuccess || cited.missing
+        : row.isSuccess && after.isSuccess),
   };
 }

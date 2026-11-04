@@ -18,15 +18,14 @@ import { useQueries } from "@tanstack/react-query";
 import { classQuery } from "../../../hooks/classQuery.ts";
 import { useCatalogSearch } from "../../../hooks/useCatalogSearch.ts";
 import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
+import { catalogClass } from "../../../lib/catalogClass.ts";
 import { meetsPrerequisite } from "../../../lib/multiclassPrerequisites.ts";
 import { type Granted, NO_GRANTS, resolveGrants } from "../../../lib/proficiencyGrants.ts";
 import { skillPickOf, toolPicksOf } from "./entryPicks.ts";
 
-const catalogOf = (cls: EntryRef) => ("name" in cls ? cls : undefined);
-
 /** A catalog class's prerequisite once its row loads; a homebrew class needs no score. */
 export const prerequisiteOf = (cls: EntryRef, json: unknown) =>
-  !catalogOf(cls) ? [] : json ? multiclassPrerequisiteSchema.parse(json) : undefined;
+  !catalogClass(cls) ? [] : json ? multiclassPrerequisiteSchema.parse(json) : undefined;
 
 /**
  * What a level in `cls` brings where the character does not hold the class yet: the
@@ -45,12 +44,13 @@ export function useMulticlassEntry(
   const homebrewNames = useHomebrewNames();
   const { edition, proficiencies } = definition;
   const entering = definition.levels.every((level) => entryKey(level.class) !== entryKey(cls));
-  const start = entering && catalogOf(cls) && json ? multiclassEntrySchema.parse(json) : undefined;
+  const start =
+    entering && catalogClass(cls) && json ? multiclassEntrySchema.parse(json) : undefined;
   const skillChoice = start && classSkillChoiceSchema.parse(start);
   const toolChoices = start ? classToolChoicesSchema.parse(start) : [];
   const groups = classLevels(definition);
   const heldRows = useQueries({
-    queries: groups.map((group) => classQuery(entering ? catalogOf(group.class) : undefined)),
+    queries: groups.map((group) => classQuery(entering ? catalogClass(group.class) : undefined)),
   });
   // One edition holds at most 168 skill and language rows, and some fifty mundane tools,
   // each under the route's 200. Past that, a pick leaves out the rows beyond the page.
@@ -107,7 +107,7 @@ export function useMulticlassEntry(
   ]);
 
   const rowsRead = groups.every(
-    (group, index) => !catalogOf(group.class) || heldRows[index]?.isSuccess,
+    (group, index) => !catalogClass(group.class) || heldRows[index]?.isSuccess,
   );
   return {
     entering,

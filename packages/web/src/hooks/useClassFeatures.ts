@@ -6,6 +6,7 @@ import {
   entryKey,
 } from "@dnd/character";
 import { useQueries } from "@tanstack/react-query";
+import { catalogClass } from "../lib/catalogClass.ts";
 import type { ClassFeatures } from "../lib/classFeatures.ts";
 import { classGrantsQuery } from "./classGrantsQuery.ts";
 import { subclassGrantsQuery } from "./subclassGrantsQuery.ts";
@@ -23,9 +24,10 @@ export function useClassFeatures(levels: readonly Level[]): {
   read: boolean;
   failed: boolean;
 } {
-  const classes = classLevels({ levels }).flatMap(({ class: cls, level, subclass }) =>
-    "name" in cls ? [{ cls, level, subclass: catalogRef(subclass) }] : [],
-  );
+  const classes = classLevels({ levels }).flatMap(({ class: cls, level, subclass }) => {
+    const catalog = catalogClass(cls);
+    return catalog ? [{ cls: catalog, level, subclass: catalogRef(subclass) }] : [];
+  });
   const results = useQueries({
     queries: classes.map(({ cls, level }) => classGrantsQuery(cls, level)),
   });
