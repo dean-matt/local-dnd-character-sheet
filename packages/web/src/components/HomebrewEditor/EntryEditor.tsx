@@ -12,7 +12,7 @@ import { HomebrewPreview } from "./HomebrewPreview.tsx";
 import { HomebrewStepMode } from "./HomebrewStepMode.tsx";
 import { HomebrewViewTabs } from "./HomebrewViewTabs.tsx";
 import { EDITING_KINDS, stepOf, stepsOf } from "./homebrewKinds.ts";
-import { useClassDieHold } from "./useClassDieHold.ts";
+import { useHeldSaveHold } from "./useHeldSaveHold.ts";
 import { useHomebrewEntryDraft } from "./useHomebrewEntryDraft.ts";
 
 const MODES = ["Step by step", "JSON"] as const;
@@ -74,7 +74,7 @@ export function EntryEditor({
     if (refusals > 0) form.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }, [refusals]);
   const mode = draft.text === undefined ? MODES[0] : MODES[1];
-  const hold = useClassDieHold(collection, record, draft.checked, failure);
+  const hold = useHeldSaveHold(collection, record, draft.checked, failure);
   const problems = "problems" in draft.checked ? draft.checked.problems : [];
   const shownProblems = tried ? problems : [];
   const title = record ? `Edit ${record.name}` : `New ${lower}`;

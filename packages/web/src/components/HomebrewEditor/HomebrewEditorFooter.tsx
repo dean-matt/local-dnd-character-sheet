@@ -1,8 +1,8 @@
 import { Undo2 } from "lucide-react";
 import { useRef } from "react";
 import type { HomebrewUndo } from "../../hooks/useHomebrewHistory.ts";
-import { ClassDieHoldNote } from "./ClassDieHoldNote.tsx";
-import type { ClassDieHold } from "./useClassDieHold.ts";
+import { HeldSaveHoldNote } from "./HeldSaveHoldNote.tsx";
+import type { HeldSaveHold } from "./useHeldSaveHold.ts";
 
 const BUTTON = "rounded-control px-3.5 py-2 font-semibold text-row";
 const SECONDARY = `${BUTTON} border border-border bg-surface text-ink hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50`;
@@ -15,7 +15,7 @@ export interface HomebrewEditorFooterProps {
   onAdvance: (by: number) => void;
   saving: boolean;
   /** Why Save is unavailable, drawn to its left; Save holds while it stands. */
-  hold?: ClassDieHold;
+  hold?: HeldSaveHold;
   /** Reverts the row to the version its last save replaced; absent for a new row. */
   undo?: HomebrewUndo;
   onSave: () => void;
@@ -82,7 +82,7 @@ export function HomebrewEditorFooter({
           </button>
         </>
       )}
-      {hold && <ClassDieHoldNote hold={{ ...hold, retry }} />}
+      {hold && <HeldSaveHoldNote hold={{ ...hold, retry }} />}
       <button
         ref={saveButton}
         type="button"

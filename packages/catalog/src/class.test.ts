@@ -10,6 +10,7 @@ import {
   homebrewClassRecordSchema,
   preparationRuleSchema,
   preparedSpellCountSchema,
+  sameSubclassParent,
   spellbookGainsSchema,
   spellcastingAbilitySchema,
   subclassLevelSchema,
@@ -245,5 +246,21 @@ describe("subclassLevelSchema", () => {
   it("is undefined for a class that grants no subclass", () => {
     expect(subclassLevelSchema.parse({ classFeatures: ["Rage|Barbarian||1"] })).toBeUndefined();
     expect(subclassLevelSchema.parse({})).toBeUndefined();
+  });
+});
+
+describe("sameSubclassParent", () => {
+  const cleric = { name: "Cleric", source: "PHB" };
+
+  it("matches a catalog class by exact name and source, and a homebrew class by id", () => {
+    expect(sameSubclassParent(cleric, { ...cleric })).toBe(true);
+    expect(sameSubclassParent({ classId: "c1" }, { classId: "c1" })).toBe(true);
+  });
+
+  it("tells apart another edition's class, a change of case, another id and a homebrew class", () => {
+    expect(sameSubclassParent(cleric, { name: "Cleric", source: "XPHB" })).toBe(false);
+    expect(sameSubclassParent(cleric, { name: "cleric", source: "PHB" })).toBe(false);
+    expect(sameSubclassParent({ classId: "c1" }, { classId: "c2" })).toBe(false);
+    expect(sameSubclassParent(cleric, { classId: "c1" })).toBe(false);
   });
 });

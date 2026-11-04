@@ -1,4 +1,4 @@
-import { classRecordSchema, homebrewClassRecordSchema } from "@dnd/catalog";
+import { classRecordSchema, homebrewClassRecordSchema, subclassParentLabel } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -28,11 +28,14 @@ export function useParentClasses(edition: CharacterRecord["edition"]) {
   const classes: ParentClass[] = [
     ...(catalog.data?.items ?? []).map(({ name, source }) => ({
       parent: { name, source },
-      label: `${name} (${source})`,
+      label: subclassParentLabel({ className: name, classSource: source }),
     })),
     ...(list.data ?? [])
       .filter((row) => row.edition === edition)
-      .map(({ id, name }) => ({ parent: { classId: id }, label: `${name} (Homebrew)` })),
+      .map(({ id, name }) => ({
+        parent: { classId: id },
+        label: subclassParentLabel({ className: name, classSource: "HB", classId: id }),
+      })),
   ];
   return {
     classes,

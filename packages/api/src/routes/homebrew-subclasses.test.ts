@@ -249,6 +249,84 @@ describe("homebrewSubclassesRoutes", () => {
     expect((await subclasses.request(`/homebrew/subclasses/${created.id}`)).status).toBe(200);
   });
 
+  describe("moving to another parent class", () => {
+    const held = (subclassId: string) =>
+      insertCharacter(opened.charactersDb, {
+        id: "1",
+        definition: baseDefinition({
+          edition: "classic",
+          levels: [
+            { class: { name: "Cleric", source: "PHB" }, subclass: { homebrewId: subclassId } },
+          ],
+        }),
+      });
+
+    it("refuses a held subclass's move, naming the character, and changes nothing", async () => {
+      const cls = await createClass();
+      const created = await (
+        await subclasses.request("/homebrew/subclasses", json(storm()))
+      ).json();
+      const character = held(created.id);
+
+      for (const parent of [{ name: "Cleric", source: "XPHB" }, { classId: cls.id }]) {
+        const res = await subclasses.request(
+          `/homebrew/subclasses/${created.id}`,
+          put(storm({ parent, entries: ["Moved."] })),
+        );
+        expect(res.status).toBe(409);
+        expect(await res.json()).toEqual({
+          error: `Storm Domain is held by ${character.name}, so it stays a subclass of Cleric (PHB). Keep Cleric (PHB), or add a new subclass to the other class.`,
+          characters: [{ id: character.id, name: character.name }],
+        });
+      }
+      expect(await (await subclasses.request(`/homebrew/subclasses/${created.id}`)).json()).toEqual(
+        created,
+      );
+    });
+
+    it("names a held homebrew parent as the class picker does", async () => {
+      const cls = await createClass();
+      const created = await (
+        await subclasses.request(
+          "/homebrew/subclasses",
+          json(storm({ parent: { classId: cls.id } })),
+        )
+      ).json();
+      held(created.id);
+
+      const res = await subclasses.request(`/homebrew/subclasses/${created.id}`, put(storm()));
+      expect(res.status).toBe(409);
+      expect((await res.json()).error).toMatch(/stays a subclass of Warden \(Homebrew\)\./);
+    });
+
+    it("saves a held subclass that keeps its parent", async () => {
+      const created = await (
+        await subclasses.request("/homebrew/subclasses", json(storm()))
+      ).json();
+      held(created.id);
+
+      const res = await subclasses.request(
+        `/homebrew/subclasses/${created.id}`,
+        put(storm({ name: "Tempest Domain" })),
+      );
+      expect(res.status).toBe(200);
+    });
+
+    it("moves a subclass no character holds", async () => {
+      const cls = await createClass();
+      const created = await (
+        await subclasses.request("/homebrew/subclasses", json(storm()))
+      ).json();
+
+      const res = await subclasses.request(
+        `/homebrew/subclasses/${created.id}`,
+        put(storm({ parent: { classId: cls.id } })),
+      );
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ classId: cls.id, edition: "one" });
+    });
+  });
+
   describe("features", () => {
     const feature = { name: "Thunder Strike", level: 3, entries: ["Push a creature."] };
     const later = { name: "Eye of the Storm", level: 6, entries: ["Fly in the storm."] };
