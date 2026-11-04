@@ -40,11 +40,9 @@ export function ImportHomebrew() {
           });
         }}
       />
-      {done && (
-        <p role="status" className="text-row">
-          {done}
-        </p>
-      )}
+      <p role="status" className="text-row empty:hidden">
+        {done}
+      </p>
       {importFile.isError && (
         <p role="alert" className="max-w-md text-error text-row">
           Import failed: {importFile.error.message}

@@ -129,7 +129,9 @@ const KINDS: Record<Collection, Kind> = {
     holder: (db, input: { name: string; parent: HomebrewSubclassInput["parent"] }) => () =>
       findHomebrewSubclass(db, input.parent, input.name),
     blocked: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
-      parentEdition(db, dataDir, input.parent) ? undefined : "Its class no longer exists.",
+      parentEdition(db, dataDir, input.parent)
+        ? undefined
+        : "Its class is in neither the catalog nor homebrew.",
     editionNow: (db, dataDir, input: { parent: HomebrewSubclassInput["parent"] }) =>
       parentEdition(db, dataDir, input.parent),
   },
@@ -140,7 +142,9 @@ const KINDS: Record<Collection, Kind> = {
     holder: (db, input: { name: string; parent: HomebrewSubraceInput["parent"] }) => () =>
       findHomebrewSubrace(db, input.parent, input.name),
     blocked: (db, dataDir, input: { parent: HomebrewSubraceInput["parent"] }) =>
-      raceEdition(db, dataDir, input.parent) ? undefined : "Its race no longer exists.",
+      raceEdition(db, dataDir, input.parent)
+        ? undefined
+        : "Its race is in neither the catalog nor homebrew.",
     editionNow: (db, dataDir, input: { parent: HomebrewSubraceInput["parent"] }) =>
       raceEdition(db, dataDir, input.parent),
   },
@@ -372,8 +376,16 @@ export function homebrewHistoryRoutes(
     });
   }
 
-  routes.openapi(readHistory, (c) =>
-    c.json({
+  // An import can bring a deleted row back under its id, which leaves it nothing to restore.
+  const pruneDeleted = () => {
+    for (const [key, { collection, id }] of deleted) {
+      if (snapshotOf(db, collection, id)) deleted.delete(key);
+    }
+  };
+
+  routes.openapi(readHistory, (c) => {
+    pruneDeleted();
+    return c.json({
       reversible: [...earlier.values()].map(({ collection, id }) => ({ collection, id })),
       deleted: [...deleted.values()]
         .map(({ collection, id, name, input, deletedAt }) => ({
@@ -384,8 +396,8 @@ export function homebrewHistoryRoutes(
           deletedAt: deletedAt.toISOString(),
         }))
         .reverse(),
-    }),
-  );
+    });
+  });
 
   routes.openapi(revertRow, async (c) => {
     const { collection, id } = c.req.valid("param");
@@ -427,6 +439,7 @@ export function homebrewHistoryRoutes(
   routes.openapi(restoreRow, (c) => {
     const { collection, id } = c.req.valid("param");
     const key = keyOf(collection, id);
+    pruneDeleted();
     const gone = deleted.get(key);
     if (!gone) {
       return c.json({ error: "No deleted row with that id" }, 404);

@@ -361,8 +361,38 @@ describe("homebrewFileRoutes import", () => {
     const { status, body } = await importInto(renamed);
 
     expect(status).toBe(409);
-    expect(body.error).toBe('The item "Moonblade" is already in homebrew, under the id i1.');
+    expect(body.error).toBe('The item "Moonblade" is already in homebrew.');
     expect(getHomebrewItem(target, "i1")?.name).toBe("Sunblade");
+  });
+
+  it("keeps a bundled parent already here, importing a second subclass of an imported class", async () => {
+    seedEveryKind(source);
+    await importInto(await exportFrom(from, [{ collection: "subclasses", id: "sc1" }]));
+    insertHomebrewSubclass(source, "sc3", {
+      name: "Oath of Embers",
+      parent: { classId: "c1" },
+      edition: "one",
+    } as never);
+    const renamed = await exportFrom(from, [{ collection: "subclasses", id: "sc3" }]);
+    const bundled = renamed.entries.find(({ collection }) => collection === "classes");
+    (bundled?.input as { name: string }).name = "Renamed";
+
+    expect(await importInto(renamed)).toEqual({ status: 201, body: { created: 1 } });
+    expect(getHomebrewClass(target, "c1")?.name).toBe("Warden");
+  });
+
+  it("refuses a file that lists a row twice", async () => {
+    insertHomebrewItem(source, "i1", sunblade() as never);
+    const exported = await exportFrom(from, [{ collection: "items", id: "i1" }]);
+
+    const { status, body } = await importInto({
+      ...exported,
+      entries: [...exported.entries, ...exported.entries],
+    });
+
+    expect(status).toBe(409);
+    expect(body.error).toBe('The file lists the item "Sunblade" twice.');
+    expect(getHomebrewItem(target, "i1")).toBeUndefined();
   });
 
   it("refuses a subclass whose homebrew class is in neither the file nor homebrew", async () => {

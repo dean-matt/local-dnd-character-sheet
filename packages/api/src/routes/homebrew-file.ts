@@ -62,9 +62,10 @@ const importFile = createRoute({
   tags: ["homebrew"],
   summary: "Import a homebrew file",
   description:
-    "Creates each row under the id it had, as its kind's save would. A row already here, " +
-    "one its kind's save would refuse, or a subclass or subrace whose homebrew parent is in " +
-    "neither the file nor homebrew refuses the whole file.",
+    "Creates each row under the id it had, as its kind's save would. A bundled parent already " +
+    "here is kept as it is. Any other row already here, a row listed twice, one its kind's " +
+    "save would refuse, or a subclass or subrace whose homebrew parent is in neither the file " +
+    "nor homebrew refuses the whole file.",
   request: {
     body: { content: { "application/json": { schema: homebrewFileSchema } } },
   },
@@ -140,9 +141,7 @@ function heldRows(file: HomebrewFile): HeldRow[] | z.ZodError {
 /** Writes `row`, or says why not, naming it. */
 function importRow(db: HomebrewDb, dataDir: string, row: HeldRow): string | undefined {
   const named = `The ${nounOf(row.collection)} "${(row.input as { name: string }).name}"`;
-  if (snapshotOf(db, row.collection, row.id)) {
-    return `${named} is already in homebrew, under the id ${row.id}.`;
-  }
+  if (snapshotOf(db, row.collection, row.id)) return `${named} is already in homebrew.`;
   const parent = parentOf(row);
   if (parent && !snapshotOf(db, parent.collection, parent.id)) {
     return `${named} hangs from the homebrew ${nounOf(parent.collection)} ${parent.id}, which is in neither the file nor homebrew.`;
@@ -185,10 +184,31 @@ export function homebrewFileRoutes(db: HomebrewDb, dataDir: string) {
       if (rows instanceof z.ZodError) {
         return c.json({ error: describeIssues(rows, "homebrew") }, 422);
       }
+      const keys = new Set<string>();
+      for (const row of rows) {
+        const key = `${row.collection}/${row.id}`;
+        if (keys.has(key)) {
+          const name = (row.input as { name: string }).name;
+          return c.json(
+            { error: `The file lists the ${nounOf(row.collection)} "${name}" twice.` },
+            409,
+          );
+        }
+        keys.add(key);
+      }
+      // Export bundles a subclass's or subrace's homebrew parent, so a file for a second
+      // subclass of an imported class carries that class again; it is already here.
+      const bundled = new Set(
+        rows.map(parentOf).map((ref) => ref && `${ref.collection}/${ref.id}`),
+      );
+      const fresh = rows.filter(
+        (row) =>
+          !(bundled.has(`${row.collection}/${row.id}`) && snapshotOf(db, row.collection, row.id)),
+      );
       try {
         // A parent ahead of what hangs from it, whatever order a hand-edited file holds.
         db.transaction(() => {
-          for (const row of rows.toSorted(byKind)) {
+          for (const row of fresh.toSorted(byKind)) {
             const refusal = importRow(db, dataDir, row);
             if (refusal) throw new ImportRefused(refusal);
           }
@@ -197,7 +217,7 @@ export function homebrewFileRoutes(db: HomebrewDb, dataDir: string) {
         if (error instanceof ImportRefused) return c.json({ error: error.message }, 409);
         throw error;
       }
-      return c.json({ created: rows.length }, 201);
+      return c.json({ created: fresh.length }, 201);
     },
     (result, c) => {
       if (!result.success) return c.json({ error: describeIssues(result.error, "homebrew") }, 422);

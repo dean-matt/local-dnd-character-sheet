@@ -11,6 +11,7 @@ import { homebrewBackgroundsRoutes } from "./homebrew-backgrounds.ts";
 import { homebrewClassesRoutes } from "./homebrew-classes.ts";
 import { homebrewDeitiesRoutes } from "./homebrew-deities.ts";
 import { homebrewFeatsRoutes } from "./homebrew-feats.ts";
+import { homebrewFileRoutes } from "./homebrew-file.ts";
 import { homebrewHistoryRoutes } from "./homebrew-history.ts";
 import { homebrewItemsRoutes } from "./homebrew-items.ts";
 import { homebrewMonstersRoutes } from "./homebrew-monsters.ts";
@@ -118,6 +119,7 @@ describe("homebrewHistoryRoutes", () => {
     app.route("/", homebrewDeitiesRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewOptionalFeaturesRoutes(homebrewDb, charactersDb));
     app.route("/", homebrewMonstersRoutes(homebrewDb));
+    app.route("/", homebrewFileRoutes(homebrewDb, dataDir));
   });
 
   afterEach(() => {
@@ -406,6 +408,21 @@ describe("homebrewHistoryRoutes", () => {
     const res = await app.request("/homebrew/skills/old/restore", post);
     expect(res.status).toBe(409);
     expect((await res.json()).error).toBe("Perception is already a skill.");
+  });
+
+  it("forgets a deleted row an import brought back, so restore 404s", async () => {
+    const created = await (await app.request("/homebrew/items", json(sunblade()))).json();
+    const file = await (
+      await app.request(
+        "/homebrew/export",
+        json({ entries: [{ collection: "items", id: created.id }] }),
+      )
+    ).json();
+    await app.request(`/homebrew/items/${created.id}`, { method: "DELETE" });
+    expect((await app.request("/homebrew/import", json(file))).status).toBe(201);
+
+    expect((await history()).deleted).toEqual([]);
+    expect((await app.request(`/homebrew/items/${created.id}/restore`, post)).status).toBe(404);
   });
 
   it("404s a revert or a restore of a row it never held", async () => {
