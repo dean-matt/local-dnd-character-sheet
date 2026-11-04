@@ -1,3 +1,5 @@
+import { alignmentWords } from "@dnd/catalog";
+import { capitalize } from "../../lib/capitalize.ts";
 import { isRecord } from "../../lib/entryGuards.ts";
 
 export const MONSTER_SPEED_MODES = ["walk", "burrow", "climb", "fly", "swim"] as const;
@@ -60,33 +62,118 @@ export const ratingOf = (cr: unknown): string =>
 export const withRating = (cr: unknown, rating: string): unknown =>
   isRecord(cr) ? { ...cr, cr: rating } : rating;
 
-/** The alignments the form offers, each as the letters upstream writes. */
-export const MONSTER_ALIGNMENTS: { label: string; letters: string[] }[] = [
-  { label: "Lawful good", letters: ["L", "G"] },
-  { label: "Neutral good", letters: ["NX", "G"] },
-  { label: "Chaotic good", letters: ["C", "G"] },
-  { label: "Lawful neutral", letters: ["L", "NY"] },
-  { label: "Neutral", letters: ["N"] },
-  { label: "Chaotic neutral", letters: ["C", "NY"] },
-  { label: "Lawful evil", letters: ["L", "E"] },
-  { label: "Neutral evil", letters: ["NX", "E"] },
-  { label: "Chaotic evil", letters: ["C", "E"] },
-  { label: "Unaligned", letters: ["U"] },
-  { label: "Any alignment", letters: ["A"] },
+/** The alignments the form offers, as the letters upstream writes: the nine, unaligned, any, then the ranges. */
+export const MONSTER_ALIGNMENTS: string[][] = [
+  ["L", "G"],
+  ["NX", "G"],
+  ["C", "G"],
+  ["L", "NY"],
+  ["N"],
+  ["C", "NY"],
+  ["L", "E"],
+  ["NX", "E"],
+  ["C", "E"],
+  ["U"],
+  ["A"],
+  ["L", "NX", "C", "G"],
+  ["L", "NX", "C", "E"],
+  ["L", "NX", "C", "NY", "G"],
+  ["L", "NX", "C", "NY", "E"],
+  ["L", "G", "NY", "E"],
+  ["C", "G", "NY", "E"],
+  ["NX", "C", "G", "NY", "E"],
+  ["L", "NX", "G", "NY", "E"],
 ];
 
 /**
- * The label of the offered alignment `alignment` states, `""` where it states none, and
- * `undefined` where it is a range, a chance, a prefix or prose, which the form leaves to JSON.
+ * `letters` as the stat block reads them, in sentence case. Letters that read alike share a
+ * label, so `["N", "E"]` and `["NX", "E"]` are both "Neutral evil".
  */
-export function alignmentLabel(alignment: unknown, prefix: unknown): string | undefined {
-  if (alignment === undefined) return prefix === undefined ? "" : undefined;
-  if (prefix !== undefined || !Array.isArray(alignment)) return undefined;
-  return MONSTER_ALIGNMENTS.find(
-    ({ letters }) =>
-      letters.length === alignment.length && letters.every((one, at) => one === alignment[at]),
-  )?.label;
+export const alignmentLabel = (letters: string[]): string => capitalize(alignmentWords(letters));
+
+/** The option that states an alignment in words rather than letters. */
+export const ALIGNMENT_IN_WORDS = "Described in words";
+
+/** One alignment a monster may have, as the form edits it. */
+export interface AlignmentRow {
+  letters?: string[];
+  /** The alignment in words, where the row states prose; it wins over `letters`. */
+  special?: string;
+  /** The percentage chance a choice of alignments gives this one. */
+  chance?: number;
+  note: string;
+  /** The entry as stored, so a key the form does not edit survives an edit. */
+  stored: unknown;
 }
+
+const isLetters = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((each) => typeof each === "string");
+
+const isChoice = (part: unknown): part is Record<string, unknown> =>
+  isRecord(part) && (isLetters(part.alignment) || typeof part.special === "string");
+
+/** True where the form shows `alignment`: none, letters, or a choice of letters or prose. */
+export const alignmentIsEditable = (alignment: unknown): boolean =>
+  alignment === undefined ||
+  isLetters(alignment) ||
+  (Array.isArray(alignment) && alignment.every(isChoice));
+
+/** The rows `alignment` states: one for letters, one per choice; none where the form cannot show it. */
+export function alignmentRows(alignment: unknown): AlignmentRow[] {
+  if (!Array.isArray(alignment) || alignment.length === 0 || !alignmentIsEditable(alignment)) {
+    return [];
+  }
+  if (isLetters(alignment)) return [{ letters: alignment, note: "", stored: alignment }];
+  return alignment.filter(isChoice).map((part) => ({
+    letters: isLetters(part.alignment) ? part.alignment : undefined,
+    special: typeof part.special === "string" ? part.special : undefined,
+    chance: finite(part.chance) ? part.chance : undefined,
+    note: typeof part.note === "string" ? part.note : "",
+    stored: part,
+  }));
+}
+
+/**
+ * The `alignment` `rows` state: plain letters for one row with nothing beside them, otherwise a
+ * choice. A row with neither letters nor words writes nothing; `undefined` where nothing is left.
+ */
+export function withAlignmentRows(rows: AlignmentRow[]): unknown[] | undefined {
+  const written = rows.flatMap(
+    ({ letters, special, chance, note, stored }): Record<string, unknown>[] => {
+      const {
+        alignment: _alignment,
+        special: _special,
+        chance: _chance,
+        note: _note,
+        ...rest
+      } = isRecord(stored) && !Array.isArray(stored) ? stored : ({} as Record<string, unknown>);
+      if (special !== undefined)
+        return special.trim() ? [{ ...rest, special: special.trim() }] : [];
+      if (!letters) return [];
+      return [
+        {
+          ...rest,
+          alignment: letters,
+          ...(chance === undefined ? {} : { chance }),
+          ...(note.trim() ? { note: note.trim() } : {}),
+        },
+      ];
+    },
+  );
+  const [only] = written;
+  if (written.length === 1 && only && Object.keys(only).length === 1 && isLetters(only.alignment)) {
+    return only.alignment;
+  }
+  return written.length > 0 ? written : undefined;
+}
+
+/** `alignmentPrefix` as the form shows it, without the space before the alignment. */
+export const prefixText = (prefix: unknown): string =>
+  typeof prefix === "string" ? prefix.trimEnd() : "";
+
+/** The `alignmentPrefix` `text` states, ending in the space the stat block reads it with. */
+export const withPrefix = (text: string): string | undefined =>
+  text.trim() ? `${text.trim()} ` : undefined;
 
 /** The strings among `list`, for a row list that edits them and keeps anything else. */
 export const stringsIn = (list: unknown): string[] =>
