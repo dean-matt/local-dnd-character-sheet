@@ -41,6 +41,7 @@ import {
   getHomebrewBackground,
   getHomebrewClass,
   getHomebrewFeat,
+  getHomebrewOptionalFeature,
   getHomebrewSubclass,
   getHomebrewSubrace,
   type HomebrewDb,
@@ -324,11 +325,16 @@ function featGroup(
   return { origin: "feat", features };
 }
 
-/** A homebrew pick is not resolved yet: choosing one is out of scope. */
-function optionalFeatureGroup(dataDir: string, definition: CharacterDefinition): FeatureGroup {
+function optionalFeatureGroup(
+  dataDir: string,
+  homebrewDb: HomebrewDb,
+  definition: CharacterDefinition,
+): FeatureGroup {
   const features = definition.optionalFeatures.map(({ ref, featureType }) =>
     rowFeature(
-      "homebrewId" in ref ? undefined : getOptionalFeature(dataDir, ref.name, ref.source)?.json,
+      "homebrewId" in ref
+        ? getHomebrewOptionalFeature(homebrewDb, ref.homebrewId)?.json
+        : getOptionalFeature(dataDir, ref.name, ref.source)?.json,
       ref,
       { featureType },
     ),
@@ -347,7 +353,7 @@ export function resolveCharacterFeatures(
     raceGroup(dataDir, homebrewDb, definition),
     backgroundGroup(dataDir, homebrewDb, definition),
     featGroup(dataDir, homebrewDb, definition),
-    optionalFeatureGroup(dataDir, definition),
+    optionalFeatureGroup(dataDir, homebrewDb, definition),
   ];
   return { groups: groups.filter((group) => group.features.length > 0) };
 }

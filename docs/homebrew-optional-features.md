@@ -19,7 +19,8 @@ and a table cannot add an invocation to Warlock yet.
   `content.db`.
 - Deleting a feature a character holds is refused with a 409 naming the characters. A character
   cites one by `{homebrewId}`, so a rename never orphans it.
-- A character cannot choose one yet: the pickers list it as unavailable, and it entitles nothing.
+- A character chooses one where it chooses a catalog feature of its type and edition, counted
+  against the same entitlements; a homebrew feature entitles nothing.
 
 ## Reads
 

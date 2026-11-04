@@ -105,7 +105,6 @@ export function optionalFeatureJudge(facts: PrerequisiteFacts, held: ReadonlySet
       : undefined;
   return {
     unavailableReason: (hit: SearchHit) => {
-      if ("id" in hit) return "homebrew optional features cannot be picked yet";
       return held.has(searchHitKey(hit)) ? "Chosen already" : notes(hit)?.unmet;
     },
     describe: (hit: SearchHit) => notes(hit)?.unchecked,
