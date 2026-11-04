@@ -89,6 +89,7 @@ import { MonsterAbilityScores } from "./MonsterAbilityScores.tsx";
 import { MonsterBasics } from "./MonsterBasics.tsx";
 import { MonsterCombat } from "./MonsterCombat.tsx";
 import { MonsterSenses } from "./MonsterSenses.tsx";
+import { MonsterSpellcasting } from "./MonsterSpellcasting.tsx";
 import {
   MonsterActions,
   MonsterBonusActions,
@@ -512,6 +513,7 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
       keys: ["legendary", "legendaryHeader", "legendaryActions"],
     },
     { title: "Mythic actions", Fields: MonsterMythicActions, keys: ["mythic", "mythicHeader"] },
+    { title: "Spellcasting", Fields: MonsterSpellcasting, keys: ["spellcasting"] },
   ],
   shownKeys: () => [
     "name",
@@ -534,6 +536,7 @@ const monster: EditingKind<z.infer<typeof homebrewMonsterInputSchema>> = {
     "legendaryActions",
     "mythic",
     "mythicHeader",
+    "spellcasting",
     ...ABILITIES,
   ],
 };
