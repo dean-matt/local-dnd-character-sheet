@@ -16,6 +16,7 @@ import {
   insertHomebrewBackground,
   insertHomebrewClass,
   insertHomebrewFeat,
+  insertHomebrewOptionalFeature,
   insertHomebrewRace,
   insertHomebrewSubclass,
   insertHomebrewSubrace,
@@ -536,6 +537,31 @@ describe("featuresRoutes", () => {
     expect(groups.map(({ origin }) => origin)).toEqual(["class", "subclass", "race", "feat"]);
     expect(groups[3]?.features).toEqual([
       { resolved: true, name: "Tavern Brawler Plus", entries: ["You brawl."] },
+    ]);
+  });
+
+  it("resolves a homebrew optional feature under the type it was picked as", async () => {
+    insertHomebrewOptionalFeature(opened.homebrewDb, "ho", {
+      name: "Grave Sight",
+      edition: "classic",
+      featureType: ["EI"],
+      entries: ["You see the dead."],
+    });
+    store(
+      definitionWith({
+        optionalFeatures: [
+          {
+            ref: { homebrewId: "ho" },
+            featureType: "EI",
+            grantedBy: { kind: "class", ref: FIGHTER },
+          },
+        ],
+      }),
+    );
+    const { groups } = await features();
+
+    expect(groups.find(({ origin }) => origin === "optionalFeature")?.features).toEqual([
+      { resolved: true, name: "Grave Sight", featureType: "EI", entries: ["You see the dead."] },
     ]);
   });
 
