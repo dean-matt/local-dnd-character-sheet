@@ -3762,6 +3762,55 @@ describe("Homebrew subclasses", () => {
       await waitFor(() => expect(writesOf(fetchMock)).toHaveLength(1));
       expect(writesOf(fetchMock)[0]?.body).toMatchObject({ parent: { classId: "c1" } });
     });
+
+    it("holds a move while the characters cannot be read, naming the class it keeps", async () => {
+      const fetchMock = stubApi(lists);
+      const answer = fetchMock.getMockImplementation() as NonNullable<
+        ReturnType<typeof fetchMock.getMockImplementation>
+      >;
+      fetchMock.mockImplementation(async (input, init) =>
+        String(input) === "/api/characters" ? json(500, { error: "down" }) : answer(input, init),
+      );
+      const client = renderPage("subclasses");
+
+      await editRow(subclasses(), "Hearthkeeper");
+      await settled();
+      pick("Parent class", "Warden (Homebrew)");
+      await waitFor(() => expect(client.getQueryState(charactersKey)?.status).toBe("error"));
+      fireEvent.click(save());
+      fireEvent.click(note() as HTMLElement);
+
+      expect(
+        within(editor()).getByText(
+          "Couldn't check which characters hold this subclass, so Save waits until they are checked. A held subclass keeps its parent class, Fighter (XPHB).",
+        ),
+      ).toBeVisible();
+      expect(writesOf(fetchMock)).toEqual([]);
+    });
+
+    it("holds Save on the holders a refusal names that the list missed", async () => {
+      const error =
+        "Hearthkeeper is held by Vex, so it stays a subclass of Fighter (XPHB). Keep Fighter (XPHB), or add a new subclass to the other class.";
+      const fetchMock = stubApi({ ...lists, characters: [characterRecord("c", "Bram")] }, [
+        { status: 409, body: { error, characters: [{ id: "x1", name: "Vex" }] } },
+      ]);
+      renderPage("subclasses");
+
+      await editRow(subclasses(), "Hearthkeeper");
+      await settled();
+      pick("Parent class", "Warden (Homebrew)");
+      await settled();
+      fireEvent.click(save());
+
+      expect(await within(editor()).findByRole("alert")).toHaveTextContent(`Save failed: ${error}`);
+      expect(save()).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(note() as HTMLElement);
+      expect(within(editor()).getByRole("link", { name: "Vex" })).toHaveAttribute(
+        "href",
+        "/characters/x1",
+      );
+      expect(writesOf(fetchMock)).toHaveLength(1);
+    });
   });
 
   it("deletes a subclass, and shows the reason where the API refuses", async () => {
