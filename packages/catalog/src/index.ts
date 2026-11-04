@@ -93,7 +93,11 @@ export type {
 } from "./features.ts";
 export { characterFeaturesSchema } from "./features.ts";
 export type { HomebrewExportRequest, HomebrewFile } from "./homebrew-file.ts";
-export { homebrewExportRequestSchema, homebrewFileSchema } from "./homebrew-file.ts";
+export {
+  homebrewExportRequestSchema,
+  homebrewFileSchema,
+  homebrewImportResultSchema,
+} from "./homebrew-file.ts";
 export { homebrewCollectionSchema, homebrewHistorySchema } from "./homebrew-history.ts";
 export type {
   HomebrewMonster,

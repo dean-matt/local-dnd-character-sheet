@@ -30,3 +30,6 @@ export const homebrewFileSchema = z.strictObject({
 });
 
 export type HomebrewFile = z.infer<typeof homebrewFileSchema>;
+
+/** What an import wrote: every entry in the file, or nothing. */
+export const homebrewImportResultSchema = z.strictObject({ created: z.number().int().min(0) });

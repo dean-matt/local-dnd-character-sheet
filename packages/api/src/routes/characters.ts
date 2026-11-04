@@ -47,7 +47,7 @@ import {
 import { type HomebrewDb, homebrewNames } from "../db/queries/homebrew.ts";
 import { listCharacterPages } from "../db/queries/pages.ts";
 import { listUndoEntries } from "../db/queries/undo.ts";
-import { errorSchema, notFound } from "./errors.ts";
+import { describeIssues, errorSchema, notFound } from "./errors.ts";
 import { toPageRecords } from "./pages.ts";
 
 type CharacterRow = NonNullable<ReturnType<typeof getCharacter>>;
@@ -196,23 +196,6 @@ const importFile = createRoute({
     },
   },
 });
-
-/** A union fails with one issue per branch; the branch nearest to matching is the one worth naming. */
-function flattenIssues(issues: readonly z.core.$ZodIssue[]): z.core.$ZodIssue[] {
-  return issues.flatMap((issue) => {
-    if (issue.code !== "invalid_union") return [issue];
-    const nearest = issue.errors.reduce((best, each) => (each.length < best.length ? each : best));
-    return flattenIssues(nearest);
-  });
-}
-
-/** Names each field a file fails on, so the person importing it can find the field. */
-function describeIssues(error: z.ZodError): string {
-  const issues = flattenIssues(error.issues).map(
-    (issue) => `${issue.path.join(".") || "file"}: ${issue.message}`,
-  );
-  return `Not a character file this build can read. ${issues.join("; ")}`;
-}
 
 // RFC 9110 has a server ignore a date it cannot parse; a 400 instead keeps a malformed
 // precondition from writing unguarded.
@@ -431,13 +414,14 @@ export function charactersRoutes(
           : importCharacter(db, id, file);
         return c.json(record(row), 201);
       } catch (error) {
-        if (error instanceof z.ZodError) return c.json({ error: describeIssues(error) }, 422);
+        if (error instanceof z.ZodError)
+          return c.json({ error: describeIssues(error, "character") }, 422);
         if (error instanceof DatabasesBusyError) return c.json({ error: error.message }, 409);
         throw error;
       }
     },
     (result, c) => {
-      if (!result.success) return c.json({ error: describeIssues(result.error) }, 422);
+      if (!result.success) return c.json({ error: describeIssues(result.error, "character") }, 422);
     },
   );
 
