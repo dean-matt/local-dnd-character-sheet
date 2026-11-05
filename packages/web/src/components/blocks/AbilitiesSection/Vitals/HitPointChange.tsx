@@ -104,25 +104,6 @@ export function HitPointChange({
 
   return (
     <div className="flex flex-col">
-      {/* The line keeps its height when empty, so the amount row never moves under a pointer. */}
-      <div className="mb-2 flex h-6 items-center gap-1.5 text-muted text-row">
-        {dying && (
-          <>
-            <span className="font-semibold text-error">Dying</span>
-            <span aria-hidden="true">·</span>
-            <span aria-hidden="true">next hit is</span>
-            <button
-              type="button"
-              aria-label="Next hit is critical"
-              aria-pressed={critical}
-              onClick={() => setCritical(!critical)}
-              className={CRITICAL}
-            >
-              critical
-            </button>
-          </>
-        )}
-      </div>
       <div className="flex flex-wrap items-center gap-2">
         <InputField
           label="Damage or healing amount"
@@ -158,6 +139,23 @@ export function HitPointChange({
         >
           <span aria-hidden="true">+ </span>Heal
         </button>
+        {/* Last in the row, so the field and buttons never move under a pointer when it comes or goes. */}
+        {dying && (
+          <div className="ml-auto flex flex-wrap items-center gap-1.5 text-muted text-row">
+            <span className="font-semibold text-error">Dying</span>
+            <span aria-hidden="true">·</span>
+            <span aria-hidden="true">next hit is</span>
+            <button
+              type="button"
+              aria-label="Next hit is critical"
+              aria-pressed={critical}
+              onClick={() => setCritical(!critical)}
+              className={CRITICAL}
+            >
+              critical
+            </button>
+          </div>
+        )}
       </div>
       <div ref={setMessages} className="flex flex-col">
         {replace.error && (
