@@ -84,6 +84,21 @@ describe("charactersRoutes", () => {
     expect(typeof body.id).toBe("string");
   });
 
+  it("stores a classic character's long rest as returning every hit die unless it says otherwise", async () => {
+    const stored = async (definition: CharacterDefinition) =>
+      (await (await routes.request("/characters", json(definition))).json()).definition.houseRules;
+
+    expect(
+      await stored(baseDefinition({ edition: "classic", houseRules: { feats: true } })),
+    ).toEqual({ feats: true, everyHitDieOnLongRest: true });
+    expect(
+      await stored(
+        baseDefinition({ edition: "classic", houseRules: { everyHitDieOnLongRest: false } }),
+      ),
+    ).toEqual({ everyHitDieOnLongRest: false });
+    expect(await stored(baseDefinition({ houseRules: { feats: true } }))).toEqual({ feats: true });
+  });
+
   it("summarizes race and class on every read, a catalog row by its name", async () => {
     await routes.request("/characters", json(baseDefinition()));
 

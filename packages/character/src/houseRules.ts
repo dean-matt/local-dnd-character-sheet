@@ -1,3 +1,4 @@
+import type { Edition } from "@dnd/rules";
 import { z } from "zod";
 
 /**
@@ -104,3 +105,16 @@ export const PRINTED_RULE: Required<HouseRules> = {
   noInstantDeath: false,
   everyHitDieOnLongRest: false,
 };
+
+/**
+ * A new character with the options this table plays by default written in, so an absent
+ * option keeps meaning the rule as printed. Every classic character's long rest returns every
+ * hit die; one sent with the option set keeps it.
+ */
+export function withTableHouseRules<
+  Definition extends { edition: Edition; houseRules: HouseRules },
+>(definition: Definition): Definition {
+  if (definition.edition !== "classic") return definition;
+  const { everyHitDieOnLongRest = true } = definition.houseRules;
+  return { ...definition, houseRules: { ...definition.houseRules, everyHitDieOnLongRest } };
+}
