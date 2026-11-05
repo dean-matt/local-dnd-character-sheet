@@ -60,6 +60,18 @@ describe("DeathSaves", () => {
     expect(await card().findByText(`Rolled ${value}`)).toBeVisible();
   });
 
+  it("names a natural 1 at two failures, where the count can rise only by one", async () => {
+    const { writes } = renderVitals(atZero(0, 2));
+    await roll(1);
+
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent(
+        "Rolled 1: a natural 1, two failures. 0 successes, 3 failures, dead.",
+      ),
+    );
+    expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 3 });
+  });
+
   it("stores the third success as three, and shows the character stable", async () => {
     const { writes } = renderVitals(atZero(2, 2));
     await roll(12);
@@ -193,14 +205,13 @@ describe("DeathSaves", () => {
 
   it("drops the last roll once the character leaves dying", async () => {
     renderVitals(atZero(2, 0));
-    await roll(9);
-    expect(await card().findByText("Rolled 9")).toBeVisible();
-
     await roll(12);
     expect(await card().findByText("Stable")).toBeVisible();
-    fireEvent.click(mark("Success 3"));
+
+    fireEvent.change(screen.getByRole("spinbutton"), { target: { value: "1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Damage" }));
 
     expect(await card().findByText("Dying")).toBeVisible();
-    expect(card().queryByText(/^Rolled/)).not.toBeInTheDocument();
+    expect(card().queryByText("Rolled 12")).not.toBeInTheDocument();
   });
 });

@@ -40,14 +40,16 @@ function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`;
 }
 
-/** What a roll did, read from the rule's result rather than its thresholds. */
-function verdict(before: CharacterState, { state: after, outcome }: Rolled) {
+/**
+ * What a roll did, read from the rule's result rather than its thresholds. A natural 1 is
+ * named from the die, since a third failure caps the count it raised.
+ */
+function verdict(roll: number, before: CharacterState, { state: after, outcome }: Rolled) {
   if (outcome === "conscious") return "a natural 20";
   if (after.deathSaves.successes > before.deathSaves.successes || outcome === "stable") {
     return "a success";
   }
-  const failed = after.deathSaves.failures - before.deathSaves.failures;
-  return failed > 1 ? "a natural 1, two failures" : "a failure";
+  return roll === 1 ? "a natural 1, two failures" : "a failure";
 }
 
 /**
@@ -94,7 +96,7 @@ export function DeathSaves({
     const d20 = rollDice("1d20").total;
     const rolled = deathSaveRolledState(derived, state, d20);
     const after = rolled.state;
-    if (await write(after, `Rolled ${d20}: ${verdict(state, rolled)}. ${summary(after)}.`)) {
+    if (await write(after, `Rolled ${d20}: ${verdict(d20, state, rolled)}. ${summary(after)}.`)) {
       setLastRoll(d20);
     }
   }
