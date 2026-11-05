@@ -124,6 +124,19 @@ const OPTIONS: Record<
     },
     editions: ["classic", "one"],
   },
+  everyHitDieOnLongRest: {
+    name: "Hit dice on a long rest",
+    printed: {
+      label: "Half return",
+      description:
+        "A long rest returns up to half your total hit dice, rounded down and at least 1.",
+    },
+    house: {
+      label: "All return",
+      description: "A long rest returns every hit die you spent, as the 2024 rules do.",
+    },
+    editions: ["classic"],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];

@@ -66,6 +66,12 @@ const houseRulesObject = z
      * `instantDeath`, inverted.
      */
     noInstantDeath: z.boolean().optional(),
+    /**
+     * A classic long rest returns every spent hit die, as a 2024 one does. Absent, it returns
+     * up to half the character's total, rounded down and at least 1. `rest` takes it as
+     * `everyHitDie`.
+     */
+    everyHitDieOnLongRest: z.boolean().optional(),
   })
   .prefault({});
 
@@ -96,4 +102,5 @@ export const PRINTED_RULE: Required<HouseRules> = {
   feats: false,
   requireEquipProficiency: false,
   noInstantDeath: false,
+  everyHitDieOnLongRest: false,
 };
