@@ -49,13 +49,6 @@
       <label for="tempHpInput" style="font-size: 11px; color: #6b7280;">Temp HP</label>
       <input id="tempHpInput" type="number" min="0" value="{{tempHp}}" onChange="{{onTempHpChange}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; background: #ffffff; color: #1f2430;">
     </div>
-    <div style="display: flex; gap: 8px; padding-top: 4px; border-top: 1px solid #dde1e6;">
-      <button onClick="{{shortRest}}" title="Roll a Hit Die + CON modifier to heal" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">Short Rest</button>
-      <button onClick="{{longRest}}" title="Restore all HP" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: #eceef1; color: #1f2430; font-size: 12px; font-weight: 600;">Long Rest</button>
-    </div>
-    <sc-if value="{{hasRoll}}" hint-placeholder-val="{{false}}">
-      <div style="font-size: 12px; color: #6b7280;">{{rollText}}</div>
-    </sc-if>
   </div>
   <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
     <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
@@ -76,7 +69,7 @@
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { hpCur: 54, hpMax: 58, tempHp: 0, hitDice: '7d10', conScore: 14, dmgInput: '', lastRoll: null, maxCalcOpen: false, modalOpen: false };
+    this.state = { hpCur: 54, hpMax: 58, tempHp: 0, hitDice: '7d10', conScore: 14, dmgInput: '', maxCalcOpen: false, modalOpen: false };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
@@ -109,15 +102,6 @@ class Component extends DCLogic {
       },
       applyHeal: () => this.setState({ hpCur: Math.min(hpMax, hpCur + amount), dmgInput: '' }),
       onTempHpChange: (e) => this.setState({ tempHp: Math.max(0, parseInt(e.target.value, 10) || 0) }),
-      shortRest: () => {
-        const dieSize = parseInt((hitDice || '1d8').split('d')[1], 10) || 8;
-        const roll = 1 + Math.floor(Math.random() * dieSize);
-        const healed = Math.max(1, roll + conMod);
-        this.setState({ hpCur: Math.min(hpMax, hpCur + healed), lastRoll: { text: 'Short Rest (1d' + dieSize + ' + ' + conMod + '): ' + roll + ' → healed ' + healed } });
-      },
-      longRest: () => this.setState({ hpCur: hpMax, lastRoll: { text: 'Long Rest: HP fully restored' } }),
-      hasRoll: !!this.state.lastRoll,
-      rollText: this.state.lastRoll ? this.state.lastRoll.text : '',
       modalOpen: this.state.modalOpen,
       closeModal: () => this.setState({ modalOpen: false }),
       stopPropagation: (e) => e.stopPropagation()

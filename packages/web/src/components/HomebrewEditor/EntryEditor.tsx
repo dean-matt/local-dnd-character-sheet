@@ -137,7 +137,7 @@ export function EntryEditor({
   return (
     // `wide`'s height is the JSON mode's at its default size. The body never scrolls: a step's
     // columns, the field reference, the editor and the preview each scroll their own overflow.
-    <Modal onClose={close} wide>
+    <Modal onClose={close} size="wide">
       <ModalEntry
         contained
         title={title}

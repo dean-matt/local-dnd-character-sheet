@@ -5,21 +5,14 @@ import {
   characterDerivedSchema,
   derivedValue,
   overrideKey,
+  sheetState,
 } from "@dnd/character";
 import { Card } from "../../../Card.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
 
 const { shape } = characterDerivedSchema;
 
-/** A die with no pool in state has spent nothing, the way a new character's empty `hitDice` reads. */
-function hitDiceRemaining(derived: CharacterDerived, state: CharacterState) {
-  return derived.hitDice.map((pool) => {
-    const size = derivedValue(pool.total);
-    const spent = state.hitDice.find((candidate) => candidate.die === pool.die);
-    return { pool, remaining: Math.min(spent?.remaining ?? size, size) };
-  });
-}
-
+/** Current, temporary and each die's remaining hit dice, read against the derived totals by `sheetState`. */
 export function HitPoints({
   character,
   derived,
@@ -33,7 +26,11 @@ export function HitPoints({
   const current = state.hitPoints.current ?? maximum;
   const { temporary } = state.hitPoints;
   const filled = Math.max(0, Math.min(100, Math.round((current / maximum) * 100)));
-  const dice = hitDiceRemaining(derived, state);
+  const remaining = sheetState(derived, state).hitDice;
+  const dice = derived.hitDice.map((pool, index) => ({
+    pool,
+    remaining: remaining[index]?.remaining ?? 0,
+  }));
 
   return (
     <Card title="Hit Points">

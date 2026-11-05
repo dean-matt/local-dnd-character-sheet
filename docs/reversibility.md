@@ -122,9 +122,9 @@ the old id and refuses a name another row now holds.
 ## Play state
 
 `PUT /characters/{id}/state` (`packages/api/src/routes/characters.ts`) writes
-`character_state` whole, and no control calls it yet; only an import sets it. Undo never reaches
-it, since its log holds definitions alone. Each control below is the way back from its own
-change.
+`character_state` whole. A rest calls it, through `hooks/useReplaceCharacterState.ts`, and an
+import sets it. Undo never reaches it, since its log holds definitions alone. Each control below
+is the way back from its own change.
 
 | Decision | Control |
 |---|---|
@@ -132,5 +132,5 @@ change.
 | Spell and pact slots | Not built: #278 |
 | Class resources | Not built: #279 |
 | Conditions and exhaustion | Not built: #280 |
-| Hit dice, and a rest | Not built: #281, #275 |
+| Hit dice, and a rest | Nothing undoes a rest, which lists its changes before it writes. The fields it moves get their own controls in #277, #278, #279 and #280 |
 | Concentration, inspiration | Not stored: #123, #396 |

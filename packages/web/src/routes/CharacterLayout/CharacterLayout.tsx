@@ -10,6 +10,7 @@ import { CharacterSidebar } from "./CharacterSidebar.tsx";
 import { Dock } from "./Dock.tsx";
 import { ManagePages } from "./ManagePages/ManagePages.tsx";
 import { PrintSheet } from "./PrintSheet/PrintSheet.tsx";
+import { RestMenu } from "./RestMenu/RestMenu.tsx";
 import { UndoHistory } from "./UndoHistory/UndoHistory.tsx";
 import { UndoHistoryButton } from "./UndoHistoryButton.tsx";
 
@@ -56,6 +57,7 @@ export function CharacterLayout() {
                     open={historyOpen}
                     onToggle={() => setHistoryOpen((open) => !open)}
                   />
+                  <RestMenu character={character.data} />
                   <NavLink
                     to={`/characters/${id}/settings`}
                     title="Character settings"
