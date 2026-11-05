@@ -6,7 +6,7 @@ import {
   derivedValue,
   healedState,
 } from "@dnd/character";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { InputField } from "../../../InputField.tsx";
@@ -14,6 +14,9 @@ import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
 
 type Changed = ReturnType<typeof healedState>;
+
+const CRITICAL =
+  "rounded-pill border border-border bg-surface px-2.5 font-semibold text-muted text-row hover:bg-subtle aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white aria-pressed:hover:bg-accent-hover forced-colors:aria-pressed:bg-[Highlight] forced-colors:aria-pressed:text-[HighlightText]";
 
 const BUTTON =
   "h-8 rounded-control border bg-surface px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
@@ -50,9 +53,10 @@ export function HitPointChange({
   const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
-  const criticalId = useId();
   const maximum = derivedValue(derived.hitPointMaximum);
   const atZero = (state.hitPoints.current ?? maximum) <= 0;
+  // Three failures is the most the state schema stores, and it is death.
+  const dying = atZero && state.deathSaves.failures < 3;
 
   async function write({ state: after, outcome }: Changed) {
     try {
@@ -85,7 +89,7 @@ export function HitPointChange({
       derived,
       state,
       parsed.amount,
-      atZero && critical,
+      dying && critical,
     );
     // Damage to the dead changes nothing, so there is nothing to confirm.
     if (
@@ -100,6 +104,25 @@ export function HitPointChange({
 
   return (
     <div className="flex flex-col">
+      {/* The line keeps its height when empty, so the amount row never moves under a pointer. */}
+      <div className="mb-2 flex h-6 items-center gap-1.5 text-muted text-row">
+        {dying && (
+          <>
+            <span className="font-semibold text-error">Dying</span>
+            <span aria-hidden="true">·</span>
+            <span aria-hidden="true">next hit is</span>
+            <button
+              type="button"
+              aria-label="Next hit is critical"
+              aria-pressed={critical}
+              onClick={() => setCritical(!critical)}
+              className={CRITICAL}
+            >
+              critical
+            </button>
+          </>
+        )}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         <InputField
           label="Damage or healing amount"
@@ -118,17 +141,6 @@ export function HitPointChange({
           }}
           className="w-16"
         />
-        {atZero && (
-          <span className="flex items-center gap-1 text-row">
-            <input
-              id={criticalId}
-              type="checkbox"
-              checked={critical}
-              onChange={(event) => setCritical(event.target.checked)}
-            />
-            <label htmlFor={criticalId}>Critical hit</label>
-          </span>
-        )}
         <button
           ref={damageButton}
           type="button"

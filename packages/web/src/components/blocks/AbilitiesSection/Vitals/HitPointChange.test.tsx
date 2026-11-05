@@ -42,6 +42,8 @@ function renderLive(state: Partial<CharacterState>, { character = vex(), fail = 
 
 const amount = () => screen.getByRole("spinbutton", { name: "Damage or healing amount" });
 const button = (name: string) => screen.getByRole("button", { name });
+const CRITICAL = "Next hit is critical";
+const critical = () => button(CRITICAL);
 const announced = () =>
   screen.getAllByRole("status").find((region) => region.className === "sr-only");
 
@@ -78,14 +80,16 @@ describe("HitPointChange", () => {
     await waitFor(() => expect(announced()).toHaveTextContent("20 hit points."));
   });
 
-  it("offers Critical hit only at 0 hit points, and a critical costs two failures", async () => {
+  it("offers a critical toggle while dying; a critical costs two failures, then resets", async () => {
     const writes = renderLive({ hitPoints: { current: 0, temporary: 0 } });
     await screen.findByRole("spinbutton");
-    fireEvent.click(screen.getByRole("checkbox", { name: "Critical hit" }));
+    fireEvent.click(critical());
+    expect(critical()).toHaveAttribute("aria-pressed", "true");
     await apply("1", "Damage");
 
     await waitFor(() => expect(announced()).toHaveTextContent("0 hit points, dying."));
     expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 2 });
+    expect(critical()).toHaveAttribute("aria-pressed", "false");
   });
 
   it("announces a result again when it repeats the last one", async () => {
@@ -100,10 +104,16 @@ describe("HitPointChange", () => {
     expect(announced()).toHaveTextContent("0 hit points, dying.");
   });
 
-  it("hides Critical hit above 0 hit points", async () => {
-    renderLive({ hitPoints: { current: 1, temporary: 0 } });
+  it.each([
+    ["above 0 hit points", { hitPoints: { current: 1, temporary: 0 } }],
+    [
+      "once dead",
+      { hitPoints: { current: 0, temporary: 0 }, deathSaves: { successes: 0, failures: 3 } },
+    ],
+  ])("hides the critical toggle %s", async (_, state) => {
+    renderLive(state);
     await screen.findByRole("spinbutton");
-    expect(screen.queryByRole("checkbox", { name: "Critical hit" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: CRITICAL })).not.toBeInTheDocument();
   });
 
   it("asks before massive damage kills, and Cancel writes nothing", async () => {
