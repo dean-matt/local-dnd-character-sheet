@@ -27,6 +27,7 @@ import {
   UNDO_LOG_LIMIT,
   undoLogSchema,
   withExperienceFloor,
+  withTableHouseRules,
 } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type Database from "better-sqlite3";
@@ -373,7 +374,10 @@ export function charactersRoutes(
   });
 
   routes.openapi(create, (c) => {
-    const row = insertCharacter(db, { id: randomUUID(), definition: c.req.valid("json") });
+    const row = insertCharacter(db, {
+      id: randomUUID(),
+      definition: withTableHouseRules(c.req.valid("json")),
+    });
     return c.json(record(row), 201);
   });
 

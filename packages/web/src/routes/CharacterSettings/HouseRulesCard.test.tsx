@@ -57,6 +57,20 @@ describe("HouseRulesCard", () => {
     expect(hitDice.getByRole("radio", { name: /Half return/ })).toBeChecked();
   });
 
+  it("turns off the every-hit-die default a classic character is created with", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(classic({}))));
+    const hitDice = within(
+      renderCard(classic({ everyHitDieOnLongRest: true })).getByRole("group", {
+        name: "Hit dice on a long rest",
+      }),
+    );
+    expect(hitDice.getByRole("radio", { name: /All return/ })).toBeChecked();
+
+    fireEvent.click(hitDice.getByRole("radio", { name: /Half return/ }));
+
+    await waitFor(() => expect(written(fetchMock)).toEqual({ everyHitDieOnLongRest: false }));
+  });
+
   it("names both outcomes, marks the printed one, and describes the one in effect", () => {
     const card = renderCard(identityRecord());
     const encumbrance = within(card.getByRole("group", { name: "Encumbrance" }));

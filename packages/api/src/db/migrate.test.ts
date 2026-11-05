@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { defaultCharacterState, PRESET_PAGES } from "@dnd/character";
+import { characterDefinitionSchema, defaultCharacterState, PRESET_PAGES } from "@dnd/character";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -446,6 +446,104 @@ describe("migrations", () => {
       { slug: "loot", position: 4 },
       { slug: "backstory", position: 5 },
     ]);
+  });
+
+  it("turns on every hit die for a classic definition that never set it, and changes nothing else", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    sqlite.pragma("foreign_keys = ON");
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0014_drop_character_summaries");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const definition = (edition: string, houseRules?: object) => {
+      const { houseRules: _, ...rest } = characterDefinitionSchema.parse({
+        name: "Vex",
+        edition,
+        levels: [{ class: { name: "Fighter", source: "PHB" } }],
+        race: { name: "Elf", source: "PHB" },
+        background: { name: "Sage", source: "PHB" },
+        abilityScores: { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 },
+        proficiencies: {
+          savingThrows: [],
+          skills: [],
+          armor: [],
+          weapons: [],
+          tools: [],
+          languages: [],
+        },
+        inventory: [],
+        spells: [],
+      });
+      return JSON.stringify(houseRules ? { ...rest, houseRules } : rest);
+    };
+    const characters = [
+      ["bare", definition("classic")],
+      ["feats", definition("classic", { feats: true })],
+      ["off", definition("classic", { everyHitDieOnLongRest: false })],
+      ["on", definition("classic", { everyHitDieOnLongRest: true })],
+      ["new", definition("one", { feats: true })],
+    ] as const;
+    const insertUndo = sqlite.prepare(
+      "INSERT INTO undo_log (character_id, previous_state, described_as) VALUES (?, ?, 'Edit')",
+    );
+    for (const [id, stored] of characters) {
+      sqlite
+        .prepare(
+          "INSERT INTO characters (id, name, edition, level, definition) VALUES (?, 'Vex', ?, 1, ?)",
+        )
+        .run(id, JSON.parse(stored).edition, stored);
+      sqlite.prepare("INSERT INTO character_state (character_id, state) VALUES (?, '{}')").run(id);
+      for (const table of ["character_portraits", "character_portraits_previous"]) {
+        sqlite
+          .prepare(
+            `INSERT INTO ${table} (character_id, media_type, image) VALUES (?, 'image/png', ?)`,
+          )
+          .run(id, Buffer.from([1, 2, 3]));
+      }
+      sqlite
+        .prepare(
+          "INSERT INTO character_pages (character_id, slug, title, position, blocks) VALUES (?, 'notes', 'Notes', 0, '[]')",
+        )
+        .run(id);
+      sqlite
+        .prepare(
+          "INSERT INTO roll_log (character_id, label, notation, result, detail) VALUES (?, 'Attack', '1d20', 12, '[12]')",
+        )
+        .run(id);
+      insertUndo.run(id, stored);
+    }
+    insertUndo.run("bare", definition("classic", { everyHitDieOnLongRest: false }));
+    insertUndo.run("new", definition("classic"));
+    const untouched = [
+      "character_state",
+      "character_pages",
+      "character_portraits",
+      "character_portraits_previous",
+      "roll_log",
+    ];
+    const rows = (table: string) => sqlite.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all();
+    const before = Object.fromEntries(untouched.map((table) => [table, rows(table)]));
+    const definitions = (query: string) =>
+      (sqlite.prepare(query).all() as { stored: string }[]).map(({ stored }) => JSON.parse(stored));
+    const stored = () => definitions("SELECT definition AS stored FROM characters ORDER BY rowid");
+    const undone = () => definitions("SELECT previous_state AS stored FROM undo_log ORDER BY id");
+    const [storedBefore, undoneBefore] = [stored(), undone()];
+
+    migrateCharacters(db);
+
+    const on = (saved: { houseRules?: object }) => ({
+      ...saved,
+      houseRules: { ...saved.houseRules, everyHitDieOnLongRest: true },
+    });
+    const [bare, feats, off, kept, fresh] = storedBefore;
+    expect(stored()).toEqual([on(bare), on(feats), off, kept, fresh]);
+    const [, , , , , bareOff, classicUnderNew] = undoneBefore;
+    expect(undone()).toEqual([on(bare), on(feats), off, kept, fresh, bareOff, on(classicUnderNew)]);
+    for (const saved of [...stored(), ...undone()]) {
+      expect(() => characterDefinitionSchema.parse(saved)).not.toThrow();
+    }
+    for (const table of untouched) expect(rows(table), table).toEqual(before[table]);
   });
 
   it("renames all but the oldest of the homebrew items or spells one edition gives one name", () => {
