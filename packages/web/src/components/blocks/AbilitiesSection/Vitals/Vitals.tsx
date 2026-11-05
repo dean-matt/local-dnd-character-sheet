@@ -7,7 +7,7 @@ import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
-import { HitPoints } from "./HitPoints.tsx";
+import { HitPoints } from "./HitPoints/HitPoints.tsx";
 import { StatusEffects } from "./StatusEffects.tsx";
 
 export function Vitals({

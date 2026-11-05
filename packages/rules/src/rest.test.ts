@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type HitDie, resetsOn, rest } from "./index.ts";
+import { type HitDie, hitDicePick, resetsOn, rest } from "./index.ts";
 
 describe("resetsOn", () => {
   it.each([
@@ -162,5 +162,36 @@ describe("rest", () => {
     const first = rest(before, classic);
     expect(before).toEqual(state());
     expect(rest(before, classic)).toEqual(first);
+  });
+});
+
+describe("hitDicePick", () => {
+  const classic = { edition: "classic" as const, everyHitDie: false };
+  const pools = [
+    { die: 10 as const, total: 3, remaining: 0 },
+    { die: 8 as const, total: 1, remaining: 1 },
+    { die: 6 as const, total: 2, remaining: 1 },
+  ];
+
+  it("names how many return and each size spent where fewer return than were spent", () => {
+    expect(hitDicePick(pools, classic)).toEqual({
+      allowed: 3,
+      spent: [
+        { die: 10, count: 3 },
+        { die: 6, count: 1 },
+      ],
+    });
+  });
+
+  it("asks nothing where every spent die returns", () => {
+    expect(hitDicePick(pools, { ...classic, edition: "one" })).toBeNull();
+    expect(hitDicePick(pools, { ...classic, everyHitDie: true })).toBeNull();
+    expect(hitDicePick([{ die: 8, total: 4, remaining: 2 }], classic)).toBeNull();
+  });
+
+  it("rejects a malformed pool", () => {
+    expect(() => hitDicePick([{ die: 8, total: 1, remaining: 2 }], classic)).toThrow(
+      /A d8 pool has/,
+    );
   });
 });

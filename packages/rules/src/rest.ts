@@ -62,8 +62,8 @@ function resets(trigger: ResetTrigger, length: RestLength): boolean {
   return length === "long" && (trigger === "long" || trigger === "dawn");
 }
 
-function recovered(pools: readonly Pool[], { edition, everyHitDie, picked }: RestOptions): Pool[] {
-  const spent = new Map<number, number>();
+function spentDice(pools: readonly Pool[]): Map<HitDie, number> {
+  const spent = new Map<HitDie, number>();
   for (const pool of pools) {
     if (!Number.isInteger(pool.remaining) || pool.remaining < 0 || pool.remaining > pool.total) {
       throw new RangeError(`A d${pool.die} pool has ${pool.remaining} of ${pool.total} remaining`);
@@ -71,34 +71,56 @@ function recovered(pools: readonly Pool[], { edition, everyHitDie, picked }: Res
     if (spent.has(pool.die)) {
       throw new RangeError(`Two pools hold d${pool.die} hit dice`);
     }
-    spent.set(pool.die, (spent.get(pool.die) ?? 0) + pool.total - pool.remaining);
+    spent.set(pool.die, pool.total - pool.remaining);
   }
+  return spent;
+}
+
+type HitDicePick = { allowed: number; spent: { die: HitDie; count: number }[] };
+
+/**
+ * What a long rest asks the player to pick: how many hit dice return, and how many of each
+ * size were spent, omitting a size with none spent. Null where every spent die returns, so
+ * `rest` reads no `picked`. Throws as `rest` does on a malformed pool.
+ */
+export function hitDicePick(
+  pools: readonly Pool[],
+  { edition, everyHitDie }: Pick<RestOptions, "edition" | "everyHitDie">,
+): HitDicePick | null {
+  const spent = spentDice(pools);
   const allowed = hitDiceRecovered(
     pools.map((pool) => pool.total),
     everyHitDie ? "one" : edition,
   );
-  const spentTotal = [...spent.values()].reduce((sum, dice) => sum + dice, 0);
-  if (spentTotal <= allowed) {
+  const sizes = [...spent].filter(([, count]) => count > 0);
+  const total = sizes.reduce((sum, [, count]) => sum + count, 0);
+  if (total <= allowed) return null;
+  return { allowed, spent: sizes.map(([die, count]) => ({ die, count })) };
+}
+
+function recovered(pools: readonly Pool[], options: RestOptions): Pool[] {
+  const pick = hitDicePick(pools, options);
+  if (!pick) {
     return pools.map((pool) => ({ ...pool, remaining: pool.total }));
   }
+  const { allowed, spent } = pick;
+  const { picked } = options;
   if (picked === undefined) {
-    throw new RangeError(`${spentTotal} hit dice were spent and ${allowed} return: pick which`);
+    const total = spent.reduce((sum, size) => sum + size.count, 0);
+    throw new RangeError(`${total} hit dice were spent and ${allowed} return: pick which`);
   }
   if (picked.length > allowed) {
     throw new RangeError(`${picked.length} hit dice were picked and at most ${allowed} return`);
   }
-  const unpicked = new Map(spent);
+  const back = new Map<HitDie, number>();
   for (const die of picked) {
-    const left = unpicked.get(die) ?? 0;
-    if (left === 0) {
+    const taken = back.get(die) ?? 0;
+    if (taken === (spent.find((size) => size.die === die)?.count ?? 0)) {
       throw new RangeError(`More d${die} hit dice were picked than were spent`);
     }
-    unpicked.set(die, left - 1);
+    back.set(die, taken + 1);
   }
-  return pools.map((pool) => {
-    const back = (spent.get(pool.die) ?? 0) - (unpicked.get(pool.die) ?? 0);
-    return { ...pool, remaining: pool.remaining + back };
-  });
+  return pools.map((pool) => ({ ...pool, remaining: pool.remaining + (back.get(pool.die) ?? 0) }));
 }
 
 /**
