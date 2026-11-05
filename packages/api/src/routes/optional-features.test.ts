@@ -202,6 +202,22 @@ describe("optionalFeaturesRoutes", () => {
     ]);
   });
 
+  it("reads a homebrew class cited by name and source as one cited by id", async () => {
+    insertHomebrewClass(opened.homebrewDb, "hc", {
+      name: "Warden",
+      edition: "one",
+      hd: { number: 1, faces: 10 },
+      optionalfeatureProgression: [{ featureType: ["EI"], progression: { "1": 1, "2": 2 } }],
+    });
+    const warden = { name: "warden", source: "HB" };
+
+    expect(
+      await entitlements(definition({ levels: [{ class: warden }, { class: warden }] })),
+    ).toEqual([
+      { featureType: "EI", known: 2, grantedBy: { kind: "class", ref: warden }, edition: "one" },
+    ]);
+  });
+
   it("entitles nothing from a grantor the catalog does not hold", async () => {
     expect(
       await entitlements(

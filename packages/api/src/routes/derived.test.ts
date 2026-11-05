@@ -1155,28 +1155,47 @@ describe("derivedRoutes", () => {
     expect(await res.json()).toEqual({ error: "Class homebrew c has a d20 hit die" });
   });
 
-  it("reads a homebrew class cited by name and source as one cited by id, its edition first", async () => {
-    insertHomebrewClass(opened.homebrewDb, "one", {
-      name: "Warden",
-      edition: "one",
-      hd: { number: 1, faces: 12 },
-    });
-    insertHomebrewClass(opened.homebrewDb, "classic", {
-      name: "Warden",
-      edition: "classic",
-      hd: { number: 1, faces: 10 },
-    });
-    store(definitionWith({ levels: [{ class: { homebrewId: "classic" } }] }));
-    const byId = await derived();
-    updateCharacterDefinition(
-      opened.charactersDb,
-      "1",
-      definitionWith({ levels: [{ class: { name: "warden", source: "HB" } }] }),
-    );
-    const byName = await derived();
+  describe("a homebrew class cited by name and source", () => {
+    const WARDEN = { class: { name: "warden", source: "HB" } };
 
-    expect(byName.hitDice).toEqual([expect.objectContaining({ die: 10 })]);
-    expect(byName.hitPointMaximum).toEqual(byId.hitPointMaximum);
+    beforeEach(() => {
+      for (const [edition, faces] of [
+        ["one", 12],
+        ["classic", 10],
+      ] as const) {
+        insertHomebrewClass(opened.homebrewDb, edition, {
+          name: "Warden",
+          edition,
+          hd: { number: 1, faces },
+          spellcastingAbility: "wis",
+          casterProgression: "full",
+        });
+      }
+    });
+
+    it("derives as the class cited by id, adding no slot table to a multiclass", async () => {
+      const paladin = [{ class: PALADIN }, { class: PALADIN }];
+      store(definitionWith({ levels: [{ class: { homebrewId: "classic" } }, ...paladin] }));
+      const byId = await derived();
+      updateCharacterDefinition(
+        opened.charactersDb,
+        "1",
+        definitionWith({ levels: [WARDEN, ...paladin] }),
+      );
+      const byName = await derived();
+
+      expect(byName.hitDice).toEqual(byId.hitDice);
+      expect(byName.hitPointMaximum).toEqual(byId.hitPointMaximum);
+      expect(byName.spellcasting[0]).toEqual(expect.objectContaining({ ability: "wis" }));
+      expect(byName.spellSlots).not.toEqual([]);
+      expect(byName.spellSlots).toEqual(byId.spellSlots);
+    });
+
+    it("reads the row in the character's edition", async () => {
+      store(definitionWith({ edition: "one", levels: [WARDEN] }));
+
+      expect((await derived()).hitDice).toEqual([expect.objectContaining({ die: 12 })]);
+    });
   });
 
   it("422s a homebrew class cited by a name no homebrew class holds, naming it", async () => {

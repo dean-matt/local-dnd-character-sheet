@@ -60,7 +60,6 @@ import {
 } from "@dnd/character";
 import { ABILITIES, HIT_DICE, type HitDie } from "@dnd/rules";
 import { type ZodType, z } from "zod";
-import { homebrewClasses } from "../homebrew.ts";
 import {
   getCasterRows,
   getClass,
@@ -70,12 +69,12 @@ import {
 } from "./classes.ts";
 import { getFeat } from "./feats.ts";
 import {
+  asHomebrewIdRef,
   getHomebrewClass,
   getHomebrewFeat,
   getHomebrewRace,
   getHomebrewSubrace,
   type HomebrewDb,
-  homebrewNamed,
   listHomebrewSkills,
 } from "./homebrew.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
@@ -105,23 +104,6 @@ const isAbility = (value: string | null): value is Ability =>
   (ABILITIES as readonly (string | null)[]).includes(value);
 
 type ClassFacts = { hitDie: number; json: unknown };
-
-/**
- * `ref` as the id of the homebrew class it cites by `(name, "HB")`, the row in `edition`
- * before the other, as the level-up dialog reads it. Any other citation, and a name no
- * homebrew class holds, comes back as it is.
- */
-function homebrewClassById(
-  homebrewDb: HomebrewDb,
-  ref: EntryRef,
-  edition: CharacterDefinition["edition"],
-): EntryRef {
-  if ("homebrewId" in ref || ref.source.toUpperCase() !== HOMEBREW_SOURCE) return ref;
-  const row =
-    homebrewNamed(homebrewDb, homebrewClasses, ref.name, edition) ??
-    homebrewNamed(homebrewDb, homebrewClasses, ref.name);
-  return row ? { homebrewId: row.id } : ref;
-}
 
 function classFacts(
   dataDir: string,
@@ -573,7 +555,7 @@ export function resolveCharacterCatalog(
   for (const { class: ref } of definition.levels) {
     const key = entryKey(ref);
     if (hitDice.has(key)) continue;
-    const cited = homebrewClassById(homebrewDb, ref, definition.edition);
+    const cited = asHomebrewIdRef(homebrewDb, ref, definition.edition);
     const facts = classFacts(dataDir, homebrewDb, cited);
     if (!facts) throw new UnresolvedReference(`No class ${describe(ref)}`);
     if (!isHitDie(facts.hitDie)) {
