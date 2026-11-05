@@ -49,6 +49,14 @@ describe("HouseRulesCard", () => {
     ]);
   });
 
+  it("offers the hit dice option to a classic character", () => {
+    const hitDice = within(
+      renderCard(classic({})).getByRole("group", { name: "Hit dice on a long rest" }),
+    );
+
+    expect(hitDice.getByRole("radio", { name: /Half return/ })).toBeChecked();
+  });
+
   it("names both outcomes, marks the printed one, and describes the one in effect", () => {
     const card = renderCard(identityRecord());
     const encumbrance = within(card.getByRole("group", { name: "Encumbrance" }));
