@@ -19,6 +19,13 @@ describe("houseRules", () => {
     expect(houseRule(parsed, "encumbrance")).toBe(false);
   });
 
+  it("reads noInstantDeath as off unless the table set it", () => {
+    const option = (houseRules: object) =>
+      houseRule(characterDefinitionSchema.parse({ ...definition, houseRules }), "noInstantDeath");
+    expect(option({})).toBe(false);
+    expect(option({ noInstantDeath: true })).toBe(true);
+  });
+
   it("reads back the option the table set", () => {
     const parsed = characterDefinitionSchema.parse(structuredClone(definition));
     expect(houseRule(parsed, "encumbrance")).toBe(true);

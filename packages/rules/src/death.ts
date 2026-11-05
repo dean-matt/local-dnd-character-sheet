@@ -17,7 +17,7 @@
  * rather than rolled for — without that, a 20 revives the character the last roll killed.
  */
 
-const REQUIRED = 3;
+export const REQUIRED = 3;
 
 const SUCCESS_DC = 10;
 
@@ -25,7 +25,7 @@ const D20_FACES = 20;
 
 const DOUBLE_FAILURE = 2;
 
-type DeathSaves = {
+export type DeathSaves = {
   successes: number;
   failures: number;
 };
@@ -34,14 +34,14 @@ type DeathSaves = {
  * `dying` is still making saves. `conscious` is up at 1 hit point, which only a natural
  * 20 reaches — `stable` is at 0 and unconscious.
  */
-type DeathSaveOutcome = "dying" | "stable" | "dead" | "conscious";
+export type DeathSaveOutcome = "dying" | "stable" | "dead" | "conscious";
 
 type DeathSaveResult = DeathSaves & {
   outcome: DeathSaveOutcome;
 };
 
 /** Both columns by name, so an absent one is rejected rather than skipped. */
-function assertSaves(saves: DeathSaves): void {
+export function assertSaves(saves: DeathSaves): void {
   for (const label of ["successes", "failures"] as const) {
     const count = saves[label];
     if (!Number.isInteger(count) || count < 0 || count > REQUIRED) {
@@ -99,8 +99,8 @@ export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
  * stable in both rulesets and starts the saves again. So three successes on arrival clear,
  * and the failure lands on an empty sheet.
  *
- * Whether the damage kills outright by equalling the hit point maximum is the caller's to
- * judge, because that rule reads a number this one never sees.
+ * Whether the damage kills outright by equalling the hit point maximum is `takeDamage`'s
+ * to judge, because that rule reads a number this one never sees.
  */
 export function damageAtZeroHitPoints(saves: DeathSaves, critical: boolean): DeathSaveResult {
   assertSaves(saves);
