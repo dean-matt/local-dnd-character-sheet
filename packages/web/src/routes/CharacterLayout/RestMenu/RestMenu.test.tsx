@@ -119,8 +119,16 @@ describe("RestMenu", () => {
     expect(rest()).toHaveAttribute("aria-expanded", "true");
     const short = screen.getByRole("button", { name: "Short rest" });
     expect(short).toHaveAttribute("aria-haspopup", "dialog");
-    expect(short).toHaveAccessibleDescription("Recover pact slots and short-rest resources");
+    expect(short).toHaveAccessibleDescription("Nothing to recover");
     expect(screen.getByRole("button", { name: "Long rest" })).toBeInTheDocument();
+  });
+
+  it("names what a short rest would recover for this character", async () => {
+    renderLive(spent());
+    await openMenu();
+    expect(screen.getByRole("button", { name: "Short rest" })).toHaveAccessibleDescription(
+      "Recover pact slots and Ki",
+    );
   });
 
   it("closes the menu on Escape, returning focus to the Rest button", async () => {

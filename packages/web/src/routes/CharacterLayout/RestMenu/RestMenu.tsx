@@ -1,24 +1,24 @@
-import type { CharacterRecord, RestLength } from "@dnd/character";
+import {
+  type CharacterRecord,
+  derivedValue,
+  type RestLength,
+  restedState,
+  sheetState,
+} from "@dnd/character";
 import { FlameKindling } from "lucide-react";
 import { useId, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { RestDialog } from "./RestDialog.tsx";
-
-const RESTS: { length: RestLength; title: string; description: string }[] = [
-  {
-    length: "short",
-    title: "Short rest",
-    description: "Recover pact slots and short-rest resources",
-  },
-  { length: "long", title: "Long rest", description: "Restore HP, Hit Dice and spent resources" },
-];
+import { recoverySummary } from "./recoverySummary.ts";
+import { restChanges } from "./restChanges.ts";
 
 /**
  * The header's Rest button and the menu under it, whose items open the dialog for a short or
  * a long rest. Escape, or focus leaving the menu, closes it; focus returns to the button when
- * the dialog closes, and a rest applied is announced, since its dialog closes on it. The
+ * the dialog closes, and a rest applied is announced, since its dialog closes on it. The short
+ * rest's line names what it would recover, from the same changes its dialog lists. The
  * button waits on the sheet's derived block and state, which the dialog reads, and names
  * why where either failed to load.
  */
@@ -32,6 +32,23 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
   const menuId = useId();
   const ready = derived.data !== undefined && state.data !== undefined;
   const failed = derived.error ?? state.error;
+  const rests: { length: RestLength; title: string; description: string }[] = [
+    {
+      length: "short",
+      title: "Short rest",
+      description:
+        derived.data && state.data
+          ? recoverySummary(
+              restChanges(
+                sheetState(derived.data, state.data.state),
+                restedState(character.definition, derived.data, state.data.state, "short"),
+                derivedValue(derived.data.hitPointMaximum),
+              ),
+            )
+          : "",
+    },
+    { length: "long", title: "Long rest", description: "Restore HP, Hit Dice and spent resources" },
+  ];
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Escape and focusout bubbling from the button and the menu.
@@ -64,9 +81,9 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
       {menuOpen && (
         <div
           id={menuId}
-          className="absolute top-full right-0 z-40 mt-1 flex w-50 flex-col rounded-card border border-border bg-surface p-1.5 shadow-popover"
+          className="absolute top-full right-0 z-40 mt-1 flex w-max max-w-[calc(100vw-2rem)] flex-col rounded-card border border-border bg-surface p-1.5 shadow-popover"
         >
-          {RESTS.map(({ length, title, description }) => (
+          {rests.map(({ length, title, description }) => (
             <button
               key={length}
               type="button"
