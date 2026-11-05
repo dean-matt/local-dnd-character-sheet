@@ -1155,6 +1155,38 @@ describe("derivedRoutes", () => {
     expect(await res.json()).toEqual({ error: "Class homebrew c has a d20 hit die" });
   });
 
+  it("reads a homebrew class cited by name and source as one cited by id, its edition first", async () => {
+    insertHomebrewClass(opened.homebrewDb, "one", {
+      name: "Warden",
+      edition: "one",
+      hd: { number: 1, faces: 12 },
+    });
+    insertHomebrewClass(opened.homebrewDb, "classic", {
+      name: "Warden",
+      edition: "classic",
+      hd: { number: 1, faces: 10 },
+    });
+    store(definitionWith({ levels: [{ class: { homebrewId: "classic" } }] }));
+    const byId = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({ levels: [{ class: { name: "warden", source: "HB" } }] }),
+    );
+    const byName = await derived();
+
+    expect(byName.hitDice).toEqual([expect.objectContaining({ die: 10 })]);
+    expect(byName.hitPointMaximum).toEqual(byId.hitPointMaximum);
+  });
+
+  it("422s a homebrew class cited by a name no homebrew class holds, naming it", async () => {
+    store(definitionWith({ levels: [{ class: { name: "Nobody", source: "HB" } }] }));
+    const res = await routes.request("/characters/1/derived");
+
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "No class Nobody (HB)" });
+  });
+
   it("422s a stored race row that states no size or speed, naming that row", async () => {
     opened.homebrewDb.$client
       .prepare("INSERT INTO homebrew_races (id, edition, name, json) VALUES (?, ?, ?, ?)")
