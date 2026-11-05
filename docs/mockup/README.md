@@ -51,7 +51,7 @@ widget, panel, or nav element:
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the app's character list tile), then the subtitle
   — total level, race and classes — after a `·`, with the save status, then Inspiration
-  (its icon alone, the label in a tooltip) and a Character settings gear as 32px
+  (its icon alone, the label in a tooltip), Rest and a Character settings gear as 32px
   buttons at the right. The save status reads "Saving…" while any write to the character is in
   flight and "Saved" for a moment after; a save that fails or an entry a field refuses
   raises a toast at the bottom right naming the field, with Retry for a failed save, and
@@ -159,7 +159,7 @@ says how much of the artboard the app builds today.
 | `RaceFeaturesFilter` | #311 | nothing |
 | `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
-| `CharacterHeader` | #227, #241, #391, #394, #395, #396, #452, #674 | the settings gear and the portrait upload, the rest read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear and the portrait upload, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `WidgetPicker` | #819 | nothing |
