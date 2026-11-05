@@ -39,7 +39,7 @@ export function HitDicePicks({
               onChange(typed.map((value, at) => (at === index ? event.target.value : value)))
             }
             error={counts[index] === undefined && `Type a whole number from 0 to ${count}.`}
-            className="w-24 text-row"
+            className="min-h-11 w-24 text-row"
           />
         ))}
       </div>

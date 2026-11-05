@@ -3,6 +3,8 @@ import { Fragment, type ReactNode, useEffect, useId, useMemo, useRef, useState }
 import { InModal } from "./inModalContext.ts";
 import { SaveToasts } from "./SaveToasts.tsx";
 
+const SIZE = { narrow: "w-sm", default: "w-3xl", wide: "h-[min(35.5rem,80%)] w-6xl" };
+
 /**
  * The one modal dialog, showing one entry at a time. It opens on `children`, a
  * `ModalEntry`; an entry opened from inside it replaces the one showing, and the back
@@ -16,15 +18,17 @@ import { SaveToasts } from "./SaveToasts.tsx";
  */
 export function Modal({
   onClose,
-  wide,
+  size,
   children,
 }: {
   onClose: () => void;
   /**
-   * For an entry edited beside a reference: wider, and one height whatever its content, so
-   * moving between views never resizes it; content taller than that height scrolls.
+   * `wide` is for an entry edited beside a reference: wider, and one height whatever its
+   * content, so moving between views never resizes it; content taller than that height
+   * scrolls. `narrow` is for a short confirmation, which a full-width modal leaves mostly
+   * empty.
    */
-  wide?: boolean;
+  size?: "narrow" | "wide";
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -76,7 +80,7 @@ export function Modal({
       onClick={(event) => {
         if (pressedBackdrop.current && event.target === event.currentTarget) onClose();
       }}
-      className={`m-auto max-h-[80%] ${wide ? "h-[min(35.5rem,80%)] w-6xl" : "w-3xl"} max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
+      className={`m-auto max-h-[80%] ${SIZE[size ?? "default"]} max-w-[calc(100%-2rem)] flex-col rounded-card border-0 bg-surface p-0 text-ink shadow-modal open:flex print:hidden`}
     >
       {/* Fixed to the viewport, so it draws over the backdrop rather than inside the dialog's box. */}
       <button

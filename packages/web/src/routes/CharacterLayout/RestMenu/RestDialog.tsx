@@ -67,7 +67,7 @@ export function RestDialog({
   }
 
   return (
-    <Modal onClose={close}>
+    <Modal onClose={close} size="narrow">
       <ModalEntry
         title={TITLE[length]}
         footer={
@@ -76,7 +76,7 @@ export function RestDialog({
               type="button"
               aria-disabled={replace.isPending}
               onClick={close}
-              className="rounded-control px-3.5 py-2 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
+              className="min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
             >
               Cancel
             </button>
@@ -84,7 +84,7 @@ export function RestDialog({
               type="button"
               aria-disabled={!after || replace.isPending}
               onClick={confirm}
-              className="rounded-control bg-accent px-3.5 py-2 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"
+              className="min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"
             >
               {replace.isPending ? "Resting…" : `Take the ${TITLE[length].toLowerCase()}`}
             </button>
@@ -98,11 +98,11 @@ export function RestDialog({
           {changes === undefined ? (
             <p className="text-muted">Pick the hit dice to recover to see what the rest changes.</p>
           ) : changes.length > 0 ? (
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 text-row">
               {changes.map((change) => (
                 <div key={change.key} className="contents">
-                  <dt className="font-semibold">{change.label}</dt>
-                  <dd>
+                  <dt>{change.label}</dt>
+                  <dd className="text-right font-semibold tabular-nums">
                     {change.before} → {change.after}
                   </dd>
                 </div>
