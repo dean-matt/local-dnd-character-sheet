@@ -113,9 +113,10 @@ export function DeathSaves({
   return (
     <>
       {status && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           {COLUMNS.map(({ column, label, mark: name, className }) => (
-            <fieldset key={column} className="flex items-center gap-1.5">
+            // The button's height, so the marks hold still when it comes or goes.
+            <fieldset key={column} className="flex h-8 items-center gap-1">
               <legend className="sr-only">Death save {column}</legend>
               <span aria-hidden="true" className="text-label text-muted">
                 {label}
