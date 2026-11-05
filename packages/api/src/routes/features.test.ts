@@ -591,6 +591,26 @@ describe("featuresRoutes", () => {
     expect(await listed()).toBeUndefined();
   });
 
+  it("lists the features of a homebrew class cited by name and source", async () => {
+    insertHomebrewClass(opened.homebrewDb, "hc", {
+      name: "Warden",
+      edition: "classic",
+      hd: { number: 1, faces: 10 },
+    });
+    replaceHomebrewClassFeatures(opened.homebrewDb, "hc", [
+      { name: "Second Wind", level: 1, entries: ["Second Wind."] },
+    ]);
+    const warden = { name: "warden", source: "HB" };
+    store(definitionWith({ levels: [{ class: warden }] }));
+
+    expect((await features()).groups.find(({ origin }) => origin === "class")).toEqual({
+      origin: "class",
+      name: "warden",
+      class: warden,
+      features: [{ resolved: true, name: "Second Wind", level: 1, entries: ["Second Wind."] }],
+    });
+  });
+
   it("lists a homebrew subclass's features up to the class's level, each at its own", async () => {
     insertHomebrewSubclass(opened.homebrewDb, "hs", {
       name: "Storm Knight",

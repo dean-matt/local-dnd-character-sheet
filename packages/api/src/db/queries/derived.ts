@@ -69,6 +69,7 @@ import {
 } from "./classes.ts";
 import { getFeat } from "./feats.ts";
 import {
+  asHomebrewIdRef,
   getHomebrewClass,
   getHomebrewFeat,
   getHomebrewRace,
@@ -554,16 +555,17 @@ export function resolveCharacterCatalog(
   for (const { class: ref } of definition.levels) {
     const key = entryKey(ref);
     if (hitDice.has(key)) continue;
-    const facts = classFacts(dataDir, homebrewDb, ref);
+    const cited = asHomebrewIdRef(homebrewDb, ref, definition.edition);
+    const facts = classFacts(dataDir, homebrewDb, cited);
     if (!facts) throw new UnresolvedReference(`No class ${describe(ref)}`);
     if (!isHitDie(facts.hitDie)) {
       throw new UnresolvedReference(`Class ${describe(ref)} has a d${facts.hitDie} hit die`);
     }
     hitDice.set(key, facts.hitDie);
-    const ability = castingAbility(dataDir, definition, ref, facts.json);
+    const ability = castingAbility(dataDir, definition, cited, facts.json);
     if (!ability) continue;
     spellcastingAbilities.set(key, ability);
-    const table = casterTable(dataDir, definition, ref, facts.json);
+    const table = casterTable(dataDir, definition, cited, facts.json);
     if (table) casterTables.set(key, table);
   }
 

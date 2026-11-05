@@ -1155,6 +1155,57 @@ describe("derivedRoutes", () => {
     expect(await res.json()).toEqual({ error: "Class homebrew c has a d20 hit die" });
   });
 
+  describe("a homebrew class cited by name and source", () => {
+    const WARDEN = { class: { name: "warden", source: "HB" } };
+
+    beforeEach(() => {
+      for (const [edition, faces] of [
+        ["one", 12],
+        ["classic", 10],
+      ] as const) {
+        insertHomebrewClass(opened.homebrewDb, edition, {
+          name: "Warden",
+          edition,
+          hd: { number: 1, faces },
+          spellcastingAbility: "wis",
+          casterProgression: "full",
+        });
+      }
+    });
+
+    it("derives as the class cited by id, adding no slot table to a multiclass", async () => {
+      const paladin = [{ class: PALADIN }, { class: PALADIN }];
+      store(definitionWith({ levels: [{ class: { homebrewId: "classic" } }, ...paladin] }));
+      const byId = await derived();
+      updateCharacterDefinition(
+        opened.charactersDb,
+        "1",
+        definitionWith({ levels: [WARDEN, ...paladin] }),
+      );
+      const byName = await derived();
+
+      expect(byName.hitDice).toEqual(byId.hitDice);
+      expect(byName.hitPointMaximum).toEqual(byId.hitPointMaximum);
+      expect(byName.spellcasting[0]).toEqual(expect.objectContaining({ ability: "wis" }));
+      expect(byName.spellSlots).not.toEqual([]);
+      expect(byName.spellSlots).toEqual(byId.spellSlots);
+    });
+
+    it("reads the row in the character's edition", async () => {
+      store(definitionWith({ edition: "one", levels: [WARDEN] }));
+
+      expect((await derived()).hitDice).toEqual([expect.objectContaining({ die: 12 })]);
+    });
+  });
+
+  it("422s a homebrew class cited by a name no homebrew class holds, naming it", async () => {
+    store(definitionWith({ levels: [{ class: { name: "Nobody", source: "HB" } }] }));
+    const res = await routes.request("/characters/1/derived");
+
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({ error: "No class Nobody (HB)" });
+  });
+
   it("422s a stored race row that states no size or speed, naming that row", async () => {
     opened.homebrewDb.$client
       .prepare("INSERT INTO homebrew_races (id, edition, name, json) VALUES (?, ?, ?, ?)")

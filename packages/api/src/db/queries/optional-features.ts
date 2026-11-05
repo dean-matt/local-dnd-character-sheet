@@ -19,7 +19,12 @@ import {
 } from "@dnd/character";
 import type { Edition } from "@dnd/rules";
 import { openContentDb } from "../content.ts";
-import { getHomebrewClass, getHomebrewSubclass, type HomebrewDb } from "./homebrew.ts";
+import {
+  asHomebrewIdRef,
+  getHomebrewClass,
+  getHomebrewSubclass,
+  type HomebrewDb,
+} from "./homebrew.ts";
 
 type Count = { featureType: string; known: number };
 
@@ -89,20 +94,21 @@ export function listOptionalFeatureEntitlements(
 
     return [
       ...classLevels(definition).flatMap(({ class: cls, level, subclass }) => {
+        const cited = asHomebrewIdRef(homebrewDb, cls, definition.edition);
         const own = each(
           { kind: "class", ref: cls },
-          "homebrewId" in cls
-            ? homebrewCounts(getHomebrewClass(homebrewDb, cls.homebrewId), level)
+          "homebrewId" in cited
+            ? homebrewCounts(getHomebrewClass(homebrewDb, cited.homebrewId), level)
             : {
                 edition: edition(
                   "SELECT edition FROM classes WHERE name = ? AND source = ?",
-                  cls.name,
-                  cls.source,
+                  cited.name,
+                  cited.source,
                 ),
                 counts: counts(
                   "class_optional_features WHERE class_name = ? AND class_source = ? AND level = ?",
-                  cls.name,
-                  cls.source,
+                  cited.name,
+                  cited.source,
                   level,
                 ),
               },

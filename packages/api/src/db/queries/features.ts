@@ -38,6 +38,7 @@ import {
 import { parseJson, raceJson } from "./derived.ts";
 import { getFeat, getOptionalFeature } from "./feats.ts";
 import {
+  asHomebrewIdRef,
   getHomebrewBackground,
   getHomebrewClass,
   getHomebrewFeat,
@@ -171,29 +172,30 @@ function classGroups(
 ): FeatureGroup[] {
   return classLevels(definition).flatMap(({ class: ref, level, subclass }): FeatureGroup[] => {
     const name = displayName(ref);
-    if ("homebrewId" in ref) {
-      if (!getHomebrewClass(homebrewDb, ref.homebrewId)) {
+    const cited = asHomebrewIdRef(homebrewDb, ref, definition.edition);
+    if ("homebrewId" in cited) {
+      if (!getHomebrewClass(homebrewDb, cited.homebrewId)) {
         return [{ origin: "class", name, class: ref, features: [unresolved(ref)] }];
       }
-      const features = listHomebrewClassFeatures(homebrewDb, ref.homebrewId)
+      const features = listHomebrewClassFeatures(homebrewDb, cited.homebrewId)
         .filter((feature) => feature.level <= level)
         .map((feature): SheetFeature => ({ resolved: true, ...feature }));
       return [{ origin: "class", name, class: ref, features }];
     }
-    if (!getClass(dataDir, ref.name, ref.source)) {
+    if (!getClass(dataDir, cited.name, cited.source)) {
       return [{ origin: "class", name, class: ref, features: [unresolved(ref)] }];
     }
     const features = withChoices(
-      getClassFeatures(dataDir, ref.name, ref.source, level).filter(inPlay(definition)),
-      { className: ref.name, classSource: ref.source },
+      getClassFeatures(dataDir, cited.name, cited.source, level).filter(inPlay(definition)),
+      { className: cited.name, classSource: cited.source },
       definition,
     );
     const groups: FeatureGroup[] = [{ origin: "class", name, class: ref, features }];
     const catalogSubclass = catalogRef(subclass);
     if (catalogSubclass) {
-      groups.push(subclassGroup(dataDir, definition, ref, catalogSubclass, level));
+      groups.push(subclassGroup(dataDir, definition, cited, catalogSubclass, level));
     } else if (subclass && "homebrewId" in subclass) {
-      groups.push(homebrewSubclassGroup(homebrewDb, ref, subclass, level));
+      groups.push(homebrewSubclassGroup(homebrewDb, cited, subclass, level));
     }
     return groups;
   });

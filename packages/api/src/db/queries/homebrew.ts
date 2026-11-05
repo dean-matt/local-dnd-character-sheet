@@ -37,6 +37,7 @@ import {
   spellEntrySchema,
   subraceFullName,
 } from "@dnd/catalog";
+import type { CharacterDefinition, EntryRef } from "@dnd/character";
 import type { Edition } from "@dnd/rules";
 import { and, between, eq, inArray, ne, type SQL, sql } from "drizzle-orm";
 import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
@@ -192,6 +193,23 @@ export function homebrewNamed(
     )
     .orderBy(classicFirst(table))
     .get();
+}
+
+/**
+ * `ref` as the id of the homebrew class it cites by `(name, "HB")`, the row in `edition`
+ * before the other, as the level-up dialog reads it. Any other citation, and a name no
+ * homebrew class holds, comes back as it is.
+ */
+export function asHomebrewIdRef(
+  db: HomebrewDb,
+  ref: EntryRef,
+  edition: CharacterDefinition["edition"],
+): EntryRef {
+  if ("homebrewId" in ref || ref.source.toUpperCase() !== HOMEBREW_SOURCE) return ref;
+  const row =
+    homebrewNamed(db, homebrewClasses, ref.name, edition) ??
+    homebrewNamed(db, homebrewClasses, ref.name);
+  return row ? { homebrewId: row.id } : ref;
 }
 
 export function getHomebrewItem(db: HomebrewDb, id: string) {
