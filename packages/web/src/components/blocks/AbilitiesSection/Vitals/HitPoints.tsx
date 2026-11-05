@@ -9,10 +9,14 @@ import {
 } from "@dnd/character";
 import { Card } from "../../../Card.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
+import { HitPointChange } from "./HitPointChange.tsx";
 
 const { shape } = characterDerivedSchema;
 
-/** Current, temporary and each die's remaining hit dice, read against the derived totals by `sheetState`. */
+/**
+ * Current, temporary and each die's remaining hit dice, read against the derived totals by
+ * `sheetState`, and the control that applies damage or healing.
+ */
 export function HitPoints({
   character,
   derived,
@@ -83,6 +87,7 @@ export function HitPoints({
         <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-pill bg-subtle">
           <div className="h-full bg-accent" style={{ width: `${filled}%` }} />
         </div>
+        <HitPointChange character={character} derived={derived} state={state} />
       </div>
     </Card>
   );
