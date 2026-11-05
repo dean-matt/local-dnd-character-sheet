@@ -132,6 +132,33 @@ describe("RestMenu", () => {
     expect(rest()).toHaveFocus();
   });
 
+  it("closes the menu when focus leaves it", async () => {
+    renderLive({});
+    await openMenu();
+    fireEvent.blur(rest(), { relatedTarget: document.body });
+
+    expect(screen.queryByRole("button", { name: "Short rest" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the menu shut until the sheet loads, and names a failed load", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () => new Response(JSON.stringify({ error: "Character not found" }), { status: 404 }),
+      ),
+    );
+    renderWithClient(<RestMenu character={characterRecord("1", "Vex")} />);
+    expect(rest()).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(rest());
+    expect(rest()).toHaveAttribute("aria-expanded", "false");
+
+    await waitFor(() =>
+      expect(rest()).toHaveAttribute("title", "A rest is unavailable: Character not found"),
+    );
+    fireEvent.click(rest());
+    expect(screen.queryByRole("button", { name: "Short rest" })).not.toBeInTheDocument();
+  });
+
   it("lists what a long rest changes, before and after, writing nothing", async () => {
     const writes = renderLive(spent());
     const dialog = await open("Long rest");

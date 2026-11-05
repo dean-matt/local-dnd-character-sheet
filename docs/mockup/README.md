@@ -141,7 +141,7 @@ says how much of the artboard the app builds today.
 | `Saves` | #227, #487 | read-only |
 | `Skills` | #227, #399, #487 | the rings and homebrew skills edit, the rest read-only |
 | `Combat` | #227, #228 | read-only |
-| `HP` | #277, #487 | read-only |
+| `HP` | #277, #487, #1239 | read-only |
 | `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |
 | `Weapons` | #311, #398, #400 | all but the filter and its own search |

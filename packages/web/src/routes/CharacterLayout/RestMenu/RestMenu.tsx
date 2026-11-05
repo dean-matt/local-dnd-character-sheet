@@ -19,7 +19,8 @@ const RESTS: { length: RestLength; title: string; description: string }[] = [
  * The header's Rest button and the menu under it, whose items open the dialog for a short or
  * a long rest. Escape, or focus leaving the menu, closes it; focus returns to the button when
  * the dialog closes, and a rest applied is announced, since its dialog closes on it. The
- * button waits on the sheet's derived block and state, which the dialog reads.
+ * button waits on the sheet's derived block and state, which the dialog reads, and names
+ * why where either failed to load.
  */
 export function RestMenu({ character }: { character: CharacterRecord }) {
   const derived = useCharacterDerived(character.id);
@@ -30,6 +31,7 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
   const button = useReturnFocus<HTMLButtonElement>(resting !== undefined);
   const menuId = useId();
   const ready = derived.data !== undefined && state.data !== undefined;
+  const failed = derived.error ?? state.error;
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: Escape and focusout bubbling from the button and the menu.
@@ -49,7 +51,7 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
       <button
         ref={button}
         type="button"
-        title="Take a short or long rest"
+        title={failed ? `A rest is unavailable: ${failed.message}` : "Take a short or long rest"}
         aria-expanded={menuOpen}
         aria-controls={menuOpen ? menuId : undefined}
         aria-disabled={!ready}
@@ -103,9 +105,9 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
         />
       )}
       {/* Mounted while empty: a live region added with its text is often not announced. */}
-      <p role="status" className="sr-only">
+      <span role="status" className="sr-only">
         {applied}
-      </p>
+      </span>
     </div>
   );
 }
