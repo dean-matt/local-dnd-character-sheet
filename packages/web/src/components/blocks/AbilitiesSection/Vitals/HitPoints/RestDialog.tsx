@@ -20,9 +20,10 @@ const TITLE: Record<RestLength, string> = { short: "Short rest", long: "Long res
 
 /**
  * What a rest changes, listed before anything is written. Confirm writes the rested state in
- * one write and hands `onApplied` what it changed; Cancel, Escape and a failed write write nothing. Hit dice
- * are picked only where more than one size was spent; with one size, the most that return
- * come back.
+ * one write and hands `onApplied` what it changed; Cancel, Escape and a failed write write
+ * nothing. The dialog stays open while the write is in flight, so its outcome is shown. Hit
+ * dice are picked only where more than one size was spent; with one size, the most that
+ * return come back.
  */
 export function RestDialog({
   character,
@@ -50,6 +51,10 @@ export function RestDialog({
   const changes =
     after && restChanges(sheetState(derived, state), after, derivedValue(derived.hitPointMaximum));
 
+  function close() {
+    if (!replace.isPending) onClose();
+  }
+
   async function confirm() {
     if (!after || !changes || replace.isPending) return;
     try {
@@ -62,15 +67,16 @@ export function RestDialog({
   }
 
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={close}>
       <ModalEntry
         title={TITLE[length]}
         footer={
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-control px-3.5 py-2 font-semibold text-row hover:bg-subtle"
+              aria-disabled={replace.isPending}
+              onClick={close}
+              className="rounded-control px-3.5 py-2 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
             >
               Cancel
             </button>

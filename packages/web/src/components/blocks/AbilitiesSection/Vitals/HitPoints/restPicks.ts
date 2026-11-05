@@ -2,7 +2,10 @@ import type { HitDie, longRestHitDicePick } from "@dnd/character";
 
 export type HitDicePick = NonNullable<ReturnType<typeof longRestHitDicePick>>;
 
-/** The count typed for each spent size, in `pick.spent`'s order, or `undefined` where it is no whole number from 0 to what was spent. */
+/**
+ * The count typed for each spent size, in `pick.spent`'s order, or `undefined` where it is no
+ * whole number from 0 to what was spent.
+ */
 export function typedCounts(pick: HitDicePick, typed: readonly string[]): (number | undefined)[] {
   return pick.spent.map(({ count }, index) => {
     const raw = typed[index]?.trim() ?? "";

@@ -113,11 +113,17 @@ describe("a rest", () => {
 
   /**
    * Renders the cards over a stand-in API that keeps what each state write sends, so a rest
-   * lands on the sheet as it would. `fail` answers every write with a 500.
+   * lands on the sheet as it would. `fail` answers every write with a 500; `hold` keeps each
+   * write in flight until it settles.
    */
   function renderLive(
     state: Partial<CharacterState>,
-    { character = characterRecord("1", "Vex") as CharacterRecord, fail = false } = {},
+    {
+      character = characterRecord("1", "Vex") as CharacterRecord,
+      derivedBlock = derived(),
+      fail = false,
+      hold = Promise.resolve(),
+    } = {},
   ) {
     let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
     const writes: CharacterState[] = [];
@@ -125,6 +131,7 @@ describe("a rest", () => {
       "fetch",
       vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
         if (init?.method === "PUT") {
+          await hold;
           if (fail) return new Response(JSON.stringify({ error: "Disk full" }), { status: 500 });
           const written = JSON.parse(String(init.body));
           writes.push(written);
@@ -133,7 +140,7 @@ describe("a rest", () => {
         return new Response(JSON.stringify(stored), { status: 200 });
       }),
     );
-    renderWithClient(<Vitals character={character} derived={derived()} />);
+    renderWithClient(<Vitals character={character} derived={derivedBlock} />);
     return writes;
   }
 
@@ -197,6 +204,27 @@ describe("a rest", () => {
   it("says so when a rest changes nothing", async () => {
     renderLive({});
     expect((await open("Short rest")).getByText("This rest changes nothing.")).toBeInTheDocument();
+  });
+
+  it("lists each spent spell slot level a long rest restores, by its level", async () => {
+    const slots = (...levels: [number, number][]) =>
+      levels.map(([level, total]) => ({
+        level,
+        total: { computed: total, manual: null, terms: [] },
+      }));
+    renderLive(
+      {
+        spellSlots: [
+          { level: 2, total: 3, expended: 2 },
+          { level: 3, total: 2, expended: 2 },
+        ],
+      },
+      { derivedBlock: { ...derived(), spellSlots: slots([1, 4], [2, 3], [3, 2]) } },
+    );
+    expect(listed(await open("Long rest"))).toEqual([
+      "2nd Level slots: 1/3 → 3/3",
+      "3rd Level slots: 0/2 → 2/2",
+    ]);
   });
 
   it("asks which sizes a classic long rest recovers, refusing more than return", async () => {
@@ -266,6 +294,24 @@ describe("a rest", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(writes).toEqual([]);
     expect((await card("Hit Points")).getByRole("button", { name: "Short rest" })).toHaveFocus();
+  });
+
+  it("stays open through a write in flight, ignoring Cancel and Escape", async () => {
+    let settle = () => {};
+    const writes = renderLive(spent(), { hold: new Promise<void>((done) => (settle = done)) });
+    const dialog = await open("Long rest");
+    fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+    const cancel = await dialog.findByRole("button", { name: "Cancel" });
+    await waitFor(() => expect(cancel).toHaveAttribute("aria-disabled", "true"));
+
+    fireEvent.click(cancel);
+    fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    settle();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(writes).toHaveLength(1);
+    expect((await card("Hit Points")).getByRole("status")).toHaveTextContent(/^Long rest applied/);
   });
 
   it("keeps the sheet as it was and says so when the write fails", async () => {
