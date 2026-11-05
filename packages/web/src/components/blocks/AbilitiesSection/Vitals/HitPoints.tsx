@@ -5,23 +5,14 @@ import {
   characterDerivedSchema,
   derivedValue,
   overrideKey,
-  type RestLength,
   sheetState,
 } from "@dnd/character";
-import { useState } from "react";
-import { Card } from "../../../../Card.tsx";
-import { DerivedValue } from "../../../DerivedValue.tsx";
-import { RestButton } from "./RestButton.tsx";
+import { Card } from "../../../Card.tsx";
+import { DerivedValue } from "../../DerivedValue.tsx";
 
 const { shape } = characterDerivedSchema;
 
-const RESTS: RestLength[] = ["short", "long"];
-
-/**
- * Current, temporary and each die's remaining hit dice, read against the derived totals by
- * `sheetState`, and the controls that take a rest. A rest applied is announced, since its
- * dialog closes on it.
- */
+/** Current, temporary and each die's remaining hit dice, read against the derived totals by `sheetState`. */
 export function HitPoints({
   character,
   derived,
@@ -40,26 +31,9 @@ export function HitPoints({
     pool,
     remaining: remaining[index]?.remaining ?? 0,
   }));
-  const [applied, setApplied] = useState<string>();
 
   return (
-    <Card
-      title="Hit Points"
-      action={
-        <span className="flex items-center gap-0.5">
-          {RESTS.map((length) => (
-            <RestButton
-              key={length}
-              character={character}
-              derived={derived}
-              state={state}
-              length={length}
-              onApplied={setApplied}
-            />
-          ))}
-        </span>
-      }
-    >
+    <Card title="Hit Points">
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-1.5">
           <span className="font-bold text-[26px] leading-none">
@@ -109,10 +83,6 @@ export function HitPoints({
         <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-pill bg-subtle">
           <div className="h-full bg-accent" style={{ width: `${filled}%` }} />
         </div>
-        {/* Mounted while empty: a live region added with its text is often not announced. */}
-        <p role="status" className="sr-only">
-          {applied}
-        </p>
       </div>
     </Card>
   );

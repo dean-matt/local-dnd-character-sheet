@@ -9,9 +9,9 @@ import {
   sheetState,
 } from "@dnd/character";
 import { useState } from "react";
-import { useReplaceCharacterState } from "../../../../../hooks/useReplaceCharacterState.ts";
-import { Modal } from "../../../../Modal.tsx";
-import { ModalEntry } from "../../../../ModalEntry.tsx";
+import { Modal } from "../../../components/Modal.tsx";
+import { ModalEntry } from "../../../components/ModalEntry.tsx";
+import { useReplaceCharacterState } from "../../../hooks/useReplaceCharacterState.ts";
 import { HitDicePicks } from "./HitDicePicks.tsx";
 import { restChanges } from "./restChanges.ts";
 import { largestFirst, pickedDice } from "./restPicks.ts";

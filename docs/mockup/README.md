@@ -141,7 +141,7 @@ says how much of the artboard the app builds today.
 | `Saves` | #227, #487 | read-only |
 | `Skills` | #227, #399, #487 | the rings and homebrew skills edit, the rest read-only |
 | `Combat` | #227, #228 | read-only |
-| `HP` | #277, #281, #487 | the rests, the rest read-only |
+| `HP` | #277, #487 | read-only |
 | `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |
 | `Weapons` | #311, #398, #400 | all but the filter and its own search |
@@ -159,7 +159,7 @@ says how much of the artboard the app builds today.
 | `RaceFeaturesFilter` | #311 | nothing |
 | `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
-| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear and the portrait upload, the rest read-only |
+| `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the portrait upload and the Rest menu, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
 | `RollsPanelFilter` | #311, #312 | nothing |
 | `WidgetPicker` | #819 | nothing |

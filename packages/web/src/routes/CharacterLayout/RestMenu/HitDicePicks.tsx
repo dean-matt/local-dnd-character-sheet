@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { InputField } from "../../../../InputField.tsx";
+import { InputField } from "../../../components/InputField.tsx";
 import { type HitDicePick, typedCounts } from "./restPicks.ts";
 
 /**

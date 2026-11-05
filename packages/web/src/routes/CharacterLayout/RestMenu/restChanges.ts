@@ -1,5 +1,5 @@
 import type { CharacterState } from "@dnd/character";
-import { levelLabel, ORDINAL } from "../../../../../lib/spellLevel.ts";
+import { levelLabel, ORDINAL } from "../../../lib/spellLevel.ts";
 
 /** `key` tells rows apart where two resources share a name. */
 export type RestChange = { key: string; label: string; before: string; after: string };
