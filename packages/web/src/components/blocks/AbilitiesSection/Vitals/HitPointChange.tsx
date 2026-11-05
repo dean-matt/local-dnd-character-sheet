@@ -47,7 +47,7 @@ export function HitPointChange({
   const [critical, setCritical] = useState(false);
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ amount: number; changed: Changed }>();
-  const [announced, setAnnounced] = useState("");
+  const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
   const criticalId = useId();
@@ -63,9 +63,10 @@ export function HitPointChange({
     setTyped("");
     setCritical(false);
     const current = after.hitPoints.current ?? maximum;
-    setAnnounced(
-      `${current} hit points${current < 1 && outcome !== "conscious" ? `, ${outcome}` : ""}.`,
-    );
+    setAnnounced(({ count }) => ({
+      text: `${current} hit points${current < 1 && outcome !== "conscious" ? `, ${outcome}` : ""}.`,
+      count: count + 1,
+    }));
   }
 
   function apply(kind: "damage" | "heal") {
@@ -153,9 +154,11 @@ export function HitPointChange({
           </p>
         )}
       </div>
-      {/* Mounted while empty: a live region added with its text is often not announced. */}
+      {/* Mounted while empty: a live region added with its text is often not announced.
+          The keyed child replaces its node on every change, so a result that repeats the
+          last one's text is announced again. */}
       <span role="status" className="sr-only">
-        {announced}
+        <span key={announced.count}>{announced.text}</span>
       </span>
       {confirming && (
         <Modal onClose={() => !replace.isPending && setConfirming(undefined)} size="narrow">

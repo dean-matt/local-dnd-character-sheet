@@ -57,13 +57,12 @@ describe("HitPointChange", () => {
     const writes = renderLive({ hitPoints: { current: 12, temporary: 3 } });
     await apply("5", "Damage");
 
-    await waitFor(() => expect(writes).toHaveLength(1));
+    await waitFor(() => expect(announced()).toHaveTextContent("10 hit points."));
     expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 0 });
     const card = within(screen.getByRole("region", { name: "Hit Points" }));
-    await waitFor(() => expect(card.getByText("10")).toBeInTheDocument());
+    expect(card.getByText("10")).toBeInTheDocument();
     expect(card.queryByText(/temp$/)).not.toBeInTheDocument();
     expect(amount()).toHaveValue(null);
-    expect(announced()).toHaveTextContent("10 hit points.");
   });
 
   it("heals to the maximum by writing null, clearing the death saves", async () => {
@@ -85,8 +84,19 @@ describe("HitPointChange", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Critical hit" }));
     await apply("1", "Damage");
 
-    await waitFor(() => expect(writes).toHaveLength(1));
+    await waitFor(() => expect(announced()).toHaveTextContent("0 hit points, dying."));
     expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 2 });
+  });
+
+  it("announces a result again when it repeats the last one", async () => {
+    const writes = renderLive({ hitPoints: { current: 0, temporary: 0 } });
+    await apply("1", "Damage");
+    await waitFor(() => expect(announced()).toHaveTextContent("0 hit points, dying."));
+    const first = announced()?.firstChild;
+
+    await apply("1", "Damage");
+    await waitFor(() => expect(announced()?.firstChild).not.toBe(first));
+    expect(writes).toHaveLength(2);
     expect(announced()).toHaveTextContent("0 hit points, dying.");
   });
 
@@ -137,10 +147,9 @@ describe("HitPointChange", () => {
     );
     await apply("25", "Damage");
 
-    await waitFor(() => expect(writes).toHaveLength(1));
+    await waitFor(() => expect(announced()).toHaveTextContent("0 hit points, dying."));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 0 });
-    expect(announced()).toHaveTextContent("0 hit points, dying.");
   });
 
   it.each([
