@@ -49,11 +49,11 @@ export function RestDialog({
     : { after: undefined, changes: undefined };
 
   function close() {
-    if (!replace.isPending) onClose();
+    if (!replace.writing) onClose();
   }
 
   async function confirm() {
-    if (!after || !changes || replace.isPending) return;
+    if (!after || !changes || replace.writing) return;
     try {
       await replace.mutateAsync(after);
     } catch {
@@ -71,7 +71,7 @@ export function RestDialog({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              aria-disabled={replace.isPending}
+              aria-disabled={replace.writing}
               onClick={close}
               className="min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
             >
@@ -79,7 +79,7 @@ export function RestDialog({
             </button>
             <button
               type="button"
-              aria-disabled={!after || replace.isPending}
+              aria-disabled={!after || replace.writing}
               onClick={confirm}
               className="min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"
             >

@@ -4,9 +4,8 @@
  * Both take the stored shape: a null `current` reads as the maximum, and healing to the
  * maximum writes null back, so an unhurt character keeps pace with a level-up.
  *
- * The outcome reads `dying` for any living character at 0. Stabilizing clears both counts
- * and the counts are all the state keeps, so a stable character and one that just dropped
- * look the same here; only a roll tells them apart, and any damage ends stability anyway.
+ * The outcome reads `dying` for any living character at 0, stable or not: stability lives
+ * in how a caller stores the counts, not here, and any damage ends it anyway.
  *
  * No `Edition` parameter: temporary hit points, the healing cap and instant death read the
  * same in the 2014 and 2024 rulesets.

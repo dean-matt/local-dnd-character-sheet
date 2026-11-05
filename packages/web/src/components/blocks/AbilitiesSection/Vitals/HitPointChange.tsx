@@ -61,7 +61,7 @@ export function HitPointChange({
   // Damage ends stability and restarts the saves, so a critical counts while stable too.
   const atRisk = status === "dying" || status === "stable";
 
-  async function write({ state: after, outcome }: Changed) {
+  async function write({ state: after }: Changed) {
     try {
       await replace.mutateAsync(after);
     } catch {
@@ -69,15 +69,16 @@ export function HitPointChange({
     }
     setTyped("");
     setCritical(false);
-    const current = after.hitPoints.current ?? maximum;
+    // From the stored counts, as the card's label is: the outcome reads a stable character as dying.
+    const now = deathSaveStatus(derived, after);
     setAnnounced(({ count }) => ({
-      text: `${current} hit points${current < 1 && outcome !== "conscious" ? `, ${outcome}` : ""}.`,
+      text: `${after.hitPoints.current ?? maximum} hit points${now ? `, ${now}` : ""}.`,
       count: count + 1,
     }));
   }
 
   function apply(kind: "damage" | "heal") {
-    if (replace.isPending) return;
+    if (replace.writing) return;
     const parsed = parseAmount(typed);
     if ("error" in parsed) {
       setInvalid(parsed.error);
@@ -128,7 +129,7 @@ export function HitPointChange({
         <button
           ref={damageButton}
           type="button"
-          aria-disabled={replace.isPending}
+          aria-disabled={replace.writing}
           onClick={() => apply("damage")}
           className={`${BUTTON} border-accent text-accent-text`}
         >
@@ -136,7 +137,7 @@ export function HitPointChange({
         </button>
         <button
           type="button"
-          aria-disabled={replace.isPending}
+          aria-disabled={replace.writing}
           onClick={() => apply("heal")}
           className={`${BUTTON} border-positive text-positive`}
         >
@@ -182,24 +183,24 @@ export function HitPointChange({
         <span key={announced.count}>{announced.text}</span>
       </span>
       {confirming && (
-        <Modal onClose={() => !replace.isPending && setConfirming(undefined)} size="narrow">
+        <Modal onClose={() => !replace.writing && setConfirming(undefined)} size="narrow">
           <ModalEntry
             title={`${confirming.amount} damage kills ${character.name}`}
             footer={
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  aria-disabled={replace.isPending}
-                  onClick={() => !replace.isPending && setConfirming(undefined)}
+                  aria-disabled={replace.writing}
+                  onClick={() => !replace.writing && setConfirming(undefined)}
                   className="min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  aria-disabled={replace.isPending}
+                  aria-disabled={replace.writing}
                   onClick={async () => {
-                    if (replace.isPending) return;
+                    if (replace.writing) return;
                     await write(confirming.changed);
                     setConfirming(undefined);
                   }}

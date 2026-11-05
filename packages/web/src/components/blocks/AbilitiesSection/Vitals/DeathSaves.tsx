@@ -11,6 +11,8 @@ import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterS
 
 type Column = keyof CharacterState["deathSaves"];
 
+type Rolled = ReturnType<typeof deathSaveRolledState>;
+
 const MARKS = [1, 2, 3] as const;
 
 const COLUMNS = [
@@ -38,10 +40,14 @@ function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`;
 }
 
-function verdict(roll: number) {
-  if (roll === 20) return "a natural 20";
-  if (roll === 1) return "a natural 1, two failures";
-  return roll >= 10 ? "a success" : "a failure";
+/** What a roll did, read from the rule's result rather than its thresholds. */
+function verdict(before: CharacterState, { state: after, outcome }: Rolled) {
+  if (outcome === "conscious") return "a natural 20";
+  if (after.deathSaves.successes > before.deathSaves.successes || outcome === "stable") {
+    return "a success";
+  }
+  const failed = after.deathSaves.failures - before.deathSaves.failures;
+  return failed > 1 ? "a natural 1, two failures" : "a failure";
 }
 
 /**
@@ -63,6 +69,8 @@ export function DeathSaves({
   const [lastRoll, setLastRoll] = useState<number>();
   const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const status = deathSaveStatus(derived, state);
+  // A roll speaks for the dying it was rolled in; leaving that ends it.
+  if (status !== "dying" && lastRoll !== undefined) setLastRoll(undefined);
 
   function summary(after: CharacterState) {
     const now = deathSaveStatus(derived, after);
@@ -82,18 +90,20 @@ export function DeathSaves({
   }
 
   async function roll() {
-    if (replace.isPending) return;
+    if (replace.writing) return;
     const d20 = rollDice("1d20").total;
-    const after = deathSaveRolledState(derived, state, d20).state;
-    if (await write(after, `Rolled ${d20}: ${verdict(d20)}. ${summary(after)}.`)) {
+    const rolled = deathSaveRolledState(derived, state, d20);
+    const after = rolled.state;
+    if (await write(after, `Rolled ${d20}: ${verdict(state, rolled)}. ${summary(after)}.`)) {
       setLastRoll(d20);
     }
   }
 
   function mark(column: Column, index: number) {
-    if (replace.isPending) return;
+    if (replace.writing) return;
     const count = index <= state.deathSaves[column] ? index - 1 : index;
     const after = { ...state, deathSaves: { ...state.deathSaves, [column]: count } };
+    setLastRoll(undefined);
     write(after, `${summary(after)}.`);
   }
 
@@ -114,7 +124,7 @@ export function DeathSaves({
                   type="button"
                   aria-label={`${name} ${index}`}
                   aria-pressed={index <= state.deathSaves[column]}
-                  aria-disabled={replace.isPending}
+                  aria-disabled={replace.writing}
                   onClick={() => mark(column, index)}
                   className={`${MARK} ${className}`}
                 />
@@ -128,7 +138,7 @@ export function DeathSaves({
               )}
               <button
                 type="button"
-                aria-disabled={replace.isPending}
+                aria-disabled={replace.writing}
                 onClick={roll}
                 className={BUTTON}
               >

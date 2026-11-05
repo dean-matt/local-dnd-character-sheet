@@ -54,6 +54,16 @@ describe("HitPointChange", () => {
     expect(critical()).toHaveAttribute("aria-pressed", "false");
   });
 
+  it("announces a stable character as stable when temporary hit points take the damage", async () => {
+    renderVitals({
+      hitPoints: { current: 0, temporary: 5 },
+      deathSaves: { successes: 3, failures: 0 },
+    });
+    await apply("2", "Damage");
+
+    await waitFor(() => expect(announced()).toHaveTextContent("0 hit points, stable."));
+  });
+
   it("announces a result again when it repeats the last one", async () => {
     const { writes } = renderVitals({ hitPoints: { current: 0, temporary: 0 } });
     await apply("1", "Damage");

@@ -57,7 +57,7 @@ describe("DeathSaves", () => {
 
     await waitFor(() => expect(announced()).toHaveTextContent(text));
     expect(writes).toHaveLength(1);
-    expect(card().getByText(`Rolled ${value}`)).toBeVisible();
+    expect(await card().findByText(`Rolled ${value}`)).toBeVisible();
   });
 
   it("stores the third success as three, and shows the character stable", async () => {
@@ -65,9 +65,9 @@ describe("DeathSaves", () => {
     await roll(12);
 
     await waitFor(() => expect(writes[0]?.deathSaves).toEqual({ successes: 3, failures: 0 }));
-    expect(await card().findByText("Stable")).toBeVisible();
+    await waitFor(() => expect(announced()).toHaveTextContent("3 successes, 0 failures, stable."));
+    expect(card().getByText("Stable")).toBeVisible();
     expect(rollButton()).not.toBeInTheDocument();
-    expect(announced()).toHaveTextContent("3 successes, 0 failures, stable.");
   });
 
   it("brings a 20 up to 1 hit point with both counts cleared", async () => {
@@ -77,8 +77,10 @@ describe("DeathSaves", () => {
     await waitFor(() => expect(writes).toHaveLength(1));
     expect(writes[0]?.hitPoints).toEqual({ current: 1, temporary: 0 });
     expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 0 });
-    await waitFor(() => expect(card().queryByRole("group")).not.toBeInTheDocument());
-    expect(announced()).toHaveTextContent("Rolled 20: a natural 20. Conscious at 1 hit point.");
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent("Rolled 20: a natural 20. Conscious at 1 hit point."),
+    );
+    expect(card().queryByRole("group")).not.toBeInTheDocument();
   });
 
   it.each([
@@ -95,8 +97,8 @@ describe("DeathSaves", () => {
     await screen.findByRole("spinbutton");
 
     fireEvent.click(mark("Failure 2"));
-    await waitFor(() => expect(marks("failures")).toEqual(["true", "true", "false"]));
-    expect(announced()).toHaveTextContent("1 success, 2 failures, dying.");
+    await waitFor(() => expect(announced()).toHaveTextContent("1 success, 2 failures, dying."));
+    expect(marks("failures")).toEqual(["true", "true", "false"]);
 
     fireEvent.click(mark("Success 1"));
     await waitFor(() => expect(marks("successes")).toEqual(["false", "false", "false"]));
@@ -155,13 +157,50 @@ describe("DeathSaves", () => {
     fireEvent.click(mark("Success 2"));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Death saves were not changed: Disk full",
+      "Death saves were not changed: Disk full, write 1",
     );
     expect(marks("successes")).toEqual(["true", "false", "false"]);
 
     await roll(15);
-    await waitFor(() => expect(screen.getByRole("alert")).toBeVisible());
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("write 2"));
     expect(marks("successes")).toEqual(["true", "false", "false"]);
     expect(card().queryByText("Rolled 15")).not.toBeInTheDocument();
+  });
+
+  it("refuses a mark while another control's write is in flight", async () => {
+    const { writes, release } = renderVitals(atZero(1, 0), { hold: true });
+    fireEvent.change(await screen.findByRole("spinbutton"), { target: { value: "3" } });
+    fireEvent.click(screen.getByRole("button", { name: "Damage" }));
+    await waitFor(() => expect(mark("Success 2")).toHaveAttribute("aria-disabled", "true"));
+
+    fireEvent.click(mark("Success 2"));
+    release();
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.deathSaves).toEqual({ successes: 1, failures: 1 });
+    await waitFor(() => expect(mark("Success 2")).toHaveAttribute("aria-disabled", "false"));
+    expect(writes).toHaveLength(1);
+  });
+
+  it("drops the last roll once the marks are changed by hand", async () => {
+    renderVitals(atZero(0, 0));
+    await roll(12);
+    expect(await card().findByText("Rolled 12")).toBeVisible();
+
+    fireEvent.click(mark("Failure 1"));
+    await waitFor(() => expect(card().queryByText("Rolled 12")).not.toBeInTheDocument());
+  });
+
+  it("drops the last roll once the character leaves dying", async () => {
+    renderVitals(atZero(2, 0));
+    await roll(9);
+    expect(await card().findByText("Rolled 9")).toBeVisible();
+
+    await roll(12);
+    expect(await card().findByText("Stable")).toBeVisible();
+    fireEvent.click(mark("Success 3"));
+
+    expect(await card().findByText("Dying")).toBeVisible();
+    expect(card().queryByText(/^Rolled/)).not.toBeInTheDocument();
   });
 });

@@ -20,20 +20,30 @@ export function vex(noInstantDeath?: boolean): CharacterRecord {
 /**
  * Renders the Vitals cards, at a 20 hit point maximum, over a stand-in API that keeps what
  * each state write sends and answers later reads with it, as a reload would. `fail` answers
- * every write with a 500. Returns the writes, in order, and `reload`, which renders the cards
- * again over a fresh cache.
+ * every write with a 500 whose error names the attempt, "Disk full, write 2". `hold` keeps
+ * each write unanswered until `release`. Returns the writes, in order, `release`, and
+ * `reload`, which renders the cards again over a fresh cache.
  */
 export function renderVitals(
   state: Partial<CharacterState>,
-  { character = vex(), fail = false } = {},
+  { character = vex(), fail = false, hold = false } = {},
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
+  let attempts = 0;
+  let release = () => {};
+  const held = hold ? new Promise<void>((resolve) => (release = resolve)) : Promise.resolve();
   vi.stubGlobal(
     "fetch",
     vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === "PUT") {
-        if (fail) return new Response(JSON.stringify({ error: "Disk full" }), { status: 500 });
+        const attempt = ++attempts;
+        await held;
+        if (fail) {
+          return new Response(JSON.stringify({ error: `Disk full, write ${attempt}` }), {
+            status: 500,
+          });
+        }
         const written = JSON.parse(String(init.body));
         writes.push(written);
         stored = { ...stored, state: written };
@@ -45,6 +55,7 @@ export function renderVitals(
   const view = render();
   return {
     writes,
+    release: () => release(),
     reload() {
       view.unmount();
       render();
