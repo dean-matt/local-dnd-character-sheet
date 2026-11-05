@@ -1,10 +1,4 @@
-import {
-  type CharacterRecord,
-  derivedValue,
-  type RestLength,
-  restedState,
-  sheetState,
-} from "@dnd/character";
+import type { CharacterRecord, RestLength } from "@dnd/character";
 import { FlameKindling } from "lucide-react";
 import { useId, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
@@ -12,7 +6,7 @@ import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { RestDialog } from "./RestDialog.tsx";
 import { recoverySummary } from "./recoverySummary.ts";
-import { restChanges } from "./restChanges.ts";
+import { restPreview } from "./restChanges.ts";
 
 /**
  * The header's Rest button and the menu under it, whose items open the dialog for a short or
@@ -39,11 +33,7 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
       description:
         derived.data && state.data
           ? recoverySummary(
-              restChanges(
-                sheetState(derived.data, state.data.state),
-                restedState(character.definition, derived.data, state.data.state, "short"),
-                derivedValue(derived.data.hitPointMaximum),
-              ),
+              restPreview(character.definition, derived.data, state.data.state, "short").changes,
             )
           : "",
     },

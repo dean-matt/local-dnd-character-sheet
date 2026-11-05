@@ -20,6 +20,12 @@ describe("recoverySummary", () => {
     ).toBe("Recover Action Surge and Second Wind");
   });
 
+  it("names two resources sharing a name once", () => {
+    expect(recoverySummary([change("resource0", "Ki"), change("resource1", "Ki")])).toBe(
+      "Recover Ki",
+    );
+  });
+
   it("names two and counts the rest", () => {
     expect(
       recoverySummary([

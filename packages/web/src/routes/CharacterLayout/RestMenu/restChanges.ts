@@ -1,4 +1,13 @@
-import type { CharacterState } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  type CharacterDerived,
+  type CharacterState,
+  derivedValue,
+  type HitDie,
+  type RestLength,
+  restedState,
+  sheetState,
+} from "@dnd/character";
 import { levelLabel, ORDINAL } from "../../../lib/spellLevel.ts";
 
 /** `key` tells rows apart where two resources share a name. */
@@ -13,11 +22,7 @@ const left = (slot: Slot) => `${slot.total - slot.expended}/${slot.total}`;
  * are measured against the sheet by `sheetState`, so their pools and slots line up one to one;
  * a null current reads as `maximum`. A field the rest leaves alone is omitted.
  */
-export function restChanges(
-  before: CharacterState,
-  after: CharacterState,
-  maximum: number,
-): RestChange[] {
+function restChanges(before: CharacterState, after: CharacterState, maximum: number): RestChange[] {
   const rows: RestChange[] = [
     {
       key: "hitPoints",
@@ -67,4 +72,24 @@ export function restChanges(
     },
   ];
   return rows.filter((row) => row.before !== row.after);
+}
+
+/**
+ * The state a rest leaves and what it changes on the sheet, so the menu's summary and the
+ * dialog's list describe the one rest the dialog writes.
+ */
+export function restPreview(
+  definition: CharacterDefinition,
+  derived: CharacterDerived,
+  state: CharacterState,
+  length: RestLength,
+  picked?: HitDie[],
+): { after: CharacterState; changes: RestChange[] } {
+  const after = restedState(definition, derived, state, length, picked);
+  const changes = restChanges(
+    sheetState(derived, state),
+    after,
+    derivedValue(derived.hitPointMaximum),
+  );
+  return { after, changes };
 }

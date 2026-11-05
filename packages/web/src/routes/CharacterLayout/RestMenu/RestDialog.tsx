@@ -2,18 +2,15 @@ import {
   type CharacterDerived,
   type CharacterRecord,
   type CharacterState,
-  derivedValue,
   longRestHitDicePick,
   type RestLength,
-  restedState,
-  sheetState,
 } from "@dnd/character";
 import { useState } from "react";
 import { Modal } from "../../../components/Modal.tsx";
 import { ModalEntry } from "../../../components/ModalEntry.tsx";
 import { useReplaceCharacterState } from "../../../hooks/useReplaceCharacterState.ts";
 import { HitDicePicks } from "./HitDicePicks.tsx";
-import { restChanges } from "./restChanges.ts";
+import { restPreview } from "./restChanges.ts";
 import { largestFirst, pickedDice } from "./restPicks.ts";
 
 const TITLE: Record<RestLength, string> = { short: "Short rest", long: "Long rest" };
@@ -47,9 +44,9 @@ export function RestDialog({
   const [typed, setTyped] = useState(() => (pick ? largestFirst(pick) : []));
   const picked = pick ? pickedDice(pick, typed) : undefined;
   const ready = !pick || picked !== undefined;
-  const after = ready ? restedState(definition, derived, state, length, picked) : undefined;
-  const changes =
-    after && restChanges(sheetState(derived, state), after, derivedValue(derived.hitPointMaximum));
+  const { after, changes } = ready
+    ? restPreview(definition, derived, state, length, picked)
+    : { after: undefined, changes: undefined };
 
   function close() {
     if (!replace.isPending) onClose();
