@@ -60,9 +60,9 @@ const houseRulesObject = z
      */
     requireEquipProficiency: z.boolean().optional(),
     /**
-     * Massive damage never kills outright: a hit whose damage past 0 hit points equals the
-     * maximum drops the character to 0, and one taken at 0 costs death saves, as smaller hits
-     * do. Absent, either kills, as both rulesets print. `takeDamage` takes it as
+     * Massive damage never kills outright: a hit whose damage past 0 hit points equals or
+     * exceeds the maximum drops the character to 0, and one taken at 0 costs death saves, as
+     * smaller hits do. Absent, either kills, as both rulesets print. `takeDamage` takes it as
      * `instantDeath`, inverted.
      */
     noInstantDeath: z.boolean().optional(),

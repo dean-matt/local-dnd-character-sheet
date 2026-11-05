@@ -17,7 +17,7 @@
  * rather than rolled for — without that, a 20 revives the character the last roll killed.
  */
 
-const REQUIRED = 3;
+export const REQUIRED = 3;
 
 const SUCCESS_DC = 10;
 

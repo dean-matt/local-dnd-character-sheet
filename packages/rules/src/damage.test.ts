@@ -143,3 +143,26 @@ describe.each([
     expect(() => apply(amount)).toThrow(RangeError);
   });
 });
+
+describe("hit point inputs", () => {
+  const damage = (hitPoints: { current: number | null; temporary: number }, maximum = 20) =>
+    takeDamage(hitPoints, clear, maximum, 1, printed);
+
+  it.each([0, -1, 1.5])("throws a RangeError for a maximum of %d", (maximum) => {
+    expect(() => damage(hp(5), maximum)).toThrow(RangeError);
+    expect(() => heal(hp(5), clear, maximum, 1)).toThrow(RangeError);
+  });
+
+  it("throws a RangeError for a fractional current", () => {
+    expect(() => damage(hp(5.5))).toThrow(RangeError);
+  });
+
+  it.each([-1, 1.5])("throws a RangeError for temporary hit points of %d", (temporary) => {
+    expect(() => damage(hp(5, temporary))).toThrow(RangeError);
+  });
+
+  it("reads a stored negative current as 0", () => {
+    expect(heal(hp(-3), clear, 20, 4).hitPoints).toEqual(hp(4));
+    expect(damage(hp(-3)).outcome).toBe("dying");
+  });
+});

@@ -17,9 +17,8 @@ import {
   type DeathSaveOutcome,
   type DeathSaves,
   damageAtZeroHitPoints,
+  REQUIRED as FATAL_FAILURES,
 } from "./death.ts";
-
-const FATAL_FAILURES = 3;
 
 type HitPoints = {
   current: number | null;
@@ -34,7 +33,7 @@ type HitPointResult = {
 
 type DamageOptions = {
   critical: boolean;
-  /** False plays the table's rule that a massive hit costs death saves rather than a life. */
+  /** False: a massive hit follows the death saves like any other. */
   instantDeath: boolean;
 };
 
