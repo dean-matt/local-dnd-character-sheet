@@ -122,15 +122,17 @@ the old id and refuses a name another row now holds.
 ## Play state
 
 `PUT /characters/{id}/state` (`packages/api/src/routes/characters.ts`) writes
-`character_state` whole. A rest calls it, through `hooks/useReplaceCharacterState.ts`, and an
-import sets it. Undo never reaches it, since its log holds definitions alone. Each control below
+`character_state` whole. A rest and a damage or heal call it, through
+`hooks/useReplaceCharacterState.ts`, and an import sets it. Undo never reaches it, since its log holds definitions alone. Each control below
 is the way back from its own change.
 
 | Decision | Control |
 |---|---|
-| Hit points, temporary hit points, death saves | Not built: #277, #274 |
+| Hit points, and the death saves damage and healing move | Damage and Heal on the Hit Points card, `components/blocks/AbilitiesSection/Vitals/HitPointChange.tsx`, each the way back from the other. Damage that kills asks first |
+| Temporary hit points | Not built: #1026 |
+| Death save marks | Not built: #1025 |
 | Spell and pact slots | Not built: #278 |
 | Class resources | Not built: #279 |
 | Conditions and exhaustion | Not built: #280 |
-| Hit dice, and a rest | Nothing undoes a rest, which lists its changes before it writes. The fields it moves get their own controls in #277, #278, #279 and #280 |
+| Hit dice, and a rest | Nothing undoes a rest, which lists its changes before it writes. Hit points take Damage and Heal; the other fields it moves get their own controls in #278, #279 and #280 |
 | Concentration, inspiration | Not stored: #123, #396 |
