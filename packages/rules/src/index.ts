@@ -27,6 +27,7 @@ export {
   proficiencyBonusBreakdown,
   proficiencyContribution,
 } from "./core.ts";
+export { heal, takeDamage } from "./damage.ts";
 export { damageAtZeroHitPoints, deathSave } from "./death.ts";
 export type { Edition } from "./edition.ts";
 export { EDITIONS } from "./edition.ts";

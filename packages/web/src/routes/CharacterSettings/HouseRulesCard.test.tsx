@@ -45,6 +45,7 @@ describe("HouseRulesCard", () => {
       "Replace a duplicate skill",
       "Replace a duplicate tool",
       "Equipping without proficiency",
+      "Massive damage",
     ]);
   });
 

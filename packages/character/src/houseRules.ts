@@ -59,6 +59,13 @@ const houseRulesObject = z
      * the equip goes through and the sheet marks what it costs.
      */
     requireEquipProficiency: z.boolean().optional(),
+    /**
+     * Massive damage never kills outright: a hit whose damage past 0 hit points equals the
+     * maximum drops the character to 0, and one taken at 0 costs death saves, as smaller hits
+     * do. Absent, either kills, as both rulesets print. `takeDamage` takes it as
+     * `instantDeath`, inverted.
+     */
+    noInstantDeath: z.boolean().optional(),
   })
   .prefault({});
 
@@ -88,4 +95,5 @@ export const PRINTED_RULE: Required<HouseRules> = {
   duplicateToolReplacement: false,
   feats: false,
   requireEquipProficiency: false,
+  noInstantDeath: false,
 };

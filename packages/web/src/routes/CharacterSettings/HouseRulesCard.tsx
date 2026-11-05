@@ -110,6 +110,20 @@ const OPTIONS: Record<
     },
     editions: ["classic", "one"],
   },
+  noInstantDeath: {
+    name: "Massive damage",
+    printed: {
+      label: "Can kill outright",
+      description:
+        "If damage drops you to 0 hit points and the damage left over equals or exceeds your hit point maximum, you die. So does damage that large taken at 0.",
+    },
+    house: {
+      label: "Never kills outright",
+      description:
+        "Massive damage takes you to 0 hit points or costs death saves, like any other hit.",
+    },
+    editions: ["classic", "one"],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];

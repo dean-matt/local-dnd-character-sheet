@@ -1,3 +1,4 @@
+import { takeDamage } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { characterDefinitionSchema, derivedSchema, derivedValue, houseRule } from "./index.ts";
@@ -17,6 +18,20 @@ describe("houseRules", () => {
       houseRules: { encumbrance: undefined },
     });
     expect(houseRule(parsed, "encumbrance")).toBe(false);
+  });
+
+  it("kills on massive damage unless the table set noInstantDeath", () => {
+    const massive = (houseRules: object) => {
+      const parsed = characterDefinitionSchema.parse({ ...definition, houseRules });
+      const instantDeath = !houseRule(parsed, "noInstantDeath");
+      const saves = { successes: 0, failures: 0 };
+      return takeDamage({ current: 0, temporary: 0 }, saves, 10, 10, {
+        critical: false,
+        instantDeath,
+      }).outcome;
+    };
+    expect(massive({})).toBe("dead");
+    expect(massive({ noInstantDeath: true })).toBe("dying");
   });
 
   it("reads back the option the table set", () => {
