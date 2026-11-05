@@ -68,6 +68,9 @@ function recovered(pools: readonly Pool[], { edition, everyHitDie, picked }: Res
     if (!Number.isInteger(pool.remaining) || pool.remaining < 0 || pool.remaining > pool.total) {
       throw new RangeError(`A d${pool.die} pool has ${pool.remaining} of ${pool.total} remaining`);
     }
+    if (spent.has(pool.die)) {
+      throw new RangeError(`Two pools hold d${pool.die} hit dice`);
+    }
     spent.set(pool.die, (spent.get(pool.die) ?? 0) + pool.total - pool.remaining);
   }
   const allowed = hitDiceRecovered(
@@ -106,7 +109,8 @@ function recovered(pools: readonly Pool[], { edition, everyHitDie, picked }: Res
  * and returns hit dice by `hitDiceRecovered`.
  *
  * Throws a RangeError, returning nothing, when `picked` is missing where it is needed, picks
- * more dice than return, or names a size more times than dice of it were spent.
+ * more dice than return, or names a size more times than dice of it were spent, and when a
+ * pool's remaining dice fall outside 0 to its total or two pools share a die size.
  */
 export function rest<S extends RestState>(state: S, options: RestOptions): S {
   const resources = state.resources.map((resource) =>

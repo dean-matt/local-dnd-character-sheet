@@ -125,11 +125,30 @@ describe("rest", () => {
       expect(() => remaining([8])).toThrow(/More d8 hit dice/);
     });
 
+    it("returns no dice for an empty pick", () => {
+      expect(remaining([])).toEqual([0, 1]);
+    });
+
     it("returns every spent die under the house rule, with no picks", () => {
       expect(
         rest(fiveDice(), { ...classic, everyHitDie: true }).hitDice.map((pool) => pool.remaining),
       ).toEqual([3, 2]);
     });
+  });
+
+  it.each([
+    [{ die: 8 as const, total: 1, remaining: 2 }],
+    [{ die: 8 as const, total: 2, remaining: -1 }],
+    [{ die: 8 as const, total: 2, remaining: 0.5 }],
+  ])("rejects a pool with %o", (pool) => {
+    expect(() => rest({ ...state(), hitDice: [pool] }, long)).toThrow(/A d8 pool has/);
+  });
+
+  it("rejects two pools of one die size", () => {
+    const pool = { die: 8 as const, total: 2, remaining: 0 };
+    expect(() => rest({ ...state(), hitDice: [pool, pool] }, classic)).toThrow(
+      /Two pools hold d8 hit dice/,
+    );
   });
 
   it.each([short, long])("passes conditions and death saves through a $length rest", (options) => {
