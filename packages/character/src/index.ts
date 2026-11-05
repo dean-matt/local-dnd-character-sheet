@@ -97,7 +97,12 @@ export {
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
 export { allocatePicks, type FeatPick, grantedSkillLevels, heldSkillLevel } from "./featGrants.ts";
-export { damagedState, healedState } from "./hitPointChange.ts";
+export {
+  damagedState,
+  deathSaveRolledState,
+  deathSaveStatus,
+  healedState,
+} from "./hitPointChange.ts";
 export { type HouseRule, withTableHouseRules } from "./houseRules.ts";
 export {
   IMPROVEMENT_FEAT,

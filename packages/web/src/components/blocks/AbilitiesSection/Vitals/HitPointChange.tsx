@@ -3,6 +3,7 @@ import {
   type CharacterRecord,
   type CharacterState,
   damagedState,
+  deathSaveStatus,
   derivedValue,
   healedState,
 } from "@dnd/character";
@@ -14,6 +15,8 @@ import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
 
 type Changed = ReturnType<typeof healedState>;
+
+const STATUS = { dying: "Dying", stable: "Stable", dead: "Dead" } as const;
 
 const CRITICAL =
   "rounded-pill border border-border bg-surface px-2.5 font-semibold text-muted text-row hover:bg-subtle aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white aria-pressed:hover:bg-accent-hover forced-colors:aria-pressed:bg-[Highlight] forced-colors:aria-pressed:text-[HighlightText]";
@@ -54,9 +57,9 @@ export function HitPointChange({
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
   const maximum = derivedValue(derived.hitPointMaximum);
-  const atZero = (state.hitPoints.current ?? maximum) <= 0;
-  // Three failures is the most the state schema stores, and it is death.
-  const dying = atZero && state.deathSaves.failures < 3;
+  const status = deathSaveStatus(derived, state);
+  // Damage ends stability and restarts the saves, so a critical counts while stable too.
+  const atRisk = status === "dying" || status === "stable";
 
   async function write({ state: after, outcome }: Changed) {
     try {
@@ -89,7 +92,7 @@ export function HitPointChange({
       derived,
       state,
       parsed.amount,
-      dying && critical,
+      atRisk && critical,
     );
     // Damage to the dead changes nothing, so there is nothing to confirm.
     if (
@@ -140,20 +143,28 @@ export function HitPointChange({
           <span aria-hidden="true">+ </span>Heal
         </button>
         {/* Last in the row, so the field and buttons never move under a pointer when it comes or goes. */}
-        {dying && (
+        {status && (
           <div className="ml-auto flex flex-wrap items-center gap-1.5 text-muted text-row">
-            <span className="font-semibold text-error">Dying</span>
-            <span aria-hidden="true">·</span>
-            <span aria-hidden="true">next hit is</span>
-            <button
-              type="button"
-              aria-label="Next hit is critical"
-              aria-pressed={critical}
-              onClick={() => setCritical(!critical)}
-              className={CRITICAL}
+            <span
+              className={`font-semibold ${status === "stable" ? "text-positive" : "text-error"}`}
             >
-              critical
-            </button>
+              {STATUS[status]}
+            </span>
+            {atRisk && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span aria-hidden="true">next hit is</span>
+                <button
+                  type="button"
+                  aria-label="Next hit is critical"
+                  aria-pressed={critical}
+                  onClick={() => setCritical(!critical)}
+                  className={CRITICAL}
+                >
+                  critical
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -199,7 +210,10 @@ export function HitPointChange({
               </div>
             }
           >
-            <p>{character.name} dies, and nothing on the sheet brings a dead character back.</p>
+            <p>
+              {character.name} dies. Clearing a death save failure brings them back, still at 0 hit
+              points.
+            </p>
           </ModalEntry>
         </Modal>
       )}
