@@ -4,6 +4,8 @@ export const characterKey = (id: string) => [...charactersKey, id] as const;
 export const characterInventoryKey = (id: string) => [...characterKey(id), "inventory"] as const;
 export const characterSpellsKey = (id: string) => [...characterKey(id), "spells"] as const;
 export const characterStateKey = (id: string) => [...characterKey(id), "state"] as const;
+/** Tags every write to a character's state, so a control can see one another control started. */
+export const characterStateWriteKey = (id: string) => [...characterKey(id), "state-write"] as const;
 export const characterPagesKey = (id: string) => [...characterKey(id), "pages"] as const;
 /** Tags every write to a character's definition, an undo among them, so a control can see one in flight. */
 export const characterDefinitionWriteKey = (id: string) =>

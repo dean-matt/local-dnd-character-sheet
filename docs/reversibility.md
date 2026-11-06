@@ -122,15 +122,15 @@ the old id and refuses a name another row now holds.
 ## Play state
 
 `PUT /characters/{id}/state` (`packages/api/src/routes/characters.ts`) writes
-`character_state` whole. A rest, Damage and Heal call it, through
+`character_state` whole. A rest, Damage, Heal and the death saves call it, through
 `hooks/useReplaceCharacterState.ts`, and an import sets it. Undo never reaches it, since its log
 holds definitions alone. Each control below is the way back from its own change.
 
 | Decision | Control |
 |---|---|
-| Hit points, and the death saves they move | Damage and Heal on the Hit Points card, `components/blocks/AbilitiesSection/Vitals/HitPointChange.tsx`. Heal restores current hit points that Damage took, but not the temporary hit points it spent, and healing from 0 clears both death-save counts rather than restoring them. Nothing brings back a dead character, so Damage that kills asks first |
+| Hit points, and the death saves they move | Damage and Heal on the Hit Points card, `components/blocks/AbilitiesSection/Vitals/HitPointChange.tsx`. Heal restores current hit points that Damage took, but not the temporary hit points it spent, and healing from 0 clears both death-save counts rather than restoring them. Damage that kills asks first, because clearing a death save failure brings the character back still at 0 hit points |
 | Temporary hit points | Not built: #1026 |
-| Death save marks | Not built: #1025 |
+| Death save marks, and death | The marks and Roll on the Death Saves card, `components/blocks/AbilitiesSection/Vitals/DeathSaves.tsx`. Each mark is set or cleared by hand at any hit points, so a save recorded wrongly, or the second failure a critical hit at 0 costs, is marked there, and clearing a failure returns a dead character to dying |
 | Spell and pact slots | Not built: #278 |
 | Class resources | Not built: #279 |
 | Conditions and exhaustion | Not built: #280 |

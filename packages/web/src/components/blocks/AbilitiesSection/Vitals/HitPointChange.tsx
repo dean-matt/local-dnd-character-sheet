@@ -15,9 +15,6 @@ import { ModalEntry } from "../../../ModalEntry.tsx";
 
 type Changed = ReturnType<typeof healedState>;
 
-const CRITICAL =
-  "rounded-pill border border-border bg-surface px-2.5 font-semibold text-muted text-row hover:bg-subtle aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white aria-pressed:hover:bg-accent-hover forced-colors:aria-pressed:bg-[Highlight] forced-colors:aria-pressed:text-[HighlightText]";
-
 const BUTTON =
   "h-8 rounded-control border bg-surface px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
@@ -47,34 +44,28 @@ export function HitPointChange({
 }) {
   const replace = useReplaceCharacterState(character.id);
   const [typed, setTyped] = useState("");
-  const [critical, setCritical] = useState(false);
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ amount: number; changed: Changed }>();
   const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
   const maximum = derivedValue(derived.hitPointMaximum);
-  const atZero = (state.hitPoints.current ?? maximum) <= 0;
-  // Three failures is the most the state schema stores, and it is death.
-  const dying = atZero && state.deathSaves.failures < 3;
 
-  async function write({ state: after, outcome }: Changed) {
+  async function write({ state: after }: Changed) {
     try {
       await replace.mutateAsync(after);
     } catch {
       return;
     }
     setTyped("");
-    setCritical(false);
-    const current = after.hitPoints.current ?? maximum;
     setAnnounced(({ count }) => ({
-      text: `${current} hit points${current < 1 && outcome !== "conscious" ? `, ${outcome}` : ""}.`,
+      text: `${after.hitPoints.current ?? maximum} hit points.`,
       count: count + 1,
     }));
   }
 
   function apply(kind: "damage" | "heal") {
-    if (replace.isPending) return;
+    if (replace.writing) return;
     const parsed = parseAmount(typed);
     if ("error" in parsed) {
       setInvalid(parsed.error);
@@ -84,13 +75,7 @@ export function HitPointChange({
       write(healedState(derived, state, parsed.amount));
       return;
     }
-    const changed = damagedState(
-      character.definition,
-      derived,
-      state,
-      parsed.amount,
-      dying && critical,
-    );
+    const changed = damagedState(character.definition, derived, state, parsed.amount);
     // Damage to the dead changes nothing, so there is nothing to confirm.
     if (
       changed.outcome === "dead" &&
@@ -125,7 +110,7 @@ export function HitPointChange({
         <button
           ref={damageButton}
           type="button"
-          aria-disabled={replace.isPending}
+          aria-disabled={replace.writing}
           onClick={() => apply("damage")}
           className={`${BUTTON} border-accent text-accent-text`}
         >
@@ -133,29 +118,12 @@ export function HitPointChange({
         </button>
         <button
           type="button"
-          aria-disabled={replace.isPending}
+          aria-disabled={replace.writing}
           onClick={() => apply("heal")}
           className={`${BUTTON} border-positive text-positive`}
         >
           <span aria-hidden="true">+ </span>Heal
         </button>
-        {/* Last in the row, so the field and buttons never move under a pointer when it comes or goes. */}
-        {dying && (
-          <div className="ml-auto flex flex-wrap items-center gap-1.5 text-muted text-row">
-            <span className="font-semibold text-error">Dying</span>
-            <span aria-hidden="true">·</span>
-            <span aria-hidden="true">next hit is</span>
-            <button
-              type="button"
-              aria-label="Next hit is critical"
-              aria-pressed={critical}
-              onClick={() => setCritical(!critical)}
-              className={CRITICAL}
-            >
-              critical
-            </button>
-          </div>
-        )}
       </div>
       <div ref={setMessages} className="flex flex-col">
         {replace.error && (
@@ -171,24 +139,24 @@ export function HitPointChange({
         <span key={announced.count}>{announced.text}</span>
       </span>
       {confirming && (
-        <Modal onClose={() => !replace.isPending && setConfirming(undefined)} size="narrow">
+        <Modal onClose={() => !replace.writing && setConfirming(undefined)} size="narrow">
           <ModalEntry
             title={`${confirming.amount} damage kills ${character.name}`}
             footer={
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  aria-disabled={replace.isPending}
-                  onClick={() => !replace.isPending && setConfirming(undefined)}
+                  aria-disabled={replace.writing}
+                  onClick={() => !replace.writing && setConfirming(undefined)}
                   className="min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
-                  aria-disabled={replace.isPending}
+                  aria-disabled={replace.writing}
                   onClick={async () => {
-                    if (replace.isPending) return;
+                    if (replace.writing) return;
                     await write(confirming.changed);
                     setConfirming(undefined);
                   }}
@@ -199,7 +167,10 @@ export function HitPointChange({
               </div>
             }
           >
-            <p>{character.name} dies, and nothing on the sheet brings a dead character back.</p>
+            <p>
+              {character.name} dies. Clearing a death save failure brings them back, still at 0 hit
+              points.
+            </p>
           </ModalEntry>
         </Modal>
       )}

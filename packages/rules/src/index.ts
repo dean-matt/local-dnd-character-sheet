@@ -28,7 +28,7 @@ export {
   proficiencyContribution,
 } from "./core.ts";
 export { heal, takeDamage } from "./damage.ts";
-export { damageAtZeroHitPoints, deathSave } from "./death.ts";
+export { damageAtZeroHitPoints, deathSave, REQUIRED as REQUIRED_DEATH_SAVES } from "./death.ts";
 export type { Edition } from "./edition.ts";
 export { EDITIONS } from "./edition.ts";
 export { exhaustionEffects } from "./exhaustion.ts";

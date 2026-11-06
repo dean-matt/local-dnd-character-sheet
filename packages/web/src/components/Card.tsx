@@ -1,20 +1,25 @@
 import { type ReactNode, useId } from "react";
 
-/** A titled panel on the sheet, labeled by its own heading. `aside` sits beside the title; `action` sits at the far end. */
+/** A titled panel on the sheet, labeled by its own heading. `aside` sits beside the title; `action` sits at the far end. `className` adds to the panel's own classes. */
 export function Card({
   title,
   aside,
   action,
   children,
+  className = "",
 }: {
   title: string;
   aside?: ReactNode;
   action?: ReactNode;
   children: ReactNode;
+  className?: string;
 }) {
   const id = useId();
   return (
-    <section aria-labelledby={id} className="rounded-card border border-border bg-surface p-2.5">
+    <section
+      aria-labelledby={id}
+      className={`rounded-card border border-border bg-surface p-2.5 ${className}`}
+    >
       <div className="flex items-center gap-1.5 text-label">
         <h3 id={id} className="font-semibold text-muted uppercase tracking-label">
           {title}
