@@ -6,12 +6,12 @@ import {
   overrideKey,
   sheetState,
 } from "@dnd/character";
-import { useState } from "react";
 import { ErrorState } from "../../../../ErrorState.tsx";
+import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
-import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { levelLabel, ORDINAL } from "../../../../lib/spellLevel.ts";
+import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { SpellSlotRow } from "./SpellSlotRow.tsx";
 
@@ -43,8 +43,7 @@ export function SpellSlots({
 }) {
   const { spellSlots, pactSlots } = derived;
   const state = useCharacterState(character.id);
-  const replace = useReplaceCharacterState(character.id);
-  const [announced, setAnnounced] = useState({ text: "", count: 0 });
+  const replace = useAnnouncedStateWrite(character.id);
   if (spellSlots.length === 0 && !pactSlots) return null;
   if (state.isPending) return <LoadingState label="Loading spell slots…" />;
   if (state.isError) return <ErrorState error={state.error} />;
@@ -54,17 +53,11 @@ export function SpellSlots({
   const pactSlot = sheet.pactSlots;
   const pactSpoken = pactSlots && `Pact Magic, ${levelLabel(pactSlots.level)}`;
 
-  async function expend(slot: Slot, pact: boolean, spoken: string, expended: number) {
-    if (replace.writing) return;
-    try {
-      await replace.mutateAsync(expendedState(stored, { ...slot, expended }, pact));
-    } catch {
-      return;
-    }
-    setAnnounced(({ count }) => ({
-      text: `${spoken} spell slots: ${slot.total - expended} of ${slot.total} left.`,
-      count: count + 1,
-    }));
+  function expend(slot: Slot, pact: boolean, spoken: string, expended: number) {
+    replace.write(
+      expendedState(stored, { ...slot, expended }, pact),
+      `${spoken} spell slots: ${slot.total - expended} of ${slot.total} left.`,
+    );
   }
 
   return (
@@ -104,11 +97,7 @@ export function SpellSlots({
           Spell slots were not changed: {replace.error.message}
         </p>
       )}
-      {/* Mounted while empty: a live region added with its text is often not announced.
-          The keyed child replaces its node on every change, so a repeated text is announced again. */}
-      <span role="status" className="sr-only">
-        <span key={announced.count}>{announced.text}</span>
-      </span>
+      <Announcer announced={replace.announced} />
     </Card>
   );
 }

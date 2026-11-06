@@ -8,8 +8,9 @@ import {
   healedState,
 } from "@dnd/character";
 import { useRef, useState } from "react";
-import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
+import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
+import { Announcer } from "../../../Announcer.tsx";
 import { InputField } from "../../../InputField.tsx";
 import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
@@ -51,12 +52,11 @@ export function HitPointChange({
   derived: CharacterDerived;
   state: CharacterState;
 }) {
-  const replace = useReplaceCharacterState(character.id);
+  const replace = useAnnouncedStateWrite(character.id);
   const [typed, setTyped] = useState("");
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ amount: number; changed: Changed }>();
   const [notice, setNotice] = useState<{ text: string; instead?: number; read: string }>();
-  const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
   const grantButton = useRef<HTMLButtonElement>(null);
@@ -66,19 +66,10 @@ export function HitPointChange({
   const read = `${temporary} ${status}`;
   const shown = notice?.read === read ? notice : undefined;
 
-  function announce(text: string) {
-    setAnnounced(({ count }) => ({ text, count: count + 1 }));
-  }
-
   async function write(after: CharacterState, text: string) {
-    try {
-      await replace.mutateAsync(after);
-    } catch {
-      return false;
-    }
+    if (!(await replace.write(after, text))) return false;
     setTyped("");
     setNotice(undefined);
-    announce(text);
     return true;
   }
 
@@ -98,7 +89,7 @@ export function HitPointChange({
 
   function say(text: string, instead?: number) {
     setNotice({ text, instead, read });
-    announce(text);
+    replace.announce(text);
   }
 
   function grant(amount: number) {
@@ -222,12 +213,7 @@ export function HitPointChange({
           </p>
         )}
       </div>
-      {/* Mounted while empty: a live region added with its text is often not announced.
-          The keyed child replaces its node on every change, so a result that repeats the
-          last one's text is announced again. */}
-      <span role="status" className="sr-only">
-        <span key={announced.count}>{announced.text}</span>
-      </span>
+      <Announcer announced={replace.announced} />
       {confirming && (
         <Modal onClose={() => !replace.writing && setConfirming(undefined)} size="narrow">
           <ModalEntry
