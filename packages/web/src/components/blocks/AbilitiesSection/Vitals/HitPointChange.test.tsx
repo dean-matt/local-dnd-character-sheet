@@ -185,6 +185,37 @@ describe("temporary hit points", () => {
     expect(button("Grant temp")).toHaveFocus();
   });
 
+  it("keeps as many as are held, with nothing to take instead", async () => {
+    const { writes } = renderVitals({ hitPoints: { current: 12, temporary: 8 } });
+    await grant("8");
+
+    expect(
+      card("Hit Points").getByText(
+        "Kept 8 temporary hit points: they do not stack, and 8 is no more.",
+        { selector: "p" },
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /instead$/ })).not.toBeInTheDocument();
+    expect(writes).toEqual([]);
+  });
+
+  it("withdraws the offer when the character dies before it is taken", async () => {
+    const { writes } = renderVitals({
+      hitPoints: { current: 0, temporary: 8 },
+      deathSaves: { successes: 0, failures: 2 },
+    });
+    await grant("5");
+    expect(button("Take 5 instead")).toBeInTheDocument();
+
+    fireEvent.click(card("Death Saves").getByRole("button", { name: "Failure 3" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Take 5 instead" })).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/^Kept 8/, { selector: "p" })).not.toBeInTheDocument();
+    expect(writes[0]?.hitPoints).toEqual({ current: 0, temporary: 8 });
+  });
+
   it("clears them to 0, and offers Clear temp only while some are held", async () => {
     const { writes } = renderVitals({
       hitPoints: { current: 0, temporary: 4 },

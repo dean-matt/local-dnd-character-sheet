@@ -19,7 +19,7 @@ type Changed = ReturnType<typeof healedState>;
 const BUTTON =
   "h-8 rounded-control border bg-surface px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
-/** Why `typed` is no amount of damage or healing, or the whole number it is. */
+/** Why `typed` is no amount of hit points, or the whole number it is. */
 function parseAmount(typed: string): { amount: number } | { error: string } {
   if (typed.trim() === "") return { error: "Enter an amount." };
   const amount = Number(typed);
@@ -37,7 +37,8 @@ function withTemporary(state: CharacterState, temporary: number): CharacterState
  * returns, and Grant temp and Clear temp, which write the temporary hit points alone. Each is
  * one state write. Damage that leaves the character dead asks first. Temporary hit points do
  * not stack, so a grant no larger than those held keeps them and offers to take the grant
- * instead; a grant to the dead writes nothing. A failed write
+ * instead; a grant to the dead writes nothing. Either notice lasts only while the temporary hit
+ * points and the death-save status it read stand. A failed write
  * keeps the amount and names the error, and the card goes on showing what the server holds,
  * since the cache takes only a write that lands.
  */
@@ -54,13 +55,16 @@ export function HitPointChange({
   const [typed, setTyped] = useState("");
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ amount: number; changed: Changed }>();
-  const [notice, setNotice] = useState<{ text: string; instead?: number }>();
+  const [notice, setNotice] = useState<{ text: string; instead?: number; read: string }>();
   const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
   const grantButton = useRef<HTMLButtonElement>(null);
   const maximum = derivedValue(derived.hitPointMaximum);
   const { temporary } = state.hitPoints;
+  const status = deathSaveStatus(derived, state);
+  const read = `${temporary} ${status}`;
+  const shown = notice?.read === read ? notice : undefined;
 
   function announce(text: string) {
     setAnnounced(({ count }) => ({ text, count: count + 1 }));
@@ -93,19 +97,19 @@ export function HitPointChange({
   }
 
   function say(text: string, instead?: number) {
-    setNotice({ text, instead });
+    setNotice({ text, instead, read });
     announce(text);
   }
 
   function grant(amount: number) {
-    if (deathSaveStatus(derived, state) === "dead") {
+    if (status === "dead") {
       say(`${character.name} is dead, so temporary hit points were not granted.`);
     } else if (amount > temporary) {
       writeTemporary(amount);
     } else {
       say(
         `Kept ${temporary} temporary hit points: they do not stack, and ${amount} is no more.`,
-        amount,
+        amount < temporary ? amount : undefined,
       );
     }
   }
@@ -202,17 +206,17 @@ export function HitPointChange({
             Hit points were not changed: {replace.error.message}
           </p>
         )}
-        {notice && (
+        {shown && (
           <p className="mt-1 flex flex-wrap items-center gap-2 text-secondary text-row">
-            {notice.text}
-            {notice.instead !== undefined && (
+            {shown.text}
+            {shown.instead !== undefined && (
               <button
                 type="button"
                 aria-disabled={replace.writing}
-                onClick={() => notice.instead !== undefined && writeTemporaryFrom(notice.instead)}
+                onClick={() => shown.instead !== undefined && writeTemporaryFrom(shown.instead)}
                 className={`${BUTTON} border-border text-ink`}
               >
-                Take {notice.instead} instead
+                Take {shown.instead} instead
               </button>
             )}
           </p>
