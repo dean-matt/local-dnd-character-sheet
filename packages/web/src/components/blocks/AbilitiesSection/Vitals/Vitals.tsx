@@ -1,5 +1,5 @@
 /**
- * The Hit Points and Status Effects cards. Current and temporary hit points,
+ * The Hit Points, Death Saves and Status Effects cards. Current and temporary hit points,
  * hit dice spent and conditions come from the character's state; the maximum and each
  * die's total come from the derived block, and a null current reads as that maximum.
  */
@@ -7,6 +7,7 @@ import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
+import { DeathSaves } from "./DeathSaves.tsx";
 import { HitPoints } from "./HitPoints.tsx";
 import { StatusEffects } from "./StatusEffects.tsx";
 
@@ -24,6 +25,7 @@ export function Vitals({
   return (
     <div className="grid gap-3 md:grid-cols-2">
       <HitPoints character={character} derived={derived} state={state.data.state} />
+      <DeathSaves character={character} derived={derived} state={state.data.state} />
       <StatusEffects state={state.data.state} />
     </div>
   );

@@ -11,15 +11,14 @@ const atZero = (successes: number, failures: number): Partial<CharacterState> =>
   deathSaves: { successes, failures },
 });
 
-const card = () => within(screen.getByRole("region", { name: "Hit Points" }));
+const card = () => within(screen.getByRole("region", { name: "Death Saves" }));
 const marks = (column: "successes" | "failures") =>
   within(card().getByRole("group", { name: `Death save ${column}` }))
     .getAllByRole("button")
     .map((mark) => mark.getAttribute("aria-pressed"));
 const mark = (name: string) => card().getByRole("button", { name });
 const rollButton = () => card().queryByRole("button", { name: "Roll death save" });
-const announced = () =>
-  screen.getAllByRole("status").filter((region) => region.className === "sr-only")[1];
+const announced = () => card().getByRole("status");
 
 async function roll(value: number) {
   d20.total = value;
@@ -40,11 +39,25 @@ describe("DeathSaves", () => {
     expect(marks("failures")).toEqual(["true", "false", "false"]);
   });
 
-  it("shows no marks above 0 hit points", async () => {
-    renderVitals({ hitPoints: { current: 5, temporary: 0 } });
+  it("shows the marks with no status and no roll above 0 hit points", async () => {
+    renderVitals({
+      hitPoints: { current: 5, temporary: 0 },
+      deathSaves: { successes: 1, failures: 0 },
+    });
     await screen.findByRole("spinbutton");
 
-    expect(card().queryByRole("group")).not.toBeInTheDocument();
+    expect(marks("successes")).toEqual(["true", "false", "false"]);
+    expect(card().queryByText(/Dying|Stable|Dead/)).not.toBeInTheDocument();
+    expect(rollButton()).not.toBeInTheDocument();
+  });
+
+  it("sets a mark by hand above 0 hit points", async () => {
+    const { writes } = renderVitals({ hitPoints: { current: 5, temporary: 0 } });
+    await screen.findByRole("spinbutton");
+    fireEvent.click(mark("Failure 1"));
+
+    await waitFor(() => expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 1 }));
+    await waitFor(() => expect(marks("failures")).toEqual(["true", "false", "false"]));
   });
 
   it.each([
@@ -92,7 +105,8 @@ describe("DeathSaves", () => {
     await waitFor(() =>
       expect(announced()).toHaveTextContent("Rolled 20: a natural 20. Conscious at 1 hit point."),
     );
-    expect(card().queryByRole("group")).not.toBeInTheDocument();
+    expect(card().queryByText("Dying")).not.toBeInTheDocument();
+    expect(rollButton()).not.toBeInTheDocument();
   });
 
   it.each([
@@ -160,7 +174,8 @@ describe("DeathSaves", () => {
     fireEvent.click(screen.getByRole("button", { name: "Heal" }));
 
     await waitFor(() => expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 0 }));
-    await waitFor(() => expect(card().queryByRole("group")).not.toBeInTheDocument());
+    await waitFor(() => expect(marks("successes")).toEqual(["false", "false", "false"]));
+    expect(card().queryByText("Dying")).not.toBeInTheDocument();
   });
 
   it("keeps the stored marks and names the error when a write fails", async () => {

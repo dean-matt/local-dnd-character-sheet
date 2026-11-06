@@ -8,6 +8,7 @@ import {
 import { rollDice } from "@dnd/dice";
 import { useState } from "react";
 import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
+import { Card } from "../../../Card.tsx";
 
 type Column = keyof CharacterState["deathSaves"];
 
@@ -36,6 +37,13 @@ const MARK =
 const BUTTON =
   "h-8 rounded-control border border-border bg-surface px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
+const STATUS = { dying: "Dying", stable: "Stable", dead: "Dead" } as const;
+
+/** What an announcement reads from: the status and both counts. */
+function key(status: string | undefined, { deathSaves }: CharacterState) {
+  return `${status}:${deathSaves.successes}:${deathSaves.failures}`;
+}
+
 function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`;
 }
@@ -53,10 +61,11 @@ function verdict(roll: number, before: CharacterState, { state: after, outcome }
 }
 
 /**
- * The death save marks of a character at 0 hit points, set or cleared by hand, and a Roll
- * button while dying. Each change is one state write, so a failed write leaves the marks as
- * the server holds them and names the error. Mounted at any hit points, so the live region
- * outlasts the 20 that takes the marks away.
+ * The Death Saves card: three success and three failure marks filled to the stored counts,
+ * each set or cleared by hand at any hit points, and a Roll button while dying. At 0 hit
+ * points the header reads Dying, Stable or Dead. Each change is one state write, so a failed
+ * write leaves the marks as the server holds them and names the error. A change another
+ * control writes, such as damage at 0, is announced here too.
  */
 export function DeathSaves({
   character,
@@ -74,6 +83,20 @@ export function DeathSaves({
   // A roll speaks for the dying it was rolled in; leaving that ends it.
   if (status !== "dying" && lastRoll !== undefined) setLastRoll(undefined);
 
+  // This card's own writes announce themselves, so `own` holds the key of the one in flight.
+  const seen = key(status, state);
+  const [heard, setHeard] = useState(seen);
+  const [own, setOwn] = useState<string>();
+  if (heard !== seen) {
+    setHeard(seen);
+    if (seen === own) setOwn(undefined);
+    else if (status) announce(`${summary(state)}.`);
+  }
+
+  function announce(text: string) {
+    setAnnounced(({ count }) => ({ text, count: count + 1 }));
+  }
+
   function summary(after: CharacterState) {
     const now = deathSaveStatus(derived, after);
     if (!now) return "Conscious at 1 hit point";
@@ -82,12 +105,14 @@ export function DeathSaves({
   }
 
   async function write(after: CharacterState, text: string) {
+    setOwn(key(deathSaveStatus(derived, after), after));
     try {
       await replace.mutateAsync(after);
     } catch {
+      setOwn(undefined);
       return false;
     }
-    setAnnounced(({ count }) => ({ text, count: count + 1 }));
+    announce(text);
     return true;
   }
 
@@ -109,16 +134,25 @@ export function DeathSaves({
     write(after, `${summary(after)}.`);
   }
 
-  // A fragment, so the card's gap opens only around what shows.
   return (
-    <>
-      {status && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <Card
+      title="Death Saves"
+      aside={
+        status && (
+          <span
+            className={`font-semibold text-row ${status === "stable" ? "text-positive" : "text-error"}`}
+          >
+            {STATUS[status]}
+          </span>
+        )
+      }
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex flex-col gap-1.5">
           {COLUMNS.map(({ column, label, mark: name, className }) => (
-            // The button's height, so the marks hold still when it comes or goes.
-            <fieldset key={column} className="flex h-8 items-center gap-1">
+            <fieldset key={column} className="flex items-center gap-1">
               <legend className="sr-only">Death save {column}</legend>
-              <span aria-hidden="true" className="text-label text-muted">
+              <span aria-hidden="true" className="w-16 text-label text-muted">
                 {label}
               </span>
               {MARKS.map((index) => (
@@ -134,32 +168,30 @@ export function DeathSaves({
               ))}
             </fieldset>
           ))}
-          {status === "dying" && (
-            <div className="ml-auto flex items-center gap-2">
-              {lastRoll !== undefined && (
-                <span className="text-muted text-row">Rolled {lastRoll}</span>
-              )}
-              <button
-                type="button"
-                aria-disabled={replace.writing}
-                onClick={roll}
-                className={BUTTON}
-              >
-                Roll death save
-              </button>
-            </div>
-          )}
         </div>
-      )}
+        {/* No taller than the marks, and after them, so it never moves them when it comes or goes. */}
+        {status === "dying" && (
+          <div className="flex flex-col items-end gap-0.5">
+            <button type="button" aria-disabled={replace.writing} onClick={roll} className={BUTTON}>
+              Roll death save
+            </button>
+            {lastRoll !== undefined && (
+              <span className="text-muted text-row">Rolled {lastRoll}</span>
+            )}
+          </div>
+        )}
+      </div>
       {replace.error && (
-        <p role="alert" className="text-error text-row">
+        <p role="alert" className="mt-1 text-error text-row">
           Death saves were not changed: {replace.error.message}
         </p>
       )}
-      {/* Mounted while empty, and keyed, as the hit point change's region is. */}
+      {/* Mounted while empty: a live region added with its text is often not announced.
+          The keyed child replaces its node on every change, so a result that repeats the
+          last one's text is announced again. */}
       <span role="status" className="sr-only">
         <span key={announced.count}>{announced.text}</span>
       </span>
-    </>
+    </Card>
   );
 }

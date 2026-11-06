@@ -3,7 +3,6 @@ import {
   type CharacterRecord,
   type CharacterState,
   damagedState,
-  deathSaveStatus,
   derivedValue,
   healedState,
 } from "@dnd/character";
@@ -15,11 +14,6 @@ import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
 
 type Changed = ReturnType<typeof healedState>;
-
-const STATUS = { dying: "Dying", stable: "Stable", dead: "Dead" } as const;
-
-const CRITICAL =
-  "rounded-pill border border-border bg-surface px-2.5 font-semibold text-muted text-row hover:bg-subtle aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-white aria-pressed:hover:bg-accent-hover forced-colors:aria-pressed:bg-[Highlight] forced-colors:aria-pressed:text-[HighlightText]";
 
 const BUTTON =
   "h-8 rounded-control border bg-surface px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
@@ -50,16 +44,12 @@ export function HitPointChange({
 }) {
   const replace = useReplaceCharacterState(character.id);
   const [typed, setTyped] = useState("");
-  const [critical, setCritical] = useState(false);
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ amount: number; changed: Changed }>();
   const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
   const maximum = derivedValue(derived.hitPointMaximum);
-  const status = deathSaveStatus(derived, state);
-  // Damage ends stability and restarts the saves, so a critical counts while stable too.
-  const atRisk = status === "dying" || status === "stable";
 
   async function write({ state: after }: Changed) {
     try {
@@ -68,11 +58,8 @@ export function HitPointChange({
       return;
     }
     setTyped("");
-    setCritical(false);
-    // From the stored counts, as the card's label is: the outcome reads a stable character as dying.
-    const now = deathSaveStatus(derived, after);
     setAnnounced(({ count }) => ({
-      text: `${after.hitPoints.current ?? maximum} hit points${now ? `, ${now}` : ""}.`,
+      text: `${after.hitPoints.current ?? maximum} hit points.`,
       count: count + 1,
     }));
   }
@@ -88,13 +75,7 @@ export function HitPointChange({
       write(healedState(derived, state, parsed.amount));
       return;
     }
-    const changed = damagedState(
-      character.definition,
-      derived,
-      state,
-      parsed.amount,
-      atRisk && critical,
-    );
+    const changed = damagedState(character.definition, derived, state, parsed.amount);
     // Damage to the dead changes nothing, so there is nothing to confirm.
     if (
       changed.outcome === "dead" &&
@@ -143,31 +124,6 @@ export function HitPointChange({
         >
           <span aria-hidden="true">+ </span>Heal
         </button>
-        {/* Last in the row, so the field and buttons never move under a pointer when it comes or goes. */}
-        {status && (
-          <div className="ml-auto flex flex-wrap items-center gap-1.5 text-muted text-row">
-            <span
-              className={`font-semibold ${status === "stable" ? "text-positive" : "text-error"}`}
-            >
-              {STATUS[status]}
-            </span>
-            {atRisk && (
-              <>
-                <span aria-hidden="true">·</span>
-                <span aria-hidden="true">next hit is</span>
-                <button
-                  type="button"
-                  aria-label="Next hit is critical"
-                  aria-pressed={critical}
-                  onClick={() => setCritical(!critical)}
-                  className={CRITICAL}
-                >
-                  critical
-                </button>
-              </>
-            )}
-          </div>
-        )}
       </div>
       <div ref={setMessages} className="flex flex-col">
         {replace.error && (

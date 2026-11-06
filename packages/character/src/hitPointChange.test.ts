@@ -16,15 +16,15 @@ const state = (current: number | null) => ({
 
 describe("damagedState", () => {
   it("kills outright on massive damage past the maximum the sheet shows", () => {
-    expect(damagedState({ houseRules: {} }, sheet, state(5), 34, false).outcome).toBe("dying");
-    const { state: after, outcome } = damagedState({ houseRules: {} }, sheet, state(5), 35, false);
+    expect(damagedState({ houseRules: {} }, sheet, state(5), 34).outcome).toBe("dying");
+    const { state: after, outcome } = damagedState({ houseRules: {} }, sheet, state(5), 35);
     expect(outcome).toBe("dead");
     expect(after.deathSaves).toEqual({ successes: 0, failures: 3 });
   });
 
   it("leaves massive damage dying under noInstantDeath", () => {
     const rules = { houseRules: { noInstantDeath: true } };
-    const { state: after, outcome } = damagedState(rules, sheet, state(5), 35, false);
+    const { state: after, outcome } = damagedState(rules, sheet, state(5), 35);
     expect(outcome).toBe("dying");
     expect(after.hitPoints).toEqual({ current: 0, temporary: 0 });
   });

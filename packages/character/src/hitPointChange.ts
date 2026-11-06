@@ -17,21 +17,21 @@ function changed(state: CharacterState, result: ReturnType<typeof heal>): Change
 
 /**
  * The state after `amount` damage, by `takeDamage`, against the maximum the sheet shows and
- * under the table's `noInstantDeath`. `critical` counts only at 0 hit points, as the rule does.
+ * under the table's `noInstantDeath`. Damage at 0 counts as one failure: for a critical hit
+ * the player marks the second failure by hand.
  */
 export function damagedState(
   definition: Pick<CharacterDefinition, "houseRules">,
   derived: Sheet,
   state: CharacterState,
   amount: number,
-  critical: boolean,
 ): Changed {
   const result = takeDamage(
     state.hitPoints,
     state.deathSaves,
     derivedValue(derived.hitPointMaximum),
     amount,
-    { critical, instantDeath: !houseRule(definition, "noInstantDeath") },
+    { critical: false, instantDeath: !houseRule(definition, "noInstantDeath") },
   );
   return changed(state, result);
 }
