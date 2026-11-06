@@ -67,7 +67,7 @@ export function ClassResources({
 
   return (
     <Card title="Class Resources" className="max-w-full self-start">
-      <ul className="grid grid-cols-[auto_auto_auto] gap-x-3 gap-y-1">
+      <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 gap-y-1">
         {derived.classResources.map((pool, index) => {
           const key = classResourceKey(pool);
           const label = resourceLabel(pool.key);

@@ -44,11 +44,12 @@ for (const width of [320, 390, 1280]) {
       );
       for (const [first, second] of columns) expect(first).toBe(second);
 
-      // The card alone is judged: at 320px the character header overflows on its own.
+      // The card alone is judged: at 320px the character header overflows on its own. The rail
+      // animates its width, so the card fits only once the collapse settles.
+      await expect.poll(() => card.evaluate((el) => el.scrollWidth - el.clientWidth)).toBe(0);
       const b = await box(card);
       expect(b.x).toBeGreaterThanOrEqual(0);
       expect(b.x + b.width).toBeLessThanOrEqual(width);
-      expect(await card.evaluate((el) => el.scrollWidth - el.clientWidth)).toBe(0);
     } finally {
       await request.delete(`/api/characters/${id}`);
     }
