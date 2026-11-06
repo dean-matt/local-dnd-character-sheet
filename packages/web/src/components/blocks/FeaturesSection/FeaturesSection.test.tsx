@@ -3,7 +3,7 @@ import type { CharacterReferences } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord } from "../../../test/records.ts";
+import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../../../test/stubFetch.ts";
 import { FeaturesSection } from "./FeaturesSection.tsx";
 
@@ -96,7 +96,7 @@ function renderSection(
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <FeaturesSection character={character} />
+      <FeaturesSection character={character} derived={undefined} />
     </QueryClientProvider>,
   );
 }
@@ -104,6 +104,31 @@ function renderSection(
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+/** A Fighter with one Second Wind pool; `features` undefined fails the features read. */
+function renderWithPool(features: CharacterFeatures | undefined) {
+  stubFetchByUrl({
+    ...(features && { "/api/characters/1/features": features }),
+    "/api/characters/1/state": stateRecord(),
+  });
+  const derived = {
+    ...derivedRecord(),
+    classResources: [
+      {
+        class: { name: "Fighter", source: "PHB" },
+        key: "second_wind",
+        maximum: { computed: 1, manual: null, terms: [] },
+      },
+    ],
+  };
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <FeaturesSection character={characterRecord("1", "Vex")} derived={derived} />
+    </QueryClientProvider>,
+  );
+}
 
 describe("FeaturesSection", () => {
   it("gathers features into Class, Race, Background and Chosen cards", async () => {
@@ -142,7 +167,7 @@ describe("FeaturesSection", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <FeaturesSection character={characterRecord("1", "Vex")} />
+        <FeaturesSection character={characterRecord("1", "Vex")} derived={undefined} />
       </QueryClientProvider>,
     );
 
@@ -177,7 +202,7 @@ describe("FeaturesSection", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <FeaturesSection character={holding} />
+        <FeaturesSection character={holding} derived={undefined} />
       </QueryClientProvider>,
     );
 
@@ -408,7 +433,7 @@ describe("FeaturesSection", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <FeaturesSection character={characterRecord("1", "Vex")} />
+        <FeaturesSection character={characterRecord("1", "Vex")} derived={undefined} />
       </QueryClientProvider>,
     );
 
@@ -508,18 +533,42 @@ describe("FeaturesSection", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <FeaturesSection character={characterRecord("1", "Vex")} />
+        <FeaturesSection character={characterRecord("1", "Vex")} derived={undefined} />
       </QueryClientProvider>,
     );
 
     expect(await screen.findByRole("alert")).toHaveTextContent("No character with that id");
   });
 
+  it("opens with the Class Resources card where the character has a pool", async () => {
+    renderWithPool(FEATURES);
+
+    await screen.findByRole("region", { name: "Class Resources" });
+    const cards = await screen.findAllByRole("heading", { level: 3 });
+    expect(cards.map((card) => card.textContent).slice(0, 2)).toEqual([
+      "Class Resources",
+      "Class Features",
+    ]);
+  });
+
+  it.each([
+    ["the features read fails", undefined, "alert"],
+    ["the character has no features", { groups: [] }, "Vex has no features yet."],
+  ])("keeps the Class Resources card when %s", async (_, features, shown) => {
+    renderWithPool(features);
+
+    expect(
+      await screen.findByRole("button", { name: "Spend a use of Second wind, Fighter" }),
+    ).toBeInTheDocument();
+    if (shown === "alert") expect(await screen.findByRole("alert")).toBeInTheDocument();
+    else expect(await screen.findByText(shown)).toBeInTheDocument();
+  });
+
   it("waits on the character before it asks for anything", () => {
     const fetchMock = stubFetch(new Response("{}"));
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <FeaturesSection character={undefined} />
+        <FeaturesSection character={undefined} derived={undefined} />
       </QueryClientProvider>,
     );
 

@@ -7,7 +7,8 @@ import {
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 import { useState } from "react";
-import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
+import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
+import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 
 type Column = keyof CharacterState["deathSaves"];
@@ -76,9 +77,8 @@ export function DeathSaves({
   derived: CharacterDerived;
   state: CharacterState;
 }) {
-  const replace = useReplaceCharacterState(character.id);
+  const replace = useAnnouncedStateWrite(character.id);
   const [lastRoll, setLastRoll] = useState<number>();
-  const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const status = deathSaveStatus(derived, state);
   // A roll speaks for the dying it was rolled in; leaving that ends it.
   if (status !== "dying" && lastRoll !== undefined) setLastRoll(undefined);
@@ -90,11 +90,7 @@ export function DeathSaves({
   if (heard !== seen) {
     setHeard(seen);
     if (seen === own) setOwn(undefined);
-    else if (status) announce(`${summary(state)}.`);
-  }
-
-  function announce(text: string) {
-    setAnnounced(({ count }) => ({ text, count: count + 1 }));
+    else if (status) replace.announce(`${summary(state)}.`);
   }
 
   function summary(after: CharacterState) {
@@ -105,14 +101,9 @@ export function DeathSaves({
 
   async function write(after: CharacterState, text: string) {
     setOwn(key(deathSaveStatus(derived, after), after));
-    try {
-      await replace.mutateAsync(after);
-    } catch {
-      setOwn(undefined);
-      return false;
-    }
-    announce(text);
-    return true;
+    const landed = await replace.write(after, text);
+    if (!landed) setOwn(undefined);
+    return landed;
   }
 
   async function roll() {
@@ -185,12 +176,7 @@ export function DeathSaves({
           Death saves were not changed: {replace.error.message}
         </p>
       )}
-      {/* Mounted while empty: a live region added with its text is often not announced.
-          The keyed child replaces its node on every change, so a result that repeats the
-          last one's text is announced again. */}
-      <span role="status" className="sr-only">
-        <span key={announced.count}>{announced.text}</span>
-      </span>
+      <Announcer announced={replace.announced} />
     </Card>
   );
 }

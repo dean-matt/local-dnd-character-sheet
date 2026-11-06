@@ -18,7 +18,7 @@ export function SectionBlockView({ block, character, derived }: BlockViewProps) 
     case "inventory":
       return <InventorySection character={character} derived={derived} />;
     case "features":
-      return <FeaturesSection character={character} />;
+      return <FeaturesSection character={character} derived={derived} />;
     case "identity":
       return <IdentitySection character={character} />;
     case "level":

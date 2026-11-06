@@ -1,11 +1,15 @@
 /**
- * The Features page: what the character has gained, in one card each for class, race,
- * background and chosen features. Each feature is a row whose name opens its rules text
- * in a modal, and a search narrows every card by name, so a reader looking for one
- * feature skips the rest.
+ * The Features page: the class resource pools a player spends, then what the character has
+ * gained, in one card each for class, race, background and chosen features. Each feature
+ * is a row whose name opens its rules text in a modal, and a search narrows every feature
+ * card by name, so a reader looking for one feature skips the rest.
  */
 import type { FeatureOrigin } from "@dnd/catalog";
-import { type CharacterRecord, optionalFeatureTallies } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  optionalFeatureTallies,
+} from "@dnd/character";
 import { useId, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { ErrorState } from "../../../ErrorState.tsx";
@@ -14,6 +18,7 @@ import { useOptionalFeatureEntitlements } from "../../../hooks/useOptionalFeatur
 import { LoadingState } from "../../../LoadingState.tsx";
 import { Card } from "../../Card.tsx";
 import { RulesBlock } from "../../RulesBlock/RulesBlock.tsx";
+import { ClassResources } from "./ClassResources/ClassResources.tsx";
 import { FeatureRow } from "./FeatureRow.tsx";
 import { byLevelGained, classFeatureLevel } from "./featureOrder.ts";
 import { OptionalFeaturePicks } from "./OptionalFeaturePicks.tsx";
@@ -44,18 +49,34 @@ const WIDGETS: readonly {
   },
 ];
 
-export function FeaturesSection({ character }: { character: CharacterRecord | undefined }) {
+export function FeaturesSection({
+  character,
+  derived,
+}: {
+  character: CharacterRecord | undefined;
+  derived: CharacterDerived | undefined;
+}) {
   const features = useCharacterFeatures(character?.id ?? "");
   const entitlements = useOptionalFeatureEntitlements(character?.id ?? "");
   const [query, setQuery] = useState("");
   const inputId = useId();
 
   if (!character) return <EmptyState>Features isn't available yet.</EmptyState>;
-  if (features.isPending) return <LoadingState label="Loading features…" />;
-  if (features.isError) return <ErrorState error={features.error} />;
-
-  if (features.data.groups.length === 0) {
-    return <EmptyState>{character.name} has no features yet.</EmptyState>;
+  // The card needs only the derived block and state, so no features fetch holds it back.
+  const resources = derived && <ClassResources character={character} derived={derived} />;
+  if (features.isPending || features.isError || features.data.groups.length === 0) {
+    return (
+      <div className="flex flex-col gap-3">
+        {resources}
+        {features.isPending ? (
+          <LoadingState label="Loading features…" />
+        ) : features.isError ? (
+          <ErrorState error={features.error} />
+        ) : (
+          <EmptyState>{character.name} has no features yet.</EmptyState>
+        )}
+      </div>
+    );
   }
 
   // Built only once the entitlements land: read as none while loading, every pick would
@@ -83,6 +104,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
 
   return (
     <div className="flex flex-col gap-3">
+      {resources}
       <div className="print:hidden">
         <label htmlFor={inputId} className="sr-only">
           Search features
