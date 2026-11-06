@@ -147,40 +147,36 @@ export function DeathSaves({
         )
       }
     >
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex flex-col gap-1.5">
-          {COLUMNS.map(({ column, label, mark: name, className }) => (
-            <fieldset key={column} className="flex items-center gap-1">
-              <legend className="sr-only">Death save {column}</legend>
-              <span aria-hidden="true" className="w-16 text-label text-muted">
-                {label}
-              </span>
-              {MARKS.map((index) => (
-                <button
-                  key={index}
-                  type="button"
-                  aria-label={`${name} ${index}`}
-                  aria-pressed={index <= state.deathSaves[column]}
-                  aria-disabled={replace.writing}
-                  onClick={() => mark(column, index)}
-                  className={`${MARK} ${className}`}
-                />
-              ))}
-            </fieldset>
-          ))}
-        </div>
-        {/* No taller than the marks, and after them, so it never moves them when it comes or goes. */}
-        {status === "dying" && (
-          <div className="flex flex-col items-end gap-0.5">
-            <button type="button" aria-disabled={replace.writing} onClick={roll} className={BUTTON}>
-              Roll death save
-            </button>
-            {lastRoll !== undefined && (
-              <span className="text-muted text-row">Rolled {lastRoll}</span>
-            )}
-          </div>
-        )}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {COLUMNS.map(({ column, label, mark: name, className }) => (
+          <fieldset key={column} className="flex items-center gap-1">
+            <legend className="sr-only">Death save {column}</legend>
+            <span aria-hidden="true" className="min-w-14 text-label text-muted">
+              {label}
+            </span>
+            {MARKS.map((index) => (
+              <button
+                key={index}
+                type="button"
+                aria-label={`${name} ${index}`}
+                aria-pressed={index <= state.deathSaves[column]}
+                aria-disabled={replace.writing}
+                onClick={() => mark(column, index)}
+                className={`${MARK} ${className}`}
+              />
+            ))}
+          </fieldset>
+        ))}
       </div>
+      {/* Below the marks, so it never moves them when it comes or goes. */}
+      {status === "dying" && (
+        <div className="mt-1.5 flex items-center gap-2">
+          <button type="button" aria-disabled={replace.writing} onClick={roll} className={BUTTON}>
+            Roll death save
+          </button>
+          {lastRoll !== undefined && <span className="text-muted text-row">Rolled {lastRoll}</span>}
+        </div>
+      )}
       {replace.error && (
         <p role="alert" className="mt-1 text-error text-row">
           Death saves were not changed: {replace.error.message}
