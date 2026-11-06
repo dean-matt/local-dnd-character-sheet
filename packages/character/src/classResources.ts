@@ -19,6 +19,7 @@ const POOL_KEYS: ReadonlySet<string> = new Set([
   "wild_shape",
   "psi_points",
   "favored_enemy",
+  "energy_die_number",
 ]);
 
 const UNLIMITED = "Unlimited";

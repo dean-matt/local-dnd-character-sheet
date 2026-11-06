@@ -50,9 +50,10 @@ Four traps in reading a group:
 ## Resource counters
 
 A column that counts uses a character spends is a pool: Rages, Ki or Focus Points, Sorcery
-Points, Channel Divinity, Second Wind, Wild Shape, Psi Points and Favored Enemy. The derived
-block lists each pool the table prints at the character's level in its class, and state
-records what is spent, so a level change moves every maximum with no state write. The
+Points, Channel Divinity, Second Wind, Wild Shape, Psi Points, Favored Enemy, and the
+Psionic Energy dice a Psi Warrior's or Soulknife's subclass table prints. The derived
+block lists each pool the class and subclass tables print at the character's level in its
+class, and state records what is spent, so a level change moves every maximum with no state write. The
 sheet reads state through `sheetState`, which caps what is spent at the maximum and drops a
 pool the table no longer prints. `Unlimited` reads as no maximum.
 

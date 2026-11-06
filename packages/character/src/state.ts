@@ -1,6 +1,6 @@
 import { HIT_DICE, RESET_TRIGGERS } from "@dnd/rules";
 import { z } from "zod";
-import { entryKey, isUnique } from "./keys.ts";
+import { classResourceKey, isUnique } from "./keys.ts";
 import { contentRefSchema, entryRefSchema } from "./refs.ts";
 
 const hitPointsSchema = z.strictObject({
@@ -90,7 +90,7 @@ export const characterStateSchema = z.strictObject({
   resources: z.array(resourceSchema),
   classResources: z
     .array(classResourceSchema)
-    .refine((pools) => isUnique(pools, (pool) => `${entryKey(pool.class)}|${pool.key}`), {
+    .refine((pools) => isUnique(pools, classResourceKey), {
       error: "the same class resource is listed twice",
     })
     .default([]),

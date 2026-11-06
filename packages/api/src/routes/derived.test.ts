@@ -200,6 +200,15 @@ describe("derivedRoutes", () => {
           resource_key: "prepared_spells",
           value: "3",
         },
+        ...["energy_die_number", "energy_die_size"].map((resource_key) => ({
+          class_name: "Fighter",
+          class_source: "XPHB",
+          subclass_name: "Psi Warrior",
+          subclass_source: "XPHB",
+          level: 3,
+          resource_key,
+          value: resource_key === "energy_die_number" ? "4" : "D6",
+        })),
       ],
       subclassSpellSlots: [
         {
@@ -642,6 +651,21 @@ describe("derivedRoutes", () => {
 
     updateCharacterDefinition(opened.charactersDb, "1", barbarian(20));
     expect(await rages()).toEqual([["rages", null]]);
+  });
+
+  it("lists the pool a subclass table prints beside the class table's", async () => {
+    store(
+      definitionWith({
+        levels: [
+          { class: FIGHTER_ONE },
+          { class: FIGHTER_ONE },
+          { class: FIGHTER_ONE, subclass: { name: "Psi Warrior", source: "XPHB" } },
+        ],
+      }),
+    );
+    expect(
+      (await derived()).classResources.map((pool) => [pool.key, pool.maximum?.computed ?? null]),
+    ).toEqual([["energy_die_number", 4]]);
   });
 
   it("lets a Fighter master three kinds and shows a chosen one's mastery, magic items included", async () => {

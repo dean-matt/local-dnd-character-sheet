@@ -47,6 +47,10 @@ export const isUnique = <T>(items: T[], key: (item: T) => string): boolean =>
 export const entryKey = (ref: EntryRef): string =>
   "homebrewId" in ref ? `homebrew|${ref.homebrewId}` : `catalog|${refKey(ref)}`;
 
+/** A class resource pool: its class, then the table's `resource_key`, which holds no `|`. */
+export const classResourceKey = (pool: { class: EntryRef; key: string }): string =>
+  `${entryKey(pool.class)}|${pool.key}`;
+
 /**
  * An inventory entry's item, which is its `ref` expanded by any `variant`: `Barding`
  * weighs twice the armor it expands, so a base item alone cannot key a weight.

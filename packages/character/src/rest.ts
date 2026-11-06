@@ -2,7 +2,7 @@ import { type HitDie, hitDicePick, rest } from "@dnd/rules";
 import type { CharacterDerived } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived } from "./derivedField.ts";
-import { entryKey } from "./keys.ts";
+import { classResourceKey } from "./keys.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
 
@@ -34,8 +34,7 @@ function sheetClassResources(
   return derived.classResources.map((pool) => {
     const maximum = pool.maximum && derivedValue(pool.maximum);
     const held = state.classResources.find(
-      (candidate) =>
-        candidate.key === pool.key && entryKey(candidate.class) === entryKey(pool.class),
+      (candidate) => classResourceKey(candidate) === classResourceKey(pool),
     );
     const expended = held?.expended ?? 0;
     return {
