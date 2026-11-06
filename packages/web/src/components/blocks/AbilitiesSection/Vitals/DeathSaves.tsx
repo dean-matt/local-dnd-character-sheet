@@ -137,6 +137,9 @@ export function DeathSaves({
   return (
     <Card
       title="Death Saves"
+      // One width in every state, sized for "Stable" or "Dying" and "Rolled 20", so the
+      // card never grows when the Roll row appears.
+      className="w-52 max-w-full justify-self-start"
       aside={
         status && (
           <span
@@ -147,7 +150,7 @@ export function DeathSaves({
         )
       }
     >
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
+      <div className="flex flex-col gap-1">
         {COLUMNS.map(({ column, label, mark: name, className }) => (
           <fieldset key={column} className="flex items-center gap-1">
             <legend className="sr-only">Death save {column}</legend>
