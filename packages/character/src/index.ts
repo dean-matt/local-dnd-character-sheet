@@ -117,7 +117,15 @@ export {
   withImprovement,
   withoutImprovement,
 } from "./improvements.ts";
-export { deityKey, entryKey, featureKey, itemKey, refKey, spellBlockKey } from "./keys.ts";
+export {
+  classResourceKey,
+  deityKey,
+  entryKey,
+  featureKey,
+  itemKey,
+  refKey,
+  spellBlockKey,
+} from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {
   grantorKey,

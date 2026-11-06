@@ -151,11 +151,11 @@ says how much of the artboard the app builds today.
 | `GearFilter` | #311 | nothing |
 | `SpellList` | #230, #311 | all but the filter and the custom spell |
 | `SpellListFilter` | #311 | nothing |
-| `ClassFeatures` | #279, #311 | read-only |
+| `ClassFeatures` | #311 | read-only |
 | `ClassFeaturesFilter` | #311 | nothing |
-| `RaceFeatures` | #279, #311 | read-only |
+| `RaceFeatures` | #311 | read-only |
 | `RaceFeaturesFilter` | #311 | nothing |
-| `ChosenFeatures` | #231, #279, #311 | the optional-feature picks, the rest read-only |
+| `ChosenFeatures` | #231, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the portrait upload and the Rest menu, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |

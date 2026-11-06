@@ -1,11 +1,15 @@
 /**
- * The Features page: what the character has gained, in one card each for class, race,
- * background and chosen features. Each feature is a row whose name opens its rules text
- * in a modal, and a search narrows every card by name, so a reader looking for one
- * feature skips the rest.
+ * The Features page: the class resource pools a player spends, then what the character has
+ * gained, in one card each for class, race, background and chosen features. Each feature
+ * is a row whose name opens its rules text in a modal, and a search narrows every feature
+ * card by name, so a reader looking for one feature skips the rest.
  */
 import type { FeatureOrigin } from "@dnd/catalog";
-import { type CharacterRecord, optionalFeatureTallies } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  optionalFeatureTallies,
+} from "@dnd/character";
 import { useId, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { ErrorState } from "../../../ErrorState.tsx";
@@ -14,6 +18,7 @@ import { useOptionalFeatureEntitlements } from "../../../hooks/useOptionalFeatur
 import { LoadingState } from "../../../LoadingState.tsx";
 import { Card } from "../../Card.tsx";
 import { RulesBlock } from "../../RulesBlock/RulesBlock.tsx";
+import { ClassResources } from "./ClassResources/ClassResources.tsx";
 import { FeatureRow } from "./FeatureRow.tsx";
 import { byLevelGained, classFeatureLevel } from "./featureOrder.ts";
 import { OptionalFeaturePicks } from "./OptionalFeaturePicks.tsx";
@@ -44,7 +49,13 @@ const WIDGETS: readonly {
   },
 ];
 
-export function FeaturesSection({ character }: { character: CharacterRecord | undefined }) {
+export function FeaturesSection({
+  character,
+  derived,
+}: {
+  character: CharacterRecord | undefined;
+  derived: CharacterDerived | undefined;
+}) {
   const features = useCharacterFeatures(character?.id ?? "");
   const entitlements = useOptionalFeatureEntitlements(character?.id ?? "");
   const [query, setQuery] = useState("");
@@ -83,6 +94,7 @@ export function FeaturesSection({ character }: { character: CharacterRecord | un
 
   return (
     <div className="flex flex-col gap-3">
+      {derived && <ClassResources character={character} derived={derived} />}
       <div className="print:hidden">
         <label htmlFor={inputId} className="sr-only">
           Search features
