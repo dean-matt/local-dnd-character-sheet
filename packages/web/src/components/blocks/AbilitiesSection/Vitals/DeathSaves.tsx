@@ -99,9 +99,8 @@ export function DeathSaves({
 
   function summary(after: CharacterState) {
     const now = deathSaveStatus(derived, after);
-    if (!now) return "Conscious at 1 hit point";
     const { successes, failures } = after.deathSaves;
-    return `${plural(successes, "success", "successes")}, ${plural(failures, "failure", "failures")}, ${now}`;
+    return `${plural(successes, "success", "successes")}, ${plural(failures, "failure", "failures")}${now ? `, ${now}` : ""}`;
   }
 
   async function write(after: CharacterState, text: string) {
@@ -121,7 +120,8 @@ export function DeathSaves({
     const d20 = rollDice("1d20").total;
     const rolled = deathSaveRolledState(derived, state, d20);
     const after = rolled.state;
-    if (await write(after, `Rolled ${d20}: ${verdict(d20, state, rolled)}. ${summary(after)}.`)) {
+    const result = rolled.outcome === "conscious" ? "Conscious at 1 hit point" : summary(after);
+    if (await write(after, `Rolled ${d20}: ${verdict(d20, state, rolled)}. ${result}.`)) {
       setLastRoll(d20);
     }
   }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { damageAtZeroHitPoints, deathSave, heal, takeDamage } from "./index.ts";
 
 const clear = { successes: 0, failures: 0 };
-const printed = { critical: false, instantDeath: true };
+const printed = { instantDeath: true };
 const hp = (current: number | null, temporary = 0) => ({ current, temporary });
 
 describe("takeDamage", () => {
@@ -26,16 +26,13 @@ describe("takeDamage", () => {
     });
   });
 
-  it("records a failure for damage at 0, two on a critical, as damageAtZeroHitPoints does", () => {
+  it("records one failure for damage at 0", () => {
     const saves = { successes: 3, failures: 1 };
     expect(takeDamage(hp(0), saves, 20, 4, printed)).toEqual({
       hitPoints: hp(0),
       deathSaves: { successes: 0, failures: 1 },
       outcome: "dying",
     });
-    const critical = takeDamage(hp(0), clear, 20, 4, { ...printed, critical: true });
-    const { outcome: _, ...expected } = damageAtZeroHitPoints(clear, true);
-    expect(critical.deathSaves).toEqual(expected);
   });
 
   it("dies on a third failure at 0", () => {

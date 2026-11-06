@@ -31,7 +31,7 @@ export function damagedState(
     state.deathSaves,
     derivedValue(derived.hitPointMaximum),
     amount,
-    { critical: false, instantDeath: !houseRule(definition, "noInstantDeath") },
+    { instantDeath: !houseRule(definition, "noInstantDeath") },
   );
   return changed(state, result);
 }

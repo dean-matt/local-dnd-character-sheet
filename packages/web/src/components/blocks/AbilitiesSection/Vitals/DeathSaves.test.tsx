@@ -56,8 +56,9 @@ describe("DeathSaves", () => {
     await screen.findByRole("spinbutton");
     fireEvent.click(mark("Failure 1"));
 
-    await waitFor(() => expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 1 }));
-    await waitFor(() => expect(marks("failures")).toEqual(["true", "false", "false"]));
+    await waitFor(() => expect(announced()).toHaveTextContent("0 successes, 1 failure."));
+    expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 1 });
+    expect(marks("failures")).toEqual(["true", "false", "false"]);
   });
 
   it.each([
