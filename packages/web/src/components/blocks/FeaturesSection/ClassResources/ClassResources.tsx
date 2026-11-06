@@ -8,7 +8,7 @@ import {
   resourceLabel,
   sheetState,
 } from "@dnd/character";
-import { useEffect, useRef, useState } from "react";
+import { Minus, Plus, RefreshCw } from "lucide-react";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
@@ -16,17 +16,12 @@ import { LoadingState } from "../../../../LoadingState.tsx";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
+import { PoolButton } from "./PoolButton.tsx";
 
 type Pool = CharacterState["classResources"][number];
 
-const BUTTON =
-  "h-6 rounded-control border border-border bg-surface px-2 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
-
-/**
- * Each row takes the list's columns, so names, counts and buttons line up down the card. On a
- * phone the buttons drop below the name.
- */
-const ROW = "col-span-3 grid min-h-6 grid-cols-subgrid items-center gap-y-1";
+/** Each row takes the list's columns, so names, counts and buttons line up down the card. */
+const ROW = "col-span-3 grid min-h-6 grid-cols-subgrid items-center";
 
 /** The state with one pool's entry replaced, or added where state holds none for it. */
 function spentState(state: CharacterState, pool: Pool): CharacterState {
@@ -46,8 +41,7 @@ function spentState(state: CharacterState, pool: Pool): CharacterState {
  * The Class Resources card: each pool the derived block lists, with its uses left against
  * the maximum the sheet shows, read through `sheetState` as a rest reads them. Spend,
  * restore and reset are each one state write, announced once it lands. An `Unlimited` pool
- * counts nothing, so it offers no control. A write that removes the pressed button moves
- * focus to the first button left in its row.
+ * counts nothing, so it offers no control.
  */
 export function ClassResources({
   character,
@@ -58,22 +52,6 @@ export function ClassResources({
 }) {
   const state = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
-  const list = useRef<HTMLUListElement>(null);
-  const [landed, setLanded] = useState<{ key: string; expended: number }>();
-
-  useEffect(() => {
-    if (!landed || !state.data) return;
-    const index = derived.classResources.findIndex((pool) => classResourceKey(pool) === landed.key);
-    const held = sheetState(derived, state.data.state).classResources[index];
-    // Until the written count renders, the pressed button may still be mounted.
-    if (held?.expended !== landed.expended) return;
-    setLanded(undefined);
-    const row = [...(list.current?.children ?? [])].find(
-      (li) => li instanceof HTMLElement && li.dataset.pool === landed.key,
-    );
-    if (row && !row.contains(document.activeElement))
-      row.querySelector<HTMLElement>("[data-actions] button")?.focus();
-  }, [landed, state.data, derived]);
 
   if (derived.classResources.length === 0) return null;
   if (state.isPending) return <LoadingState label="Loading class resources…" />;
@@ -82,16 +60,14 @@ export function ClassResources({
   const stored = state.data.state;
   const sheet = sheetState(derived, stored);
 
-  async function change(pool: Pool, maximum: number, spoken: string, expended: number) {
+  function change(pool: Pool, maximum: number, spoken: string, expended: number) {
     const text = `${spoken}: ${maximum - expended} of ${maximum} left.`;
-    if (await replace.write(spentState(stored, { ...pool, expended }), text)) {
-      setLanded({ key: classResourceKey(pool), expended });
-    }
+    replace.write(spentState(stored, { ...pool, expended }), text);
   }
 
   return (
     <Card title="Class Resources" className="max-w-full self-start">
-      <ul ref={list} className="grid grid-cols-[auto_auto_auto] gap-x-3 gap-y-2 sm:gap-y-1">
+      <ul className="grid grid-cols-[auto_auto_auto] gap-x-3 gap-y-1">
         {derived.classResources.map((pool, index) => {
           const key = classResourceKey(pool);
           const label = resourceLabel(pool.key);
@@ -103,7 +79,7 @@ export function ClassResources({
           );
           if (pool.maximum === null) {
             return (
-              <li key={key} data-pool={key} className={ROW}>
+              <li key={key} className={ROW}>
                 {name}
                 <span className="col-span-2 text-muted text-row">Unlimited</span>
               </li>
@@ -113,46 +89,34 @@ export function ClassResources({
           const maximum = derivedValue(pool.maximum);
           const spoken = `${label}, ${owner}`;
           return (
-            <li key={key} data-pool={key} className={ROW}>
+            <li key={key} className={ROW}>
               {name}
               <span className="text-row">
                 {maximum - held.expended} /{" "}
                 <DerivedValue name={`${spoken} maximum`} value={pool.maximum} format={String} />
               </span>
-              <span data-actions className="col-span-3 flex flex-wrap gap-1 sm:col-span-1">
-                {held.expended < maximum && (
-                  <button
-                    type="button"
-                    aria-label={`Spend a use of ${spoken}`}
-                    aria-disabled={replace.writing}
-                    onClick={() => change(held, maximum, spoken, held.expended + 1)}
-                    className={BUTTON}
-                  >
-                    Spend
-                  </button>
-                )}
-                {held.expended > 0 && (
-                  <>
-                    <button
-                      type="button"
-                      aria-label={`Restore a use of ${spoken}`}
-                      aria-disabled={replace.writing}
-                      onClick={() => change(held, maximum, spoken, held.expended - 1)}
-                      className={BUTTON}
-                    >
-                      Restore
-                    </button>
-                    <button
-                      type="button"
-                      aria-label={`Reset ${spoken} to full`}
-                      aria-disabled={replace.writing}
-                      onClick={() => change(held, maximum, spoken, 0)}
-                      className={BUTTON}
-                    >
-                      Reset
-                    </button>
-                  </>
-                )}
+              <span className="flex gap-1">
+                <PoolButton
+                  icon={Minus}
+                  label={`Spend a use of ${spoken}`}
+                  tooltip="Spend a use"
+                  disabled={replace.writing || held.expended >= maximum}
+                  onPress={() => change(held, maximum, spoken, held.expended + 1)}
+                />
+                <PoolButton
+                  icon={Plus}
+                  label={`Restore a use of ${spoken}`}
+                  tooltip="Restore a use"
+                  disabled={replace.writing || held.expended === 0}
+                  onPress={() => change(held, maximum, spoken, held.expended - 1)}
+                />
+                <PoolButton
+                  icon={RefreshCw}
+                  label={`Reset ${spoken} to full`}
+                  tooltip="Reset to full"
+                  disabled={replace.writing || held.expended === 0}
+                  onPress={() => change(held, maximum, spoken, 0)}
+                />
               </span>
             </li>
           );

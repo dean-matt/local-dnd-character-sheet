@@ -104,19 +104,42 @@ describe("ClassResources", () => {
     expect(writes[0]?.spellSlots).toEqual(stateRecord().state.spellSlots);
   });
 
-  it("offers no spend on a spent pool, and neither restore nor reset on a full one", async () => {
-    renderPools({
+  it("shows minus, plus and refresh icons for each counted pool, with no text", async () => {
+    renderPools({});
+    await screen.findByRole("region", { name: "Class Resources" });
+    const buttons = within(item("Rages", "Barbarian")).getAllByRole("button");
+
+    expect(buttons.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Spend a use of Rages, Barbarian",
+      "Restore a use of Rages, Barbarian",
+      "Reset Rages, Barbarian to full",
+    ]);
+    expect(buttons.map((b) => b.title)).toEqual(["Spend a use", "Restore a use", "Reset to full"]);
+    for (const b of buttons) {
+      expect(b.textContent).toBe("");
+      expect(b.querySelector("svg")).not.toBeNull();
+    }
+  });
+
+  it("disables spend on a spent pool, and restore and reset on a full one", async () => {
+    const { writes } = renderPools({
       classResources: [{ class: BARBARIAN, key: "rages", maximum: 3, expended: 3 }],
     });
     await screen.findByRole("region", { name: "Class Resources" });
+    const disabled = [
+      "Spend a use of Rages, Barbarian",
+      "Restore a use of Focus points, Monk",
+      "Reset Focus points, Monk to full",
+    ];
+    for (const name of disabled) {
+      expect(button(name)).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button(name));
+    }
 
-    expect(card().queryByRole("button", { name: "Spend a use of Rages, Barbarian" })).toBeNull();
-    expect(button("Restore a use of Rages, Barbarian")).toBeInTheDocument();
-    expect(button("Spend a use of Focus points, Monk")).toBeInTheDocument();
-    expect(
-      card().queryByRole("button", { name: "Restore a use of Focus points, Monk" }),
-    ).toBeNull();
-    expect(card().queryByRole("button", { name: "Reset Focus points, Monk to full" })).toBeNull();
+    expect(button("Restore a use of Rages, Barbarian")).toHaveAttribute("aria-disabled", "false");
+    expect(button("Spend a use of Focus points, Monk")).toHaveAttribute("aria-disabled", "false");
+    expect(writes).toHaveLength(0);
+    expect(announced().textContent).toBe("");
   });
 
   it("restores one use, then resets the pool to none spent", async () => {
@@ -130,32 +153,36 @@ describe("ClassResources", () => {
 
     await waitFor(() => expect(announced()).toHaveTextContent("Focus points, Monk: 4 of 4 left."));
     expect(writes.map((write) => write.classResources[0]?.expended)).toEqual([2, 0]);
-    expect(card().queryByRole("button", { name: "Reset Focus points, Monk to full" })).toBeNull();
+    expect(button("Reset Focus points, Monk to full")).toHaveAttribute("aria-disabled", "true");
   });
 
-  it("moves focus to the row's first button left when a write removes the pressed one", async () => {
+  it("keeps focus on Spend when spending the last use disables it", async () => {
     renderPools({
-      classResources: [{ class: MONK, key: "focus_points", maximum: 4, expended: 3 }],
+      classResources: [{ class: BARBARIAN, key: "rages", maximum: 3, expended: 2 }],
     });
-    await screen.findByRole("region", { name: "Class Resources" });
-    const reset = button("Reset Focus points, Monk to full");
-    reset.focus();
-    fireEvent.click(reset);
-
-    await waitFor(() =>
-      expect(document.activeElement).toBe(button("Spend a use of Focus points, Monk")),
-    );
-  });
-
-  it("keeps focus on a pressed button the write leaves in place", async () => {
-    renderPools({});
     await screen.findByRole("region", { name: "Class Resources" });
     const spend = button("Spend a use of Rages, Barbarian");
     spend.focus();
     fireEvent.click(spend);
 
-    await waitFor(() => expect(announced()).toHaveTextContent("2 of 3 left."));
-    expect(document.activeElement).toBe(button("Spend a use of Rages, Barbarian"));
+    await waitFor(() => expect(announced()).toHaveTextContent("Rages, Barbarian: 0 of 3 left."));
+    expect(spend).toHaveAttribute("aria-disabled", "true");
+    expect(document.activeElement).toBe(spend);
+  });
+
+  it("leaves focus where the user moved it before the write lands", async () => {
+    const { release } = renderPools(
+      { classResources: [{ class: MONK, key: "focus_points", maximum: 4, expended: 3 }] },
+      { hold: true },
+    );
+    await screen.findByRole("region", { name: "Class Resources" });
+    fireEvent.click(button("Reset Focus points, Monk to full"));
+    const elsewhere = button("Spend a use of Rages, Barbarian");
+    elsewhere.focus();
+    release();
+
+    await waitFor(() => expect(announced()).toHaveTextContent("Focus points, Monk: 4 of 4 left."));
+    expect(document.activeElement).toBe(elsewhere);
   });
 
   it("shows an Unlimited pool with no control", async () => {
