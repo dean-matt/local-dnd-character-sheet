@@ -112,6 +112,63 @@ export type ClassGrantsRow = {
   features: ClassFeatureRow[];
 };
 
+function selectClassResources(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  level: number,
+): ClassResourceRow[] {
+  return db
+    .prepare(
+      `SELECT resource_key, value FROM class_resources
+       WHERE class_name = ? AND class_source = ? AND level = ?
+       ORDER BY resource_key`,
+    )
+    .all(className, classSource, level) as ClassResourceRow[];
+}
+
+function selectSubclassResources(
+  db: Database.Database,
+  className: string,
+  classSource: string,
+  subclassName: string,
+  subclassSource: string,
+  level: number,
+): ClassResourceRow[] {
+  return db
+    .prepare(
+      `SELECT resource_key, value FROM subclass_resources
+       WHERE class_name = ? AND class_source = ?
+         AND subclass_name = ? AND subclass_source = ? AND level = ?
+       ORDER BY resource_key`,
+    )
+    .all(className, classSource, subclassName, subclassSource, level) as ClassResourceRow[];
+}
+
+/**
+ * The resource columns a class table prints at one level in the class, by `resource_key`,
+ * then those its subclass's table prints at that level.
+ */
+export function getClassResources(
+  dataDir: string,
+  className: string,
+  classSource: string,
+  level: number,
+  subclass?: { name: string; source: string },
+): ClassResourceRow[] {
+  const db = openContentDb(dataDir);
+  try {
+    return [
+      ...selectClassResources(db, className, classSource, level),
+      ...(subclass
+        ? selectSubclassResources(db, className, classSource, subclass.name, subclass.source, level)
+        : []),
+    ];
+  } finally {
+    db.close();
+  }
+}
+
 function selectClassSpellSlots(
   db: Database.Database,
   className: string,
@@ -231,13 +288,7 @@ export function getClassGrants(
 ): ClassGrantsRow {
   const db = openContentDb(dataDir);
   try {
-    const resources = db
-      .prepare(
-        `SELECT resource_key, value FROM class_resources
-         WHERE class_name = ? AND class_source = ? AND level = ?
-         ORDER BY resource_key`,
-      )
-      .all(className, classSource, level) as ClassResourceRow[];
+    const resources = selectClassResources(db, className, classSource, level);
     const spellSlots = selectClassSpellSlots(db, className, classSource, level);
     const optionalFeatures = db
       .prepare(
@@ -461,14 +512,14 @@ export function getSubclassGrants(
 ): ClassGrantsRow {
   const db = openContentDb(dataDir);
   try {
-    const resources = db
-      .prepare(
-        `SELECT resource_key, value FROM subclass_resources
-         WHERE class_name = ? AND class_source = ?
-           AND subclass_name = ? AND subclass_source = ? AND level = ?
-         ORDER BY resource_key`,
-      )
-      .all(className, classSource, subclassName, subclassSource, level) as ClassResourceRow[];
+    const resources = selectSubclassResources(
+      db,
+      className,
+      classSource,
+      subclassName,
+      subclassSource,
+      level,
+    );
     const spellSlots = selectSubclassSpellSlots(
       db,
       className,

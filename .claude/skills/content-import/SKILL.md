@@ -71,8 +71,9 @@ it was written under — 112 across `races.json` and `feats.json`, so a loader c
 than the file lists. A file neither mechanism leaves readable gets a `prepare` on its
 `Loader`, running between them: only `races.json` does, to merge a subrace with its race.
 
-**Unmapped class resource labels become generic counters**, not errors. Only about 80%
-of resources come from `classTableGroups`; Battle Master superiority dice and similar
+**Unmapped class resource labels are stored under their slug**, not refused; the sheet
+counts one only once `packages/character/src/classResources.ts` names its key as a pool.
+Only about 80% of resources come from `classTableGroups`; Battle Master superiority dice and similar
 live in prose and cannot be extracted.
 
 **Never write to `content.db` outside the ETL.** It is rebuilt wholesale and never

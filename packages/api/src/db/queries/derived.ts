@@ -40,9 +40,11 @@ import {
   type CasterTable,
   type CharacterCatalog,
   type CharacterDefinition,
+  type ClassResourceCell,
   type ContainerTrait,
   type ContentRef,
   catalogRef,
+  classLevels,
   type DefenseTrait,
   type EntryRef,
   entryKey,
@@ -63,6 +65,7 @@ import { type ZodType, z } from "zod";
 import {
   getCasterRows,
   getClass,
+  getClassResources,
   getFirstSpellSlotLevel,
   getSubclass,
   getWeaponMasteryCount,
@@ -544,6 +547,29 @@ function weaponMasteryKinds(dataDir: string, definition: CharacterDefinition): M
   return kinds;
 }
 
+/**
+ * Per catalog class, the resource columns its table and its catalog subclass's table print
+ * at the character's level in it.
+ */
+function classResources(
+  dataDir: string,
+  definition: CharacterDefinition,
+): Map<string, ClassResourceCell[]> {
+  const cells = new Map<string, ClassResourceCell[]>();
+  for (const group of classLevels(definition)) {
+    const ref = group.class;
+    if ("homebrewId" in ref) continue;
+    const subclass =
+      group.subclass && !("homebrewId" in group.subclass) ? group.subclass : undefined;
+    const rows = getClassResources(dataDir, ref.name, ref.source, group.level, subclass);
+    cells.set(
+      entryKey(ref),
+      rows.map((row) => ({ key: row.resource_key, value: row.value })),
+    );
+  }
+  return cells;
+}
+
 export function resolveCharacterCatalog(
   dataDir: string,
   homebrewDb: HomebrewDb,
@@ -591,6 +617,7 @@ export function resolveCharacterCatalog(
   return {
     hitDice,
     weaponMasteryKinds: weaponMasteryKinds(dataDir, definition),
+    classResources: classResources(dataDir, definition),
     spellcastingAbilities,
     casterTables,
     skills,

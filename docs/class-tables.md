@@ -49,8 +49,16 @@ Four traps in reading a group:
 
 ## Resource counters
 
-Class resources come from `classTableGroups` where upstream provides them, which is
-about 80% of cases. The rest are stored as generic counters:
+A column that counts uses a character spends is a pool: Rages, Ki or Focus Points, Sorcery
+Points, Channel Divinity, Second Wind, Wild Shape, Psi Points, Favored Enemy, and the
+Psionic Energy dice a Psi Warrior's or Soulknife's subclass table prints. The derived
+block lists each pool the class and subclass tables print at the character's level in its
+class, and state records what is spent, so a level change moves every maximum with no state write. The
+sheet reads state through `sheetState`, which caps what is spent at the maximum and drops a
+pool the table no longer prints. `Unlimited` reads as no maximum.
+
+Superiority Dice and the other resources no table prints are counters the user adds,
+stored whole in state's `resources`:
 
 ```
 name          "Superiority Dice"
@@ -58,6 +66,3 @@ current       3
 maximum       4
 resets_on     short | long | dawn | manual
 ```
-
-The same shape holds data-derived resources and user-invented ones, so Battle Master
-dice and a homebrew resource need no special casing.

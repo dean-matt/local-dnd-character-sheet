@@ -2,6 +2,7 @@ import { type HitDie, hitDicePick, rest } from "@dnd/rules";
 import type { CharacterDerived } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived } from "./derivedField.ts";
+import { classResourceKey } from "./keys.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
 
@@ -9,7 +10,7 @@ export type RestLength = "short" | "long";
 
 type Resting = Pick<CharacterDefinition, "edition" | "houseRules">;
 
-type Sheet = Pick<CharacterDerived, "hitDice" | "spellSlots" | "pactSlots">;
+type Sheet = Pick<CharacterDerived, "hitDice" | "spellSlots" | "pactSlots" | "classResources">;
 
 type Slot = NonNullable<CharacterState["pactSlots"]>;
 
@@ -26,13 +27,34 @@ function sheetSlot(slot: { level: number; total: Derived<number> }, held: Slot |
   return { level: slot.level, total, expended: Math.min(held?.expended ?? 0, total) };
 }
 
+function sheetClassResources(
+  derived: Sheet,
+  state: CharacterState,
+): CharacterState["classResources"] {
+  return derived.classResources.map((pool) => {
+    const maximum = pool.maximum && derivedValue(pool.maximum);
+    const held = state.classResources.find(
+      (candidate) => classResourceKey(candidate) === classResourceKey(pool),
+    );
+    const expended = held?.expended ?? 0;
+    return {
+      class: pool.class,
+      key: pool.key,
+      maximum,
+      expended: maximum === null ? expended : Math.min(expended, maximum),
+    };
+  });
+}
+
 /**
  * State measured against the totals the derived block shows, which is what the sheet reads
  * and a rest acts on: each pool and slot level the derived block lists, in its order, with
  * what remains or is expended from state capped at the total. A pool or slot level with none
  * in state has spent nothing, the way a new character's empty lists read. One the derived
  * block no longer lists, left by a class since removed, is dropped; pact slots carry their
- * expended count across a change of slot level.
+ * expended count across a change of slot level. Class resource pools follow the same rule,
+ * an `Unlimited` one never capping what is spent; the counters the user added in
+ * `resources` pass through untouched.
  */
 export function sheetState(derived: Sheet, state: CharacterState): CharacterState {
   return {
@@ -45,6 +67,7 @@ export function sheetState(derived: Sheet, state: CharacterState): CharacterStat
       ),
     ),
     pactSlots: derived.pactSlots && sheetSlot(derived.pactSlots, state.pactSlots ?? undefined),
+    classResources: sheetClassResources(derived, state),
   };
 }
 

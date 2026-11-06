@@ -8,7 +8,11 @@ import {
 } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
-import { insertCharacter, updateCharacterDefinition } from "../db/queries/characters.ts";
+import {
+  insertCharacter,
+  undoChanges,
+  updateCharacterDefinition,
+} from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
   deleteHomebrewSubrace,
@@ -147,6 +151,26 @@ describe("derivedRoutes", () => {
         },
       ],
       classResources: [
+        ...[
+          [2, "2"],
+          [3, "3"],
+          [20, "Unlimited"],
+        ].flatMap(([level, value]) => [
+          {
+            class_name: "Barbarian",
+            class_source: "PHB",
+            level: Number(level),
+            resource_key: "rages",
+            value: String(value),
+          },
+          {
+            class_name: "Barbarian",
+            class_source: "PHB",
+            level: Number(level),
+            resource_key: "rage_damage",
+            value: "+2",
+          },
+        ]),
         {
           class_name: "Warlock",
           class_source: "XPHB",
@@ -176,6 +200,15 @@ describe("derivedRoutes", () => {
           resource_key: "prepared_spells",
           value: "3",
         },
+        ...["energy_die_number", "energy_die_size"].map((resource_key) => ({
+          class_name: "Fighter",
+          class_source: "XPHB",
+          subclass_name: "Psi Warrior",
+          subclass_source: "XPHB",
+          level: 3,
+          resource_key,
+          value: resource_key === "energy_die_number" ? "4" : "D6",
+        })),
       ],
       subclassSpellSlots: [
         {
@@ -601,6 +634,38 @@ describe("derivedRoutes", () => {
 
     expect(attack?.attackBonus.terms).toContainEqual({ label: "Proficiency", value: 2 });
     expect(attack?.attackBonus.computed).toBe(3 + 2 + 1);
+  });
+
+  it("lists the rages a Barbarian's table prints at each level, and undoes a level-up with them", async () => {
+    const barbarian = (count: number) =>
+      definitionWith({ levels: Array.from({ length: count }, () => ({ class: BARBARIAN })) });
+    const rages = async () =>
+      (await derived()).classResources.map((pool) => [pool.key, pool.maximum?.computed ?? null]);
+    store(barbarian(2));
+    expect(await rages()).toEqual([["rages", 2]]);
+
+    updateCharacterDefinition(opened.charactersDb, "1", barbarian(3));
+    expect(await rages()).toEqual([["rages", 3]]);
+    expect(undoChanges(opened.charactersDb, "1")?.kind).toBe("restored");
+    expect(await rages()).toEqual([["rages", 2]]);
+
+    updateCharacterDefinition(opened.charactersDb, "1", barbarian(20));
+    expect(await rages()).toEqual([["rages", null]]);
+  });
+
+  it("lists the pool a subclass table prints beside the class table's", async () => {
+    store(
+      definitionWith({
+        levels: [
+          { class: FIGHTER_ONE },
+          { class: FIGHTER_ONE },
+          { class: FIGHTER_ONE, subclass: { name: "Psi Warrior", source: "XPHB" } },
+        ],
+      }),
+    );
+    expect(
+      (await derived()).classResources.map((pool) => [pool.key, pool.maximum?.computed ?? null]),
+    ).toEqual([["energy_die_number", 4]]);
   });
 
   it("lets a Fighter master three kinds and shows a chosen one's mastery, magic items included", async () => {

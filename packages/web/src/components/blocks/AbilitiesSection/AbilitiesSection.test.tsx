@@ -75,6 +75,7 @@ function derivedFor(
     containers: new Map(),
     featGrants: new Map(),
     weaponMasteryKinds: new Map(),
+    classResources: new Map(),
   });
 }
 

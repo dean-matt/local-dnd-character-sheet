@@ -1,7 +1,12 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { characterDefinitionSchema, defaultCharacterState, PRESET_PAGES } from "@dnd/character";
+import {
+  characterDefinitionSchema,
+  characterStateSchema,
+  defaultCharacterState,
+  PRESET_PAGES,
+} from "@dnd/character";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -113,7 +118,9 @@ describe("migrations", () => {
     const row = sqlite
       .prepare("SELECT state FROM character_state WHERE character_id = ?")
       .get("1") as { state: string } | undefined;
-    expect(row && JSON.parse(row.state)).toEqual(defaultCharacterState());
+    expect(row && characterStateSchema.parse(JSON.parse(row.state))).toEqual(
+      defaultCharacterState(),
+    );
   });
 
   it("reads a state row left at 0 hit points as full, and leaves a hurt or dying one alone", () => {

@@ -26,8 +26,9 @@ import { type Entry, isRecord } from "./json.ts";
  * wording. The two labels missing here are the pact magic pair, which becomes
  * spell slots instead.
  *
- * A label absent from this map is still stored, keyed by its slug, so a column
- * upstream adds arrives as a generic counter rather than as nothing.
+ * A label absent from this map is still stored, keyed by its slug. The sheet counts
+ * uses only for the keys `@dnd/character` names as pools, so a column upstream adds
+ * is stored but shows on no counter until it is named there.
  */
 const RESOURCE_KEYS: Record<string, string> = {
   Rages: "rages",

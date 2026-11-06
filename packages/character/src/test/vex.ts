@@ -51,6 +51,7 @@ export const derivedInput = (traits: object = {}) => ({
   spellcasting: [],
   spellSlots: [],
   pactSlots: null,
+  classResources: [],
   carryingCapacity: { computed: 120 },
   carriedWeight: 0,
   containers: [],
@@ -169,6 +170,7 @@ export const state: CharacterState = {
   pactSlots: { level: 2, total: 2, expended: 1 },
   conditions: [{ name: "Prone", source: "XPHB" }],
   resources: [{ name: "Superiority Dice", current: 3, maximum: 4, resetsOn: "short" }],
+  classResources: [],
   deathSaves: { successes: 0, failures: 0 },
   exhaustion: 1,
 };

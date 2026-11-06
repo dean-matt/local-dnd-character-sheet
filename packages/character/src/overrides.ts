@@ -1,7 +1,7 @@
 import type { z } from "zod";
 import { type CharacterDerived, characterDerivedSchema } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
-import { entryKey, itemKey, refKey } from "./keys.ts";
+import { classResourceKey, entryKey, itemKey, refKey } from "./keys.ts";
 
 type Lists = {
   [K in keyof CharacterDerived as CharacterDerived[K] extends readonly unknown[]
@@ -29,6 +29,7 @@ const ELEMENT_KEY: {
   skills: (skill) => refKey(skill.ref),
   spellcasting: (caster) => entryKey(caster.class),
   spellSlots: (slot) => String(slot.level),
+  classResources: classResourceKey,
   containers: (container) => container.name,
   unproficientItems: (item) => String(item.entry),
   pendingAbilityPicks: (pick) => String(pick.entry),
