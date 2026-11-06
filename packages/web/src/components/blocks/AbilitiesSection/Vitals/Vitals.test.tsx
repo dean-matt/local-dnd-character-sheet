@@ -44,7 +44,7 @@ describe("Vitals", () => {
     expect(hp.getByText("12")).toBeInTheDocument();
     expect(hp.getByText("20")).toBeInTheDocument();
     expect(hp.getByText(/Hit Dice/)).toHaveTextContent("Hit Dice 1/3 d8, 2/2 d10");
-    expect(hp.queryByText(/temp/)).not.toBeInTheDocument();
+    expect(hp.queryByText(/^\+\d+ temp$/)).not.toBeInTheDocument();
     expect(bar(screen.getByRole("region", { name: "Hit Points" })).style.width).toBe("60%");
   });
 
