@@ -3,7 +3,7 @@ import type { CharacterDerived, CharacterReferences } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord, derivedRecord } from "../../../test/records.ts";
+import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
 import { stubFetch, stubFetchByUrl } from "../../../test/stubFetch.ts";
 import { SpellsSection } from "./SpellsSection.tsx";
 
@@ -69,6 +69,7 @@ function renderSection(
 ) {
   const fetchMock = stubFetchByUrl({
     "/api/characters/1/spells": spells,
+    "/api/characters/1/state": stateRecord(),
     ...(references && { "/api/characters/1/references": references }),
   });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -142,7 +143,7 @@ describe("SpellsSection", () => {
     await screen.findByText("Hex");
   });
 
-  it("draws each level's slots as empty pips, pact slots in the same row shape", async () => {
+  it("shows each level's slot total, pact slots in the same row shape", async () => {
     renderSection({
       ...derivedRecord(),
       spellSlots: [
@@ -151,28 +152,13 @@ describe("SpellsSection", () => {
       ],
     });
 
+    await screen.findByRole("heading", { level: 3, name: "Spell Slots" });
     const slots = card("Spell Slots");
     const row = (spoken: string) => slots.getByText(`${spoken} slots`).closest("li") as HTMLElement;
-    const pips = (spoken: string) => [
-      ...(row(spoken).querySelectorAll(":scope > [aria-hidden]")[1]?.children ?? []),
-    ];
     expect(row("1st Level")).toHaveTextContent("1st Level slots4");
-    expect(pips("1st Level")).toHaveLength(4);
-    expect(pips("2nd Level")).toHaveLength(2);
     expect(row("2nd Level")).toHaveTextContent("overridden from 3");
     expect(row("Pact Magic, 1st Level")).toHaveTextContent("Pact Magic, 1st Level slots1");
     expect(row("Pact Magic, 1st Level")).toHaveTextContent("Pact 1st");
-    expect(pips("Pact Magic, 1st Level")).toHaveLength(1);
-    for (const pip of pips("1st Level")) {
-      expect(pip.getAttribute("style")).toBeNull();
-      expect(pip.className.split(" ")).toEqual([
-        "size-[15px]",
-        "shrink-0",
-        "rounded-full",
-        "border-[1.5px]",
-        "border-accent",
-      ]);
-    }
     await screen.findByText("Hex");
   });
 

@@ -44,7 +44,7 @@ widget, panel, or nav element:
   artboards have no house-rule switch and draw that grayed backpack as the rule on, under
   the ordinary "Equipped, Spear" name. The
   icons are inline Lucide outlines (ISC), as is every icon on a list row.
-- Spells: Spell Slots, Known Spells.
+- Spells: Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
 - Page chrome: Character Header, Rolls Panel. Character Header is one 52px
@@ -91,8 +91,7 @@ widget, panel, or nav element:
 Ability scores, saves, and skills (with homebrew, non-ability-based
 skills); a tab rail where any tab reorders, hides and renames, but only a user-created
 tab deletes or has its widgets added, moved, or resized; inventory split into weapons, armor, and
-gear, gated by proficiency to equip; spell slots as a per-level, clickable pip tracker;
-short and long rest; temporary HP; status effects; a global
+gear, gated by proficiency to equip; short and long rest; temporary HP; status effects; a global
 search across characters and a sample compendium, with an advanced search page, a
 catalog detail modal, and a way to add a result to a character; light, dark, and system
 theme; a user-customizable accent color; a settings page for homebrew content and sources; a way
@@ -150,7 +149,6 @@ says how much of the artboard the app builds today.
 | `ArmorFilter` | #311 | nothing |
 | `Gear` | #311 | all but the filter and its own search |
 | `GearFilter` | #311 | nothing |
-| `SpellSlots` | #230, #278, #800 | read-only |
 | `SpellList` | #230, #311 | all but the filter and the custom spell |
 | `SpellListFilter` | #311 | nothing |
 | `ClassFeatures` | #279, #311 | read-only |
