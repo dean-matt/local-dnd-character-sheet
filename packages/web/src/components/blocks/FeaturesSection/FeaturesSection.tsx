@@ -62,11 +62,21 @@ export function FeaturesSection({
   const inputId = useId();
 
   if (!character) return <EmptyState>Features isn't available yet.</EmptyState>;
-  if (features.isPending) return <LoadingState label="Loading features…" />;
-  if (features.isError) return <ErrorState error={features.error} />;
-
-  if (features.data.groups.length === 0) {
-    return <EmptyState>{character.name} has no features yet.</EmptyState>;
+  // The card needs only the derived block and state, so no features fetch holds it back.
+  const resources = derived && <ClassResources character={character} derived={derived} />;
+  if (features.isPending || features.isError || features.data.groups.length === 0) {
+    return (
+      <div className="flex flex-col gap-3">
+        {resources}
+        {features.isPending ? (
+          <LoadingState label="Loading features…" />
+        ) : features.isError ? (
+          <ErrorState error={features.error} />
+        ) : (
+          <EmptyState>{character.name} has no features yet.</EmptyState>
+        )}
+      </div>
+    );
   }
 
   // Built only once the entitlements land: read as none while loading, every pick would
@@ -94,7 +104,7 @@ export function FeaturesSection({
 
   return (
     <div className="flex flex-col gap-3">
-      {derived && <ClassResources character={character} derived={derived} />}
+      {resources}
       <div className="print:hidden">
         <label htmlFor={inputId} className="sr-only">
           Search features

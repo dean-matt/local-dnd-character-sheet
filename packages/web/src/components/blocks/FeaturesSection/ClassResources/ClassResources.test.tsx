@@ -62,7 +62,7 @@ const item = (label: string, className: string) =>
   card()
     .getAllByRole("listitem")
     .find((li) => li.textContent?.startsWith(`${label} ${className}`)) as HTMLElement;
-/** "2 / 3": the uses left, then the maximum the override field names. */
+/** "2 / 3": the uses left, then the maximum the sheet shows. */
 const count = (label: string, className: string) => {
   const [, left, maximum] = item(label, className).textContent?.match(/(\d+) \/ .*?(\d+)/) ?? [];
   return `${left} / ${maximum}`;
@@ -131,6 +131,31 @@ describe("ClassResources", () => {
     await waitFor(() => expect(announced()).toHaveTextContent("Focus points, Monk: 4 of 4 left."));
     expect(writes.map((write) => write.classResources[0]?.expended)).toEqual([2, 0]);
     expect(card().queryByRole("button", { name: "Reset Focus points, Monk to full" })).toBeNull();
+  });
+
+  it("moves focus to the row's first button left when a write removes the pressed one", async () => {
+    renderPools({
+      classResources: [{ class: MONK, key: "focus_points", maximum: 4, expended: 3 }],
+    });
+    await screen.findByRole("region", { name: "Class Resources" });
+    const reset = button("Reset Focus points, Monk to full");
+    reset.focus();
+    fireEvent.click(reset);
+
+    await waitFor(() =>
+      expect(document.activeElement).toBe(button("Spend a use of Focus points, Monk")),
+    );
+  });
+
+  it("keeps focus on a pressed button the write leaves in place", async () => {
+    renderPools({});
+    await screen.findByRole("region", { name: "Class Resources" });
+    const spend = button("Spend a use of Rages, Barbarian");
+    spend.focus();
+    fireEvent.click(spend);
+
+    await waitFor(() => expect(announced()).toHaveTextContent("2 of 3 left."));
+    expect(document.activeElement).toBe(button("Spend a use of Rages, Barbarian"));
   });
 
   it("shows an Unlimited pool with no control", async () => {

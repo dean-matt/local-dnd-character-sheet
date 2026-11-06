@@ -105,6 +105,31 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** A Fighter with one Second Wind pool; `features` undefined fails the features read. */
+function renderWithPool(features: CharacterFeatures | undefined) {
+  stubFetchByUrl({
+    ...(features && { "/api/characters/1/features": features }),
+    "/api/characters/1/state": stateRecord(),
+  });
+  const derived = {
+    ...derivedRecord(),
+    classResources: [
+      {
+        class: { name: "Fighter", source: "PHB" },
+        key: "second_wind",
+        maximum: { computed: 1, manual: null, terms: [] },
+      },
+    ],
+  };
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <FeaturesSection character={characterRecord("1", "Vex")} derived={derived} />
+    </QueryClientProvider>,
+  );
+}
+
 describe("FeaturesSection", () => {
   it("gathers features into Class, Race, Background and Chosen cards", async () => {
     renderSection(WITH_BACKGROUND);
@@ -516,25 +541,7 @@ describe("FeaturesSection", () => {
   });
 
   it("opens with the Class Resources card where the character has a pool", async () => {
-    stubFetchByUrl({
-      "/api/characters/1/features": FEATURES,
-      "/api/characters/1/state": stateRecord(),
-    });
-    const derived = {
-      ...derivedRecord(),
-      classResources: [
-        {
-          class: { name: "Fighter", source: "PHB" },
-          key: "second_wind",
-          maximum: { computed: 1, manual: null, terms: [] },
-        },
-      ],
-    };
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <FeaturesSection character={characterRecord("1", "Vex")} derived={derived} />
-      </QueryClientProvider>,
-    );
+    renderWithPool(FEATURES);
 
     await screen.findByRole("region", { name: "Class Resources" });
     const cards = await screen.findAllByRole("heading", { level: 3 });
@@ -542,6 +549,19 @@ describe("FeaturesSection", () => {
       "Class Resources",
       "Class Features",
     ]);
+  });
+
+  it.each([
+    ["the features read fails", undefined, "alert"],
+    ["the character has no features", { groups: [] }, "Vex has no features yet."],
+  ])("keeps the Class Resources card when %s", async (_, features, shown) => {
+    renderWithPool(features);
+
+    expect(
+      await screen.findByRole("button", { name: "Spend a use of Second wind, Fighter" }),
+    ).toBeInTheDocument();
+    if (shown === "alert") expect(await screen.findByRole("alert")).toBeInTheDocument();
+    else expect(await screen.findByText(shown)).toBeInTheDocument();
   });
 
   it("waits on the character before it asks for anything", () => {
