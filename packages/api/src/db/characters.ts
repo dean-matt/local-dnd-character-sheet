@@ -107,6 +107,8 @@ export const rollLog = sqliteTable(
   (t) => [index("roll_log_by_character").on(t.characterId, t.id)],
 );
 
+export const UNDO_KINDS = ["definition", "state"] as const;
+
 /** Bounded by `UNDO_LOG_LIMIT` from `@dnd/character`, pruned on insert. Session affordance, not an audit trail. */
 export const undoLog = sqliteTable(
   "undo_log",
@@ -115,8 +117,9 @@ export const undoLog = sqliteTable(
     characterId: text("character_id")
       .notNull()
       .references(() => characters.id, { onDelete: "cascade" }),
-    /** The whole definition the write replaced, not `character_state`, which undo never reaches. */
+    /** What the write replaced, whole: the definition, or `character_state` where `kind` is `state`. */
     previousState: text("previous_state", { mode: "json" }).notNull(),
+    kind: text("kind", { enum: UNDO_KINDS }).notNull().default("definition"),
     describedAs: text("described_as").notNull(),
     changedAt: integer("changed_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     /** Set where its write asked to be its own entry, so no later write merges into it. */

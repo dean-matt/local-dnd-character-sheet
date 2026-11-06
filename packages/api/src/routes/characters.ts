@@ -1,7 +1,7 @@
 /**
  * List, read, create, duplicate, import, export, update and delete for `characters.db`'s
  * `characters` table, plus read and replace for the `character_state` row each one owns,
- * and the undo log a definition update writes. `name`, `level` and `edition` are never
+ * and the undo log a definition or state write adds to. `name`, `level` and `edition` are never
  * accepted from a request body — the query layer derives all three from `definition` on
  * every write, and a state write never reaches that table. `raceSummary` and
  * `classSummary` are computed on every read, naming a homebrew race or class from
@@ -297,8 +297,9 @@ const readUndo = createRoute({
   summary: "List a character's undo entries, newest first",
   description:
     "Each `PUT /characters/{id}` records the definition it replaced, merging an autosave " +
-    "burst on one field into one entry. The log covers the definition only — not state, " +
-    `pages or a deleted character — and keeps the newest ${UNDO_LOG_LIMIT}.`,
+    "burst on one field into one entry, and each `PUT /characters/{id}/state` that changes " +
+    "something records the state it replaced as its own entry. The log covers neither " +
+    `pages nor a deleted character, and keeps the newest ${UNDO_LOG_LIMIT} of both kinds.`,
   request: { params: idParam },
   responses: {
     200: {
@@ -313,10 +314,10 @@ const undo = createRoute({
   method: "post",
   path: "/characters/{id}/undo",
   tags: ["characters"],
-  summary: "Restore the definition an undo entry holds, and drop it and every newer entry",
+  summary: "Restore what an undo entry and every newer one replaced, and drop them",
   description:
     "Undoes back to `to`, or the newest entry alone where the body names none, in one " +
-    "write. `newest` is the head of the log the client read, and `If-Unmodified-Since` " +
+    "write to the definition, the state, or both, as the entries undone hold. `newest` is the head of the log the client read, and `If-Unmodified-Since` " +
     "the character's `updatedAt`: where either has moved on, nothing is written.",
   request: {
     params: idParam,
@@ -332,7 +333,7 @@ const undo = createRoute({
   },
   responses: {
     200: {
-      description: "The character as restored",
+      description: "The character as restored; read the state again where it changed",
       content: { "application/json": { schema: characterRecordSchema } },
     },
     404: notFound("character"),
@@ -480,7 +481,11 @@ export function charactersRoutes(
     const { id } = c.req.valid("param");
     const row = getCharacter(db, id);
     if (!row) return c.json({ error: NOT_FOUND }, 404);
-    const entries = listUndoEntries(db, id, row.definition).map((entry) => ({
+    const state = getCharacterState(db, id);
+    const entries = listUndoEntries(db, id, {
+      definition: row.definition,
+      state: state?.state,
+    }).map((entry) => ({
       ...entry,
       changedAt: entry.changedAt.toISOString(),
     }));

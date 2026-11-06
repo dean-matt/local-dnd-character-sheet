@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   type CharacterDefinition,
+  type CharacterState,
   characterDefinitionSchema,
   defaultCharacterState,
   PRESET_PAGES,
@@ -717,6 +718,128 @@ describe("the undo log", () => {
         "Charisma 19 to 20",
         "Charisma 17 to 18",
       ]);
+    });
+  });
+
+  describe("play state", () => {
+    const putState = (state: CharacterState) =>
+      routes.request(`/characters/${id}/state`, { ...json(state), method: "PUT" });
+    const withHp = (current: number | null, temporary = 0) => {
+      const state = defaultCharacterState();
+      return { ...state, hitPoints: { current, temporary } };
+    };
+    const readState = async () =>
+      (await (await routes.request(`/characters/${id}/state`)).json()).state;
+    const readDefinition = async () =>
+      (await (await routes.request(`/characters/${id}`)).json()).definition;
+
+    it("records each change that changes something as its own entry, naming each field", async () => {
+      await putState(withHp(12));
+      await putState(withHp(5));
+      await putState(withHp(5));
+      expect(await entries()).toEqual([
+        {
+          id: expect.any(Number),
+          describedAs: "Hit points 12 to 5",
+          changes: ["Hit points 12 to 5"],
+          changedAt: expect.any(String),
+        },
+        {
+          id: expect.any(Number),
+          describedAs: "Hit points full to 12",
+          changes: ["Hit points full to 12"],
+          changedAt: expect.any(String),
+        },
+      ]);
+    });
+
+    it("undoes a write that changed several fields, such as a rest, as one entry", async () => {
+      const spent = {
+        ...withHp(3, 4),
+        hitDice: [{ die: 8 as const, total: 3, remaining: 1 }],
+        deathSaves: { successes: 1, failures: 0 },
+      };
+      await putState(spent);
+      await putState({ ...withHp(null), hitDice: [{ die: 8, total: 3, remaining: 3 }] });
+      expect((await entries())[0]?.changes).toEqual([
+        "Hit points 3 to full",
+        "Temporary hit points 4 to 0",
+        "d8 hit dice 1 of 3 to 3 of 3",
+        "Death save successes 1 to 0",
+      ]);
+
+      expect((await undo()).status).toBe(200);
+      expect(await readState()).toEqual(spent);
+    });
+
+    it("keeps one history with the definition, each undo restoring only its own kind", async () => {
+      await putState(withHp(12));
+      await put(withCha(18));
+      await putState(withHp(5));
+      expect((await entries()).map((e) => e.describedAs)).toEqual([
+        "Hit points 12 to 5",
+        "Charisma 17 to 18",
+        "Hit points full to 12",
+      ]);
+
+      await undo();
+      expect(await readState()).toEqual(withHp(12));
+      expect(await readDefinition()).toEqual(withCha(18));
+      await undo();
+      expect(await readState()).toEqual(withHp(12));
+      expect(await readDefinition()).toEqual(baseDefinition());
+    });
+
+    it("does not merge a definition edit into a state entry inside the window", async () => {
+      await put(withCha(18));
+      await putState(withHp(12));
+      await put(withCha(19));
+      expect(await entries()).toHaveLength(3);
+    });
+
+    it("undoes back to an entry across both kinds in one write", async () => {
+      await putState(withHp(12));
+      await put(withCha(18), own);
+      await putState(withHp(5));
+      await put(withCha(19), own);
+      const log = await entries();
+      const res = await routes.request(`/characters/${id}/undo`, {
+        ...json({ to: log.at(-1)?.id, newest: log[0]?.id }),
+      });
+      expect(res.status).toBe(200);
+      expect(await readState()).toEqual(defaultCharacterState());
+      expect(await readDefinition()).toEqual(baseDefinition());
+      expect(await entries()).toEqual([]);
+    });
+
+    it("refuses an undo where a state write landed since the client read the log", async () => {
+      await putState(withHp(12));
+      const [read] = await entries();
+      await putState(withHp(5));
+      const res = await routes.request(`/characters/${id}/undo`, {
+        ...json({ to: read?.id, newest: read?.id }),
+      });
+      expect(res.status).toBe(412);
+      expect(await readState()).toEqual(withHp(5));
+    });
+
+    it("shares the bound of 50 with definition entries", async () => {
+      for (let at = 1; at <= 30; at++) await putState(withHp(at));
+      for (let at = 1; at <= 25; at++) await put(baseDefinition({ name: `Vex ${at}` }), own);
+      const kept = await entries();
+      expect(kept).toHaveLength(50);
+      expect(kept.at(-1)?.describedAs).toBe("Hit points 5 to 6");
+    });
+
+    it("drops a state snapshot its schema rejects, leaving the state as it was", async () => {
+      await putState(withHp(12));
+      opened.charactersDb
+        .insert(undoLog)
+        .values({ characterId: id, kind: "state", previousState: {}, describedAs: "Broken" })
+        .run();
+      expect((await undo()).status).toBe(422);
+      expect(await readState()).toEqual(withHp(12));
+      expect((await entries()).map((e) => e.describedAs)).toEqual(["Hit points full to 12"]);
     });
   });
 

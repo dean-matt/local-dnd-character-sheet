@@ -5,16 +5,23 @@ import {
 } from "@dnd/character";
 import { useIsMutating, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiMutate } from "../lib/api.ts";
-import { characterStateKey, characterStateWriteKey } from "./characterKeys.ts";
+import {
+  characterStateKey,
+  characterStateWriteKey,
+  characterUndoKey,
+  characterUndoWriteKey,
+} from "./characterKeys.ts";
 
 /**
- * Replaces a character's whole state in one write. The cache takes the response only once
+ * Replaces a character's whole state in one write, which the server records as an undo
+ * entry, so a landed write refetches the undo log. The cache takes the response only once
  * the write lands, so a failure leaves the sheet showing what the server still holds and a
  * view renders the mutation's own `error`.
  *
- * `writing` is true while any of the character's state writes is in flight, from this view or
- * another. Each write carries the whole state its caller read, so a control waits on it: a
- * second write started meanwhile would overwrite the first with what the first replaced.
+ * `writing` is true while any of the character's state writes or an undo is in flight, from
+ * this view or another. Each write carries the whole state its caller read, so a control
+ * waits on it: a second write started meanwhile would overwrite the first with what the
+ * first replaced.
  */
 export function useReplaceCharacterState(id: string) {
   const queryClient = useQueryClient();
@@ -22,8 +29,14 @@ export function useReplaceCharacterState(id: string) {
     mutationKey: characterStateWriteKey(id),
     mutationFn: (state) =>
       apiMutate("PUT", `/characters/${id}/state`, characterStateRecordSchema, state),
-    onSuccess: (record) => queryClient.setQueryData(characterStateKey(id), record),
+    onSuccess: (record) => {
+      queryClient.setQueryData(characterStateKey(id), record);
+      queryClient.invalidateQueries({ queryKey: characterUndoKey(id) });
+    },
   });
-  const writing = useIsMutating({ mutationKey: characterStateWriteKey(id) }) > 0;
+  const writing =
+    useIsMutating({ mutationKey: characterStateWriteKey(id) }) +
+      useIsMutating({ mutationKey: characterUndoWriteKey(id) }) >
+    0;
   return { ...mutation, writing };
 }

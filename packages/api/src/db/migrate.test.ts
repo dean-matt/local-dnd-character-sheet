@@ -353,6 +353,26 @@ describe("migrations", () => {
     expect(sqlite.prepare("SELECT COUNT(*) AS n FROM characters").get()).toEqual({ n: 0 });
   });
 
+  it("reads every undo entry recorded before play state was undoable as a definition entry", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0015_every_hit_die_for_classic_characters");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+    insertBareCharacter(sqlite, "1");
+    sqlite
+      .prepare(
+        "INSERT INTO undo_log (character_id, previous_state, described_as) VALUES ('1', '{}', 'Edit')",
+      )
+      .run();
+
+    migrateCharacters(db);
+
+    expect(sqlite.prepare("SELECT kind, described_as AS describedAs FROM undo_log").all()).toEqual([
+      { kind: "definition", describedAs: "Edit" },
+    ]);
+  });
+
   it("removes the stock Alignment preset and keeps an edited one as the user's own page", () => {
     sqlite = new Database(join(workspace, "characters.db"));
     const db = drizzle(sqlite);

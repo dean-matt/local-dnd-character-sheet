@@ -1,6 +1,6 @@
 /**
  * The page lists a character's page writes replaced, newest last, so a page edit can be
- * undone. The server's undo log covers the definition alone, so this one lives beside the
+ * undone. The server's undo log covers the definition and play state, so this one lives beside the
  * query cache for the session, is lost on a reload, and is bounded like the server's, at
  * `UNDO_LOG_LIMIT`.
  */

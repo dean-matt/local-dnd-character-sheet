@@ -1,11 +1,13 @@
 /**
- * What a definition write changed, in words a person reads in an undo control, and the
- * paths it touched, which the undo log compares to merge an autosave burst into one entry.
+ * What a definition or state write changed, in words a person reads in an undo control,
+ * and the paths a definition write touched, which the undo log compares to merge an
+ * autosave burst into one entry.
  */
 import { ABILITY_LABEL } from "@dnd/rules";
 import { z } from "zod";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Ability, EntryRef } from "./refs.ts";
+import type { CharacterState } from "./state.ts";
 
 /** Newest kept per character; the insert that passes it prunes the oldest. */
 export const UNDO_LOG_LIMIT = 50;
@@ -233,7 +235,7 @@ const quote = (value: unknown) =>
   typeof value === "boolean" ? (value ? "yes" : "no") : String(value);
 
 function phrase({ label, before, after }: Change): string {
-  if (!quotable(before) || !quotable(after)) return `${label} edited`;
+  if (!quotable(before) || !quotable(after) || before === after) return `${label} edited`;
   if (blank(before)) return `${label} set to ${quote(after)}`;
   if (blank(after)) return `${label} cleared`;
   return `${label} ${quote(before)} to ${quote(after)}`;
@@ -243,20 +245,151 @@ function phrase({ label, before, after }: Change): string {
 export const changePhrases = (before: CharacterDefinition, after: CharacterDefinition) =>
   changes(before, after).map(phrase);
 
-/**
- * `null` where the two definitions hold the same character. Past three changes the
- * description names the first two and counts the rest, so a level-up stays one line.
- */
+/** Past three changes the description names the first two and counts the rest, so a level-up stays one line. */
+function describe(found: Change[]) {
+  const phrases = found.map(phrase);
+  return phrases.length > 3
+    ? `${phrases.slice(0, 2).join(", ")} and ${phrases.length - 2} more changes`
+    : phrases.join(", ");
+}
+
+/** `null` where the two definitions hold the same character. */
 export function describeChange(
   before: CharacterDefinition,
   after: CharacterDefinition,
 ): { paths: string[]; describedAs: string } | null {
   const found = changes(before, after);
   if (found.length === 0) return null;
-  const phrases = found.map(phrase);
-  const describedAs =
-    phrases.length > 3
-      ? `${phrases.slice(0, 2).join(", ")} and ${phrases.length - 2} more changes`
-      : phrases.join(", ");
-  return { paths: found.map((change) => change.path), describedAs };
+  return { paths: found.map((change) => change.path), describedAs: describe(found) };
+}
+
+const left = (remaining: number, total: number) => `${remaining} of ${total}`;
+
+/** One change per key either side holds, each side's item read through `value`. */
+function keyed<T>(
+  path: string,
+  before: T[],
+  after: T[],
+  key: (item: T) => string,
+  label: (key: string) => string,
+  value: (item: T) => string,
+): Change[] {
+  const keys = new Set([...before, ...after].map(key));
+  return [...keys].flatMap((at) => {
+    const was = before.find((item) => key(item) === at);
+    const now = after.find((item) => key(item) === at);
+    if (equal(was, now)) return [];
+    return [
+      {
+        path: `${path}.${at}`,
+        label: label(at),
+        before: was && value(was),
+        after: now && value(now),
+      },
+    ];
+  });
+}
+
+/**
+ * Compares the values themselves and phrases them through `read`, so a change `read` does
+ * not show still records, and reads as the field edited.
+ */
+const one = <T>(
+  path: string,
+  label: string,
+  before: T,
+  after: T,
+  read: (value: T) => unknown = (value) => value,
+): Change[] =>
+  equal(before, after) ? [] : [{ path, label, before: read(before), after: read(after) }];
+
+const slotsLeft = (slot: { total: number; expended: number } | null) =>
+  slot ? left(slot.total - slot.expended, slot.total) : undefined;
+
+const names = (conditions: CharacterState["conditions"]) =>
+  conditions.map((condition) => condition.name).join(", ");
+
+/**
+ * Exhaustive, so a field added to the state fails to compile until it says how it reads.
+ * Null current hit points reads as the derived maximum, so it reads as "full".
+ */
+const STATE_CHANGES: {
+  [K in keyof CharacterState]: (before: CharacterState, after: CharacterState) => Change[];
+} = {
+  hitPoints: (before, after) => [
+    ...one(
+      "hitPoints.current",
+      "Hit points",
+      before.hitPoints.current ?? "full",
+      after.hitPoints.current ?? "full",
+    ),
+    ...one(
+      "hitPoints.temporary",
+      "Temporary hit points",
+      before.hitPoints.temporary,
+      after.hitPoints.temporary,
+    ),
+  ],
+  hitDice: (before, after) =>
+    keyed(
+      "hitDice",
+      before.hitDice,
+      after.hitDice,
+      (pool) => `d${pool.die}`,
+      (die) => `${die} hit dice`,
+      (pool) => left(pool.remaining, pool.total),
+    ),
+  spellSlots: (before, after) =>
+    keyed(
+      "spellSlots",
+      before.spellSlots,
+      after.spellSlots,
+      (slot) => String(slot.level),
+      (level) => `Level ${level} spell slots`,
+      (slot) => left(slot.total - slot.expended, slot.total),
+    ),
+  pactSlots: (before, after) =>
+    one("pactSlots", "Pact slots", before.pactSlots, after.pactSlots, slotsLeft),
+  conditions: (before, after) =>
+    one("conditions", "Conditions", before.conditions, after.conditions, names),
+  resources: (before, after) =>
+    keyed(
+      "resources",
+      before.resources,
+      after.resources,
+      (resource) => resource.name,
+      (name) => name,
+      (resource) => left(resource.current, resource.maximum),
+    ),
+  deathSaves: (before, after) => [
+    ...one(
+      "deathSaves.successes",
+      "Death save successes",
+      before.deathSaves.successes,
+      after.deathSaves.successes,
+    ),
+    ...one(
+      "deathSaves.failures",
+      "Death save failures",
+      before.deathSaves.failures,
+      after.deathSaves.failures,
+    ),
+  ],
+  exhaustion: (before, after) =>
+    one("exhaustion", "Exhaustion", before.exhaustion, after.exhaustion),
+};
+
+const stateChanges = (before: CharacterState, after: CharacterState) =>
+  (Object.keys(STATE_CHANGES) as (keyof CharacterState)[]).flatMap((field) =>
+    STATE_CHANGES[field](before, after),
+  );
+
+/** Every change from `before` to `after` play state, one phrase each, none where they are the same. */
+export const stateChangePhrases = (before: CharacterState, after: CharacterState) =>
+  stateChanges(before, after).map(phrase);
+
+/** `null` where the two states are the same. */
+export function describeStateChange(before: CharacterState, after: CharacterState) {
+  const found = stateChanges(before, after);
+  return found.length === 0 ? null : describe(found);
 }

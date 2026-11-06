@@ -1,8 +1,7 @@
-import { useIsMutating } from "@tanstack/react-query";
 import { History } from "lucide-react";
 import { type Ref, useEffect, useId, useRef, useState } from "react";
-import { characterDefinitionWriteKey } from "../../hooks/characterKeys.ts";
 import { useCharacterUndoLog } from "../../hooks/useCharacterUndoLog.ts";
+import { useCharacterWriting } from "../../hooks/useCharacterWriting.ts";
 import { useUndoCharacterChange } from "../../hooks/useUndoCharacterChange.ts";
 
 const TEXT_ENTRY =
@@ -42,7 +41,7 @@ export function UndoHistoryButton({
   const log = useCharacterUndoLog(characterId);
   const undo = useUndoCharacterChange(characterId);
   const [announced, setAnnounced] = useState("");
-  const writing = useIsMutating({ mutationKey: characterDefinitionWriteKey(characterId) }) > 0;
+  const writing = useCharacterWriting(characterId);
   const next = log.data?.[0];
   const shortcutId = useId();
   const shortcut = next ? `Control+Z or Command+Z undoes ${next.describedAs}` : "Nothing to undo";

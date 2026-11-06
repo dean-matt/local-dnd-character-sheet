@@ -1,10 +1,9 @@
 import { UNDO_LOG_LIMIT } from "@dnd/character";
-import { useIsMutating } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { EmptyNote } from "../../../components/EmptyNote.tsx";
-import { characterDefinitionWriteKey } from "../../../hooks/characterKeys.ts";
 import { useCharacter } from "../../../hooks/useCharacter.ts";
 import { useCharacterUndoLog } from "../../../hooks/useCharacterUndoLog.ts";
+import { useCharacterWriting } from "../../../hooks/useCharacterWriting.ts";
 import { useUndoCharacterChange } from "../../../hooks/useUndoCharacterChange.ts";
 import { UndoHistoryEntry } from "./UndoHistoryEntry.tsx";
 import { UndoToHereDialog } from "./UndoToHereDialog.tsx";
@@ -20,7 +19,7 @@ export function UndoHistory({ characterId }: { characterId: string }) {
   const log = useCharacterUndoLog(characterId);
   const character = useCharacter(characterId);
   const undo = useUndoCharacterChange(characterId);
-  const writing = useIsMutating({ mutationKey: characterDefinitionWriteKey(characterId) }) > 0;
+  const writing = useCharacterWriting(characterId);
   const [marked, setMarked] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<{ id: number; describedAs: string } | null>(null);
   const [announced, setAnnounced] = useState("");
