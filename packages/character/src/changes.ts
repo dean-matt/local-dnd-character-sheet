@@ -235,7 +235,7 @@ const quote = (value: unknown) =>
   typeof value === "boolean" ? (value ? "yes" : "no") : String(value);
 
 function phrase({ label, before, after }: Change): string {
-  if (!quotable(before) || !quotable(after)) return `${label} edited`;
+  if (!quotable(before) || !quotable(after) || before === after) return `${label} edited`;
   if (blank(before)) return `${label} set to ${quote(after)}`;
   if (blank(after)) return `${label} cleared`;
   return `${label} ${quote(before)} to ${quote(after)}`;
@@ -290,11 +290,24 @@ function keyed<T>(
   });
 }
 
-const one = (path: string, label: string, before: unknown, after: unknown): Change[] =>
-  equal(before, after) ? [] : [{ path, label, before, after }];
+/**
+ * Compares the values themselves and phrases them through `read`, so a change `read` does
+ * not show still records, and reads as the field edited.
+ */
+const one = <T>(
+  path: string,
+  label: string,
+  before: T,
+  after: T,
+  read: (value: T) => unknown = (value) => value,
+): Change[] =>
+  equal(before, after) ? [] : [{ path, label, before: read(before), after: read(after) }];
 
 const slotsLeft = (slot: { total: number; expended: number } | null) =>
   slot ? left(slot.total - slot.expended, slot.total) : undefined;
+
+const names = (conditions: CharacterState["conditions"]) =>
+  conditions.map((condition) => condition.name).join(", ");
 
 /**
  * Exhaustive, so a field added to the state fails to compile until it says how it reads.
@@ -336,14 +349,9 @@ const STATE_CHANGES: {
       (slot) => left(slot.total - slot.expended, slot.total),
     ),
   pactSlots: (before, after) =>
-    one("pactSlots", "Pact slots", slotsLeft(before.pactSlots), slotsLeft(after.pactSlots)),
+    one("pactSlots", "Pact slots", before.pactSlots, after.pactSlots, slotsLeft),
   conditions: (before, after) =>
-    one(
-      "conditions",
-      "Conditions",
-      before.conditions.map((condition) => condition.name).join(", "),
-      after.conditions.map((condition) => condition.name).join(", "),
-    ),
+    one("conditions", "Conditions", before.conditions, after.conditions, names),
   resources: (before, after) =>
     keyed(
       "resources",

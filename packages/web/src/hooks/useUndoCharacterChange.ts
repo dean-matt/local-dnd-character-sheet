@@ -25,10 +25,9 @@ export interface UndoBackTo {
  * including `to`. On success it lands in the detail cache the way a definition write
  * does, and the prefix invalidation refetches the undo log, the play state and every block
  * derived from the definition. The undo stays pending until that refetch settles, so a
- * state control waiting on it never writes over the restored state with the one it held. The log drops the undone entries at once, so a second press before
- * that refetch names, and undoes, the entry behind them. A failure refetches the
- * character and the log, since a refused snapshot is dropped on the server and a refused
- * target means either moved on.
+ * state control waiting on it never writes over the restored state with the one it held.
+ * A failure refetches the character and the log, since a refused snapshot is dropped on
+ * the server and a refused target means either moved on.
  */
 export function useUndoCharacterChange(id: string) {
   const queryClient = useQueryClient();

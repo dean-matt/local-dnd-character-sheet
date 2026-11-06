@@ -151,6 +151,26 @@ describe("describeStateChange", () => {
     );
   });
 
+  it("records a change its phrase does not show, as the field edited", () => {
+    const before: CharacterState = {
+      ...state,
+      pactSlots: { ...slot, level: 2 },
+      conditions: [{ name: "Poisoned", source: "PHB" }],
+      resources: [{ name: "Rage", current: 3, maximum: 3, resetsOn: "long" }],
+    };
+    const after: CharacterState = {
+      ...before,
+      pactSlots: { ...slot, level: 3 },
+      conditions: [{ name: "Poisoned", source: "XPHB" }],
+      resources: [{ name: "Rage", current: 3, maximum: 3, resetsOn: "short" }],
+    };
+    expect(stateChangePhrases(before, after)).toEqual([
+      "Pact slots edited",
+      "Conditions edited",
+      "Rage edited",
+    ]);
+  });
+
   it("names a pool, slot or resource by its key with what is left of it", () => {
     const before: CharacterState = {
       ...state,

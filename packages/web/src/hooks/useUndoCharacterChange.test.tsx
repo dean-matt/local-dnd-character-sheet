@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, stateRecord } from "../test/records.ts";
 import { stubFetch } from "../test/stubFetch.ts";
 import { characterKey, characterStateKey, characterUndoKey } from "./characterKeys.ts";
+import { useCharacterState } from "./useCharacterState.ts";
+import { useReplaceCharacterState } from "./useReplaceCharacterState.ts";
 import { useUndoCharacterChange } from "./useUndoCharacterChange.ts";
 
 function wrapper(queryClient: QueryClient) {
@@ -45,6 +47,43 @@ describe("useUndoCharacterChange", () => {
     expect(queryClient.getQueryData(characterUndoKey("1"))).toEqual([entry(1)]);
     expect(queryClient.getQueryState(characterUndoKey("1"))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(characterStateKey("1"))?.isInvalidated).toBe(true);
+  });
+
+  it("holds a state control's write until the restored state is refetched", async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let stateReads = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          return new Response(JSON.stringify(characterRecord("1", "Vex")), { status: 200 });
+        }
+        if (String(input).endsWith("/state") && ++stateReads > 1) await held;
+        return new Response(JSON.stringify(stateRecord()), { status: 200 });
+      }),
+    );
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { result } = renderHook(
+      () => ({
+        state: useCharacterState("1"),
+        replace: useReplaceCharacterState("1"),
+        undo: useUndoCharacterChange("1"),
+      }),
+      { wrapper: wrapper(queryClient) },
+    );
+    await waitFor(() => expect(result.current.state.isSuccess).toBe(true));
+
+    result.current.undo.mutate();
+    await waitFor(() => expect(stateReads).toBe(2));
+    expect(result.current.undo.isPending).toBe(true);
+    expect(result.current.replace.writing).toBe(true);
+
+    release();
+    await waitFor(() => expect(result.current.undo.isSuccess).toBe(true));
+    expect(result.current.replace.writing).toBe(false);
   });
 
   it("drops every entry back to the target, and sends what the caller last read", async () => {
