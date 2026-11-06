@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord } from "../../test/records.ts";
+import { useReplaceCharacterState } from "../../hooks/useReplaceCharacterState.ts";
+import { characterRecord, stateRecord } from "../../test/records.ts";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { UndoHistoryButton } from "./UndoHistoryButton.tsx";
 
@@ -100,6 +101,56 @@ describe("UndoHistoryButton", () => {
     );
 
     fireEvent.keyDown(screen.getByRole("button", { name: "Close" }), { key: "z", ctrlKey: true });
+    expect(posts(fetchMock)).toHaveLength(0);
+  });
+
+  it("undoes nothing on Control+Z while a play-state write is saving, and refetches the log once it lands", async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "PUT") {
+        await held;
+        return new Response(JSON.stringify(stateRecord()), { status: 200 });
+      }
+      return init?.method === "POST"
+        ? new Response(JSON.stringify(characterRecord("1", "Vex")), { status: 200 })
+        : new Response(JSON.stringify([ENTRY]), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    function Damage() {
+      const replace = useReplaceCharacterState("1");
+      return (
+        <>
+          <button type="button" onClick={() => replace.mutate(stateRecord().state)}>
+            Damage
+          </button>
+          {replace.writing && <span>Saving</span>}
+        </>
+      );
+    }
+    renderWithClient(
+      <>
+        <Damage />
+        {button()}
+      </>,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Undo Changes" })).toHaveAccessibleDescription(
+        /Charisma 17 to 18/,
+      ),
+    );
+    const reads = () => fetchMock.mock.calls.filter(([, init]) => init?.method === undefined);
+    expect(reads()).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Damage" }));
+    // The shortcut reads the same in-flight count, which lands in the same render as this.
+    await screen.findByText("Saving");
+    fireEvent.keyDown(document.body, { key: "z", ctrlKey: true });
+    release();
+
+    await waitFor(() => expect(reads()).toHaveLength(2));
     expect(posts(fetchMock)).toHaveLength(0);
   });
 

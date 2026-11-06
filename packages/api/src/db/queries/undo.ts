@@ -1,17 +1,21 @@
 /**
- * Reads and writes for `undo_log`. A row holds the definition a write replaced, so undo
- * restores it whole. Only `characters.ts` records and pops a row, inside the same
- * transaction as the definition write.
+ * Reads and writes for `undo_log`. A row holds the definition or the play state a write
+ * replaced, as its `kind` says, so undo restores it whole. Only `characters.ts` records and
+ * pops a row, inside the same transaction as the write.
  */
 import {
   type CharacterDefinition,
+  type CharacterState,
   changePhrases,
   characterDefinitionSchema,
+  characterStateSchema,
   describeChange,
+  describeStateChange,
+  stateChangePhrases,
   UNDO_LOG_LIMIT,
 } from "@dnd/character";
-import { and, desc, eq, gte, notInArray } from "drizzle-orm";
-import { undoLog } from "../characters.ts";
+import { and, asc, desc, eq, gte, notInArray } from "drizzle-orm";
+import { type UNDO_KINDS, undoLog } from "../characters.ts";
 import type { CharactersDb, CharactersWriter as Db } from "./characters.ts";
 
 /**
@@ -20,7 +24,8 @@ import type { CharactersDb, CharactersWriter as Db } from "./characters.ts";
  * with each merge: one field edited without a 30-second pause stays one entry however
  * long it runs. A section with no keys, such as spells or a resized inventory, is one
  * field, so two separate edits to it inside the window merge too. A write that sends
- * `Undo-Entry: own` is the way out for both.
+ * `Undo-Entry: own` is the way out for both. A play-state write never merges: each is a
+ * discrete action, such as one Damage.
  */
 const COALESCE_WINDOW_MS = 30_000;
 
@@ -39,13 +44,18 @@ export function newestUndoEntry(db: Db, characterId: string) {
 
 /**
  * Newest first, each with every change undoing it reverses: from its snapshot to the next
- * newer one's, or to `current` for the newest. Where either side no longer passes the
- * schema, the entry's stored description stands in.
+ * newer one of its kind, or to `current` for the newest. Where either side no longer passes
+ * the schema, the entry's stored description stands in.
  */
-export function listUndoEntries(db: CharactersDb, characterId: string, current: unknown) {
+export function listUndoEntries(
+  db: CharactersDb,
+  characterId: string,
+  current: { definition: unknown; state: unknown },
+) {
   const rows = db
     .select({
       id: undoLog.id,
+      kind: undoLog.kind,
       describedAs: undoLog.describedAs,
       changedAt: undoLog.changedAt,
       previousState: undoLog.previousState,
@@ -54,11 +64,21 @@ export function listUndoEntries(db: CharactersDb, characterId: string, current: 
     .where(eq(undoLog.characterId, characterId))
     .orderBy(desc(undoLog.id))
     .all();
-  let after = characterDefinitionSchema.safeParse(current);
-  return rows.map(({ previousState, ...entry }) => {
-    const before = characterDefinitionSchema.safeParse(previousState);
-    const phrases = before.success && after.success ? changePhrases(before.data, after.data) : [];
-    after = before;
+  let definitionAfter = characterDefinitionSchema.safeParse(current.definition);
+  let stateAfter = characterStateSchema.safeParse(current.state);
+  return rows.map(({ previousState, kind, ...entry }) => {
+    let phrases: string[] = [];
+    if (kind === "state") {
+      const before = characterStateSchema.safeParse(previousState);
+      if (before.success && stateAfter.success)
+        phrases = stateChangePhrases(before.data, stateAfter.data);
+      stateAfter = before;
+    } else {
+      const before = characterDefinitionSchema.safeParse(previousState);
+      if (before.success && definitionAfter.success)
+        phrases = changePhrases(before.data, definitionAfter.data);
+      definitionAfter = before;
+    }
     return { ...entry, changes: phrases.length > 0 ? phrases : [entry.describedAs] };
   });
 }
@@ -73,6 +93,22 @@ export function undoEntry(db: Db, characterId: string, id: number) {
 
 export function deleteUndoEntry(db: Db, id: number) {
   db.delete(undoLog).where(eq(undoLog.id, id)).run();
+}
+
+/** The oldest entry of `kind` from `id` on, which an undo back to `id` restores. */
+export function oldestUndoEntryFrom(
+  db: Db,
+  characterId: string,
+  id: number,
+  kind: (typeof UNDO_KINDS)[number],
+) {
+  return db
+    .select()
+    .from(undoLog)
+    .where(and(eq(undoLog.characterId, characterId), eq(undoLog.kind, kind), gte(undoLog.id, id)))
+    .orderBy(asc(undoLog.id))
+    .limit(1)
+    .get();
 }
 
 /** Drops the entry `id` and every newer one, which an undo back to `id` reverses. */
@@ -101,6 +137,7 @@ export function recordChange(
   const start = newest && characterDefinitionSchema.safeParse(newest.previousState);
   if (
     newest &&
+    newest.kind === "definition" &&
     !newest.sealed &&
     start?.success &&
     now.getTime() - newest.changedAt.getTime() < COALESCE_WINDOW_MS
@@ -129,6 +166,26 @@ export function recordChange(
       sealed: own,
     })
     .run();
+  prune(db, characterId);
+}
+
+/** Records `before` as what undo restores after the play state `after` lands, then prunes. */
+export function recordStateChange(
+  db: Db,
+  characterId: string,
+  before: CharacterState,
+  after: CharacterState,
+  now: Date,
+) {
+  const describedAs = describeStateChange(before, after);
+  if (!describedAs) return;
+  db.insert(undoLog)
+    .values({ characterId, kind: "state", previousState: before, describedAs, changedAt: now })
+    .run();
+  prune(db, characterId);
+}
+
+function prune(db: Db, characterId: string) {
   const kept = db
     .select({ id: undoLog.id })
     .from(undoLog)

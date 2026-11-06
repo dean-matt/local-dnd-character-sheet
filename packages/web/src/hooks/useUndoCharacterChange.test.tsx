@@ -2,9 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord } from "../test/records.ts";
+import { characterRecord, stateRecord } from "../test/records.ts";
 import { stubFetch } from "../test/stubFetch.ts";
-import { characterKey, characterUndoKey } from "./characterKeys.ts";
+import { characterKey, characterStateKey, characterUndoKey } from "./characterKeys.ts";
 import { useUndoCharacterChange } from "./useUndoCharacterChange.ts";
 
 function wrapper(queryClient: QueryClient) {
@@ -28,6 +28,7 @@ describe("useUndoCharacterChange", () => {
       changedAt: "2026-01-01T00:00:00.000Z",
     });
     queryClient.setQueryData(characterUndoKey("1"), [entry(2), entry(1)]);
+    queryClient.setQueryData(characterStateKey("1"), stateRecord());
 
     const { result } = renderHook(() => useUndoCharacterChange("1"), {
       wrapper: wrapper(queryClient),
@@ -43,6 +44,7 @@ describe("useUndoCharacterChange", () => {
     expect(queryClient.getQueryData(characterKey("1"))).toEqual(restored);
     expect(queryClient.getQueryData(characterUndoKey("1"))).toEqual([entry(1)]);
     expect(queryClient.getQueryState(characterUndoKey("1"))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(characterStateKey("1"))?.isInvalidated).toBe(true);
   });
 
   it("drops every entry back to the target, and sends what the caller last read", async () => {

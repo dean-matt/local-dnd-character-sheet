@@ -10,6 +10,7 @@ import {
   type CharacterFile,
   type CharacterState,
   characterDefinitionSchema,
+  characterStateSchema,
   defaultCharacterState,
   PRESET_PAGES,
   refKey,
@@ -25,7 +26,9 @@ import {
   deleteUndoEntriesFrom,
   deleteUndoEntry,
   newestUndoEntry,
+  oldestUndoEntryFrom,
   recordChange,
+  recordStateChange,
   undoEntry,
 } from "./undo.ts";
 
@@ -215,11 +218,27 @@ function findUndoTarget(
 }
 
 /**
- * Restores the definition the target `undo_log` row holds, in one write, and drops that
- * row and every newer one, recording nothing, since there is no redo. `undefined` where
- * `id` names no character. A snapshot the schema now refuses restores nothing and drops
- * that row alone, so the next undo reaches the entry behind it; the current definition
- * and the newer entries are never touched.
+ * What an undo back to entry `from` restores: the definition the oldest definition entry
+ * from it on holds, and the state the oldest state entry holds, either absent where no entry
+ * of its kind is among them. `refused` is the first of those two the schema now refuses.
+ */
+function snapshotsFrom(tx: CharactersWriter, id: string, from: number) {
+  const definitionEntry = oldestUndoEntryFrom(tx, id, from, "definition");
+  const stateEntry = oldestUndoEntryFrom(tx, id, from, "state");
+  const definition =
+    definitionEntry && characterDefinitionSchema.safeParse(definitionEntry.previousState);
+  const state = stateEntry && characterStateSchema.safeParse(stateEntry.previousState);
+  if (definition?.success === false) return { refused: definitionEntry } as const;
+  if (state?.success === false) return { refused: stateEntry } as const;
+  return { definition: definition?.data, state: state?.data } as const;
+}
+
+/**
+ * Restores what the target `undo_log` row and every newer one replaced, in one write to the
+ * definition, the state, or both, and drops those rows, recording nothing, since there is no
+ * redo. `undefined` where `id` names no character. A snapshot the schema now refuses
+ * restores nothing and drops that row alone, so the next undo reaches past it; the current
+ * definition, state and the other entries are never touched.
  */
 export function undoChanges(
   db: CharactersDb,
@@ -229,17 +248,20 @@ export function undoChanges(
   return db.transaction((tx) => {
     const found = findUndoTarget(tx, id, target);
     if (found?.kind !== "found") return found;
-    const { entry } = found;
-    const previous = characterDefinitionSchema.safeParse(entry.previousState);
-    if (!previous.success) {
-      deleteUndoEntry(tx, entry.id);
+    const snapshots = snapshotsFrom(tx, id, found.entry.id);
+    if (snapshots.refused) {
+      deleteUndoEntry(tx, snapshots.refused.id);
       return {
         kind: "invalid",
-        message: `Cannot restore "${entry.describedAs}", so it was dropped`,
+        message: `Cannot restore "${snapshots.refused.describedAs}", so it was dropped`,
       };
     }
-    deleteUndoEntriesFrom(tx, id, entry.id);
-    const row = writeDefinition(tx, id, previous.data, new Date());
+    deleteUndoEntriesFrom(tx, id, found.entry.id);
+    const now = new Date();
+    if (snapshots.state) writeState(tx, id, snapshots.state, now);
+    const row = snapshots.definition
+      ? writeDefinition(tx, id, snapshots.definition, now)
+      : tx.select().from(characters).where(eq(characters.id, id)).get();
     if (!row) return undefined;
     return { kind: "restored", row };
   });
@@ -366,16 +388,33 @@ export function getCharacterState(db: CharactersDb, characterId: string) {
   return db.select().from(characterState).where(eq(characterState.characterId, characterId)).get();
 }
 
-/**
- * `undefined` where `characterId` names no row, the way `updateCharacterDefinition` reads
- * a miss. Touches only `character_state` — `characters.definition`, `.level` and
- * `.edition` are a different table this statement never names.
- */
-export function updateCharacterState(db: CharactersDb, characterId: string, state: CharacterState) {
+function writeState(db: CharactersWriter, characterId: string, state: CharacterState, now: Date) {
   return db
     .update(characterState)
-    .set({ state, updatedAt: new Date() })
+    .set({ state, updatedAt: now })
     .where(eq(characterState.characterId, characterId))
     .returning()
     .get();
+}
+
+/**
+ * `undefined` where `characterId` names no row, the way `updateCharacterDefinition` reads
+ * a miss. Touches only `character_state` and `undo_log` — `characters.definition`,
+ * `.level` and `.edition` are a different table this statement never names. Records what
+ * it replaced as its own undo entry; a stored state its schema now refuses records
+ * nothing, since undo could not restore it.
+ */
+export function updateCharacterState(db: CharactersDb, characterId: string, state: CharacterState) {
+  return db.transaction((tx) => {
+    const current = tx
+      .select({ state: characterState.state })
+      .from(characterState)
+      .where(eq(characterState.characterId, characterId))
+      .get();
+    if (!current) return undefined;
+    const now = new Date();
+    const before = characterStateSchema.safeParse(current.state);
+    if (before.success) recordStateChange(tx, characterId, before.data, state, now);
+    return writeState(tx, characterId, state, now);
+  });
 }

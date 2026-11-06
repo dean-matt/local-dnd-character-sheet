@@ -1,0 +1,1 @@
+ALTER TABLE `undo_log` ADD `kind` text DEFAULT 'definition' NOT NULL;

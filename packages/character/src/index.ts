@@ -54,7 +54,9 @@ export type {
 export {
   changePhrases,
   describeChange,
+  describeStateChange,
   SECTION_LABEL,
+  stateChangePhrases,
   UNDO_LOG_LIMIT,
   undoLogSchema,
 } from "./changes.ts";

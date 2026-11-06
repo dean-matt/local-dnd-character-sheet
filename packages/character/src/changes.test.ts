@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { type CharacterDefinition, changePhrases, describeChange } from "./index.ts";
+import {
+  type CharacterDefinition,
+  type CharacterState,
+  changePhrases,
+  defaultCharacterState,
+  describeChange,
+  describeStateChange,
+  stateChangePhrases,
+} from "./index.ts";
 import { definition } from "./test/vex.ts";
 
 const edit = (change: Partial<CharacterDefinition>): CharacterDefinition => ({
@@ -113,6 +121,59 @@ describe("describeChange", () => {
       "Strength 8 to 9",
       "Dexterity 16 to 17",
       "Constitution 14 to 15",
+    ]);
+  });
+});
+
+describe("describeStateChange", () => {
+  const state = defaultCharacterState();
+  const slot = { level: 1, total: 4, expended: 1 };
+
+  it("is null where nothing changed", () => {
+    expect(describeStateChange(state, structuredClone(state))).toBeNull();
+  });
+
+  it("names each field with both values, reading null hit points as full", () => {
+    const after: CharacterState = {
+      ...state,
+      hitPoints: { current: 7, temporary: 5 },
+      deathSaves: { successes: 0, failures: 2 },
+      exhaustion: 1,
+    };
+    expect(stateChangePhrases(state, after)).toEqual([
+      "Hit points full to 7",
+      "Temporary hit points 0 to 5",
+      "Death save failures 0 to 2",
+      "Exhaustion 0 to 1",
+    ]);
+    expect(describeStateChange(state, after)).toBe(
+      "Hit points full to 7, Temporary hit points 0 to 5 and 2 more changes",
+    );
+  });
+
+  it("names a pool, slot or resource by its key with what is left of it", () => {
+    const before: CharacterState = {
+      ...state,
+      hitDice: [{ die: 10, total: 2, remaining: 0 }],
+      spellSlots: [slot],
+      pactSlots: { ...slot, expended: 2 },
+      resources: [{ name: "Rage", current: 0, maximum: 3, resetsOn: "long" }],
+      conditions: [{ name: "Poisoned", source: "XPHB" }],
+    };
+    const after: CharacterState = {
+      ...before,
+      hitDice: [{ die: 10, total: 2, remaining: 1 }],
+      spellSlots: [{ ...slot, expended: 0 }],
+      pactSlots: { ...slot, expended: 0 },
+      resources: [{ name: "Rage", current: 3, maximum: 3, resetsOn: "long" }],
+      conditions: [],
+    };
+    expect(stateChangePhrases(before, after)).toEqual([
+      "d10 hit dice 0 of 2 to 1 of 2",
+      "Level 1 spell slots 3 of 4 to 4 of 4",
+      "Pact slots 2 of 4 to 4 of 4",
+      "Conditions cleared",
+      "Rage 0 of 3 to 3 of 3",
     ]);
   });
 });

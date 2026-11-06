@@ -113,6 +113,13 @@
       "when": 1793908639175,
       "tag": "0015_every_hit_die_for_classic_characters",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1793979326242,
+      "tag": "0016_undo_play_state",
+      "breakpoints": true
     }
   ]
 }
