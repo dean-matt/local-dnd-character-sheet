@@ -10,6 +10,23 @@ const sheet = {
   ],
   spellSlots: [{ level: 1, total: total(4) }],
   pactSlots: { level: 2, total: total(2) },
+  classResources: [],
+};
+
+const BARBARIAN = { name: "Barbarian", source: "PHB" };
+const MONK = { name: "Monk", source: "PHB" };
+
+const rages = (maximum: number | null) => ({
+  class: BARBARIAN,
+  key: "rages",
+  maximum: maximum === null ? null : total(maximum),
+});
+
+const superiorityDice = {
+  name: "Superiority Dice",
+  current: 1,
+  maximum: 4,
+  resetsOn: "short" as const,
 };
 
 const state = () => ({
@@ -42,6 +59,46 @@ describe("sheetState", () => {
       { die: 10, total: 3, remaining: 3 },
       { die: 6, total: 3, remaining: 3 },
     ]);
+  });
+});
+
+describe("sheetState's class resources", () => {
+  it("holds each pool the derived block lists at its maximum, nothing spent where state holds none", () => {
+    const read = sheetState(
+      {
+        ...sheet,
+        classResources: [rages(3), { class: MONK, key: "ki_points", maximum: total(5, 6) }],
+      },
+      state(),
+    );
+    expect(read.classResources).toEqual([
+      { class: BARBARIAN, key: "rages", maximum: 3, expended: 0 },
+      { class: MONK, key: "ki_points", maximum: 6, expended: 0 },
+    ]);
+  });
+
+  it("caps what was spent at a lowered maximum and never caps an unlimited pool", () => {
+    const spent = {
+      ...state(),
+      classResources: [{ class: BARBARIAN, key: "rages", maximum: 5, expended: 4 }],
+    };
+    expect(sheetState({ ...sheet, classResources: [rages(3)] }, spent).classResources).toEqual([
+      { class: BARBARIAN, key: "rages", maximum: 3, expended: 3 },
+    ]);
+    expect(sheetState({ ...sheet, classResources: [rages(null)] }, spent).classResources).toEqual([
+      { class: BARBARIAN, key: "rages", maximum: null, expended: 4 },
+    ]);
+  });
+
+  it("drops a pool the derived block no longer lists and keeps every counter the user added", () => {
+    const spent = {
+      ...state(),
+      resources: [superiorityDice],
+      classResources: [{ class: BARBARIAN, key: "rages", maximum: 2, expended: 1 }],
+    };
+    const read = sheetState(sheet, spent);
+    expect(read.classResources).toEqual([]);
+    expect(read.resources).toEqual([superiorityDice]);
   });
 });
 

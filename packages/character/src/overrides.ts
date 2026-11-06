@@ -29,6 +29,7 @@ const ELEMENT_KEY: {
   skills: (skill) => refKey(skill.ref),
   spellcasting: (caster) => entryKey(caster.class),
   spellSlots: (slot) => String(slot.level),
+  classResources: (pool) => `${entryKey(pool.class)}|${pool.key}`,
   containers: (container) => container.name,
   unproficientItems: (item) => String(item.entry),
   pendingAbilityPicks: (pick) => String(pick.entry),

@@ -37,6 +37,7 @@ export type {
   ArmorTrait,
   CasterTable,
   CharacterCatalog,
+  ClassResourceCell,
   ContainerTrait,
   DefenseTrait,
   FeatGrantTrait,
@@ -71,6 +72,7 @@ export {
   type LegacyCharacterFile,
   legacyCharacterFileSchema,
 } from "./characterFile.ts";
+export { resourceLabel } from "./classResources.ts";
 export {
   carriesCustomSkills,
   convertCustomSkills,

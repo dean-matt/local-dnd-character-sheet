@@ -180,6 +180,18 @@ export const characterDerivedSchema = z.strictObject({
   pactSlots: z
     .strictObject({ level: z.int().min(1).max(9), total: derivedSchema(z.int().min(1)) })
     .nullable(),
+  /**
+   * Each pool of uses a class table prints at the character's level in that class, by class
+   * in the order it was taken. `key` is the table's `resource_key`; `maximum` is null where
+   * the table prints `Unlimited`. What is spent is state.
+   */
+  classResources: z.array(
+    z.strictObject({
+      class: entryRefSchema,
+      key: z.string().min(1),
+      maximum: derivedSchema(z.int().min(1)).nullable(),
+    }),
+  ),
   /** Pounds, from the Strength score and `size`. */
   carryingCapacity: derivedSchema(z.number().min(0)),
   /**

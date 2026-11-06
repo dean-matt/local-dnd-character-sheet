@@ -249,6 +249,7 @@ describe("deriveCharacter", () => {
     containers: new Map<string, ContainerTrait>(),
     featGrants: new Map(),
     weaponMasteryKinds: new Map<string, number>(),
+    classResources: new Map(),
   };
 
   const derived = deriveCharacter(equipped, catalog);
@@ -2155,6 +2156,27 @@ describe("deriveCharacter", () => {
       expect(sensesOf([worn(HELM)]).map(({ name }) => name)).toEqual(["darkvision"]);
       expect(sensesOf([{ ...worn(GOGGLES), equipped: false }]).map(({ from }) => from)).toEqual([
         [raceSummary(equipped)],
+      ]);
+    });
+  });
+
+  describe("class resources", () => {
+    const BARBARIAN = { name: "Barbarian", source: "PHB" };
+    const barbarian: CharacterDefinition = { ...definition, levels: [{ class: BARBARIAN }] };
+    const pool = { class: BARBARIAN, key: "rages", maximum: null };
+
+    it("lists the class table's pools, and names an override by class and key", () => {
+      const key = `${overrideKey("classResources", pool, barbarian)}.maximum`;
+      const block = deriveCharacter(
+        { ...barbarian, overrides: { [key]: 4 } },
+        {
+          ...catalog,
+          hitDice: new Map([[entryKey(BARBARIAN), 12 as const]]),
+          classResources: new Map([[entryKey(BARBARIAN), [{ key: "rages", value: "2" }]]]),
+        },
+      );
+      expect(block.classResources).toEqual([
+        { class: BARBARIAN, key: "rages", maximum: { computed: 2, manual: 4, terms: [] } },
       ]);
     });
   });

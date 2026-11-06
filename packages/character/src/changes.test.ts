@@ -196,4 +196,26 @@ describe("describeStateChange", () => {
       "Rage 0 of 3 to 3 of 3",
     ]);
   });
+
+  it("names a class resource by its key, an unlimited one by what is spent", () => {
+    const barbarian = { name: "Barbarian", source: "PHB" };
+    const before: CharacterState = {
+      ...state,
+      classResources: [
+        { class: barbarian, key: "rages", maximum: 3, expended: 1 },
+        { class: { name: "Monk", source: "PHB" }, key: "ki_points", maximum: null, expended: 0 },
+      ],
+    };
+    const after: CharacterState = {
+      ...before,
+      classResources: [
+        { class: barbarian, key: "rages", maximum: 3, expended: 2 },
+        { class: { name: "Monk", source: "PHB" }, key: "ki_points", maximum: null, expended: 1 },
+      ],
+    };
+    expect(stateChangePhrases(before, after)).toEqual([
+      "Rages 2 of 3 to 1 of 3",
+      "Ki points 0 spent to 1 spent",
+    ]);
+  });
 });

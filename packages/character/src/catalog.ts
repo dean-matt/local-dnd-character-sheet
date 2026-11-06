@@ -226,6 +226,11 @@ export type CharacterCatalog = {
    * as Way of the Four Elements, which casts with neither slots nor a prepared list.
    */
   casterTables: ReadonlyMap<string, CasterTable>;
+  /**
+   * Keyed like `hitDice`: the class table's resource cells at the character's level in the
+   * class, as `class_resources` stores them, absent for a class whose table prints none.
+   */
+  classResources: ReadonlyMap<string, readonly ClassResourceCell[]>;
   skills: readonly SkillTrait[];
   /** Every size the race offers, never empty; the definition's `size` picks among them. */
   sizes: readonly Size[];
@@ -258,6 +263,9 @@ export type CharacterCatalog = {
   /** Keyed like `weapons`, and absent for an item that holds nothing. */
   containers: ReadonlyMap<string, ContainerTrait>;
 };
+
+/** One column of a class table at one level: `rages` and `3`, or `martial_arts` and `1d6`. */
+export type ClassResourceCell = { key: string; value: string };
 
 /**
  * How a class counts the spells it may prepare: the `classic` arithmetic `rule`, or the

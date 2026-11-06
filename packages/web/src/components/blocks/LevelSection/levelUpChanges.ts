@@ -3,7 +3,7 @@
  * and the features that arrived. A value that did not move is left out.
  */
 import type { ClassGrants } from "@dnd/catalog";
-import type { CharacterDerived, Derived } from "@dnd/character";
+import { type CharacterDerived, type Derived, resourceLabel } from "@dnd/character";
 import { featureTypeLabel } from "../../../lib/featureTypeLabel.ts";
 import { ORDINAL } from "../../../lib/spellLevel.ts";
 import { signed } from "../signed.ts";
@@ -13,12 +13,6 @@ export type LevelChange = { label: string; before: string; after: string };
 type Table = Pick<ClassGrants, "resources" | "optionalFeatures">;
 
 const NONE = "none";
-
-/** `ki_points` as `Ki points`. */
-const resourceLabel = (key: string) => {
-  const words = key.replaceAll("_", " ");
-  return words.charAt(0).toUpperCase() + words.slice(1);
-};
 
 /** A field the player typed over shows what stands and the computed value beneath it. */
 function shown(

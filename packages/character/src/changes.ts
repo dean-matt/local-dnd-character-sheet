@@ -5,7 +5,9 @@
  */
 import { ABILITY_LABEL } from "@dnd/rules";
 import { z } from "zod";
+import { resourceLabel } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
+import { entryKey } from "./keys.ts";
 import type { Ability, EntryRef } from "./refs.ts";
 import type { CharacterState } from "./state.ts";
 
@@ -360,6 +362,18 @@ const STATE_CHANGES: {
       (resource) => resource.name,
       (name) => name,
       (resource) => left(resource.current, resource.maximum),
+    ),
+  classResources: (before, after) =>
+    keyed(
+      "classResources",
+      before.classResources,
+      after.classResources,
+      (pool) => `${pool.key}|${entryKey(pool.class)}`,
+      (at) => resourceLabel(at.slice(0, at.indexOf("|"))),
+      (pool) =>
+        pool.maximum === null
+          ? `${pool.expended} spent`
+          : left(pool.maximum - pool.expended, pool.maximum),
     ),
   deathSaves: (before, after) => [
     ...one(

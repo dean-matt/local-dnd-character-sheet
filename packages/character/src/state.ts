@@ -1,7 +1,7 @@
 import { HIT_DICE, RESET_TRIGGERS } from "@dnd/rules";
 import { z } from "zod";
-import { isUnique } from "./keys.ts";
-import { contentRefSchema } from "./refs.ts";
+import { entryKey, isUnique } from "./keys.ts";
+import { contentRefSchema, entryRefSchema } from "./refs.ts";
 
 const hitPointsSchema = z.strictObject({
   /**
@@ -29,7 +29,7 @@ export const spellSlotSchema = z
   })
   .refine((slot) => slot.expended <= slot.total, { error: "expended exceeds total" });
 
-/** Class resources and user-invented counters share one shape, so neither needs special casing. */
+/** A counter the user added, such as Superiority Dice, which no class table prints. */
 export const resourceSchema = z
   .strictObject({
     name: z.string().min(1),
@@ -38,6 +38,22 @@ export const resourceSchema = z
     resetsOn: z.enum(RESET_TRIGGERS),
   })
   .refine((resource) => resource.current <= resource.maximum, { error: "current exceeds maximum" });
+
+/**
+ * A pool of uses a class table prints, such as Rages or Ki Points, keyed by its class and the
+ * table's `resource_key`. Counted as uses spent rather than left, because a null `maximum`,
+ * the `Unlimited` a level 20 barbarian's rages print, leaves nothing to count down from.
+ */
+const classResourceSchema = z
+  .strictObject({
+    class: entryRefSchema,
+    key: z.string().min(1),
+    maximum: z.int().min(1).nullable(),
+    expended: z.int().min(0),
+  })
+  .refine((pool) => pool.maximum === null || pool.expended <= pool.maximum, {
+    error: "expended exceeds maximum",
+  });
 
 const deathSavesSchema = z.strictObject({
   successes: z.int().min(0).max(3).default(0),
@@ -72,6 +88,12 @@ export const characterStateSchema = z.strictObject({
       error: "exhaustion is held as a level, not a condition reference",
     }),
   resources: z.array(resourceSchema),
+  classResources: z
+    .array(classResourceSchema)
+    .refine((pools) => isUnique(pools, (pool) => `${entryKey(pool.class)}|${pool.key}`), {
+      error: "the same class resource is listed twice",
+    })
+    .default([]),
   deathSaves: deathSavesSchema,
   exhaustion: z.int().min(0).max(6).default(0),
 });

@@ -37,6 +37,7 @@ describe("default state", () => {
       pactSlots: null,
       conditions: [],
       resources: [],
+      classResources: [],
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
     });
@@ -60,6 +61,17 @@ describe("counters cannot exceed their pool", () => {
     expect(
       resourceSchema.safeParse({ name: "Ki", current: 6, maximum: 5, resetsOn: "short" }).success,
     ).toBe(false);
+  });
+
+  it("rejects a class resource spent past its maximum, but not an unlimited one", () => {
+    const pool = (maximum: number | null) => ({
+      ...state,
+      classResources: [
+        { class: { name: "Barbarian", source: "PHB" }, key: "rages", maximum, expended: 7 },
+      ],
+    });
+    expect(characterStateSchema.safeParse(pool(6)).success).toBe(false);
+    expect(characterStateSchema.safeParse(pool(null)).success).toBe(true);
   });
 
   it("rejects a die size that is not a hit die", () => {
@@ -88,6 +100,13 @@ describe("invariants a duplicate row would break", () => {
       ],
     };
     expect(characterStateSchema.safeParse(split).success).toBe(false);
+  });
+});
+
+describe("a state stored before class resources", () => {
+  it("parses with none spent", () => {
+    const { classResources: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).classResources).toEqual([]);
   });
 });
 

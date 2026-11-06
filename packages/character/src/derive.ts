@@ -46,6 +46,7 @@ import type {
   WeaponTrait,
 } from "./catalog.ts";
 import type { CharacterDerived, Defenses } from "./characterDerived.ts";
+import { classResourcePools } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { featHitPointTerms, featInitiativeTerms, speedWithFeats } from "./featEffects.ts";
@@ -1000,6 +1001,7 @@ export function deriveCharacter(
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
+    classResources: classResourcePools(definition, catalog),
     ...carrying,
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
