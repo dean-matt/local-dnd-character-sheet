@@ -125,7 +125,7 @@ the old id and refuses a name another row now holds.
 ## Play state
 
 `PUT /characters/{id}/state` (`packages/api/src/routes/characters.ts`) writes
-`character_state` whole. A rest, Damage, Heal and the death saves call it, through
+`character_state` whole. A rest, Damage, Heal, the death saves and the spell slots call it, through
 `hooks/useReplaceCharacterState.ts`, and an import sets it. Each call that changes something
 is one undo entry, which restores every field it changed and leaves the definition alone.
 
@@ -134,8 +134,8 @@ is one undo entry, which restores every field it changed and leaves the definiti
 | Hit points, and the death saves they move | Undo, or Damage and Heal on the Hit Points card, `components/blocks/AbilitiesSection/Vitals/HitPointChange.tsx`. Heal restores current hit points that Damage took, but not the temporary hit points it spent, and healing from 0 clears both death-save counts rather than restoring them. Damage that kills asks first, because clearing a death save failure brings the character back still at 0 hit points |
 | Temporary hit points | Undo, or Grant temp and Clear temp on the Hit Points card, `components/blocks/AbilitiesSection/Vitals/HitPointChange.tsx`. A grant no larger than those held keeps them and offers to take the grant instead |
 | Death save marks, and death | Undo, or the marks and Roll on the Death Saves card, `components/blocks/AbilitiesSection/Vitals/DeathSaves.tsx`. Each mark is set or cleared by hand at any hit points, so a save recorded wrongly, or the second failure a critical hit at 0 costs, is marked there, and clearing a failure returns a dead character to dying |
-| Spell and pact slots | Not built: #278 |
+| Spell and pact slots | Undo, or the pips on the Spell Slots card, `components/blocks/SpellsSection/SpellSlots/SpellSlots.tsx`. A pip leaves that many slots expended, so an empty pip spends every slot up to it and the last expended pip restores its slot |
 | Class resources | Not built: #279 |
 | Conditions and exhaustion | Not built: #280 |
-| Hit dice, and a rest | Undo, which restores every field the rest changed. Hit points also take Damage and Heal; the other fields it moves get their own controls in #278, #279 and #280 |
+| Hit dice, and a rest | Undo, which restores every field the rest changed. Hit points also take Damage and Heal, and slots the Spell Slots card; the other fields it moves get their own controls in #279 and #280 |
 | Concentration, inspiration | Not stored: #123, #396 |
