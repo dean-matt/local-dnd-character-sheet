@@ -15,7 +15,7 @@ const { shape } = characterDerivedSchema;
 
 /**
  * Current, temporary and each die's remaining hit dice, read against the derived totals by
- * `sheetState`, and the control that applies damage or healing.
+ * `sheetState`, and the controls that apply damage, healing and temporary hit points.
  */
 export function HitPoints({
   character,

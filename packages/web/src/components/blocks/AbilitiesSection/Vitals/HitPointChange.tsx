@@ -3,10 +3,11 @@ import {
   type CharacterRecord,
   type CharacterState,
   damagedState,
+  deathSaveStatus,
   derivedValue,
   healedState,
 } from "@dnd/character";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { InputField } from "../../../InputField.tsx";
@@ -27,9 +28,16 @@ function parseAmount(typed: string): { amount: number } | { error: string } {
   return { amount };
 }
 
+function withTemporary(state: CharacterState, temporary: number): CharacterState {
+  return { ...state, hitPoints: { ...state.hitPoints, temporary } };
+}
+
 /**
  * The amount field with Damage and Heal, which write what `damagedState` or `healedState`
- * returns in one state write. Damage that leaves the character dead asks first. A failed write
+ * returns, and Grant temp and Clear temp, which write the temporary hit points alone. Each is
+ * one state write. Damage that leaves the character dead asks first. Temporary hit points do
+ * not stack, so a grant no larger than those held keeps them and offers to take the grant
+ * instead; a grant to the dead writes nothing. A failed write
  * keeps the amount and names the error, and the card goes on showing what the server holds,
  * since the cache takes only a write that lands.
  */
@@ -46,33 +54,76 @@ export function HitPointChange({
   const [typed, setTyped] = useState("");
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ amount: number; changed: Changed }>();
+  const [notice, setNotice] = useState<{ text: string; instead?: number }>();
   const [announced, setAnnounced] = useState({ text: "", count: 0 });
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
+  const grantButton = useRef<HTMLButtonElement>(null);
   const maximum = derivedValue(derived.hitPointMaximum);
+  const { temporary } = state.hitPoints;
 
-  async function write({ state: after }: Changed) {
+  function announce(text: string) {
+    setAnnounced(({ count }) => ({ text, count: count + 1 }));
+  }
+
+  async function write(after: CharacterState, text: string) {
     try {
       await replace.mutateAsync(after);
     } catch {
-      return;
+      return false;
     }
     setTyped("");
-    setAnnounced(({ count }) => ({
-      text: `${after.hitPoints.current ?? maximum} hit points.`,
-      count: count + 1,
-    }));
+    setNotice(undefined);
+    announce(text);
+    return true;
   }
 
-  function apply(kind: "damage" | "heal") {
+  function writeHitPoints({ state: after }: Changed) {
+    return write(after, `${after.hitPoints.current ?? maximum} hit points.`);
+  }
+
+  function writeTemporary(amount: number) {
+    return write(withTemporary(state, amount), `${amount} temporary hit points.`);
+  }
+
+  /** For a control the write removes, so focus does not fall to the page. */
+  async function writeTemporaryFrom(amount: number) {
     if (replace.writing) return;
+    if (await writeTemporary(amount)) grantButton.current?.focus();
+  }
+
+  function say(text: string, instead?: number) {
+    setNotice({ text, instead });
+    announce(text);
+  }
+
+  function grant(amount: number) {
+    if (deathSaveStatus(derived, state) === "dead") {
+      say(`${character.name} is dead, so temporary hit points were not granted.`);
+    } else if (amount > temporary) {
+      writeTemporary(amount);
+    } else {
+      say(
+        `Kept ${temporary} temporary hit points: they do not stack, and ${amount} is no more.`,
+        amount,
+      );
+    }
+  }
+
+  function apply(kind: "damage" | "heal" | "temporary") {
+    if (replace.writing) return;
+    setNotice(undefined);
     const parsed = parseAmount(typed);
     if ("error" in parsed) {
       setInvalid(parsed.error);
       return;
     }
+    if (kind === "temporary") {
+      grant(parsed.amount);
+      return;
+    }
     if (kind === "heal") {
-      write(healedState(derived, state, parsed.amount));
+      writeHitPoints(healedState(derived, state, parsed.amount));
       return;
     }
     const changed = damagedState(character.definition, derived, state, parsed.amount);
@@ -84,14 +135,14 @@ export function HitPointChange({
       setConfirming({ amount: parsed.amount, changed });
       return;
     }
-    write(changed);
+    writeHitPoints(changed);
   }
 
   return (
     <div className="flex flex-col">
       <div className="flex flex-wrap items-center gap-2">
         <InputField
-          label="Damage or healing amount"
+          label="Hit point amount"
           labelHidden
           type="number"
           inputMode="numeric"
@@ -104,6 +155,7 @@ export function HitPointChange({
           onChange={(event) => {
             setTyped(event.target.value);
             setInvalid(undefined);
+            setNotice(undefined);
           }}
           className="w-16"
         />
@@ -124,11 +176,45 @@ export function HitPointChange({
         >
           <span aria-hidden="true">+ </span>Heal
         </button>
+        <button
+          ref={grantButton}
+          type="button"
+          aria-disabled={replace.writing}
+          onClick={() => apply("temporary")}
+          className={`${BUTTON} border-border`}
+        >
+          Grant temp
+        </button>
+        {temporary > 0 && (
+          <button
+            type="button"
+            aria-disabled={replace.writing}
+            onClick={() => writeTemporaryFrom(0)}
+            className={`${BUTTON} border-border`}
+          >
+            Clear temp
+          </button>
+        )}
       </div>
       <div ref={setMessages} className="flex flex-col">
         {replace.error && (
           <p role="alert" className="mt-1 text-error text-row">
             Hit points were not changed: {replace.error.message}
+          </p>
+        )}
+        {notice && (
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-secondary text-row">
+            {notice.text}
+            {notice.instead !== undefined && (
+              <button
+                type="button"
+                aria-disabled={replace.writing}
+                onClick={() => notice.instead !== undefined && writeTemporaryFrom(notice.instead)}
+                className={`${BUTTON} border-border text-ink`}
+              >
+                Take {notice.instead} instead
+              </button>
+            )}
           </p>
         )}
       </div>
@@ -157,7 +243,7 @@ export function HitPointChange({
                   aria-disabled={replace.writing}
                   onClick={async () => {
                     if (replace.writing) return;
-                    await write(confirming.changed);
+                    await writeHitPoints(confirming.changed);
                     setConfirming(undefined);
                   }}
                   className="min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"

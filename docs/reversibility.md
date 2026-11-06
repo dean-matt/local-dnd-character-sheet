@@ -129,7 +129,7 @@ holds definitions alone. Each control below is the way back from its own change.
 | Decision | Control |
 |---|---|
 | Hit points, and the death saves they move | Damage and Heal on the Hit Points card, `components/blocks/AbilitiesSection/Vitals/HitPointChange.tsx`. Heal restores current hit points that Damage took, but not the temporary hit points it spent, and healing from 0 clears both death-save counts rather than restoring them. Damage that kills asks first, because clearing a death save failure brings the character back still at 0 hit points |
-| Temporary hit points | Not built: #1026 |
+| Temporary hit points | Grant temp and Clear temp on the Hit Points card, `components/blocks/AbilitiesSection/Vitals/HitPointChange.tsx`. A grant no larger than those held keeps them and offers to take the grant instead |
 | Death save marks, and death | The marks and Roll on the Death Saves card, `components/blocks/AbilitiesSection/Vitals/DeathSaves.tsx`. Each mark is set or cleared by hand at any hit points, so a save recorded wrongly, or the second failure a critical hit at 0 costs, is marked there, and clearing a failure returns a dead character to dying |
 | Spell and pact slots | Not built: #278 |
 | Class resources | Not built: #279 |
