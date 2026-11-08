@@ -13,15 +13,16 @@ type Pool = CharacterState["classResources"][number];
 export const isRaging = (state: Pick<CharacterState, "activeEffects">) =>
   state.activeEffects.some((effect) => effect.name === RAGE);
 
-/** Why a rage cannot start from this pool, or null where it can. A 2014 rage only loses its benefits in heavy armor, but entering one there gains nothing, so both editions refuse. */
+/** Why a rage cannot start from this pool, or null where it can. Both editions refuse in heavy armor, where a 2014 rage gains nothing. */
 export function rageBlockedBy(derived: Pick<CharacterDerived, "heavyArmorWorn">, pool: Pool) {
   if (derived.heavyArmorWorn) return "Heavy armor is worn.";
   if (pool.maximum !== null && pool.expended >= pool.maximum) return "No Rage use left.";
   return null;
 }
 
-/** The state with a use of the pool spent, which an `Unlimited` pool skips, and the rage begun. */
+/** The state with a use of the pool spent, which an `Unlimited` pool skips, and the rage begun; a raging state is unchanged. */
 export function rageStarted(state: CharacterState, pool: Pool): CharacterState {
+  if (isRaging(state)) return state;
   const spent =
     pool.maximum === null
       ? state

@@ -24,6 +24,11 @@ describe("starting a rage", () => {
     expect(rageBlockedBy(unarmored, pool(null, 40))).toBeNull();
   });
 
+  it("leaves a raging state as it is, spending no second use", () => {
+    const started = rageStarted(defaultCharacterState(), pool(3, 1));
+    expect(rageStarted(started, pool(3, 2))).toBe(started);
+  });
+
   it("is blocked with no use left, or in heavy armor, and says why", () => {
     expect(rageBlockedBy(unarmored, pool(3, 3))).toBe("No Rage use left.");
     expect(rageBlockedBy({ heavyArmorWorn: true }, pool(3, 0))).toBe("Heavy armor is worn.");
