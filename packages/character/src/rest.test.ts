@@ -212,3 +212,17 @@ describe("restedState", () => {
     });
   });
 });
+
+describe("a rest ends a rage", () => {
+  const raging = {
+    ...defaultCharacterState(),
+    activeEffects: [{ name: "Rage" }, { name: "Bless" }],
+  };
+
+  it.each(["short", "long"] as const)("on a %s rest, and leaves any other effect", (length) => {
+    const definition = { edition: "one" as const, houseRules: {} };
+    expect(restedState(definition, sheet, raging, length).activeEffects).toEqual([
+      { name: "Bless" },
+    ]);
+  });
+});

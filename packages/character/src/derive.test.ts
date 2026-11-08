@@ -539,6 +539,26 @@ describe("deriveCharacter", () => {
       expect(stowed.castingBlockedBy).toEqual([]);
     });
 
+    it("reports heavy armor worn only while it is equipped", () => {
+      const PLATE = { name: "Plate Armor", source: "XPHB" };
+      const heavy = (equippedPlate: boolean): CharacterDefinition => ({
+        ...equipped,
+        inventory: [
+          { ref: PLATE, quantity: 1, carried: true, equipped: equippedPlate, attuned: false },
+        ],
+      });
+      const withPlate = {
+        ...catalog,
+        weights: new Map([...catalog.weights, [entryKey(PLATE), 65]]),
+        armor: new Map<string, ArmorTrait>([
+          [entryKey(PLATE), { name: PLATE.name, category: "heavy" as const, armorClass: 18 }],
+        ]),
+      };
+      expect(deriveCharacter(heavy(true), withPlate).heavyArmorWorn).toBe(true);
+      expect(deriveCharacter(heavy(false), withPlate).heavyArmorWorn).toBe(false);
+      expect(deriveCharacter(gear(true), withHide).heavyArmorWorn).toBe(false);
+    });
+
     it("counts an armor the character is proficient with by name", () => {
       const ELVEN_CHAIN = { name: "Elven Chain", source: "DMG" };
       const worn = (armor: string[]): CharacterDefinition => ({

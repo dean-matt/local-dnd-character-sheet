@@ -218,4 +218,10 @@ describe("describeStateChange", () => {
       "Ki points 0 spent to 1 spent",
     ]);
   });
+
+  it("names an effect starting and ending", () => {
+    const raging: CharacterState = { ...state, activeEffects: [{ name: "Rage" }] };
+    expect(stateChangePhrases(state, raging)).toEqual(["Rage set to active"]);
+    expect(stateChangePhrases(raging, state)).toEqual(["Rage cleared"]);
+  });
 });

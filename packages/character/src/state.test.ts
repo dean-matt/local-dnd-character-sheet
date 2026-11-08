@@ -38,6 +38,7 @@ describe("default state", () => {
       conditions: [],
       resources: [],
       classResources: [],
+      activeEffects: [],
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
     });
@@ -159,5 +160,23 @@ describe("exhaustion", () => {
   it("accepts every other condition row", () => {
     const prone = { ...state, conditions: [{ name: "Prone", source: "XPHB" }] };
     expect(characterStateSchema.safeParse(prone).success).toBe(true);
+  });
+});
+
+describe("active effects", () => {
+  it("stores and reads back an effect other than Rage, and refuses one listed twice", () => {
+    const blessed = { ...state, activeEffects: [{ name: "Rage" }, { name: "Bless" }] };
+    expect(characterStateSchema.parse(structuredClone(blessed))).toEqual(blessed);
+    expect(characterStateSchema.parse(JSON.parse(JSON.stringify(blessed))).activeEffects).toEqual([
+      { name: "Rage" },
+      { name: "Bless" },
+    ]);
+    const twice = { ...state, activeEffects: [{ name: "Bless" }, { name: "Bless" }] };
+    expect(characterStateSchema.safeParse(twice).success).toBe(false);
+  });
+
+  it("parses a state stored before them with none active", () => {
+    const { activeEffects: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).activeEffects).toEqual([]);
   });
 });

@@ -77,6 +77,7 @@ export const derivedInput = (traits: object = {}) => ({
   unproficientItems: [],
   pendingAbilityPicks: [],
   castingBlockedBy: [],
+  heavyArmorWorn: false,
   ...raceTraits,
   ...traits,
 });
@@ -171,6 +172,7 @@ export const state: CharacterState = {
   conditions: [{ name: "Prone", source: "XPHB" }],
   resources: [{ name: "Superiority Dice", current: 3, maximum: 4, resetsOn: "short" }],
   classResources: [],
+  activeEffects: [],
   deathSaves: { successes: 0, failures: 0 },
   exhaustion: 1,
 };

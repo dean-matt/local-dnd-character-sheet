@@ -375,6 +375,15 @@ const STATE_CHANGES: {
           ? `${pool.expended} spent`
           : left(pool.maximum - pool.expended, pool.maximum),
     ),
+  activeEffects: (before, after) =>
+    keyed(
+      "activeEffects",
+      before.activeEffects,
+      after.activeEffects,
+      (effect) => effect.name,
+      (name) => name,
+      () => "active",
+    ),
   deathSaves: (before, after) => [
     ...one(
       "deathSaves.successes",

@@ -11,6 +11,12 @@ export function StatusEffects({ state }: { state: CharacterState }) {
   return (
     <Card title="Status Effects">
       <ChipList labels={labels} empty="No active conditions." />
+      {state.activeEffects.length > 0 && (
+        <p className="mt-2 text-row">
+          <span className="text-muted">Active effects: </span>
+          {state.activeEffects.map((effect) => effect.name).join(", ")}
+        </p>
+      )}
     </Card>
   );
 }
