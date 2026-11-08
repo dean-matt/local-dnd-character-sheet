@@ -194,11 +194,30 @@ describe("Vitals", () => {
       expect(writes).toHaveLength(7);
     });
 
-    it("names a failed write", async () => {
+    it("makes each add, remove and step one state write, so one undo entry", async () => {
+      const { writes } = renderWriting({ conditions: [{ name: "Prone", source: "XPHB" }] });
+      await addCondition("Poisoned");
+      await waitFor(() => expect(writes).toHaveLength(1));
+
+      fireEvent.click(await findInStatus("button", { name: "Remove Prone" }));
+      await waitFor(() => expect(writes).toHaveLength(2));
+
+      fireEvent.click(await findInStatus("button", { name: "Raise exhaustion" }));
+      await waitFor(() => expect(writes).toHaveLength(3));
+      expect(writes.map((write) => [write.conditions.length, write.exhaustion])).toEqual([
+        [2, 0],
+        [1, 0],
+        [1, 1],
+      ]);
+    });
+
+    it("names a failed write for a condition or a step alike", async () => {
       renderWriting({ exhaustion: 1 }, { fail: true });
       fireEvent.click(await findInStatus("button", { name: "Raise exhaustion" }));
 
-      expect(await status().findByRole("alert")).toHaveTextContent("Disk full");
+      expect(await status().findByRole("alert")).toHaveTextContent(
+        "Status effects were not changed: Disk full",
+      );
     });
   });
 

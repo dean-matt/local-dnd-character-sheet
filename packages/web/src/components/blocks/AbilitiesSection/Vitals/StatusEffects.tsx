@@ -106,7 +106,7 @@ export function StatusEffects({
       )}
       {replace.error && (
         <p role="alert" className="mt-1 text-error text-row">
-          Conditions were not changed: {replace.error.message}
+          Status effects were not changed: {replace.error.message}
         </p>
       )}
       <Announcer announced={replace.announced} />
