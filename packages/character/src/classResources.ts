@@ -28,6 +28,17 @@ const POOL_RESETS: ReadonlyMap<string, Record<Edition, ResetTrigger>> = new Map(
 /** The rest that restores every use of a class pool, or undefined for a key that is no pool. */
 export const poolReset = (key: string, edition: Edition) => POOL_RESETS.get(key)?.[edition];
 
+const SHORT_REST_USE: ReadonlySet<string> = new Set([
+  "rages",
+  "channel_divinity",
+  "second_wind",
+  "wild_shape",
+]);
+
+/** Whether a short rest returns one spent use of the pool, which only the 2024 rules grant. */
+export const regainsOneOnShortRest = (key: string, edition: Edition) =>
+  edition === "one" && SHORT_REST_USE.has(key);
+
 const UNLIMITED = "Unlimited";
 
 /** A class table's `resource_key` as words: `ki_points` as `Ki points`. */
