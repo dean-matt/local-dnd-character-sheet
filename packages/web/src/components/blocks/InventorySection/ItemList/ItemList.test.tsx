@@ -788,6 +788,45 @@ describe("ItemList", () => {
       expect(JSON.parse(String(stateWrites(fetchMock)[0]?.[1]?.body)).activeEffects).toEqual([]);
     });
 
+    const failPut = (fetchMock: ReturnType<typeof stubApi>, target: string) =>
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+          String(input) === target && init?.method === "PUT"
+            ? json({ error: "disk full" }, 500)
+            : fetchMock(input, init),
+        ),
+      );
+
+    it("toasts a rage that failed to end", async () => {
+      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      await screen.findByText("Plate Armor");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+      failPut(fetchMock, "/api/characters/1/state");
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
+
+      expect(
+        await saveToasts().findByText("Rage: Couldn't end the rage: disk full"),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the rage when the armor failed to save", async () => {
+      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      await screen.findByText("Plate Armor");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+      failPut(fetchMock, "/api/characters/1");
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
+
+      await saveToasts().findByText("Inventory: Couldn't save: disk full");
+      expect(stateWrites(fetchMock)).toHaveLength(0);
+    });
+
     it("leaves a character who is not raging alone", async () => {
       const fetchMock = renderList(derivedRecord(), plate());
       await screen.findByText("Plate Armor");

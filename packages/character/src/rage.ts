@@ -1,8 +1,9 @@
-import type { CharacterCatalog } from "./catalog.ts";
+import type { CharacterCatalog, WeaponTrait } from "./catalog.ts";
 import type { CharacterDerived } from "./characterDerived.ts";
 import { withClassResource } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { entryKey } from "./keys.ts";
+import type { Ability } from "./refs.ts";
 import type { CharacterState } from "./state.ts";
 import { classLevels } from "./summaries.ts";
 
@@ -10,7 +11,7 @@ import { classLevels } from "./summaries.ts";
 export const RAGES = "rages";
 
 /** The name a rage goes by in the state's `activeEffects`. */
-const RAGE = "Rage";
+export const RAGE = "Rage";
 
 type Pool = CharacterState["classResources"][number];
 
@@ -70,8 +71,8 @@ export function rageBenefits(
 export const rageDamageTerms = (
   rage: ReturnType<typeof rageBenefits>,
   edition: CharacterDefinition["edition"],
-  weaponKind: string,
-  ability: string,
+  weaponKind: WeaponTrait["kind"],
+  ability: Ability,
 ) =>
   rage && rage.damage > 0 && ability === "str" && (edition === "one" || weaponKind === "melee")
     ? [{ label: "Rage", value: rage.damage }]

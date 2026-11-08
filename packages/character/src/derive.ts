@@ -60,7 +60,7 @@ import {
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
-import { RAGE_RESISTANCES, rageBenefits, rageDamageTerms } from "./rage.ts";
+import { RAGE, RAGE_RESISTANCES, rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
@@ -657,7 +657,7 @@ function derivedDefenses(
       immune: [],
       conditionImmune: [],
       vulnerable: [],
-      from: "Rage",
+      from: RAGE,
     });
   }
   return computed({
@@ -790,7 +790,7 @@ function derivedRollEffects(
   const encumbered = burdened ? disadvantageOn("Heavily encumbered", BURDENED_ABILITIES) : [];
   const raging = rage
     ? (["check", "save"] as const).map((roll) => ({
-        source: "Rage",
+        source: RAGE,
         mode: "advantage" as const,
         roll,
         target: "str",

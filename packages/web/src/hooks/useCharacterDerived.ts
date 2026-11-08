@@ -6,7 +6,7 @@ import { characterDerivedKey } from "./characterKeys.ts";
 
 /**
  * A character's derived block. Keyed under the character, so a definition write that
- * invalidates `characters` recomputes it too, as does a state write, since a rage shapes it. A 422 names a class or race that resolves
+ * invalidates `characters` recomputes it too. A state write invalidates it explicitly, since a rage shapes it. A 422 names a class or race that resolves
  * to nothing, which no retry changes.
  */
 export function useCharacterDerived(id: string) {

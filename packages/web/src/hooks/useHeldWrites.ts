@@ -11,7 +11,7 @@ type Held = { error: Error; edit: DefinitionEdit };
  * write to another item would otherwise clear a failure whose change never saved.
  *
  * `latest` is the newest failure still held, `failed` every held item's key, and `retry`
- * replays each held edit against the latest definition. `write` never rejects. With
+ * replays each held edit against the latest definition. `write` never rejects; it resolves `true` when the write landed. With
  * `ownUndoEntry`, each write is an undo entry of its own.
  */
 export function useHeldWrites(
@@ -21,20 +21,24 @@ export function useHeldWrites(
   const [held, setHeld] = useState<ReadonlyMap<string, Held>>(new Map());
   const write = (key: string, edit: DefinitionEdit) =>
     update.mutateAsync({ edit, ownUndoEntry }).then(
-      () =>
+      () => {
         setHeld((current) => {
           if (!current.has(key)) return current;
           const next = new Map(current);
           next.delete(key);
           return next;
-        }),
-      (error: Error) =>
+        });
+        return true;
+      },
+      (error: Error) => {
         setHeld((current) => {
           const next = new Map(current);
           // Deleted first so the newest failure sits last.
           next.delete(key);
           return next.set(key, { error, edit });
-        }),
+        });
+        return false;
+      },
     );
   const retry = () => {
     for (const [key, { edit }] of held) write(key, edit);
