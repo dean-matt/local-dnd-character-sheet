@@ -1,5 +1,6 @@
-import { type HitDie, hitDicePick, rest } from "@dnd/rules";
+import { type HitDie, hitDicePick, resets, rest } from "@dnd/rules";
 import type { CharacterDerived } from "./characterDerived.ts";
+import { poolReset } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived } from "./derivedField.ts";
 import { classResourceKey } from "./keys.ts";
@@ -84,7 +85,8 @@ export function longRestHitDicePick(definition: Resting, derived: Sheet, state: 
 /**
  * The state after a rest, by `rest`, for the character's edition and house rule. `picked`
  * names the hit dice to recover where `longRestHitDicePick` asks; `rest` throws a RangeError
- * where it is missing or out of bounds.
+ * where it is missing or out of bounds. Each class pool whose reset the rest meets has no
+ * use spent; the others keep what was spent.
  */
 export function restedState(
   definition: Resting,
@@ -93,9 +95,16 @@ export function restedState(
   length: RestLength,
   picked?: readonly HitDie[],
 ): CharacterState {
-  return rest(sheetState(derived, state), {
+  const rested = rest(sheetState(derived, state), {
     length,
     ...options(definition),
     picked,
   });
+  return {
+    ...rested,
+    classResources: rested.classResources.map((pool) => {
+      const trigger = poolReset(pool.key, definition.edition);
+      return trigger && resets(trigger, length) ? { ...pool, expended: 0 } : pool;
+    }),
+  };
 }

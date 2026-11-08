@@ -42,7 +42,8 @@ export {
 } from "./hitpoints.ts";
 export type { MagicItemValue } from "./itemvalue.ts";
 export { magicItemValue, spellScrollValue } from "./itemvalue.ts";
-export { hitDicePick, RESET_TRIGGERS, resetsOn, rest } from "./rest.ts";
+export type { ResetTrigger } from "./rest.ts";
+export { hitDicePick, RESET_TRIGGERS, resets, resetsOn, rest } from "./rest.ts";
 export type { Sense } from "./senses.ts";
 export { SENSES } from "./senses.ts";
 export { reducedSpeed, unarmoredMovementBonus } from "./speed.ts";
