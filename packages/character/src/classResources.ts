@@ -2,7 +2,8 @@ import type { Edition, ResetTrigger } from "@dnd/rules";
 import type { CharacterCatalog } from "./catalog.ts";
 import type { CharacterDerived } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
-import { entryKey } from "./keys.ts";
+import { classResourceKey, entryKey } from "./keys.ts";
+import type { CharacterState } from "./state.ts";
 import { classLevels } from "./summaries.ts";
 
 /**
@@ -70,4 +71,21 @@ export function classResourcePools(
         return { class: group.class, key: cell.key, maximum: computed(maximum) };
       }),
   );
+}
+
+/** The state with one pool's entry replaced, or added where state holds none for it. */
+export function withClassResource(
+  state: CharacterState,
+  pool: CharacterState["classResources"][number],
+): CharacterState {
+  const key = classResourceKey(pool);
+  const held = state.classResources.some((candidate) => classResourceKey(candidate) === key);
+  return {
+    ...state,
+    classResources: held
+      ? state.classResources.map((candidate) =>
+          classResourceKey(candidate) === key ? pool : candidate,
+        )
+      : [...state.classResources, pool],
+  };
 }

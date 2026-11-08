@@ -55,6 +55,12 @@ const classResourceSchema = z
     error: "expended exceeds maximum",
   });
 
+/**
+ * Something in force until the user ends it, such as a rage. Keyed by `name`, so a second
+ * effect needs no change to this shape; what an effect does is the rule that reads the name.
+ */
+const activeEffectSchema = z.strictObject({ name: z.string().min(1) });
+
 const deathSavesSchema = z.strictObject({
   successes: z.int().min(0).max(3).default(0),
   failures: z.int().min(0).max(3).default(0),
@@ -92,6 +98,12 @@ export const characterStateSchema = z.strictObject({
     .array(classResourceSchema)
     .refine((pools) => isUnique(pools, classResourceKey), {
       error: "the same class resource is listed twice",
+    })
+    .default([]),
+  activeEffects: z
+    .array(activeEffectSchema)
+    .refine((effects) => isUnique(effects, (effect) => effect.name), {
+      error: "the same effect is listed twice",
     })
     .default([]),
   deathSaves: deathSavesSchema,

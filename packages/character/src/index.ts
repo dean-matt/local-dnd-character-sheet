@@ -72,7 +72,7 @@ export {
   type LegacyCharacterFile,
   legacyCharacterFileSchema,
 } from "./characterFile.ts";
-export { resourceLabel } from "./classResources.ts";
+export { resourceLabel, withClassResource } from "./classResources.ts";
 export {
   carriesCustomSkills,
   convertCustomSkills,
@@ -155,6 +155,7 @@ export {
   VALUE_BLOCK_FIELDS,
   type ValueBlockField,
 } from "./pages.ts";
+export { isRaging, RAGES, rageBlockedBy, rageEnded, rageStarted } from "./rage.ts";
 export {
   type CatalogKind,
   type CatalogReference,

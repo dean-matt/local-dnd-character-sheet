@@ -5,10 +5,16 @@ import {
   classResourceKey,
   derivedValue,
   displayName,
+  isRaging,
+  RAGES,
+  rageBlockedBy,
+  rageEnded,
+  rageStarted,
   resourceLabel,
   sheetState,
+  withClassResource,
 } from "@dnd/character";
-import { Minus, Plus, RefreshCw } from "lucide-react";
+import { Flame, Minus, Plus, RefreshCw, X } from "lucide-react";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
@@ -20,28 +26,18 @@ import { PoolButton } from "./PoolButton.tsx";
 
 type Pool = CharacterState["classResources"][number];
 
-/** Each row takes the list's columns, so names, counts and buttons line up down the card. */
-const ROW = "col-span-3 grid min-h-6 grid-cols-subgrid items-center";
-
-/** The state with one pool's entry replaced, or added where state holds none for it. */
-function spentState(state: CharacterState, pool: Pool): CharacterState {
-  const key = classResourceKey(pool);
-  const held = state.classResources.some((candidate) => classResourceKey(candidate) === key);
-  return {
-    ...state,
-    classResources: held
-      ? state.classResources.map((candidate) =>
-          classResourceKey(candidate) === key ? pool : candidate,
-        )
-      : [...state.classResources, pool],
-  };
-}
+/**
+ * Each row takes the list's columns, so names, counts and buttons line up down the card. A
+ * Rages row adds a rage column after the use buttons, so they stay aligned with every other row.
+ */
+const ROW = "col-span-full grid min-h-6 grid-cols-subgrid items-center";
 
 /**
  * The Class Resources card: each pool the derived block lists, with its uses left against
  * the maximum the sheet shows, read through `sheetState` as a rest reads them. Spend,
  * restore and reset are each one state write, announced once it lands. An `Unlimited` pool
- * counts nothing, so it offers no control.
+ * counts nothing, so it offers no use control. The Rages row also starts and ends a rage,
+ * each one write that moves the use and the active effect together.
  */
 export function ClassResources({
   character,
@@ -62,12 +58,18 @@ export function ClassResources({
 
   function change(pool: Pool, maximum: number, spoken: string, expended: number) {
     const text = `${spoken}: ${maximum - expended} of ${maximum} left.`;
-    replace.write(spentState(stored, { ...pool, expended }), text);
+    replace.write(withClassResource(stored, { ...pool, expended }), text);
   }
+
+  const rages = derived.classResources.some((pool) => pool.key === RAGES);
 
   return (
     <Card title="Class Resources" className="max-w-full self-start">
-      <ul className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-3 gap-y-1">
+      <ul
+        className={`grid gap-x-3 gap-y-1 ${
+          rages ? "grid-cols-[minmax(0,1fr)_auto_auto_auto]" : "grid-cols-[minmax(0,1fr)_auto_auto]"
+        }`}
+      >
         {derived.classResources.map((pool, index) => {
           const key = classResourceKey(pool);
           const label = resourceLabel(pool.key);
@@ -77,15 +79,32 @@ export function ClassResources({
               {label} <span className="text-muted">{owner}</span>
             </span>
           );
+          const held = sheet.classResources[index] as Pool;
+          const raging = isRaging(stored);
+          const blocked = rageBlockedBy(derived, held);
+          const rageButton = pool.key === RAGES && (
+            <PoolButton
+              icon={raging ? X : Flame}
+              label={raging ? "End rage" : "Start rage"}
+              tooltip={raging ? "End rage" : (blocked ?? "Start rage")}
+              disabled={replace.writing || (!raging && blocked !== null)}
+              onPress={() =>
+                replace.write(
+                  raging ? rageEnded(stored) : rageStarted(stored, held),
+                  raging ? "Rage ended." : "Rage started.",
+                )
+              }
+            />
+          );
           if (pool.maximum === null) {
             return (
               <li key={key} className={ROW}>
                 {name}
                 <span className="col-span-2 text-muted text-row">Unlimited</span>
+                {rageButton}
               </li>
             );
           }
-          const held = sheet.classResources[index] as Pool;
           const maximum = derivedValue(pool.maximum);
           const spoken = `${label}, ${owner}`;
           return (
@@ -118,6 +137,7 @@ export function ClassResources({
                   onPress={() => change(held, maximum, spoken, 0)}
                 />
               </span>
+              {rageButton}
             </li>
           );
         })}

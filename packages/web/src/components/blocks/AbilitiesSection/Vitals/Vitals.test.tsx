@@ -94,6 +94,19 @@ describe("Vitals", () => {
     expect(chips.map((chip) => chip.textContent)).toEqual(["Poisoned", "Prone", "Exhaustion 2"]);
   });
 
+  it("names the active effects beside the conditions, and none when there are none", async () => {
+    renderVitals({ activeEffects: [{ name: "Rage" }] });
+    expect(
+      (await card("Status Effects")).getByText(/Active effects:/).parentElement,
+    ).toHaveTextContent("Active effects: Rage");
+  });
+
+  it("shows no Active effects line while none is active", async () => {
+    renderVitals({});
+    await card("Status Effects");
+    expect(screen.queryByText(/Active effects/)).toBeNull();
+  });
+
   it("reports a state the API could not answer", async () => {
     stubFetch(new Response(JSON.stringify({ error: "Character not found" }), { status: 404 }));
     renderWithClient(<Vitals character={characterRecord("1", "Vex")} derived={derived()} />);

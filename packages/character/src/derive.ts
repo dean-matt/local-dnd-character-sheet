@@ -1014,6 +1014,7 @@ export function deriveCharacter(
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),
+    heavyArmorWorn: equippedArmor(definition, catalog.armor).worn?.category === "heavy",
   };
   return applyOverrides(block, stored);
 }

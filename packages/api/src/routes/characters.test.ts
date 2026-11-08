@@ -7,6 +7,8 @@ import {
   characterDefinitionSchema,
   defaultCharacterState,
   PRESET_PAGES,
+  rageEnded,
+  rageStarted,
 } from "@dnd/character";
 import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
@@ -770,6 +772,25 @@ describe("the undo log", () => {
 
       expect((await undo()).status).toBe(200);
       expect(await readState()).toEqual(spent);
+    });
+
+    it("undoes a rage start, returning the use and clearing the rage, and an end, restoring the rage", async () => {
+      const pool = {
+        class: { name: "Barbarian", source: "PHB" },
+        key: "rages",
+        maximum: 3,
+        expended: 0,
+      };
+      const before = { ...defaultCharacterState(), classResources: [pool] };
+      const raging = rageStarted(before, pool);
+      await putState(before);
+      await putState(raging);
+      await putState(rageEnded(raging));
+
+      await undo();
+      expect(await readState()).toEqual(raging);
+      await undo();
+      expect(await readState()).toEqual(before);
     });
 
     it("keeps one history with the definition, each undo restoring only its own kind", async () => {

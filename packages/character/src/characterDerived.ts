@@ -293,6 +293,8 @@ export const characterDerivedSchema = z.strictObject({
   ),
   /** The equipped armor, by name, the character lacks proficiency with: each stops them casting spells. A 2014 shield counts; a 2024 one does not. */
   castingBlockedBy: z.array(z.string().min(1)),
+  /** Whether equipped armor is of the heavy category, which a rage cannot be entered or held in. */
+  heavyArmorWorn: z.boolean(),
 });
 
 export type CharacterDerived = z.infer<typeof characterDerivedSchema>;

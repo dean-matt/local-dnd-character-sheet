@@ -113,8 +113,14 @@ describe("ClassResources", () => {
       "Spend a use of Rages, Barbarian",
       "Restore a use of Rages, Barbarian",
       "Reset Rages, Barbarian to full",
+      "Start rage",
     ]);
-    expect(buttons.map((b) => b.title)).toEqual(["Spend a use", "Restore a use", "Reset to full"]);
+    expect(buttons.map((b) => b.title)).toEqual([
+      "Spend a use",
+      "Restore a use",
+      "Reset to full",
+      "Start rage",
+    ]);
     for (const b of buttons) {
       expect(b.textContent).toBe("");
       expect(b.querySelector("svg")).not.toBeNull();
@@ -185,13 +191,15 @@ describe("ClassResources", () => {
     expect(document.activeElement).toBe(elsewhere);
   });
 
-  it("shows an Unlimited pool with no control", async () => {
+  it("shows an Unlimited pool with no use control", async () => {
     renderPools({});
     await screen.findByRole("region", { name: "Class Resources" });
     const unlimited = within(card().getAllByRole("listitem")[2] as HTMLElement);
 
     expect(unlimited.getByText("Unlimited")).toBeInTheDocument();
-    expect(unlimited.queryByRole("button")).toBeNull();
+    expect(unlimited.getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Start rage",
+    ]);
   });
 
   it("keeps a spend across a reload", async () => {
@@ -230,5 +238,83 @@ describe("ClassResources", () => {
     );
     expect(count("Rages", "Barbarian")).toBe("3 / 3");
     expect(announced().textContent).toBe("");
+  });
+
+  describe("rage", () => {
+    const start = (label: string, owner: string) =>
+      within(item(label, owner)).getByRole("button", { name: "Start rage" });
+    const end = () => within(item("Rages", "Barbarian")).getByRole("button", { name: "End rage" });
+
+    it("starts a rage, spending a use and marking the character raging in one write", async () => {
+      const { writes } = renderPools({});
+      await screen.findByRole("region", { name: "Class Resources" });
+      fireEvent.click(start("Rages", "Barbarian"));
+
+      await waitFor(() => expect(announced()).toHaveTextContent("Rage started."));
+      expect(writes).toHaveLength(1);
+      expect(writes[0]?.classResources).toEqual([
+        { class: BARBARIAN, key: "rages", maximum: 3, expended: 1 },
+      ]);
+      expect(writes[0]?.activeEffects).toEqual([{ name: "Rage" }]);
+      expect(count("Rages", "Barbarian")).toBe("2 / 3");
+    });
+
+    it("starts a rage from an Unlimited pool without a count to run down", async () => {
+      const { writes } = renderPools({});
+      await screen.findByRole("region", { name: "Class Resources" });
+      const unlimited = card().getAllByRole("listitem")[2] as HTMLElement;
+      fireEvent.click(within(unlimited).getByRole("button", { name: "Start rage" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.classResources).toEqual([]);
+      expect(writes[0]?.activeEffects).toEqual([{ name: "Rage" }]);
+    });
+
+    it("is disabled with the reason when no use is left", async () => {
+      const { writes } = renderPools({
+        classResources: [{ class: BARBARIAN, key: "rages", maximum: 3, expended: 3 }],
+      });
+      await screen.findByRole("region", { name: "Class Resources" });
+
+      expect(start("Rages", "Barbarian")).toHaveAttribute("aria-disabled", "true");
+      expect(start("Rages", "Barbarian")).toHaveAttribute("title", "No Rage use left.");
+      fireEvent.click(start("Rages", "Barbarian"));
+      expect(writes).toHaveLength(0);
+    });
+
+    it("is disabled in heavy armor, even with an Unlimited pool", async () => {
+      renderPools({}, { sheet: { ...derived, heavyArmorWorn: true } });
+      await screen.findByRole("region", { name: "Class Resources" });
+
+      expect(start("Rages", "Barbarian")).toHaveAttribute("title", "Heavy armor is worn.");
+      expect(start("Rages", "Barbarian")).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("ends the rage, restoring no use", async () => {
+      const { writes } = renderPools({
+        classResources: [{ class: BARBARIAN, key: "rages", maximum: 3, expended: 1 }],
+        activeEffects: [{ name: "Rage" }],
+      });
+      await screen.findByRole("region", { name: "Class Resources" });
+      fireEvent.click(end());
+
+      await waitFor(() => expect(announced()).toHaveTextContent("Rage ended."));
+      expect(writes[0]?.activeEffects).toEqual([]);
+      expect(writes[0]?.classResources[0]?.expended).toBe(1);
+      expect(
+        within(item("Rages", "Barbarian")).queryByRole("button", { name: "Start rage" }),
+      ).not.toBeNull();
+    });
+
+    it("stays raging across a reload", async () => {
+      const { reload } = renderPools({});
+      await screen.findByRole("region", { name: "Class Resources" });
+      fireEvent.click(start("Rages", "Barbarian"));
+      await waitFor(() => expect(announced()).toHaveTextContent("Rage started."));
+
+      reload();
+      await screen.findByRole("region", { name: "Class Resources" });
+      expect(end()).toBeInTheDocument();
+    });
   });
 });

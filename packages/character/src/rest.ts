@@ -4,6 +4,7 @@ import { poolReset, regainsOneOnShortRest } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived } from "./derivedField.ts";
 import { classResourceKey } from "./keys.ts";
+import { rageEnded } from "./rage.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
 
@@ -86,7 +87,7 @@ export function longRestHitDicePick(definition: Resting, derived: Sheet, state: 
  * The state after a rest, by `rest`, for the character's edition and house rule. `picked`
  * names the hit dice to recover where `longRestHitDicePick` asks; `rest` throws a RangeError
  * where it is missing or out of bounds. Each class pool whose reset the rest meets has no
- * use spent; a 2024 pool with a partial recharge regains one use on a short rest, and the
+ * use spent and any rage ended; a 2024 pool with a partial recharge regains one use on a short rest, and the
  * others keep what was spent.
  */
 export function restedState(
@@ -102,7 +103,7 @@ export function restedState(
     picked,
   });
   return {
-    ...rested,
+    ...rageEnded(rested),
     classResources: rested.classResources.map((pool) => {
       const trigger = poolReset(pool.key, definition.edition);
       if (trigger && resets(trigger, length)) return { ...pool, expended: 0 };
