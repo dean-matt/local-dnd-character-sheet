@@ -8,6 +8,7 @@ import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { CastingBlockedNote } from "../CastingBlockedNote.tsx";
 import { CasterNumbers } from "./CasterNumbers.tsx";
+import { RagingNote } from "./RagingNote.tsx";
 import { SpellList } from "./SpellList/SpellList.tsx";
 import { SpellSlots } from "./SpellSlots/SpellSlots.tsx";
 
@@ -29,6 +30,7 @@ export function SpellsSection({
   return (
     <div className="flex flex-col gap-3">
       <CastingBlockedNote armor={derived.castingBlockedBy} />
+      <RagingNote id={character.id} />
       <div className="grid items-start gap-3 sm:grid-cols-2">
         <CasterNumbers character={character} derived={derived} />
         <SpellSlots character={character} derived={derived} />
