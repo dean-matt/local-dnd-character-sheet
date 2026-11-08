@@ -169,16 +169,46 @@ describe("restedState", () => {
     it("restores a pool on the rest its edition names", () => {
       const wild = {
         ...sheet,
-        classResources: [{ class: MONK, key: "second_wind", maximum: total(2) }],
+        classResources: [{ class: MONK, key: "second_wind", maximum: total(3) }],
       };
       const used = {
         ...state(),
-        classResources: [{ class: MONK, key: "second_wind", maximum: 2, expended: 1 }],
+        classResources: [{ class: MONK, key: "second_wind", maximum: 3, expended: 2 }],
       };
       expect(expended(restedState(classic, wild, used, "short"))).toEqual([0]);
       expect(expended(restedState({ ...classic, edition: "one" }, wild, used, "short"))).toEqual([
         1,
       ]);
+    });
+
+    describe("a 2024 partial recharge", () => {
+      const one = { ...classic, edition: "one" as const };
+      const key = (name: string, expendedUses: number) => ({
+        sheet: { ...sheet, classResources: [{ class: MONK, key: name, maximum: total(3) }] },
+        state: {
+          ...state(),
+          classResources: [{ class: MONK, key: name, maximum: 3, expended: expendedUses }],
+        },
+      });
+
+      it.each(["rages", "channel_divinity", "wild_shape", "second_wind"])(
+        "%s regains one use on a short rest and all on a long rest",
+        (name) => {
+          const { sheet: s, state: st } = key(name, 3);
+          expect(expended(restedState(one, s, st, "short"))).toEqual([2]);
+          expect(expended(restedState(one, s, st, "long"))).toEqual([0]);
+        },
+      );
+
+      it("regains none when no use is spent", () => {
+        const { sheet: s, state: st } = key("rages", 0);
+        expect(expended(restedState(one, s, st, "short"))).toEqual([0]);
+      });
+
+      it("leaves a classic rages pool spent on a short rest", () => {
+        const { sheet: s, state: st } = key("rages", 3);
+        expect(expended(restedState(classic, s, st, "short"))).toEqual([3]);
+      });
     });
   });
 });
