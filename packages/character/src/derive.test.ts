@@ -2614,6 +2614,145 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("a rage", () => {
+    const BARBARIAN = { name: "Barbarian", source: "XPHB" };
+    const GREATAXE = { name: "Greataxe", source: "XPHB" };
+    const SHORTBOW = { name: "Shortbow", source: "XPHB" };
+    const RAPIER = { name: "Rapier", source: "XPHB" };
+    const PLATE = { name: "Plate Armor", source: "XPHB" };
+    const weapon = (name: string, kind: "melee" | "ranged", properties: string[]): WeaponTrait => ({
+      kind,
+      properties,
+      damage: "1d8",
+      name,
+      category: "martial",
+      damageType: "slashing",
+      bonus: noBonus,
+    });
+    const rageCatalog = {
+      ...catalog,
+      hitDice: new Map([...hitDice, [entryKey(BARBARIAN), 12 as HitDie]]),
+      classResources: new Map([[entryKey(BARBARIAN), [{ key: "rage_damage", value: "+3" }]]]),
+      skills: [{ ref: { name: "Athletics", source: "XPHB" }, ability: "str" as const }],
+      weights: new Map<string, number | null>(
+        [GREATAXE, SHORTBOW, RAPIER, PLATE].map((ref) => [entryKey(ref), 1]),
+      ),
+      weapons: new Map<string, WeaponTrait>([
+        [entryKey(GREATAXE), weapon("Greataxe", "melee", [])],
+        [entryKey(SHORTBOW), weapon("Shortbow", "ranged", ["A|XPHB", "2H|XPHB"])],
+        [entryKey(RAPIER), weapon("Rapier", "melee", ["F|XPHB"])],
+      ]),
+      armor: new Map<string, ArmorTrait>([
+        [entryKey(PLATE), { name: PLATE.name, category: "heavy" as const, armorClass: 18 }],
+      ]),
+    };
+    const carried = (ref: EntryRef, equipped = false) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped,
+      attuned: false,
+    });
+    const barbarian = (
+      levels: number,
+      edition: "classic" | "one",
+      extra: Partial<CharacterDefinition> = {},
+    ): CharacterDefinition => ({
+      ...definition,
+      edition,
+      levels: Array.from({ length: levels }, () => ({ class: BARBARIAN })),
+      abilityScores: { ...definition.abilityScores, str: 16, dex: 10 },
+      inventory: [carried(GREATAXE), carried(SHORTBOW), carried(RAPIER)],
+      ...extra,
+    });
+    const raging = { activeEffects: [{ name: "Rage" }] };
+    const calm = { activeEffects: [] };
+    const damageOf = (block: CharacterDerived, entry: number) =>
+      block.attacks.find((attack) => attack.entry === entry)?.damage?.modifier;
+
+    it("resists bludgeoning, piercing and slashing, citing Rage", () => {
+      const block = deriveCharacter(barbarian(5, "one"), rageCatalog, raging);
+      expect(block.defenses.computed.resistances).toEqual([
+        { name: "bludgeoning", from: ["Rage"] },
+        { name: "piercing", from: ["Rage"] },
+        { name: "slashing", from: ["Rage"] },
+      ]);
+      expect(
+        deriveCharacter(barbarian(5, "one"), rageCatalog, calm).defenses.computed.resistances,
+      ).toEqual([]);
+    });
+
+    it("gives advantage on Strength checks and saves, citing Rage", () => {
+      const effects = deriveCharacter(barbarian(5, "one"), rageCatalog, raging).rollEffects
+        .computed;
+      expect(effects).toEqual([
+        { source: "Rage", mode: "advantage", roll: "check", target: "str" },
+        { source: "Rage", mode: "advantage", roll: "save", target: "str" },
+      ]);
+      expect(deriveCharacter(barbarian(5, "one"), rageCatalog, calm).rollEffects.computed).toEqual(
+        [],
+      );
+    });
+
+    it("adds the class table's Rage Damage cell as a Rage term, and nothing while calm", () => {
+      const modifier = damageOf(deriveCharacter(barbarian(5, "one"), rageCatalog, raging), 0);
+      expect(modifier?.computed).toBe(6);
+      expect(modifier?.terms).toEqual([
+        { label: "Strength", value: 3 },
+        { label: "Rage", value: 3 },
+      ]);
+      expect(damageOf(deriveCharacter(barbarian(5, "one"), rageCatalog, calm), 0)?.computed).toBe(
+        3,
+      );
+    });
+
+    it("applies in 2014 to a melee Strength attack, and never to a Dexterity one", () => {
+      const classic = deriveCharacter(barbarian(5, "classic"), rageCatalog, raging);
+      expect(damageOf(classic, 0)?.terms.map((term) => term.label)).toContain("Rage");
+      expect(damageOf(classic, 1)?.terms.map((term) => term.label)).toEqual(["Dexterity"]);
+      const nimble = barbarian(5, "one", {
+        abilityScores: { ...definition.abilityScores, str: 10, dex: 18 },
+      });
+      const finesse = deriveCharacter(nimble, rageCatalog, raging);
+      expect(damageOf(finesse, 2)?.terms.map((term) => term.label)).toEqual(["Dexterity"]);
+    });
+
+    it.each(["one", "classic"] as const)(
+      "%s: shows no benefit while heavy armor is worn",
+      (edition) => {
+        const plated = barbarian(5, edition, {
+          proficiencies: { ...definition.proficiencies, armor: ["Heavy"] },
+        });
+        const worn = {
+          ...plated,
+          inventory: [...plated.inventory, carried(PLATE, true)],
+        };
+        const block = deriveCharacter(worn, rageCatalog, raging);
+        expect(block.defenses.computed.resistances).toEqual([]);
+        expect(block.rollEffects.computed).toEqual([]);
+        expect(damageOf(block, 0)?.terms.map((term) => term.label)).toEqual(["Strength"]);
+      },
+    );
+
+    it("keeps a manual override over the damage modifier and the Rage term beside it", () => {
+      const base = barbarian(5, "one");
+      const probe = deriveCharacter(base, rageCatalog, raging);
+      const [attack] = probe.attacks;
+      if (!attack) throw new Error("expected an attack");
+      const key = `${overrideKey("attacks", attack, base)}.damage.modifier`;
+      const block = deriveCharacter({ ...base, overrides: { [key]: 9 } }, rageCatalog, raging);
+      const modifier = block.attacks[0]?.damage?.modifier;
+      expect(modifier?.manual).toBe(9);
+      expect(modifier?.terms.map((term) => term.label)).toContain("Rage");
+    });
+
+    it("applies nothing without a state, as a character not raging", () => {
+      expect(
+        deriveCharacter(barbarian(5, "one"), rageCatalog).defenses.computed.resistances,
+      ).toEqual([]);
+    });
+  });
+
   describe("overrides", () => {
     const withOverrides = (overrides: CharacterDefinition["overrides"]) =>
       deriveCharacter({ ...equipped, overrides }, catalog);

@@ -1,9 +1,17 @@
 import type { SheetItem } from "@dnd/catalog";
-import { type CharacterDerived, type CharacterRecord, houseRule } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  houseRule,
+  isRaging,
+  rageEnded,
+} from "@dnd/character";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
+import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
+import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
 import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
@@ -36,6 +44,8 @@ export function ItemList({
   const write = useHeldSave(character.id, "Inventory");
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
+  const state = useCharacterState(character.id);
+  const replaceState = useReplaceCharacterState(character.id);
   const { settled, hold, writing } = useRowWrites(characterInventoryKey(character.id));
   const busy = writing || inventory.isFetching;
   const drawn = character.definition.inventory;
@@ -157,13 +167,23 @@ export function ItemList({
                   busy={busy}
                   equipRequires={equipRequires(index)}
                   onGrip={(grip) => edit(index, (entry) => ({ ...entry, grip }))}
-                  onEquip={(equipped) =>
+                  onEquip={(equipped) => {
                     edit(index, (entry) => ({
                       ...entry,
                       equipped,
                       carried: entry.carried || equipped,
-                    }))
-                  }
+                    }));
+                    const stored = state.data?.state;
+                    if (
+                      equipped &&
+                      item.armor?.category === "heavy" &&
+                      character.edition === "one" &&
+                      stored &&
+                      isRaging(stored)
+                    ) {
+                      replaceState.mutate(rageEnded(stored));
+                    }
+                  }}
                   onAttune={(on) => edit(index, (entry) => ({ ...entry, attuned: on }))}
                   onRemove={() => edit(index, () => null)}
                 />

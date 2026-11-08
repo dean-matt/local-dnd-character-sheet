@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { defaultCharacterState, isRaging, rageBlockedBy, rageEnded, rageStarted } from "./index.ts";
+import { rageDamageTerms } from "./rage.ts";
 
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const pool = (maximum: number | null, expended: number) => ({
@@ -42,5 +43,21 @@ describe("ending a rage", () => {
     const ended = rageEnded(started);
     expect(isRaging(ended)).toBe(false);
     expect(ended.classResources).toEqual([pool(3, 1)]);
+  });
+});
+
+describe("the Rage Damage term", () => {
+  const rage = { damage: 2 };
+
+  it("reaches a Strength weapon attack of any kind in 2024, and a melee one in 2014", () => {
+    expect(rageDamageTerms(rage, "one", "ranged", "str")).toEqual([{ label: "Rage", value: 2 }]);
+    expect(rageDamageTerms(rage, "classic", "ranged", "str")).toEqual([]);
+    expect(rageDamageTerms(rage, "classic", "melee", "str")).toEqual([{ label: "Rage", value: 2 }]);
+  });
+
+  it("never reaches a Dexterity attack, or adds nothing without a rage or a damage value", () => {
+    expect(rageDamageTerms(rage, "one", "melee", "dex")).toEqual([]);
+    expect(rageDamageTerms(null, "one", "melee", "str")).toEqual([]);
+    expect(rageDamageTerms({ damage: 0 }, "one", "melee", "str")).toEqual([]);
   });
 });

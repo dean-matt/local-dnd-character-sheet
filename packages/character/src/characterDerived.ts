@@ -248,7 +248,7 @@ export const characterDerivedSchema = z.strictObject({
     }),
   ),
   /**
-   * Resistances, immunities and vulnerabilities from the race, then from each feat, then from each equipped item, attuned where it must be.
+   * Resistances, immunities and vulnerabilities from the race, then from each feat, then from each equipped item, attuned where it must be, then a rage's while the play state holds one.
    *
    * The sheet offers no override for this or the three lists below: each names the race,
    * feat or item behind an entry, and a typed-over list would name none and stop following the equipment.
@@ -266,7 +266,7 @@ export const characterDerivedSchema = z.strictObject({
   /**
    * The advantage and disadvantage equipped items grant, attuned where they must be, in
    * inventory order, then what armor worn without proficiency costs, then heavy
-   * encumbrance's under the variant. Nothing here cancels a pair: the table decides
+   * encumbrance's under the variant, then a rage's Strength advantage. Nothing here cancels a pair: the table decides
    * whether a condition holds.
    */
   rollEffects: derivedSchema(z.array(rollEffectSchema)),
