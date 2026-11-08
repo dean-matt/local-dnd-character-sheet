@@ -1,3 +1,4 @@
+import type { Edition, ResetTrigger } from "@dnd/rules";
 import type { CharacterCatalog } from "./catalog.ts";
 import type { CharacterDerived } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
@@ -5,22 +6,27 @@ import { entryKey } from "./keys.ts";
 import { classLevels } from "./summaries.ts";
 
 /**
- * The `resource_key`s whose column counts uses a character spends. The rest of a class
- * table describes rather than counts: a die size, a bonus, how many spells or options are
- * known. `infused_items` and `magic_items` count what is held at once, not uses.
+ * The `resource_key`s whose column counts uses a character spends, with the rest that
+ * restores every use under each edition. The rest of a class table describes rather than
+ * counts: a die size, a bonus, how many spells or options are known. `infused_items` and
+ * `magic_items` count what is held at once, not uses. A 2024 pool that also returns one use
+ * on a short rest lists its full recovery here.
  */
-const POOL_KEYS: ReadonlySet<string> = new Set([
-  "rages",
-  "ki_points",
-  "focus_points",
-  "sorcery_points",
-  "channel_divinity",
-  "second_wind",
-  "wild_shape",
-  "psi_points",
-  "favored_enemy",
-  "energy_die_number",
+const POOL_RESETS: ReadonlyMap<string, Record<Edition, ResetTrigger>> = new Map([
+  ["rages", { classic: "long", one: "long" }],
+  ["ki_points", { classic: "short", one: "short" }],
+  ["focus_points", { classic: "short", one: "short" }],
+  ["sorcery_points", { classic: "long", one: "long" }],
+  ["channel_divinity", { classic: "short", one: "long" }],
+  ["second_wind", { classic: "short", one: "long" }],
+  ["wild_shape", { classic: "short", one: "long" }],
+  ["psi_points", { classic: "long", one: "long" }],
+  ["favored_enemy", { classic: "long", one: "long" }],
+  ["energy_die_number", { classic: "long", one: "long" }],
 ]);
+
+/** The rest that restores every use of a class pool, or undefined for a key that is no pool. */
+export const poolReset = (key: string, edition: Edition) => POOL_RESETS.get(key)?.[edition];
 
 const UNLIMITED = "Unlimited";
 
@@ -43,7 +49,7 @@ export function classResourcePools(
 ): CharacterDerived["classResources"] {
   return classLevels(definition).flatMap((group) =>
     (catalog.classResources.get(entryKey(group.class)) ?? [])
-      .filter((cell) => POOL_KEYS.has(cell.key))
+      .filter((cell) => POOL_RESETS.has(cell.key))
       .map((cell) => {
         if (cell.value === UNLIMITED) return { class: group.class, key: cell.key, maximum: null };
         const maximum = Number(cell.value);

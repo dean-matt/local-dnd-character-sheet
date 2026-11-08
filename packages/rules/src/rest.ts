@@ -7,7 +7,7 @@ import { type HitDie, hitDiceRecovered } from "./hitpoints.ts";
  */
 export const RESET_TRIGGERS = ["short", "long", "dawn", "manual"] as const;
 
-type ResetTrigger = (typeof RESET_TRIGGERS)[number];
+export type ResetTrigger = (typeof RESET_TRIGGERS)[number];
 
 /**
  * Upstream `recharge` values that map onto a trigger the sheet tracks. `dusk`,
@@ -57,7 +57,8 @@ type RestOptions = {
   picked?: readonly HitDie[];
 };
 
-function resets(trigger: ResetTrigger, length: RestLength): boolean {
+/** Whether a rest of this length restores what recovers on `trigger`. */
+export function resets(trigger: ResetTrigger, length: RestLength): boolean {
   if (trigger === "short") return true;
   return length === "long" && (trigger === "long" || trigger === "dawn");
 }

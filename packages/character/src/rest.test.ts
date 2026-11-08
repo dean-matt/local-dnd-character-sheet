@@ -142,4 +142,43 @@ describe("restedState", () => {
       restedState(house, sheet, tired(), "long").hitDice.map((pool) => pool.remaining),
     ).toEqual([3, 3]);
   });
+
+  describe("class resource pools", () => {
+    const pools = {
+      ...sheet,
+      classResources: [rages(3), { class: MONK, key: "ki_points", maximum: total(5) }],
+    };
+    const spent = {
+      ...state(),
+      classResources: [
+        { class: BARBARIAN, key: "rages", maximum: 3, expended: 2 },
+        { class: MONK, key: "ki_points", maximum: 5, expended: 3 },
+      ],
+    };
+    const expended = (after: ReturnType<typeof restedState>) =>
+      after.classResources.map((pool) => pool.expended);
+
+    it("restores a short-rest pool on a short rest and leaves a long-rest pool spent", () => {
+      expect(expended(restedState(classic, pools, spent, "short"))).toEqual([2, 0]);
+    });
+
+    it("restores short- and long-rest pools on a long rest", () => {
+      expect(expended(restedState(classic, pools, spent, "long"))).toEqual([0, 0]);
+    });
+
+    it("restores a pool on the rest its edition names", () => {
+      const wild = {
+        ...sheet,
+        classResources: [{ class: MONK, key: "second_wind", maximum: total(2) }],
+      };
+      const used = {
+        ...state(),
+        classResources: [{ class: MONK, key: "second_wind", maximum: 2, expended: 1 }],
+      };
+      expect(expended(restedState(classic, wild, used, "short"))).toEqual([0]);
+      expect(expended(restedState({ ...classic, edition: "one" }, wild, used, "short"))).toEqual([
+        1,
+      ]);
+    });
+  });
 });
