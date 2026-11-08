@@ -131,6 +131,35 @@ describe("SpellsSection", () => {
     ).toBeInTheDocument();
   });
 
+  it("notes that a raging character can't cast or concentrate, and leaves the controls enabled", async () => {
+    const raging = {
+      ...stateRecord(),
+      state: { ...stateRecord().state, activeEffects: [{ name: "Rage" }] },
+    };
+    stubFetchByUrl({
+      "/api/characters/1/spells": SPELLS,
+      "/api/characters/1/state": raging,
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <SpellsSection character={characterRecord("1", "Vex")} derived={derivedRecord()} />
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByText("Can't cast spells or concentrate while raging."),
+    ).toBeInTheDocument();
+    await screen.findByText("Hex");
+    for (const control of screen.getAllByRole("button")) expect(control).toBeEnabled();
+  });
+
+  it("shows no raging note while calm", async () => {
+    renderSection();
+    await screen.findByText("Hex");
+    expect(screen.queryByText(/while raging/)).toBeNull();
+  });
+
   it("shows a spell damage card only while an item adds to it", async () => {
     renderSection(derivedRecord());
     expect(screen.queryByText("Spell Damage Bonus")).toBeNull();
