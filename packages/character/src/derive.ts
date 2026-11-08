@@ -60,8 +60,10 @@ import {
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { applyOverrides } from "./overrides.ts";
+import { RAGE, RAGE_RESISTANCES, rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
 import { houseRule } from "./resolve.ts";
+import type { CharacterState } from "./state.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
 import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
@@ -460,6 +462,7 @@ function derivedAttacks(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   bonuses: readonly ItemBonusTrait[],
+  rage: RageBenefits,
 ): CharacterDerived["attacks"] {
   const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
   const level = totalLevel(definition);
@@ -495,7 +498,12 @@ function derivedAttacks(
           ? {
               dice: result.damage.dice,
               type: weapon.damageType,
-              modifier: fromBreakdown(result.damage.modifier),
+              modifier: fromBreakdown(
+                breakdown([
+                  ...result.damage.modifier.terms,
+                  ...rageDamageTerms(rage, definition.edition, weapon.kind, result.ability),
+                ]),
+              ),
             }
           : null,
         grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
@@ -602,6 +610,7 @@ const scoreOf = (definition: CharacterDefinition, catalog: CharacterCatalog, abi
   abilityScore(definition, ability, equippedAbilityGrants(definition, catalog));
 
 type Grant = DefenseTrait & { from: string };
+type RageBenefits = ReturnType<typeof rageBenefits>;
 
 /** Each name once, in the order first granted, with every label that grants it. */
 function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly string[]) {
@@ -618,7 +627,7 @@ function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly st
 
 /**
  * The race's grants, its picked resistance among them, then each feat's, then each equipped
- * item's. An item that requires attunement grants only once it is attuned as well. A resistance
+ * item's, then a rage's. An item that requires attunement grants only once it is attuned as well. A resistance
  * stays listed beside an immunity to the same type, since each names a source the reader
  * may want.
  */
@@ -626,6 +635,7 @@ function derivedDefenses(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   feats: readonly Grant[],
+  rage: RageBenefits,
 ): ComputedField<Defenses> {
   const { resistChoice, ...race } = catalog.raceDefenses;
   const from = raceSummary(definition);
@@ -640,6 +650,15 @@ function derivedDefenses(
     if (item && entry.equipped && (entry.attuned || !item.requiresAttunement)) {
       grants.push({ ...item, from: item.name });
     }
+  }
+  if (rage) {
+    grants.push({
+      resist: RAGE_RESISTANCES,
+      immune: [],
+      conditionImmune: [],
+      vulnerable: [],
+      from: RAGE,
+    });
   }
   return computed({
     resistances: gathered(grants, (grant) => grant.resist),
@@ -750,6 +769,7 @@ function derivedRollEffects(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   burdened: boolean,
+  rage: RageBenefits,
 ): CharacterDerived["rollEffects"] {
   const granted = definition.inventory.flatMap((entry) => {
     const item = catalog.itemAdvantages.get(itemKey(entry));
@@ -768,7 +788,15 @@ function derivedRollEffects(
     disadvantageOn(name, UNPROFICIENT_ARMOR_ABILITIES),
   );
   const encumbered = burdened ? disadvantageOn("Heavily encumbered", BURDENED_ABILITIES) : [];
-  return computed([...granted, ...stealth, ...unproficient, ...encumbered]);
+  const raging = rage
+    ? (["check", "save"] as const).map((roll) => ({
+        source: RAGE,
+        mode: "advantage" as const,
+        roll,
+        target: "str",
+      }))
+    : [];
+  return computed([...granted, ...stealth, ...unproficient, ...encumbered, ...raging]);
 }
 
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
@@ -888,10 +916,13 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
 export function deriveCharacter(
   stored: CharacterDefinition,
   catalog: CharacterCatalog,
+  state: Pick<CharacterState, "activeEffects"> = { activeEffects: [] },
 ): CharacterDerived {
   const feats = featGrants(stored, catalog);
   const definition = withFeatGrants(stored, feats.granted, feats.itemSkills);
   const level = totalLevel(definition);
+  const heavyArmorWorn = equippedArmor(definition, catalog.armor).worn?.category === "heavy";
+  const rage = rageBenefits(definition, catalog, state, heavyArmorWorn);
   const casters = castingClasses(definition, catalog);
   const grants = equippedAbilityGrants(definition, catalog);
   const bonuses = equippedBonuses(definition, catalog);
@@ -1005,16 +1036,16 @@ export function deriveCharacter(
     ...carrying,
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
-    attacks: derivedAttacks(definition, catalog, bonuses),
-    defenses: derivedDefenses(definition, catalog, feats.defenses),
+    attacks: derivedAttacks(definition, catalog, bonuses, rage),
+    defenses: derivedDefenses(definition, catalog, feats.defenses, rage),
     senses: derivedSenses(definition, catalog, feats.senses),
     itemGrants: derivedItemGrants(definition, catalog, feats.itemSkills),
     featGrants: computed(feats.granted),
-    rollEffects: derivedRollEffects(definition, catalog, burdened),
+    rollEffects: derivedRollEffects(definition, catalog, burdened, rage),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),
-    heavyArmorWorn: equippedArmor(definition, catalog.armor).worn?.category === "heavy",
+    heavyArmorWorn,
   };
   return applyOverrides(block, stored);
 }

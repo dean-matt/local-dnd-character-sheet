@@ -1,6 +1,7 @@
 /** The query keys every character hook shares, so an invalidation by prefix reaches them all. */
 export const charactersKey = ["characters"] as const;
 export const characterKey = (id: string) => [...charactersKey, id] as const;
+export const characterDerivedKey = (id: string) => [...characterKey(id), "derived"] as const;
 export const characterInventoryKey = (id: string) => [...characterKey(id), "inventory"] as const;
 export const characterSpellsKey = (id: string) => [...characterKey(id), "spells"] as const;
 export const characterStateKey = (id: string) => [...characterKey(id), "state"] as const;

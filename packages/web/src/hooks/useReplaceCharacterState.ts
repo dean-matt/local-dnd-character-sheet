@@ -6,6 +6,7 @@ import {
 import { useIsMutating, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiMutate } from "../lib/api.ts";
 import {
+  characterDerivedKey,
   characterStateKey,
   characterStateWriteKey,
   characterUndoKey,
@@ -32,6 +33,7 @@ export function useReplaceCharacterState(id: string) {
     onSuccess: (record) => {
       queryClient.setQueryData(characterStateKey(id), record);
       queryClient.invalidateQueries({ queryKey: characterUndoKey(id) });
+      queryClient.invalidateQueries({ queryKey: characterDerivedKey(id) });
     },
   });
   const writing =

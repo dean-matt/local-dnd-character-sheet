@@ -5,6 +5,7 @@ import {
   type CharacterDefinition,
   type CharacterDerived,
   characterDefinitionSchema,
+  defaultCharacterState,
 } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { z } from "zod";
@@ -12,6 +13,7 @@ import {
   insertCharacter,
   undoChanges,
   updateCharacterDefinition,
+  updateCharacterState,
 } from "../db/queries/characters.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
@@ -651,6 +653,31 @@ describe("derivedRoutes", () => {
 
     updateCharacterDefinition(opened.charactersDb, "1", barbarian(20));
     expect(await rages()).toEqual([["rages", null]]);
+  });
+
+  it("applies a rage's benefits only while the play state holds the rage", async () => {
+    store(
+      definitionWith({
+        levels: [{ class: BARBARIAN }, { class: BARBARIAN }],
+        inventory: [{ ref: LONGSWORD }],
+      }),
+    );
+    const modifier = async () => (await derived()).attacks[0]?.damage?.modifier.computed;
+    const resisted = async () => (await derived()).defenses.computed.resistances;
+    expect(await modifier()).toBe(3);
+    expect(await resisted()).toEqual([]);
+
+    const state = defaultCharacterState();
+    updateCharacterState(opened.charactersDb, "1", { ...state, activeEffects: [{ name: "Rage" }] });
+    expect(await modifier()).toBe(5);
+    expect((await resisted()).map((resistance) => resistance.from)).toEqual([
+      ["Rage"],
+      ["Rage"],
+      ["Rage"],
+    ]);
+
+    updateCharacterState(opened.charactersDb, "1", state);
+    expect(await modifier()).toBe(3);
   });
 
   it("lists the pool a subclass table prints beside the class table's", async () => {

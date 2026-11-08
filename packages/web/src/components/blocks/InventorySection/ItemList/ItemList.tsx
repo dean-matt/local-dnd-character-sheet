@@ -1,10 +1,20 @@
 import type { SheetItem } from "@dnd/catalog";
-import { type CharacterDerived, type CharacterRecord, houseRule } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  houseRule,
+  isRaging,
+  rageEnded,
+} from "@dnd/character";
+import { useState } from "react";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterInventoryKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
+import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
+import { useReplaceCharacterState } from "../../../../hooks/useReplaceCharacterState.ts";
 import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
+import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { withItem } from "../../../../lib/addedEntries.ts";
@@ -36,13 +46,35 @@ export function ItemList({
   const write = useHeldSave(character.id, "Inventory");
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
+  const state = useCharacterState(character.id);
+  const replaceState = useReplaceCharacterState(character.id);
+  const [rageFailure, setRageFailure] = useState<string>();
+  const endRage = async () => {
+    const stored = state.data?.state;
+    if (!stored) {
+      setRageFailure("Couldn't end the rage: the character's state hasn't loaded");
+      return;
+    }
+    if (!isRaging(stored)) return;
+    try {
+      await replaceState.mutateAsync(rageEnded(stored));
+      setRageFailure(undefined);
+    } catch (error) {
+      setRageFailure(`Couldn't end the rage: ${(error as Error).message}`);
+    }
+  };
+  const endsRage = (category: string | undefined) =>
+    character.edition === "one" && category === "heavy";
+  useSaveToast("Rage", rageFailure, endRage, rageFailure);
   const { settled, hold, writing } = useRowWrites(characterInventoryKey(character.id));
   const busy = writing || inventory.isFetching;
   const drawn = character.definition.inventory;
   const edit = (index: number, change: EntryChange) => {
     const entry = drawn[index];
     if (!entry || !settled()) return;
-    hold(() => write(`row:${index}`, (latest) => editInventoryEntry(latest, index, entry, change)));
+    return hold(() =>
+      write(`row:${index}`, (latest) => editInventoryEntry(latest, index, entry, change)),
+    );
   };
   const place = (index: number, holder: number | null) => {
     const entry = drawn[index];
@@ -157,13 +189,15 @@ export function ItemList({
                   busy={busy}
                   equipRequires={equipRequires(index)}
                   onGrip={(grip) => edit(index, (entry) => ({ ...entry, grip }))}
-                  onEquip={(equipped) =>
+                  onEquip={(equipped) => {
                     edit(index, (entry) => ({
                       ...entry,
                       equipped,
                       carried: entry.carried || equipped,
-                    }))
-                  }
+                    }))?.then((landed) => {
+                      if (landed && equipped && endsRage(item.armor?.category)) endRage();
+                    });
+                  }}
                   onAttune={(on) => edit(index, (entry) => ({ ...entry, attuned: on }))}
                   onRemove={() => edit(index, () => null)}
                 />

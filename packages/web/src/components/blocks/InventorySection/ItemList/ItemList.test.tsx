@@ -1,5 +1,9 @@
 import type { CharacterInventory, SheetItem } from "@dnd/catalog";
-import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
+import {
+  type CharacterDerived,
+  characterDefinitionSchema,
+  defaultCharacterState,
+} from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -107,6 +111,16 @@ function searchPage(url: string) {
   return json({ items, total: items.length, limit: 20, offset: 0 });
 }
 
+/** Answers the character's play state, raging or not, and takes a write to it. */
+function stateStub(raging: boolean) {
+  let state = { ...defaultCharacterState(), activeEffects: raging ? [{ name: "Rage" }] : [] };
+  return (url: string, init?: RequestInit) => {
+    if (url !== "/api/characters/1/state") return undefined;
+    if (init?.method === "PUT") state = JSON.parse(String(init.body));
+    return json({ characterId: "1", state, updatedAt: "2026-01-01T00:00:00.000Z" });
+  };
+}
+
 /** `+1 Weapon` expanded over a Dagger, or the error a `status` other than 200 answers. */
 function expansion(status: number, refusal: string) {
   if (status !== 200) return json({ error: refusal }, status);
@@ -147,6 +161,7 @@ function stubApi({
   houseRules,
   firstEntry,
   homebrewItem,
+  raging = false,
 }: {
   inventory?: SheetItem[];
   variantStatus?: number;
@@ -158,6 +173,7 @@ function stubApi({
   firstEntry?: object;
   /** The homebrew record `/api/homebrew/items/{id}` reads, which a `PUT` there renames. */
   homebrewItem?: { id: string; name: string };
+  raging?: boolean;
 } = {}) {
   let reads = 0;
   let homebrewRow = homebrewItem;
@@ -180,6 +196,7 @@ function stubApi({
         releasePut = resolve;
       })
     : undefined;
+  const stateReply = stateStub(raging);
   const answer = async (url: string, init?: RequestInit) => {
     if (init?.method === "PUT") {
       const wait = held;
@@ -202,7 +219,7 @@ function stubApi({
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    return homebrewReply(url, init) ?? answer(url, init);
+    return homebrewReply(url, init) ?? stateReply(url, init) ?? answer(url, init);
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -742,6 +759,86 @@ describe("ItemList", () => {
     const cloak = screen.getByLabelText("Equipped, Cloak of Protection");
     expect(cloak).toHaveAttribute("aria-pressed", "false");
     expect(cloak.querySelector("svg")).toHaveClass("lucide-backpack");
+  });
+
+  describe("heavy armor equipped during a rage", () => {
+    const plate = (): SheetItem[] => [
+      {
+        ...ITEMS[0],
+        name: "Plate Armor",
+        weapon: null,
+        armor: { category: "heavy", armorClass: 18 },
+      } as SheetItem,
+    ];
+    const stateWrites = (fetchMock: ReturnType<typeof stubApi>) =>
+      fetchMock.mock.calls.filter(
+        ([url, init]) => url === "/api/characters/1/state" && init?.method === "PUT",
+      );
+
+    it("ends the rage", async () => {
+      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      await screen.findByText("Plate Armor");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
+
+      await waitFor(() => expect(stateWrites(fetchMock)).toHaveLength(1));
+      expect(JSON.parse(String(stateWrites(fetchMock)[0]?.[1]?.body)).activeEffects).toEqual([]);
+    });
+
+    const failPut = (fetchMock: ReturnType<typeof stubApi>, target: string) =>
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+          String(input) === target && init?.method === "PUT"
+            ? json({ error: "disk full" }, 500)
+            : fetchMock(input, init),
+        ),
+      );
+
+    it("toasts a rage that failed to end", async () => {
+      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      await screen.findByText("Plate Armor");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+      failPut(fetchMock, "/api/characters/1/state");
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
+
+      expect(
+        await saveToasts().findByText("Rage: Couldn't end the rage: disk full"),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the rage when the armor failed to save", async () => {
+      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      await screen.findByText("Plate Armor");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+      failPut(fetchMock, "/api/characters/1");
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
+
+      await saveToasts().findByText("Inventory: Couldn't save: disk full");
+      expect(stateWrites(fetchMock)).toHaveLength(0);
+    });
+
+    it("leaves a character who is not raging alone", async () => {
+      const fetchMock = renderList(derivedRecord(), plate());
+      await screen.findByText("Plate Armor");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
+
+      expect((await written(fetchMock)).inventory[0].equipped).toBe(true);
+      expect(stateWrites(fetchMock)).toHaveLength(0);
+    });
   });
 
   describe("a weapon or armor the character lacks proficiency with", () => {
