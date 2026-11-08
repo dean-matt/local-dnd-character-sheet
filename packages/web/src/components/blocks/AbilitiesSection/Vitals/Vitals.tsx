@@ -26,7 +26,7 @@ export function Vitals({
     <div className="grid items-start gap-3 md:grid-cols-2">
       <HitPoints character={character} derived={derived} state={state.data.state} />
       <DeathSaves character={character} derived={derived} state={state.data.state} />
-      <StatusEffects state={state.data.state} />
+      <StatusEffects character={character} state={state.data.state} />
     </div>
   );
 }

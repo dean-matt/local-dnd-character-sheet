@@ -657,8 +657,9 @@ describe("AbilitiesSection", () => {
         within(tile("Ability Scores", "Strength")).getByRole("button", { name: "Strength" }),
       );
       expect(screen.getByRole("dialog", { name: "Strength" })).toHaveTextContent("Score 8");
-      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-      const asked = fetchMock.mock.calls.map((call) => JSON.parse(String(call[1]?.body)).refs[0]);
+      const lookups = () => fetchMock.mock.calls.filter((call) => call[1]?.body !== undefined);
+      await waitFor(() => expect(lookups()).toHaveLength(2));
+      const asked = lookups().map((call) => JSON.parse(String(call[1]?.body)).refs[0]);
       expect(asked).toContainEqual({ tag: "variantrule", name: "Saving Throw", source: "XPHB" });
       expect(asked).toContainEqual({
         tag: "variantrule",

@@ -4,6 +4,18 @@ import { characterRecord, derivedRecord, stateRecord } from "../../../../test/re
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { Vitals } from "./Vitals.tsx";
 
+const CONDITIONS = {
+  items: ["Exhaustion", "Poisoned", "Prone", "Stunned"].map((name) => ({
+    type: "condition",
+    name,
+    source: "XPHB",
+    edition: "one",
+  })),
+  total: 4,
+  limit: 100,
+  offset: 0,
+};
+
 function derived(): CharacterDerived {
   return { ...derivedRecord(), hitPointMaximum: { computed: 20, manual: null, terms: [] } };
 }
@@ -35,7 +47,8 @@ export function renderVitals(
   const held = hold ? new Promise<void>((resolve) => (release = resolve)) : Promise.resolve();
   vi.stubGlobal(
     "fetch",
-    vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).includes("/search")) return new Response(JSON.stringify(CONDITIONS));
       if (init?.method === "PUT") {
         const attempt = ++attempts;
         await held;
