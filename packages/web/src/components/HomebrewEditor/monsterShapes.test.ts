@@ -14,12 +14,14 @@ import {
   ratingOf,
   rulesParts,
   speedFeet,
+  type TablePart,
   type TypeTagRow,
   typeTagRows,
   withAlignmentRows,
   withArmorClass,
   withArmorClassWords,
   withExtraArmorClasses,
+  withoutColumn,
   withPrefix,
   withRating,
   withSpeed,
@@ -194,7 +196,7 @@ describe("monster shapes", () => {
     expect(isPlainTextRow({ name: "Bite", entries: ["a", { type: "list", items: ["b"] }] })).toBe(
       true,
     );
-    expect(isPlainTextRow({ name: "Bite", entries: [{ type: "table", rows: [] }] })).toBe(false);
+    expect(isPlainTextRow({ name: "Bite", entries: [{ type: "table", rows: [[1]] }] })).toBe(false);
     expect(
       isPlainTextRow({
         name: "Bite",
@@ -254,6 +256,70 @@ describe("monster shapes", () => {
       rulesParts([{ type: "entries", entries: [{ type: "list", items: [] }] }]),
     ).toBeUndefined();
     expect(rulesParts([{ type: "entries", name: 3 }])).toBeUndefined();
+  });
+
+  it("reads a table as its caption, labels and cells, and writes it back unchanged", () => {
+    const table = {
+      type: "table",
+      caption: "Soul Bag",
+      colLabels: ["d6", "Soul"],
+      colStyles: ["col-1", "col-5"],
+      rows: [["1", "Bat"], ["2"]],
+    };
+    const parts = rulesParts(["Intro.", table]);
+
+    expect(parts).toEqual([
+      { text: "Intro." },
+      {
+        caption: "Soul Bag",
+        labels: ["d6", "Soul"],
+        rows: [
+          ["1", "Bat"],
+          ["2", ""],
+        ],
+        stored: table,
+      },
+      { text: "" },
+    ]);
+    expect(entriesOfParts(parts ?? [])).toEqual(["Intro.", table]);
+    const edited = parts?.[1];
+    expect(entriesOfParts([{ ...(edited as TablePart), caption: "Bag" }])).toEqual([
+      {
+        ...table,
+        caption: "Bag",
+        rows: [
+          ["1", "Bat"],
+          ["2", ""],
+        ],
+      },
+    ]);
+    expect(rulesParts([{ type: "table", rows: [[1]] }])).toBeUndefined();
+    expect(rulesParts([{ type: "table", rows: [["a"]], caption: 3 }])).toBeUndefined();
+  });
+
+  it("writes a table without a caption or labels that has none, and nothing for a blank one", () => {
+    const stored = { type: "table" };
+    expect(
+      entriesOfParts([{ caption: " ", labels: ["", ""], rows: [[" a ", ""]], stored }]),
+    ).toEqual([{ type: "table", rows: [["a", ""]] }]);
+    expect(
+      entriesOfParts([{ caption: "", labels: ["", ""], rows: [["", ""]], stored }]),
+    ).toBeUndefined();
+  });
+
+  it("drops a column from the labels, cells and column styles", () => {
+    const part = {
+      caption: "",
+      labels: ["a", "b"],
+      rows: [["1", "2"]],
+      stored: { type: "table", colStyles: ["x", "y"] },
+    };
+    expect(withoutColumn(part, 0)).toEqual({
+      caption: "",
+      labels: ["b"],
+      rows: [["2"]],
+      stored: { type: "table", colStyles: ["y"] },
+    });
   });
 
   it("writes nothing for a section with neither name nor paragraphs", () => {

@@ -5079,6 +5079,15 @@ describe("Homebrew monsters", () => {
     describe("traits, actions, reactions and legendary actions", () => {
       const list = { type: "list", style: "list-hang-notitle", items: ["a", "b"] };
       const section = { type: "entries", name: "Heartstone", entries: ["Turns ethereal."] };
+      const table = {
+        type: "table",
+        caption: "Bag of Souls",
+        colLabels: ["d6", "Soul"],
+        rows: [
+          ["1", "Bat"],
+          ["2", "Owl"],
+        ],
+      };
       const withText = {
         ...full,
         json: {
@@ -5092,8 +5101,18 @@ describe("Homebrew monsters", () => {
           action: [{ name: "Bite", entries: ["{@atk mw} {@hit 4} to hit.", section] }],
         },
       };
-      const openText = async (writes: Parameters<typeof stubApi>[1] = []) => {
-        const fetchMock = stubApi({ monsters: [withText] }, writes);
+      const withTable = {
+        ...withText,
+        json: {
+          ...withText.json,
+          action: [...withText.json.action, { name: "Spit", entries: ["Spits.", table] }],
+        },
+      };
+      const openText = async (
+        writes: Parameters<typeof stubApi>[1] = [],
+        monster: typeof withText | typeof withTable = withText,
+      ) => {
+        const fetchMock = stubApi({ monsters: [monster] }, writes);
         renderPage("monsters");
         await editRow(monsters(), "Cinder Hound");
         await settled();
@@ -5303,6 +5322,78 @@ describe("Homebrew monsters", () => {
           { type: "list", items: ["x"] },
           "Outro.",
         ]);
+      });
+
+      it("adds, edits and removes a table with its rows and columns", async () => {
+        await openText([], withTable);
+        expect(field("textbox", "Actions 2 table 1 caption")).toHaveValue("Bag of Souls");
+        expect(field("textbox", "Actions 2 table 1 column 2 label")).toHaveValue("Soul");
+        expect(field("textbox", "Actions 2 table 1 row 2 column 2")).toHaveValue("Owl");
+
+        fireEvent.change(field("textbox", "Actions 2 table 1 caption"), {
+          target: { value: "Souls" },
+        });
+        fireEvent.change(field("textbox", "Actions 2 table 1 row 1 column 2"), {
+          target: { value: "Rat" },
+        });
+        click("Add a column to table 1 of action 2");
+        fireEvent.change(field("textbox", "Actions 2 table 1 column 3 label"), {
+          target: { value: "Cost" },
+        });
+        click("Add a row to table 1 of action 2");
+        fireEvent.change(field("textbox", "Actions 2 table 1 row 3 column 1"), {
+          target: { value: "3" },
+        });
+        click("Remove row 2 of table 1 of action 2");
+        click("Remove column 2 of table 1 of action 2");
+        click("Add a table to action 2");
+        fireEvent.change(field("textbox", "Actions 2 table 2 row 1 column 1"), {
+          target: { value: "x" },
+        });
+        mode("JSON");
+
+        expect(JSON.parse(jsonText("Monster JSON")).action[1].entries.slice(1)).toEqual([
+          {
+            type: "table",
+            caption: "Souls",
+            colLabels: ["d6", "Cost"],
+            rows: [
+              ["1", ""],
+              ["3", ""],
+            ],
+          },
+          { type: "table", rows: [["x", ""]] },
+        ]);
+
+        mode("Step by step");
+        stepTo("Traits");
+        click("Remove table 2 of action 2");
+        click("Remove table 1 of action 2");
+        mode("JSON");
+        expect(JSON.parse(jsonText("Monster JSON")).action[1].entries).toEqual(["Spits."]);
+      });
+
+      it("shows a table changed in JSON in the form and the preview", async () => {
+        await openText([], withTable);
+        mode("JSON");
+        typeJson(
+          "Monster JSON",
+          JSON.stringify({
+            ...withText.json,
+            trait: [{ name: "Items", entries: [{ ...table, caption: "Bag" }] }],
+          }),
+        );
+        mode("Step by step");
+        stepTo("Traits");
+
+        expect(field("textbox", "Traits 1 table 1 caption")).toHaveValue("Bag");
+        fireEvent.change(field("textbox", "Traits 1 table 1 row 1 column 2"), {
+          target: { value: "Moth" },
+        });
+        mode("Preview");
+        const preview = within(editor());
+        expect(preview.getByText("Bag")).toBeInTheDocument();
+        expect(preview.getByText("Moth")).toBeInTheDocument();
       });
 
       it("shows a nested section changed in JSON in the form and the preview", async () => {

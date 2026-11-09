@@ -31,10 +31,11 @@ source or in words, average hit points and hit dice, the five speeds, senses, la
 its traits, actions, bonus actions, reactions, legendary actions and mythic actions, the
 legendary action uses, and the text introducing the reactions, legendary actions and mythic
 actions; the API's reasons show beside the field. Each of those rows is a name and rules text
-of paragraphs, lists of plain items and named sections of paragraphs, which `{@tag}`s may fill;
+of paragraphs, lists of plain items, tables of text and named sections of paragraphs, which `{@tag}`s may fill;
 a row can be moved or removed, a list added, removed or edited an item to a line, keeping its
-style, and a section added, moved, removed or edited, its name and paragraphs. A row whose text
-holds a table, a list of named items or a section holding more than paragraphs, or that is not
+style, a table added, removed or edited, its caption, column labels and cells with rows and
+columns added and removed, and a section added, moved, removed or edited, its name and paragraphs. A row whose text
+holds a list of named items, a table of more than text or a section holding more than paragraphs, or that is not
 a name and entries, shows as read-only and is edited in JSON, as are lair actions. The form
 adds, edits and removes spellcasting blocks: a block's name, ability, whether it shows as a
 trait or an action, its header and footer paragraphs, and its spells at will, as rituals, per
