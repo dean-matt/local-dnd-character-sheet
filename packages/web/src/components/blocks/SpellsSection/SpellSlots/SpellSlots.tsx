@@ -61,7 +61,7 @@ export function SpellSlots({
   }
 
   return (
-    <Card title="Spell Slots">
+    <Card title="Spell Slots" className="w-fit max-w-full">
       <ul className="flex flex-col gap-1.5">
         {spellSlots.map((slot, index) => {
           const held = sheet.spellSlots[index] as Slot;
