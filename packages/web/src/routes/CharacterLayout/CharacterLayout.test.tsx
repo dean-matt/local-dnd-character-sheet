@@ -67,6 +67,8 @@ describe("CharacterLayout header actions", () => {
 describe("CharacterLayout roll log", () => {
   const roll = {
     id: 1,
+    characterId: "1",
+    characterName: "Vex",
     rolledAt: "2026-01-01T00:00:00.000Z",
     label: "1d4",
     notation: "1d4",
@@ -77,7 +79,7 @@ describe("CharacterLayout roll log", () => {
   };
 
   async function renderSheet(rolls: unknown[]) {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       const bodies: Record<string, unknown> = {
         "/api/characters/1": warlockRecord(),
@@ -85,7 +87,8 @@ describe("CharacterLayout roll log", () => {
         "/api/characters/1/derived": derivedRecord(),
         "/api/characters/1/pages": [],
         "/api/characters/1/undo": [],
-        "/api/characters/1/rolls": init?.method === "POST" ? roll : rolls,
+        "/api/characters/1/rolls": roll,
+        "/api/rolls": rolls,
       };
       return url in bodies
         ? new Response(JSON.stringify(bodies[url]), { status: 200 })
@@ -127,6 +130,17 @@ describe("CharacterLayout roll log", () => {
     expect(item).toHaveTextContent("Fire Bolt");
     expect(item).toHaveTextContent("2d10");
     expect(item).toHaveTextContent("14");
+  });
+
+  it("tags each roll with its character, another character's included", async () => {
+    await renderSheet([
+      { ...roll, id: 2, characterId: "2", characterName: "Mira" },
+      { ...roll, id: 1, characterName: "Vex" },
+    ]);
+    fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+    const items = await screen.findAllByRole("listitem");
+    expect(items[0]).toHaveTextContent("Mira");
+    expect(items[1]).toHaveTextContent("Vex");
   });
 
   it("opens on a rolled tag and announces the roll", async () => {

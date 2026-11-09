@@ -24,29 +24,6 @@
   </div>
 
   <div>
-    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Character</div>
-    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
-      <sc-for list="{{characterChips}}" as="chip" hint-placeholder-count="1">
-        <div style="display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 4px 3px 10px; border-radius: 999px; background: #eceef1; border: 1px solid #dde1e6; color: #1f2430;">
-          {{chip.label}}
-          <button aria-label="Remove {{chip.label}}" onClick="{{chip.remove}}" style="width: 14px; height: 14px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
-        </div>
-      </sc-for>
-      <sc-if value="{{characterEmpty}}" hint-placeholder-val="{{true}}">
-        <div style="font-size: 12px; color: #9aa1ab; font-style: italic;">Showing all</div>
-      </sc-if>
-    </div>
-    <sc-if value="{{characterHasHidden}}" hint-placeholder-val="{{true}}">
-      <select onChange="{{onCharacterAdd}}" value="" aria-label="Narrow by character" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
-        <option value="" disabled>+ Narrow to character…</option>
-        <sc-for list="{{characterHiddenOptions}}" as="opt" hint-placeholder-count="1">
-          <option value="{{opt.value}}">{{opt.label}}</option>
-        </sc-for>
-      </select>
-    </sc-if>
-  </div>
-
-  <div style="border-top: 1px solid #dde1e6; padding-top: 8px;">
     <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Roll Type</div>
     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
       <sc-for list="{{typeChips}}" as="chip" hint-placeholder-count="1">
@@ -72,13 +49,12 @@
   <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":320}}'>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":200}}'>
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const CHARACTERS = ['Mira Stormwind', 'Kaelen Ashwood'];
     const TYPES = ['Attack', 'Damage', 'Check', 'Save', 'Spell Atk', 'Spell Dmg'];
-    const DEFAULT = { characters: [], types: [] };
+    const DEFAULT = { types: [] };
     const filters = this.props.filters || DEFAULT;
     const onChange = this.props.onChange || (() => {});
     const onClose = this.props.onClose || (() => {});
@@ -93,15 +69,9 @@ class Component extends DCLogic {
         onAdd: (e) => { const k = e.target.value; if (k) apply([...selected, k]); }
       };
     };
-    const characterFacet = makeFacet(filters.characters, CHARACTERS, (next) => set({ characters: next }));
     const typeFacet = makeFacet(filters.types, TYPES, (next) => set({ types: next }));
     return {
       accent,
-      characterChips: characterFacet.chips,
-      characterEmpty: characterFacet.isEmpty,
-      characterHasHidden: characterFacet.hasHidden,
-      characterHiddenOptions: characterFacet.hiddenOptions,
-      onCharacterAdd: characterFacet.onAdd,
       typeChips: typeFacet.chips,
       typeEmpty: typeFacet.isEmpty,
       typeHasHidden: typeFacet.hasHidden,

@@ -60,14 +60,13 @@ widget, panel, or nav element:
   subtitle ends in an ellipsis and keeps its full text in a tooltip; the `longText`
   tweak shows both truncated. Rolls
   Panel is a right-docked, collapsible rail — the counterpart to the tab rail on the left —
-  listing rolls newest first, each tagged with what it was rolled for (a weapon, a
-  spell, an ability check…) and which character made it, with a Clear button and a
-  Filter button (by character, by roll type) in the same shape as the other list
-  widgets' filters. Character sheet only, not Settings. Forward design for #282, which
-  only specified the list; the dock, the collapse, and Clear are this mockup's own call.
-  The Filter button and the per-roll character tag widen past #282's own "out of scope"
-  line ("Filtering or searching the log") and its single-character framing — #311 and #312
-  are the new issues that settle those two.
+  listing every character's rolls newest first, whichever character is open, each tagged
+  with what it was rolled for (a weapon, a spell, an ability check…) and which character
+  made it, with a Clear button and a Filter button (by roll type) in the same shape as the
+  other list widgets' filters. There is no filter by character. Character sheet only, not
+  Settings. Forward design for #282, which only specified the list; the dock, the collapse,
+  and Clear are this mockup's own call. The Filter button widens past #282's own "out of
+  scope" line ("Filtering or searching the log") — #311 settles it.
 - Overlays: Add Widget Picker.
 - Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)
@@ -159,7 +158,7 @@ says how much of the artboard the app builds today.
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the portrait upload and the Rest menu, the rest read-only |
 | `RollsPanel` | #282, #311, #312 | nothing |
-| `RollsPanelFilter` | #311, #312 | nothing |
+| `RollsPanelFilter` | #311 | nothing |
 | `WidgetPicker` | #819 | nothing |
 | `CustomTab` | #819 | nothing |
 

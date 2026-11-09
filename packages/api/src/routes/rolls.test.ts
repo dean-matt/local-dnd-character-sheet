@@ -52,7 +52,9 @@ describe("rollsRoutes", () => {
     (await (await characters.request("/characters", send("POST", definition))).json()).id;
   const record = (id: string, body: unknown) =>
     rolls.request(`/characters/${id}/rolls`, send("POST", body));
-  const list = async (id: string) => (await rolls.request(`/characters/${id}/rolls`)).json();
+  const list = async () => (await rolls.request("/rolls")).json();
+  const listOf = async (id: string) =>
+    (await list()).filter((entry: { characterId: string }) => entry.characterId === id);
 
   beforeEach(() => {
     opened = openTestDatabases();
@@ -73,7 +75,7 @@ describe("rollsRoutes", () => {
     const stored = await res.json();
     expect(stored).toMatchObject(roll(15));
     expect(Number.isNaN(Date.parse(stored.rolledAt))).toBe(false);
-    expect(await list(id)).toEqual([stored]);
+    expect(await list()).toEqual([stored]);
   });
 
   it("round-trips the mode and the reason a d20 option gave the roll", async () => {
@@ -86,7 +88,7 @@ describe("rollsRoutes", () => {
 
     const stored = await (await record(id, lucky)).json();
     expect(stored).toMatchObject({ mode: "normal", reason: "lucky" });
-    expect(await list(id)).toEqual([stored]);
+    expect(await list()).toEqual([stored]);
   });
 
   it("loads a row written before a roll carried a mode or a reason", async () => {
@@ -104,7 +106,7 @@ describe("rollsRoutes", () => {
       })
       .run();
 
-    const [legacy] = await list(id);
+    const [legacy] = await list();
     expect(legacy).toMatchObject(roll(11));
     expect(legacy).not.toHaveProperty("reason");
     expect(legacy).not.toHaveProperty("mode");
@@ -120,7 +122,7 @@ describe("rollsRoutes", () => {
     await record(id, roll(10, "First"));
     await record(id, roll(11, "Second"));
 
-    expect((await list(id)).map((entry: { label: string }) => entry.label)).toEqual([
+    expect((await list()).map((entry: { label: string }) => entry.label)).toEqual([
       "Second",
       "First",
     ]);
@@ -132,15 +134,35 @@ describe("rollsRoutes", () => {
     await record(other, roll(1, "Other"));
     for (let n = 0; n <= ROLL_LOG_LIMIT; n++) await record(id, roll(n + 3, `Roll ${n}`));
 
-    const kept = await list(id);
+    const kept = await listOf(id);
     expect(kept).toHaveLength(ROLL_LOG_LIMIT);
     expect(kept[0].label).toBe(`Roll ${ROLL_LOG_LIMIT}`);
     expect(kept.at(-1).label).toBe("Roll 1");
-    expect(await list(other)).toHaveLength(1);
+    expect(await listOf(other)).toHaveLength(1);
+    expect(await list()).toHaveLength(ROLL_LOG_LIMIT + 1);
   });
 
-  it("404s an unknown character on both routes", async () => {
-    expect((await rolls.request("/characters/missing/rolls")).status).toBe(404);
+  it("tags each roll with its character and lists every character's, newest first", async () => {
+    const vex = await create();
+    const other = await create();
+    await record(vex, roll(10, "First"));
+    await record(other, roll(11, "Second"));
+
+    expect(await list()).toMatchObject([
+      { label: "Second", characterId: other, characterName: "Vex" },
+      { label: "First", characterId: vex, characterName: "Vex" },
+    ]);
+  });
+
+  it("drops a deleted character's rolls from the list", async () => {
+    const id = await create();
+    await record(id, roll(10));
+    expect(await list()).toHaveLength(1);
+    await characters.request(`/characters/${id}`, { method: "DELETE" });
+    expect(await list()).toEqual([]);
+  });
+
+  it("404s recording a roll for an unknown character", async () => {
     const res = await record("missing", roll(12));
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "No character with that id" });
@@ -152,6 +174,6 @@ describe("rollsRoutes", () => {
       const { [field as keyof ReturnType<typeof roll>]: _gone, ...rest } = roll(12);
       expect((await record(id, rest)).status).toBe(400);
     }
-    expect(await list(id)).toEqual([]);
+    expect(await list()).toEqual([]);
   });
 });

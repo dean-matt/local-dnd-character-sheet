@@ -1,4 +1,4 @@
-/** Record a roll the client made, and read a character's recent rolls. The server never rolls. */
+/** Record a roll the client made, and read every character's recent rolls. The server never rolls. */
 import { rollLogEntrySchema, rollRecordSchema } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
@@ -11,16 +11,14 @@ const NOT_FOUND = "No character with that id";
 
 const list = createRoute({
   method: "get",
-  path: "/characters/{id}/rolls",
+  path: "/rolls",
   tags: ["characters"],
-  summary: "List a character's recent rolls, newest first, at most 200",
-  request: { params: idParam },
+  summary: "List every character's recent rolls, newest first, each character's last 200",
   responses: {
     200: {
-      description: "The character's rolls",
+      description: "The rolls, each with the character that made it",
       content: { "application/json": { schema: z.array(rollLogEntrySchema) } },
     },
-    404: notFound("character"),
   },
 });
 
@@ -45,11 +43,7 @@ const record = createRoute({
 export function rollsRoutes(db: CharactersDb) {
   const routes = new OpenAPIHono();
 
-  routes.openapi(list, (c) => {
-    const rolls = listRolls(db, c.req.valid("param").id);
-    if (!rolls) return c.json({ error: NOT_FOUND }, 404);
-    return c.json(rolls, 200);
-  });
+  routes.openapi(list, (c) => c.json(listRolls(db), 200));
 
   routes.openapi(record, (c) => {
     const stored = recordRoll(db, c.req.valid("param").id, c.req.valid("json"), new Date());

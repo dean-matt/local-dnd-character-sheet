@@ -1,7 +1,4 @@
-/**
- * Reads and writes for `roll_log`. Each answers `undefined` where the character does not
- * exist, the way `listCharacterPages` reads a miss.
- */
+/** Reads and writes for `roll_log`. `recordRoll` answers `undefined` where the character does not exist. */
 import type { rollRecordSchema } from "@dnd/character";
 import { and, desc, eq, notInArray } from "drizzle-orm";
 import type { z } from "zod";
@@ -10,36 +7,37 @@ import type { CharactersDb } from "./characters.ts";
 
 type RollRecord = z.infer<typeof rollRecordSchema>;
 
-const exists = (db: Pick<CharactersDb, "select">, characterId: string) =>
-  db.select({ id: characters.id }).from(characters).where(eq(characters.id, characterId)).get() !==
-  undefined;
-
-const entry = (row: typeof rollLog.$inferSelect) => {
-  const { detail, result, rolledAt, characterId: _owner, ...rest } = row;
+const entry = (row: typeof rollLog.$inferSelect, characterName: string) => {
+  const { detail, result, rolledAt, ...rest } = row;
   return {
     ...rest,
+    characterName,
     total: result,
     ...(detail as Pick<RollRecord, "dice" | "modifier" | "critical" | "mode" | "reason">),
     rolledAt: rolledAt.toISOString(),
   };
 };
 
-export function listRolls(db: CharactersDb, characterId: string) {
-  if (!exists(db, characterId)) return undefined;
+/** Every character's rolls, newest first; the bound is per character, so this is at most 200 a character. */
+export function listRolls(db: CharactersDb) {
   return db
-    .select()
+    .select({ roll: rollLog, characterName: characters.name })
     .from(rollLog)
-    .where(eq(rollLog.characterId, characterId))
+    .innerJoin(characters, eq(characters.id, rollLog.characterId))
     .orderBy(desc(rollLog.id))
-    .limit(ROLL_LOG_LIMIT)
     .all()
-    .map(entry);
+    .map(({ roll, characterName }) => entry(roll, characterName));
 }
 
 /** Stores `roll` as the character's newest and prunes the oldest past the bound. */
 export function recordRoll(db: CharactersDb, characterId: string, roll: RollRecord, now: Date) {
   return db.transaction((tx) => {
-    if (!exists(tx, characterId)) return undefined;
+    const owner = tx
+      .select({ name: characters.name })
+      .from(characters)
+      .where(eq(characters.id, characterId))
+      .get();
+    if (!owner) return undefined;
     const { dice, modifier, critical, mode, reason, total, label, notation } = roll;
     const row = tx
       .insert(rollLog)
@@ -62,6 +60,6 @@ export function recordRoll(db: CharactersDb, characterId: string, roll: RollReco
     tx.delete(rollLog)
       .where(and(eq(rollLog.characterId, characterId), notInArray(rollLog.id, kept)))
       .run();
-    return entry(row);
+    return entry(row, owner.name);
   });
 }
