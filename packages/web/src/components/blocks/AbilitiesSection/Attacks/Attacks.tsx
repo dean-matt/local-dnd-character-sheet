@@ -15,6 +15,7 @@ import {
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { Card } from "../../../Card.tsx";
+import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
 import { damageText } from "../../attack.ts";
 import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
@@ -84,6 +85,8 @@ export function Attacks({
             <col />
             <col className="w-[88px]" />
             <col />
+            <col className="w-6" />
+            <col className="w-6" />
           </colgroup>
           <thead className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
             <tr>
@@ -95,6 +98,12 @@ export function Attacks({
               </th>
               <th scope="col" className="px-0.5 pb-0.5 text-left">
                 Damage / Type
+              </th>
+              <th scope="col" className="px-0 pb-0.5">
+                <span className="sr-only">Roll attack</span>
+              </th>
+              <th scope="col" className="px-0 pb-0.5">
+                <span className="sr-only">Roll damage</span>
               </th>
             </tr>
           </thead>
@@ -125,6 +134,21 @@ export function Attacks({
                       overrideKey={`${key}.attackBonus`}
                     />
                   }
+                  rollAttack={
+                    <RollBonusButton
+                      label={`${name} attack`}
+                      bonus={derivedValue(attack.attackBonus)}
+                    />
+                  }
+                  rollDamage={
+                    attack.damage && (
+                      <RollBonusButton
+                        label={`${name} damage`}
+                        dice={attack.damage.dice}
+                        bonus={derivedValue(attack.damage.modifier)}
+                      />
+                    )
+                  }
                   damage={
                     <AttackDamage name={name} attack={attack} overrideKey={key}>
                       {attack.damage
@@ -151,6 +175,9 @@ export function Attacks({
                     />
                   }
                   damage={NONE}
+                  rollAttack={
+                    <RollBonusButton label={name} bonus={derivedValue(caster.attackBonus)} />
+                  }
                   effects={effectsOnRoll(rollEffects, { roll: "attack", ability: caster.ability })}
                   notes={<CastingBlockedNote armor={derived.castingBlockedBy} />}
                 />
