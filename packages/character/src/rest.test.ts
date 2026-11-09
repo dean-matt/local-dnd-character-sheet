@@ -181,6 +181,39 @@ describe("restedState", () => {
       ]);
     });
 
+    describe("a homebrew pool", () => {
+      const homebrew = (key: string, resetsOn: "short" | "long" | null) => ({
+        sheet: {
+          ...sheet,
+          classResources: [{ class: MONK, key, maximum: total(3), resets: resetsOn }],
+        },
+        state: {
+          ...state(),
+          classResources: [{ class: MONK, key, maximum: 3, expended: 2 }],
+        },
+      });
+
+      it.each([
+        ["short", "short", 0],
+        ["short", "long", 0],
+        ["long", "short", 2],
+        ["long", "long", 0],
+        [null, "short", 2],
+        [null, "long", 2],
+      ] as const)("with resets %s, a %s rest leaves %s spent", (on, length, left) => {
+        const { sheet: s, state: st } = homebrew("Ki", on);
+        const reloaded = sheetState(s, st);
+        expect(expended(restedState(classic, s, reloaded, length))).toEqual([left]);
+      });
+
+      it("takes only its stored cadence when named like a catalog pool", () => {
+        const { sheet: s, state: st } = homebrew("rages", null);
+        const one = { ...classic, edition: "one" as const };
+        expect(expended(restedState(one, s, st, "short"))).toEqual([2]);
+        expect(expended(restedState(one, s, st, "long"))).toEqual([2]);
+      });
+    });
+
     describe("a 2024 partial recharge", () => {
       const one = { ...classic, edition: "one" as const };
       const key = (name: string, expendedUses: number) => ({

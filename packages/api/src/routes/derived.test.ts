@@ -1363,6 +1363,20 @@ describe("derivedRoutes", () => {
       expect(await pools()).toEqual([["Ki", 3]]);
     });
 
+    it("carries the stored cadence and keeps a catalog-like name off the catalog rules", async () => {
+      replaceHomebrewClassResources(opened.homebrewDb, "c", [
+        { name: "Ki", resets: "short-rest", maximums: maximums({ 3: 3 }) },
+        { name: "rages", resets: "none", maximums: maximums({ 3: 2 }) },
+        { name: "Pact", maximums: maximums({ 3: 1 }) },
+      ]);
+      store(definitionWith({ levels: levels(3) }));
+      expect((await derived()).classResources.map((pool) => [pool.key, pool.resets])).toEqual([
+        ["Ki", "short"],
+        ["Pact", null],
+        ["rages", null],
+      ]);
+    });
+
     it("reads a class cited by name and source", async () => {
       store(definitionWith({ levels: levels(3, { name: "Monk", source: "HB" }) }));
       expect(await pools()).toEqual([["Ki", 3]]);

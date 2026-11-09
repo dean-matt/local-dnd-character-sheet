@@ -61,7 +61,9 @@ export function ClassResources({
     replace.write(withClassResource(stored, { ...pool, expended }), text);
   }
 
-  const rages = derived.classResources.some((pool) => pool.key === RAGES);
+  const isRage = (pool: { key: string; resets?: unknown }) =>
+    pool.key === RAGES && pool.resets === undefined;
+  const rages = derived.classResources.some(isRage);
 
   return (
     <Card title="Class Resources" className="max-w-full self-start">
@@ -82,7 +84,7 @@ export function ClassResources({
           const held = sheet.classResources[index] as Pool;
           const raging = isRaging(stored);
           const blocked = rageBlockedBy(derived, held);
-          const rageButton = pool.key === RAGES && (
+          const rageButton = isRage(pool) && (
             <PoolButton
               icon={raging ? X : Flame}
               label={raging ? "End rage" : "Start rage"}

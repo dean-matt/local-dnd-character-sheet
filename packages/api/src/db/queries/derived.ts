@@ -565,10 +565,14 @@ function classResources(
     if ("homebrewId" in cited) {
       cells.set(
         entryKey(ref),
-        listHomebrewClassResources(homebrewDb, cited.homebrewId).flatMap(({ name, maximums }) => {
-          const maximum = maximums[group.level - 1];
-          return maximum ? [{ key: name, value: String(maximum), homebrew: true as const }] : [];
-        }),
+        listHomebrewClassResources(homebrewDb, cited.homebrewId).flatMap(
+          ({ name, maximums, resets }) => {
+            const maximum = maximums[group.level - 1];
+            if (!maximum) return [];
+            const rest = resets === "short-rest" ? "short" : resets === "long-rest" ? "long" : null;
+            return [{ key: name, value: String(maximum), homebrew: { resets: rest } }];
+          },
+        ),
       );
       continue;
     }

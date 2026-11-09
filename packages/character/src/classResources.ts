@@ -64,12 +64,24 @@ export function classResourcePools(
     (catalog.classResources.get(entryKey(group.class)) ?? [])
       .filter((cell) => cell.homebrew || POOL_RESETS.has(cell.key))
       .map((cell) => {
-        if (cell.value === UNLIMITED) return { class: group.class, key: cell.key, maximum: null };
+        if (cell.value === UNLIMITED) {
+          return {
+            class: group.class,
+            key: cell.key,
+            maximum: null,
+            ...(cell.homebrew && { resets: cell.homebrew.resets }),
+          };
+        }
         const maximum = Number(cell.value);
         if (!Number.isInteger(maximum) || maximum < 1) {
           throw new RangeError(`${entryKey(group.class)} ${cell.key} prints ${cell.value}`);
         }
-        return { class: group.class, key: cell.key, maximum: computed(maximum) };
+        return {
+          class: group.class,
+          key: cell.key,
+          maximum: computed(maximum),
+          ...(cell.homebrew && { resets: cell.homebrew.resets }),
+        };
       }),
   );
 }
