@@ -341,7 +341,6 @@ describe("RestMenu", () => {
 
   describe("spending hit dice after a short rest", () => {
     const conModifier = derivedValue(derived().abilityModifiers.con);
-    const modifierLabel = conModifier < 0 ? `- ${-conModifier}` : `+ ${conModifier}`;
     const rollsA = (face: number, faces: number) =>
       vi.spyOn(Math, "random").mockReturnValue((face - 1) / faces + 0.001);
     const takeShort = async () => {
@@ -373,9 +372,11 @@ describe("RestMenu", () => {
       expect(writes[1]?.hitDice[0]?.remaining).toBe(0);
       await waitFor(() => expect(rolls).toHaveLength(1));
       expect(rolls[0]).toMatchObject({ label: "Hit die d8", modifier: conModifier });
-      expect(
-        await dialog.findByText(`d8 5 ${modifierLabel} = +${Math.max(0, 5 + conModifier)} HP`),
-      ).toBeInTheDocument();
+      expect(await dialog.findByRole("img", { name: "d8, rolled 5" })).toHaveTextContent("5");
+      expect(dialog.getAllByRole("img", { name: "d8, spent" })).toHaveLength(2);
+      expect(dialog.queryByRole("img", { name: "d8, not spent" })).not.toBeInTheDocument();
+      expect(dialog.getByText(`+${Math.max(0, 5 + conModifier)} HP`)).toBeInTheDocument();
+      expect(dialog.getByText("d8 · 0 of 3 left")).toBeInTheDocument();
       expect(dialog.getByText(`${12 + Math.max(0, 5 + conModifier)} / 20`)).toBeInTheDocument();
       expect(
         screen.getAllByRole("status").some((node) => /regained/.test(node.textContent ?? "")),
@@ -428,7 +429,7 @@ describe("RestMenu", () => {
       fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       await waitFor(() => expect(writes).toHaveLength(2));
       expect(await dialog.findByRole("alert")).toHaveTextContent("The roll was not logged.");
-      expect(await dialog.findByText(/^d8 5 .* HP$/)).toBeInTheDocument();
+      expect(await dialog.findByRole("img", { name: "d8, rolled 5" })).toBeInTheDocument();
     });
 
     it("makes every die unavailable for a dead character", async () => {
