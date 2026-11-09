@@ -118,6 +118,8 @@ export const characterStateSchema = z.strictObject({
     .default([]),
   deathSaves: deathSavesSchema,
   exhaustion: z.int().min(0).max(6).default(0),
+  /** One inspiration held or not; a count above one is a different rule. */
+  inspiration: z.boolean().default(false),
 });
 
 /**
