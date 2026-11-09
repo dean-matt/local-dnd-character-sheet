@@ -106,6 +106,7 @@ export {
   deathSaveRolledState,
   deathSaveStatus,
   healedState,
+  hitDieSpentState,
 } from "./hitPointChange.ts";
 export { type HouseRule, withTableHouseRules } from "./houseRules.ts";
 export {

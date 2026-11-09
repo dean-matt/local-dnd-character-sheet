@@ -1,4 +1,9 @@
-import type { CharacterDerived, CharacterRecord, CharacterState } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterRecord,
+  type CharacterState,
+  derivedValue,
+} from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
@@ -38,6 +43,8 @@ const spent = (): Partial<CharacterState> => ({
   exhaustion: 1,
 });
 
+const rolls: { label: string; notation: string; total: number; modifier: number }[] = [];
+
 /**
  * Renders the menu beside what the sheet reads, over a stand-in API that keeps what each state
  * write sends, so a rest lands on the sheet as it would. `fail` answers every write with a
@@ -49,16 +56,27 @@ function renderLive(
     character = characterRecord("1", "Vex") as CharacterRecord,
     derivedBlock = derived(),
     fail = false,
+    failRolls = false,
     hold = Promise.resolve(),
   } = {},
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
+  rolls.length = 0;
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       if (String(input).endsWith("/derived")) {
         return new Response(JSON.stringify(derivedBlock), { status: 200 });
+      }
+      if (init?.method === "POST" && String(input).endsWith("/rolls")) {
+        if (failRolls) return new Response(JSON.stringify({ error: "Disk full" }), { status: 500 });
+        const roll = JSON.parse(String(init.body));
+        rolls.push(roll);
+        return new Response(
+          JSON.stringify({ ...roll, id: rolls.length, rolledAt: "2026-01-01T00:00:00.000Z" }),
+          { status: 200 },
+        );
       }
       if (init?.method === "PUT") {
         await hold;
@@ -108,7 +126,10 @@ const listed = (dialog: ReturnType<typeof within>): string[] =>
     .queryAllByRole("term")
     .map((term: HTMLElement) => `${term.textContent}: ${term.nextSibling?.textContent}`);
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("RestMenu", () => {
   it("offers a short and a long rest, each opening a dialog", async () => {
@@ -316,5 +337,183 @@ describe("RestMenu", () => {
 
     expect(await dialog.findByRole("alert")).toHaveTextContent("The rest was not applied");
     expect(sheet()).toHaveTextContent("12 hp; 1/3 d8");
+  });
+
+  describe("spending hit dice after a short rest", () => {
+    const conModifier = derivedValue(derived().abilityModifiers.con);
+    const rollsA = (face: number, faces: number) =>
+      vi.spyOn(Math, "random").mockReturnValue((face - 1) / faces + 0.001);
+    const takeShort = async () => {
+      const dialog = await open("Short rest");
+      fireEvent.click(dialog.getByRole("button", { name: "Take the short rest" }));
+      await dialog.findByRole("heading", { name: "Spend hit dice" });
+      return dialog;
+    };
+
+    it("spends no die when the rest is cancelled", async () => {
+      const writes = renderLive(spent());
+      fireEvent.click((await open("Short rest")).getByRole("button", { name: "Cancel" }));
+      expect(writes).toEqual([]);
+      expect(rolls).toEqual([]);
+    });
+
+    it("rolls, heals, lowers the pool in one write and logs the roll", async () => {
+      rollsA(5, 8);
+      const writes = renderLive(spent(), { character: classic() });
+      const dialog = await takeShort();
+      expect(writes).toHaveLength(1);
+
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      await waitFor(() => expect(writes).toHaveLength(2));
+      expect(writes[1]?.hitPoints).toEqual({
+        current: 12 + Math.max(0, 5 + conModifier),
+        temporary: 3,
+      });
+      expect(writes[1]?.hitDice[0]?.remaining).toBe(0);
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      expect(rolls[0]).toMatchObject({ label: "Hit die d8", modifier: conModifier });
+      const amount = Math.max(0, 5 + conModifier);
+      const calculation = `d8: rolled 5 ${conModifier < 0 ? `- ${-conModifier}` : `+ ${conModifier}`} (Con) = ${amount} HP`;
+      expect(await dialog.findByRole("img", { name: calculation })).toHaveTextContent(`${amount}`);
+      expect(dialog.getAllByRole("img", { name: "d8, spent" })).toHaveLength(2);
+      expect(dialog.queryByRole("img", { name: "d8, not spent" })).not.toBeInTheDocument();
+      expect(dialog.getByText(`+${Math.max(0, 5 + conModifier)} HP`)).toBeInTheDocument();
+      expect(dialog.getByText("d8 · 0 of 3 left")).toBeInTheDocument();
+      expect(dialog.getByText(`${12 + Math.max(0, 5 + conModifier)} / 20`)).toBeInTheDocument();
+      expect(
+        screen.getAllByRole("status").some((node) => /regained/.test(node.textContent ?? "")),
+      ).toBe(true);
+    });
+
+    it("shows the calculation in a tooltip on hover and focus, and Escape dismisses it", async () => {
+      rollsA(5, 8);
+      renderLive(spent(), { character: classic() });
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      const die = await dialog.findByRole("img", { name: /^d8: rolled 5/ });
+      const calculation = die.getAttribute("aria-label") ?? "";
+      expect(dialog.queryByText(calculation)).not.toBeInTheDocument();
+
+      fireEvent.mouseEnter(die);
+      expect(dialog.getByText(calculation)).toBeInTheDocument();
+      fireEvent.mouseLeave(die);
+      expect(dialog.queryByText(calculation)).not.toBeInTheDocument();
+
+      expect(die).toHaveAttribute("tabindex", "0");
+      fireEvent.focus(die);
+      expect(dialog.getByText(calculation)).toBeInTheDocument();
+      expect(fireEvent.keyDown(die, { key: "Escape" })).toBe(false);
+      expect(dialog.queryByText(calculation)).not.toBeInTheDocument();
+    });
+
+    it("says when the heal was capped at the maximum", async () => {
+      rollsA(8, 8);
+      renderLive(
+        { ...spent(), hitPoints: { current: 19, temporary: 0 } },
+        { character: classic() },
+      );
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      const die = await dialog.findByRole("img", { name: /capped at max HP/ });
+      expect(die).toHaveTextContent("1");
+      expect(die).toHaveAccessibleName(/= 1 HP \(capped at max HP\)$/);
+    });
+
+    it("says when the heal was floored", async () => {
+      rollsA(1, 8);
+      const base = derived();
+      const low = {
+        ...base,
+        abilityModifiers: {
+          ...base.abilityModifiers,
+          con: { computed: -3, manual: null, terms: [] },
+        },
+      };
+      renderLive(spent(), { character: classic(), derivedBlock: low });
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      expect(
+        await dialog.findByRole("img", { name: "d8: rolled 1 - 3 (Con) = 0 HP (floored to 0)" }),
+      ).toHaveTextContent("0");
+    });
+
+    it("makes a pool with none left unavailable", async () => {
+      rollsA(5, 8);
+      const writes = renderLive(
+        {
+          ...spent(),
+          hitDice: [
+            { die: 8, total: 3, remaining: 1 },
+            { die: 10, total: 2, remaining: 0 },
+          ],
+        },
+        { character: classic() },
+      );
+      const dialog = await takeShort();
+      const button = dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" });
+      fireEvent.click(button);
+      await waitFor(() =>
+        expect(dialog.getByRole("button", { name: "Roll d8, 0 of 3 left" })).toHaveAttribute(
+          "aria-disabled",
+          "true",
+        ),
+      );
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 0 of 3 left" }));
+      expect(writes).toHaveLength(2);
+      expect(dialog.getByText("No hit dice remain.")).toBeInTheDocument();
+    });
+
+    it("keeps the sheet as it was and says the die was not spent when the write fails", async () => {
+      rollsA(5, 8);
+      renderLive(spent(), { character: classic() });
+      const dialog = await takeShort();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(JSON.stringify({ error: "Disk full" }), { status: 500 })),
+      );
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      expect(await dialog.findByRole("alert")).toHaveTextContent("The hit die was not spent");
+      expect(rolls).toEqual([]);
+    });
+
+    it("says so on the page when the roll is not logged", async () => {
+      rollsA(5, 8);
+      const writes = renderLive(spent(), { character: classic(), failRolls: true });
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      await waitFor(() => expect(writes).toHaveLength(2));
+      expect(await dialog.findByRole("alert")).toHaveTextContent("The roll was not logged.");
+      expect(await dialog.findByRole("img", { name: /^d8: rolled 5 .* HP$/ })).toBeInTheDocument();
+    });
+
+    it("makes every die unavailable for a dead character", async () => {
+      const writes = renderLive(
+        {
+          ...spent(),
+          hitPoints: { current: 0, temporary: 0 },
+          deathSaves: { successes: 0, failures: 3 },
+        },
+        { character: classic() },
+      );
+      const dialog = await takeShort();
+      expect(dialog.getByText("Vex is dead.")).toBeInTheDocument();
+      const button = dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" });
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button);
+      expect(writes).toHaveLength(1);
+    });
+
+    it("keeps each roll made when the dialog closes, and returns focus to Rest", async () => {
+      rollsA(5, 8);
+      const writes = renderLive(spent(), { character: classic() });
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      await waitFor(() => expect(writes).toHaveLength(2));
+      fireEvent.click(dialog.getByRole("button", { name: "Done" }));
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(rest()).toHaveFocus();
+      expect(sheet()).toHaveTextContent(/0\/3 d8/);
+    });
   });
 });

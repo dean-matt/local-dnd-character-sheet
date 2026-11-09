@@ -4,6 +4,7 @@ import {
   type HitDie,
   type HitPointLevel,
   hitDiceRecovered,
+  hitDieHealing,
   hitPointSource,
   maxHitPoints,
 } from "./index.ts";
@@ -149,5 +150,23 @@ describe("hitDiceRecovered", () => {
 
   it.each([-1, 1.5])("rejects a pool of %s", (total) => {
     expect(() => hitDiceRecovered([1, total], "classic")).toThrow(RangeError);
+  });
+});
+
+describe("hitDieHealing", () => {
+  it.each([
+    [5, 2, "classic", 7],
+    [1, -3, "classic", 0],
+    [1, -3, "one", 1],
+    [4, -1, "one", 3],
+  ] as const)(
+    "a roll of %i with a modifier of %i under %s regains %i",
+    (roll, modifier, edition, expected) => {
+      expect(hitDieHealing(roll, modifier, edition)).toBe(expected);
+    },
+  );
+
+  it("refuses a fractional roll", () => {
+    expect(() => hitDieHealing(1.5, 0, "classic")).toThrow(RangeError);
   });
 });
