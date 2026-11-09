@@ -225,6 +225,12 @@ describe("describeStateChange", () => {
     expect(stateChangePhrases(raging, state)).toEqual(["Rage cleared"]);
   });
 
+  it("records inspiration gained and spent", () => {
+    const inspired: CharacterState = { ...state, inspiration: true };
+    expect(describeStateChange(state, inspired)).toBe("Inspiration set to held");
+    expect(stateChangePhrases(inspired, state)).toEqual(["Inspiration cleared"]);
+  });
+
   it("records a custom condition added and removed", () => {
     const marked: CharacterState = { ...state, customConditions: ["Marked"] };
     expect(describeStateChange(state, marked)).not.toBeNull();

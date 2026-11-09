@@ -408,6 +408,10 @@ const STATE_CHANGES: {
   ],
   exhaustion: (before, after) =>
     one("exhaustion", "Exhaustion", before.exhaustion, after.exhaustion),
+  inspiration: (before, after) =>
+    one("inspiration", "Inspiration", before.inspiration, after.inspiration, (held) =>
+      held ? "held" : undefined,
+    ),
 };
 
 const stateChanges = (before: CharacterState, after: CharacterState) =>

@@ -42,6 +42,7 @@ describe("default state", () => {
       activeEffects: [],
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
+      inspiration: false,
     });
   });
 
@@ -197,5 +198,17 @@ describe("custom conditions", () => {
   it("parses a state stored before them with none", () => {
     const { customConditions: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).customConditions).toEqual([]);
+  });
+});
+
+describe("inspiration", () => {
+  it("stores and reads back as held", () => {
+    const held = { ...state, inspiration: true };
+    expect(characterStateSchema.parse(structuredClone(held))).toEqual(held);
+  });
+
+  it("parses a state stored before it as none", () => {
+    const { inspiration: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).inspiration).toBe(false);
   });
 });

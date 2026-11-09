@@ -8,6 +8,7 @@ import { SidebarFrame } from "../SidebarFrame.tsx";
 import { CharacterHeader } from "./CharacterHeader.tsx";
 import { CharacterSidebar } from "./CharacterSidebar.tsx";
 import { Dock } from "./Dock.tsx";
+import { InspirationButton } from "./InspirationButton.tsx";
 import { ManagePages } from "./ManagePages/ManagePages.tsx";
 import { PrintSheet } from "./PrintSheet/PrintSheet.tsx";
 import { RestMenu } from "./RestMenu/RestMenu.tsx";
@@ -50,6 +51,7 @@ export function CharacterLayout() {
               character={character.data}
               actions={
                 <>
+                  <InspirationButton characterId={id} />
                   <UndoHistoryButton
                     ref={historyButtonRef}
                     characterId={id}
