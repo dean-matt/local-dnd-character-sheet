@@ -124,6 +124,8 @@ export function ProficiencyRow({
         <span className="flex w-7 justify-end font-semibold">
           <DerivedValue named name={roll} value={modifier} overrideKey={overrideKey} />
         </span>
+      </span>
+      <span className="flex w-5 shrink-0 justify-center empty:hidden">
         <RollBonusButton label={ability ? roll : title} bonus={derivedValue(modifier)} />
       </span>
     </li>

@@ -8,6 +8,7 @@ export function StatTile({
   name,
   labelClassName,
   detail,
+  corner,
   children,
 }: {
   label: string;
@@ -20,6 +21,8 @@ export function StatTile({
     rules: Rules | undefined;
     footer?: ReactNode;
   };
+  /** Sits in the tile's top-right corner, out of the centred stack. */
+  corner?: ReactNode;
   children: ReactNode;
 }) {
   const heading = (
@@ -29,7 +32,8 @@ export function StatTile({
     </>
   );
   return (
-    <div className="flex flex-col items-center gap-0.5 rounded-control bg-subtle px-1 py-1.5">
+    <div className="relative flex flex-col items-center gap-0.5 rounded-control bg-subtle px-1 py-1.5">
+      {corner && <div className="absolute top-0.5 right-0.5">{corner}</div>}
       <dt className={`font-semibold text-muted uppercase ${labelClassName}`}>
         {detail ? (
           <DetailName {...detail} className="uppercase hover:underline">

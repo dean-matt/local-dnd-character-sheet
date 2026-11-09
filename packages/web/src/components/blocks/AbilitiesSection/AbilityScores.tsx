@@ -88,6 +88,12 @@ export function AbilityScores({
               label={ability}
               name={ABILITY_LABEL[ability]}
               labelClassName={ABILITY_LABEL_CLASS}
+              corner={
+                <RollBonusButton
+                  label={`${ABILITY_LABEL[ability]} check`}
+                  bonus={derivedValue(derived.abilityModifiers[ability])}
+                />
+              }
               detail={{
                 title: ABILITY_LABEL[ability],
                 meta:
@@ -171,10 +177,6 @@ export function AbilityScores({
                   overrideKey={`abilityModifiers.${ability}`}
                 />
               </span>
-              <RollBonusButton
-                label={`${ABILITY_LABEL[ability]} check`}
-                bonus={derivedValue(derived.abilityModifiers[ability])}
-              />
             </StatTile>
           );
         })}

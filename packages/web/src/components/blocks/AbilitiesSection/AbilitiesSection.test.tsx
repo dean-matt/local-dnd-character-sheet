@@ -833,6 +833,20 @@ describe("AbilitiesSection", () => {
       await waitFor(() => expect(changes.at(-1)).toMatch(/^Stealth check: \d+$/));
     });
 
+    it("puts a row's roll button in the last column and an ability's in its tile corner", () => {
+      renderRolling();
+      const row = screen.getByRole("button", { name: "Roll Stealth check" }).closest("li");
+      expect(row?.lastElementChild).toContainElement(
+        screen.getByRole("button", { name: "Roll Stealth check" }),
+      );
+      const tile = screen
+        .getByRole("button", { name: "Roll Charisma check" })
+        .closest("div.relative");
+      expect(tile?.firstElementChild).toContainElement(
+        screen.getByRole("button", { name: "Roll Charisma check" }),
+      );
+    });
+
     it("shows no roll button where no character's sheet is open", () => {
       renderSection();
       expect(screen.queryByRole("button", { name: /^Roll / })).toBeNull();
