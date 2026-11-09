@@ -16,7 +16,7 @@ import {
   within,
 } from "@testing-library/react";
 import { EditorView } from "codemirror";
-import { MemoryRouter, Route, Routes } from "react-router";
+import { MemoryRouter, Outlet, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { charactersKey } from "../../hooks/characterKeys.ts";
 import { useHomebrewNames } from "../../hooks/useHomebrewNames.ts";
@@ -28,6 +28,7 @@ import {
   RACE_STARTERS,
 } from "../../lib/homebrewStarters.ts";
 import { characterRecord } from "../../test/records.ts";
+import { ExportSelectionProvider } from "./ExportSelectionProvider.tsx";
 import { HomebrewKindPage } from "./HomebrewKindPage.tsx";
 import { RecentlyDeleted } from "./RecentlyDeleted.tsx";
 
@@ -225,6 +226,37 @@ afterEach(() => {
 });
 
 describe("Homebrew kind page", () => {
+  describe.each([
+    ["loading", "Loading homebrew items…", () => new Promise<Response>(() => {})],
+    ["error", "down", async () => json(500, { error: "down" })],
+  ])("while the list is %s", (_, text, answer) => {
+    it("lines its message up with Import, inside the export column and not in print", async () => {
+      vi.stubGlobal("fetch", vi.fn(answer));
+      render(
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <MemoryRouter initialEntries={["/homebrew/items"]}>
+            <Routes>
+              <Route
+                element={
+                  <ExportSelectionProvider>
+                    <Outlet />
+                  </ExportSelectionProvider>
+                }
+              >
+                <Route path="/homebrew/:kind" element={<HomebrewKindPage />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      );
+
+      const message = await within(items()).findByText(text);
+      expect(message.closest(".pl-6")).toHaveClass("print:pl-0");
+    });
+  });
+
   it("lists only the kind it names, with its Add button", async () => {
     stubApi({});
     renderPage("spells");
