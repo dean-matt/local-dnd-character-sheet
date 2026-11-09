@@ -9,7 +9,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
 import { getCharacter, getCharacterState } from "../db/queries/characters.ts";
 import { resolveCharacterCatalog, UnresolvedReference } from "../db/queries/derived.ts";
-import type { HomebrewDb } from "../db/queries/homebrew.ts";
+import { type HomebrewDb, homebrewNames } from "../db/queries/homebrew.ts";
 import { catalogOutOfDate, errorSchema, notFound } from "./errors.ts";
 
 const read = createRoute({
@@ -45,7 +45,12 @@ export function derivedRoutes(charactersDb: CharactersDb, dataDir: string, homeb
     const state = characterStateSchema.parse(getCharacterState(charactersDb, row.id)?.state);
     try {
       const catalog = resolveCharacterCatalog(dataDir, homebrewDb, definition);
-      return c.json(characterDerivedSchema.parse(deriveCharacter(definition, catalog, state)), 200);
+      return c.json(
+        characterDerivedSchema.parse(
+          deriveCharacter(definition, catalog, state, homebrewNames(homebrewDb)),
+        ),
+        200,
+      );
     } catch (error) {
       if (error instanceof UnresolvedReference) return c.json({ error: error.message }, 422);
       throw error;
