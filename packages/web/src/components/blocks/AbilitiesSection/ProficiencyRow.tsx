@@ -1,8 +1,15 @@
-import { ABILITY_LABEL, type Ability, type Derived, type RollEffectEntry } from "@dnd/character";
+import {
+  ABILITY_LABEL,
+  type Ability,
+  type Derived,
+  derivedValue,
+  type RollEffectEntry,
+} from "@dnd/character";
 import { FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { Popover } from "../../Popover.tsx";
+import { RollBonusButton } from "../../RollBonusButton.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import type { Rules } from "./abilityRules.ts";
 import { DetailName } from "./DetailName/DetailName.tsx";
@@ -117,6 +124,7 @@ export function ProficiencyRow({
         <span className="flex w-7 justify-end font-semibold">
           <DerivedValue named name={roll} value={modifier} overrideKey={overrideKey} />
         </span>
+        <RollBonusButton label={ability ? roll : title} bonus={derivedValue(modifier)} />
       </span>
     </li>
   );

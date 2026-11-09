@@ -17,6 +17,7 @@ import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
 import { InputField } from "../../InputField.tsx";
 import { Popover } from "../../Popover.tsx";
+import { RollBonusButton } from "../../RollBonusButton.tsx";
 import { DerivedBreakdown } from "../DerivedBreakdown.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { signed } from "../signed.ts";
@@ -170,6 +171,10 @@ export function AbilityScores({
                   overrideKey={`abilityModifiers.${ability}`}
                 />
               </span>
+              <RollBonusButton
+                label={`${ABILITY_LABEL[ability]} check`}
+                bonus={derivedValue(derived.abilityModifiers[ability])}
+              />
             </StatTile>
           );
         })}

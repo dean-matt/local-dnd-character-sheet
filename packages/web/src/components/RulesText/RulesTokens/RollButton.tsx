@@ -1,9 +1,4 @@
-import { rollDice } from "@dnd/dice";
-import { useContext } from "react";
-import { useRecordRoll } from "../../../hooks/useRecordRoll.ts";
-import { OnRolled } from "../../rollerContext.ts";
-
-type Roll = ReturnType<typeof rollDice>;
+import { useRollAndRecord } from "../../../hooks/useRollAndRecord.ts";
 
 /**
  * Rolls its notation and records the roll; the character layout shows it in the roll log.
@@ -19,41 +14,20 @@ export function RollButton({
   notation: string;
   display: string;
 }) {
-  const record = useRecordRoll(characterId);
-  const onRolled = useContext(OnRolled);
-
-  function activate() {
-    let rolled: Roll;
-    try {
-      rolled = rollDice(notation);
-    } catch {
-      return;
-    }
-    record.mutate(
-      {
-        label: display,
-        notation: rolled.notation,
-        total: rolled.total,
-        dice: rolled.dice,
-        modifier: rolled.modifier,
-        critical: rolled.critical,
-      },
-      { onSuccess: (roll) => onRolled(roll) },
-    );
-  }
+  const { roll, failed } = useRollAndRecord(characterId);
 
   return (
     <span data-notation={notation} data-rollable="true">
       <button
         type="button"
-        onClick={activate}
+        onClick={() => roll(notation, display)}
         aria-label={`Roll ${display}`}
         className="cursor-pointer underline decoration-dotted underline-offset-2"
       >
         {display}
       </button>
       <span role="status" className="text-error empty:hidden">
-        {record.isError && " not logged"}
+        {failed && " not logged"}
       </span>
     </span>
   );
