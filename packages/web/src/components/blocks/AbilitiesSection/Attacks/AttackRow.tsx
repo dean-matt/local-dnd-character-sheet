@@ -10,12 +10,16 @@ export function AttackRow({
   damage,
   effects,
   notes,
+  rollAttack,
+  rollDamage,
 }: {
   name: string;
   bonus: ReactNode;
   damage: ReactNode;
   effects: readonly RollEffectEntry[];
   notes?: ReactNode;
+  rollAttack: ReactNode;
+  rollDamage?: ReactNode;
 }) {
   return (
     <tr className="border-border border-t">
@@ -30,6 +34,8 @@ export function AttackRow({
         </span>
       </td>
       <td className={`${CELL} text-muted`}>{damage}</td>
+      <td className={`${CELL} px-0`}>{rollAttack}</td>
+      <td className={`${CELL} px-0`}>{rollDamage}</td>
     </tr>
   );
 }

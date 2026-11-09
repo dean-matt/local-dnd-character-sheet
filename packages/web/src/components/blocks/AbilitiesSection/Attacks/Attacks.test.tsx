@@ -1,9 +1,10 @@
 import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
-import { fireEvent, screen, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { stubFetchByUrl } from "../../../../test/stubFetch.ts";
+import { OnRolled, RollingFor } from "../../../rollerContext.ts";
 import { Attacks } from "./Attacks.tsx";
 
 /** Vex with a longsword in hand and a dagger in the pack. */
@@ -56,7 +57,7 @@ describe("Attacks", () => {
 
     expect(await screen.findByRole("rowheader", { name: "Longsword" })).toBeInTheDocument();
     expect(rows().map((row) => row.textContent)).toEqual([
-      "NameBonusDamage / Type",
+      "NameBonusDamage / TypeRoll attackRoll damage",
       "Longsword+51d8-1 slashing",
       "Warlock spell attack+5—None",
     ]);
@@ -232,5 +233,80 @@ describe("Attacks", () => {
     renderAttacks({ ...derivedRecord(), spellcasting: [], attacks: [attack(1, 2)] });
 
     expect(screen.getByText("No weapon equipped.")).toBeInTheDocument();
+  });
+
+  describe("roll buttons", () => {
+    const logged = {
+      id: 1,
+      rolledAt: "2026-01-01T00:00:00.000Z",
+      label: "x",
+      notation: "x",
+      total: 9,
+      dice: [],
+      modifier: 0,
+      critical: false,
+    };
+
+    function renderRolling(derived: CharacterDerived, status = 201) {
+      const onRolled = vi.fn();
+      const posts: Record<string, unknown>[] = [];
+      stubFetchByUrl({ "/api/characters/1/inventory": { items: [{ name: "Longsword" }] } });
+      const base = globalThis.fetch;
+      vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+        if (String(url) !== "/api/characters/1/rolls") return base(url, init);
+        if (init?.method === "POST") posts.push(JSON.parse(String(init.body)));
+        return new Response(JSON.stringify(logged), { status });
+      });
+      renderWithClient(
+        <RollingFor value="1">
+          <OnRolled value={onRolled}>
+            <Attacks character={vex()} derived={derived} />
+          </OnRolled>
+        </RollingFor>,
+      );
+      return { posts, onRolled };
+    }
+
+    it("rolls a weapon's attack and damage and a spell attack, each labelled", async () => {
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Warlock spell attack" }));
+
+      await waitFor(() => expect(posts).toHaveLength(3));
+      expect(posts.map((post) => [post.label, post.notation])).toEqual([
+        ["Longsword attack", "1d20+5"],
+        ["Longsword damage", "1d8-1"],
+        ["Warlock spell attack", "1d20+5"],
+      ]);
+    });
+
+    it("has no damage button on a weapon with no damage", async () => {
+      renderRolling({ ...derivedRecord(), attacks: [{ ...attack(0, 5), damage: null }] });
+      await screen.findByRole("button", { name: "Roll Longsword attack" });
+      expect(screen.queryByRole("button", { name: /damage$/ })).toBeNull();
+    });
+
+    it("hands the recorded entry to the layout and announces the total without moving focus", async () => {
+      const { onRolled } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      const button = await screen.findByRole("button", { name: "Roll Longsword damage" });
+      button.focus();
+      fireEvent.click(button);
+      await waitFor(() => expect(onRolled).toHaveBeenCalledWith(logged));
+      expect(await screen.findByText(/^Longsword damage: \d+$/)).toHaveAttribute("role", "status");
+      expect(button).toHaveFocus();
+    });
+
+    it("announces a roll the server could not record as not logged", async () => {
+      renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] }, 500);
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
+      expect(await screen.findByText(/^Longsword attack: \d+, not logged$/)).toBeInTheDocument();
+    });
+
+    it("shows no roll button where no character is open to record to", async () => {
+      renderAttacks({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      await screen.findByRole("rowheader", { name: "Longsword" });
+      expect(screen.queryByRole("button", { name: /^Roll / })).toBeNull();
+    });
   });
 });
