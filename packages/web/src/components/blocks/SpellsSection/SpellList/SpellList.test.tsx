@@ -536,6 +536,29 @@ describe("SpellList", () => {
       expect(screen.getByText("Fire Bolt")).toBeInTheDocument();
     });
 
+    it("hides a spell that did not resolve under a school or level filter, and shows it again on Reset", async () => {
+      const gone: SheetSpell = {
+        resolved: false,
+        name: "Lost Spell",
+        source: "XPHB",
+        prepared: false,
+      };
+      const record = vex([{ ref: { name: "Lost Spell", source: "XPHB" }, prepared: false }]);
+      renderList(record, { spells: [...FILTERED.spells, gone] });
+      await screen.findByText("Lost Spell");
+
+      open();
+      await addSchool("Enchantment");
+      expect(screen.queryByText("Lost Spell")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getByText("Lost Spell")).toBeInTheDocument();
+
+      level("Maximum", "9");
+      expect(screen.queryByText("Lost Spell")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getByText("Lost Spell")).toBeInTheDocument();
+    });
+
     it("closes on Escape with focus back on the button", async () => {
       renderList(filtered(), FILTERED);
       await screen.findByText("Hex");
