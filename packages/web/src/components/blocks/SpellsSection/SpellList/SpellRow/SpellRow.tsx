@@ -14,6 +14,7 @@ import { NotFoundTag } from "../../../../NotFoundTag.tsx";
 import { RemoveButton } from "../../../../RemoveButton.tsx";
 import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../../../Tag.tsx";
+import { AlwaysPrepared } from "./AlwaysPrepared.tsx";
 import { PreparedToggle } from "./PreparedToggle.tsx";
 import { SpellDamageChips } from "./SpellDamageChips.tsx";
 import { SpellFact } from "./SpellFact.tsx";
@@ -46,6 +47,8 @@ export function SpellRow({
   const remove = spell.fromItem ? undefined : (
     <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />
   );
+  const alwaysPrepared =
+    spell.resolved && spell.level > 0 && !spell.fromItem && (spell.granted || spell.pickedFor);
   const mark = <Tag>{spell.fromItem ?? (spell.prepared ? "Prepared" : "Known")}</Tag>;
   if (!spell.resolved) {
     return (
@@ -76,7 +79,7 @@ export function SpellRow({
           <Tag>{schoolName(spell.school)}</Tag>
           <SpellDamageChips spell={spell} />
           {classTag}
-          {!preparable && mark}
+          {!preparable && !alwaysPrepared && mark}
           {spell.concentration && <Tag>Concentration</Tag>}
           {spell.ritual && <Tag>Ritual</Tag>}
         </>
@@ -84,13 +87,17 @@ export function SpellRow({
       remove={remove}
       preview={firstLine(spell.entries)}
       controls={
-        preparable && (
-          <PreparedToggle
-            name={spell.name}
-            prepared={spell.prepared}
-            onChange={onPrepare}
-            busy={busy}
-          />
+        alwaysPrepared ? (
+          <AlwaysPrepared name={spell.name} source={spell.pickedFor?.ref.name} />
+        ) : (
+          preparable && (
+            <PreparedToggle
+              name={spell.name}
+              prepared={spell.prepared}
+              onChange={onPrepare}
+              busy={busy}
+            />
+          )
         )
       }
       detail={{
