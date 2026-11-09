@@ -19,11 +19,12 @@ export function RollBonusButton({ label, bonus }: { label: string; bonus: number
     <>
       <button
         type="button"
-        onClick={() =>
+        onClick={() => {
+          setHeard("");
           roll(notation, label, (rolled, logged) =>
             setHeard(`${label}: ${rolled.total}${logged ? "" : ", not logged"}`),
-          )
-        }
+          );
+        }}
         aria-label={`Roll ${label}`}
         title={`Roll ${label}`}
         className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-subtle hover:text-ink"

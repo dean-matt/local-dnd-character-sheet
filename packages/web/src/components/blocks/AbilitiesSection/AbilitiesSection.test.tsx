@@ -12,7 +12,7 @@ import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { saveToasts } from "../../../test/saveToasts.ts";
-import { RollingFor } from "../../rollerContext.ts";
+import { OnRolled, RollingFor } from "../../rollerContext.ts";
 import { SaveToasts } from "../../SaveToasts.tsx";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
 
@@ -748,7 +748,8 @@ describe("AbilitiesSection", () => {
 
     /** Records each POST to the roll log, answering it with `status`. */
     function renderRolling(status = 201, record = warlock(), derived = derivedFor(record)) {
-      const rules = stubRules([]);
+      const onRolled = vi.fn();
+      stubRules([]);
       const base = globalThis.fetch;
       const posts: Record<string, unknown>[] = [];
       vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -758,10 +759,12 @@ describe("AbilitiesSection", () => {
       });
       renderWithClient(
         <RollingFor value="1">
-          <AbilitiesSection character={record} derived={derived} />
+          <OnRolled value={onRolled}>
+            <AbilitiesSection character={record} derived={derived} />
+          </OnRolled>
         </RollingFor>,
       );
-      return { posts, rules };
+      return { posts, onRolled };
     }
 
     it("rolls an ability check, a save and a skill with their derived bonus and labels each roll", async () => {
@@ -805,6 +808,29 @@ describe("AbilitiesSection", () => {
       renderRolling(500);
       fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
       expect(await screen.findByText(/^Stealth check: \d+, not logged$/)).toBeInTheDocument();
+    });
+
+    it("hands the recorded entry to the layout so the Roll Log opens on it", async () => {
+      const { onRolled } = renderRolling();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      await waitFor(() => expect(onRolled).toHaveBeenCalledWith(logged));
+    });
+
+    it("announces a repeated roll of the same label and total again", async () => {
+      renderRolling();
+      const button = screen.getByRole("button", { name: "Roll Stealth check" });
+      const status = () => button.nextElementSibling as HTMLElement;
+      fireEvent.click(button);
+      await waitFor(() => expect(status()).toHaveTextContent(/^Stealth check: \d+$/));
+      const changes: string[] = [];
+      new MutationObserver(() => changes.push(status().textContent ?? "")).observe(status(), {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      fireEvent.click(button);
+      await waitFor(() => expect(changes).toContain(""));
+      await waitFor(() => expect(changes.at(-1)).toMatch(/^Stealth check: \d+$/));
     });
 
     it("shows no roll button where no character's sheet is open", () => {
