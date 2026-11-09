@@ -325,6 +325,42 @@ describe("reference resolution", () => {
       expect(screen.getByRole("status")).toBeEmptyDOMElement();
     });
 
+    it("says so beside the result when the roll could not be recorded", async () => {
+      stubFetch(new Response(JSON.stringify({ error: "down" }), { status: 500 }));
+      onSheet("{@damage 1d4}");
+      fireEvent.click(screen.getByRole("button"));
+      await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("not logged"));
+    });
+
+    it("replaces the result when rolled again", () => {
+      stubFetch(new Response(JSON.stringify(entry(1)), { status: 201 }));
+      const random = vi.spyOn(Math, "random");
+      random.mockReturnValue(0);
+      onSheet("{@damage 1d20}");
+      const button = screen.getByRole("button");
+      fireEvent.click(button);
+      expect(screen.getByRole("status")).toHaveTextContent("1 = 1");
+      random.mockReturnValue(0.99);
+      fireEvent.click(button);
+      expect(screen.getByRole("status")).toHaveTextContent("20 = 20");
+      expect(screen.getByRole("status")).not.toHaveTextContent("1 = 1");
+      random.mockRestore();
+    });
+
+    it("lets Escape through when there is no result to dismiss", () => {
+      const outer = vi.fn();
+      renderWithClient(
+        <RollingFor value="c1">
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: observes the Escape that bubbles out. */}
+          <div onKeyDown={outer}>
+            <RulesText text="{@damage 1d4}" />
+          </div>
+        </RollingFor>,
+      );
+      fireEvent.keyDown(screen.getByRole("button"), { key: "Escape" });
+      expect(outer).toHaveBeenCalled();
+    });
+
     it("keeps a live region present before any roll", () => {
       onSheet("{@damage 1d4}");
       expect(screen.getByRole("status")).toBeEmptyDOMElement();

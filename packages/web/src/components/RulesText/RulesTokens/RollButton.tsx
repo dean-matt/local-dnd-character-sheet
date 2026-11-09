@@ -77,6 +77,7 @@ export function RollButton({
               {" = "}
               <strong>{roll.total}</strong>
             </span>
+            {record.isError && <span className="text-error"> not logged</span>}
           </>
         )}
       </span>
