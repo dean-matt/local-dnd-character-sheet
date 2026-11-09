@@ -233,6 +233,44 @@ describe("SpellList", () => {
     );
   });
 
+  it("shows an always-prepared spell the Prepared pill and an info icon that says why", async () => {
+    const pickedFor = {
+      kind: "feat" as const,
+      ref: { name: "Strixhaven Initiate", source: "SCC" },
+    };
+    renderList(vex(), {
+      spells: [
+        ...SHEET.spells,
+        { ...spell("Catapult", 1, true), pickedFor },
+        { ...spell("Shield", 1, true), granted: true },
+      ],
+    });
+
+    const row = (await screen.findByText("Catapult")).closest("li") as HTMLElement;
+    expect(within(row).getByText("Prepared")).toBeInTheDocument();
+    expect(within(row).queryByRole("button", { name: /^Prepared, / })).toBeNull();
+
+    const icon = within(row).getByRole("button", { name: "Why Catapult is always prepared" });
+    expect(screen.getAllByRole("tooltip", { hidden: true })[0]).not.toBeVisible();
+    fireEvent.focus(icon);
+    const tip = within(row).getByRole("tooltip");
+    expect(tip).toHaveTextContent("Always prepared: Strixhaven Initiate");
+    expect(tip).toHaveTextContent("does not count against the prepared limit");
+    expect(icon).toHaveAccessibleDescription(tip.textContent ?? "");
+    fireEvent.keyDown(icon, { key: "Escape" });
+    expect(tip).not.toBeVisible();
+    fireEvent.focus(icon);
+    fireEvent.blur(icon);
+    expect(tip).not.toBeVisible();
+    fireEvent.mouseEnter(icon);
+    expect(tip).toBeVisible();
+
+    const shield = (await screen.findByText("Shield")).closest("li") as HTMLElement;
+    fireEvent.focus(within(shield).getByRole("button", { name: "Why Shield is always prepared" }));
+    expect(within(shield).getByRole("tooltip")).toHaveTextContent("this spell is granted");
+    expect(within(shield).getByRole("tooltip")).not.toHaveTextContent("Strixhaven");
+  });
+
   it("marks a spell known where its class knows rather than prepares, or a granted one", async () => {
     const [warlock] = derivedRecord().spellcasting;
     const { preparedSpells: _, ...knower } = warlock as CharacterDerived["spellcasting"][number];
