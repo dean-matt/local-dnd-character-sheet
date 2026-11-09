@@ -224,4 +224,11 @@ describe("describeStateChange", () => {
     expect(stateChangePhrases(state, raging)).toEqual(["Rage set to active"]);
     expect(stateChangePhrases(raging, state)).toEqual(["Rage cleared"]);
   });
+
+  it("records a custom condition added and removed", () => {
+    const marked: CharacterState = { ...state, customConditions: ["Marked"] };
+    expect(describeStateChange(state, marked)).not.toBeNull();
+    expect(describeStateChange(marked, state)).not.toBeNull();
+    expect(stateChangePhrases(state, marked)).toHaveLength(1);
+  });
 });

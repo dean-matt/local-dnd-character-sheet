@@ -142,7 +142,7 @@ says how much of the artboard the app builds today.
 | `Combat` | #227, #228 | read-only |
 | `HP` | #277, #487, #1026 | Damage, Heal and temporary hit points, the rest read-only |
 | `Attacks` | #398, #487 | read-only |
-| `Status` | #280 | read-only |
+| `Status` | #280, #1265 | conditions and exhaustion edit, custom conditions included |
 | `Weapons` | #311, #398, #400 | all but the filter and its own search |
 | `WeaponsFilter` | #311 | nothing |
 | `Armor` | #311, #400 | all but the filter and its own search |
