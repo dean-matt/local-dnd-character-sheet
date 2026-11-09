@@ -44,15 +44,15 @@ type Roll = {
 type RollMode = "normal" | "advantage" | "disadvantage";
 
 /**
- * A d20 test the mode cannot express. Elven Accuracy needs advantage and rolls a third
- * die, keeping the best. Lucky needs `normal`, rolls an extra die, and keeps the higher
- * unless `kept` picks the die at that index. Portent needs `normal` and takes `value` in
- * place of a roll, so the roller consumes no randomness.
+ * A d20 test the mode cannot express. Elven Accuracy needs advantage and rolls `dice`
+ * d20s, keeping the best. Lucky needs `normal`, rolls an extra die, and `kept` picks the
+ * index of the die that counts. Portent needs `normal` and takes `kept` as the die's value
+ * in place of a roll, so the roller consumes no randomness.
  */
 type D20Option =
-  | { reason: "elven-accuracy" }
-  | { reason: "lucky"; kept?: 0 | 1 }
-  | { reason: "portent"; value: number };
+  | { reason: "elven-accuracy"; dice: number }
+  | { reason: "lucky"; kept: 0 | 1 }
+  | { reason: "portent"; kept: number };
 
 type D20Reason = D20Option["reason"];
 
@@ -267,14 +267,20 @@ function checkD20(single: DiceTerm | undefined, d20: D20Option, mode: RollMode, 
   if (mode !== needed) {
     throw new TypeError(`${d20.reason} needs ${needed}, not ${mode}: "${notation}"`);
   }
-  if (d20.reason === "lucky" && d20.kept !== undefined && d20.kept !== 0 && d20.kept !== 1) {
+  if (
+    d20.reason === "elven-accuracy" &&
+    !(Number.isInteger(d20.dice) && d20.dice >= 3 && d20.dice <= 20)
+  ) {
+    throw new RangeError(`elven-accuracy dice must be 3-20, not ${d20.dice}: "${notation}"`);
+  }
+  if (d20.reason === "lucky" && d20.kept !== 0 && d20.kept !== 1) {
     throw new RangeError(`lucky kept must be 0 or 1, not ${d20.kept}: "${notation}"`);
   }
   if (
     d20.reason === "portent" &&
-    !(Number.isInteger(d20.value) && d20.value >= 1 && d20.value <= 20)
+    !(Number.isInteger(d20.kept) && d20.kept >= 1 && d20.kept <= 20)
   ) {
-    throw new RangeError(`portent value must be 1-20, not ${d20.value}: "${notation}"`);
+    throw new RangeError(`portent kept must be 1-20, not ${d20.kept}: "${notation}"`);
   }
 }
 
@@ -288,11 +294,11 @@ function rollPool(
   random: () => number,
 ): RolledDie[] {
   if (d20?.reason === "portent") {
-    return [{ faces: 20, value: d20.value, kept: true, sign: 1 }];
+    return [{ faces: 20, value: d20.kept, kept: true, sign: 1 }];
   }
   let pool = 2;
   let applied: Keep | null = BEST;
-  if (d20?.reason === "elven-accuracy") pool = 3;
+  if (d20?.reason === "elven-accuracy") pool = d20.dice;
   else if (d20 === undefined && mode === "normal") [pool, applied] = [term.count, term.keep];
   else if (d20 === undefined) applied = { high: mode === "advantage", count: 1 };
 
@@ -303,7 +309,7 @@ function rollPool(
     sign: term.sign,
   }));
   markKept(rolled, applied);
-  if (d20?.reason === "lucky" && d20.kept !== undefined) {
+  if (d20?.reason === "lucky") {
     for (const [index, die] of rolled.entries()) die.kept = index === d20.kept;
   }
   return rolled;
