@@ -8,6 +8,7 @@ import {
   sheetState,
 } from "@dnd/character";
 import { Card } from "../../../Card.tsx";
+import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
 import { HitPointChange } from "./HitPointChange.tsx";
 
@@ -63,27 +64,37 @@ export function HitPoints({
               +{temporary} temp
             </span>
           )}
-          {dice.length > 0 && (
-            <span className="ml-auto text-label text-muted">
-              Hit Dice{" "}
-              {dice.map(({ pool, remaining }, index) => (
-                <span key={pool.die}>
-                  {index > 0 && ", "}
-                  {remaining}/
-                  <DerivedValue
-                    named
-                    name={`d${pool.die} Hit Dice total`}
-                    value={pool.total}
-                    format={String}
-                    overrideKey={`${overrideKey("hitDice", pool, character.definition)}.total`}
-                    schema={shape.hitDice.element.shape.total.shape.computed}
-                  />{" "}
-                  d{pool.die}
-                </span>
-              ))}
-            </span>
-          )}
         </div>
+        {dice.length > 0 && (
+          <div className="text-label text-muted">
+            <h3 className="font-semibold text-[10px] uppercase tracking-[0.06em]">Hit Dice</h3>
+            <ul>
+              {dice.map(({ pool, remaining }) => (
+                <li key={pool.die} className="flex items-center gap-1">
+                  <span className="min-w-0 flex-1">
+                    {remaining}/
+                    <DerivedValue
+                      named
+                      name={`d${pool.die} Hit Dice total`}
+                      value={pool.total}
+                      format={String}
+                      overrideKey={`${overrideKey("hitDice", pool, character.definition)}.total`}
+                      schema={shape.hitDice.element.shape.total.shape.computed}
+                    />{" "}
+                    d{pool.die}
+                  </span>
+                  <span className="flex w-6 justify-center">
+                    <RollBonusButton
+                      label={`d${pool.die} Hit Die`}
+                      dice={`1d${pool.die}`}
+                      bonus={derivedValue(derived.abilityModifiers.con)}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div aria-hidden="true" className="h-2 w-full overflow-hidden rounded-pill bg-subtle">
           <div className="h-full bg-accent" style={{ width: `${filled}%` }} />
         </div>

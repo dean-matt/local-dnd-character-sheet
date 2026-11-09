@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { stubFetch, stubFetchByUrl } from "../../../../test/stubFetch.ts";
+import { OnRolled, RollingFor } from "../../../rollerContext.ts";
 import { renderVitals as renderWriting } from "./renderVitals.tsx";
 import { Vitals } from "./Vitals.tsx";
 
@@ -44,7 +45,9 @@ describe("Vitals", () => {
     const hp = await card("Hit Points");
     expect(hp.getByText("12")).toBeInTheDocument();
     expect(hp.getByText("20")).toBeInTheDocument();
-    expect(hp.getByText(/Hit Dice/)).toHaveTextContent("Hit Dice 1/3 d8, 2/2 d10");
+    const pools = hp.getAllByRole("listitem");
+    expect(pools[0]).toHaveTextContent("1/3 d8");
+    expect(pools[1]).toHaveTextContent("2/2 d10");
     expect(hp.queryByText(/^\+\d+ temp$/)).not.toBeInTheDocument();
     expect(bar(screen.getByRole("region", { name: "Hit Points" })).style.width).toBe("60%");
   });
@@ -305,5 +308,97 @@ describe("Vitals", () => {
     renderWithClient(<Vitals character={characterRecord("1", "Vex")} derived={derived()} />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Character not found");
+  });
+});
+
+describe("Hit Dice rolls", () => {
+  const logged = {
+    id: 1,
+    rolledAt: "2026-01-01T00:00:00.000Z",
+    label: "d8 Hit Die",
+    notation: "1d8+2",
+    total: 5,
+    dice: [],
+    modifier: 2,
+    critical: false,
+  };
+
+  function renderRolling(status = 201, recording = true) {
+    const base = derived();
+    const block = {
+      ...base,
+      abilityModifiers: { ...base.abilityModifiers, con: { computed: 2, manual: null, terms: [] } },
+    };
+    const calls: { url: string; method?: string; body?: Record<string, unknown> }[] = [];
+    const onRolled = vi.fn();
+    const state = stateRecord();
+    vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({
+        url: String(url),
+        method: init?.method,
+        body: init?.body ? JSON.parse(String(init.body)) : undefined,
+      });
+      if (String(url) === "/api/characters/1/rolls") {
+        return new Response(JSON.stringify(init?.method === "POST" ? logged : []), { status });
+      }
+      return new Response(JSON.stringify(state), { status: 200 });
+    });
+    const sheet = <Vitals character={characterRecord("1", "Vex")} derived={block} />;
+    renderWithClient(
+      recording ? (
+        <RollingFor value="1">
+          <OnRolled value={onRolled}>{sheet}</OnRolled>
+        </RollingFor>
+      ) : (
+        sheet
+      ),
+    );
+    return { calls, onRolled };
+  }
+
+  it("rolls a pool's die plus Constitution, labels it, and opens the Roll Log on it", async () => {
+    const { calls, onRolled } = renderRolling();
+    fireEvent.click(await screen.findByRole("button", { name: "Roll d10 Hit Die" }));
+
+    await waitFor(() => expect(onRolled).toHaveBeenCalledWith(logged));
+    const post = calls.find((call) => call.method === "POST");
+    expect(post?.body).toMatchObject({ label: "d10 Hit Die", notation: "1d10+2", modifier: 2 });
+    expect(screen.getByRole("button", { name: "Roll d8 Hit Die" })).toBeInTheDocument();
+  });
+
+  it("announces the roll, and that it was not logged when the server refuses it", async () => {
+    renderRolling(500);
+    fireEvent.click(await screen.findByRole("button", { name: "Roll d8 Hit Die" }));
+
+    await waitFor(() =>
+      expect(screen.getAllByRole("status").map((status) => status.textContent)).toContainEqual(
+        expect.stringMatching(/^d8 Hit Die: \d+, not logged$/),
+      ),
+    );
+  });
+
+  it("announces the total when it was logged", async () => {
+    renderRolling();
+    fireEvent.click(await screen.findByRole("button", { name: "Roll d8 Hit Die" }));
+
+    await waitFor(() =>
+      expect(screen.getAllByRole("status").map((status) => status.textContent)).toContainEqual(
+        expect.stringMatching(/^d8 Hit Die: \d+$/),
+      ),
+    );
+  });
+
+  it("changes no state: a roll writes nothing but the roll log, and spends no die", async () => {
+    const { calls } = renderRolling();
+    fireEvent.click(await screen.findByRole("button", { name: "Roll d8 Hit Die" }));
+
+    await waitFor(() => expect(calls.some((call) => call.method === "POST")).toBe(true));
+    expect(calls.filter((call) => call.method === "PUT")).toEqual([]);
+  });
+
+  it("shows no roll button where there is no character to record to", async () => {
+    renderRolling(201, false);
+    await screen.findByText("Hit Dice");
+    expect(screen.queryByRole("button", { name: /Hit Die$/ })).not.toBeInTheDocument();
   });
 });
