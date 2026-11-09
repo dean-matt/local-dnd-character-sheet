@@ -31,6 +31,10 @@ type Roll = {
    * be asked which.
    */
   critical: boolean;
+  /** The mode the roll was made in, so a stored roll names it without counting its dice. */
+  mode: RollMode;
+  /** The option that added or replaced a d20, absent on a roll that used none. */
+  reason?: D20Reason;
 };
 
 /**
@@ -39,8 +43,23 @@ type Roll = {
  */
 type RollMode = "normal" | "advantage" | "disadvantage";
 
+/**
+ * A d20 test the mode cannot express. Elven Accuracy needs advantage and rolls a third
+ * die, keeping the best. Lucky needs `normal`, rolls an extra die, and keeps the higher
+ * unless `kept` picks the die at that index. Portent needs `normal` and takes `value` in
+ * place of a roll, so the roller consumes no randomness.
+ */
+type D20Option =
+  | { reason: "elven-accuracy" }
+  | { reason: "lucky"; kept?: 0 | 1 }
+  | { reason: "portent"; value: number };
+
+type D20Reason = D20Option["reason"];
+
 type RollOptions = {
   mode?: RollMode;
+  /** Applies only to a single d20, and never with a critical. */
+  d20?: D20Option;
   /**
    * Rolls every pool a second time and adds the modifier once, as a critical hit does. An
    * option rather than notation for the same reason a mode is: doubling the string
@@ -240,6 +259,56 @@ export function isRollable(notation: string): boolean {
   }
 }
 
+function checkD20(single: DiceTerm | undefined, d20: D20Option, mode: RollMode, notation: string) {
+  if (single === undefined || single.count !== 1 || single.faces !== 20 || single.keep !== null) {
+    throw new TypeError(`${d20.reason} applies to a single d20, not to "${notation}"`);
+  }
+  const needed = d20.reason === "elven-accuracy" ? "advantage" : "normal";
+  if (mode !== needed) {
+    throw new TypeError(`${d20.reason} needs ${needed}, not ${mode}: "${notation}"`);
+  }
+  if (d20.reason === "lucky" && d20.kept !== undefined && d20.kept !== 0 && d20.kept !== 1) {
+    throw new RangeError(`lucky kept must be 0 or 1, not ${d20.kept}: "${notation}"`);
+  }
+  if (
+    d20.reason === "portent" &&
+    !(Number.isInteger(d20.value) && d20.value >= 1 && d20.value <= 20)
+  ) {
+    throw new RangeError(`portent value must be 1-20, not ${d20.value}: "${notation}"`);
+  }
+}
+
+const BEST: Keep = { high: true, count: 1 };
+
+/** One pool's dice for the mode or d20 option in force, with the discarded ones marked. */
+function rollPool(
+  term: DiceTerm,
+  mode: RollMode,
+  d20: D20Option | undefined,
+  random: () => number,
+): RolledDie[] {
+  if (d20?.reason === "portent") {
+    return [{ faces: 20, value: d20.value, kept: true, sign: 1 }];
+  }
+  let pool = 2;
+  let applied: Keep | null = BEST;
+  if (d20?.reason === "elven-accuracy") pool = 3;
+  else if (d20 === undefined && mode === "normal") [pool, applied] = [term.count, term.keep];
+  else if (d20 === undefined) applied = { high: mode === "advantage", count: 1 };
+
+  const rolled: RolledDie[] = Array.from({ length: pool }, () => ({
+    faces: term.faces,
+    value: Math.floor(random() * term.faces) + 1,
+    kept: true,
+    sign: term.sign,
+  }));
+  markKept(rolled, applied);
+  if (d20?.reason === "lucky" && d20.kept !== undefined) {
+    for (const [index, die] of rolled.entries()) die.kept = index === d20.kept;
+  }
+  return rolled;
+}
+
 /**
  * Rolls `notation`. Malformed notation throws a `SyntaxError`, a quantity out of bounds
  * a `RangeError`, and every message names the offending input.
@@ -249,6 +318,9 @@ export function isRollable(notation: string): boolean {
  * pool, a keep clause, or a second pool is rejected rather than reinterpreted — a
  * `TypeError`, because the notation is valid and only the pairing is wrong.
  *
+ * `d20` covers the tests a mode cannot say: a third die, a chosen die, a supplied die. It
+ * pairs only with a single d20 and the mode it needs, and `reason` on the result names it.
+ *
  * A critical pairs with no mode — doubling belongs to a damage roll and a mode to the d20
  * test that preceded it, so the pair names no roll anyone makes, and it is a `TypeError`
  * for the same reason. Each doubled pool resolves its own keep clause, so a critical
@@ -256,7 +328,7 @@ export function isRollable(notation: string): boolean {
  * the roll the notation describes.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
-  const { mode = "normal", critical = false, random = Math.random } = options;
+  const { mode = "normal", critical = false, d20, random = Math.random } = options;
   const parsed = parseDice(notation);
   const { terms, modifier, pooled } = parsed;
 
@@ -267,26 +339,30 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
   if (critical && mode !== "normal") {
     throw new TypeError(`a critical does not combine with ${mode}: "${notation}"`);
   }
+  if (d20 !== undefined) {
+    if (critical)
+      throw new TypeError(`a critical does not combine with ${d20.reason}: "${notation}"`);
+    checkD20(single, d20, mode, notation);
+  }
   const repeats = critical ? 2 : 1;
   checkPooled(pooled * repeats, notation);
 
   const dice: RolledDie[] = [];
   for (const term of terms) {
-    const pool = mode === "normal" ? term.count : 2;
-    const applied = mode === "normal" ? term.keep : { high: mode === "advantage", count: 1 };
     for (let repeat = 0; repeat < repeats; repeat += 1) {
-      const rolled: RolledDie[] = Array.from({ length: pool }, () => ({
-        faces: term.faces,
-        value: Math.floor(random() * term.faces) + 1,
-        kept: true,
-        sign: term.sign,
-      }));
-      markKept(rolled, applied);
-      dice.push(...rolled);
+      dice.push(...rollPool(term, mode, d20, random));
     }
   }
 
   const total =
     dice.reduce((sum, die) => sum + (die.kept ? die.sign * die.value : 0), 0) + modifier;
-  return { total, dice, modifier, notation: canonical(parsed), critical };
+  return {
+    total,
+    dice,
+    modifier,
+    notation: canonical(parsed),
+    critical,
+    mode,
+    ...(d20 && { reason: d20.reason }),
+  };
 }

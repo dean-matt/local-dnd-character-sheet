@@ -19,7 +19,7 @@ const entry = (row: typeof rollLog.$inferSelect) => {
   return {
     ...rest,
     total: result,
-    ...(detail as Pick<RollRecord, "dice" | "modifier" | "critical">),
+    ...(detail as Pick<RollRecord, "dice" | "modifier" | "critical" | "mode" | "reason">),
     rolledAt: rolledAt.toISOString(),
   };
 };
@@ -40,7 +40,7 @@ export function listRolls(db: CharactersDb, characterId: string) {
 export function recordRoll(db: CharactersDb, characterId: string, roll: RollRecord, now: Date) {
   return db.transaction((tx) => {
     if (!exists(tx, characterId)) return undefined;
-    const { dice, modifier, critical, total, label, notation } = roll;
+    const { dice, modifier, critical, mode, reason, total, label, notation } = roll;
     const row = tx
       .insert(rollLog)
       .values({
@@ -48,7 +48,7 @@ export function recordRoll(db: CharactersDb, characterId: string, roll: RollReco
         label,
         notation,
         result: total,
-        detail: { dice, modifier, critical },
+        detail: { dice, modifier, critical, mode, reason },
         rolledAt: now,
       })
       .returning()

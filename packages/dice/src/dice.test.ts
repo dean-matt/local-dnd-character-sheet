@@ -35,6 +35,7 @@ describe("rollDice", () => {
       notation: "1d20",
       dice: [{ faces: 20, value: 14, kept: true, sign: 1 }],
       critical: false,
+      mode: "normal",
     });
   });
 
@@ -266,5 +267,82 @@ describe("rollDice", () => {
     expect(rollDice("500d6", { critical: true }).dice).toHaveLength(1000);
     expect(() => rollDice("501d6", { critical: true })).toThrow(RangeError);
     expect(() => rollDice("501d6", { critical: true })).toThrow("asks for 1002");
+  });
+});
+
+describe("rollDice d20 options", () => {
+  it("rolls a third die on Elven Accuracy and keeps only the highest", () => {
+    const roll = rollDice("1d20+5", {
+      mode: "advantage",
+      d20: { reason: "elven-accuracy" },
+      random: loaded(20, 8, 19, 12),
+    });
+    expect(values(roll)).toEqual([8, 19, 12]);
+    expect(kept(roll)).toEqual([19]);
+    expect(roll.total).toBe(24);
+    expect(roll.mode).toBe("advantage");
+    expect(roll.reason).toBe("elven-accuracy");
+  });
+
+  it("rolls an extra die on Lucky and keeps the higher unless told which", () => {
+    const random = () => loaded(20, 6, 17);
+    const best = rollDice("1d20", { d20: { reason: "lucky" }, random: random() });
+    expect(kept(best)).toEqual([17]);
+
+    const first = rollDice("1d20+1", { d20: { reason: "lucky", kept: 0 }, random: random() });
+    expect(values(first)).toEqual([6, 17]);
+    expect(kept(first)).toEqual([6]);
+    expect(first.total).toBe(7);
+    expect(first.mode).toBe("normal");
+    expect(first.reason).toBe("lucky");
+
+    expect(kept(rollDice("1d20", { d20: { reason: "lucky", kept: 1 }, random: random() }))).toEqual(
+      [17],
+    );
+  });
+
+  it("takes a Portent die in place of a roll without rolling", () => {
+    const roll = rollDice("1d20+2", {
+      d20: { reason: "portent", value: 4 },
+      random: () => {
+        throw new Error("rolled");
+      },
+    });
+    expect(roll.dice).toEqual([{ faces: 20, value: 4, kept: true, sign: 1 }]);
+    expect(roll.total).toBe(6);
+    expect(roll.mode).toBe("normal");
+    expect(roll.reason).toBe("portent");
+  });
+
+  it("leaves plain advantage and a plain roll unchanged", () => {
+    const roll = rollDice("1d20", { mode: "advantage", random: loaded(20, 8, 19) });
+    expect(values(roll)).toEqual([8, 19]);
+    expect(roll).not.toHaveProperty("reason");
+    expect(rollDice("1d20", { random: loaded(20, 3) })).not.toHaveProperty("reason");
+  });
+
+  it.each(["1d8", "2d20", "2d20kh1", "1d20+1d4"])("rejects an option on %s", (notation) => {
+    const options = { d20: { reason: "lucky" } } as const;
+    expect(() => rollDice(notation, options)).toThrow(TypeError);
+    expect(() => rollDice(notation, options)).toThrow(`"${notation}"`);
+  });
+
+  it("rejects an option with a critical", () => {
+    expect(() => rollDice("1d20", { critical: true, d20: { reason: "lucky" } })).toThrow(
+      /critical.*lucky.*"1d20"/,
+    );
+  });
+
+  it("rejects an option paired with the wrong mode", () => {
+    expect(() => rollDice("1d20", { d20: { reason: "elven-accuracy" } })).toThrow(
+      /elven-accuracy needs advantage/,
+    );
+    expect(() =>
+      rollDice("1d20", { mode: "advantage", d20: { reason: "portent", value: 3 } }),
+    ).toThrow(/portent needs normal/);
+  });
+
+  it.each([0, 21, 1.5])("rejects a Portent value of %o", (value) => {
+    expect(() => rollDice("1d20", { d20: { reason: "portent", value } })).toThrow(RangeError);
   });
 });

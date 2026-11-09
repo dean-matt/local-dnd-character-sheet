@@ -1,7 +1,7 @@
 import { tmpdir } from "node:os";
 import { characterDefinitionSchema } from "@dnd/character";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ROLL_LOG_LIMIT } from "../db/characters.ts";
+import { ROLL_LOG_LIMIT, rollLog } from "../db/characters.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
 import { rollsRoutes } from "./rolls.ts";
@@ -74,6 +74,45 @@ describe("rollsRoutes", () => {
     expect(stored).toMatchObject(roll(15));
     expect(Number.isNaN(Date.parse(stored.rolledAt))).toBe(false);
     expect(await list(id)).toEqual([stored]);
+  });
+
+  it("round-trips the mode and the reason a d20 option gave the roll", async () => {
+    const id = await create();
+    const lucky = {
+      ...roll(15),
+      mode: "normal",
+      reason: "lucky",
+    };
+
+    const stored = await (await record(id, lucky)).json();
+    expect(stored).toMatchObject({ mode: "normal", reason: "lucky" });
+    expect(await list(id)).toEqual([stored]);
+  });
+
+  it("loads a row written before a roll carried a mode or a reason", async () => {
+    const id = await create();
+    const { dice, modifier, critical, total, label, notation } = roll(11);
+    opened.charactersDb
+      .insert(rollLog)
+      .values({
+        characterId: id,
+        label,
+        notation,
+        result: total,
+        detail: { dice, modifier, critical },
+        rolledAt: new Date(),
+      })
+      .run();
+
+    const [legacy] = await list(id);
+    expect(legacy).toMatchObject(roll(11));
+    expect(legacy).not.toHaveProperty("reason");
+    expect(legacy).not.toHaveProperty("mode");
+  });
+
+  it("rejects a reason that is not a d20 option", async () => {
+    const id = await create();
+    expect((await record(id, { ...roll(15), reason: "inspiration" })).status).toBe(400);
   });
 
   it("lists newest first", async () => {
