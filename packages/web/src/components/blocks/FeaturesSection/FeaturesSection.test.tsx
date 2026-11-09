@@ -520,6 +520,98 @@ describe("FeaturesSection", () => {
     expect(within(card("Race Features")).getByText("No race features match “zzz”.")).toBeVisible();
   });
 
+  describe("level filter", () => {
+    const fighter = { name: "Fighter", source: "PHB" };
+    const record = characterRecord("1", "Vex");
+    const leveled = {
+      ...record,
+      definition: {
+        ...record.definition,
+        levels: [{ class: fighter }, { class: fighter }, { class: fighter }, { class: fighter }],
+      },
+    };
+    const feature = (name: string, level?: number) => ({
+      resolved: true as const,
+      name,
+      source: "PHB",
+      entries: [],
+      ...(level && { level }),
+    });
+    const features: CharacterFeatures = {
+      groups: [
+        {
+          origin: "class",
+          name: "Fighter",
+          class: fighter,
+          features: [
+            feature("Second Wind", 1),
+            feature("Action Surge", 2),
+            feature("Indomitable", 4),
+          ],
+        },
+        { origin: "race", name: "Elf", features: [feature("Darkvision")] },
+        { origin: "background", name: "Acolyte", features: [feature("Shelter")] },
+        { origin: "feat", features: [feature("Lucky", 4)] },
+      ],
+    };
+    const open = (title: string) =>
+      fireEvent.click(within(card(title)).getByRole("button", { name: /^Filter / }));
+    const setLevel = (title: string, end: "Minimum" | "Maximum", value: string) =>
+      fireEvent.change(within(card(title)).getByLabelText(`${end} level`), { target: { value } });
+
+    it("narrows a card by minimum and maximum level, badges it, and resets", async () => {
+      renderSection(features, undefined, leveled);
+      await screen.findByText("Second Wind");
+      expect(
+        within(card("Background Features")).queryByRole("button", { name: /^Filter / }),
+      ).toBeNull();
+
+      open("Class Features");
+      setLevel("Class Features", "Minimum", "2");
+      setLevel("Class Features", "Maximum", "3");
+      const classes = within(card("Class Features"));
+      expect(classes.getByText("Action Surge")).toBeVisible();
+      expect(classes.queryByText("Second Wind")).toBeNull();
+      expect(classes.queryByText("Indomitable")).toBeNull();
+      expect(
+        classes.getByRole("button", { name: "Filter Class Features (1 active)" }),
+      ).toBeVisible();
+      expect(within(card("Chosen Features")).getByText("Lucky")).toBeVisible();
+
+      fireEvent.click(classes.getByRole("button", { name: "Reset" }));
+      expect(classes.getByText("Second Wind")).toBeVisible();
+      expect(classes.getByText("Indomitable")).toBeVisible();
+      expect(classes.getByRole("button", { name: "Filter Class Features" })).toBeVisible();
+    });
+
+    it("says nothing matches the filter, apart from a card with nothing in it", async () => {
+      renderSection(features, undefined, leveled);
+      await screen.findByText("Second Wind");
+
+      open("Chosen Features");
+      setLevel("Chosen Features", "Maximum", "2");
+      expect(
+        within(card("Chosen Features")).getByText("Nothing matches the filter."),
+      ).toBeVisible();
+
+      open("Race Features");
+      setLevel("Race Features", "Minimum", "1");
+      expect(within(card("Race Features")).getByText("Nothing matches the filter.")).toBeVisible();
+    });
+
+    it("closes on Escape with focus back on the button", async () => {
+      renderSection(features, undefined, leveled);
+      await screen.findByText("Second Wind");
+      open("Race Features");
+      const button = within(card("Race Features")).getByRole("button", { name: /^Filter / });
+      fireEvent.keyDown(within(card("Race Features")).getByLabelText("Minimum level"), {
+        key: "Escape",
+      });
+      expect(within(card("Race Features")).queryByLabelText("Minimum level")).toBeNull();
+      expect(button).toHaveFocus();
+    });
+  });
+
   it("says so when the character has gained nothing", async () => {
     renderSection({ groups: [] });
 
