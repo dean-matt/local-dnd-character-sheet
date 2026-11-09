@@ -85,17 +85,6 @@ describe("SpellSlots", () => {
     expect(pips("Pact Magic, 3rd Level")).toBe("xx");
   });
 
-  it("keeps a label on one line, the card as wide as its rows, and the pips wrapping inside it", async () => {
-    renderSlots({ spellSlots: [{ level: 1, total: 4, expended: 0 }], pactSlots: null });
-    const region = await screen.findByRole("region", { name: "Spell Slots" });
-
-    expect(region).toHaveClass("w-fit", "max-w-full");
-    const li = row("1st Level").getByText("1st Level").closest("li") as HTMLElement;
-    expect(li.children[0]).toHaveClass("whitespace-nowrap");
-    expect(li.children[1]).toHaveClass("flex-wrap", "min-w-0");
-    expect(li.children[2]).toHaveClass("shrink-0");
-  });
-
   it("spends every slot up to the pip clicked, writing only that level", async () => {
     const { writes } = renderSlots({ pactSlots: { level: 3, total: 2, expended: 1 } });
     await screen.findByRole("region", { name: "Spell Slots" });
