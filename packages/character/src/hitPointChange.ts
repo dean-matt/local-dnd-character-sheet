@@ -1,10 +1,24 @@
-import { deathSave, heal, REQUIRED_DEATH_SAVES, takeDamage } from "@dnd/rules";
+import {
+  deathSave,
+  type HitDie,
+  heal,
+  hitDieHealing,
+  REQUIRED_DEATH_SAVES,
+  takeDamage,
+} from "@dnd/rules";
 import type { CharacterDerived } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
+import { sheetState } from "./rest.ts";
 import type { CharacterState } from "./state.ts";
 
 type Sheet = Pick<CharacterDerived, "hitPointMaximum">;
+
+type HitDiceSheet = Sheet &
+  Pick<
+    CharacterDerived,
+    "hitDice" | "spellSlots" | "pactSlots" | "classResources" | "abilityModifiers"
+  >;
 
 type Changed = { state: CharacterState; outcome: ReturnType<typeof heal>["outcome"] };
 
@@ -75,4 +89,32 @@ export function deathSaveRolledState(
   const deathSaves =
     outcome === "stable" ? { successes: REQUIRED_DEATH_SAVES, failures: 0 } : counts;
   return { state: { ...state, deathSaves }, outcome };
+}
+
+/**
+ * The state after spending one `die` hit die on a face of `roll`, or undefined where the
+ * character is dead or the sheet's pool for that size has none left. The pool loses one die
+ * and the hit points gain the roll plus the Constitution modifier the sheet shows, by
+ * `hitDieHealing` and `healedState`, in the one state.
+ */
+export function hitDieSpentState(
+  definition: Pick<CharacterDefinition, "edition">,
+  derived: HitDiceSheet,
+  state: CharacterState,
+  die: HitDie,
+  roll: number,
+): { state: CharacterState; regained: number; modifier: number } | undefined {
+  if (deathSaveStatus(derived, state) === "dead") return undefined;
+  const held = sheetState(derived, state);
+  const pool = held.hitDice.find((candidate) => candidate.die === die);
+  if (!pool || pool.remaining < 1) return undefined;
+  const modifier = derivedValue(derived.abilityModifiers.con);
+  const regained = hitDieHealing(roll, modifier, definition.edition);
+  const spent = {
+    ...held,
+    hitDice: held.hitDice.map((each) =>
+      each.die === die ? { ...each, remaining: each.remaining - 1 } : each,
+    ),
+  };
+  return { state: healedState(derived, spent, regained).state, regained, modifier };
 }

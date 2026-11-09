@@ -12,6 +12,7 @@ import { useReplaceCharacterState } from "../../../hooks/useReplaceCharacterStat
 import { HitDicePicks } from "./HitDicePicks.tsx";
 import { restPreview } from "./restChanges.ts";
 import { largestFirst, pickedDice } from "./restPicks.ts";
+import { SpendHitDice } from "./SpendHitDice.tsx";
 
 const TITLE: Record<RestLength, string> = { short: "Short rest", long: "Long rest" };
 
@@ -20,7 +21,8 @@ const TITLE: Record<RestLength, string> = { short: "Short rest", long: "Long res
  * one write and hands `onApplied` what it changed; Cancel, Escape and a failed write write
  * nothing. The dialog stays open while the write is in flight, so its outcome is shown. Hit
  * dice are picked only where more than one size was spent; with one size, the most that
- * return come back.
+ * return come back. A short rest, once confirmed, stays open to spend hit dice, each spend
+ * its own write; closing it then announces the rest and keeps every die already spent.
  */
 export function RestDialog({
   character,
@@ -43,13 +45,16 @@ export function RestDialog({
   const pick = length === "long" ? longRestHitDicePick(definition, derived, state) : null;
   const [typed, setTyped] = useState(() => (pick ? largestFirst(pick) : []));
   const picked = pick ? pickedDice(pick, typed) : undefined;
+  const [taken, setTaken] = useState<string>();
   const ready = !pick || picked !== undefined;
   const { after, changes } = ready
     ? restPreview(definition, derived, state, length, picked)
     : { after: undefined, changes: undefined };
 
   function close() {
-    if (!replace.writing) onClose();
+    if (replace.writing) return;
+    if (taken === undefined) onClose();
+    else onApplied(taken);
   }
 
   async function confirm() {
@@ -60,7 +65,9 @@ export function RestDialog({
       return;
     }
     const moved = changes.map((change) => `${change.label} ${change.after}`).join(", ");
-    onApplied(`${TITLE[length]} applied. ${moved ? `${moved}.` : "Nothing changed."}`);
+    const summary = `${TITLE[length]} applied. ${moved ? `${moved}.` : "Nothing changed."}`;
+    if (length === "short") setTaken(summary);
+    else onApplied(summary);
   }
 
   return (
@@ -68,30 +75,47 @@ export function RestDialog({
       <ModalEntry
         title={TITLE[length]}
         footer={
-          <div className="flex items-center gap-2">
+          taken !== undefined ? (
             <button
               type="button"
               aria-disabled={replace.writing}
               onClick={close}
-              className="min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              aria-disabled={!after || replace.writing}
-              onClick={confirm}
               className="min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"
             >
-              {replace.isPending ? "Resting…" : `Take the ${TITLE[length].toLowerCase()}`}
+              Done
             </button>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-disabled={replace.writing}
+                onClick={close}
+                className="min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                aria-disabled={!after || replace.writing}
+                onClick={confirm}
+                className="min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"
+              >
+                {replace.isPending ? "Resting…" : `Take the ${TITLE[length].toLowerCase()}`}
+              </button>
+            </div>
+          )
         }
       >
-        {pick && pick.spent.length > 1 && (
+        {taken !== undefined && (
+          <>
+            <p>{taken}</p>
+            <SpendHitDice character={character} derived={derived} state={state} />
+          </>
+        )}
+        {taken === undefined && pick && pick.spent.length > 1 && (
           <HitDicePicks pick={pick} typed={typed} onChange={setTyped} />
         )}
-        <div aria-live="polite">
+        <div aria-live="polite" hidden={taken !== undefined}>
           {changes === undefined ? (
             <p className="text-muted">Pick the hit dice to recover to see what the rest changes.</p>
           ) : changes.length > 0 ? (

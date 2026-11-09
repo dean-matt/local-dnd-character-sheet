@@ -5,6 +5,7 @@ import {
   deathSaveStatus,
   defaultCharacterState,
   healedState,
+  hitDieSpentState,
 } from "./index.ts";
 
 const sheet = { hitPointMaximum: { computed: 20, manual: 30, terms: [] } };
@@ -82,5 +83,58 @@ describe("deathSaveRolledState", () => {
   it("writes null for a 20 when the maximum is 1", () => {
     const one = { hitPointMaximum: { computed: 1, manual: null, terms: [] } };
     expect(deathSaveRolledState(one, dying(0, 0), 20).state.hitPoints.current).toBeNull();
+  });
+});
+
+describe("hitDieSpentState", () => {
+  const total = (computed: number) => ({ computed, manual: null, terms: [] });
+  const con = (modifier: number) => ({
+    ...sheet,
+    hitDice: [
+      { die: 8 as const, total: total(3) },
+      { die: 6 as const, total: total(1) },
+    ],
+    spellSlots: [],
+    pactSlots: null,
+    classResources: [],
+    abilityModifiers: { con: total(modifier) } as never,
+  });
+  const held = (current: number | null, d8 = 2) => ({
+    ...state(current),
+    hitDice: [
+      { die: 8 as const, total: 3, remaining: d8 },
+      { die: 6 as const, total: 1, remaining: 1 },
+    ],
+  });
+
+  it("heals the roll plus the modifier and lowers that pool by one", () => {
+    const spent = hitDieSpentState({ edition: "classic" }, con(2), held(10), 8, 5);
+    expect(spent?.regained).toBe(7);
+    expect(spent?.state.hitPoints.current).toBe(17);
+    expect(spent?.state.hitDice.map((pool) => pool.remaining)).toEqual([1, 1]);
+  });
+
+  it("floors at 0 for classic and 1 for 2024", () => {
+    expect(hitDieSpentState({ edition: "classic" }, con(-4), held(10), 8, 2)?.regained).toBe(0);
+    expect(hitDieSpentState({ edition: "one" }, con(-4), held(10), 8, 2)?.regained).toBe(1);
+  });
+
+  it("stops at the maximum and keeps temporary hit points", () => {
+    const padded = { ...held(28), hitPoints: { current: 28, temporary: 3 } };
+    const spent = hitDieSpentState({ edition: "classic" }, con(2), padded, 8, 8);
+    expect(spent?.state.hitPoints).toEqual({ current: null, temporary: 3 });
+  });
+
+  it("clears the death saves when it heals from 0", () => {
+    const dying = { ...held(0), deathSaves: { successes: 1, failures: 2 } };
+    const spent = hitDieSpentState({ edition: "classic" }, con(2), dying, 8, 3);
+    expect(spent?.state.deathSaves).toEqual({ successes: 0, failures: 0 });
+  });
+
+  it("spends nothing from an empty pool, an unknown size or a dead character", () => {
+    expect(hitDieSpentState({ edition: "classic" }, con(2), held(10, 0), 8, 5)).toBeUndefined();
+    expect(hitDieSpentState({ edition: "classic" }, con(2), held(10), 12, 5)).toBeUndefined();
+    const dead = { ...held(0), deathSaves: { successes: 0, failures: 3 } };
+    expect(hitDieSpentState({ edition: "classic" }, con(2), dead, 8, 5)).toBeUndefined();
   });
 });

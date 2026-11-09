@@ -8,6 +8,7 @@
  */
 
 import type { Edition } from "./edition.ts";
+import { assertInteger } from "./integer.ts";
 import { type Breakdown, breakdown } from "./term.ts";
 
 export const HIT_DICE = [6, 8, 10, 12] as const;
@@ -111,4 +112,14 @@ export function hitDiceRecovered(totalsPerDie: readonly number[], edition: Editi
     return total;
   }
   return Math.max(1, Math.floor(total / 2));
+}
+
+/**
+ * What one spent hit die regains: the roll plus the Constitution modifier, never below 0 in
+ * the 2014 rules and never below 1 in the 2024 rules.
+ */
+export function hitDieHealing(roll: number, modifier: number, edition: Edition): number {
+  assertInteger("A hit die roll", roll);
+  assertInteger("A Constitution modifier", modifier);
+  return Math.max(edition === "one" ? 1 : 0, roll + modifier);
 }

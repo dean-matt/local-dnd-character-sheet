@@ -37,6 +37,7 @@ export {
   averageHitPoints,
   HIT_DICE,
   hitDiceRecovered,
+  hitDieHealing,
   hitPointSource,
   maxHitPoints,
 } from "./hitpoints.ts";
