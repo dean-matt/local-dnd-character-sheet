@@ -12,6 +12,7 @@ import { characterKey } from "../../../hooks/characterKeys.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { saveToasts } from "../../../test/saveToasts.ts";
+import { OnRolled, RollingFor } from "../../rollerContext.ts";
 import { SaveToasts } from "../../SaveToasts.tsx";
 import { AbilitiesSection } from "./AbilitiesSection.tsx";
 
@@ -730,6 +731,124 @@ describe("AbilitiesSection", () => {
       fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
       await waitFor(() => expect(nameButton("Skills", "Arcana")).toHaveFocus());
+    });
+  });
+
+  describe("roll buttons", () => {
+    const logged = {
+      id: 1,
+      rolledAt: "2026-01-01T00:00:00.000Z",
+      label: "x",
+      notation: "x",
+      total: 14,
+      dice: [],
+      modifier: 0,
+      critical: false,
+    };
+
+    /** Records each POST to the roll log, answering it with `status`. */
+    function renderRolling(status = 201, record = warlock(), derived = derivedFor(record)) {
+      const onRolled = vi.fn();
+      stubRules([]);
+      const base = globalThis.fetch;
+      const posts: Record<string, unknown>[] = [];
+      vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+        if (String(url) !== "/api/characters/1/rolls") return base(url, init);
+        if (init?.method === "POST") posts.push(JSON.parse(String(init.body)));
+        return new Response(JSON.stringify(init?.method === "POST" ? logged : []), { status });
+      });
+      renderWithClient(
+        <RollingFor value="1">
+          <OnRolled value={onRolled}>
+            <AbilitiesSection character={record} derived={derived} />
+          </OnRolled>
+        </RollingFor>,
+      );
+      return { posts, onRolled };
+    }
+
+    it("rolls an ability check, a save and a skill with their derived bonus and labels each roll", async () => {
+      const { posts } = renderRolling();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Charisma check" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Wisdom saving throw" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+
+      await waitFor(() => expect(posts).toHaveLength(3));
+      expect(posts.map((post) => post.label)).toEqual([
+        "Charisma check",
+        "Wisdom saving throw",
+        "Stealth check",
+      ]);
+      expect(posts.map((post) => post.modifier)).toEqual([3, 3, 7]);
+      expect(posts.map((post) => post.notation)).toEqual(["1d20+3", "1d20+3", "1d20+7"]);
+    });
+
+    it("rolls with an override in place of the computed bonus", async () => {
+      const record = warlock();
+      const derived = derivedFor(record);
+      const { posts } = renderRolling(201, record, {
+        ...derived,
+        savingThrows: { ...derived.savingThrows, wis: { ...derived.savingThrows.wis, manual: -2 } },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Roll Wisdom saving throw" }));
+      await waitFor(() => expect(posts[0]).toMatchObject({ notation: "1d20-2", modifier: -2 }));
+    });
+
+    it("announces what was rolled and the total without moving focus", async () => {
+      renderRolling();
+      const button = screen.getByRole("button", { name: "Roll Stealth check" });
+      button.focus();
+      fireEvent.click(button);
+      const status = (await screen.findAllByText(/^Stealth check: \d+$/))[0];
+      expect(status).toHaveAttribute("role", "status");
+      expect(button).toHaveFocus();
+    });
+
+    it("announces a roll the server could not record as not logged", async () => {
+      renderRolling(500);
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      expect(await screen.findByText(/^Stealth check: \d+, not logged$/)).toBeInTheDocument();
+    });
+
+    it("hands the recorded entry to the layout so the Roll Log opens on it", async () => {
+      const { onRolled } = renderRolling();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      await waitFor(() => expect(onRolled).toHaveBeenCalledWith(logged));
+    });
+
+    it("announces a repeated roll of the same label and total again", async () => {
+      renderRolling();
+      const button = screen.getByRole("button", { name: "Roll Stealth check" });
+      const status = () => button.nextElementSibling as HTMLElement;
+      fireEvent.click(button);
+      await waitFor(() => expect(status()).toHaveTextContent(/^Stealth check: \d+$/));
+      const changes: string[] = [];
+      new MutationObserver(() => changes.push(status().textContent ?? "")).observe(status(), {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      fireEvent.click(button);
+      await waitFor(() => expect(changes).toContain(""));
+      await waitFor(() => expect(changes.at(-1)).toMatch(/^Stealth check: \d+$/));
+    });
+
+    it("puts a row's roll button in the last column and an ability's in its tile corner", () => {
+      renderRolling();
+      const row = screen.getByRole("button", { name: "Roll Stealth check" }).closest("li");
+      expect(row?.lastElementChild).toContainElement(
+        screen.getByRole("button", { name: "Roll Stealth check" }),
+      );
+      const charisma = screen.getByRole("button", { name: "Roll Charisma check" });
+      expect(charisma.closest("dd")?.parentElement).toHaveClass("relative");
+      expect(
+        charisma.closest("dd")?.closest("dl")?.querySelectorAll(":scope > div > :not(dt, dd)"),
+      ).toHaveLength(0);
+    });
+
+    it("shows no roll button where no character's sheet is open", () => {
+      renderSection();
+      expect(screen.queryByRole("button", { name: /^Roll / })).toBeNull();
     });
   });
 });
