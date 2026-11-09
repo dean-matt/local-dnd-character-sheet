@@ -372,7 +372,9 @@ describe("RestMenu", () => {
       expect(writes[1]?.hitDice[0]?.remaining).toBe(0);
       await waitFor(() => expect(rolls).toHaveLength(1));
       expect(rolls[0]).toMatchObject({ label: "Hit die d8", modifier: conModifier });
-      expect(await dialog.findByRole("img", { name: "d8, rolled 5" })).toHaveTextContent("5");
+      const amount = Math.max(0, 5 + conModifier);
+      const calculation = `d8: rolled 5 ${conModifier < 0 ? `- ${-conModifier}` : `+ ${conModifier}`} (Con) = ${amount} HP`;
+      expect(await dialog.findByRole("img", { name: calculation })).toHaveTextContent(`${amount}`);
       expect(dialog.getAllByRole("img", { name: "d8, spent" })).toHaveLength(2);
       expect(dialog.queryByRole("img", { name: "d8, not spent" })).not.toBeInTheDocument();
       expect(dialog.getByText(`+${Math.max(0, 5 + conModifier)} HP`)).toBeInTheDocument();
@@ -381,6 +383,59 @@ describe("RestMenu", () => {
       expect(
         screen.getAllByRole("status").some((node) => /regained/.test(node.textContent ?? "")),
       ).toBe(true);
+    });
+
+    it("shows the calculation in a tooltip on hover and focus, and Escape dismisses it", async () => {
+      rollsA(5, 8);
+      renderLive(spent(), { character: classic() });
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      const die = await dialog.findByRole("img", { name: /^d8: rolled 5/ });
+      const calculation = die.getAttribute("aria-label") ?? "";
+      expect(dialog.queryByText(calculation)).not.toBeInTheDocument();
+
+      fireEvent.mouseEnter(die);
+      expect(dialog.getByText(calculation)).toBeInTheDocument();
+      fireEvent.mouseLeave(die);
+      expect(dialog.queryByText(calculation)).not.toBeInTheDocument();
+
+      expect(die).toHaveAttribute("tabindex", "0");
+      fireEvent.focus(die);
+      expect(dialog.getByText(calculation)).toBeInTheDocument();
+      expect(fireEvent.keyDown(die, { key: "Escape" })).toBe(false);
+      expect(dialog.queryByText(calculation)).not.toBeInTheDocument();
+    });
+
+    it("says when the heal was capped at the maximum", async () => {
+      rollsA(8, 8);
+      renderLive(
+        { ...spent(), hitPoints: { current: 19, temporary: 0 } },
+        { character: classic() },
+      );
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      const die = await dialog.findByRole("img", { name: /capped at max HP/ });
+      expect(die).toHaveTextContent("1");
+      expect(die).toHaveAccessibleName(/= 1 HP \(capped at max HP\)$/);
+    });
+
+    it("says when the heal was floored", async () => {
+      rollsA(1, 8);
+      const base = derived();
+      const low = {
+        ...base,
+        abilityModifiers: {
+          ...base.abilityModifiers,
+          con: { computed: -3, manual: null, terms: [] },
+        },
+      };
+      renderLive(spent(), { character: classic(), derivedBlock: low });
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      expect(
+        await dialog.findByRole("img", { name: "d8: rolled 1 - 3 (Con) = 0 HP (floored to 0)" }),
+      ).toHaveTextContent("0");
     });
 
     it("makes a pool with none left unavailable", async () => {
@@ -429,7 +484,7 @@ describe("RestMenu", () => {
       fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       await waitFor(() => expect(writes).toHaveLength(2));
       expect(await dialog.findByRole("alert")).toHaveTextContent("The roll was not logged.");
-      expect(await dialog.findByRole("img", { name: "d8, rolled 5" })).toBeInTheDocument();
+      expect(await dialog.findByRole("img", { name: /^d8: rolled 5 .* HP$/ })).toBeInTheDocument();
     });
 
     it("makes every die unavailable for a dead character", async () => {
