@@ -18,7 +18,7 @@ const entry = (row: typeof rollLog.$inferSelect, characterName: string) => {
   };
 };
 
-/** Every character's rolls, newest first; the bound is per character, so this is at most 200 a character. */
+/** Every character's rolls, newest first. Unlimited: 200 a character, so it grows with the character count; page it if that gets large. */
 export function listRolls(db: CharactersDb) {
   return db
     .select({ roll: rollLog, characterName: characters.name })

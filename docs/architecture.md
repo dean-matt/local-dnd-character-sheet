@@ -131,11 +131,11 @@ different things. `character` attaches whatever reference explains a term — a 
 `(name, source)`, another derived field, or the house-rule option that moved the
 arithmetic — since `rules` knows a term's meaning but never what supplied its input.
 
-Both logs are bounded and pruned on insert — 200 rolls and 50 undo entries per character.
-They are session affordances, not audit trails. The bound is per character; the Rolls Panel lists every character's rolls, each tagged with its character. A definition write records the definition it
-replaced, and saves on one field in quick succession merge into one entry, except a write sent
-with `Undo-Entry: own`. A play-state write records the state it replaced as its own entry in
-the same history, so undo reaches both — not pages or a deleted character.
+Both logs are bounded and pruned on insert — 200 rolls and 50 undo entries per character, not per list: the Rolls
+Panel lists every character's rolls, each tagged with its character. They are session affordances, not audit trails. A
+definition write records the definition it replaced, and saves on one field in quick succession merge into one entry,
+except a write sent with `Undo-Entry: own`. A play-state write records the state it replaced as its own entry, so undo
+reaches both — not pages or a deleted character.
 
 **One field contract, two modes.** `packages/web/src/components/Field/Field.tsx` is the only
 component that renders a computed-versus-manual value. The sheet shows a derived number in

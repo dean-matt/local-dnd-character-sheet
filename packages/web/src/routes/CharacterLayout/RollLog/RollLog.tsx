@@ -9,9 +9,8 @@ type Roll = z.infer<typeof rollLogEntrySchema>;
 const announcement = (roll: Roll) => `Rolled ${roll.label}: ${roll.total}`;
 
 /**
- * Every character's recent rolls, newest first, each tagged with who rolled it. The heading takes focus when the panel
- * opens from the header, not from a roll, which keeps focus on the rolled tag. `latest` is the roll that just landed; the status region is in the panel before
- * the effect fills it, so a reader speaks it even when the roll is what opened the panel.
+ * Every character's recent rolls, newest first, each tagged with who rolled it. `latest` is the roll that just landed.
+ * The heading takes focus only when the header opened the panel, so a roll keeps focus on the rolled tag.
  */
 export function RollLog({ latest }: { latest: Roll | null }) {
   const log = useRolls();
