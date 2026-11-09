@@ -168,9 +168,8 @@ export function ItemList({
       <Card
         key={group}
         title={group}
-        aside={
+        action={
           <span className="flex items-center gap-1">
-            <AddItemButton group={group} edition={character.edition} onAdd={add} />
             <FilterButton label={group} active={filter.active} onReset={filter.reset}>
               {facets.map(({ key, label, valuesOf }) => (
                 <ChipFacet
@@ -182,6 +181,7 @@ export function ItemList({
                 />
               ))}
             </FilterButton>
+            <AddItemButton group={group} edition={character.edition} onAdd={add} />
           </span>
         }
       >

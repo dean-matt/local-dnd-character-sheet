@@ -5,7 +5,7 @@ import {
   defaultCharacterState,
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacter } from "../../../../hooks/useCharacter.ts";
@@ -1053,6 +1053,8 @@ describe("ItemList", () => {
       screen.getByRole("heading", { level: 3, name: "Weapons" }).closest("section") as HTMLElement;
     const armor = () =>
       screen.getByRole("heading", { level: 3, name: "Armor" }).closest("section") as HTMLElement;
+    const gearCard = () =>
+      screen.getByRole("heading", { level: 3, name: "Gear" }).closest("section") as HTMLElement;
     const open = (card: string) =>
       fireEvent.click(screen.getByRole("button", { name: new RegExp(`^Filter ${card}`) }));
     async function addPick(facet: string, option: string) {
@@ -1106,6 +1108,16 @@ describe("ItemList", () => {
       expect(armor()).not.toHaveTextContent("Nothing matches the filter.");
     });
 
+    it("puts Filter immediately left of Add item at the header's far end", async () => {
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      const buttons = within(weapons()).getAllByRole("button", { name: /^(Filter|Add item)/ });
+      expect(buttons.map((button) => button.textContent)).toEqual(["Filter", "Add item"]);
+      expect(buttons[0]?.parentElement?.nextElementSibling).toBe(buttons[1]);
+      expect(buttons[1]?.nextElementSibling).toBeNull();
+    });
+
     it("keeps the empty note on a card with no rows", async () => {
       renderList(undefined, ITEMS);
       await screen.findByText("Longsword");
@@ -1126,15 +1138,35 @@ describe("ItemList", () => {
     });
 
     it("filters Armor and Gear by their own facets", async () => {
-      renderList(undefined, FILTERED);
+      const gear = (name: string, category: string): ResolvedItem => ({
+        ...(ITEMS[0] as ResolvedItem),
+        name,
+        type: { abbreviation: "G", name: category },
+        weapon: null,
+      });
+      renderList(undefined, [
+        ...FILTERED,
+        {
+          ...(ITEMS[0] as ResolvedItem),
+          name: "Leather",
+          type: { abbreviation: "LA", name: "Light Armor" },
+          weapon: null,
+          armor: { category: "light", armorClass: 11 },
+        },
+        gear("Rope", "Adventuring Gear"),
+        gear("Lute", "Instrument"),
+      ]);
       await screen.findByText("Longsword");
 
       open("Armor");
       await addPick("armor class", "Heavy");
       expect(within(armor()).getByText("Chain Mail")).toBeInTheDocument();
+      expect(within(armor()).queryByText("Leather")).toBeNull();
+
       open("Gear");
-      expect(screen.getByRole("group", { name: "Gear filter" })).toBeInTheDocument();
-      expect(screen.getByText("Category")).toBeInTheDocument();
+      await addPick("category", "Instrument");
+      expect(within(gearCard()).getByText("Lute")).toBeInTheDocument();
+      expect(within(gearCard()).queryByText("Rope")).toBeNull();
     });
 
     it("closes on Escape with focus back on the Filter button", async () => {
@@ -1169,8 +1201,13 @@ describe("ItemList", () => {
     });
 
     it("shows every card unfiltered after a remount", async () => {
-      const { unmount } = render(<span />);
-      unmount();
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+      open("Weapons");
+      await addPick("weapon class", "Simple");
+      expect(within(weapons()).queryByText("Longsword")).toBeNull();
+
+      cleanup();
       renderList(undefined, FILTERED);
       await screen.findByText("Longsword");
       expect(screen.getByRole("button", { name: "Filter Weapons" })).toBeInTheDocument();

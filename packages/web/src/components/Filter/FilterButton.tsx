@@ -6,8 +6,7 @@ import { CountBadge } from "../CountBadge.tsx";
  * A card's Filter button and the popover of facets it opens, for a card header's `aside`.
  * `active` is how many facets narrow the card, shown as a badge; Reset clears them through
  * `onReset`. The popover stays in the DOM beside the button, so Tab runs button, facets,
- * Reset. Escape, or focus or a pointer leaving, closes it, and Escape returns focus to the
- * button. Escape inside a facet's own open list closes that list first.
+ * Reset. Escape, or focus leaving, closes it, and Escape returns focus to the button. Escape inside a facet's own open list closes that list first.
  */
 export function FilterButton({
   label,
