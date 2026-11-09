@@ -52,6 +52,7 @@ export function CharacterLayout() {
               actions={
                 <>
                   <InspirationButton characterId={id} />
+                  <RestMenu character={character.data} />
                   <UndoHistoryButton
                     ref={historyButtonRef}
                     characterId={id}
@@ -59,7 +60,6 @@ export function CharacterLayout() {
                     open={historyOpen}
                     onToggle={() => setHistoryOpen((open) => !open)}
                   />
-                  <RestMenu character={character.data} />
                   <NavLink
                     to={`/characters/${id}/settings`}
                     title="Character settings"

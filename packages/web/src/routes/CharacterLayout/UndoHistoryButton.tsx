@@ -70,12 +70,12 @@ export function UndoHistoryButton({
   }, []);
 
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="relative">
       <span
         role="status"
         aria-live="polite"
         data-failed={undo.isError}
-        className="max-w-60 truncate text-muted text-row data-[failed=true]:text-error"
+        className="absolute top-full right-0 mt-1 w-max max-w-60 truncate bg-surface text-muted text-row data-[failed=true]:text-error"
       >
         {undo.isError ? `Undo failed: ${undo.error.message}` : announced}
       </span>

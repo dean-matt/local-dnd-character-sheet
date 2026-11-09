@@ -11,7 +11,7 @@ import { SaveIndicator } from "./SaveIndicator.tsx";
  * window; print carries `PrintTitle` instead. Its height is `--spacing-header`, which
  * `index.css` adds to `scroll-padding-top` while it is mounted, so focus never lands under
  * it. Name and subtitle truncate rather than wrap, holding that height. The save status
- * and then `actions` sit at the right, where the mockup puts its 32px buttons.
+ * and then `actions`, in one row with a single gap, sit at the right; the name block gives up width before the row does.
  */
 export function CharacterHeader({
   character,
@@ -42,7 +42,9 @@ export function CharacterHeader({
         </p>
       </div>
       <SaveIndicator characterId={character.id} />
-      {actions}
+      <div data-header-actions className="flex shrink-0 items-center gap-2">
+        {actions}
+      </div>
     </div>
   );
 }

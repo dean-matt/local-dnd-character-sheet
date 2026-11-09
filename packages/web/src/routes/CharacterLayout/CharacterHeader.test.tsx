@@ -66,7 +66,9 @@ describe("CharacterHeader", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeEmptyDOMElement();
-    expect(status.nextElementSibling).toBe(screen.getByRole("button", { name: "Undo" }));
+    expect(status.nextElementSibling).toContainElement(
+      screen.getByRole("button", { name: "Undo" }),
+    );
   });
 
   it("leaves the printed page to the print title", () => {
