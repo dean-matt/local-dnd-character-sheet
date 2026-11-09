@@ -175,6 +175,7 @@ export {
 export { derivedValue, houseRule } from "./resolve.ts";
 export { longRestHitDicePick, type RestLength, restedState, sheetState } from "./rest.ts";
 export { effectsOnRoll, netRollEffect } from "./rollEffects.ts";
+export { rollLogEntrySchema, rollRecordSchema } from "./rollLog.ts";
 export {
   type CharacterState,
   type CharacterStateRecord,
