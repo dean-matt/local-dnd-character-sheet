@@ -17,6 +17,9 @@ import { useCharacterFeatures } from "../../../hooks/useCharacterFeatures.ts";
 import { useOptionalFeatureEntitlements } from "../../../hooks/useOptionalFeatureEntitlements.ts";
 import { LoadingState } from "../../../LoadingState.tsx";
 import { Card } from "../../Card.tsx";
+import { FilterButton } from "../../Filter/FilterButton.tsx";
+import { inRange, NO_RANGE, type Range } from "../../Filter/facets.ts";
+import { RangeFacet } from "../../Filter/RangeFacet.tsx";
 import { RulesBlock } from "../../RulesBlock/RulesBlock.tsx";
 import { ClassResources } from "./ClassResources/ClassResources.tsx";
 import { FeatureRow } from "./FeatureRow.tsx";
@@ -29,6 +32,8 @@ const WIDGETS: readonly {
   noun: string;
   origins: readonly FeatureOrigin[];
   byLevel?: "class" | "taken";
+  /** Carries a Filter button narrowing it by the level each feature was gained at. */
+  filterable?: true;
   /** Shown with no features in it, where it holds the picks the character may make. */
   picks?: true;
 }[] = [
@@ -37,6 +42,7 @@ const WIDGETS: readonly {
     noun: "class features",
     origins: ["class", "subclass"],
     byLevel: "class",
+    filterable: true,
   },
   { title: "Race Features", noun: "race features", origins: ["race"] },
   { title: "Background Features", noun: "background features", origins: ["background"] },
@@ -45,6 +51,7 @@ const WIDGETS: readonly {
     noun: "chosen features",
     origins: ["feat", "optionalFeature"],
     byLevel: "taken",
+    filterable: true,
     picks: true,
   },
 ];
@@ -59,6 +66,7 @@ export function FeaturesSection({
   const features = useCharacterFeatures(character?.id ?? "");
   const entitlements = useOptionalFeatureEntitlements(character?.id ?? "");
   const [query, setQuery] = useState("");
+  const [ranges, setRanges] = useState<Record<string, Range>>({});
   const inputId = useId();
 
   if (!character) return <EmptyState>Features isn't available yet.</EmptyState>;
@@ -90,17 +98,17 @@ export function FeaturesSection({
     const listed = features.data.groups
       .filter((group) => widget.origins.includes(group.origin))
       .flatMap((group) => group.features.map((feature) => ({ feature, group })));
-    const entries = widget.byLevel
-      ? byLevelGained(listed, (entry) =>
-          widget.byLevel === "class"
-            ? classFeatureLevel(character.definition.levels, entry)
-            : entry.feature.level,
-        )
-      : listed;
-    const matches = entries.filter(({ feature }) => feature.name.toLowerCase().includes(needle));
-    return { ...widget, entries, matches };
+    const levelOf = (entry: (typeof listed)[number]) =>
+      widget.byLevel === "class"
+        ? classFeatureLevel(character.definition.levels, entry)
+        : entry.feature.level;
+    const entries = widget.byLevel ? byLevelGained(listed, levelOf) : listed;
+    const named = entries.filter(({ feature }) => feature.name.toLowerCase().includes(needle));
+    const range = ranges[widget.title] ?? NO_RANGE;
+    const matches = named.filter((entry) => inRange(levelOf(entry), range));
+    return { ...widget, entries, named, matches, range };
   }).filter((widget) => widget.entries.length > 0 || (widget.picks && picking));
-  const noMatches = widgets.every((widget) => widget.matches.length === 0);
+  const noMatches = widgets.every((widget) => widget.named.length === 0);
 
   return (
     <div className="flex flex-col gap-3">
@@ -126,11 +134,33 @@ export function FeaturesSection({
           references in one request and a search keystroke sends none. */}
       <RulesBlock content={features.data.groups}>
         {widgets.map((widget) => (
-          <Card key={widget.title} title={widget.title}>
-            {widget.entries.length === 0 ? null : widget.matches.length === 0 ? (
+          <Card
+            key={widget.title}
+            title={widget.title}
+            action={
+              widget.filterable &&
+              widget.entries.length > 0 && (
+                <FilterButton
+                  label={widget.title}
+                  active={widget.range.min !== "" || widget.range.max !== "" ? 1 : 0}
+                  onReset={() => setRanges((at) => ({ ...at, [widget.title]: NO_RANGE }))}
+                >
+                  <RangeFacet
+                    label="Level"
+                    range={widget.range}
+                    bounds={{ min: 1, max: 20 }}
+                    onChange={(next) => setRanges((at) => ({ ...at, [widget.title]: next }))}
+                  />
+                </FilterButton>
+              )
+            }
+          >
+            {widget.entries.length === 0 ? null : widget.named.length === 0 ? (
               <p className="text-body text-muted italic">
                 No {widget.noun} match “{query.trim()}”.
               </p>
+            ) : widget.matches.length === 0 ? (
+              <p className="text-body text-muted italic">Nothing matches the filter.</p>
             ) : (
               <ul className="flex flex-col gap-1.5">
                 {widget.matches.map((entry, index) => (
