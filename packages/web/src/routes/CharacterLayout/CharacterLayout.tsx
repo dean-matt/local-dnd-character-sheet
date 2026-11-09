@@ -1,7 +1,9 @@
+import type { rollLogEntrySchema } from "@dnd/character";
 import { Settings } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
-import { RollingFor } from "../../components/rollerContext.ts";
+import type { z } from "zod";
+import { OnRolled, RollingFor } from "../../components/rollerContext.ts";
 import { useCharacter } from "../../hooks/useCharacter.ts";
 import { useCharacterPages } from "../../hooks/useCharacterPages.ts";
 import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
@@ -13,6 +15,8 @@ import { InspirationButton } from "./InspirationButton.tsx";
 import { ManagePages } from "./ManagePages/ManagePages.tsx";
 import { PrintSheet } from "./PrintSheet/PrintSheet.tsx";
 import { RestMenu } from "./RestMenu/RestMenu.tsx";
+import { RollLog } from "./RollLog/RollLog.tsx";
+import { RollLogButton } from "./RollLogButton.tsx";
 import { UndoHistory } from "./UndoHistory/UndoHistory.tsx";
 import { UndoHistoryButton } from "./UndoHistoryButton.tsx";
 
@@ -23,8 +27,18 @@ export function CharacterLayout() {
   const character = useCharacter(id);
   const [managing, setManaging] = useState(false);
   const manageButtonRef = useRef<HTMLButtonElement>(null);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [panel, setPanel] = useState<"history" | "rolls" | null>(null);
+  const [latestRoll, setLatestRoll] = useState<z.infer<typeof rollLogEntrySchema> | null>(null);
+  const historyOpen = panel === "history";
+  const rollsOpen = panel === "rolls";
   const historyButtonRef = useReturnFocus<HTMLButtonElement>(historyOpen);
+  const rollsButtonRef = useReturnFocus<HTMLButtonElement>(rollsOpen);
+  const toggle = (which: "history" | "rolls") => () =>
+    setPanel((open) => (open === which ? null : which));
+  const showRoll = (roll: z.infer<typeof rollLogEntrySchema>) => {
+    setLatestRoll(roll);
+    setPanel("rolls");
+  };
   const dockId = useId();
 
   const openManage = () => setManaging(true);
@@ -59,7 +73,13 @@ export function CharacterLayout() {
                     characterId={id}
                     panelId={dockId}
                     open={historyOpen}
-                    onToggle={() => setHistoryOpen((open) => !open)}
+                    onToggle={toggle("history")}
+                  />
+                  <RollLogButton
+                    ref={rollsButtonRef}
+                    panelId={dockId}
+                    open={rollsOpen}
+                    onToggle={toggle("rolls")}
                   />
                   <NavLink
                     to={`/characters/${id}/settings`}
@@ -75,13 +95,19 @@ export function CharacterLayout() {
           )}
           <div className="px-gutter py-4">
             <RollingFor value={id}>
-              <Outlet />
+              <OnRolled value={showRoll}>
+                <Outlet />
+              </OnRolled>
             </RollingFor>
           </div>
         </div>
-        {historyOpen && (
-          <Dock id={dockId} label="Side panel" onClose={() => setHistoryOpen(false)}>
-            <UndoHistory characterId={id} />
+        {panel && (
+          <Dock id={dockId} label="Side panel" onClose={() => setPanel(null)}>
+            {historyOpen ? (
+              <UndoHistory characterId={id} />
+            ) : (
+              <RollLog characterId={id} latest={latestRoll} />
+            )}
           </Dock>
         )}
       </SidebarFrame>
