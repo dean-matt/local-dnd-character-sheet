@@ -56,6 +56,7 @@ function renderLive(
     character = characterRecord("1", "Vex") as CharacterRecord,
     derivedBlock = derived(),
     fail = false,
+    failRolls = false,
     hold = Promise.resolve(),
   } = {},
 ) {
@@ -69,6 +70,7 @@ function renderLive(
         return new Response(JSON.stringify(derivedBlock), { status: 200 });
       }
       if (init?.method === "POST" && String(input).endsWith("/rolls")) {
+        if (failRolls) return new Response(JSON.stringify({ error: "Disk full" }), { status: 500 });
         const roll = JSON.parse(String(init.body));
         rolls.push(roll);
         return new Response(
@@ -416,6 +418,33 @@ describe("RestMenu", () => {
       fireEvent.click(dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" }));
       expect(await dialog.findByRole("alert")).toHaveTextContent("The hit die was not spent");
       expect(rolls).toEqual([]);
+    });
+
+    it("says so on the page when the roll is not logged", async () => {
+      rollsA(5, 8);
+      const writes = renderLive(spent(), { character: classic(), failRolls: true });
+      const dialog = await takeShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" }));
+      await waitFor(() => expect(writes).toHaveLength(2));
+      expect(await dialog.findByRole("alert")).toHaveTextContent("The roll was not logged.");
+      expect(await dialog.findByRole("listitem")).toHaveTextContent("regained");
+    });
+
+    it("makes every die unavailable for a dead character", async () => {
+      const writes = renderLive(
+        {
+          ...spent(),
+          hitPoints: { current: 0, temporary: 0 },
+          deathSaves: { successes: 0, failures: 3 },
+        },
+        { character: classic() },
+      );
+      const dialog = await takeShort();
+      expect(dialog.getByText("Vex is dead.")).toBeInTheDocument();
+      const button = dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" });
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button);
+      expect(writes).toHaveLength(1);
     });
 
     it("keeps each roll made when the dialog closes, and returns focus to Rest", async () => {

@@ -36,6 +36,7 @@ export function SpendHitDice({
   const replace = useAnnouncedStateWrite(character.id);
   const record = useRecordRoll(character.id);
   const [spent, setSpent] = useState<Spent[]>([]);
+  const [unlogged, setUnlogged] = useState(false);
   const pools = sheetState(derived, state).hitDice;
   const maximum = derivedValue(derived.hitPointMaximum);
   const dead = deathSaveStatus(derived, state) === "dead";
@@ -53,6 +54,7 @@ export function SpendHitDice({
     if (!result) return;
     const hitPoints = result.state.hitPoints.current ?? maximum;
     const text = `d${die}: rolled ${face} ${signed(modifier)}, regained ${result.regained} hit points. Hit points ${hitPoints} of ${maximum}.`;
+    setUnlogged(false);
     if (!(await replace.write(result.state, text))) return;
     setSpent((rows) => [...rows, { id: rows.length, text }]);
     try {
@@ -65,7 +67,7 @@ export function SpendHitDice({
         critical: rolled.critical,
       });
     } catch {
-      replace.announce("The roll was not logged.");
+      setUnlogged(true);
     }
   }
 
@@ -96,6 +98,11 @@ export function SpendHitDice({
             <li key={row.id}>{row.text}</li>
           ))}
         </ul>
+      )}
+      {unlogged && (
+        <p role="alert" className="text-error text-row">
+          The roll was not logged.
+        </p>
       )}
       {replace.error && (
         <p role="alert" className="text-error text-row">
