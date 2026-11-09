@@ -40,9 +40,7 @@
           <sc-for list="{{matches}}" as="m" hint-placeholder-count="2">
             <button onClick="{{m.add}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; font-size: 13px; color: #1f2430;">{{m.name}}</button>
           </sc-for>
-          <sc-if value="{{canAddCustom}}" hint-placeholder-val="{{true}}">
           <button onClick="{{addCustom}}" style="display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 4px; border: none; background: none; border-top: 1px solid #dde1e6; margin-top: 2px; font-size: 13px; font-weight: 600; color: {{accent}};">+ Add custom "{{statusQuery}}"</button>
-          </sc-if>
         </div>
       </sc-if>
     </div>
@@ -70,19 +68,15 @@ class Component extends DCLogic {
           add: () => this.setState({ statusEffects: [...statusEffects, name], statusQuery: '' })
         }))
       : [];
-    const typed = statusQuery.trim();
-    const known = [...CONDITIONS, 'Exhaustion', ...statusEffects].map((c) => c.toLowerCase());
-    const canAddCustom = typed !== '' && known.indexOf(typed.toLowerCase()) === -1;
     return {
       accent,
-      canAddCustom,
       noStatusEffects: statusEffects.length === 0,
       statusEffects: statusRows,
       statusQuery,
       onStatusQueryChange: (e) => this.setState({ statusQuery: e.target.value }),
-      showResults: !!typed && (matches.length > 0 || canAddCustom),
+      showResults: !!statusQuery,
       matches,
-      addCustom: () => this.setState({ statusEffects: [...statusEffects, typed], statusQuery: '' })
+      addCustom: () => this.setState({ statusEffects: [...statusEffects, statusQuery], statusQuery: '' })
     };
   }
 }
