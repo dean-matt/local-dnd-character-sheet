@@ -17,3 +17,4 @@ export const characterUndoWriteKey = (id: string) =>
 /** Writes to one character's definition run one at a time, an undo among them. */
 export const characterDefinitionWriteScope = (id: string) => `definition-write:${id}`;
 export const characterUndoKey = (id: string) => [...characterKey(id), "undo"] as const;
+export const characterRollsKey = (id: string) => [...characterKey(id), "rolls"] as const;
