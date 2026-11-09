@@ -259,6 +259,27 @@ describe("ClassResources", () => {
       expect(count("Rages", "Barbarian")).toBe("2 / 3");
     });
 
+    it("shows a red outline while not raging and a red fill while raging", async () => {
+      renderPools({});
+      await screen.findByRole("region", { name: "Class Resources" });
+      expect(start("Rages", "Barbarian")).toHaveClass(
+        "border-error",
+        "bg-transparent",
+        "text-error",
+      );
+      expect(start("Rages", "Barbarian")).not.toHaveClass("bg-error");
+    });
+
+    it("fills the button red and swaps its icon and label while raging", async () => {
+      renderPools({
+        classResources: [{ class: BARBARIAN, key: "rages", maximum: 3, expended: 1 }],
+        activeEffects: [{ name: "Rage" }],
+      });
+      await screen.findByRole("region", { name: "Class Resources" });
+      expect(end()).toHaveClass("border-error", "bg-error");
+      expect(end().querySelector("svg")).not.toBeNull();
+    });
+
     it("starts a rage from an Unlimited pool without a count to run down", async () => {
       const { writes } = renderPools({});
       await screen.findByRole("region", { name: "Class Resources" });

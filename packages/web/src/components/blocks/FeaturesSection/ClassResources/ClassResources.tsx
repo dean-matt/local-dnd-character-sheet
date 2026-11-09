@@ -88,6 +88,7 @@ export function ClassResources({
               label={raging ? "End rage" : "Start rage"}
               tooltip={raging ? "End rage" : (blocked ?? "Start rage")}
               disabled={replace.writing || (!raging && blocked !== null)}
+              on={raging}
               onPress={() =>
                 replace.write(
                   raging ? rageEnded(stored) : rageStarted(stored, held),
