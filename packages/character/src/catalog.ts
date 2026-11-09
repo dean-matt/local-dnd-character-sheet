@@ -265,7 +265,7 @@ export type CharacterCatalog = {
 };
 
 /** One column of a class table at one level: `rages` and `3`, or `martial_arts` and `1d6`. */
-export type ClassResourceCell = { key: string; value: string };
+export type ClassResourceCell = { key: string; value: string; homebrew?: true };
 
 /**
  * How a class counts the spells it may prepare: the `classic` arithmetic `rule`, or the

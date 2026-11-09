@@ -51,8 +51,9 @@ export const resourceLabel = (key: string) => {
 const computed = (value: number) => ({ computed: value, manual: null, terms: [] });
 
 /**
- * Each pool a class table prints at the character's level in that class. A class the
- * catalog holds no cells for, a homebrew class among them, prints none. Throws a RangeError
+ * Each pool a class table prints at the character's level in that class, and every cell
+ * of a homebrew class, whose resource tables name their own pools. A class the catalog
+ * holds no cells for prints none. Throws a RangeError
  * on a pool cell that is neither a count nor `Unlimited`, rather than guess a maximum.
  */
 export function classResourcePools(
@@ -61,7 +62,7 @@ export function classResourcePools(
 ): CharacterDerived["classResources"] {
   return classLevels(definition).flatMap((group) =>
     (catalog.classResources.get(entryKey(group.class)) ?? [])
-      .filter((cell) => POOL_RESETS.has(cell.key))
+      .filter((cell) => cell.homebrew || POOL_RESETS.has(cell.key))
       .map((cell) => {
         if (cell.value === UNLIMITED) return { class: group.class, key: cell.key, maximum: null };
         const maximum = Number(cell.value);

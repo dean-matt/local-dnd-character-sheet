@@ -23,6 +23,7 @@ import {
   insertHomebrewRace,
   insertHomebrewSkill,
   insertHomebrewSubrace,
+  replaceHomebrewClassResources,
 } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { derivedRoutes } from "./derived.ts";
@@ -1325,6 +1326,55 @@ describe("derivedRoutes", () => {
       definitionWith({ ...harengon, size: "small" }),
     );
     expect((await derived()).size.computed).toBe("small");
+  });
+
+  describe("a homebrew class's resource tables", () => {
+    const maximums = (values: Record<number, number>) =>
+      Array.from({ length: 20 }, (_, index) => values[index + 1] ?? null);
+
+    beforeEach(() => {
+      insertHomebrewClass(opened.homebrewDb, "c", {
+        name: "Monk",
+        edition: "classic",
+        hd: { number: 1, faces: 8 },
+      });
+      replaceHomebrewClassResources(opened.homebrewDb, "c", [
+        { name: "Ki", maximums: maximums({ 2: 2, 3: 3, 5: 0 }) },
+      ]);
+    });
+
+    const pools = async () =>
+      (await derived()).classResources.map((pool) => [pool.key, pool.maximum?.computed ?? null]);
+    const levels = (
+      count: number,
+      ref: CharacterDefinition["levels"][number]["class"] = { homebrewId: "c" },
+    ) => Array.from({ length: count }, () => ({ class: ref }));
+
+    it("lists each resource at the class level, and none where the level has no value", async () => {
+      store(definitionWith({ levels: levels(1) }));
+      expect(await pools()).toEqual([]);
+      updateCharacterDefinition(opened.charactersDb, "1", definitionWith({ levels: levels(2) }));
+      expect(await pools()).toEqual([["Ki", 2]]);
+      updateCharacterDefinition(opened.charactersDb, "1", definitionWith({ levels: levels(4) }));
+      expect(await pools()).toEqual([]);
+      updateCharacterDefinition(opened.charactersDb, "1", definitionWith({ levels: levels(5) }));
+      expect(await pools()).toEqual([]);
+      updateCharacterDefinition(opened.charactersDb, "1", definitionWith({ levels: levels(3) }));
+      expect(await pools()).toEqual([["Ki", 3]]);
+    });
+
+    it("reads a class cited by name and source", async () => {
+      store(definitionWith({ levels: levels(3, { name: "Monk", source: "HB" }) }));
+      expect(await pools()).toEqual([["Ki", 3]]);
+    });
+
+    it("reads each class of a multiclass at its own level", async () => {
+      store(definitionWith({ levels: [...levels(2), { class: BARBARIAN }, { class: BARBARIAN }] }));
+      expect(await pools()).toEqual([
+        ["Ki", 2],
+        ["rages", 2],
+      ]);
+    });
   });
 
   it("resolves a homebrew class, race and item", async () => {
