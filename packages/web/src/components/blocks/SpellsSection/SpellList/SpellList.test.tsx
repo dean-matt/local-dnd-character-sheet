@@ -10,13 +10,13 @@ import { SpellList } from "./SpellList.tsx";
 const WARLOCK = { name: "Warlock", source: "XPHB" };
 const WIZARD = { name: "Wizard", source: "XPHB" };
 
-const spell = (name: string, level: number, prepared = false): SheetSpell => ({
+const spell = (name: string, level: number, prepared = false, school = "V"): SheetSpell => ({
   resolved: true,
   name,
   source: "XPHB",
   prepared,
   level,
-  school: "V",
+  school,
   concentration: false,
   ritual: false,
   entries: [],
@@ -471,5 +471,125 @@ describe("SpellList", () => {
       .find((url) => url.includes("Wizard"));
     expect(listRead).toContain("class=Wizard%7CXPHB");
     expect(listRead).toContain("classLevel=1");
+  });
+
+  describe("filter", () => {
+    const FILTERED: CharacterSpells = {
+      spells: [
+        spell("Hex", 1, true, "E"),
+        spell("Armor of Agathys", 1, false, "A"),
+        spell("Fire Bolt", 0, false, "V"),
+        spell("Darkness", 2, false, "E"),
+      ],
+    };
+    const filtered = () =>
+      vex([
+        { ref: { name: "Fire Bolt", source: "XPHB" }, prepared: false },
+        { ref: { name: "Darkness", source: "XPHB" }, prepared: false },
+      ]);
+    const open = () =>
+      fireEvent.click(screen.getByRole("button", { name: /^Filter Known Spells/ }));
+    async function addSchool(option: string) {
+      fireEvent.click(screen.getByRole("combobox", { name: "Add school" }));
+      fireEvent.click(await screen.findByRole("option", { name: option }));
+    }
+    const level = (end: "Minimum" | "Maximum", value: string) =>
+      fireEvent.change(screen.getByLabelText(`${end} spell level`), { target: { value } });
+
+    it("narrows by any school picked and by level, badging the button", async () => {
+      renderList(filtered(), FILTERED);
+      await screen.findByText("Hex");
+
+      open();
+      await addSchool("Enchantment");
+      await addSchool("Abjuration");
+      expect(screen.queryByText("Fire Bolt")).toBeNull();
+      expect(screen.getByText("Darkness")).toBeInTheDocument();
+      expect(screen.getByText("Armor of Agathys")).toBeInTheDocument();
+
+      level("Minimum", "2");
+      expect(screen.getByText("Darkness")).toBeInTheDocument();
+      expect(screen.queryByText("Hex")).toBeNull();
+      level("Maximum", "1");
+      expect(screen.getByText("Nothing matches the filter.")).toBeInTheDocument();
+      expect(screen.queryByText(/has no spells yet/)).toBeNull();
+      expect(screen.getByRole("button", { name: "Filter Known Spells (2 active)" })).toBeVisible();
+    });
+
+    it("removes a chip by its ×, offers a picked school no more, and resets both facets", async () => {
+      renderList(filtered(), FILTERED);
+      await screen.findByText("Hex");
+
+      open();
+      await addSchool("Evocation");
+      fireEvent.click(screen.getByRole("combobox", { name: "Add school" }));
+      expect(screen.queryByRole("option", { name: "Evocation" })).toBeNull();
+      fireEvent.keyDown(screen.getByRole("combobox", { name: "Add school" }), { key: "Escape" });
+      fireEvent.click(screen.getByRole("button", { name: "Remove Evocation" }));
+      expect(screen.getByText("Showing all")).toBeInTheDocument();
+
+      await addSchool("Evocation");
+      level("Minimum", "3");
+      fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getByRole("button", { name: "Filter Known Spells" })).toBeInTheDocument();
+      expect(screen.getByText("Hex")).toBeInTheDocument();
+      expect(screen.getByText("Fire Bolt")).toBeInTheDocument();
+    });
+
+    it("hides a spell that did not resolve under a school or level filter, and shows it again on Reset", async () => {
+      const gone: SheetSpell = {
+        resolved: false,
+        name: "Lost Spell",
+        source: "XPHB",
+        prepared: false,
+      };
+      const record = vex([{ ref: { name: "Lost Spell", source: "XPHB" }, prepared: false }]);
+      renderList(record, { spells: [...FILTERED.spells, gone] });
+      await screen.findByText("Lost Spell");
+
+      open();
+      await addSchool("Enchantment");
+      expect(screen.queryByText("Lost Spell")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getByText("Lost Spell")).toBeInTheDocument();
+
+      level("Maximum", "9");
+      expect(screen.queryByText("Lost Spell")).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getByText("Lost Spell")).toBeInTheDocument();
+    });
+
+    it("closes on Escape with focus back on the button", async () => {
+      renderList(filtered(), FILTERED);
+      await screen.findByText("Hex");
+
+      const button = screen.getByRole("button", { name: "Filter Known Spells" });
+      button.focus();
+      fireEvent.click(button);
+      screen.getByLabelText("Minimum spell level").focus();
+      fireEvent.keyDown(screen.getByLabelText("Minimum spell level"), { key: "Escape" });
+      expect(screen.queryByRole("group", { name: "Known Spells filter" })).toBeNull();
+      expect(button).toHaveFocus();
+    });
+
+    it("still prepares the right spell while narrowed", async () => {
+      const fetchMock = renderList(filtered(), FILTERED);
+      await screen.findByText("Hex");
+
+      open();
+      level("Minimum", "2");
+      fireEvent.click(screen.getByRole("button", { name: "Prepared, Darkness" }));
+      await waitFor(() => expect(written(fetchMock)).toBeDefined());
+      expect(written(fetchMock)[3]).toEqual({
+        ref: { name: "Darkness", source: "XPHB" },
+        prepared: true,
+      });
+    });
+
+    it("keeps the empty card's own note", async () => {
+      renderList(vex(), { spells: [] });
+      await screen.findByText(/has no spells yet/);
+      expect(screen.queryByText("Nothing matches the filter.")).toBeNull();
+    });
   });
 });

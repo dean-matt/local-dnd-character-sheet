@@ -6,6 +6,7 @@ import {
   displayName,
   type EntryRef,
 } from "@dnd/character";
+import { useState } from "react";
 import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterSpellsKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterSpells } from "../../../../hooks/useCharacterSpells.ts";
@@ -15,23 +16,42 @@ import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { withSpell } from "../../../../lib/addedEntries.ts";
 import { levelLabel } from "../../../../lib/spellLevel.ts";
+import { SCHOOLS, schoolName } from "../../../../lib/spellSchool.ts";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
+import { ChipFacet } from "../../../Filter/ChipFacet.tsx";
+import { FilterButton } from "../../../Filter/FilterButton.tsx";
+import {
+  type Facet,
+  inRange,
+  matchesFacets,
+  NO_RANGE,
+  useFacetPicks,
+} from "../../../Filter/facets.ts";
+import { RangeFacet } from "../../../Filter/RangeFacet.tsx";
 import { editSpellEntry } from "./editSpellEntry.ts";
 import { LearnSpellField } from "./LearnSpellField.tsx";
 import { PreparedTallies } from "./PreparedTallies.tsx";
 import { SpellRow } from "./SpellRow/SpellRow.tsx";
 import { preparedTallies, spellCaster } from "./spellCaster.ts";
 
+const SCHOOL_FACET: Facet<SheetSpell> = {
+  key: "school",
+  label: "School",
+  valuesOf: (spell) => (spell.resolved ? [schoolName(spell.school)] : []),
+};
+
+const SCHOOL_NAMES = Object.values(SCHOOLS).sort();
+
 /** `index` is the spell's place in the definition. */
 type Placed = { spell: SheetSpell; index: number };
 type Group = { key: string; title: string; spells: Placed[] };
 
 /** By level, cantrips first, with every reference that resolved to nothing gathered last. */
-function groupByLevel(spells: readonly SheetSpell[]): Group[] {
+function groupByLevel(spells: readonly Placed[]): Group[] {
   const byLevel = new Map<number, Placed[]>();
   const missing: Placed[] = [];
-  spells.forEach((spell, index) => {
+  spells.forEach(({ spell, index }) => {
     if (!spell.resolved) {
       missing.push({ spell, index });
       return;
@@ -62,6 +82,8 @@ export function SpellList({
   derived: CharacterDerived;
 }) {
   const names = useHomebrewNames();
+  const schools = useFacetPicks();
+  const [levels, setLevels] = useState(NO_RANGE);
   const spells = useCharacterSpells(character.id);
   const write = useHeldSave(character.id, "Spells");
   const { settled, hold, writing } = useRowWrites(characterSpellsKey(character.id));
@@ -92,14 +114,49 @@ export function SpellList({
     spell.level > 0 &&
     !spell.granted &&
     spellCaster(spell, casters)?.preparedSpells !== undefined;
+  const active = schools.active + (levels.min !== "" || levels.max !== "" ? 1 : 0);
+  const shown = list
+    .map((spell, index) => ({ spell, index }))
+    .filter(
+      ({ spell }) =>
+        matchesFacets(spell, [SCHOOL_FACET], schools.picks) &&
+        inRange(spell.resolved ? spell.level : undefined, levels),
+    );
   return (
-    <Card title="Known Spells">
+    <Card
+      title="Known Spells"
+      action={
+        <FilterButton
+          label="Known Spells"
+          active={active}
+          onReset={() => {
+            schools.reset();
+            setLevels(NO_RANGE);
+          }}
+        >
+          <ChipFacet
+            label="School"
+            options={SCHOOL_NAMES}
+            picked={schools.picks.school ?? []}
+            onChange={(next) => schools.set("school", next)}
+          />
+          <RangeFacet
+            label="Spell level"
+            range={levels}
+            bounds={{ min: 0, max: 9 }}
+            onChange={setLevels}
+          />
+        </FilterButton>
+      }
+    >
       <div className="flex flex-col gap-2">
         <PreparedTallies tallies={preparedTallies(list, casters, names)} />
         {list.length === 0 ? (
           <EmptyNote>{character.name} has no spells yet.</EmptyNote>
+        ) : shown.length === 0 ? (
+          <EmptyNote>Nothing matches the filter.</EmptyNote>
         ) : (
-          groupByLevel(list).map((group) => (
+          groupByLevel(shown).map((group) => (
             <div key={group.key}>
               <h4 className="mb-1.5 font-semibold text-label text-muted uppercase tracking-label">
                 {group.title}
