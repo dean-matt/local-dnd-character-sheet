@@ -188,7 +188,7 @@ describe("Vitals", () => {
       }
     });
 
-    it("adds nothing for a name outside the list until it is offered as custom", async () => {
+    it("disables Add condition while the field is empty", async () => {
       const { writes } = renderWriting({});
       fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
         target: { value: "" },
@@ -199,6 +199,28 @@ describe("Vitals", () => {
         "true",
       );
       expect(writes).toHaveLength(0);
+    });
+
+    it.each([
+      ["still loading", () => new Promise<Response>(() => {})],
+      ["failed", async () => new Response("{}", { status: 500 })],
+    ])("offers no custom condition while the catalog is %s", async (_, search) => {
+      const record = stateRecord();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL) =>
+          String(input).includes("/search")
+            ? search()
+            : new Response(JSON.stringify(record), { status: 200 }),
+        ),
+      );
+      renderWithClient(<Vitals character={characterRecord("1", "Vex")} derived={derived()} />);
+      fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+        target: { value: "Prone" },
+      });
+      expect(
+        status().queryByRole("button", { name: /^Add custom condition/ }),
+      ).not.toBeInTheDocument();
     });
 
     it("removes every reference under a name", async () => {

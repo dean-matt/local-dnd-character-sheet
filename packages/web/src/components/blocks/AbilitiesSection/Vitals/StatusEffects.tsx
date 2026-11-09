@@ -12,8 +12,8 @@ const STEP =
 
 /**
  * The Status Effects card: a chip per held condition with a remove control, an add control
- * over the edition's catalog conditions or a custom name, and an exhaustion stepper from 0 to 6. Each change
- * is one state write, announced once it lands.
+ * over the edition's catalog conditions or a custom name, and an exhaustion stepper from 0 to
+ * 6. Each change is one state write, announced once it lands.
  */
 export function StatusEffects({
   character,

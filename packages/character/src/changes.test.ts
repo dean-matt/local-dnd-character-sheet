@@ -229,6 +229,6 @@ describe("describeStateChange", () => {
     const marked: CharacterState = { ...state, customConditions: ["Marked"] };
     expect(describeStateChange(state, marked)).not.toBeNull();
     expect(describeStateChange(marked, state)).not.toBeNull();
-    expect(stateChangePhrases(state, marked)).toHaveLength(1);
+    expect(stateChangePhrases(state, marked)).toEqual(["Conditions set to Marked"]);
   });
 });

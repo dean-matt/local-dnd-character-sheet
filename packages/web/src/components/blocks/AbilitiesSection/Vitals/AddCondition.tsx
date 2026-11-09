@@ -41,7 +41,7 @@ export function AddCondition({
   const known = new Set(
     [...(data?.items ?? []).map((hit) => hit.name), ...held].map((known) => known.toLowerCase()),
   );
-  const custom = !chosen && typed !== "" && !known.has(typed.toLowerCase());
+  const custom = data !== undefined && !chosen && typed !== "" && !known.has(typed.toLowerCase());
 
   return (
     <div className="mt-2 flex items-center gap-2">
