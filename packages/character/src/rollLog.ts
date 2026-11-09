@@ -18,6 +18,8 @@ export const rollRecordSchema = z.strictObject({
   dice: z.array(rolledDieSchema),
   modifier: z.int(),
   critical: z.boolean(),
+  mode: z.enum(["normal", "advantage", "disadvantage"]).optional(),
+  reason: z.enum(["elven-accuracy", "lucky", "portent"]).optional(),
 });
 
 /** A character's `roll_log` row as an endpoint lists it; the newest 200 are kept. */

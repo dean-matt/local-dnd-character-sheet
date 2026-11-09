@@ -46,6 +46,7 @@ rollDice("2d6", { random: () => 0.5 });      // deterministic, for a test
 |---|---|---|---|
 | `mode` | `"normal" \| "advantage" \| "disadvantage"` | `"normal"` | Rolls a second die and keeps the higher or the lower. Only valid on notation that rolls a single die, keeps it, and sums no second pool |
 | `critical` | `boolean` | `false` | Rolls every pool a second time and adds the modifier once, as a critical hit does. A mode with it is rejected |
+| `d20` | `{ reason: "elven-accuracy", dice } \| { reason: "lucky", kept: 0 \| 1 } \| { reason: "portent", kept }` | none | A d20 test `mode` cannot say: Elven Accuracy (with `advantage`) rolls `dice` d20s (3-20) and keeps the best; Lucky rolls an extra die and keeps the die at index `kept`; Portent uses `kept` (1-20) as the die's value in place of a roll. Only valid on a single d20, with the mode it needs, and never with a critical |
 | `random` | `() => number` | `Math.random` | Returns a float in `[0, 1)`. Pass one to make a test deterministic |
 
 It returns:
@@ -57,6 +58,8 @@ It returns:
 | `modifier` | `number` | Every constant in the notation, summed. `0` when it carries none |
 | `notation` | `string` | The input in canonical form |
 | `critical` | `boolean` | Whether the `critical` option doubled the pools |
+| `mode` | `"normal" \| "advantage" \| "disadvantage"` | The mode the roll was made in |
+| `reason` | `"elven-accuracy" \| "lucky" \| "portent"` | The `d20` option used. Absent when none was |
 
 A die a keep clause discarded stays in the array with `kept: false`, and a die belonging to
 a subtracted pool carries `sign: -1`, so `total` can be read back off the dice.
@@ -100,7 +103,7 @@ Every message names the offending input.
 |---|---|
 | `SyntaxError` | The notation is malformed |
 | `RangeError` | A count, die size, modifier, or the dice a roll puts on the table at once falls outside 1-1000, or a keep or drop clause names a number its pool cannot honor |
-| `TypeError` | The notation is valid, but a mode does not fit it, or a critical was asked for with one |
+| `TypeError` | The notation is valid, but a mode does not fit it, or a critical was asked for with one; also a `d20` option on anything but a single d20, or with the wrong mode |
 
 ## Troubleshooting
 
