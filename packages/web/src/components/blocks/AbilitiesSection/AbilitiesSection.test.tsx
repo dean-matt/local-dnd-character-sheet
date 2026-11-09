@@ -839,12 +839,11 @@ describe("AbilitiesSection", () => {
       expect(row?.lastElementChild).toContainElement(
         screen.getByRole("button", { name: "Roll Stealth check" }),
       );
-      const tile = screen
-        .getByRole("button", { name: "Roll Charisma check" })
-        .closest("div.relative");
-      expect(tile?.firstElementChild).toContainElement(
-        screen.getByRole("button", { name: "Roll Charisma check" }),
-      );
+      const charisma = screen.getByRole("button", { name: "Roll Charisma check" });
+      expect(charisma.closest("dd")?.parentElement).toHaveClass("relative");
+      expect(
+        charisma.closest("dd")?.closest("dl")?.querySelectorAll(":scope > div > :not(dt, dd)"),
+      ).toHaveLength(0);
     });
 
     it("shows no roll button where no character's sheet is open", () => {
