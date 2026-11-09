@@ -36,6 +36,7 @@ describe("default state", () => {
       spellSlots: [],
       pactSlots: null,
       conditions: [],
+      customConditions: [],
       resources: [],
       classResources: [],
       activeEffects: [],
@@ -178,5 +179,23 @@ describe("active effects", () => {
   it("parses a state stored before them with none active", () => {
     const { activeEffects: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).activeEffects).toEqual([]);
+  });
+});
+
+describe("custom conditions", () => {
+  it("stores and reads back a name the catalog lacks", () => {
+    const marked = { ...state, customConditions: ["Marked", "Cursed"] };
+    expect(characterStateSchema.parse(structuredClone(marked))).toEqual(marked);
+  });
+
+  it("refuses a name listed twice or taking Exhaustion's, in any case", () => {
+    for (const customConditions of [["Marked", "marked"], ["exhaustion"]]) {
+      expect(characterStateSchema.safeParse({ ...state, customConditions }).success).toBe(false);
+    }
+  });
+
+  it("parses a state stored before them with none", () => {
+    const { customConditions: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).customConditions).toEqual([]);
   });
 });

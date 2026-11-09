@@ -7,19 +7,21 @@ const BUTTON =
 
 /**
  * Searches the edition's catalog conditions and adds the chosen one. The list leaves out
- * Exhaustion, which has its own stepper, and every name already held; a typed name that is
- * not in the list adds nothing.
+ * Exhaustion, which has its own stepper, and every name already held. Typed text that is no
+ * catalog condition, held condition or Exhaustion offers to add itself as a custom one.
  */
 export function AddCondition({
   edition,
   held,
   busy,
   onAdd,
+  onAddCustom,
 }: {
   edition: "classic" | "one";
   held: ReadonlySet<string>;
   busy: boolean;
   onAdd: (ref: { name: string; source: string }) => void;
+  onAddCustom: (name: string) => void;
 }) {
   const [name, setName] = useState("");
   const { data } = useCatalogSearch({
@@ -35,6 +37,11 @@ export function AddCondition({
       : [],
   );
   const chosen = offered.find((option) => option.name === name);
+  const typed = name.trim();
+  const known = new Set(
+    [...(data?.items ?? []).map((hit) => hit.name), ...held].map((known) => known.toLowerCase()),
+  );
+  const custom = data !== undefined && !chosen && typed !== "" && !known.has(typed.toLowerCase());
 
   return (
     <div className="mt-2 flex items-center gap-2">
@@ -49,15 +56,18 @@ export function AddCondition({
       </div>
       <button
         type="button"
-        aria-disabled={!chosen || busy}
+        aria-label={custom ? `Add custom condition ${typed}` : undefined}
+        aria-disabled={(!chosen && !custom) || busy}
         onClick={() => {
-          if (!chosen || busy) return;
-          onAdd(chosen);
+          if (busy) return;
+          if (chosen) onAdd(chosen);
+          else if (custom) onAddCustom(typed);
+          else return;
           setName("");
         }}
         className={BUTTON}
       >
-        Add condition
+        {custom ? "Add custom" : "Add condition"}
       </button>
     </div>
   );

@@ -354,6 +354,14 @@ const STATE_CHANGES: {
     one("pactSlots", "Pact slots", before.pactSlots, after.pactSlots, slotsLeft),
   conditions: (before, after) =>
     one("conditions", "Conditions", before.conditions, after.conditions, names),
+  customConditions: (before, after) =>
+    one(
+      "customConditions",
+      "Conditions",
+      before.customConditions,
+      after.customConditions,
+      (conditions) => conditions.join(", "),
+    ),
   resources: (before, after) =>
     keyed(
       "resources",

@@ -93,6 +93,16 @@ export const characterStateSchema = z.strictObject({
     .refine((conditions) => conditions.every((condition) => condition.name !== EXHAUSTION), {
       error: "exhaustion is held as a level, not a condition reference",
     }),
+  /** A table's own condition, such as "Marked", that the catalog lacks; it has a name and no rules. */
+  customConditions: z
+    .array(z.string().trim().min(1))
+    .refine((names) => isUnique(names, (name) => name.toLowerCase()), {
+      error: "the same custom condition is listed twice",
+    })
+    .refine((names) => names.every((name) => name.toLowerCase() !== EXHAUSTION.toLowerCase()), {
+      error: "exhaustion is held as a level, not a custom condition",
+    })
+    .default([]),
   resources: z.array(resourceSchema),
   classResources: z
     .array(classResourceSchema)

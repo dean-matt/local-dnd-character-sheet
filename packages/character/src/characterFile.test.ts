@@ -39,6 +39,13 @@ describe("characterFileSchema", () => {
     expect(characterFileSchema.parse(JSON.parse(JSON.stringify(parsed)))).toEqual(parsed);
   });
 
+  it("reads back a custom condition", () => {
+    const marked = { ...file, state: { ...file.state, customConditions: ["Marked"] } };
+    expect(characterFileSchema.parse(structuredClone(marked)).state.customConditions).toEqual([
+      "Marked",
+    ]);
+  });
+
   it("refuses a version it does not know, naming the field", () => {
     const result = characterFileSchema.safeParse({ ...file, version: 3 });
     expect(result.error?.issues.map((issue) => issue.path)).toEqual([["version"]]);

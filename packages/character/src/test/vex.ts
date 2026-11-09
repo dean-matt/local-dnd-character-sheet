@@ -170,6 +170,7 @@ export const state: CharacterState = {
   spellSlots: [],
   pactSlots: { level: 2, total: 2, expended: 1 },
   conditions: [{ name: "Prone", source: "XPHB" }],
+  customConditions: [],
   resources: [{ name: "Superiority Dice", current: 3, maximum: 4, resetsOn: "short" }],
   classResources: [],
   activeEffects: [],

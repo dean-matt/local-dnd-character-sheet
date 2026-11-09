@@ -12,8 +12,8 @@ const STEP =
 
 /**
  * The Status Effects card: a chip per held condition with a remove control, an add control
- * over the edition's catalog conditions, and an exhaustion stepper from 0 to 6. Each change
- * is one state write, announced once it lands.
+ * over the edition's catalog conditions or a custom name, and an exhaustion stepper from 0 to
+ * 6. Each change is one state write, announced once it lands.
  */
 export function StatusEffects({
   character,
@@ -24,17 +24,30 @@ export function StatusEffects({
 }) {
   const replace = useAnnouncedStateWrite(character.id);
   // A chip shows the name alone, so one condition held from two sources reads as one chip.
-  const names = [...new Set(state.conditions.map((condition) => condition.name))];
+  const names = [
+    ...new Set([...state.conditions.map((condition) => condition.name), ...state.customConditions]),
+  ];
   const { exhaustion } = state;
 
   function add(ref: { name: string; source: string }) {
     replace.write({ ...state, conditions: [...state.conditions, ref] }, `${ref.name} added`);
   }
 
+  function addCustom(name: string) {
+    replace.write(
+      { ...state, customConditions: [...state.customConditions, name] },
+      `${name} added`,
+    );
+  }
+
   function remove(name: string) {
     if (replace.writing) return;
     replace.write(
-      { ...state, conditions: state.conditions.filter((condition) => condition.name !== name) },
+      {
+        ...state,
+        conditions: state.conditions.filter((condition) => condition.name !== name),
+        customConditions: state.customConditions.filter((custom) => custom !== name),
+      },
       `${name} removed`,
     );
   }
@@ -76,6 +89,7 @@ export function StatusEffects({
         held={new Set(names)}
         busy={replace.writing}
         onAdd={add}
+        onAddCustom={addCustom}
       />
       <div className="mt-2 flex items-center gap-2">
         <span className="text-label text-muted">Exhaustion level</span>

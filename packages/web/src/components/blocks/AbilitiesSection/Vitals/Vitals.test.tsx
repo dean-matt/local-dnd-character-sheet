@@ -146,15 +146,81 @@ describe("Vitals", () => {
       expect(chips()).toEqual(["Prone", "Poisoned"]);
     });
 
-    it("adds nothing for a name outside the list", async () => {
+    it("adds a name outside the catalog as a custom condition, and keeps it after a reload", async () => {
+      const { writes, reload } = renderWriting({});
+      fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+        target: { value: "  Marked " },
+      });
+      fireEvent.click(status().getByRole("button", { name: "Add custom condition Marked" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.customConditions).toEqual(["Marked"]);
+      expect(writes[0]?.conditions).toEqual([]);
+      await waitFor(() => expect(status().getByRole("status")).toHaveTextContent("Marked added"));
+
+      reload();
+      await screen.findByRole("combobox", { name: "Condition to add" });
+      expect(chips()).toEqual(["Marked"]);
+    });
+
+    it("removes a custom condition, and it stays gone after a reload", async () => {
+      const { writes, reload } = renderWriting({ customConditions: ["Marked", "Cursed"] });
+      fireEvent.click(await findInStatus("button", { name: "Remove Marked" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.customConditions).toEqual(["Cursed"]);
+      await waitFor(() => expect(status().getByRole("status")).toHaveTextContent("Marked removed"));
+
+      reload();
+      await screen.findByRole("combobox", { name: "Condition to add" });
+      expect(chips()).toEqual(["Cursed"]);
+    });
+
+    it("offers no custom condition for a held, catalog or Exhaustion name in any case", async () => {
+      renderWriting({ customConditions: ["Marked"] });
+      for (const typed of ["marked", "PRONE", "exhaustion", "  ", ""]) {
+        fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+          target: { value: typed },
+        });
+        expect(
+          status().queryByRole("button", { name: /^Add custom condition/ }),
+        ).not.toBeInTheDocument();
+      }
+    });
+
+    it("disables Add condition while the field is empty", async () => {
       const { writes } = renderWriting({});
-      await addCondition("Cursed");
+      fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+        target: { value: "" },
+      });
 
       expect(status().getByRole("button", { name: "Add condition" })).toHaveAttribute(
         "aria-disabled",
         "true",
       );
       expect(writes).toHaveLength(0);
+    });
+
+    it.each([
+      ["still loading", () => new Promise<Response>(() => {})],
+      ["failed", async () => new Response("{}", { status: 500 })],
+    ])("offers no custom condition while the catalog is %s", async (_, search) => {
+      const record = stateRecord();
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL) =>
+          String(input).includes("/search")
+            ? search()
+            : new Response(JSON.stringify(record), { status: 200 }),
+        ),
+      );
+      renderWithClient(<Vitals character={characterRecord("1", "Vex")} derived={derived()} />);
+      fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+        target: { value: "Prone" },
+      });
+      expect(
+        status().queryByRole("button", { name: /^Add custom condition/ }),
+      ).not.toBeInTheDocument();
     });
 
     it("removes every reference under a name", async () => {
@@ -209,6 +275,19 @@ describe("Vitals", () => {
         [1, 0],
         [1, 1],
       ]);
+    });
+
+    it("makes each custom add and remove one state write", async () => {
+      const { writes } = renderWriting({});
+      fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+        target: { value: "Marked" },
+      });
+      fireEvent.click(status().getByRole("button", { name: "Add custom condition Marked" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+
+      fireEvent.click(await findInStatus("button", { name: "Remove Marked" }));
+      await waitFor(() => expect(writes).toHaveLength(2));
+      expect(writes.map((write) => write.customConditions)).toEqual([["Marked"], []]);
     });
 
     it("names a failed write for a condition or a step alike", async () => {
