@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
+import { RollingFor } from "../rollerContext.ts";
 import { RulesText } from "./RulesText.tsx";
 
 describe("RulesText", () => {
@@ -266,5 +267,84 @@ describe("reference resolution", () => {
     const fetchMock = stubFetch(new Response("{}"));
     renderWithClient(<RulesText text="{@b plain} prose" />);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  describe("click to roll", () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    const entry = (total: number) => ({
+      id: 1,
+      rolledAt: "2026-01-01T00:00:00.000Z",
+      label: "x",
+      notation: "x",
+      total,
+      dice: [],
+      modifier: 0,
+      critical: false,
+    });
+
+    function onSheet(text: string) {
+      return renderWithClient(
+        <RollingFor value="c1">
+          <RulesText text={text} />
+        </RollingFor>,
+      );
+    }
+
+    it("rolls, records the roll and shows the pool inline", async () => {
+      const fetchMock = stubFetch(new Response(JSON.stringify(entry(9)), { status: 201 }));
+      onSheet("Deals {@damage 2d6+3}.");
+      fireEvent.click(screen.getByRole("button", { name: "Roll 2d6+3" }));
+
+      const result = screen.getByRole("status");
+      expect(result).toHaveTextContent(/\+ 3 = \d+/);
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      const [url, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
+      expect(url).toBe("/api/characters/c1/rolls");
+      expect(init.method).toBe("POST");
+      const body = JSON.parse(String(init.body));
+      expect(body).toMatchObject({ notation: "2d6+3", modifier: 3 });
+      expect(body.dice).toHaveLength(2);
+    });
+
+    it("marks a discarded die and the sign of a subtracted one", () => {
+      stubFetch(new Response(JSON.stringify(entry(1)), { status: 201 }));
+      onSheet("{@dice 4d6kh3-1d4}");
+      fireEvent.click(screen.getByRole("button"));
+      expect(screen.getByText("discarded")).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent("\u2212");
+    });
+
+    it("dismisses the result on Escape", () => {
+      stubFetch(new Response(JSON.stringify(entry(1)), { status: 201 }));
+      onSheet("{@damage 1d4}");
+      const button = screen.getByRole("button");
+      fireEvent.click(button);
+      expect(screen.getByRole("status")).not.toBeEmptyDOMElement();
+      fireEvent.keyDown(button, { key: "Escape" });
+      expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    });
+
+    it("keeps a live region present before any roll", () => {
+      onSheet("{@damage 1d4}");
+      expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    });
+
+    it("renders a non-rollable token as text", () => {
+      const { container } = onSheet("{@dc 15}");
+      expect(container).toHaveTextContent("DC 15");
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    });
+
+    it("renders notation the dice cannot roll as text", () => {
+      onSheet("{@damage 8d6 fire} {@damage 0d0}");
+      expect(screen.queryAllByRole("button")).toHaveLength(0);
+    });
+  });
+
+  it("renders a rollable token as text where no character is open", () => {
+    renderWithClient(<RulesText text="{@damage 8d6}" />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getByText("8d6")).toHaveAttribute("data-notation", "8d6");
   });
 });

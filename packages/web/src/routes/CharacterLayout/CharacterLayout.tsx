@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
+import { RollingFor } from "../../components/rollerContext.ts";
 import { useCharacter } from "../../hooks/useCharacter.ts";
 import { useCharacterPages } from "../../hooks/useCharacterPages.ts";
 import { useReturnFocus } from "../../hooks/useReturnFocus.ts";
@@ -73,7 +74,9 @@ export function CharacterLayout() {
             />
           )}
           <div className="px-gutter py-4">
-            <Outlet />
+            <RollingFor value={id}>
+              <Outlet />
+            </RollingFor>
           </div>
         </div>
         {historyOpen && (
