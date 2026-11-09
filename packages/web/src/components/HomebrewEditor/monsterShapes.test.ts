@@ -14,6 +14,7 @@ import {
   ratingOf,
   rulesParts,
   speedFeet,
+  type TablePart,
   type TypeTagRow,
   typeTagRows,
   withAlignmentRows,
@@ -280,10 +281,12 @@ describe("monster shapes", () => {
       },
       { text: "" },
     ]);
-    expect(entriesOfParts(parts ?? [])).toEqual([
-      "Intro.",
+    expect(entriesOfParts(parts ?? [])).toEqual(["Intro.", table]);
+    const edited = parts?.[1];
+    expect(entriesOfParts([{ ...(edited as TablePart), caption: "Bag" }])).toEqual([
       {
         ...table,
+        caption: "Bag",
         rows: [
           ["1", "Bat"],
           ["2", ""],

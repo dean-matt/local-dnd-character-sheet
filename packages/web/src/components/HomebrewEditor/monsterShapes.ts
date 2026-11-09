@@ -395,7 +395,7 @@ export type RulesPart =
       stored: Record<string, unknown>;
     };
 
-function tablePart(entry: PlainTable): RulesPart {
+function tablePart(entry: PlainTable): TablePart {
   const labels = entry.colLabels ?? [];
   const width = Math.max(labels.length, ...entry.rows.map((row) => row.length));
   const pad = (cells: string[]) => [...cells, ...Array<string>(width - cells.length).fill("")];
@@ -438,8 +438,16 @@ export function rulesParts(entries: unknown): RulesPart[] | undefined {
 
 export type TablePart = Extract<RulesPart, { rows: string[][] }>;
 
-/** The table `part` states; nothing where its caption, labels and cells are all blank. */
-function tableEntry({ caption, labels, rows, stored }: TablePart): unknown[] {
+/**
+ * The table `part` states, the stored one where nothing changed so a ragged or padded table
+ * survives; nothing where its caption, labels and cells are all blank.
+ */
+function tableEntry(part: TablePart): unknown[] {
+  const { caption, labels, rows, stored } = part;
+  if (isPlainTable(stored)) {
+    const { caption: c, labels: l, rows: r } = tablePart(stored);
+    if (JSON.stringify([c, l, r]) === JSON.stringify([caption, labels, rows])) return [stored];
+  }
   const trimmed = (cells: string[]) => cells.map((each) => each.trim());
   const table: Record<string, unknown> = {
     ...stored,

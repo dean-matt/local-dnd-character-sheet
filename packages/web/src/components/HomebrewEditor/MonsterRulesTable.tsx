@@ -26,7 +26,7 @@ export function MonsterRulesTable({
   onChange,
   removeButton,
 }: MonsterRulesTableProps) {
-  const columns = part.labels.length;
+  const columns = Math.max(1, part.labels.length);
   const grid = { gridTemplateColumns: `repeat(${columns}, minmax(8rem, 1fr)) 2rem` };
   const setLabel = (at: number, value: string) =>
     onChange({ ...part, labels: part.labels.map((each, i) => (i === at ? value : each)) });
