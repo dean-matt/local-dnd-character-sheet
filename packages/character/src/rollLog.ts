@@ -22,8 +22,10 @@ export const rollRecordSchema = z.strictObject({
   reason: z.enum(["elven-accuracy", "lucky", "portent"]).optional(),
 });
 
-/** A character's `roll_log` row as an endpoint lists it; the newest 200 are kept. */
+/** A `roll_log` row as an endpoint lists it, with the character that rolled it; each character keeps its newest 200. */
 export const rollLogEntrySchema = rollRecordSchema.extend({
   id: z.int(),
+  characterId: z.string(),
+  characterName: z.string(),
   rolledAt: z.iso.datetime(),
 });

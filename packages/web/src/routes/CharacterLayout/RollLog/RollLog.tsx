@@ -2,19 +2,18 @@ import type { rollLogEntrySchema } from "@dnd/character";
 import { useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import { EmptyNote } from "../../../components/EmptyNote.tsx";
-import { useCharacterRolls } from "../../../hooks/useCharacterRolls.ts";
+import { useRolls } from "../../../hooks/useRolls.ts";
 
 type Roll = z.infer<typeof rollLogEntrySchema>;
 
 const announcement = (roll: Roll) => `Rolled ${roll.label}: ${roll.total}`;
 
 /**
- * The character's recent rolls, newest first. The heading takes focus when the panel
- * opens from the header, not from a roll, which keeps focus on the rolled tag. `latest` is the roll that just landed; the status region is in the panel before
- * the effect fills it, so a reader speaks it even when the roll is what opened the panel.
+ * Every character's recent rolls, newest first, each tagged with who rolled it. `latest` is the roll that just landed.
+ * The heading takes focus only when the header opened the panel, so a roll keeps focus on the rolled tag.
  */
-export function RollLog({ characterId, latest }: { characterId: string; latest: Roll | null }) {
-  const log = useCharacterRolls(characterId);
+export function RollLog({ latest }: { latest: Roll | null }) {
+  const log = useRolls();
   const heading = useRef<HTMLHeadingElement>(null);
   const [announced, setAnnounced] = useState("");
 
@@ -46,7 +45,9 @@ export function RollLog({ characterId, latest }: { characterId: string; latest: 
           >
             <span className="min-w-0">
               <span className="block truncate font-bold">{roll.label}</span>
-              <span className="text-muted text-row">{roll.notation}</span>
+              <span className="text-muted text-row">
+                {roll.characterName} · {roll.notation}
+              </span>
             </span>
             <strong className="text-title">{roll.total}</strong>
           </li>

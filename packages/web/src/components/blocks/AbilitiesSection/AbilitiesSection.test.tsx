@@ -737,6 +737,8 @@ describe("AbilitiesSection", () => {
   describe("roll buttons", () => {
     const logged = {
       id: 1,
+      characterId: "1",
+      characterName: "Vex",
       rolledAt: "2026-01-01T00:00:00.000Z",
       label: "x",
       notation: "x",
