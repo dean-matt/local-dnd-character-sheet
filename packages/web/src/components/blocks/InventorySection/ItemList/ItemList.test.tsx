@@ -1032,4 +1032,149 @@ describe("ItemList", () => {
     ).toBeInTheDocument();
     expect(saveToasts().getByRole("button", { name: /^Retry / })).toBeInTheDocument();
   });
+
+  describe("filters", () => {
+    const FILTERED: SheetItem[] = [
+      ...ITEMS,
+      {
+        ...(ITEMS[0] as ResolvedItem),
+        name: "Dagger",
+        weapon: { category: "simple", damage: { dice: "1d4", type: "piercing" } },
+      },
+      {
+        ...(ITEMS[0] as ResolvedItem),
+        name: "Chain Mail",
+        type: { abbreviation: "HA", name: "Heavy Armor" },
+        weapon: null,
+        armor: { category: "heavy", armorClass: 16 },
+      },
+    ];
+    const weapons = () =>
+      screen.getByRole("heading", { level: 3, name: "Weapons" }).closest("section") as HTMLElement;
+    const armor = () =>
+      screen.getByRole("heading", { level: 3, name: "Armor" }).closest("section") as HTMLElement;
+    const open = (card: string) =>
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(`^Filter ${card}`) }));
+    async function addPick(facet: string, option: string) {
+      fireEvent.click(screen.getByRole("combobox", { name: `Add ${facet}` }));
+      fireEvent.click(await screen.findByRole("option", { name: option }));
+    }
+
+    it("narrows a card to rows matching every facet, any pick within one, and badges the button", async () => {
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      open("Weapons");
+      expect(screen.getAllByText("Showing all", { selector: "p" })).toHaveLength(2);
+      await addPick("weapon class", "Simple");
+      expect(within(weapons()).queryByText("Longsword")).toBeNull();
+      expect(within(weapons()).getByText("Dagger")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Filter Weapons (1 active)" })).toBeInTheDocument();
+
+      await addPick("weapon class", "Martial");
+      expect(within(weapons()).getByText("Longsword")).toBeInTheDocument();
+      await addPick("damage type", "Piercing");
+      expect(within(weapons()).queryByText("Longsword")).toBeNull();
+      expect(within(weapons()).getByText("Dagger")).toBeInTheDocument();
+      expect(screen.queryByRole("option", { name: "Simple" })).toBeNull();
+    });
+
+    it("offers a picked option no more, and removes a chip by its ×", async () => {
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      open("Weapons");
+      await addPick("weapon class", "Simple");
+      fireEvent.click(screen.getByRole("combobox", { name: "Add weapon class" }));
+      expect(screen.queryByRole("option", { name: "Simple" })).toBeNull();
+      fireEvent.keyDown(screen.getByRole("combobox", { name: "Add weapon class" }), {
+        key: "Escape",
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Remove Simple" }));
+      expect(screen.getAllByText("Showing all", { selector: "p" })).toHaveLength(2);
+      expect(within(weapons()).getByText("Longsword")).toBeInTheDocument();
+    });
+
+    it("says nothing matches, apart from an empty card's own note", async () => {
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      open("Weapons");
+      await addPick("weapon class", "Simple");
+      await addPick("damage type", "Slashing");
+      expect(weapons()).toHaveTextContent("Nothing matches the filter.");
+      expect(armor()).not.toHaveTextContent("Nothing matches the filter.");
+    });
+
+    it("keeps the empty note on a card with no rows", async () => {
+      renderList(undefined, ITEMS);
+      await screen.findByText("Longsword");
+      expect(armor()).toHaveTextContent("No armor.");
+    });
+
+    it("resets every facet at once", async () => {
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      open("Weapons");
+      await addPick("weapon class", "Simple");
+      await addPick("damage type", "Piercing");
+      fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getAllByText("Showing all", { selector: "p" })).toHaveLength(2);
+      expect(within(weapons()).getByText("Longsword")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Filter Weapons" })).toBeInTheDocument();
+    });
+
+    it("filters Armor and Gear by their own facets", async () => {
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      open("Armor");
+      await addPick("armor class", "Heavy");
+      expect(within(armor()).getByText("Chain Mail")).toBeInTheDocument();
+      open("Gear");
+      expect(screen.getByRole("group", { name: "Gear filter" })).toBeInTheDocument();
+      expect(screen.getByText("Category")).toBeInTheDocument();
+    });
+
+    it("closes on Escape with focus back on the Filter button", async () => {
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      const button = screen.getByRole("button", { name: "Filter Weapons" });
+      button.focus();
+      fireEvent.click(button);
+      const select = screen.getByRole("combobox", { name: "Add weapon class" });
+      select.focus();
+      fireEvent.keyDown(select, { key: "ArrowDown" });
+      fireEvent.keyDown(select, { key: "ArrowDown" });
+      fireEvent.keyDown(select, { key: "Enter" });
+      expect(screen.getByRole("button", { name: "Remove Martial" })).toBeInTheDocument();
+
+      fireEvent.keyDown(screen.getByRole("button", { name: "Remove Martial" }), { key: "Escape" });
+      expect(screen.queryByRole("group", { name: "Weapons filter" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Filter Weapons (1 active)" })).toHaveFocus();
+    });
+
+    it("edits a filtered row as it does unfiltered", async () => {
+      const fetchMock = renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+
+      open("Weapons");
+      await addPick("weapon class", "Martial");
+      const quantity = screen.getByLabelText("Longsword quantity");
+      fireEvent.change(quantity, { target: { value: "2" } });
+      fireEvent.blur(quantity);
+      expect((await written(fetchMock)).inventory[0].quantity).toBe(2);
+    });
+
+    it("shows every card unfiltered after a remount", async () => {
+      const { unmount } = render(<span />);
+      unmount();
+      renderList(undefined, FILTERED);
+      await screen.findByText("Longsword");
+      expect(screen.getByRole("button", { name: "Filter Weapons" })).toBeInTheDocument();
+      expect(within(weapons()).getByText("Dagger")).toBeInTheDocument();
+    });
+  });
 });

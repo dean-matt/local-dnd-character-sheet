@@ -1,4 +1,6 @@
 import { ITEM_KINDS, type SheetItem } from "@dnd/catalog";
+import { capitalize } from "../../../../lib/capitalize.ts";
+import type { Facet } from "../../../Filter/facets.ts";
 
 export const GROUPS = ["Weapons", "Armor", "Gear"] as const;
 
@@ -29,4 +31,36 @@ export const GROUP_KINDS: Record<Group, string> = {
   Weapons: WEAPONS.join(","),
   Armor: ARMOR.join(","),
   Gear: ITEM_KINDS.filter((kind) => !WEAPONS.includes(kind) && !ARMOR.includes(kind)).join(","),
+};
+
+/** The facets each card's Filter offers, each valued by what a row's item states. */
+export const GROUP_FACETS: Record<Group, readonly Facet<SheetItem>[]> = {
+  Weapons: [
+    {
+      key: "class",
+      label: "Weapon class",
+      valuesOf: (item) =>
+        item.resolved && item.weapon?.category ? [capitalize(item.weapon.category)] : [],
+    },
+    {
+      key: "damage",
+      label: "Damage type",
+      valuesOf: (item) =>
+        item.resolved && item.weapon?.damage?.type ? [capitalize(item.weapon.damage.type)] : [],
+    },
+  ],
+  Armor: [
+    {
+      key: "class",
+      label: "Armor class",
+      valuesOf: (item) => (item.resolved && item.armor ? [capitalize(item.armor.category)] : []),
+    },
+  ],
+  Gear: [
+    {
+      key: "category",
+      label: "Category",
+      valuesOf: (item) => (item.resolved && item.type?.name ? [item.type.name] : []),
+    },
+  ],
 };
