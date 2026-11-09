@@ -29,3 +29,15 @@ export function useFacetPicks() {
     reset: () => setPicks({}),
   };
 }
+
+/** A bound as typed: empty is no bound. */
+export type Range = { min: string; max: string };
+
+export const NO_RANGE: Range = { min: "", max: "" };
+
+/** A row's value matches where it sits within each bound set; a row with no value matches none. */
+export function inRange(value: number | undefined, { min, max }: Range): boolean {
+  if (min === "" && max === "") return true;
+  if (value === undefined) return false;
+  return (min === "" || value >= Number(min)) && (max === "" || value <= Number(max));
+}
