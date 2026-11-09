@@ -139,4 +139,26 @@ describe("CharacterLayout roll log", () => {
     expect(await screen.findByText("Rolled 1d4: 3")).toBeInTheDocument();
     expect(await screen.findByRole("listitem")).toHaveTextContent("1d4");
   });
+
+  it("does not announce an old roll when the panel reopens", async () => {
+    await renderSheet([roll]);
+    fireEvent.click(screen.getByRole("button", { name: "Roll 1d4" }));
+    expect(await screen.findByText("Rolled 1d4: 3")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+    fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+
+    expect(await screen.findByRole("heading", { name: "Roll Log" })).toHaveFocus();
+    expect(screen.queryByText("Rolled 1d4: 3")).not.toBeInTheDocument();
+  });
+
+  it("leaves focus on the rolled tag when the roll opens the panel", async () => {
+    await renderSheet([roll]);
+    const tag = screen.getByRole("button", { name: "Roll 1d4" });
+    tag.focus();
+    fireEvent.click(tag);
+
+    await screen.findByText("Rolled 1d4: 3");
+    expect(screen.getByRole("heading", { name: "Roll Log" })).not.toHaveFocus();
+  });
 });

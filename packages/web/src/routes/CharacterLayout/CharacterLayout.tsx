@@ -33,8 +33,14 @@ export function CharacterLayout() {
   const rollsOpen = panel === "rolls";
   const historyButtonRef = useReturnFocus<HTMLButtonElement>(historyOpen);
   const rollsButtonRef = useReturnFocus<HTMLButtonElement>(rollsOpen);
-  const toggle = (which: "history" | "rolls") => () =>
+  const closePanel = () => {
+    setLatestRoll(null);
+    setPanel(null);
+  };
+  const toggle = (which: "history" | "rolls") => () => {
+    setLatestRoll(null);
     setPanel((open) => (open === which ? null : which));
+  };
   const showRoll = (roll: z.infer<typeof rollLogEntrySchema>) => {
     setLatestRoll(roll);
     setPanel("rolls");
@@ -102,7 +108,7 @@ export function CharacterLayout() {
           </div>
         </div>
         {panel && (
-          <Dock id={dockId} label="Side panel" onClose={() => setPanel(null)}>
+          <Dock id={dockId} label="Side panel" onClose={closePanel}>
             {historyOpen ? (
               <UndoHistory characterId={id} />
             ) : (

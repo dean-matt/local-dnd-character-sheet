@@ -10,7 +10,7 @@ const announcement = (roll: Roll) => `Rolled ${roll.label}: ${roll.total}`;
 
 /**
  * The character's recent rolls, newest first. The heading takes focus when the panel
- * opens. `latest` is the roll that just landed; the status region is in the panel before
+ * opens from the header, not from a roll, which keeps focus on the rolled tag. `latest` is the roll that just landed; the status region is in the panel before
  * the effect fills it, so a reader speaks it even when the roll is what opened the panel.
  */
 export function RollLog({ characterId, latest }: { characterId: string; latest: Roll | null }) {
@@ -18,7 +18,10 @@ export function RollLog({ characterId, latest }: { characterId: string; latest: 
   const heading = useRef<HTMLHeadingElement>(null);
   const [announced, setAnnounced] = useState("");
 
-  useEffect(() => heading.current?.focus(), []);
+  const openedByHeader = useRef(latest === null);
+  useEffect(() => {
+    if (openedByHeader.current) heading.current?.focus();
+  }, []);
   useEffect(() => {
     if (latest) setAnnounced(announcement(latest));
   }, [latest]);
