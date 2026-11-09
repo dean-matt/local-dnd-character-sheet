@@ -78,6 +78,7 @@ import {
   getHomebrewRace,
   getHomebrewSubrace,
   type HomebrewDb,
+  listHomebrewClassResources,
   listHomebrewSkills,
 } from "./homebrew.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
@@ -548,20 +549,36 @@ function weaponMasteryKinds(dataDir: string, definition: CharacterDefinition): M
 }
 
 /**
- * Per catalog class, the resource columns its table and its catalog subclass's table print
- * at the character's level in it.
+ * Per class, the resource columns its table and its catalog subclass's table print at the
+ * character's level in it, or the homebrew class's resources that have a value at that
+ * level. A level with no value, or a maximum of 0, prints no cell, never the level before's.
  */
 function classResources(
   dataDir: string,
+  homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
 ): Map<string, ClassResourceCell[]> {
   const cells = new Map<string, ClassResourceCell[]>();
   for (const group of classLevels(definition)) {
     const ref = group.class;
-    if ("homebrewId" in ref) continue;
+    const cited = asHomebrewIdRef(homebrewDb, ref, definition.edition);
+    if ("homebrewId" in cited) {
+      cells.set(
+        entryKey(ref),
+        listHomebrewClassResources(homebrewDb, cited.homebrewId).flatMap(
+          ({ name, maximums, resets }) => {
+            const maximum = maximums[group.level - 1];
+            if (!maximum) return [];
+            const rest = resets === "short-rest" ? "short" : resets === "long-rest" ? "long" : null;
+            return [{ key: name, value: String(maximum), homebrew: { resets: rest } }];
+          },
+        ),
+      );
+      continue;
+    }
     const subclass =
       group.subclass && !("homebrewId" in group.subclass) ? group.subclass : undefined;
-    const rows = getClassResources(dataDir, ref.name, ref.source, group.level, subclass);
+    const rows = getClassResources(dataDir, cited.name, cited.source, group.level, subclass);
     cells.set(
       entryKey(ref),
       rows.map((row) => ({ key: row.resource_key, value: row.value })),
@@ -617,7 +634,7 @@ export function resolveCharacterCatalog(
   return {
     hitDice,
     weaponMasteryKinds: weaponMasteryKinds(dataDir, definition),
-    classResources: classResources(dataDir, definition),
+    classResources: classResources(dataDir, homebrewDb, definition),
     spellcastingAbilities,
     casterTables,
     skills,

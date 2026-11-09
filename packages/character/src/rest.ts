@@ -105,6 +105,12 @@ export function restedState(
   return {
     ...rageEnded(rested),
     classResources: rested.classResources.map((pool) => {
+      const homebrew = derived.classResources.find(
+        (candidate) => classResourceKey(candidate) === classResourceKey(pool),
+      )?.resets;
+      if (homebrew !== undefined) {
+        return homebrew && resets(homebrew, length) ? { ...pool, expended: 0 } : pool;
+      }
       const trigger = poolReset(pool.key, definition.edition);
       if (trigger && resets(trigger, length)) return { ...pool, expended: 0 };
       return length === "short" && regainsOneOnShortRest(pool.key, definition.edition)

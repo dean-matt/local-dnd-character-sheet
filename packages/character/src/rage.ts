@@ -61,7 +61,7 @@ export function rageBenefits(
   if (!isRaging(state) || heavyArmorWorn) return null;
   const cell = classLevels(definition)
     .flatMap((group) => catalog.classResources.get(entryKey(group.class)) ?? [])
-    .find(({ key }) => key === "rage_damage");
+    .find(({ key, homebrew }) => key === "rage_damage" && !homebrew);
   const damage = cell ? Number(cell.value) : 0;
   if (!Number.isInteger(damage)) throw new RangeError(`Rage Damage prints ${cell?.value}`);
   return { damage };

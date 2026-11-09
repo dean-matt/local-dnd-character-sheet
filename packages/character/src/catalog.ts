@@ -265,7 +265,12 @@ export type CharacterCatalog = {
 };
 
 /** One column of a class table at one level: `rages` and `3`, or `martial_arts` and `1d6`. */
-export type ClassResourceCell = { key: string; value: string };
+export type ClassResourceCell = {
+  key: string;
+  value: string;
+  /** Set on a homebrew resource, whose key is free text; `resets` is the rest that restores it, or null where it sets none. */
+  homebrew?: { resets: "short" | "long" | null };
+};
 
 /**
  * How a class counts the spells it may prepare: the `classic` arithmetic `rule`, or the
