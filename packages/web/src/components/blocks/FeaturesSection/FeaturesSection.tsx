@@ -44,7 +44,7 @@ const WIDGETS: readonly {
     byLevel: "class",
     filterable: true,
   },
-  { title: "Race Features", noun: "race features", origins: ["race"], filterable: true },
+  { title: "Race Features", noun: "race features", origins: ["race"] },
   { title: "Background Features", noun: "background features", origins: ["background"] },
   {
     title: "Chosen Features",
@@ -138,7 +138,8 @@ export function FeaturesSection({
             key={widget.title}
             title={widget.title}
             action={
-              widget.filterable && (
+              widget.filterable &&
+              widget.entries.length > 0 && (
                 <FilterButton
                   label={widget.title}
                   active={widget.range.min !== "" || widget.range.max !== "" ? 1 : 0}

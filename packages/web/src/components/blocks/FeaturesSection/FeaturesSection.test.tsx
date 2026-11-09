@@ -594,20 +594,37 @@ describe("FeaturesSection", () => {
         within(card("Chosen Features")).getByText("Nothing matches the filter."),
       ).toBeVisible();
 
-      open("Race Features");
-      setLevel("Race Features", "Minimum", "1");
-      expect(within(card("Race Features")).getByText("Nothing matches the filter.")).toBeVisible();
+      fireEvent.change(screen.getByPlaceholderText("Search features…"), {
+        target: { value: "zzz" },
+      });
+      expect(
+        within(card("Chosen Features")).getByText("No chosen features match “zzz”."),
+      ).toBeVisible();
+      fireEvent.change(screen.getByPlaceholderText("Search features…"), {
+        target: { value: "lucky" },
+      });
+      expect(
+        within(card("Chosen Features")).getByText("Nothing matches the filter."),
+      ).toBeVisible();
+    });
+
+    it("leaves the Race Features card unfiltered, as race features carry no level", async () => {
+      renderSection(features, undefined, leveled);
+      await screen.findByText("Second Wind");
+
+      expect(within(card("Race Features")).queryByRole("button", { name: /^Filter / })).toBeNull();
+      expect(within(card("Race Features")).getByText("Darkvision")).toBeVisible();
     });
 
     it("closes on Escape with focus back on the button", async () => {
       renderSection(features, undefined, leveled);
       await screen.findByText("Second Wind");
-      open("Race Features");
-      const button = within(card("Race Features")).getByRole("button", { name: /^Filter / });
-      fireEvent.keyDown(within(card("Race Features")).getByLabelText("Minimum level"), {
+      open("Class Features");
+      const button = within(card("Class Features")).getByRole("button", { name: /^Filter / });
+      fireEvent.keyDown(within(card("Class Features")).getByLabelText("Minimum level"), {
         key: "Escape",
       });
-      expect(within(card("Race Features")).queryByLabelText("Minimum level")).toBeNull();
+      expect(within(card("Class Features")).queryByLabelText("Minimum level")).toBeNull();
       expect(button).toHaveFocus();
     });
   });
