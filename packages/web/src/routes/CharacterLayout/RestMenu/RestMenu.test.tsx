@@ -364,7 +364,7 @@ describe("RestMenu", () => {
       const dialog = await takeShort();
       expect(writes).toHaveLength(1);
 
-      fireEvent.click(dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" }));
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       await waitFor(() => expect(writes).toHaveLength(2));
       expect(writes[1]?.hitPoints).toEqual({
         current: 12 + Math.max(0, 5 + conModifier),
@@ -373,9 +373,10 @@ describe("RestMenu", () => {
       expect(writes[1]?.hitDice[0]?.remaining).toBe(0);
       await waitFor(() => expect(rolls).toHaveLength(1));
       expect(rolls[0]).toMatchObject({ label: "Hit die d8", modifier: conModifier });
-      expect(await dialog.findByRole("listitem")).toHaveTextContent(
-        `d8: rolled 5 ${modifierLabel}, regained`,
-      );
+      expect(
+        await dialog.findByText(`d8 5 ${modifierLabel} = +${Math.max(0, 5 + conModifier)} HP`),
+      ).toBeInTheDocument();
+      expect(dialog.getByText(`${12 + Math.max(0, 5 + conModifier)} / 20`)).toBeInTheDocument();
       expect(
         screen.getAllByRole("status").some((node) => /regained/.test(node.textContent ?? "")),
       ).toBe(true);
@@ -394,15 +395,15 @@ describe("RestMenu", () => {
         { character: classic() },
       );
       const dialog = await takeShort();
-      const button = dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" });
+      const button = dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" });
       fireEvent.click(button);
       await waitFor(() =>
-        expect(dialog.getByRole("button", { name: "Spend a d8, 0 of 3 left" })).toHaveAttribute(
+        expect(dialog.getByRole("button", { name: "Roll d8, 0 of 3 left" })).toHaveAttribute(
           "aria-disabled",
           "true",
         ),
       );
-      fireEvent.click(dialog.getByRole("button", { name: "Spend a d8, 0 of 3 left" }));
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 0 of 3 left" }));
       expect(writes).toHaveLength(2);
       expect(dialog.getByText("No hit dice remain.")).toBeInTheDocument();
     });
@@ -415,7 +416,7 @@ describe("RestMenu", () => {
         "fetch",
         vi.fn(async () => new Response(JSON.stringify({ error: "Disk full" }), { status: 500 })),
       );
-      fireEvent.click(dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" }));
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       expect(await dialog.findByRole("alert")).toHaveTextContent("The hit die was not spent");
       expect(rolls).toEqual([]);
     });
@@ -424,10 +425,10 @@ describe("RestMenu", () => {
       rollsA(5, 8);
       const writes = renderLive(spent(), { character: classic(), failRolls: true });
       const dialog = await takeShort();
-      fireEvent.click(dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" }));
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       await waitFor(() => expect(writes).toHaveLength(2));
       expect(await dialog.findByRole("alert")).toHaveTextContent("The roll was not logged.");
-      expect(await dialog.findByRole("listitem")).toHaveTextContent("regained");
+      expect(await dialog.findByText(/^d8 5 .* HP$/)).toBeInTheDocument();
     });
 
     it("makes every die unavailable for a dead character", async () => {
@@ -441,7 +442,7 @@ describe("RestMenu", () => {
       );
       const dialog = await takeShort();
       expect(dialog.getByText("Vex is dead.")).toBeInTheDocument();
-      const button = dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" });
+      const button = dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" });
       expect(button).toHaveAttribute("aria-disabled", "true");
       fireEvent.click(button);
       expect(writes).toHaveLength(1);
@@ -451,7 +452,7 @@ describe("RestMenu", () => {
       rollsA(5, 8);
       const writes = renderLive(spent(), { character: classic() });
       const dialog = await takeShort();
-      fireEvent.click(dialog.getByRole("button", { name: "Spend a d8, 1 of 3 left" }));
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       await waitFor(() => expect(writes).toHaveLength(2));
       fireEvent.click(dialog.getByRole("button", { name: "Done" }));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
