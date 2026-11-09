@@ -1226,7 +1226,7 @@ describe("derivedRoutes", () => {
 
     expect(swift.speed.computed).toEqual({ walk: 40 });
     expect(swift.senses.computed).toEqual([
-      expect.objectContaining({ name: "darkvision", range: 60 }),
+      expect.objectContaining({ name: "darkvision", range: 60, from: ["Elf (Swift)"] }),
     ]);
   });
 

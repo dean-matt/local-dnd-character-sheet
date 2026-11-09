@@ -65,7 +65,7 @@ import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs
 import { houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
-import { classLevels, raceSummary, totalLevel } from "./summaries.ts";
+import { classLevels, type HomebrewNames, raceSummary, totalLevel } from "./summaries.ts";
 import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
 import { speedWithUnarmoredMovement } from "./unarmoredMovement.ts";
 
@@ -636,9 +636,10 @@ function derivedDefenses(
   catalog: CharacterCatalog,
   feats: readonly Grant[],
   rage: RageBenefits,
+  names?: HomebrewNames,
 ): ComputedField<Defenses> {
   const { resistChoice, ...race } = catalog.raceDefenses;
-  const from = raceSummary(definition);
+  const from = raceSummary(definition, names);
   const pick = definition.raceResistance;
   const picked = pick !== undefined && resistChoice.includes(pick) ? pick : undefined;
   const grants: Grant[] = [
@@ -678,9 +679,10 @@ function derivedSenses(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   feats: readonly (SenseGrant & { from: string })[],
+  names?: HomebrewNames,
 ): ComputedField<CharacterDerived["senses"]["computed"]> {
   const grants = [
-    ...catalog.raceSenses.map((sense) => ({ ...sense, from: raceSummary(definition) })),
+    ...catalog.raceSenses.map((sense) => ({ ...sense, from: raceSummary(definition, names) })),
     ...feats,
   ];
   for (const entry of definition.inventory) {
@@ -917,6 +919,7 @@ export function deriveCharacter(
   stored: CharacterDefinition,
   catalog: CharacterCatalog,
   state: Pick<CharacterState, "activeEffects"> = { activeEffects: [] },
+  names?: HomebrewNames,
 ): CharacterDerived {
   const feats = featGrants(stored, catalog);
   const definition = withFeatGrants(stored, feats.granted, feats.itemSkills);
@@ -1037,8 +1040,8 @@ export function deriveCharacter(
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
     attacks: derivedAttacks(definition, catalog, bonuses, rage),
-    defenses: derivedDefenses(definition, catalog, feats.defenses, rage),
-    senses: derivedSenses(definition, catalog, feats.senses),
+    defenses: derivedDefenses(definition, catalog, feats.defenses, rage, names),
+    senses: derivedSenses(definition, catalog, feats.senses, names),
     itemGrants: derivedItemGrants(definition, catalog, feats.itemSkills),
     featGrants: computed(feats.granted),
     rollEffects: derivedRollEffects(definition, catalog, burdened, rage),

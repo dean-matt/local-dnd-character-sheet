@@ -2154,6 +2154,23 @@ describe("deriveCharacter", () => {
       ]);
     });
 
+    it("names a homebrew subrace by its row, in the senses and the defenses", () => {
+      const starlit = { ...equipped, subrace: { homebrewId: "hb_01" } };
+      const names = new Map([["hb_01", "Starlit"]]);
+      const derived = deriveCharacter(starlit, senseCatalog, undefined, names);
+      expect(derived.senses.computed[0]?.from).toEqual([raceSummary(starlit, names)]);
+      expect(raceSummary(starlit, names)).toContain("(Starlit)");
+      const defended = deriveCharacter(
+        starlit,
+        { ...senseCatalog, raceDefenses: { ...senseCatalog.raceDefenses, resist: ["fire"] } },
+        undefined,
+        names,
+      );
+      expect(defended.defenses.computed.resistances).toEqual([
+        { name: "fire", from: ["Half-Elf (Starlit)"] },
+      ]);
+    });
+
     it("lists a feat's sense, in the order senses are listed", () => {
       expect(sensesOf([], [{ ref: FIGHTING }])).toEqual([
         { name: "blindsight", range: 10, from: ["Blind Fighting"] },
