@@ -32,6 +32,7 @@ import { optionalFeaturesRoutes } from "./routes/optional-features.ts";
 import { pagesRoutes } from "./routes/pages.ts";
 import { racesRoutes } from "./routes/races.ts";
 import { refsRoutes } from "./routes/refs.ts";
+import { rollsRoutes } from "./routes/rolls.ts";
 import { searchRoutes } from "./routes/search.ts";
 import { spellsRoutes } from "./routes/spells.ts";
 
@@ -42,6 +43,7 @@ app.onError(onAppError);
 app.route("/", charactersRoutes(charactersDb, backupCharactersDb, homebrewDb, DATA_DIR));
 app.route("/", characterPortraitRoutes(charactersDb));
 app.route("/", pagesRoutes(charactersDb));
+app.route("/", rollsRoutes(charactersDb));
 app.route("/", derivedRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", featuresRoutes(charactersDb, DATA_DIR, homebrewDb));
 app.route("/", optionalFeaturesRoutes(charactersDb, DATA_DIR, homebrewDb));
