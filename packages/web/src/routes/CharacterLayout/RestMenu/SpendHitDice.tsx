@@ -116,7 +116,7 @@ export function SpendHitDice({
                         key={index}
                         role="img"
                         aria-label={name}
-                        className={`grid size-8 place-items-center rounded-control border-[1.5px] border-accent font-semibold text-row ${index < used ? "bg-accent text-white forced-colors:bg-[Highlight]" : ""}`}
+                        className={`grid size-8 place-items-center rounded-control border-[1.5px] border-accent font-semibold text-row ${index < used ? "bg-accent text-white forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]" : ""}`}
                       >
                         {face}
                       </span>
