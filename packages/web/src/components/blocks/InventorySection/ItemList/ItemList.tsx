@@ -20,6 +20,9 @@ import { LoadingState } from "../../../../LoadingState.tsx";
 import { withItem } from "../../../../lib/addedEntries.ts";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
+import { ChipFacet } from "../../../Filter/ChipFacet.tsx";
+import { FilterButton } from "../../../Filter/FilterButton.tsx";
+import { matchesFacets, useFacetPicks } from "../../../Filter/facets.ts";
 import { AddItemButton } from "./AddItemButton.tsx";
 import {
   editInventoryEntry,
@@ -27,7 +30,7 @@ import {
   placeInventoryEntry,
 } from "./editInventoryEntry.ts";
 import { ItemPicks } from "./ItemPicks.tsx";
-import { GROUPS, groupOf } from "./itemGroups.ts";
+import { GROUP_FACETS, GROUPS, groupOf } from "./itemGroups.ts";
 import { PlaceField } from "./PlaceField.tsx";
 import { QuantityField } from "./QuantityField.tsx";
 import { ResolvedItemRow } from "./ResolvedItemRow/ResolvedItemRow.tsx";
@@ -43,6 +46,7 @@ export function ItemList({
   derived: CharacterDerived | undefined;
 }) {
   const inventory = useCharacterInventory(character.id);
+  const filters = { Weapons: useFacetPicks(), Armor: useFacetPicks(), Gear: useFacetPicks() };
   const write = useHeldSave(character.id, "Inventory");
   // A count saves through its own field, which reports its own failure.
   const counts = useUpdateCharacterDefinition(character.id);
@@ -156,15 +160,35 @@ export function ItemList({
     gated ? derived?.unproficientItems.find((item) => item.entry === index)?.requires : undefined;
   const entries = inventory.data.items.map((item, index) => ({ item, index }));
   const cards = GROUPS.map((group) => {
-    const rows = entries.filter(({ item }) => groupOf(item) === group);
+    const held = entries.filter(({ item }) => groupOf(item) === group);
+    const facets = GROUP_FACETS[group];
+    const filter = filters[group];
+    const rows = held.filter(({ item }) => matchesFacets(item, facets, filter.picks));
     return (
       <Card
         key={group}
         title={group}
-        aside={<AddItemButton group={group} edition={character.edition} onAdd={add} />}
+        action={
+          <span className="flex items-center gap-1">
+            <FilterButton label={group} active={filter.active} onReset={filter.reset}>
+              {facets.map(({ key, label, valuesOf }) => (
+                <ChipFacet
+                  key={key}
+                  label={label}
+                  options={[...new Set(held.flatMap(({ item }) => valuesOf(item)))].sort()}
+                  picked={filter.picks[key] ?? []}
+                  onChange={(next) => filter.set(key, next)}
+                />
+              ))}
+            </FilterButton>
+            <AddItemButton group={group} edition={character.edition} onAdd={add} />
+          </span>
+        }
       >
         {rows.length === 0 ? (
-          <EmptyNote>No {group.toLowerCase()}.</EmptyNote>
+          <EmptyNote>
+            {held.length === 0 ? `No ${group.toLowerCase()}.` : "Nothing matches the filter."}
+          </EmptyNote>
         ) : (
           <ul
             aria-busy={busy}
