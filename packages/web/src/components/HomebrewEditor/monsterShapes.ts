@@ -349,15 +349,42 @@ const isPlainSection = (
   (entry.entries === undefined ||
     (Array.isArray(entry.entries) && entry.entries.every((each) => typeof each === "string")));
 
+const isStrings = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((each) => typeof each === "string");
+
+type PlainTable = Record<string, unknown> & {
+  caption?: string;
+  colLabels?: string[];
+  rows: string[][];
+};
+
+const isPlainTable = (entry: unknown): entry is PlainTable =>
+  isRecord(entry) &&
+  !Array.isArray(entry) &&
+  entry.type === "table" &&
+  (entry.caption === undefined || typeof entry.caption === "string") &&
+  (entry.colLabels === undefined || isStrings(entry.colLabels)) &&
+  Array.isArray(entry.rows) &&
+  entry.rows.every(isStrings);
+
 /**
- * One part of a row's rules text as the form edits it: paragraphs, a list of plain items, or a
- * named section of paragraphs.
+ * One part of a row's rules text as the form edits it: paragraphs, a list of plain items, a
+ * table of text cells, or a named section of paragraphs.
  */
 export type RulesPart =
   | { text: string }
   | {
       items: string[];
       /** The list as stored, so its style survives an edit. */
+      stored: Record<string, unknown>;
+    }
+  | {
+      caption: string;
+      /** One per column, blank where the table has no label for it. */
+      labels: string[];
+      /** Each row as long as `labels`. */
+      rows: string[][];
+      /** The table as stored, so its other fields survive an edit. */
       stored: Record<string, unknown>;
     }
   | {
@@ -368,10 +395,22 @@ export type RulesPart =
       stored: Record<string, unknown>;
     };
 
+function tablePart(entry: PlainTable): RulesPart {
+  const labels = entry.colLabels ?? [];
+  const width = Math.max(labels.length, ...entry.rows.map((row) => row.length));
+  const pad = (cells: string[]) => [...cells, ...Array<string>(width - cells.length).fill("")];
+  return {
+    caption: entry.caption ?? "",
+    labels: pad(labels),
+    rows: entry.rows.map(pad),
+    stored: entry,
+  };
+}
+
 /**
  * The parts `entries` states, paragraphs first and after every list or section, blank where none
  * are stored, so text can be written on either side of each. `undefined` where an entry is
- * neither a string, a list of strings nor a section of strings.
+ * neither a string, a list of strings, a table of strings nor a section of strings.
  */
 export function rulesParts(entries: unknown): RulesPart[] | undefined {
   if (entries === undefined) return [{ text: "" }];
@@ -385,6 +424,7 @@ export function rulesParts(entries: unknown): RulesPart[] | undefined {
     }
     if (isPlainList(entry))
       parts.push({ text: text.join("\n\n") }, { items: entry.items, stored: entry });
+    else if (isPlainTable(entry)) parts.push({ text: text.join("\n\n") }, tablePart(entry));
     else if (isPlainSection(entry))
       parts.push(
         { text: text.join("\n\n") },
@@ -396,17 +436,51 @@ export function rulesParts(entries: unknown): RulesPart[] | undefined {
   return [...parts, { text: text.join("\n\n") }];
 }
 
+export type TablePart = Extract<RulesPart, { rows: string[][] }>;
+
+/** The table `part` states; nothing where its caption, labels and cells are all blank. */
+function tableEntry({ caption, labels, rows, stored }: TablePart): unknown[] {
+  const trimmed = (cells: string[]) => cells.map((each) => each.trim());
+  const table: Record<string, unknown> = {
+    ...stored,
+    caption: caption.trim(),
+    colLabels: trimmed(labels),
+    rows: rows.map(trimmed),
+  };
+  if (!caption.trim()) delete table.caption;
+  if (!labels.some((each) => each.trim())) delete table.colLabels;
+  if (!table.caption && !table.colLabels && rows.every((row) => row.every((cell) => !cell.trim())))
+    return [];
+  return [table];
+}
+
+/** The list `part` states; nothing where no item is left. */
+function listEntry({ items, stored }: Extract<RulesPart, { items: string[] }>): unknown[] {
+  const kept = items.map((each) => each.trim()).filter(Boolean);
+  return kept.length > 0 ? [{ ...stored, items: kept }] : [];
+}
+
+/** `part` with the column at `at` removed from its labels, cells and any column styles. */
+export function withoutColumn(part: TablePart, at: number): TablePart {
+  const drop = <T>(cells: T[]) => cells.filter((_, index) => index !== at);
+  const { colStyles } = part.stored;
+  return {
+    ...part,
+    labels: drop(part.labels),
+    rows: part.rows.map(drop),
+    stored: Array.isArray(colStyles) ? { ...part.stored, colStyles: drop(colStyles) } : part.stored,
+  };
+}
+
 /**
- * The `entries` `parts` state. Blank text, a blank item, a list with no items and a section with
- * neither name nor paragraphs write nothing.
+ * The `entries` `parts` state. Blank text, a blank item, a list with no items, a table with
+ * no text and a section with neither name nor paragraphs write nothing.
  */
 export function entriesOfParts(parts: RulesPart[]): unknown[] | undefined {
   const entries = parts.flatMap((part): unknown[] => {
     if ("text" in part) return entriesOf(part.text) ?? [];
-    if ("items" in part) {
-      const items = part.items.map((each) => each.trim()).filter(Boolean);
-      return items.length > 0 ? [{ ...part.stored, items }] : [];
-    }
+    if ("items" in part) return listEntry(part);
+    if ("rows" in part) return tableEntry(part);
     const name = part.name.trim();
     const body = entriesOf(part.body);
     if (!name && !body) return [];
@@ -418,8 +492,8 @@ export function entriesOfParts(parts: RulesPart[]): unknown[] | undefined {
 }
 
 /**
- * True where a trait or action is a name and rules text of paragraphs, lists of plain items and
- * sections of paragraphs, the shape the form edits.
+ * True where a trait or action is a name and rules text of paragraphs, lists of plain items,
+ * tables of text and sections of paragraphs, the shape the form edits.
  */
 export const isPlainTextRow = (item: unknown): item is { name?: string; entries?: unknown[] } =>
   isRecord(item) &&
