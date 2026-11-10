@@ -36,9 +36,10 @@ function describeSpend({ die, face, modifier, regained, amount }: AppliedSpend<D
  * `state` is the state after `spends`, so the pools, the faces and the readout show them.
  * `spends` holds only those `spentState` applied. Undo hands back the spends without the
  * latest. A pool with none left, a dead character, or hit points at their maximum makes the
- * roll buttons unavailable, and `busy` makes every control unavailable. Each pool draws a die face per die: a die spent in this dialog shows
- * what it regained, a remaining die is blank. The hit points a pool regained show under its
- * row, over a running hit point readout, and each spend and undo is announced in full.
+ * roll buttons unavailable, and `busy` makes every control unavailable. Each pool draws a
+ * die face per die: a die spent in this dialog shows what it regained, a remaining die is
+ * blank. The hit points a pool regained show under its row, over a running hit point
+ * readout, and each spend and undo is announced in full.
  */
 export function SpendHitDice({
   character,
