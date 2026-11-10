@@ -9,6 +9,7 @@ import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../Tag.tsx";
 import { FeatPicks } from "./FeatPicks.tsx";
 import { FeatureChoiceField } from "./FeatureChoiceField.tsx";
+import { FeatureUses } from "./FeatureUses.tsx";
 
 /** Names a grantor in the modal where the group carries no name of its own. */
 const ORIGIN_LABEL: Record<FeatureOrigin, string> = {
@@ -35,7 +36,8 @@ const ORIGIN_KINDS: Record<FeatureOrigin, readonly CatalogKind[]> = {
 /**
  * An unresolved feature with no source is a homebrew reference, which names no source. A
  * feature that offers a choice of features carries the control that changes it, and a feat
- * the controls for what its own fields offer. `featIndex` is a feat's place in `feats`.
+ * the controls for what its own fields offer. A feature with limited uses carries its uses
+ * left and the controls that spend them. `featIndex` is a feat's place in `feats`.
  */
 export function FeatureRow({
   feature,
@@ -71,6 +73,11 @@ export function FeatureRow({
   if (!feature.resolved) {
     return <ListRow name={feature.name} source={feature.source} chips={chips} />;
   }
+  const controls = feature.choice ? (
+    <FeatureChoiceField character={character} choice={feature.choice} />
+  ) : (
+    featIndex !== undefined && <FeatPicks character={character} index={featIndex} />
+  );
   return (
     <ListRow
       name={feature.name}
@@ -78,10 +85,13 @@ export function FeatureRow({
       chips={chips}
       preview={firstLine(feature.entries)}
       controls={
-        feature.choice ? (
-          <FeatureChoiceField character={character} choice={feature.choice} />
-        ) : (
-          featIndex !== undefined && <FeatPicks character={character} index={featIndex} />
+        (feature.uses || controls) && (
+          <>
+            {feature.uses && (
+              <FeatureUses characterId={character.id} name={feature.name} uses={feature.uses} />
+            )}
+            {controls}
+          </>
         )
       }
       detail={{

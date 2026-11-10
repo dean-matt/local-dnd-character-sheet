@@ -49,8 +49,24 @@ const featureFields = {
   choice: featureChoiceSchema.optional(),
 };
 
+/**
+ * A feature's limited uses, as the content build reads them from its text: `count` uses.
+ * `short` uses return on any rest; `long` uses only on a long rest. `key` names the feature
+ * in the state's `featureUses`, which counts the uses spent.
+ */
+const limitedUsesSchema = z.strictObject({
+  key: z.string().min(1),
+  count: z.int().min(1),
+  reset: z.enum(["short", "long"]),
+});
+
 const sheetFeatureSchema = z.discriminatedUnion("resolved", [
-  z.strictObject({ resolved: z.literal(true), ...featureFields, entries: entriesSchema }),
+  z.strictObject({
+    resolved: z.literal(true),
+    ...featureFields,
+    entries: entriesSchema,
+    uses: limitedUsesSchema.optional(),
+  }),
   z.strictObject({ resolved: z.literal(false), ...featureFields }),
 ]);
 
@@ -79,6 +95,7 @@ const featureGroupSchema = z.strictObject({
 export const characterFeaturesSchema = z.strictObject({ groups: z.array(featureGroupSchema) });
 
 export type SheetFeature = z.infer<typeof sheetFeatureSchema>;
+export type LimitedUses = z.infer<typeof limitedUsesSchema>;
 export type FeatureGroup = z.infer<typeof featureGroupSchema>;
 export type FeatureOrigin = (typeof FEATURE_ORIGINS)[number];
 export type CharacterFeatures = z.infer<typeof characterFeaturesSchema>;

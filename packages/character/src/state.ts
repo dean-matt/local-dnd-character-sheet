@@ -56,6 +56,16 @@ const classResourceSchema = z
   });
 
 /**
+ * The uses spent of a feature with limited uses, such as Relentless Endurance, keyed by
+ * `featureUsesKey`. The maximum is the catalog's, so it is not stored and nothing here caps
+ * what is spent; a reader caps it at the maximum the features endpoint shows.
+ */
+const featureUseSchema = z.strictObject({
+  key: z.string().min(1),
+  expended: z.int().min(0),
+});
+
+/**
  * Something in force until the user ends it, such as a rage. Keyed by `name`, so a second
  * effect needs no change to this shape; what an effect does is the rule that reads the name.
  */
@@ -110,6 +120,12 @@ export const characterStateSchema = z.strictObject({
       error: "the same class resource is listed twice",
     })
     .default([]),
+  featureUses: z
+    .array(featureUseSchema)
+    .refine((uses) => isUnique(uses, (use) => use.key), {
+      error: "the same feature is listed twice",
+    })
+    .default([]),
   activeEffects: z
     .array(activeEffectSchema)
     .refine((effects) => isUnique(effects, (effect) => effect.name), {
@@ -153,3 +169,13 @@ export function defaultCharacterState(): CharacterState {
 }
 
 export type CharacterState = z.infer<typeof characterStateSchema>;
+
+/** The state with one feature's spent uses replaced, or added where state holds none for it. */
+export function withFeatureUse(
+  state: CharacterState,
+  key: string,
+  expended: number,
+): CharacterState {
+  const others = state.featureUses.filter((use) => use.key !== key);
+  return { ...state, featureUses: [...others, { key, expended }] };
+}

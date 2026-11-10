@@ -15,12 +15,14 @@ export type SpellFixtureRow = {
   json: string;
 };
 
-export type RaceFixtureRow = {
+type NamedFixtureRow = {
   name: string;
   source: string;
   edition: string;
   json: string;
 };
+
+export type RaceFixtureRow = NamedFixtureRow & { trait_uses?: string };
 
 export type SubraceFixtureRow = {
   name: string;
@@ -29,10 +31,11 @@ export type SubraceFixtureRow = {
   race_source: string;
   edition: string;
   json: string;
+  trait_uses?: string;
 };
 
-export type BackgroundFixtureRow = RaceFixtureRow;
-export type FeatFixtureRow = RaceFixtureRow;
+export type BackgroundFixtureRow = NamedFixtureRow;
+export type FeatFixtureRow = NamedFixtureRow & { uses?: number; uses_reset?: string };
 export type MetaFixtureRow = { key: string; value: string };
 
 export type ItemFixtureRow = {
@@ -154,7 +157,7 @@ export type SearchFixture = {
   feats?: FeatFixtureRow[];
   classes?: ClassFixtureRow[];
   subclasses?: SubclassFixtureRow[];
-  optionalFeatures?: RaceFixtureRow[];
+  optionalFeatures?: FeatFixtureRow[];
   optionalFeatureTypes?: OptionalFeatureTypeFixtureRow[];
   lookups?: LookupFixtureRow[];
   entities?: EntityFixtureRow[];
@@ -221,6 +224,8 @@ type ClassFeatureFixtureRow = {
   offered_by_source?: string;
   follows_name?: string;
   follows_source?: string;
+  uses?: number;
+  uses_reset?: string;
 };
 
 type SubclassResourceFixtureRow = ClassResourceFixtureRow & {

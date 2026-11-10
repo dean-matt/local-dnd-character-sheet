@@ -383,6 +383,15 @@ const STATE_CHANGES: {
           ? `${pool.expended} spent`
           : left(pool.maximum - pool.expended, pool.maximum),
     ),
+  featureUses: (before, after) =>
+    keyed(
+      "featureUses",
+      before.featureUses,
+      after.featureUses,
+      (use) => use.key,
+      (at) => `${at.slice(at.lastIndexOf("|") + 1)} uses`,
+      (use) => `${use.expended} spent`,
+    ),
   activeEffects: (before, after) =>
     keyed(
       "activeEffects",

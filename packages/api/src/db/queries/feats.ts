@@ -34,6 +34,26 @@ export function getFeat(dataDir: string, name: string, source: string): FeatRow 
 
 type OptionalFeatureRow = FeatRow;
 
+/** The limited uses the content build read from a feature's text, both null where it read none. */
+export type UsesColumns = { uses: number | null; uses_reset: "short" | "long" | null };
+
+/** A feat's or optional feature's limited uses, or undefined where no row answers. */
+export function getUses(
+  dataDir: string,
+  table: "feats" | "optional_features",
+  name: string,
+  source: string,
+): UsesColumns | undefined {
+  const db = openContentDb(dataDir);
+  try {
+    return db
+      .prepare(`SELECT uses, uses_reset FROM ${table} WHERE name = ? AND source = ?`)
+      .get(name, source) as UsesColumns | undefined;
+  } finally {
+    db.close();
+  }
+}
+
 export function getOptionalFeature(
   dataDir: string,
   name: string,
