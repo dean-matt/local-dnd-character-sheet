@@ -100,9 +100,8 @@ export function deathSaveRolledState(
 /**
  * The state after spending one `die` hit die on a face of `roll`, or undefined where the
  * character is dead, already at maximum hit points, or the sheet's pool for that size has
- * none left. The pool loses one die
- * and the hit points gain the roll plus the Constitution modifier the sheet shows, by
- * `hitDieHealing` and `healedState`, in the one state.
+ * none left. The pool loses one die and the hit points gain the roll plus the Constitution
+ * modifier the sheet shows, by `hitDieHealing` and `healedState`, in the one state.
  */
 export function hitDieSpentState(
   definition: Pick<CharacterDefinition, "edition">,

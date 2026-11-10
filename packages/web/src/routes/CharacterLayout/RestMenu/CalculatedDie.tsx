@@ -1,6 +1,10 @@
 import { useId, useRef, useState } from "react";
 import { useTopLayer } from "../../../hooks/useTopLayer.ts";
-import { anchorName as toAnchorName } from "../../../lib/anchoring.ts";
+import {
+  ANCHORED_CLASSES,
+  anchoredStyle,
+  anchorName as toAnchorName,
+} from "../../../lib/anchoring.ts";
 
 type Result = { amount: number; calculation: string };
 
@@ -50,13 +54,8 @@ export function CalculatedDie({ result, className }: { result: Result; className
         <span
           ref={tooltip}
           aria-hidden="true"
-          style={{
-            positionAnchor: anchorName,
-            positionArea: "top span-right",
-            positionTryFallbacks: "flip-block, flip-inline, flip-block flip-inline",
-            positionVisibility: "anchors-visible",
-          }}
-          className="pointer-events-none inset-auto m-0 mb-1 w-max max-w-64 rounded-control border-0 bg-ink px-2 py-1 text-canvas text-row"
+          style={anchoredStyle(anchorName, "top span-right")}
+          className={`${ANCHORED_CLASSES} pointer-events-none mb-1 w-max max-w-64 rounded-control border-0 bg-ink px-2 py-1 text-canvas text-row`}
         >
           {result.calculation}
         </span>

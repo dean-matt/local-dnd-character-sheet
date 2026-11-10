@@ -44,10 +44,9 @@ function describeSpend(
  * Constitution modifier, writes the pool and the hit points in one state write, and only
  * then records the roll in the character's log, so a write that fails spends and logs
  * nothing. A pool with none left, a dead character, or hit points at their maximum leaves the
- * buttons unavailable. Each
- * pool draws a die face per die: a spent die shows what it regained in this dialog, a
- * remaining die is blank. The hit points a pool regained show under its row, over a running
- * hit point readout, and each result is announced in full.
+ * buttons unavailable. Each pool draws a die face per die: a spent die shows what it regained
+ * in this dialog, a remaining die is blank. The hit points a pool regained show under its
+ * row, over a running hit point readout, and each result is announced in full.
  */
 export function SpendHitDice({
   character,
