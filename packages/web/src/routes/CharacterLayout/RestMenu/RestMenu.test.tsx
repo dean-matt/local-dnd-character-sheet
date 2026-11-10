@@ -1,3 +1,4 @@
+import type { CharacterFeatures } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
@@ -60,15 +61,17 @@ function storeElsewhere(state: Partial<CharacterState>) {
 
 /**
  * Renders the menu beside what the sheet reads, over a stand-in API that keeps what each state
- * write sends, so a rest lands on the sheet as it would. `fail` answers every write with a
- * 500, `failRolls` the first that many roll logs; `hold` keeps each write in flight until it
- * settles.
+ * write sends, so a rest lands on the sheet as it would. `features` answers the features
+ * endpoint, or `failFeatures` fails it. `fail` answers every write with a 500, `failRolls` the
+ * first that many roll logs; `hold` keeps each write in flight until it settles.
  */
 function renderLive(
   state: Partial<CharacterState>,
   {
     character = characterRecord("1", "Vex") as CharacterRecord,
     derivedBlock = derived(),
+    features = { groups: [] } as CharacterFeatures,
+    failFeatures = false,
     fail = false,
     failRolls = 0,
     hold = Promise.resolve(),
@@ -78,11 +81,18 @@ function renderLive(
   let rollsToFail = failRolls;
   const writes: CharacterState[] = [];
   rolls.length = 0;
+  const featuresResponse = () =>
+    failFeatures
+      ? new Response(JSON.stringify({ error: "Features not found" }), { status: 404 })
+      : new Response(JSON.stringify(features), { status: 200 });
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       if (String(input).endsWith("/derived")) {
         return new Response(JSON.stringify(derivedBlock), { status: 200 });
+      }
+      if (String(input).endsWith("/features")) {
+        return featuresResponse();
       }
       if (init?.method === "POST" && String(input).endsWith("/rolls")) {
         if (rollsToFail > 0) {
@@ -213,6 +223,14 @@ describe("RestMenu", () => {
     expect(screen.queryByRole("button", { name: "Short rest" })).not.toBeInTheDocument();
   });
 
+  it("names a failed features load where the sheet loads", async () => {
+    renderLive(spent(), { failFeatures: true });
+    await waitFor(() =>
+      expect(rest()).toHaveAttribute("title", "A rest is unavailable: Features not found"),
+    );
+    expect(rest()).toHaveAttribute("aria-disabled", "true");
+  });
+
   it("lists what a long rest changes, before and after, writing nothing", async () => {
     const writes = renderLive(spent());
     const dialog = await open("Long rest");
@@ -327,6 +345,65 @@ describe("RestMenu", () => {
       /^Long rest applied\. Hit points 20\/20, /,
     );
     expect(rest()).toHaveFocus();
+  });
+
+  describe("a feature's limited uses", () => {
+    const STONE = "Race|Dwarf|PHB|Stone's Endurance";
+    const RELENTLESS = "Race|Half-Orc|PHB|Relentless Endurance";
+    const features: CharacterFeatures = {
+      groups: [
+        {
+          origin: "race",
+          name: "Dwarf",
+          features: [
+            {
+              resolved: true,
+              name: "Stone's Endurance",
+              entries: [],
+              uses: { key: STONE, count: 2, reset: "short" },
+            },
+            {
+              resolved: true,
+              name: "Relentless Endurance",
+              entries: [],
+              uses: { key: RELENTLESS, count: 1, reset: "long" },
+            },
+          ],
+        },
+      ],
+    };
+    const used = {
+      featureUses: [
+        { key: STONE, expended: 2 },
+        { key: RELENTLESS, expended: 1 },
+      ],
+    };
+
+    it("restores every feature's uses on a long rest, naming each", async () => {
+      const writes = renderLive(used, { features });
+      const dialog = await open("Long rest");
+      expect(listed(dialog)).toEqual([
+        "Stone's Endurance: 0/2 → 2/2",
+        "Relentless Endurance: 0/1 → 1/1",
+      ]);
+      fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.featureUses).toEqual([]);
+    });
+
+    it("restores only a short-rest feature's uses on a short rest", async () => {
+      const writes = renderLive(used, { features });
+      await openMenu();
+      expect(screen.getByRole("button", { name: "Short rest" })).toHaveAccessibleDescription(
+        "Recover Stone's Endurance",
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Short rest" }));
+      const dialog = within(screen.getByRole("dialog", { name: "Short rest" }));
+      expect(listed(dialog)).toEqual(["Stone's Endurance: 0/2 → 2/2"]);
+      fireEvent.click(dialog.getByRole("button", { name: "Take the short rest" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.featureUses).toEqual([{ key: RELENTLESS, expended: 1 }]);
+    });
   });
 
   it("writes nothing on cancel, and returns focus to the Rest button", async () => {

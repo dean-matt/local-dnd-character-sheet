@@ -12,7 +12,13 @@ import { useRecordRoll } from "../../../hooks/useRecordRoll.ts";
 import { useReplaceCharacterState } from "../../../hooks/useReplaceCharacterState.ts";
 import { ChangeList } from "./ChangeList.tsx";
 import { HitDicePicks } from "./HitDicePicks.tsx";
-import { type DialogSpend, type RestChange, restPreview, spentState } from "./restChanges.ts";
+import {
+  type DialogSpend,
+  type FeatureUse,
+  type RestChange,
+  restPreview,
+  spentState,
+} from "./restChanges.ts";
 import { largestFirst, pickedDice } from "./restPicks.ts";
 import { SpendHitDice } from "./SpendHitDice.tsx";
 
@@ -49,6 +55,7 @@ export function RestDialog({
   character,
   derived,
   state,
+  features,
   length,
   onClose,
   onApplied,
@@ -56,6 +63,8 @@ export function RestDialog({
   character: CharacterRecord;
   derived: CharacterDerived;
   state: CharacterState;
+  /** The features whose uses a rest restores where it meets their reset. */
+  features: readonly FeatureUse[];
   length: RestLength;
   /** Called on a close that writes nothing, with a sentence to announce where spends were discarded. */
   onClose: (announcement?: string) => void;
@@ -75,7 +84,7 @@ export function RestDialog({
   const spent = spentState(definition, derived, state, spends);
   const ready = !pick || picked !== undefined;
   const { after, changes } = ready
-    ? restPreview(definition, derived, state, length, picked, spends)
+    ? restPreview(definition, derived, state, features, length, picked, spends)
     : { after: undefined, changes: undefined };
 
   function close() {

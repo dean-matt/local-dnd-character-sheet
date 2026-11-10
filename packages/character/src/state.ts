@@ -184,6 +184,15 @@ export type CharacterState = z.infer<typeof characterStateSchema>;
 
 export type Concentration = z.infer<typeof concentrationSchema>;
 
+/**
+ * One feature's spent uses, capped at its count: a spent count past it, left by a catalog whose
+ * count has since fallen, reads as none left.
+ */
+export function featureUsesSpent(state: CharacterState, key: string, count: number): number {
+  const expended = state.featureUses.find((use) => use.key === key)?.expended ?? 0;
+  return Math.min(expended, count);
+}
+
 /** The state with one feature's spent uses replaced, or added where state holds none for it. */
 export function withFeatureUse(
   state: CharacterState,

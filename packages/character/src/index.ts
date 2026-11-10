@@ -191,6 +191,7 @@ export {
   characterStateRecordSchema,
   characterStateSchema,
   defaultCharacterState,
+  featureUsesSpent,
   hitDicePoolSchema,
   resourceSchema,
   spellSlotSchema,

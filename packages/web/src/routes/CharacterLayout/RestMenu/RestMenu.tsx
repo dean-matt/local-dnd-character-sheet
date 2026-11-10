@@ -2,38 +2,42 @@ import type { CharacterRecord, RestLength } from "@dnd/character";
 import { FlameKindling } from "lucide-react";
 import { useId, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
+import { useCharacterFeatures } from "../../../hooks/useCharacterFeatures.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { RestDialog } from "./RestDialog.tsx";
 import { recoverySummary } from "./recoverySummary.ts";
-import { restPreview } from "./restChanges.ts";
+import { featureUses, restPreview } from "./restChanges.ts";
 
 /**
  * The header's Rest button and the menu under it, whose items open the dialog for a short or
  * a long rest. Escape, or focus leaving the menu, closes it; focus returns to the button when
  * the dialog closes, and a rest applied or hit dice spends cancelled are announced, since the
  * dialog closes on them. The short rest's line names what it would recover, from the same
- * changes its dialog lists. The button waits on the sheet's derived block and state, which
- * the dialog reads, and names why where either failed to load.
+ * changes its dialog lists. The button waits on the sheet's derived block, state and features,
+ * which the dialog reads, and names why where any failed to load.
  */
 export function RestMenu({ character }: { character: CharacterRecord }) {
   const derived = useCharacterDerived(character.id);
   const state = useCharacterState(character.id);
+  const features = useCharacterFeatures(character.id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [resting, setResting] = useState<RestLength>();
   const [applied, setApplied] = useState<string>();
   const button = useReturnFocus<HTMLButtonElement>(resting !== undefined);
   const menuId = useId();
-  const ready = derived.data !== undefined && state.data !== undefined;
-  const failed = derived.error ?? state.error;
+  const uses = features.data && featureUses(features.data);
+  const ready = derived.data !== undefined && state.data !== undefined && uses !== undefined;
+  const failed = derived.error ?? state.error ?? features.error;
   const rests: { length: RestLength; title: string; description: string }[] = [
     {
       length: "short",
       title: "Short rest",
       description:
-        derived.data && state.data
+        derived.data && state.data && uses
           ? recoverySummary(
-              restPreview(character.definition, derived.data, state.data.state, "short").changes,
+              restPreview(character.definition, derived.data, state.data.state, uses, "short")
+                .changes,
             )
           : "",
     },
@@ -98,11 +102,12 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
           ))}
         </div>
       )}
-      {resting && derived.data && state.data && (
+      {resting && derived.data && state.data && uses && (
         <RestDialog
           character={character}
           derived={derived.data}
           state={state.data.state}
+          features={uses}
           length={resting}
           onClose={(announcement) => {
             setResting(undefined);

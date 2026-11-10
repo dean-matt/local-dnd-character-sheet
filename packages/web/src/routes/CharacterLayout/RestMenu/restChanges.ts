@@ -1,8 +1,10 @@
+import type { CharacterFeatures, LimitedUses } from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type CharacterDerived,
   type CharacterState,
   derivedValue,
+  featureUsesSpent,
   type HitDie,
   hitDieSpentState,
   type RestLength,
@@ -19,12 +21,35 @@ type Slot = NonNullable<CharacterState["pactSlots"]>;
 
 const left = (slot: Slot) => `${slot.total - slot.expended}/${slot.total}`;
 
+/** A feature's limited uses, with the name a rest's list shows it by. */
+export type FeatureUse = LimitedUses & { name: string };
+
+/** Each feature with limited uses, once per key. */
+export function featureUses(features: CharacterFeatures): FeatureUse[] {
+  const byKey = new Map<string, FeatureUse>();
+  for (const feature of features.groups.flatMap((group) => group.features)) {
+    if (feature.resolved && feature.uses) {
+      byKey.set(feature.uses.key, { name: feature.name, ...feature.uses });
+    }
+  }
+  return [...byKey.values()];
+}
+
+function usesLeft(state: CharacterState, feature: FeatureUse): string {
+  return `${feature.count - featureUsesSpent(state, feature.key, feature.count)}/${feature.count}`;
+}
+
 /**
  * Each field a rest changes, before and after, in the order the sheet reads them. Both states
  * are measured against the sheet by `sheetState`, so their pools and slots line up one to one;
  * a null current reads as `maximum`. A field the rest leaves alone is omitted.
  */
-function restChanges(before: CharacterState, after: CharacterState, maximum: number): RestChange[] {
+function restChanges(
+  before: CharacterState,
+  after: CharacterState,
+  maximum: number,
+  features: readonly FeatureUse[],
+): RestChange[] {
   const rows: RestChange[] = [
     {
       key: "hitPoints",
@@ -65,6 +90,12 @@ function restChanges(before: CharacterState, after: CharacterState, maximum: num
       label: resource.name,
       before: `${resource.current}/${resource.maximum}`,
       after: `${after.resources[index]?.current}/${resource.maximum}`,
+    })),
+    ...features.map((feature) => ({
+      key: `feature:${feature.key}`,
+      label: feature.name,
+      before: usesLeft(before, feature),
+      after: usesLeft(after, feature),
     })),
     {
       key: "exhaustion",
@@ -116,22 +147,25 @@ export function spentState<Spend extends HitDieSpend>(
 /**
  * The state a rest leaves and what it changes on the sheet, so the menu's summary and the
  * dialog's list describe the one rest the dialog writes. The hit dice in `spends` are spent
- * before the rest, so the list and the write carry them with its own recovery.
+ * before the rest, so the list and the write carry them with its own recovery. Each of
+ * `features` whose reset the rest meets has its uses restored.
  */
 export function restPreview(
   definition: CharacterDefinition,
   derived: CharacterDerived,
   state: CharacterState,
+  features: readonly FeatureUse[],
   length: RestLength,
   picked?: HitDie[],
   spends: readonly HitDieSpend[] = [],
 ): { after: CharacterState; changes: RestChange[] } {
   const during = spentState(definition, derived, state, spends).state;
-  const after = restedState(definition, derived, during, length, picked);
+  const after = restedState(definition, derived, during, length, picked, features);
   const changes = restChanges(
     sheetState(derived, state),
     after,
     derivedValue(derived.hitPointMaximum),
+    features,
   );
   return { after, changes };
 }

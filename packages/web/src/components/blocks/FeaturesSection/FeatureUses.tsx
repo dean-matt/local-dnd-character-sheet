@@ -1,5 +1,5 @@
 import type { LimitedUses } from "@dnd/catalog";
-import { withFeatureUse } from "@dnd/character";
+import { featureUsesSpent, withFeatureUse } from "@dnd/character";
 import { Minus, Plus } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
@@ -12,8 +12,7 @@ const RESET: Record<LimitedUses["reset"], string> = { short: "Short rest", long:
 /**
  * A feature's uses left against its count and the rest that restores them, with a spend and
  * a restore, each one state write announced once it lands. Nothing shows until state loads,
- * since the count left is read from it. A spent count past the count, left by a catalog whose
- * count has since fallen, reads as none left.
+ * since the count left is read from it.
  */
 export function FeatureUses({
   characterId,
@@ -29,8 +28,7 @@ export function FeatureUses({
   if (!state.isSuccess) return null;
 
   const stored = state.data.state;
-  const held = stored.featureUses.find((use) => use.key === uses.key)?.expended ?? 0;
-  const expended = Math.min(held, uses.count);
+  const expended = featureUsesSpent(stored, uses.key, uses.count);
   const reset = RESET[uses.reset];
   const change = (next: number) =>
     replace.write(
