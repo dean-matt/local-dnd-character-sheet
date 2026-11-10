@@ -55,7 +55,6 @@ test("a spent hit die's tooltip draws past the Short rest dialog's edge without 
   await page.getByRole("button", { name: "Rest", exact: true }).click();
   await page.getByRole("button", { name: /^Short rest/ }).click();
   const dialog = page.getByRole("dialog", { name: "Short rest" });
-  await dialog.getByRole("button", { name: "Take the short rest" }).click();
   // Five of six dice, so the last spent one sits near the dialog's right edge.
   for (let spent = 1; spent <= 5; spent++) {
     await dialog.getByRole("button", { name: /^Roll d8/ }).click();
