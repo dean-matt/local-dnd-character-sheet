@@ -259,3 +259,18 @@ describe("a rest ends a rage", () => {
     ]);
   });
 });
+
+describe("a rest and concentration", () => {
+  const concentrating = {
+    ...defaultCharacterState(),
+    concentration: { spell: { name: "Hex", source: "PHB" }, level: 1 },
+  };
+
+  it("ends on a long rest and holds through a short one", () => {
+    const definition = { edition: "one" as const, houseRules: {} };
+    expect(restedState(definition, sheet, concentrating, "long").concentration).toBeNull();
+    expect(restedState(definition, sheet, concentrating, "short").concentration).toEqual(
+      concentrating.concentration,
+    );
+  });
+});

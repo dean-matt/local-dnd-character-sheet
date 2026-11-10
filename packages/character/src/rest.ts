@@ -1,6 +1,7 @@
 import { type HitDie, hitDicePick, resets, rest } from "@dnd/rules";
 import type { CharacterDerived } from "./characterDerived.ts";
 import { poolReset, regainsOneOnShortRest } from "./classResources.ts";
+import { concentrationEnded } from "./concentration.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived } from "./derivedField.ts";
 import { classResourceKey } from "./keys.ts";
@@ -87,8 +88,8 @@ export function longRestHitDicePick(definition: Resting, derived: Sheet, state: 
  * The state after a rest, by `rest`, for the character's edition and house rule. `picked`
  * names the hit dice to recover where `longRestHitDicePick` asks; `rest` throws a RangeError
  * where it is missing or out of bounds. Each class pool whose reset the rest meets has no
- * use spent and any rage ended; a 2024 pool with a partial recharge regains one use on a short rest, and the
- * others keep what was spent.
+ * use spent; a 2024 pool with a partial recharge regains one use on a short rest, and the
+ * others keep what was spent. Any rest ends a rage; a long rest also ends concentration.
  */
 export function restedState(
   definition: Resting,
@@ -102,8 +103,9 @@ export function restedState(
     ...options(definition),
     picked,
   });
+  const ended = rageEnded(rested);
   return {
-    ...rageEnded(rested),
+    ...(length === "long" ? concentrationEnded(ended) : ended),
     classResources: rested.classResources.map((pool) => {
       const homebrew = derived.classResources.find(
         (candidate) => classResourceKey(candidate) === classResourceKey(pool),

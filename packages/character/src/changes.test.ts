@@ -227,6 +227,15 @@ describe("describeStateChange", () => {
     ]);
   });
 
+  it("names the spell concentrated on and its level, starting and ending", () => {
+    const hex: CharacterState = {
+      ...state,
+      concentration: { spell: { name: "Hex", source: "PHB" }, level: 3 },
+    };
+    expect(stateChangePhrases(state, hex)).toEqual(["Concentration set to Hex at level 3"]);
+    expect(stateChangePhrases(hex, state)).toEqual(["Concentration cleared"]);
+  });
+
   it("names an effect starting and ending", () => {
     const raging: CharacterState = { ...state, activeEffects: [{ name: "Rage" }] };
     expect(stateChangePhrases(state, raging)).toEqual(["Rage set to active"]);

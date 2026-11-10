@@ -71,6 +71,16 @@ const featureUseSchema = z.strictObject({
  */
 const activeEffectSchema = z.strictObject({ name: z.string().min(1) });
 
+/**
+ * The spell a character concentrates on and the level it took effect at: the slot level for a
+ * slot cast, the spell's own level for a slotless one, 0 for a cantrip. The level is kept
+ * because an upcast spell is a different effect from the same row.
+ */
+const concentrationSchema = z.strictObject({
+  spell: entryRefSchema,
+  level: z.int().min(0).max(9),
+});
+
 const deathSavesSchema = z.strictObject({
   successes: z.int().min(0).max(3).default(0),
   failures: z.int().min(0).max(3).default(0),
@@ -132,6 +142,8 @@ export const characterStateSchema = z.strictObject({
       error: "the same effect is listed twice",
     })
     .default([]),
+  /** One spell at most; a state stored before concentration holds none. */
+  concentration: concentrationSchema.nullable().default(null),
   deathSaves: deathSavesSchema,
   exhaustion: z.int().min(0).max(6).default(0),
   /** One inspiration held or not; a count above one is a different rule. */
@@ -169,6 +181,8 @@ export function defaultCharacterState(): CharacterState {
 }
 
 export type CharacterState = z.infer<typeof characterStateSchema>;
+
+export type Concentration = z.infer<typeof concentrationSchema>;
 
 /** The state with one feature's spent uses replaced, or added where state holds none for it. */
 export function withFeatureUse(

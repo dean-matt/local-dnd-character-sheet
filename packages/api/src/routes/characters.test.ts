@@ -348,6 +348,23 @@ describe("charactersRoutes", () => {
     expect(definition).toEqual(created);
   });
 
+  it("reads back the spell a character concentrates on as it was written", async () => {
+    const created = await (await routes.request("/characters", json(baseDefinition()))).json();
+    const concentrating = {
+      ...defaultCharacterState(),
+      concentration: { spell: { homebrewId: "hb-1" }, level: 4 },
+    };
+
+    const put = await routes.request(`/characters/${created.id}/state`, {
+      ...json(concentrating),
+      method: "PUT",
+    });
+    expect(put.status).toBe(200);
+
+    const read = await (await routes.request(`/characters/${created.id}/state`)).json();
+    expect(read.state).toEqual(concentrating);
+  });
+
   it("404s reading or writing the state of an id that does not exist", async () => {
     const getRes = await routes.request("/characters/missing/state");
     expect(getRes.status).toBe(404);
