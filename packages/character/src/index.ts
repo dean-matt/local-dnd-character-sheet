@@ -124,6 +124,7 @@ export {
   deityKey,
   entryKey,
   featureKey,
+  featureUsesKey,
   itemKey,
   refKey,
   spellBlockKey,
@@ -187,6 +188,7 @@ export {
   hitDicePoolSchema,
   resourceSchema,
   spellSlotSchema,
+  withFeatureUse,
 } from "./state.ts";
 export {
   classLevelLabel,

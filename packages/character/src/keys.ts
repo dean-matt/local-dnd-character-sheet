@@ -52,6 +52,13 @@ export const classResourceKey = (pool: { class: EntryRef; key: string }): string
   `${entryKey(pool.class)}|${pool.key}`;
 
 /**
+ * A feature's entry in the state's `featureUses`: what grants it, then its name, which holds
+ * no `|`. The name comes last so a reader can name the feature from the key alone.
+ */
+export const featureUsesKey = (grantor: readonly string[], name: string): string =>
+  [...grantor, name].join("|");
+
+/**
  * An inventory entry's item, which is its `ref` expanded by any `variant`: `Barding`
  * weighs twice the armor it expands, so a base item alone cannot key a weight.
  */

@@ -3,9 +3,11 @@ import {
   characterStateRecordSchema,
   characterStateSchema,
   defaultCharacterState,
+  featureUsesKey,
   hitDicePoolSchema,
   resourceSchema,
   spellSlotSchema,
+  withFeatureUse,
 } from "./index.ts";
 import { state } from "./test/vex.ts";
 
@@ -39,6 +41,7 @@ describe("default state", () => {
       customConditions: [],
       resources: [],
       classResources: [],
+      featureUses: [],
       activeEffects: [],
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
@@ -180,6 +183,36 @@ describe("active effects", () => {
   it("parses a state stored before them with none active", () => {
     const { activeEffects: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).activeEffects).toEqual([]);
+  });
+});
+
+describe("feature uses", () => {
+  const lucky = featureUsesKey(["feat", "PHB"], "Lucky");
+  const relentless = featureUsesKey(["trait", "catalog|Half-Orc|PHB"], "Relentless Endurance");
+
+  it("replaces one feature's spent uses, or adds them, leaving the others", () => {
+    const spent = withFeatureUse({ ...state, featureUses: [] }, lucky, 1);
+    const both = withFeatureUse(spent, relentless, 1);
+    expect(withFeatureUse(both, lucky, 2).featureUses).toEqual([
+      { key: relentless, expended: 1 },
+      { key: lucky, expended: 2 },
+    ]);
+  });
+
+  it("refuses a feature listed twice", () => {
+    const twice = {
+      ...state,
+      featureUses: [
+        { key: lucky, expended: 1 },
+        { key: lucky, expended: 2 },
+      ],
+    };
+    expect(characterStateSchema.safeParse(twice).success).toBe(false);
+  });
+
+  it("parses a state stored before them with none spent", () => {
+    const { featureUses: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).featureUses).toEqual([]);
   });
 });
 

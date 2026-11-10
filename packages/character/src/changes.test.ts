@@ -219,6 +219,14 @@ describe("describeStateChange", () => {
     ]);
   });
 
+  it("names a feature's uses by the feature, with what is spent", () => {
+    const key = "trait|catalog|Half-Orc|PHB|Relentless Endurance";
+    const spent: CharacterState = { ...state, featureUses: [{ key, expended: 1 }] };
+    expect(stateChangePhrases({ ...state, featureUses: [] }, spent)).toEqual([
+      "Relentless Endurance uses set to 1 spent",
+    ]);
+  });
+
   it("names an effect starting and ending", () => {
     const raging: CharacterState = { ...state, activeEffects: [{ name: "Rage" }] };
     expect(stateChangePhrases(state, raging)).toEqual(["Rage set to active"]);
