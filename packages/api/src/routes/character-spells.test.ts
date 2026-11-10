@@ -63,6 +63,7 @@ const item = (name: string, attachedSpells: unknown, requiresAttunement: 0 | 1 =
 
 const ITEMS: ItemFixtureRow[] = [
   item("Ring of Shielding", { will: ["shield"] }),
+  item("Cloak of Shade", ["darkness|PHB"]),
   item("Ring of Warding", ["shield|PHB"]),
   item("Staff of Seeing", ["Detect Magic|PHB", "no such spell"], 1),
   {
@@ -106,6 +107,8 @@ const WARRIOR_OF_SHADOW = { name: "Warrior of Shadow", source: "XPHB" };
 const SUN_SOUL = { name: "Way of the Sun Soul", source: "XGE" };
 const DRUID = { name: "Druid", source: "PHB" };
 const LAND = { name: "Circle of the Land", source: "PHB" };
+const TIEFLING = { name: "Tiefling", source: "PHB" };
+const GLOOM_TOUCHED = { name: "Gloom Touched", source: "PHB" };
 
 /** A spell row carrying only what the sheet's facts read. */
 const spellRow = (name: string, source: string, level: number) => ({
@@ -294,6 +297,21 @@ describe("characterSpellsRoutes", () => {
           level: 3,
           block,
         })),
+        ...(
+          [
+            ["races", TIEFLING, 5],
+            ["feats", GLOOM_TOUCHED, 0],
+          ] as const
+        ).map(([granted_by, row, level]) => ({
+          spell_name: "Darkness",
+          spell_source: "PHB",
+          granted_by,
+          ...row,
+          parent_name: "",
+          parent_source: "",
+          chosen: 0 as const,
+          level,
+        })),
       ],
     });
   });
@@ -431,10 +449,12 @@ describe("characterSpellsRoutes", () => {
       subclass: { name: string; source: string },
       level: number,
       spells: object[] = [],
+      extra: object = {},
     ) => {
       const definition = withSpells(spells);
       store({
         ...definition,
+        ...extra,
         levels: Array.from({ length: level }, (_, index) => ({
           class: cls,
           ...(index === 2 && { subclass }),
@@ -548,6 +568,66 @@ describe("characterSpellsRoutes", () => {
       const silence = all.filter(({ name }) => name === "Silence");
       expect(silence).toHaveLength(1);
       expect(silence[0]).not.toHaveProperty("cost");
+    });
+
+    describe("and another row gives too", () => {
+      const DARKNESS = { ref: { name: "Darkness", source: "PHB" }, prepared: true, granted: true };
+      const darkness = async () => (await listed()).filter(({ name }) => name === "Darkness");
+      const free = { name: "Darkness", source: "PHB", granted: true };
+      const costed = { ...free, fromSubclass: SHADOW.name, cost: { amount: 2, resource: "Ki" } };
+
+      it("lists a Tiefling Shadow Monk's free Darkness beside Way of Shadow's", async () => {
+        monk(MONK, SHADOW, 5, [DARKNESS], { race: TIEFLING });
+        expect(await darkness()).toEqual([free, costed]);
+      });
+
+      it("leaves a feat's entry free", async () => {
+        monk(MONK, SHADOW, 3, [DARKNESS], { feats: [GLOOM_TOUCHED] });
+        expect(await darkness()).toEqual([free, costed]);
+      });
+
+      it("reads the entry as the subclass's before the race gives it", async () => {
+        monk(MONK, SHADOW, 3, [DARKNESS], { race: TIEFLING });
+        expect(await darkness()).toEqual([{ ...free, cost: costed.cost }]);
+      });
+    });
+
+    describe("and an equipped item attaches it", () => {
+      const cloak = {
+        inventory: [
+          {
+            ref: { name: "Cloak of Shade", source: "DMG" },
+            quantity: 1,
+            carried: true,
+            equipped: true,
+            attuned: false,
+          },
+        ],
+      };
+      const darkness = async () =>
+        (await spells())
+          .filter(({ name }) => name === "Darkness")
+          .map(({ fromItem, fromSubclass, cost }) => ({ fromItem, fromSubclass, cost }));
+      const ki = { amount: 2, resource: "Ki" };
+
+      it("lists the item's row beside the subclass's", async () => {
+        monk(MONK, SHADOW, 3, [], cloak);
+        expect(await darkness()).toEqual([
+          { fromSubclass: SHADOW.name, cost: ki },
+          { fromItem: "Cloak of Shade" },
+        ]);
+      });
+
+      it("lists it beside the subclass's entry the definition holds", async () => {
+        monk(
+          MONK,
+          SHADOW,
+          3,
+          [{ ref: { name: "Darkness", source: "PHB" }, prepared: true, granted: true }],
+          cloak,
+        );
+        expect(await darkness()).toEqual([{ cost: ki }, { fromItem: "Cloak of Shade" }]);
+      });
     });
   });
 
