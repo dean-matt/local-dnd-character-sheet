@@ -6,11 +6,10 @@ import {
   type HitDie,
   hitDieSpentState,
   type RestLength,
+  type RollRecord,
   restedState,
-  type rollRecordSchema,
   sheetState,
 } from "@dnd/character";
-import type { z } from "zod";
 import { levelLabel, ORDINAL } from "../../../lib/spellLevel.ts";
 
 /** `key` tells rows apart where two resources share a name. */
@@ -77,30 +76,41 @@ function restChanges(before: CharacterState, after: CharacterState, maximum: num
   return rows.filter((row) => row.before !== row.after);
 }
 
-/** A hit die spent in the Short rest dialog before the rest is taken: its size and the face it rolled. */
-export type HitDieSpend = { die: HitDie; face: number };
+type HitDieSpend = { die: HitDie; face: number };
 
-/** A tentative spend with what the dialog shows of it and the roll it logs once the rest is taken. */
-export type DialogSpend = HitDieSpend & {
+/** A tentative spend in the Short rest dialog: the face it rolled and the roll it logs once the rest is taken. */
+export type DialogSpend = HitDieSpend & { roll: RollRecord };
+
+/** A spend `spentState` applied, with what it healed and the Constitution modifier it added. */
+export type AppliedSpend<Spend extends HitDieSpend> = Spend & {
   amount: number;
-  calculation: string;
-  roll: z.infer<typeof rollRecordSchema>;
+  regained: number;
+  modifier: number;
 };
 
 /**
- * The state after `spends`, each by `hitDieSpentState` in order, written nowhere. A spend
- * the state no longer allows, such as one from a pool since emptied, is skipped.
+ * The state after `spends`, each by `hitDieSpentState` in order, written nowhere, and the
+ * spends it applied. A spend the state no longer allows, such as one from a pool since
+ * emptied, is left out, and each `amount` is measured against the state it was applied to.
  */
-export function spentState(
+export function spentState<Spend extends HitDieSpend>(
   definition: CharacterDefinition,
   derived: CharacterDerived,
   state: CharacterState,
-  spends: readonly HitDieSpend[],
-): CharacterState {
-  return spends.reduce(
-    (held, { die, face }) => hitDieSpentState(definition, derived, held, die, face)?.state ?? held,
-    state,
-  );
+  spends: readonly Spend[],
+): { state: CharacterState; applied: AppliedSpend<Spend>[] } {
+  const maximum = derivedValue(derived.hitPointMaximum);
+  const applied: AppliedSpend<Spend>[] = [];
+  let held = state;
+  for (const spend of spends) {
+    const result = hitDieSpentState(definition, derived, held, spend.die, spend.face);
+    if (!result) continue;
+    const amount =
+      (result.state.hitPoints.current ?? maximum) - (held.hitPoints.current ?? maximum);
+    applied.push({ ...spend, amount, regained: result.regained, modifier: result.modifier });
+    held = result.state;
+  }
+  return { state: held, applied };
 }
 
 /**
@@ -116,7 +126,7 @@ export function restPreview(
   picked?: HitDie[],
   spends: readonly HitDieSpend[] = [],
 ): { after: CharacterState; changes: RestChange[] } {
-  const during = spentState(definition, derived, state, spends);
+  const during = spentState(definition, derived, state, spends).state;
   const after = restedState(definition, derived, during, length, picked);
   const changes = restChanges(
     sheetState(derived, state),

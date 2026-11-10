@@ -4,7 +4,8 @@ import {
   type CharacterState,
   derivedValue,
 } from "@dnd/character";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { focusManager } from "@tanstack/react-query";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
@@ -45,10 +46,22 @@ const spent = (): Partial<CharacterState> => ({
 
 const rolls: { label: string; notation: string; total: number; modifier: number }[] = [];
 
+let stored = stateRecord();
+
+/** Changes the stored state as another tab would, and refetches it as a window focus does. */
+function storeElsewhere(state: Partial<CharacterState>) {
+  stored = { ...stored, state: { ...stored.state, ...state } };
+  act(() => {
+    focusManager.setFocused(false);
+    focusManager.setFocused(true);
+  });
+}
+
 /**
  * Renders the menu beside what the sheet reads, over a stand-in API that keeps what each state
  * write sends, so a rest lands on the sheet as it would. `fail` answers every write with a
- * 500; `hold` keeps each write in flight until it settles.
+ * 500, `failRolls` the first that many roll logs; `hold` keeps each write in flight until it
+ * settles.
  */
 function renderLive(
   state: Partial<CharacterState>,
@@ -56,11 +69,12 @@ function renderLive(
     character = characterRecord("1", "Vex") as CharacterRecord,
     derivedBlock = derived(),
     fail = false,
-    failRolls = false,
+    failRolls = 0,
     hold = Promise.resolve(),
   } = {},
 ) {
-  let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
+  stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
+  let rollsToFail = failRolls;
   const writes: CharacterState[] = [];
   rolls.length = 0;
   vi.stubGlobal(
@@ -70,7 +84,10 @@ function renderLive(
         return new Response(JSON.stringify(derivedBlock), { status: 200 });
       }
       if (init?.method === "POST" && String(input).endsWith("/rolls")) {
-        if (failRolls) return new Response(JSON.stringify({ error: "Disk full" }), { status: 500 });
+        if (rollsToFail > 0) {
+          rollsToFail -= 1;
+          return new Response(JSON.stringify({ error: "Disk full" }), { status: 500 });
+        }
         const roll = JSON.parse(String(init.body));
         rolls.push(roll);
         return new Response(
@@ -133,6 +150,7 @@ const listed = (dialog: ReturnType<typeof within>): string[] =>
     .map((term: HTMLElement) => `${term.textContent}: ${term.nextSibling?.textContent}`);
 
 afterEach(() => {
+  focusManager.setFocused(undefined);
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -488,7 +506,7 @@ describe("RestMenu", () => {
 
     it("says so when the rest lands but a roll is not logged", async () => {
       rollsA(5, 8);
-      const writes = renderLive(spent(), { character: classic(), failRolls: true });
+      const writes = renderLive(spent(), { character: classic(), failRolls: 1 });
       const dialog = await openShort();
       fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       fireEvent.click(dialog.getByRole("button", { name: "Take the short rest" }));
@@ -500,6 +518,49 @@ describe("RestMenu", () => {
       fireEvent.click(dialog.getByRole("button", { name: "Done" }));
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(screen.getByRole("status", { name: "" })).toHaveTextContent(/^Short rest applied\./);
+    });
+
+    it("says how many rolls were not logged when only some fail", async () => {
+      rollsA(5, 10);
+      renderLive(
+        {
+          ...spent(),
+          hitPoints: { current: 2, temporary: 0 },
+          hitDice: [{ die: 10, total: 2, remaining: 2 }],
+        },
+        { character: classic(), failRolls: 1 },
+      );
+      const dialog = await openShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d10, 2 of 2 left" }));
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d10, 1 of 2 left" }));
+      fireEvent.click(dialog.getByRole("button", { name: "Take the short rest" }));
+
+      expect(await dialog.findByRole("alert")).toHaveTextContent(
+        "1 of 2 hit die rolls were not logged.",
+      );
+      expect(rolls).toHaveLength(1);
+    });
+
+    it("drops a spend the stored state no longer allows, and neither writes nor logs it", async () => {
+      rollsA(5, 8);
+      const writes = renderLive(spent(), { character: classic() });
+      const dialog = await openShort();
+      fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
+      expect(dialog.getByText(`+${regained} HP`)).toBeInTheDocument();
+
+      storeElsewhere({ hitDice: [{ die: 8, total: 3, remaining: 0 }] });
+      await waitFor(() => expect(sheet()).toHaveTextContent("12 hp; 0/3 d8"));
+      expect(dialog.queryByText(`+${regained} HP`)).not.toBeInTheDocument();
+      expect(dialog.queryByRole("img", { name: /^d8: rolled/ })).not.toBeInTheDocument();
+      expect(dialog.getByRole("button", { name: "Undo the latest hit die spent" })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+
+      fireEvent.click(dialog.getByRole("button", { name: "Take the short rest" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(writes[0]).toMatchObject({ hitPoints: { current: 12 } });
+      expect(rolls).toEqual([]);
     });
 
     it("undoes the latest spend, one at a time, until none remain", async () => {
@@ -523,7 +584,7 @@ describe("RestMenu", () => {
       expect(
         announced(
           new RegExp(
-            `^Undid the d10 spent, ${third} hit points\\. Hit points ${2 + regained} of 20\\.$`,
+            `^Undid the d10 spend: ${third} hit points removed\\. Hit points ${2 + regained} of 20\\.$`,
           ),
         ),
       ).toBe(true);

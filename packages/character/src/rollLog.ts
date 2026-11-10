@@ -22,6 +22,8 @@ export const rollRecordSchema = z.strictObject({
   reason: z.enum(["elven-accuracy", "lucky", "portent"]).optional(),
 });
 
+export type RollRecord = z.infer<typeof rollRecordSchema>;
+
 /** A `roll_log` row as an endpoint lists it, with the character that rolled it; each character keeps its newest 200. */
 export const rollLogEntrySchema = rollRecordSchema.extend({
   id: z.int(),

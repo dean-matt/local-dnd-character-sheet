@@ -13,7 +13,7 @@ import { rollDice } from "@dnd/dice";
 import { useState } from "react";
 import { Announcer } from "../../../components/Announcer.tsx";
 import { CalculatedDie } from "./CalculatedDie.tsx";
-import type { DialogSpend } from "./restChanges.ts";
+import type { AppliedSpend, DialogSpend } from "./restChanges.ts";
 
 const signed = (modifier: number) => (modifier < 0 ? `- ${-modifier}` : `+ ${modifier}`);
 
@@ -21,16 +21,10 @@ const hitDieNotation = (die: number, modifier: number) =>
   `1d${die}${modifier === 0 ? "" : `${modifier < 0 ? "-" : "+"}${Math.abs(modifier)}`}`;
 
 /** "d8: rolled 5 + 2 (Con) = 7 HP", with a note where the rules floor or the maximum cut it short. */
-function describeSpend(
-  die: number,
-  face: number,
-  modifier: number,
-  healing: number,
-  amount: number,
-) {
+function describeSpend({ die, face, modifier, regained, amount }: AppliedSpend<DialogSpend>) {
   const notes = [
-    face + modifier < healing && `floored to ${healing}`,
-    amount < healing && "capped at max HP",
+    face + modifier < regained && `floored to ${regained}`,
+    amount < regained && "capped at max HP",
   ].filter(Boolean);
   const note = notes.length ? ` (${notes.join(", ")})` : "";
   return `d${die}: rolled ${face} ${signed(modifier)} (Con) = ${amount} HP${note}`;
@@ -40,9 +34,9 @@ function describeSpend(
  * One button per hit die size, each spending a die of that size: it rolls the die with the
  * Constitution modifier and hands `onChange` the spends with it added, writing nothing.
  * `state` is the state after `spends`, so the pools, the faces and the readout show them.
- * Undo hands back the spends without the latest. A pool with none left, a dead character,
- * or hit points at their maximum leaves the roll buttons unavailable, and `busy` leaves
- * every control so. Each pool draws a die face per die: a die spent in this dialog shows
+ * `spends` holds only those `spentState` applied. Undo hands back the spends without the
+ * latest. A pool with none left, a dead character, or hit points at their maximum makes the
+ * roll buttons unavailable, and `busy` makes every control unavailable. Each pool draws a die face per die: a die spent in this dialog shows
  * what it regained, a remaining die is blank. The hit points a pool regained show under its
  * row, over a running hit point readout, and each spend and undo is announced in full.
  */
@@ -57,7 +51,7 @@ export function SpendHitDice({
   character: CharacterRecord;
   derived: CharacterDerived;
   state: CharacterState;
-  spends: readonly DialogSpend[];
+  spends: readonly AppliedSpend<DialogSpend>[];
   busy: boolean;
   onChange: (spends: DialogSpend[]) => void;
 }) {
@@ -83,14 +77,11 @@ export function SpendHitDice({
     const result = hitDieSpentState(character.definition, derived, state, die, face);
     if (!result) return;
     const hitPoints = result.state.hitPoints.current ?? maximum;
-    const amount = hitPoints - current;
     onChange([
       ...spends,
       {
         die,
         face,
-        amount,
-        calculation: describeSpend(die, face, modifier, result.regained, amount),
         roll: {
           label: `Hit die d${die}`,
           notation: rolled.notation,
@@ -102,7 +93,7 @@ export function SpendHitDice({
       },
     ]);
     announce(
-      `d${die}: rolled ${face} ${signed(modifier)}, regained ${amount} hit points. Hit points ${hitPoints} of ${maximum}.`,
+      `d${die}: rolled ${face} ${signed(modifier)}, regained ${hitPoints - current} hit points. Hit points ${hitPoints} of ${maximum}.`,
     );
   }
 
@@ -110,7 +101,7 @@ export function SpendHitDice({
     if (busy || !latest) return;
     onChange(spends.slice(0, -1));
     announce(
-      `Undid the d${latest.die} spent, ${latest.amount} hit points. Hit points ${current - latest.amount} of ${maximum}.`,
+      `Undid the d${latest.die} spend: ${latest.amount} hit points removed. Hit points ${current - latest.amount} of ${maximum}.`,
     );
   }
 
@@ -148,7 +139,7 @@ export function SpendHitDice({
                         <CalculatedDie
                           // biome-ignore lint/suspicious/noArrayIndexKey: dice in a pool are interchangeable.
                           key={index}
-                          result={result}
+                          result={{ amount: result.amount, calculation: describeSpend(result) }}
                           className={`${face} ${filled}`}
                         />
                       );

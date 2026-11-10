@@ -1,11 +1,8 @@
 /** Reads and writes for `roll_log`. `recordRoll` answers `undefined` where the character does not exist. */
-import type { rollRecordSchema } from "@dnd/character";
+import type { RollRecord } from "@dnd/character";
 import { and, desc, eq, notInArray } from "drizzle-orm";
-import type { z } from "zod";
 import { characters, ROLL_LOG_LIMIT, rollLog } from "../characters.ts";
 import type { CharactersDb } from "./characters.ts";
-
-type RollRecord = z.infer<typeof rollRecordSchema>;
 
 const entry = (row: typeof rollLog.$inferSelect, characterName: string) => {
   const { detail, result, rolledAt, ...rest } = row;

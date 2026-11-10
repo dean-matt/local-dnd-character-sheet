@@ -12,10 +12,9 @@ import { restPreview } from "./restChanges.ts";
  * The header's Rest button and the menu under it, whose items open the dialog for a short or
  * a long rest. Escape, or focus leaving the menu, closes it; focus returns to the button when
  * the dialog closes, and a rest applied or hit dice spends cancelled are announced, since the
- * dialog closes on them. The short
- * rest's line names what it would recover, from the same changes its dialog lists. The
- * button waits on the sheet's derived block and state, which the dialog reads, and names
- * why where either failed to load.
+ * dialog closes on them. The short rest's line names what it would recover, from the same
+ * changes its dialog lists. The button waits on the sheet's derived block and state, which
+ * the dialog reads, and names why where either failed to load.
  */
 export function RestMenu({ character }: { character: CharacterRecord }) {
   const derived = useCharacterDerived(character.id);

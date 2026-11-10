@@ -23,6 +23,11 @@ function appliedSummary(length: RestLength, changes: RestChange[]) {
   return `${TITLE[length]} applied. ${moved ? `${moved}.` : "Nothing changed."}`;
 }
 
+function unloggedSummary(unlogged: number, logged: number) {
+  if (logged === 0) return "The hit die rolls were not logged.";
+  return `${unlogged} of ${unlogged + logged} hit die rolls were not logged.`;
+}
+
 function discardedSummary(length: RestLength, spent: number) {
   if (spent === 0) return undefined;
   const dice = spent === 1 ? "hit die spent was" : `${spent} hit dice spent were`;
@@ -37,7 +42,8 @@ function discardedSummary(length: RestLength, spent: number) {
  * return come back. A short rest spends hit dice before it is taken: the spends are
  * tentative, so closing the dialog discards them and hands `onClose` a sentence saying so,
  * and confirm writes them with the rest, then logs each roll. A roll that fails to log keeps
- * the dialog open on the applied rest to say so.
+ * the dialog open on the applied rest to say how many. A spend the state no longer allows,
+ * after a change from elsewhere, is neither shown, written nor logged.
  */
 export function RestDialog({
   character,
@@ -65,7 +71,8 @@ export function RestDialog({
   const pick = length === "long" ? longRestHitDicePick(definition, derived, state) : null;
   const [typed, setTyped] = useState(() => (pick ? largestFirst(pick) : []));
   const picked = pick ? pickedDice(pick, typed) : undefined;
-  const [taken, setTaken] = useState<string>();
+  const [taken, setTaken] = useState<{ summary: string; unlogged: string }>();
+  const spent = spentState(definition, derived, state, spends);
   const ready = !pick || picked !== undefined;
   const { after, changes } = ready
     ? restPreview(definition, derived, state, length, picked, spends)
@@ -73,8 +80,8 @@ export function RestDialog({
 
   function close() {
     if (busy) return;
-    if (taken !== undefined) onApplied(taken);
-    else onClose(discardedSummary(length, spends.length));
+    if (taken !== undefined) onApplied(taken.summary);
+    else onClose(discardedSummary(length, spent.applied.length));
   }
 
   async function confirm() {
@@ -86,20 +93,21 @@ export function RestDialog({
       setCommitting(false);
       return;
     }
+    const logged = spent.applied;
     // The landed state already holds the spends; kept, they would be counted twice.
     setSpends([]);
-    let failed = false;
-    for (const spend of spends) {
+    let unlogged = 0;
+    for (const spend of logged) {
       try {
         await record.mutateAsync(spend.roll);
       } catch {
-        failed = true;
+        unlogged += 1;
       }
     }
     const summary = appliedSummary(length, changes);
-    if (!failed) return onApplied(summary);
+    if (unlogged === 0) return onApplied(summary);
     setCommitting(false);
-    setTaken(summary);
+    setTaken({ summary, unlogged: unloggedSummary(unlogged, logged.length - unlogged) });
   }
 
   return (
@@ -140,9 +148,9 @@ export function RestDialog({
       >
         {taken !== undefined && (
           <>
-            <p>{taken}</p>
+            <p>{taken.summary}</p>
             <p role="alert" className="text-error text-row">
-              The hit die rolls were not logged.
+              {taken.unlogged}
             </p>
           </>
         )}
@@ -150,8 +158,8 @@ export function RestDialog({
           <SpendHitDice
             character={character}
             derived={derived}
-            state={spentState(definition, derived, state, spends)}
-            spends={spends}
+            state={spent.state}
+            spends={spent.applied}
             busy={busy}
             onChange={setSpends}
           />
