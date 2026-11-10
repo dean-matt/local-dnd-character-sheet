@@ -24,6 +24,15 @@
   </div>
 
   <div>
+    <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Character</div>
+    <select onChange="{{onCharacterPick}}" value="{{character}}" aria-label="Character" style="width: 100%; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 6px; font-size: 12px; background: #ffffff; color: #1f2430;">
+      <sc-for list="{{characterOptions}}" as="opt" hint-placeholder-count="3">
+        <option value="{{opt.value}}">{{opt.label}}</option>
+      </sc-for>
+    </select>
+  </div>
+
+  <div>
     <div style="font-size: 11px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">Roll Type</div>
     <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
       <sc-for list="{{typeChips}}" as="chip" hint-placeholder-count="1">
@@ -49,12 +58,15 @@
   <button onClick="{{reset}}" style="align-self: flex-start; border: none; background: none; font-size: 12px; font-weight: 600; color: {{accent}}; padding: 0;">Reset</button>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":200}}'>
+<script type="text/x-dc" data-dc-script data-props='{"filters":{"editor":null},"characters":{"editor":null},"openCharacter":{"editor":"text","default":"Mira Stormwind"},"onChange":{"editor":null},"onClose":{"editor":null},"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":220,"height":260}}'>
 class Component extends DCLogic {
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
     const TYPES = ['Attack', 'Damage', 'Check', 'Save', 'Spell Atk', 'Spell Dmg'];
-    const DEFAULT = { types: [] };
+    const ALL = '';
+    const characters = this.props.characters || ['Mira Stormwind', 'Kaelen Ashwood'];
+    // The open character is the facet's default; Reset clears it to every character.
+    const DEFAULT = { character: this.props.openCharacter ?? ALL, types: [] };
     const filters = this.props.filters || DEFAULT;
     const onChange = this.props.onChange || (() => {});
     const onClose = this.props.onClose || (() => {});
@@ -70,14 +82,19 @@ class Component extends DCLogic {
       };
     };
     const typeFacet = makeFacet(filters.types, TYPES, (next) => set({ types: next }));
+    const characterOptions = [{ value: ALL, label: 'All characters' }]
+      .concat(characters.map((name) => ({ value: name, label: name })));
     return {
       accent,
+      character: filters.character,
+      characterOptions,
+      onCharacterPick: (e) => set({ character: e.target.value }),
       typeChips: typeFacet.chips,
       typeEmpty: typeFacet.isEmpty,
       typeHasHidden: typeFacet.hasHidden,
       typeHiddenOptions: typeFacet.hiddenOptions,
       onTypeAdd: typeFacet.onAdd,
-      reset: () => onChange(DEFAULT),
+      reset: () => onChange({ character: ALL, types: [] }),
       close: () => onClose()
     };
   }

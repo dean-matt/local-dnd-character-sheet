@@ -62,8 +62,10 @@ widget, panel, or nav element:
   Panel is a right-docked, collapsible rail — the counterpart to the tab rail on the left —
   listing every character's rolls newest first, whichever character is open, each tagged
   with what it was rolled for (a weapon, a spell, an ability check…) and which character
-  made it, with a Clear button and a Filter button (by roll type) in the same shape as the
-  other list widgets' filters. There is no filter by character. Character sheet only, not
+  made it, with a Clear button and a Filter button in the same shape as the other list
+  widgets' filters. The filter narrows by roll type and by character: the Character facet
+  is a single choice of one character or All characters, set to the open character by
+  default and set again when another character opens. Character sheet only, not
   Settings. Forward design for #282, which only specified the list; the dock, the collapse,
   and Clear are this mockup's own call. The Filter button widens past #282's own "out of
   scope" line ("Filtering or searching the log") — #311 settles it.
