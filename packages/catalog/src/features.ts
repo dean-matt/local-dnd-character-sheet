@@ -50,9 +50,9 @@ const featureFields = {
 };
 
 /**
- * A feature's limited uses, as the content build reads them from its text: `count` uses,
- * restored by a `short` (or long) rest or a `long` rest only. `key` names the feature in
- * the state's `featureUses`, which counts the uses spent.
+ * A feature's limited uses, as the content build reads them from its text: `count` uses.
+ * `short` uses return on any rest; `long` uses only on a long rest. `key` names the feature
+ * in the state's `featureUses`, which counts the uses spent.
  */
 const limitedUsesSchema = z.strictObject({
   key: z.string().min(1),

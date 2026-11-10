@@ -195,6 +195,8 @@ describe("featuresRoutes", () => {
           level: 3,
           edition: "classic",
           json: json({ name: "Improved Critical", source: "PHB" }),
+          uses: 3,
+          uses_reset: "long",
         },
         {
           name: "Tactical Variant",
@@ -208,7 +210,17 @@ describe("featuresRoutes", () => {
           json: json({ name: "Tactical Variant", source: "TCE" }, { isClassFeatureVariant: true }),
         },
       ],
-      races: [{ ...ELF, edition: "classic", json: json(ELF) }],
+      races: [
+        {
+          ...ELF,
+          edition: "classic",
+          json: JSON.stringify({
+            ...ELF,
+            entries: [{ type: "entries", name: "Trance", entries: ["You meditate."] }],
+          }),
+          trait_uses: JSON.stringify({ Trance: { uses: 1, reset: "long" } }),
+        },
+      ],
       subraces: [
         {
           name: "High",
@@ -347,7 +359,14 @@ describe("featuresRoutes", () => {
     expect(uses).toEqual([
       ["Second Wind", { key: "feature|Fighter|PHB|||1|PHB|Second Wind", count: 1, reset: "short" }],
       ["Ability Score Improvement", undefined],
-      ["Improved Critical", undefined],
+      [
+        "Improved Critical",
+        {
+          key: "feature|Fighter|PHB|Champion|PHB|3|PHB|Improved Critical",
+          count: 3,
+          reset: "long",
+        },
+      ],
       ["Darkvision", undefined],
       ["Cantrip", { key: "trait|catalog|Elf|PHB|Cantrip", count: 1, reset: "long" }],
       ["Shelter of the Faithful", undefined],
@@ -356,6 +375,15 @@ describe("featuresRoutes", () => {
       ["Archery", undefined],
       ["Misty Visions", { key: "optionalFeature|PHB|Misty Visions", count: 1, reset: "short" }],
     ]);
+  });
+
+  it("reads a trait's limited uses off the race row where no subrace is chosen", async () => {
+    store(definitionWith({ subrace: undefined }));
+    const race = (await features()).groups.find((group) => group.origin === "race");
+
+    expect(
+      race?.features.map((feature) => [feature.name, feature.resolved && feature.uses]),
+    ).toEqual([["Trance", { key: "trait|catalog|Elf|PHB|Trance", count: 1, reset: "long" }]]);
   });
 
   it("reads a class's features by its own key and level, never another class's", async () => {
