@@ -104,6 +104,8 @@ const MONK_ONE = { name: "Monk", source: "XPHB" };
 const SHADOW = { name: "Way of Shadow", source: "PHB" };
 const WARRIOR_OF_SHADOW = { name: "Warrior of Shadow", source: "XPHB" };
 const SUN_SOUL = { name: "Way of the Sun Soul", source: "XGE" };
+const DRUID = { name: "Druid", source: "PHB" };
+const LAND = { name: "Circle of the Land", source: "PHB" };
 
 /** A spell row carrying only what the sheet's facts read. */
 const spellRow = (name: string, source: string, level: number) => ({
@@ -152,6 +154,15 @@ const SUBCLASSES = [
     class: MONK,
     additionalSpells: [
       { innate: { 6: { resource: { 2: ["burning hands"] } } }, resourceName: "Ki", ability: "wis" },
+    ],
+  },
+  {
+    ...LAND,
+    short_name: "Land",
+    class: DRUID,
+    additionalSpells: [
+      { name: "Arctic", prepared: { 3: ["darkvision"] } },
+      { name: "Coast", innate: { 3: { resource: { 1: ["silence"] } } }, resourceName: "Tide" },
     ],
   },
 ];
@@ -254,17 +265,36 @@ describe("characterSpellsRoutes", () => {
         edition: ref.source === "XPHB" ? "one" : "classic",
         json: JSON.stringify({ ...ref, additionalSpells }),
       })),
-      spellGrants: SUBCLASS_GRANTS.map(([subclass, cls, spell_name, spell_source, level]) => ({
-        spell_name,
-        spell_source,
-        granted_by: "subclasses",
-        name: subclass.name,
-        source: subclass.source,
-        parent_name: cls.name,
-        parent_source: cls.source,
-        chosen: 0 as const,
-        level,
-      })),
+      spellGrants: [
+        ...SUBCLASS_GRANTS.map(([subclass, cls, spell_name, spell_source, level]) => ({
+          spell_name,
+          spell_source,
+          granted_by: "subclasses",
+          name: subclass.name,
+          source: subclass.source,
+          parent_name: cls.name,
+          parent_source: cls.source,
+          chosen: 0 as const,
+          level,
+        })),
+        ...(
+          [
+            ["Darkvision", 0],
+            ["Silence", 1],
+          ] as const
+        ).map(([spell_name, block]) => ({
+          spell_name,
+          spell_source: "PHB",
+          granted_by: "subclasses",
+          name: LAND.name,
+          source: LAND.source,
+          parent_name: DRUID.name,
+          parent_source: DRUID.source,
+          chosen: 0 as const,
+          level: 3,
+          block,
+        })),
+      ],
     });
   });
 
@@ -465,6 +495,36 @@ describe("characterSpellsRoutes", () => {
     it("lists it from that class level", async () => {
       monk(MONK, SUN_SOUL, 6);
       expect((await spells()).map(({ name }) => name)).toEqual(["Burning Hands"]);
+    });
+
+    describe("from alternative blocks", () => {
+      const druid = (spellBlocks: object[]) =>
+        store({
+          ...withSpells([]),
+          levels: Array.from({ length: 3 }, (_, index) => ({
+            class: DRUID,
+            ...(index === 2 && { subclass: LAND }),
+          })),
+          spellBlocks,
+        } as CharacterDefinition);
+
+      it("lists the chosen block's spells alone, with that block's cost", async () => {
+        druid([{ grantor: { kind: "subclass", ref: LAND, class: DRUID }, block: 1 }]);
+        expect(await listed()).toEqual([
+          {
+            name: "Silence",
+            source: "PHB",
+            fromSubclass: LAND.name,
+            cost: { amount: 1, resource: "Tide" },
+            granted: true,
+          },
+        ]);
+      });
+
+      it("lists none until a block is chosen", async () => {
+        druid([]);
+        expect(await spells()).toEqual([]);
+      });
     });
 
     it("lists nothing below the level that picks the subclass", async () => {

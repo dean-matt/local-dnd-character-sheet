@@ -24,6 +24,7 @@
  * added to a class list, and how many a `choose` takes, stay in the grantor's
  * `json`.
  */
+import { grantedSpellKey } from "@dnd/catalog";
 import { BACKGROUNDS_FILE, OPTIONAL_FEATURES_FILE } from "./character-options.ts";
 import { entriesOf as classEntriesOf } from "./class-rows.ts";
 import { CLASS_FILES, classIdentities } from "./classes.ts";
@@ -41,9 +42,6 @@ const DESCRIBING = new Set(["ability", "name", "resourceName"]);
 
 /** The `block` of a grantor offering one block, since a STRICT key cannot be NULL. */
 const NO_BLOCK = -1;
-
-/** 5etools reads a spell named without a source as the 2014 Player's Handbook's. */
-const DEFAULT_SOURCE = "phb";
 
 type Spell = {
   name: string;
@@ -68,8 +66,6 @@ type Grantor = {
 };
 
 const fold = (value: string): string => value.trim().toLowerCase();
-
-const spellKey = (name: string, source: string): string => `${fold(name)}|${fold(source)}`;
 
 /** Each key's test, given the clause's values folded to lowercase. */
 const CLAUSES: Record<string, (values: string[], where: string) => (spell: Spell) => boolean> = {
@@ -135,7 +131,9 @@ function catalogOf(sources: Map<string, unknown>): Catalog {
       });
     }
   }
-  const byKey = new Map(spells.map((spell) => [spellKey(spell.name, spell.source), spell]));
+  const byKey = new Map(
+    spells.map((spell) => [grantedSpellKey(`${spell.name}|${spell.source}`), spell]),
+  );
   const classRows = spellClassRows(
     sources.get(SOURCES_FILE),
     new Set(spells.map((spell) => `${spell.name}|${spell.source}`)),
@@ -143,7 +141,7 @@ function catalogOf(sources: Map<string, unknown>): Catalog {
   );
   for (const row of classRows) {
     byKey
-      .get(spellKey(String(row.spell_name), String(row.spell_source)))
+      .get(grantedSpellKey(`${row.spell_name}|${row.spell_source}`))
       ?.classes.add(fold(String(row.class_name)));
   }
   return { spells, byKey };
@@ -233,8 +231,7 @@ function merged(held: Grant | undefined, next: Grant): Grant {
 const arrival = (key: string): number => (/^\d+$/.test(key) ? Number(key) : 0);
 
 function namedSpell(value: string, catalog: Catalog, where: string): Spell {
-  const [name = "", source = ""] = (value.split("#")[0] ?? "").split("|");
-  const spell = catalog.byKey.get(spellKey(name, source || DEFAULT_SOURCE));
+  const spell = catalog.byKey.get(grantedSpellKey(value));
   if (spell === undefined) throw new Error(`${where} names spell ${value}, which no row holds`);
   return spell;
 }

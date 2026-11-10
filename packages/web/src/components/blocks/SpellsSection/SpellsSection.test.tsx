@@ -352,6 +352,22 @@ describe("SpellsSection", () => {
     expect(screen.queryByText("Vex doesn't cast spells.")).toBeNull();
   });
 
+  it("waits on a non-caster's grants, then reports a failed read", async () => {
+    stubFetch(
+      new Response(JSON.stringify({ error: "No character with that id" }), { status: 404 }),
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <SpellsSection character={characterRecord("1", "Vex")} derived={NON_CASTER} />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading spells…");
+    expect(await screen.findByRole("alert")).toHaveTextContent("No character with that id");
+    expect(screen.queryByText("Vex doesn't cast spells.")).toBeNull();
+  });
+
   it("says so when a caster has no spells yet", async () => {
     renderSection(derivedRecord(), { spells: [] });
 

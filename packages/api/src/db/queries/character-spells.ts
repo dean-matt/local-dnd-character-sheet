@@ -220,6 +220,8 @@ function itemSpells(
 /**
  * The definition's spells in order, then those its subclasses give that it does not list,
  * then its equipped items'. A granted entry a subclass also gives carries the subclass's cost.
+ * An entry does not record its grantor, so one a race stored, such as a Tiefling Shadow Monk's
+ * free Darkness, takes that cost too; recording the grantor on the entry would end that.
  */
 export function resolveCharacterSpells(
   dataDir: string,
