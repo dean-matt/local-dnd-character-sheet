@@ -257,6 +257,8 @@ export {
   blockLabels,
   chosenBlock,
   eitherPicks,
+  grantedSpellCosts,
+  grantedSpellKey,
   grantedSpellsSchema,
   offeredPicks,
   SPELL_GRANTORS,

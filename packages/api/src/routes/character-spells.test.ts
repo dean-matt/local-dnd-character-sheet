@@ -5,7 +5,7 @@ import type { CharacterSpells, HomebrewSpellInput } from "@dnd/catalog";
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { insertCharacter } from "../db/queries/characters.ts";
-import { type ItemFixtureRow, publishSpells } from "../db/queries/contentFixture.ts";
+import { type ItemFixtureRow, publishSpellLists } from "../db/queries/contentFixture.ts";
 import { insertHomebrewSpell, updateHomebrewSpell } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterSpellsRoutes } from "./character-spells.ts";
@@ -99,6 +99,86 @@ const DEITIES = [
   json: JSON.stringify({ name: key.name, source: key.source, alignment }),
 }));
 
+const MONK = { name: "Monk", source: "PHB" };
+const MONK_ONE = { name: "Monk", source: "XPHB" };
+const SHADOW = { name: "Way of Shadow", source: "PHB" };
+const WARRIOR_OF_SHADOW = { name: "Warrior of Shadow", source: "XPHB" };
+const SUN_SOUL = { name: "Way of the Sun Soul", source: "XGE" };
+const DRUID = { name: "Druid", source: "PHB" };
+const LAND = { name: "Circle of the Land", source: "PHB" };
+
+/** A spell row carrying only what the sheet's facts read. */
+const spellRow = (name: string, source: string, level: number) => ({
+  name,
+  source,
+  edition: source === "XPHB" ? "one" : "classic",
+  level,
+  school: "I",
+  concentration: 0 as const,
+  ritual: 0 as const,
+  json: JSON.stringify({ name, source, level, school: "I" }),
+});
+
+const SUBCLASSES = [
+  {
+    ...SHADOW,
+    short_name: "Shadow",
+    class: MONK,
+    additionalSpells: [
+      {
+        known: { 3: ["minor illusion#c"] },
+        innate: {
+          3: { resource: { 2: ["darkness", "darkvision", "pass without trace", "silence"] } },
+        },
+        resourceName: "Ki",
+        ability: "wis",
+      },
+    ],
+  },
+  {
+    ...WARRIOR_OF_SHADOW,
+    short_name: "Shadow",
+    class: MONK_ONE,
+    additionalSpells: [
+      {
+        known: { 3: ["minor illusion|xphb#c"] },
+        innate: { 3: { resource: { 1: ["darkness|xphb"] } } },
+        resourceName: "Focus Point",
+        ability: "wis",
+      },
+    ],
+  },
+  {
+    ...SUN_SOUL,
+    short_name: "Sun Soul",
+    class: MONK,
+    additionalSpells: [
+      { innate: { 6: { resource: { 2: ["burning hands"] } } }, resourceName: "Ki", ability: "wis" },
+    ],
+  },
+  {
+    ...LAND,
+    short_name: "Land",
+    class: DRUID,
+    additionalSpells: [
+      { name: "Arctic", prepared: { 3: ["darkvision"] } },
+      { name: "Coast", innate: { 3: { resource: { 1: ["silence"] } } }, resourceName: "Tide" },
+    ],
+  },
+];
+
+/** The rows the build writes for `SUBCLASSES`' grants, each arriving at its key's level. */
+const SUBCLASS_GRANTS = [
+  [SHADOW, MONK, "Minor Illusion", "PHB", 3],
+  [SHADOW, MONK, "Darkness", "PHB", 3],
+  [SHADOW, MONK, "Darkvision", "PHB", 3],
+  [SHADOW, MONK, "Pass without Trace", "PHB", 3],
+  [SHADOW, MONK, "Silence", "PHB", 3],
+  [WARRIOR_OF_SHADOW, MONK_ONE, "Minor Illusion", "XPHB", 3],
+  [WARRIOR_OF_SHADOW, MONK_ONE, "Darkness", "XPHB", 3],
+  [SUN_SOUL, MONK, "Burning Hands", "PHB", 6],
+] as const;
+
 describe("characterSpellsRoutes", () => {
   let dataDir: string;
   let opened: ReturnType<typeof openTestDatabases>;
@@ -115,9 +195,8 @@ describe("characterSpellsRoutes", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "character-spells-"));
-    publishSpells(
-      dataDir,
-      [
+    publishSpellLists(dataDir, {
+      spells: [
         {
           name: "Shield",
           source: "PHB",
@@ -167,10 +246,56 @@ describe("characterSpellsRoutes", () => {
             ],
           }),
         },
+        spellRow("Minor Illusion", "PHB", 0),
+        spellRow("Darkness", "PHB", 2),
+        spellRow("Darkvision", "PHB", 2),
+        spellRow("Pass without Trace", "PHB", 2),
+        spellRow("Silence", "PHB", 2),
+        spellRow("Burning Hands", "PHB", 1),
+        spellRow("Minor Illusion", "XPHB", 0),
+        spellRow("Darkness", "XPHB", 2),
       ],
-      ITEMS,
-      DEITIES,
-    );
+      items: ITEMS,
+      lookups: DEITIES,
+      subclasses: SUBCLASSES.map(({ short_name, class: cls, additionalSpells, ...ref }) => ({
+        ...ref,
+        short_name,
+        class_name: cls.name,
+        class_source: cls.source,
+        edition: ref.source === "XPHB" ? "one" : "classic",
+        json: JSON.stringify({ ...ref, additionalSpells }),
+      })),
+      spellGrants: [
+        ...SUBCLASS_GRANTS.map(([subclass, cls, spell_name, spell_source, level]) => ({
+          spell_name,
+          spell_source,
+          granted_by: "subclasses",
+          name: subclass.name,
+          source: subclass.source,
+          parent_name: cls.name,
+          parent_source: cls.source,
+          chosen: 0 as const,
+          level,
+        })),
+        ...(
+          [
+            ["Darkvision", 0],
+            ["Silence", 1],
+          ] as const
+        ).map(([spell_name, block]) => ({
+          spell_name,
+          spell_source: "PHB",
+          granted_by: "subclasses",
+          name: LAND.name,
+          source: LAND.source,
+          parent_name: DRUID.name,
+          parent_source: DRUID.source,
+          chosen: 0 as const,
+          level: 3,
+          block,
+        })),
+      ],
+    });
   });
 
   afterAll(() => {
@@ -298,6 +423,132 @@ describe("characterSpellsRoutes", () => {
     expect(await spells()).toEqual([
       expect.objectContaining({ resolved: true, name: "Gleam", homebrewId: "s" }),
     ]);
+  });
+
+  describe("a spell a subclass grants", () => {
+    const monk = (
+      cls: { name: string; source: string },
+      subclass: { name: string; source: string },
+      level: number,
+      spells: object[] = [],
+    ) => {
+      const definition = withSpells(spells);
+      store({
+        ...definition,
+        levels: Array.from({ length: level }, (_, index) => ({
+          class: cls,
+          ...(index === 2 && { subclass }),
+        })),
+      } as CharacterDefinition);
+    };
+    const listed = async () =>
+      (await spells()).map(({ name, source, fromSubclass, cost, granted }) => ({
+        name,
+        source,
+        fromSubclass,
+        cost,
+        granted,
+      }));
+
+    it("lists a level 3 Way of Shadow Monk's spells, each with its Ki cost", async () => {
+      monk(MONK, SHADOW, 3);
+      const ki = { amount: 2, resource: "Ki" };
+      expect(await listed()).toEqual([
+        { name: "Darkness", source: "PHB", fromSubclass: SHADOW.name, cost: ki, granted: true },
+        { name: "Darkvision", source: "PHB", fromSubclass: SHADOW.name, cost: ki, granted: true },
+        { name: "Minor Illusion", source: "PHB", fromSubclass: SHADOW.name, granted: true },
+        {
+          name: "Pass without Trace",
+          source: "PHB",
+          fromSubclass: SHADOW.name,
+          cost: ki,
+          granted: true,
+        },
+        { name: "Silence", source: "PHB", fromSubclass: SHADOW.name, cost: ki, granted: true },
+      ]);
+    });
+
+    it("lists a level 3 Warrior of Shadow Monk's spells, Darkness for a Focus Point", async () => {
+      monk(MONK_ONE, WARRIOR_OF_SHADOW, 3);
+      expect(await listed()).toEqual([
+        {
+          name: "Darkness",
+          source: "XPHB",
+          fromSubclass: WARRIOR_OF_SHADOW.name,
+          cost: { amount: 1, resource: "Focus Point" },
+          granted: true,
+        },
+        {
+          name: "Minor Illusion",
+          source: "XPHB",
+          fromSubclass: WARRIOR_OF_SHADOW.name,
+          granted: true,
+        },
+      ]);
+    });
+
+    it("leaves out a spell the subclass grants at a later class level", async () => {
+      monk(MONK, SUN_SOUL, 5);
+      expect(await spells()).toEqual([]);
+    });
+
+    it("lists it from that class level", async () => {
+      monk(MONK, SUN_SOUL, 6);
+      expect((await spells()).map(({ name }) => name)).toEqual(["Burning Hands"]);
+    });
+
+    describe("from alternative blocks", () => {
+      const druid = (spellBlocks: object[]) =>
+        store({
+          ...withSpells([]),
+          levels: Array.from({ length: 3 }, (_, index) => ({
+            class: DRUID,
+            ...(index === 2 && { subclass: LAND }),
+          })),
+          spellBlocks,
+        } as CharacterDefinition);
+
+      it("lists the chosen block's spells alone, with that block's cost", async () => {
+        druid([{ grantor: { kind: "subclass", ref: LAND, class: DRUID }, block: 1 }]);
+        expect(await listed()).toEqual([
+          {
+            name: "Silence",
+            source: "PHB",
+            fromSubclass: LAND.name,
+            cost: { amount: 1, resource: "Tide" },
+            granted: true,
+          },
+        ]);
+      });
+
+      it("lists none until a block is chosen", async () => {
+        druid([]);
+        expect(await spells()).toEqual([]);
+      });
+    });
+
+    it("lists nothing below the level that picks the subclass", async () => {
+      store({
+        ...withSpells([]),
+        levels: [{ class: MONK }, { class: MONK }],
+      } as CharacterDefinition);
+      expect(await spells()).toEqual([]);
+    });
+
+    it("costs a granted entry the definition holds, once, and leaves a pick uncosted", async () => {
+      monk(MONK, SHADOW, 3, [
+        { ref: { name: "Darkness", source: "PHB" }, prepared: true, granted: true },
+        { ref: { name: "Silence", source: "PHB" }, origin: WIZARD },
+      ]);
+      const all = await spells();
+      expect(all.filter(({ name }) => name === "Darkness")).toEqual([
+        expect.objectContaining({ cost: { amount: 2, resource: "Ki" } }),
+      ]);
+      expect(all[0]).not.toHaveProperty("fromSubclass");
+      const silence = all.filter(({ name }) => name === "Silence");
+      expect(silence).toHaveLength(1);
+      expect(silence[0]).not.toHaveProperty("cost");
+    });
   });
 
   describe("a spell an item lets the character cast", () => {

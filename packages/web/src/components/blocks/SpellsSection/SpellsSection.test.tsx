@@ -326,17 +326,46 @@ describe("SpellsSection", () => {
     );
   });
 
-  it("shows no spell view for a character who does not cast", () => {
-    const fetchMock = renderSection({
-      ...derivedRecord(),
-      spellcasting: [],
-      spellSlots: [],
-      pactSlots: null,
+  const NON_CASTER = { ...derivedRecord(), spellcasting: [], spellSlots: [], pactSlots: null };
+
+  it("shows no spell view for a character who does not cast and is granted nothing", async () => {
+    renderSection(NON_CASTER, { spells: [] });
+
+    expect(await screen.findByText("Vex doesn't cast spells.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 3 })).toBeNull();
+  });
+
+  it("lists what a non-caster's equipped items and subclass grant", async () => {
+    const [hex] = SPELLS.spells;
+    renderSection(NON_CASTER, {
+      spells: [
+        { ...hex, granted: true, fromItem: "Wand of Hexing" },
+        { ...hex, name: "Darkness", granted: true, fromSubclass: "Way of Shadow" },
+      ] as CharacterSpells["spells"],
     });
 
-    expect(screen.getByText("Vex doesn't cast spells.")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3 })).toBeNull();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      await screen.findByRole("heading", { level: 3, name: "Known Spells" }),
+    ).toBeInTheDocument();
+    expect(card("Known Spells").getByText("Hex")).toBeInTheDocument();
+    expect(card("Known Spells").getByText("Darkness")).toBeInTheDocument();
+    expect(screen.queryByText("Vex doesn't cast spells.")).toBeNull();
+  });
+
+  it("waits on a non-caster's grants, then reports a failed read", async () => {
+    stubFetch(
+      new Response(JSON.stringify({ error: "No character with that id" }), { status: 404 }),
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <SpellsSection character={characterRecord("1", "Vex")} derived={NON_CASTER} />
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent("Loading spells…");
+    expect(await screen.findByRole("alert")).toHaveTextContent("No character with that id");
+    expect(screen.queryByText("Vex doesn't cast spells.")).toBeNull();
   });
 
   it("says so when a caster has no spells yet", async () => {

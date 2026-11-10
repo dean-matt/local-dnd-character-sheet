@@ -178,6 +178,31 @@ const PARENT_COLUMNS: Partial<Record<SpellGrantor, string>> = {
   subrace: "race_name = ? AND race_source = ?",
 };
 
+function grantorJson(db: ReturnType<typeof openContentDb>, grantor: Grantor): unknown {
+  const parentColumns = PARENT_COLUMNS[grantor.kind];
+  const json = db
+    .prepare(
+      `SELECT json FROM ${GRANTOR_TABLES[grantor.kind]} WHERE name = ? AND source = ?${parentColumns ? ` AND ${parentColumns}` : ""}`,
+    )
+    .pluck()
+    .get(
+      grantor.name,
+      grantor.source,
+      ...(parentColumns ? [grantor.parent?.name ?? "", grantor.parent?.source ?? ""] : []),
+    ) as string | undefined;
+  return json === undefined ? undefined : JSON.parse(json);
+}
+
+/** `grantor`'s row, parsed, or `undefined` where no row answers. */
+export function getGrantorJson(dataDir: string, grantor: Grantor): unknown {
+  const db = openContentDb(dataDir);
+  try {
+    return grantorJson(db, grantor);
+  } finally {
+    db.close();
+  }
+}
+
 /**
  * The spells `grantor` gives outright by `level`, by name, the alternative blocks its row
  * offers, and the picks it offers by then. A row offering alternatives gives and offers
@@ -191,14 +216,7 @@ export function getGrantedSpells(
   const db = openContentDb(dataDir);
   try {
     const parent = [grantor.parent?.name ?? "", grantor.parent?.source ?? ""];
-    const parentColumns = PARENT_COLUMNS[grantor.kind];
-    const json = db
-      .prepare(
-        `SELECT json FROM ${GRANTOR_TABLES[grantor.kind]} WHERE name = ? AND source = ?${parentColumns ? ` AND ${parentColumns}` : ""}`,
-      )
-      .pluck()
-      .get(grantor.name, grantor.source, ...(parentColumns ? parent : [])) as string | undefined;
-    const row = json === undefined ? undefined : JSON.parse(json);
+    const row = grantorJson(db, grantor);
     const block = chosenBlock(row, grantor.block);
     const spells = db
       .prepare(

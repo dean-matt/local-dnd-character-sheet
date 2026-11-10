@@ -230,3 +230,53 @@ export function eitherPicks(json: unknown, level: number) {
   const { either, eitherLearned } = largestBlock(json, level);
   return { either, learned: eitherLearned };
 }
+
+/** What casting a granted spell spends: `amount` of the row's `resourceName`, such as 2 Ki. */
+type SpellCost = { amount: number; resource: string };
+
+/** 5etools reads a spell named without a source as the 2014 Player's Handbook's. */
+const DEFAULT_SPELL_SOURCE = "phb";
+
+/** A grant's spell name as `"name|source"` folded to lowercase, its `#c` cantrip mark dropped. */
+export const grantedSpellKey = (value: string): string => {
+  const [name = "", source = ""] = (value.split("#")[0] ?? "").split("|");
+  return `${name.trim().toLowerCase()}|${(source.trim() || DEFAULT_SPELL_SOURCE).toLowerCase()}`;
+};
+
+/** Each spell a `resource` record names, by the amount it costs. */
+const resourceCosts = (byAmount: Record<string, unknown>): [number, string][] =>
+  Object.entries(byAmount).flatMap(([amount, names]) =>
+    /^[1-9]\d*$/.test(amount) && Array.isArray(names)
+      ? names.flatMap((name) => (typeof name === "string" ? [[Number(amount), name]] : []))
+      : [],
+  ) as [number, string][];
+
+/** Every spell under a `resource` record in one grant, however deep, by the amount it costs. */
+function costsIn(value: unknown): [number, string][] {
+  if (Array.isArray(value)) return value.flatMap(costsIn);
+  if (!isRecord(value)) return [];
+  return Object.entries(value).flatMap(([key, inner]) =>
+    key === "resource" && isRecord(inner) ? resourceCosts(inner) : costsIn(inner),
+  );
+}
+
+/**
+ * What casting each spell a row grants under a `resource` key costs, keyed as
+ * `grantedSpellKey` writes it: the Way of Shadow's Darkness costs 2 Ki. A row offering
+ * alternative blocks reads the chosen one alone, and none until one is chosen. A block with
+ * no `resourceName` costs nothing it can name.
+ */
+export function grantedSpellCosts(json: unknown, block?: number): Map<string, SpellCost> {
+  const all = blocksOf(json);
+  const at = chosenBlock(json, block);
+  const blocks = all.length > 1 ? (at === undefined ? [] : [all[at]]) : all;
+  const costs = new Map<string, SpellCost>();
+  for (const each of blocks) {
+    if (!isRecord(each) || typeof each.resourceName !== "string") continue;
+    const resource = each.resourceName;
+    for (const [amount, name] of costsIn(each)) {
+      costs.set(grantedSpellKey(name), { amount, resource });
+    }
+  }
+  return costs;
+}

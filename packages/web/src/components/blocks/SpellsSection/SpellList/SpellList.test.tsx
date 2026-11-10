@@ -215,6 +215,26 @@ describe("SpellList", () => {
     expect(screen.getByText("Warlock: 1 of 2 prepared")).toBeInTheDocument();
   });
 
+  it("cites the subclass that grants a spell, with what casting it costs, and offers no removal", async () => {
+    renderList(vex(), {
+      spells: [
+        ...SHEET.spells,
+        {
+          ...spell("Darkness", 2, true),
+          granted: true,
+          fromSubclass: "Way of Shadow",
+          cost: { amount: 2, resource: "Ki" },
+        },
+      ],
+    });
+
+    const row = (await screen.findByText("Darkness")).closest("li") as HTMLElement;
+    expect(row).toHaveTextContent("Way of Shadow");
+    expect(row).toHaveTextContent("2 Ki");
+    expect(screen.queryByRole("button", { name: "Remove Darkness" })).toBeNull();
+    expect(screen.getByText("Warlock: 1 of 2 prepared")).toBeInTheDocument();
+  });
+
   it("holds a spell picked for a feat apart from the class", async () => {
     const pickedFor = { kind: "feat" as const, ref: { name: "Magic Initiate", source: "XPHB" } };
     const rebuke = { ref: { name: "Hellish Rebuke", source: "XPHB" }, prepared: true, pickedFor };
