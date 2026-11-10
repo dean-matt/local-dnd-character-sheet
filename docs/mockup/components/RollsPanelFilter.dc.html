@@ -65,7 +65,6 @@ class Component extends DCLogic {
     const TYPES = ['Attack', 'Damage', 'Check', 'Save', 'Spell Atk', 'Spell Dmg'];
     const ALL = '';
     const characters = this.props.characters || ['Mira Stormwind', 'Kaelen Ashwood'];
-    // The open character is the facet's default; Reset clears it to every character.
     const DEFAULT = { character: this.props.openCharacter ?? ALL, types: [] };
     const filters = this.props.filters || DEFAULT;
     const onChange = this.props.onChange || (() => {});

@@ -87,19 +87,24 @@ export function RollLog({ latest, characterId }: { latest: Roll | null; characte
             <span className="font-semibold text-label text-muted uppercase tracking-label">
               Character
             </span>
-            <FormField label="Character" labelHidden>
-              {(control) => (
-                <Select
-                  {...control}
-                  options={[
-                    { value: ALL_CHARACTERS, label: "All characters" },
-                    ...(characters.data ?? []).map(({ id, name }) => ({ value: id, label: name })),
-                  ]}
-                  value={character}
-                  onChange={pickCharacter}
-                />
-              )}
-            </FormField>
+            {characters.isError && (
+              <p className="text-error text-row">{characters.error.message}</p>
+            )}
+            {characters.data && (
+              <FormField label="Character" labelHidden>
+                {(control) => (
+                  <Select
+                    {...control}
+                    options={[
+                      { value: ALL_CHARACTERS, label: "All characters" },
+                      ...characters.data.map(({ id, name }) => ({ value: id, label: name })),
+                    ]}
+                    value={character}
+                    onChange={pickCharacter}
+                  />
+                )}
+              </FormField>
+            )}
           </div>
           <ChipFacet
             label={TYPE_FACET.label}

@@ -352,16 +352,19 @@ describe("CharacterLayout roll log", () => {
       expect(labels()).toEqual(["Mira attack"]);
     });
 
-    it("re-sets to the newly open character, replacing the choice made for the last", async () => {
+    it("re-sets to the newly open character, keeping the roll type picks and the focus", async () => {
       const router = await renderSheet(LOG);
       await openFilter();
       await pickCharacter("All characters");
-      expect(labels()).toHaveLength(4);
+      fireEvent.click(screen.getByRole("combobox", { name: "Add roll type" }));
+      fireEvent.click(await screen.findByRole("option", { name: "Attack" }));
+      expect(labels()).toEqual(["Mira attack", "Vex attack"]);
 
       await router.navigate("/characters/2");
       await screen.findByRole("heading", { level: 1, name: "Mira" });
-      await waitFor(() => expect(labels()).toEqual(["Mira attack", "Mira save"]));
+      await waitFor(() => expect(labels()).toEqual(["Mira attack"]));
       expect(screen.getByRole("combobox", { name: "Character" })).toHaveTextContent("Mira");
+      expect(screen.getByRole("heading", { name: "Roll Log" })).not.toHaveFocus();
     });
 
     it("offers the characters that exist now", async () => {
