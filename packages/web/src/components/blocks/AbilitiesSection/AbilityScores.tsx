@@ -91,6 +91,7 @@ export function AbilityScores({
               corner={
                 <RollBonusButton
                   label={`${ABILITY_LABEL[ability]} check`}
+                  type="check"
                   bonus={derivedValue(derived.abilityModifiers[ability])}
                 />
               }

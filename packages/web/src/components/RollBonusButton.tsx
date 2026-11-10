@@ -1,19 +1,22 @@
+import type { RollType } from "@dnd/character";
 import { Dices } from "lucide-react";
 import { useContext, useState } from "react";
 import { useRollAndRecord } from "../hooks/useRollAndRecord.ts";
 import { RollingFor } from "./rollerContext.ts";
 
 /**
- * Rolls `dice` (a d20 unless told otherwise) plus `bonus` and records it under `label`; nothing where no character's
+ * Rolls `dice` (a d20 unless told otherwise) plus `bonus` and records it under `label` and `type`; nothing where no character's
  * sheet is open to record to. Its status region speaks what was rolled and the total
  * without moving focus, and says so when the roll could not be logged.
  */
 export function RollBonusButton({
   label,
+  type,
   bonus,
   dice = "1d20",
 }: {
   label: string;
+  type: RollType;
   bonus: number;
   dice?: string;
 }) {
@@ -29,7 +32,7 @@ export function RollBonusButton({
         type="button"
         onClick={() => {
           setHeard("");
-          roll(notation, label, (rolled, logged) =>
+          roll(notation, label, type, (rolled, logged) =>
             setHeard(`${label}: ${rolled.total}${logged ? "" : ", not logged"}`),
           );
         }}

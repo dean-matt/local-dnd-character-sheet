@@ -84,6 +84,7 @@ export function SpendHitDice({
         die,
         face,
         roll: {
+          type: "hit-die",
           label: `Hit die d${die}`,
           notation: rolled.notation,
           total: rolled.total,

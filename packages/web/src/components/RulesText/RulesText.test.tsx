@@ -303,9 +303,28 @@ describe("reference resolution", () => {
       expect(url).toBe("/api/characters/c1/rolls");
       expect(init.method).toBe("POST");
       const body = JSON.parse(String(init.body));
-      expect(body).toMatchObject({ notation: "2d6+3", modifier: 3 });
+      expect(body).toMatchObject({ type: "damage", notation: "2d6+3", modifier: 3 });
       expect(body.dice).toHaveLength(2);
       expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    });
+
+    it.each([
+      ["{@hit 5}", "Roll +5", "attack"],
+      ["{@damage 1d6}", "Roll 1d6", "damage"],
+      ["{@scaledamage 2d6|2-9|1d6}", "Roll 1d6", "damage"],
+      ["{@savingThrow con 3}", "Roll +3", "save"],
+      ["{@skillCheck survival 4}", "Roll +4", "check"],
+      ["{@dice 1d4}", "Roll 1d4", "dice"],
+      ["{@d20 2}", "Roll +2", "dice"],
+      ["{@scaledice 2d6|1-9|1d6}", "Roll 1d6", "dice"],
+    ])("records %s, rolled by its %s button, as type %s", async (text, name, type) => {
+      const fetchMock = stubFetch(new Response(JSON.stringify(entry(9)), { status: 201 }));
+      onSheet(text);
+      fireEvent.click(screen.getByRole("button", { name }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
+      expect(JSON.parse(String(init.body))).toMatchObject({ type });
     });
 
     it("hands the recorded roll to its listener", async () => {

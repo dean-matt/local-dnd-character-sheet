@@ -1,3 +1,4 @@
+import type { RollType } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 import { useContext } from "react";
 import { OnRolled } from "../components/rollerContext.ts";
@@ -6,7 +7,7 @@ import { useRecordRoll } from "./useRecordRoll.ts";
 type Roll = ReturnType<typeof rollDice>;
 
 /**
- * Rolls `notation`, records it under `label` in the character's roll log and hands the
+ * Rolls `notation`, records it under `label` and `type` in the character's roll log and hands the
  * recorded entry to the layout. `settled` hears the roll and whether it was recorded; a
  * notation that does not parse rolls nothing.
  */
@@ -17,6 +18,7 @@ export function useRollAndRecord(characterId: string) {
   function roll(
     notation: string,
     label: string,
+    type: RollType,
     settled?: (rolled: Roll, logged: boolean) => void,
   ) {
     let rolled: Roll;
@@ -27,6 +29,7 @@ export function useRollAndRecord(characterId: string) {
     }
     record.mutate(
       {
+        type,
         label,
         notation: rolled.notation,
         total: rolled.total,

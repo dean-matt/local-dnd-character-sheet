@@ -769,7 +769,7 @@ describe("AbilitiesSection", () => {
       return { posts, onRolled };
     }
 
-    it("rolls an ability check, a save and a skill with their derived bonus and labels each roll", async () => {
+    it("rolls an ability check, a save and a skill with their derived bonus, labelling and typing each roll", async () => {
       const { posts } = renderRolling();
       fireEvent.click(screen.getByRole("button", { name: "Roll Charisma check" }));
       fireEvent.click(screen.getByRole("button", { name: "Roll Wisdom saving throw" }));
@@ -781,6 +781,7 @@ describe("AbilitiesSection", () => {
         "Wisdom saving throw",
         "Stealth check",
       ]);
+      expect(posts.map((post) => post.type)).toEqual(["check", "save", "check"]);
       expect(posts.map((post) => post.modifier)).toEqual([3, 3, 7]);
       expect(posts.map((post) => post.notation)).toEqual(["1d20+3", "1d20+3", "1d20+7"]);
     });
