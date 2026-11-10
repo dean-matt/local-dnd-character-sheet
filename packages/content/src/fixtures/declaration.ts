@@ -615,6 +615,14 @@ export const FIXTURES: Fixture[] = [
                 "header",
                 "entries",
               ],
+              set: {
+                entries: {
+                  value: [
+                    "You can use this feature twice, regaining all expended uses when you finish a long rest.",
+                  ],
+                  why: "The limited-uses parse reads a count and a rest from prose, and elided prose carries neither.",
+                },
+              },
             },
             "Channel Divinity: Touch of Death|DMG|Cleric|XPHB|Death|DMG|3",
           ],
@@ -1248,7 +1256,22 @@ export const FIXTURES: Fixture[] = [
             {
               id: "Aasimar|MPMM",
               within: {
-                entries: { items: ["Celestial Revelation", "Healing Hands"] },
+                entries: {
+                  items: [
+                    "Celestial Revelation",
+                    {
+                      id: "Healing Hands",
+                      set: {
+                        entries: {
+                          value: [
+                            "Once you use it, you can't use it again until you finish a short rest.",
+                          ],
+                          why: "The limited-uses parse reads a race trait's count and rest from prose, and elided prose carries neither.",
+                        },
+                      },
+                    },
+                  ],
+                },
                 _versions: {
                   items: ["Aasimar; Necrotic Shroud|MPMM", "Aasimar; Radiant Consumption|MPMM"],
                 },

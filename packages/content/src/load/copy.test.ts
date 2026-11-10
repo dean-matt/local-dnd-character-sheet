@@ -199,7 +199,7 @@ describe("resolveCopies", () => {
       const feature = find(features, { classSource: "XPHB" });
       expect(feature.level).toBe(3);
       expect(feature.header).toBe(2);
-      expect(feature.entries).toEqual(["Elided.", "Elided."]);
+      expect(feature.entries).toEqual(find(features, { classSource: "PHB" }).entries);
     });
   });
 

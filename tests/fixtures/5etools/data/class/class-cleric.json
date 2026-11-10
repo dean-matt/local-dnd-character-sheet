@@ -357,7 +357,9 @@
       "subclassSource": "DMG",
       "level": 2,
       "header": 2,
-      "entries": ["Elided.", "Elided."]
+      "entries": [
+        "You can use this feature twice, regaining all expended uses when you finish a long rest."
+      ]
     },
     {
       "name": "Channel Divinity: Touch of Death",
