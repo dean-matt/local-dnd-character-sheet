@@ -9,6 +9,7 @@ import { RulesBlock } from "../RulesBlock/RulesBlock.tsx";
 import { RulesText } from "../RulesText/RulesText.tsx";
 import { HeadingLevel } from "./headingLevelContext.ts";
 import { RulesSection } from "./RulesSection.tsx";
+import { RulesTable } from "./RulesTable.tsx";
 
 function renderListItem(item: unknown, keyPrefix: string): ReactNode {
   if (typeof item === "string") return <RulesText text={item} />;
@@ -69,42 +70,14 @@ function renderCell(cell: unknown, keyPrefix: string): ReactNode {
 }
 
 function renderTable(entry: EntryNode, keyPrefix: string): ReactNode {
-  const caption = str(entry.caption);
-  const colLabels = Array.isArray(entry.colLabels) ? entry.colLabels : [];
-  const rows = Array.isArray(entry.rows) ? entry.rows : [];
   return (
-    <table key={keyPrefix} className="w-full border-collapse text-left">
-      {caption && <caption className="font-semibold">{caption}</caption>}
-      {colLabels.length > 0 && (
-        <thead>
-          <tr>
-            {colLabels.map((label, index) => (
-              <th
-                // biome-ignore lint/suspicious/noArrayIndexKey: a catalog table's columns never reorder.
-                key={`${keyPrefix}-h${index}`}
-                scope="col"
-                className="border-border border-b px-2 py-1"
-              >
-                {typeof label === "string" ? <RulesText text={label} /> : null}
-              </th>
-            ))}
-          </tr>
-        </thead>
-      )}
-      <tbody>
-        {rows.map((row, rowIndex) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: a catalog table's rows never reorder.
-          <tr key={`${keyPrefix}-r${rowIndex}`}>
-            {(Array.isArray(row) ? row : []).map((cell, cellIndex) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: a catalog table's cells never reorder.
-              <td key={`${keyPrefix}-r${rowIndex}-c${cellIndex}`} className="px-2 py-1">
-                {renderCell(cell, `${keyPrefix}-r${rowIndex}-c${cellIndex}`)}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <RulesTable
+      key={keyPrefix}
+      caption={str(entry.caption)}
+      colLabels={Array.isArray(entry.colLabels) ? entry.colLabels : []}
+      rows={Array.isArray(entry.rows) ? entry.rows : []}
+      renderCell={(cell, key) => renderCell(cell, `${keyPrefix}-${key}`)}
+    />
   );
 }
 

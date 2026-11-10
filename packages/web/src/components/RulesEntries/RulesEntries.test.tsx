@@ -1,8 +1,9 @@
 import type { Entries } from "@dnd/catalog";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
-import { stubFetchByUrl } from "../../test/stubFetch.ts";
+import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
+import { RollingFor } from "../rollerContext.ts";
 import { RulesEntries } from "./RulesEntries.tsx";
 
 describe("RulesEntries", () => {
@@ -163,5 +164,110 @@ describe("reference resolution", () => {
       ],
     ]);
     expect(screen.getByText("blinded")).toHaveAttribute("data-tag", "condition");
+  });
+});
+
+describe("a rollable table", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const surge: Entries = [
+    {
+      type: "table",
+      caption: "Wild Magic Surge",
+      colLabels: ["{@dice d6}", "Effect"],
+      rows: [
+        ["1-3", "You turn blue."],
+        ["4–6", "You cast {@spell fireball}."],
+      ],
+    },
+  ];
+
+  function onSheet(entries: Entries) {
+    const logged = {
+      id: 1,
+      characterId: "c1",
+      characterName: "Vex",
+      rolledAt: "2026-01-01T00:00:00.000Z",
+      label: "Wild Magic Surge",
+      notation: "d6",
+      total: 5,
+      dice: [],
+      modifier: 0,
+      critical: false,
+    };
+    const fetchMock = stubFetch(new Response(JSON.stringify(logged), { status: 201 }));
+    renderWithClient(
+      <RollingFor value="c1">
+        <RulesEntries entries={entries} />
+      </RollingFor>,
+    );
+    return fetchMock;
+  }
+
+  const rolls = (fetchMock: ReturnType<typeof vi.fn>) =>
+    fetchMock.mock.calls
+      .filter(([url]) => String(url) === "/api/characters/c1/rolls")
+      .map(([, init]) => JSON.parse(String(init?.body)));
+
+  it("rolls its die from the first column's header and logs the roll", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.7);
+    const fetchMock = onSheet(surge);
+    fireEvent.click(screen.getByRole("button", { name: "Roll d6 on Wild Magic Surge" }));
+
+    await waitFor(() => expect(rolls(fetchMock)).toHaveLength(1));
+    expect(rolls(fetchMock)[0]).toMatchObject({
+      type: "dice",
+      label: "Wild Magic Surge",
+      notation: "1d6",
+      total: 5,
+    });
+  });
+
+  it("highlights the row the total lands in and announces its text", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.7);
+    onSheet(surge);
+    fireEvent.click(screen.getByRole("button", { name: "Roll d6 on Wild Magic Surge" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Rolled 5: You cast fireball."),
+    );
+    const [, , landed] = screen.getAllByRole("row");
+    expect(landed).toHaveAttribute("aria-current", "true");
+    expect(within(landed as HTMLElement).getByText("4–6")).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("row").filter((row) => row.hasAttribute("aria-current")),
+    ).toHaveLength(1);
+  });
+
+  it("says so when the total lands in no row", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    onSheet([{ type: "table", colLabels: ["d6", "Effect"], rows: [["1-3", "Blue"]] }]);
+    fireEvent.click(screen.getByRole("button", { name: "Roll d6 on the table" }));
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Rolled 6: no row"));
+    expect(screen.getAllByRole("row").some((row) => row.hasAttribute("aria-current"))).toBe(false);
+  });
+
+  it("rolls from a native button, which the keyboard focuses and activates", () => {
+    onSheet(surge);
+    const button = screen.getByRole("button", { name: "Roll d6 on Wild Magic Surge" });
+    expect(button.tagName).toBe("BUTTON");
+    button.focus();
+    expect(button).toHaveFocus();
+  });
+
+  it("keeps the table static where no character is open", () => {
+    stubFetchByUrl({});
+    renderWithClient(<RulesEntries entries={surge} />);
+    expect(screen.queryByRole("button", { name: /Wild Magic Surge/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps a table static whose first column names no die", () => {
+    onSheet([{ type: "table", colLabels: ["Level", "Effect"], rows: [["1", "Blue"]] }]);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });
