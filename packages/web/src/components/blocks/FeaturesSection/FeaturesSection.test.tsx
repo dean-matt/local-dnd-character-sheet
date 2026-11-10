@@ -690,6 +690,15 @@ describe("FeaturesSection", () => {
         tick("Chosen Features", "Has limited uses");
         expect(within(card("Chosen Features")).getByText("Lucky")).toBeVisible();
         expect(within(card("Chosen Features")).queryByText("Alert")).toBeNull();
+
+        tick("Chosen Features", "Has limited uses");
+        tick("Chosen Features", "No limited uses");
+        expect(within(card("Chosen Features")).queryByText("Lucky")).toBeNull();
+        expect(within(card("Chosen Features")).queryByText("Alert")).toBeNull();
+
+        tick("Chosen Features", "Has limited uses");
+        expect(within(card("Chosen Features")).getByText("Lucky")).toBeVisible();
+        expect(within(card("Chosen Features")).queryByText("Alert")).toBeNull();
       });
 
       it("badges each active facet once, and Reset clears the boxes with the range", async () => {

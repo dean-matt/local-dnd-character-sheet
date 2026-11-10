@@ -4,7 +4,7 @@
  * is a row whose name opens its rules text in a modal, and a search narrows every feature
  * card by name, so a reader looking for one feature skips the rest.
  */
-import type { FeatureOrigin } from "@dnd/catalog";
+import type { FeatureOrigin, SheetFeature } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
@@ -19,7 +19,7 @@ import { LoadingState } from "../../../LoadingState.tsx";
 import { Card } from "../../Card.tsx";
 import { CheckFacet } from "../../Filter/CheckFacet.tsx";
 import { FilterButton } from "../../Filter/FilterButton.tsx";
-import { inRange, NO_RANGE, type Range } from "../../Filter/facets.ts";
+import { type Facet, inRange, matchesFacets, NO_RANGE, type Range } from "../../Filter/facets.ts";
 import { RangeFacet } from "../../Filter/RangeFacet.tsx";
 import { RulesBlock } from "../../RulesBlock/RulesBlock.tsx";
 import { ClassResources } from "./ClassResources/ClassResources.tsx";
@@ -57,12 +57,17 @@ const WIDGETS: readonly {
   },
 ];
 
-const HAS_USES = "has";
-
 const USES_OPTIONS = [
-  { value: HAS_USES, label: "Has limited uses" },
+  { value: "has", label: "Has limited uses" },
   { value: "none", label: "No limited uses" },
 ];
+
+/** A feature that resolved to nothing has unknown uses, so it holds neither value. */
+const USES_FACET: Facet<{ feature: SheetFeature }> = {
+  key: "uses",
+  label: "Limited uses",
+  valuesOf: ({ feature }) => (feature.resolved ? [feature.uses ? "has" : "none"] : []),
+};
 
 export function FeaturesSection({
   character,
@@ -118,8 +123,7 @@ export function FeaturesSection({
     const matches = named.filter(
       (entry) =>
         inRange(levelOf(entry), range) &&
-        (uses.length === 0 ||
-          uses.includes(entry.feature.resolved && entry.feature.uses ? HAS_USES : "none")),
+        matchesFacets(entry, [USES_FACET], { [USES_FACET.key]: uses }),
     );
     const active = (range.min !== "" || range.max !== "" ? 1 : 0) + (uses.length > 0 ? 1 : 0);
     return { ...widget, entries, named, matches, range, uses, active };
@@ -173,7 +177,7 @@ export function FeaturesSection({
                     />
                   )}
                   <CheckFacet
-                    label="Limited uses"
+                    label={USES_FACET.label}
                     options={USES_OPTIONS}
                     picked={widget.uses}
                     onChange={(next) => setUsesPicks((at) => ({ ...at, [widget.title]: next }))}

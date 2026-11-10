@@ -1,6 +1,6 @@
 /**
  * A facet of checkboxes, one per option, ruled off from any facet above it. A row matches
- * where it holds any ticked option, so ticking none or every option shows all.
+ * where it holds any ticked option, and ticking none shows all.
  */
 export function CheckFacet({
   label,
@@ -8,7 +8,7 @@ export function CheckFacet({
   picked,
   onChange,
 }: {
-  /** Names the group to a screen reader; the boxes' own labels carry it on screen. */
+  /** Hidden on screen; read to a screen reader as the group's name. */
   label: string;
   options: readonly { value: string; label: string }[];
   picked: readonly string[];
