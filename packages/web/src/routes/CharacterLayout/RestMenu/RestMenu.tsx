@@ -1,4 +1,4 @@
-import type { CharacterRecord, RestLength } from "@dnd/character";
+import { benefitsFromLongRest, type CharacterRecord, type RestLength } from "@dnd/character";
 import { FlameKindling } from "lucide-react";
 import { useId, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
@@ -7,7 +7,7 @@ import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { RestDialog } from "./RestDialog.tsx";
 import { recoverySummary } from "./recoverySummary.ts";
-import { featureUses, restPreview } from "./restChanges.ts";
+import { featureUses, LONG_REST_REFUSAL, restPreview } from "./restChanges.ts";
 
 /**
  * The header's Rest button and the menu under it, whose items open the dialog for a short or
@@ -15,7 +15,8 @@ import { featureUses, restPreview } from "./restChanges.ts";
  * the dialog closes, and a rest applied or hit dice spends cancelled are announced, since the
  * dialog closes on them. The short rest's line names what it would recover, from the same
  * changes its dialog lists. The button waits on the sheet's derived block, state and features,
- * which the dialog reads, and names why where any failed to load.
+ * which the dialog reads, and names why where any failed to load. At 0 hit points the long
+ * rest is unavailable, its line saying why.
  */
 export function RestMenu({ character }: { character: CharacterRecord }) {
   const derived = useCharacterDerived(character.id);
@@ -29,7 +30,8 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
   const uses = features.data && featureUses(features.data);
   const ready = derived.data !== undefined && state.data !== undefined && uses !== undefined;
   const failed = derived.error ?? state.error ?? features.error;
-  const rests: { length: RestLength; title: string; description: string }[] = [
+  const refused = state.data && !benefitsFromLongRest(state.data.state.hitPoints.current);
+  const rests: { length: RestLength; title: string; description: string; blocked?: boolean }[] = [
     {
       length: "short",
       title: "Short rest",
@@ -41,7 +43,12 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
             )
           : "",
     },
-    { length: "long", title: "Long rest", description: "Restore HP, Hit Dice and spent resources" },
+    {
+      length: "long",
+      title: "Long rest",
+      description: refused ? LONG_REST_REFUSAL : "Restore HP, Hit Dice and spent resources",
+      blocked: refused,
+    },
   ];
 
   return (
@@ -77,22 +84,27 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
           id={menuId}
           className="absolute top-full right-0 z-40 mt-1 flex w-max max-w-[calc(100vw-2rem)] flex-col rounded-card border border-border bg-surface p-1.5 shadow-popover"
         >
-          {rests.map(({ length, title, description }) => (
+          {rests.map(({ length, title, description, blocked }) => (
             <button
               key={length}
               type="button"
               aria-haspopup="dialog"
               aria-labelledby={`${menuId}-${length}-title`}
               aria-describedby={`${menuId}-${length}-description`}
+              aria-disabled={blocked || undefined}
               // Keeps focus on the menu through the click, so the blur above cannot close it first.
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
+                if (blocked) return;
                 setMenuOpen(false);
                 setResting(length);
               }}
-              className="flex flex-col items-start gap-px rounded-control px-2.5 py-2 text-left hover:bg-subtle"
+              className="flex flex-col items-start gap-px rounded-control px-2.5 py-2 text-left hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:hover:bg-transparent"
             >
-              <span id={`${menuId}-${length}-title`} className="font-semibold text-ink text-row">
+              <span
+                id={`${menuId}-${length}-title`}
+                className={`font-semibold text-row ${blocked ? "text-muted" : "text-ink"}`}
+              >
                 {title}
               </span>
               <span id={`${menuId}-${length}-description`} className="text-label text-muted">
