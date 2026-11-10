@@ -1,4 +1,5 @@
 import {
+  atHitPointMaximum,
   type CharacterDerived,
   type CharacterRecord,
   type CharacterState,
@@ -42,7 +43,8 @@ function describeSpend(
  * One button per hit die size, each spending a die of that size: it rolls the die with the
  * Constitution modifier, writes the pool and the hit points in one state write, and only
  * then records the roll in the character's log, so a write that fails spends and logs
- * nothing. A pool with none left, or a dead character, leaves the buttons unavailable. Each
+ * nothing. A pool with none left, a dead character, or hit points at their maximum leaves the
+ * buttons unavailable. Each
  * pool draws a die face per die: a spent die shows what it regained in this dialog, a
  * remaining die is blank. The hit points a pool regained show under its row, over a running
  * hit point readout, and each result is announced in full.
@@ -64,7 +66,8 @@ export function SpendHitDice({
   const maximum = derivedValue(derived.hitPointMaximum);
   const dead = deathSaveStatus(derived, state) === "dead";
   const none = pools.every((pool) => pool.remaining < 1);
-  const unavailable = dead || none;
+  const full = atHitPointMaximum(derived, state);
+  const unavailable = dead || none || full;
 
   async function spend(die: (typeof pools)[number]["die"]) {
     if (replace.writing) return;
@@ -160,7 +163,11 @@ export function SpendHitDice({
       </ul>
       {unavailable && (
         <p className="text-muted text-row">
-          {dead ? `${character.name} is dead.` : "No hit dice remain."}
+          {dead
+            ? `${character.name} is dead.`
+            : none
+              ? "No hit dice remain."
+              : "Hit points are full."}
         </p>
       )}
       {Object.keys(spent).length > 0 && (

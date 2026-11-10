@@ -131,6 +131,11 @@ describe("hitDieSpentState", () => {
     expect(spent?.state.deathSaves).toEqual({ successes: 0, failures: 0 });
   });
 
+  it("spends nothing at maximum hit points", () => {
+    expect(hitDieSpentState({ edition: "classic" }, con(2), held(null), 8, 5)).toBeUndefined();
+    expect(hitDieSpentState({ edition: "classic" }, con(2), held(30), 8, 5)).toBeUndefined();
+  });
+
   it("spends nothing from an empty pool, an unknown size or a dead character", () => {
     expect(hitDieSpentState({ edition: "classic" }, con(2), held(10, 0), 8, 5)).toBeUndefined();
     expect(hitDieSpentState({ edition: "classic" }, con(2), held(10), 12, 5)).toBeUndefined();
