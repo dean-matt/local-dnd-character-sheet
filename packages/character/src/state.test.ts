@@ -4,6 +4,7 @@ import {
   characterStateSchema,
   defaultCharacterState,
   featureUsesKey,
+  featureUsesSpent,
   hitDicePoolSchema,
   resourceSchema,
   spellSlotSchema,
@@ -198,6 +199,13 @@ describe("feature uses", () => {
       { key: relentless, expended: 1 },
       { key: lucky, expended: 2 },
     ]);
+  });
+
+  it("reads spent uses capped at the count, and none where state holds none", () => {
+    const spent = withFeatureUse({ ...state, featureUses: [] }, lucky, 3);
+    expect(featureUsesSpent(spent, lucky, 5)).toBe(3);
+    expect(featureUsesSpent(spent, lucky, 2)).toBe(2);
+    expect(featureUsesSpent(spent, relentless, 1)).toBe(0);
   });
 
   it("refuses a feature listed twice", () => {

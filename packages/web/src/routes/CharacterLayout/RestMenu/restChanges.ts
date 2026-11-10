@@ -4,6 +4,7 @@ import {
   type CharacterDerived,
   type CharacterState,
   derivedValue,
+  featureUsesSpent,
   type HitDie,
   hitDieSpentState,
   type RestLength,
@@ -34,10 +35,8 @@ export function featureUses(features: CharacterFeatures): FeatureUse[] {
   return [...byKey.values()];
 }
 
-/** Uses left against the count, a spent count past it reading as none left. */
 function usesLeft(state: CharacterState, feature: FeatureUse): string {
-  const held = state.featureUses.find((use) => use.key === feature.key)?.expended ?? 0;
-  return `${feature.count - Math.min(held, feature.count)}/${feature.count}`;
+  return `${feature.count - featureUsesSpent(state, feature.key, feature.count)}/${feature.count}`;
 }
 
 /**

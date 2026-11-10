@@ -62,9 +62,8 @@ function storeElsewhere(state: Partial<CharacterState>) {
 /**
  * Renders the menu beside what the sheet reads, over a stand-in API that keeps what each state
  * write sends, so a rest lands on the sheet as it would. `features` answers the features
- * endpoint. `fail` answers every write with a
- * 500, `failRolls` the first that many roll logs; `hold` keeps each write in flight until it
- * settles.
+ * endpoint, or `failFeatures` fails it. `fail` answers every write with a 500, `failRolls` the
+ * first that many roll logs; `hold` keeps each write in flight until it settles.
  */
 function renderLive(
   state: Partial<CharacterState>,
@@ -72,6 +71,7 @@ function renderLive(
     character = characterRecord("1", "Vex") as CharacterRecord,
     derivedBlock = derived(),
     features = { groups: [] } as CharacterFeatures,
+    failFeatures = false,
     fail = false,
     failRolls = 0,
     hold = Promise.resolve(),
@@ -81,6 +81,10 @@ function renderLive(
   let rollsToFail = failRolls;
   const writes: CharacterState[] = [];
   rolls.length = 0;
+  const featuresResponse = () =>
+    failFeatures
+      ? new Response(JSON.stringify({ error: "Features not found" }), { status: 404 })
+      : new Response(JSON.stringify(features), { status: 200 });
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -88,7 +92,7 @@ function renderLive(
         return new Response(JSON.stringify(derivedBlock), { status: 200 });
       }
       if (String(input).endsWith("/features")) {
-        return new Response(JSON.stringify(features), { status: 200 });
+        return featuresResponse();
       }
       if (init?.method === "POST" && String(input).endsWith("/rolls")) {
         if (rollsToFail > 0) {
@@ -217,6 +221,14 @@ describe("RestMenu", () => {
     );
     fireEvent.click(rest());
     expect(screen.queryByRole("button", { name: "Short rest" })).not.toBeInTheDocument();
+  });
+
+  it("names a failed features load where the sheet loads", async () => {
+    renderLive(spent(), { failFeatures: true });
+    await waitFor(() =>
+      expect(rest()).toHaveAttribute("title", "A rest is unavailable: Features not found"),
+    );
+    expect(rest()).toHaveAttribute("aria-disabled", "true");
   });
 
   it("lists what a long rest changes, before and after, writing nothing", async () => {
