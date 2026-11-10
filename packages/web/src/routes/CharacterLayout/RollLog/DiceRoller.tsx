@@ -10,22 +10,25 @@ const signed = (value: number) => (value < 0 ? `− ${-value}` : `+ ${value}`);
 /**
  * Rolls any notation the dice parser reads, under an optional label, and records it to the
  * character's roll log. The result lists each die, a discarded one struck through, then the
- * modifier and the total; the roll log announces the recorded roll.
+ * modifier and the total; the roll log announces a recorded roll, and this form one it could not record.
  */
 export function DiceRoller({ characterId }: { characterId: string }) {
   const { roll } = useRollAndRecord(characterId);
   const [notation, setNotation] = useState("");
   const [label, setLabel] = useState("");
   const [refused, setRefused] = useState("");
-  const [result, setResult] = useState<{ rolled: Roll; logged: boolean } | null>(null);
+  const [result, setResult] = useState<{ rolled: Roll; label: string; logged: boolean } | null>(
+    null,
+  );
   const [messages, setMessages] = useState<HTMLDivElement | null>(null);
 
   function submit(event: FormEvent) {
     event.preventDefault();
     if (notation.trim() === "") return;
     setResult(null);
-    const error = roll(notation, label.trim() || "Dice roll", "dice", (rolled, logged) =>
-      setResult({ rolled, logged }),
+    const named = label.trim() || "Dice roll";
+    const error = roll(notation, named, "dice", (rolled, logged) =>
+      setResult({ rolled, label: named, logged }),
     );
     setRefused(error?.message ?? "");
   }
@@ -85,6 +88,11 @@ export function DiceRoller({ characterId }: { characterId: string }) {
           {!result.logged && <span className="text-error">not logged</span>}
         </p>
       )}
+      <p role="status" className="sr-only">
+        {result && !result.logged
+          ? `Rolled ${result.label}: ${result.rolled.total}, not logged`
+          : ""}
+      </p>
     </form>
   );
 }

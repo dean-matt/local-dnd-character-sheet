@@ -399,6 +399,7 @@ describe("CharacterLayout roll log", () => {
   });
 
   describe("dice field", () => {
+    afterEach(() => vi.restoreAllMocks());
     const posted = () =>
       vi
         .mocked(fetch)
@@ -411,6 +412,7 @@ describe("CharacterLayout roll log", () => {
       fireEvent.change(screen.getByRole("textbox", { name: "Label (optional)" }), {
         target: { value: label },
       });
+      dice.focus();
       fireEvent.submit(dice);
       return dice;
     }
@@ -432,7 +434,33 @@ describe("CharacterLayout roll log", () => {
           }),
         ]),
       );
-      vi.restoreAllMocks();
+    });
+
+    it("strikes through a discarded die and signs a subtracted one", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      await renderSheet([]);
+      await rollField("4d6kh3-1d4");
+
+      const result = await screen.findByText("4d6kh3-1d4:");
+      expect(result.parentElement).toHaveTextContent(/^4d6kh3-1d4:4444−3= 9$/);
+      const discarded = screen.getAllByTitle("d6, discarded");
+      expect(discarded).toHaveLength(1);
+      expect(discarded[0]).toHaveClass("line-through");
+    });
+
+    it("shows and announces a roll the server could not record as not logged", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      await renderSheet([]);
+      const answer = vi.mocked(fetch).getMockImplementation();
+      vi.mocked(fetch).mockImplementation(async (input, init) =>
+        init?.method === "POST"
+          ? new Response("{}", { status: 500 })
+          : (answer as typeof fetch)(input, init),
+      );
+      await rollField("1d4", "Trap");
+
+      expect(await screen.findByText("not logged")).toBeInTheDocument();
+      expect(screen.getByText("Rolled Trap: 3, not logged")).toHaveAttribute("role", "status");
     });
 
     it("labels a roll given no label", async () => {
@@ -460,7 +488,6 @@ describe("CharacterLayout roll log", () => {
     it("announces the logged roll and keeps focus in the field", async () => {
       await renderSheet([]);
       const dice = await rollField("1d4");
-      dice.focus();
 
       expect(await screen.findByText("Rolled 1d4: 3")).toBeInTheDocument();
       expect(dice).toHaveFocus();
