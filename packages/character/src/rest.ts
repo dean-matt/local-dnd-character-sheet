@@ -17,6 +17,9 @@ type Sheet = Pick<CharacterDerived, "hitDice" | "spellSlots" | "pactSlots" | "cl
 
 type Slot = NonNullable<CharacterState["pactSlots"]>;
 
+/** A feature's limited uses as the features endpoint lists them: `short` uses return on any rest. */
+type FeatureReset = { key: string; reset: RestLength };
+
 function sheetHitDice(derived: Sheet, state: CharacterState): CharacterState["hitDice"] {
   return derived.hitDice.map((pool) => {
     const total = derivedValue(pool.total);
@@ -89,7 +92,8 @@ export function longRestHitDicePick(definition: Resting, derived: Sheet, state: 
  * names the hit dice to recover where `longRestHitDicePick` asks; `rest` throws a RangeError
  * where it is missing or out of bounds. Each class pool whose reset the rest meets has no
  * use spent; a 2024 pool with a partial recharge regains one use on a short rest, and the
- * others keep what was spent. Any rest ends a rage; a long rest also ends concentration.
+ * others keep what was spent. Each feature in `features` whose reset the rest meets has no
+ * use spent. Any rest ends a rage; a long rest also ends concentration.
  */
 export function restedState(
   definition: Resting,
@@ -97,6 +101,7 @@ export function restedState(
   state: CharacterState,
   length: RestLength,
   picked?: readonly HitDie[],
+  features: readonly FeatureReset[] = [],
 ): CharacterState {
   const rested = rest(sheetState(derived, state), {
     length,
@@ -119,5 +124,9 @@ export function restedState(
         ? { ...pool, expended: Math.max(0, pool.expended - 1) }
         : pool;
     }),
+    featureUses: rested.featureUses.filter(
+      (use) =>
+        !features.some((feature) => feature.key === use.key && resets(feature.reset, length)),
+    ),
   };
 }
