@@ -155,7 +155,7 @@
         {
           "type": "entries",
           "name": "Healing Hands",
-          "entries": ["Once you use it, you can't use it again until you finish a short rest."]
+          "entries": ["Once you use it, you can't use it again until you finish a long rest."]
         }
       ],
       "hasFluff": true,

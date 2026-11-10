@@ -62,6 +62,44 @@ describe("limitedUses", () => {
       ],
     ],
     [
+      "a count from the class level",
+      [
+        "The number of times you can use this feature is based on the level you've reached in this class: 2nd level, once; 6th level, twice; and 18th level, thrice. You regain all expended uses when you finish a long rest.",
+      ],
+    ],
+    [
+      "a die pool with a partial reset",
+      [
+        "You regain all your expended Psionic Energy dice when you finish a long rest. In addition, as a bonus action, you can regain one expended Psionic Energy die, but you can't do so again until you finish a short or long rest.",
+      ],
+    ],
+    [
+      "a count for each spell",
+      [
+        "You can cast each of them once at 3rd level without expending a spell slot. When you do so, you can't do so again until you finish a short or long rest.",
+      ],
+    ],
+    [
+      "a limit in each of two named parts",
+      [
+        "Your Replicate Magic Item feature gains the following options.",
+        {
+          type: "entries",
+          name: "Drain Magic Item",
+          entries: [
+            "Once you use this feature, you can't do so again until you finish a long rest.",
+          ],
+        },
+        {
+          type: "entries",
+          name: "Transmute Magic Item",
+          entries: [
+            "Once you use this feature, you can't do so again until you finish a long rest.",
+          ],
+        },
+      ],
+    ],
+    [
       "two resets",
       [
         "You can't use it again until you finish a long rest.",
@@ -136,7 +174,7 @@ describe("the limited-uses columns", () => {
       expect(
         JSON.parse((race.get("Aasimar", "MPMM") as { trait_uses: string }).trait_uses),
       ).toEqual({
-        "Healing Hands": { uses: 1, reset: "short" },
+        "Healing Hands": { uses: 1, reset: "long" },
       });
     } finally {
       db.close();
@@ -163,6 +201,9 @@ describe("the limited-uses columns", () => {
         // Twice from 17th level, and Second Wind's count comes from the class table.
         expect(classFeature("Action Surge", "PHB", 2)).toEqual([{ uses: null, uses_reset: null }]);
         expect(classFeature("Second Wind", "XPHB", 1)).toEqual([{ uses: null, uses_reset: null }]);
+        expect(classFeature("Signature Spells", "PHB", 20)).toEqual([
+          { uses: null, uses_reset: null },
+        ]);
         expect(featureUses(db, "feats", "name = ? AND source = ?", "Mage Slayer", "XPHB")).toEqual([
           { uses: 1, uses_reset: "short" },
         ]);

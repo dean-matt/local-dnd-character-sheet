@@ -5,7 +5,8 @@
  * Text that says one count and one reset yields them. Text that says none, or says more
  * than one — Action Surge's once becoming twice at 17th level, a use regained on a short
  * rest and all of them on a long one — yields nothing rather than a guess, as does a count
- * the text ties to a modifier, the proficiency bonus or a class table. Widening it means
+ * the text ties to a modifier, the proficiency bonus, a class level or each of several
+ * spells, and a limit stated by more than one named part of the feature. Widening it means
  * adding a pattern here and its sentence to the test.
  */
 import { parseTags, renderText } from "@dnd/tags";
@@ -61,31 +62,44 @@ const READERS: { pattern: RegExp; once?: true }[] = [
   },
 ];
 const UNREADABLE =
-  /\bregain (?:one|a single)\b[^.]*?\buses?\b|\bnumber of times (?:equal to|shown)\b/i;
+  /\bregain (?:one|a single)\b[^.]*?\b(?:uses?|dice|die)\b|\bnumber of times\b[^.]*?\b(?:equal to|shown|based on)\b|\bcast each of\b/i;
 
 const restOf = (phrase = ""): LimitedUses["reset"] | undefined =>
   /\bshort\b/i.test(phrase) ? "short" : /\blong\b/i.test(phrase) ? "long" : undefined;
 
-/** The prose of an entries tree, by `entries`, `items` and `entry`, with markup rendered. */
-function prose(node: unknown): string[] {
-  if (typeof node === "string") return [renderText(parseTags(node))];
-  if (Array.isArray(node)) return node.flatMap(prose);
+type Sentence = { text: string; part: string };
+
+/**
+ * The sentences of an entries tree, by `entries`, `items` and `entry`, with markup rendered,
+ * each with the name of the nearest named entry holding it, or "" for none.
+ */
+function sentences(node: unknown, part = ""): Sentence[] {
+  if (typeof node === "string") {
+    return renderText(parseTags(node))
+      .split(/(?<=[.!?])\s+/)
+      .map((text) => ({ text, part }));
+  }
+  if (Array.isArray(node)) return node.flatMap((child) => sentences(child, part));
   if (!isRecord(node)) return [];
-  return [node.entries, node.items, node.entry].flatMap(prose);
+  const named = typeof node.name === "string" ? node.name : part;
+  return [node.entries, node.items, node.entry].flatMap((child) => sentences(child, named));
 }
 
 export function limitedUses(entries: unknown): LimitedUses | undefined {
   const counts = new Set<number | undefined>();
   const resets = new Set<LimitedUses["reset"] | undefined>();
-  for (const sentence of prose(entries).flatMap((text) => text.split(/(?<=[.!?])\s+/))) {
-    if (UNREADABLE.test(sentence)) return undefined;
+  const parts = new Set<string>();
+  for (const { text, part } of sentences(entries)) {
+    if (UNREADABLE.test(text)) return undefined;
     for (const { pattern, once } of READERS) {
-      const groups = sentence.match(pattern)?.groups;
+      const groups = text.match(pattern)?.groups;
       if (!groups) continue;
       counts.add(once ? 1 : COUNTS[groups.count?.toLowerCase().split(" ")[0] ?? ""]);
       resets.add(restOf(groups.rest));
+      parts.add(part);
     }
   }
+  if (parts.size > 1) return undefined;
   const uses = only(counts);
   const reset = only(resets);
   return uses === undefined || reset === undefined ? undefined : { uses, reset };

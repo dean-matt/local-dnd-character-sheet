@@ -1264,7 +1264,7 @@ export const FIXTURES: Fixture[] = [
                       set: {
                         entries: {
                           value: [
-                            "Once you use it, you can't use it again until you finish a short rest.",
+                            "Once you use it, you can't use it again until you finish a long rest.",
                           ],
                           why: "The limited-uses parse reads a race trait's count and rest from prose, and elided prose carries neither.",
                         },
