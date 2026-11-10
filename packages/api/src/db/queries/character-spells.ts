@@ -17,9 +17,11 @@ import {
 } from "@dnd/catalog";
 import {
   type CharacterDefinition,
+  type ContentRef,
   catalogRef,
   classLevels,
   displayName,
+  type EntryRef,
   entryKey,
   spellBlockKey,
 } from "@dnd/character";
@@ -30,6 +32,7 @@ import { resolveItemRows } from "./inventory.ts";
 import {
   type SpellRow as CatalogSpellRow,
   findSpells,
+  type Grantor,
   getGrantedSpells,
   getGrantorJson,
   getSpells,
@@ -161,6 +164,51 @@ function subclassSpells(
 }
 
 /**
+ * The spells every catalog row but a subclass gives outright, by `entryKey`: each class at
+ * its level, and the race or its subrace, the background, the feats and the optional
+ * features at the character's. A homebrew row gives none here, so a granted entry only a
+ * homebrew race gives still reads as its subclass's.
+ */
+function nonSubclassSpells(dataDir: string, definition: CharacterDefinition): Set<string> {
+  const level = Math.max(1, definition.levels.length);
+  const at = (
+    kind: Grantor["kind"],
+    ref: EntryRef | undefined,
+    parent?: { race: ContentRef },
+  ): { grantor: Grantor; level: number }[] => {
+    const found = catalogRef(ref);
+    if (!found) return [];
+    const key = spellBlockKey({ kind, ref: found, ...parent });
+    const block = definition.spellBlocks.find((choice) => spellBlockKey(choice.grantor) === key);
+    const grantor = {
+      kind,
+      ...found,
+      ...(parent && { parent: parent.race }),
+      ...(block && { block: block.block }),
+    };
+    return [{ grantor, level }];
+  };
+  const race = catalogRef(definition.race);
+  const grantors = [
+    ...classLevels(definition).flatMap((group) =>
+      at("class", group.class).map((each) => ({ ...each, level: group.level })),
+    ),
+    // A subrace's grants already hold its race's.
+    ...(catalogRef(definition.subrace) && race
+      ? at("subrace", definition.subrace, { race })
+      : at("race", definition.race)),
+    ...at("background", definition.background),
+    ...definition.feats.flatMap(({ ref }) => at("feat", ref)),
+    ...definition.optionalFeatures.flatMap(({ ref }) => at("optionalFeature", ref)),
+  ];
+  return new Set(
+    grantors.flatMap(({ grantor, level }) =>
+      getGrantedSpells(dataDir, grantor, level).spells.map(entryKey),
+    ),
+  );
+}
+
+/**
  * The spells equipped items let the character cast, in inventory order, each marked granted
  * and citing its item. A spell `known` holds by `entryKey` stays as that entry, and one
  * several items attach lists once, citing them all. An item may add spells by the alignment of
@@ -219,9 +267,10 @@ function itemSpells(
 
 /**
  * The definition's spells in order, then those its subclasses give that it does not list,
- * then its equipped items'. A granted entry a subclass also gives carries the subclass's cost.
- * An entry does not record its grantor, so one a race stored, such as a Tiefling Shadow Monk's
- * free Darkness, takes that cost too; recording the grantor on the entry would end that.
+ * then its equipped items'. An entry does not record its grantor, so a granted entry a
+ * subclass gives is that subclass's, carrying its cost, unless another row gives the spell
+ * too: a Tiefling Shadow Monk's free Darkness stays free, and Way of Shadow's costed
+ * Darkness lists beside it. An item's spell lists beside a subclass's.
  */
 export function resolveCharacterSpells(
   dataDir: string,
@@ -230,16 +279,21 @@ export function resolveCharacterSpells(
 ): CharacterSpells {
   const rows = rowFacts(dataDir, homebrewDb, definition.spells);
   const bySubclass = subclassSpells(dataDir, definition);
-  const known = new Set<string>();
+  const elsewhere =
+    bySubclass.size > 0 ? nonSubclassSpells(dataDir, definition) : new Set<string>();
+  const listed = new Set<string>();
+  const heldForItems = new Set<string>();
   const spells: SheetSpell[] = definition.spells.map((entry, index) => {
     if ("homebrewId" in entry.ref) return sheetSpell(entry, rows[index]);
-    known.add(entryKey(entry.ref));
-    const cost = entry.granted ? bySubclass.get(entryKey(entry.ref))?.cost : undefined;
-    return sheetSpell(entry, rows[index], cost && { cost });
+    const key = entryKey(entry.ref);
+    const given = entry.granted ? bySubclass.get(key) : undefined;
+    const subclassOwn = given && !elsewhere.has(key);
+    if (!given || subclassOwn) listed.add(key);
+    if (!subclassOwn) heldForItems.add(key);
+    return sheetSpell(entry, rows[index], subclassOwn && given.cost ? { cost: given.cost } : {});
   });
   const subclass = [...bySubclass].flatMap(([key, { row, subclass, cost }]) => {
-    if (known.has(key)) return [];
-    known.add(key);
+    if (listed.has(key)) return [];
     const ref = { name: row.name, source: row.source };
     return [
       sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), {
@@ -249,6 +303,6 @@ export function resolveCharacterSpells(
     ];
   });
   return {
-    spells: [...spells, ...subclass, ...itemSpells(dataDir, homebrewDb, definition, known)],
+    spells: [...spells, ...subclass, ...itemSpells(dataDir, homebrewDb, definition, heldForItems)],
   };
 }
