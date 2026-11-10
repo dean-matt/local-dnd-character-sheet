@@ -152,6 +152,10 @@ CREATE TABLE subclass_optional_features (
 -- own: it takes the option whose name matches the one chosen for the feature it
 -- names, at another level of the same class and subclass, so Storm Soul takes the
 -- environment chosen for Storm Aura. load/feature-choices.ts writes all three.
+--
+-- uses and uses_reset are the limited uses load/limited-uses.ts reads from a
+-- feature's text, here and on feats and optional_features. 'short' is a short or
+-- a long rest. Both NULL where the text states none or the parse cannot read it.
 
 CREATE TABLE class_features (
   name         TEXT NOT NULL,
@@ -166,6 +170,9 @@ CREATE TABLE class_features (
   offered_by_source TEXT,
   follows_name      TEXT,
   follows_source    TEXT,
+  uses              INTEGER CHECK (uses >= 1),
+  uses_reset        TEXT CHECK (uses_reset IN ('short', 'long')),
+  CHECK ((uses IS NULL) = (uses_reset IS NULL)),
   PRIMARY KEY (name, source, class_name, class_source, level)
 ) STRICT;
 
@@ -186,6 +193,9 @@ CREATE TABLE subclass_features (
   offered_by_source   TEXT,
   follows_name        TEXT,
   follows_source      TEXT,
+  uses                INTEGER CHECK (uses >= 1),
+  uses_reset          TEXT CHECK (uses_reset IN ('short', 'long')),
+  CHECK ((uses IS NULL) = (uses_reset IS NULL)),
   PRIMARY KEY (name, source, class_name, class_source, subclass_short_name, subclass_source, level)
 ) STRICT;
 
@@ -271,11 +281,16 @@ CREATE TABLE items (
   PRIMARY KEY (name, source)
 ) STRICT;
 
+-- trait_uses maps a trait's name to its limited uses, for the traits that have
+-- them: {"Relentless Endurance": {"uses": 1, "reset": "long"}}. A trait is a
+-- node inside json rather than a row, so its uses ride on the row that holds it,
+-- as they do on subraces. NULL where no trait has limited uses.
 CREATE TABLE races (
-  name    TEXT NOT NULL,
-  source  TEXT NOT NULL,
-  edition TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
-  json    TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  source     TEXT NOT NULL,
+  edition    TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
+  json       TEXT NOT NULL,
+  trait_uses TEXT CHECK (json_valid(trait_uses)),
   PRIMARY KEY (name, source)
 ) STRICT;
 
@@ -307,6 +322,7 @@ CREATE TABLE subraces (
   race_source TEXT NOT NULL,
   edition     TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
   json        TEXT NOT NULL,
+  trait_uses  TEXT CHECK (json_valid(trait_uses)),
   PRIMARY KEY (name, source, race_name, race_source)
 ) STRICT;
 
@@ -321,18 +337,24 @@ CREATE TABLE backgrounds (
 ) STRICT;
 
 CREATE TABLE feats (
-  name    TEXT NOT NULL,
-  source  TEXT NOT NULL,
-  edition TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
-  json    TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  source     TEXT NOT NULL,
+  edition    TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
+  json       TEXT NOT NULL,
+  uses       INTEGER CHECK (uses >= 1),
+  uses_reset TEXT CHECK (uses_reset IN ('short', 'long')),
+  CHECK ((uses IS NULL) = (uses_reset IS NULL)),
   PRIMARY KEY (name, source)
 ) STRICT;
 
 CREATE TABLE optional_features (
-  name    TEXT NOT NULL,
-  source  TEXT NOT NULL,
-  edition TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
-  json    TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  source     TEXT NOT NULL,
+  edition    TEXT NOT NULL CHECK (edition IN (${EDITION_LIST})),
+  json       TEXT NOT NULL,
+  uses       INTEGER CHECK (uses >= 1),
+  uses_reset TEXT CHECK (uses_reset IN ('short', 'long')),
+  CHECK ((uses IS NULL) = (uses_reset IS NULL)),
   PRIMARY KEY (name, source)
 ) STRICT;
 

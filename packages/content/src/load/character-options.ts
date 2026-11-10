@@ -11,6 +11,7 @@ import { EDITION_FILES, EDITIONS, type Edition, editionOf, editions, ownFiles } 
 import { byNameSource, collectFluff, isFluffPath, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, entriesOf, isRecord, strings, text } from "./json.ts";
+import { usesColumns } from "./limited-uses.ts";
 
 type FromSource = (source: string) => Edition;
 
@@ -279,6 +280,7 @@ export const characterOptions: Loader = {
         const source = text(entry, "source", context);
         const edition = editionOf(entry, source, fromSource);
         const row = toRow(entry, source, edition, context, fluff);
+        if (file.table !== "backgrounds") Object.assign(row, usesColumns(entry.entries));
         out[file.table]?.push(row);
         if (file.table === "optional_features") {
           out.optional_feature_types?.push(...typeRows(entry, row, context));

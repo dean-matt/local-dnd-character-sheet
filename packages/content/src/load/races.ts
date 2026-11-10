@@ -18,6 +18,7 @@ import { EDITION_FILES, editionOf, editions } from "./edition.ts";
 import { collectFluff, fluffKey, withFluff } from "./fluff.ts";
 import type { Loader, Row } from "./index.ts";
 import { type Entry, entriesOf, isRecord, text } from "./json.ts";
+import { traitUses } from "./limited-uses.ts";
 
 const RACES_FILE = "data/races.json";
 const RACES_FLUFF_FILE = "data/fluff-races.json";
@@ -113,6 +114,7 @@ export const races: Loader = {
           source,
           edition: editionOf(entry, source, fromSource),
           json: JSON.stringify(merged),
+          trait_uses: traitUses(merged.entries),
         };
       }),
       subraces: entriesOf(parsed, "subrace", RACES_FILE).map((entry, index): Row => {
@@ -130,6 +132,7 @@ export const races: Loader = {
           race_source: text(entry, "raceSource", context),
           edition: editionOf(entry, source, fromSource),
           json: JSON.stringify(merged),
+          trait_uses: traitUses(merged.entries),
         };
       }),
     };

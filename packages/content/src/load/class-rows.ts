@@ -8,6 +8,7 @@ import { type Edition, editionOf } from "./edition.ts";
 import { fluffKey, withFluff } from "./fluff.ts";
 import type { Row } from "./index.ts";
 import { type Entry, isRecord, text } from "./json.ts";
+import { usesColumns } from "./limited-uses.ts";
 
 /** Every class but the three sidekicks carries `hd`, and none rolls more than one. */
 function hitDie(entry: Entry, context: string): number {
@@ -80,6 +81,7 @@ function classFeatureRow(
     level: featureLevel(entry, context),
     edition: editionOf(entry, source, fromSource),
     json: JSON.stringify(entry),
+    ...usesColumns(entry.entries),
   };
 }
 
