@@ -29,8 +29,8 @@ function restChanges(before: CharacterState, after: CharacterState, maximum: num
     {
       key: "hitPoints",
       label: "Hit points",
-      before: String(before.hitPoints.current ?? maximum),
-      after: String(after.hitPoints.current ?? maximum),
+      before: `${before.hitPoints.current ?? maximum}/${maximum}`,
+      after: `${after.hitPoints.current ?? maximum}/${maximum}`,
     },
     {
       key: "temporary",

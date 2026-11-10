@@ -33,13 +33,13 @@ function describeSpend({ die, face, modifier, regained, amount }: AppliedSpend<D
 /**
  * One button per hit die size, each spending a die of that size: it rolls the die with the
  * Constitution modifier and hands `onChange` the spends with it added, writing nothing.
- * `state` is the state after `spends`, so the pools, the faces and the readout show them.
+ * `state` is the state after `spends`, so the pools and the faces show them.
  * `spends` holds only those `spentState` applied. Undo hands back the spends without the
  * latest. A pool with none left, a dead character, or hit points at their maximum makes the
  * roll buttons unavailable, and `busy` makes every control unavailable. Each pool draws a
  * die face per die: a die spent in this dialog shows what it regained, a remaining die is
- * blank. The hit points a pool regained show under its row, over a running hit point
- * readout, and each spend and undo is announced in full.
+ * blank. The hit points a pool regained show under its row, and each spend and
+ * undo is announced in full.
  */
 export function SpendHitDice({
   character,
@@ -174,23 +174,15 @@ export function SpendHitDice({
               : "Hit points are full."}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          aria-label="Undo the latest hit die spent"
-          aria-disabled={!latest || busy}
-          onClick={undo}
-          className="min-h-11 rounded-control border border-border px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
-        >
-          Undo
-        </button>
-        {latest && (
-          <p className="font-semibold text-row">
-            <span className="sr-only">Hit points </span>
-            {`${current} / ${maximum}`}
-          </p>
-        )}
-      </div>
+      <button
+        type="button"
+        aria-label="Undo the latest hit die spent"
+        aria-disabled={!latest || busy}
+        onClick={undo}
+        className="min-h-11 self-start rounded-control border border-border px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
+      >
+        Undo
+      </button>
       <Announcer announced={announced} />
     </div>
   );

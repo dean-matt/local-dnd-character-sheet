@@ -216,7 +216,7 @@ describe("RestMenu", () => {
     const writes = renderLive(spent());
     const dialog = await open("Long rest");
     expect(listed(dialog)).toEqual([
-      "Hit points: 12 → 20",
+      "Hit points: 12/20 → 20/20",
       "Temporary hit points: 3 → 0",
       "d8 Hit Dice: 1/3 → 3/3",
       "Pact Magic 1st Level slots: 0/1 → 1/1",
@@ -323,7 +323,7 @@ describe("RestMenu", () => {
     });
     await waitFor(() => expect(sheet()).toHaveTextContent("full hp; 3/3 d8, 2/2 d10"));
     expect(screen.getByRole("status", { name: "" })).toHaveTextContent(
-      /^Long rest applied\. Hit points 20, /,
+      /^Long rest applied\. Hit points 20\/20, /,
     );
     expect(rest()).toHaveFocus();
   });
@@ -388,7 +388,6 @@ describe("RestMenu", () => {
       expect(dialog.queryByRole("img", { name: "d8, not spent" })).not.toBeInTheDocument();
       expect(dialog.getByText(`+${regained} HP`)).toBeInTheDocument();
       expect(dialog.getByText("d8 · 0 of 3 left")).toBeInTheDocument();
-      expect(dialog.getByText(`${12 + regained} / 20`)).toBeInTheDocument();
       expect(announced(new RegExp(`regained ${regained} hit points`))).toBe(true);
 
       expect(writes).toEqual([]);
@@ -402,7 +401,7 @@ describe("RestMenu", () => {
       const dialog = await openShort();
       fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" }));
       expect(listed(dialog)).toEqual([
-        `Hit points: 12 → ${12 + regained}`,
+        `Hit points: 12/20 → ${12 + regained}/20`,
         "d8 Hit Dice: 1/3 → 0/3",
         "Pact Magic 1st Level slots: 0/1 → 1/1",
         "Ki: 0/2 → 2/2",
@@ -575,12 +574,12 @@ describe("RestMenu", () => {
       random.mockReturnValue(2 / 10 + 0.001);
       fireEvent.click(dialog.getByRole("button", { name: "Roll d10, 2 of 2 left" }));
       const third = Math.max(0, 3 + conModifier);
-      expect(dialog.getByText(`${2 + regained + third} / 20`)).toBeInTheDocument();
+      expect(listed(dialog)[0]).toBe(`Hit points: 2/20 → ${2 + regained + third}/20`);
 
       fireEvent.click(undo);
       expect(dialog.getByText("d10 · 2 of 2 left")).toBeInTheDocument();
       expect(dialog.getByText("d8 · 0 of 3 left")).toBeInTheDocument();
-      expect(dialog.getByText(`${2 + regained} / 20`)).toBeInTheDocument();
+      expect(listed(dialog)[0]).toBe(`Hit points: 2/20 → ${2 + regained}/20`);
       expect(
         announced(
           new RegExp(
