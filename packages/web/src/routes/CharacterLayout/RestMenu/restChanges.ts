@@ -14,6 +14,10 @@ import {
 } from "@dnd/character";
 import { levelLabel, ORDINAL } from "../../../lib/spellLevel.ts";
 
+/** Why the long rest is unavailable to a character at 0 hit points. */
+export const LONG_REST_REFUSAL =
+  "A character needs at least 1 hit point to benefit from a long rest.";
+
 /** `key` tells rows apart where two resources share a name. */
 export type RestChange = { key: string; label: string; before: string; after: string };
 

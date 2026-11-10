@@ -406,6 +406,50 @@ describe("RestMenu", () => {
     });
   });
 
+  describe("at 0 hit points", () => {
+    const refusal = "A character needs at least 1 hit point to benefit from a long rest.";
+
+    it.each([
+      ["dying", { successes: 0, failures: 2 }],
+      ["stable", { successes: 3, failures: 0 }],
+      ["dead", { successes: 0, failures: 3 }],
+    ])("makes the long rest unavailable while %s, saying why", async (_, deathSaves) => {
+      const writes = renderLive({
+        ...spent(),
+        hitPoints: { current: 0, temporary: 0 },
+        deathSaves,
+      });
+      await openMenu();
+      const long = screen.getByRole("button", { name: "Long rest" });
+      expect(long).toHaveAttribute("aria-disabled", "true");
+      expect(long).toHaveAccessibleDescription(refusal);
+
+      fireEvent.click(long);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(writes).toEqual([]);
+    });
+
+    it("still offers the short rest", async () => {
+      renderLive({ ...spent(), hitPoints: { current: 0, temporary: 0 } });
+      await openMenu();
+      expect(screen.getByRole("button", { name: "Short rest" })).not.toHaveAttribute(
+        "aria-disabled",
+      );
+    });
+
+    it("refuses an open long rest once the hit points drop to 0 elsewhere", async () => {
+      const writes = renderLive(spent());
+      const dialog = await open("Long rest");
+      storeElsewhere({ hitPoints: { current: 0, temporary: 0 } });
+
+      expect(await dialog.findByRole("alert")).toHaveTextContent(refusal);
+      const take = dialog.getByRole("button", { name: "Take the long rest" });
+      expect(take).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(take);
+      expect(writes).toEqual([]);
+    });
+  });
+
   it("writes nothing on cancel, and returns focus to the Rest button", async () => {
     const writes = renderLive(spent());
     fireEvent.click((await open("Short rest")).getByRole("button", { name: "Cancel" }));
