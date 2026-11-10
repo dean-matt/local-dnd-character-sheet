@@ -4,7 +4,8 @@ import { isRecord, str } from "./entryGuards.ts";
 
 /**
  * The die a table's first column label names, as `d100` or `{@dice 2d4}`, or undefined where
- * the label is anything else — `Wyrmling d8`, `d6 + Level` — or names nothing the dice roll.
+ * the label is anything else — `Wyrmling d8`, `d6 + Level` — or names a die the dice package
+ * cannot roll.
  */
 export function tableDie(label: unknown): string | undefined {
   if (typeof label !== "string") return undefined;
@@ -22,8 +23,9 @@ export function tableDie(label: unknown): string | undefined {
     : undefined;
 }
 
-/** A d100 table writes 100 as `00`. */
+/** A d100 table writes 100 as `00`, and as `0` in a cell's `max` or `exact`. */
 const bound = (written: string) => (written === "00" ? 100 : Number(written));
+const hundred = (n: number) => (n === 0 ? 100 : n);
 
 /**
  * The totals a row's first cell covers: `7`, `"2-3"`, `"91–00"`, `{@area 4|...}`, or a
@@ -36,8 +38,10 @@ export function rowRange(cell: unknown): readonly [number, number] | undefined {
     if (text !== undefined) return rowRange(text);
     const roll = cell.roll;
     if (!isRecord(roll)) return undefined;
-    if (typeof roll.exact === "number") return [roll.exact, roll.exact];
-    if (typeof roll.min === "number" && typeof roll.max === "number") return [roll.min, roll.max];
+    if (typeof roll.exact === "number") return [hundred(roll.exact), hundred(roll.exact)];
+    if (typeof roll.min === "number" && typeof roll.max === "number") {
+      return [roll.min, hundred(roll.max)];
+    }
     return undefined;
   }
   if (typeof cell !== "string") return undefined;

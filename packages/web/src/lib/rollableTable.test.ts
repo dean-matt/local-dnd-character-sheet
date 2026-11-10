@@ -24,6 +24,8 @@ describe("rowRange", () => {
     ["{@area 4|12a|x}", [4, 4]],
     [{ type: "cell", roll: { exact: 4, pad: true } }, [4, 4]],
     [{ type: "cell", roll: { min: 5, max: 6 } }, [5, 6]],
+    [{ type: "cell", roll: { min: 97, max: 0, pad: true } }, [97, 100]],
+    [{ type: "cell", roll: { exact: 0 } }, [100, 100]],
     [{ type: "cell", entry: "10-12" }, [10, 12]],
   ])("reads %j as %j", (cell, range) => expect(rowRange(cell)).toEqual(range));
 

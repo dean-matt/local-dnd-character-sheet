@@ -231,9 +231,9 @@ describe("a rollable table", () => {
     onSheet(surge);
     fireEvent.click(screen.getByRole("button", { name: "Roll d6 on Wild Magic Surge" }));
 
-    await waitFor(() =>
-      expect(screen.getByRole("status")).toHaveTextContent("Rolled 5: You cast fireball."),
-    );
+    const status = () => document.querySelector('[role="status"]');
+    await waitFor(() => expect(status()).toHaveTextContent("Rolled 5"));
+    expect(screen.getByRole("status")).toHaveTextContent("Rolled 5: You cast fireball.");
     const [, , landed] = screen.getAllByRole("row");
     expect(landed).toHaveAttribute("aria-current", "true");
     expect(within(landed as HTMLElement).getByText("4–6")).toBeInTheDocument();
@@ -247,8 +247,44 @@ describe("a rollable table", () => {
     onSheet([{ type: "table", colLabels: ["d6", "Effect"], rows: [["1-3", "Blue"]] }]);
     fireEvent.click(screen.getByRole("button", { name: "Roll d6 on the table" }));
 
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Rolled 6: no row"));
+    await waitFor(() =>
+      expect(document.querySelector('[role="status"]')).toHaveTextContent("Rolled 6"),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Rolled 6: no row");
     expect(screen.getAllByRole("row").some((row) => row.hasAttribute("aria-current"))).toBe(false);
+  });
+
+  it("announces a repeated total again", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.7);
+    const fetchMock = onSheet(surge);
+    const button = screen.getByRole("button", { name: "Roll d6 on Wild Magic Surge" });
+    const announced = () => document.querySelector('[role="status"] > span');
+
+    fireEvent.click(button);
+    await waitFor(() => expect(announced()).not.toBeNull());
+    const first = announced();
+    fireEvent.click(button);
+    await waitFor(() => expect(rolls(fetchMock)).toHaveLength(2));
+    await waitFor(() => expect(announced()).not.toBe(first));
+    expect(announced()).toHaveTextContent("Rolled 5: You cast fireball.");
+  });
+
+  it("highlights the row and says the roll was not logged where the log refuses it", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.7);
+    stubFetch(new Response(JSON.stringify({ error: "down" }), { status: 500 }));
+    renderWithClient(
+      <RollingFor value="c1">
+        <RulesEntries entries={surge} />
+      </RollingFor>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Roll d6 on Wild Magic Surge" }));
+
+    await waitFor(() => expect(document.querySelector("tr[aria-current]")).not.toBeNull());
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Rolled 5: You cast fireball. (not logged)",
+    );
+    const [, , landed] = screen.getAllByRole("row");
+    expect(landed).toHaveAttribute("aria-current", "true");
   });
 
   it("rolls from a native button, which the keyboard focuses and activates", () => {

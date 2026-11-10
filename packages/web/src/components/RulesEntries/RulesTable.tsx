@@ -24,7 +24,7 @@ export function RulesTable({
   const characterId = useContext(RollingFor);
   const { roll, failed } = useRollAndRecord(characterId ?? "");
   const [rolledRow, setRolledRow] = useState<number>();
-  const [announcement, setAnnouncement] = useState("");
+  const [announcement, setAnnouncement] = useState({ text: "", rolls: 0 });
   const body = useRef<HTMLTableSectionElement>(null);
   const die = characterId === null ? undefined : tableDie(colLabels[0]);
 
@@ -34,7 +34,10 @@ export function RulesTable({
       setRolledRow(row);
       const cells = [...(body.current?.rows[row]?.cells ?? [])].slice(1);
       const text = cells.map((cell) => cell.textContent?.trim()).join(" ");
-      setAnnouncement(row === -1 ? `Rolled ${total}: no row` : `Rolled ${total}: ${text}`);
+      setAnnouncement(({ rolls }) => ({
+        text: row === -1 ? `Rolled ${total}: no row` : `Rolled ${total}: ${text}`,
+        rolls: rolls + 1,
+      }));
     });
   }
 
@@ -94,7 +97,8 @@ export function RulesTable({
     <div>
       {table}
       <p role="status" className="empty:hidden">
-        {announcement}
+        {/* A new node per roll, so a repeated total is announced again. */}
+        {announcement.rolls > 0 && <span key={announcement.rolls}>{announcement.text}</span>}
         {failed && <span className="text-error"> (not logged)</span>}
       </p>
     </div>
