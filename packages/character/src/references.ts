@@ -29,7 +29,7 @@ export type CatalogKind = (typeof CATALOG_KINDS)[number];
 
 /**
  * One `(name, source)` and where the character holds it, as a path into the definition
- * such as `spells[2].ref`, or into the state for `conditions[0]`. `parent` is the rest of
+ * such as `spells[2].ref`, or into the state for `conditions[0]` or `concentration.spell`. `parent` is the rest of
  * a subclass's or a subrace's key, or the base item a magic variant expands, and
  * `pantheon` the rest of a deity's. `overridden` marks a variant the table holds on a base
  * item that refuses it.
@@ -151,6 +151,7 @@ export function catalogReferences(
   state.conditions.forEach((condition, i) => {
     add(`conditions[${i}]`, "condition", condition);
   });
+  add("concentration.spell", "spell", state.concentration?.spell);
   return found;
 }
 

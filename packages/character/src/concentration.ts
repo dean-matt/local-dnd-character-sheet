@@ -1,11 +1,11 @@
 import type { CharacterState, Concentration } from "./state.ts";
 
 /**
- * The state concentrating on `spell`, and the concentration that ended to make room, or null
+ * The state holding `concentration`, and the concentration that ended to make room, or null
  * where none was held. Starting never refuses: a caster may drop one spell for another.
  */
-export const concentrationStarted = (state: CharacterState, spell: Concentration) => ({
-  state: { ...state, concentration: spell },
+export const concentrationStarted = (state: CharacterState, concentration: Concentration) => ({
+  state: { ...state, concentration },
   ended: state.concentration,
 });
 

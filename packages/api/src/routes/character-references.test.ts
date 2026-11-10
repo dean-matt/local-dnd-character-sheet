@@ -401,6 +401,19 @@ describe("characterReferencesRoutes", () => {
     ]);
   });
 
+  it("checks the spell the state concentrates on", async () => {
+    publishReferencesFixture(dataDir, CATALOG);
+    store(definitionWith());
+    const BLESS = { name: "Bless", source: "PHB" };
+    updateCharacterState(opened.charactersDb, "1", {
+      ...defaultCharacterState(),
+      concentration: { spell: BLESS, level: 1 },
+    });
+    expect(await unresolved()).toEqual([
+      { field: "concentration.spell", kind: "spell", ref: BLESS },
+    ]);
+  });
+
   it("leaves a homebrew reference, and a subclass under a homebrew class, unchecked", async () => {
     publishReferencesFixture(dataDir, CATALOG);
     store(

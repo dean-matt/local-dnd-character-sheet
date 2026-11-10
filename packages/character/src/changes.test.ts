@@ -236,6 +236,17 @@ describe("describeStateChange", () => {
     expect(stateChangePhrases(hex, state)).toEqual(["Concentration cleared"]);
   });
 
+  it("calls a homebrew spell concentrated on a homebrew spell, and a swap of two edited", () => {
+    const held = (homebrewId: string): CharacterState => ({
+      ...state,
+      concentration: { spell: { homebrewId }, level: 2 },
+    });
+    expect(stateChangePhrases(state, held("hb-1"))).toEqual([
+      "Concentration set to a homebrew spell at level 2",
+    ]);
+    expect(stateChangePhrases(held("hb-1"), held("hb-2"))).toEqual(["Concentration edited"]);
+  });
+
   it("names an effect starting and ending", () => {
     const raging: CharacterState = { ...state, activeEffects: [{ name: "Rage" }] };
     expect(stateChangePhrases(state, raging)).toEqual(["Rage set to active"]);
