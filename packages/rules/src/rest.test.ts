@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type HitDie, hitDicePick, resetsOn, rest } from "./index.ts";
+import { benefitsFromLongRest, type HitDie, hitDicePick, resetsOn, rest } from "./index.ts";
 
 describe("resetsOn", () => {
   it.each([
@@ -60,6 +60,20 @@ describe("rest", () => {
     expect(after.spellSlots.map((slot) => slot.expended)).toEqual([0, 0]);
     expect(after.exhaustion).toBe(1);
     expect(rest({ ...state(), exhaustion: 0 }, long).exhaustion).toBe(0);
+  });
+
+  it("refuses a long rest at 0 hit points, and allows a short one", () => {
+    const down = { ...state(), hitPoints: { current: 0, temporary: 0 } };
+    expect(() => rest(down, long)).toThrow(/needs at least 1 hit point/);
+    expect(rest(down, short).hitPoints).toEqual(down.hitPoints);
+  });
+
+  it.each([
+    [0, false],
+    [1, true],
+    [null, true],
+  ])("reads %s hit points as benefiting from a long rest: %s", (current, expected) => {
+    expect(benefitsFromLongRest(current)).toBe(expected);
   });
 
   it("leaves hit points, slots, exhaustion and hit dice alone on a short rest", () => {

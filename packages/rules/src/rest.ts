@@ -57,6 +57,11 @@ type RestOptions = {
   picked?: readonly HitDie[];
 };
 
+/** Whether a long rest grants its benefits: only from at least 1 hit point, null reading as the maximum. */
+export function benefitsFromLongRest(current: number | null): boolean {
+  return current === null || current >= 1;
+}
+
 /** Whether a rest of this length restores what recovers on `trigger`. */
 export function resets(trigger: ResetTrigger, length: RestLength): boolean {
   if (trigger === "short") return true;
@@ -131,7 +136,7 @@ function recovered(pools: readonly Pool[], options: RestOptions): Pool[] {
  * as the maximum, clears temporary hit points and expended slots, lowers exhaustion by 1
  * and returns hit dice by `hitDiceRecovered`.
  *
- * Throws a RangeError, returning nothing, when `picked` is missing where it is needed, picks
+ * Throws a RangeError, returning nothing, on a long rest at 0 hit points, when `picked` is missing where it is needed, picks
  * more dice than return, or names a size more times than dice of it were spent, and when a
  * pool's remaining dice fall outside 0 to its total or two pools share a die size.
  */
@@ -144,6 +149,9 @@ export function rest<S extends RestState>(state: S, options: RestOptions): S {
   const pactSlots = state.pactSlots && { ...state.pactSlots, expended: 0 };
   if (options.length === "short") {
     return { ...state, pactSlots, resources };
+  }
+  if (!benefitsFromLongRest(state.hitPoints.current)) {
+    throw new RangeError("A long rest needs at least 1 hit point to grant its benefits");
   }
   return {
     ...state,
