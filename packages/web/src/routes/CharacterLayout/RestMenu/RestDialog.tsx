@@ -8,21 +8,36 @@ import {
 import { useState } from "react";
 import { Modal } from "../../../components/Modal.tsx";
 import { ModalEntry } from "../../../components/ModalEntry.tsx";
+import { useRecordRoll } from "../../../hooks/useRecordRoll.ts";
 import { useReplaceCharacterState } from "../../../hooks/useReplaceCharacterState.ts";
+import { ChangeList } from "./ChangeList.tsx";
 import { HitDicePicks } from "./HitDicePicks.tsx";
-import { restPreview } from "./restChanges.ts";
+import { type DialogSpend, type RestChange, restPreview, spentState } from "./restChanges.ts";
 import { largestFirst, pickedDice } from "./restPicks.ts";
 import { SpendHitDice } from "./SpendHitDice.tsx";
 
 const TITLE: Record<RestLength, string> = { short: "Short rest", long: "Long rest" };
+
+function appliedSummary(length: RestLength, changes: RestChange[]) {
+  const moved = changes.map((change) => `${change.label} ${change.after}`).join(", ");
+  return `${TITLE[length]} applied. ${moved ? `${moved}.` : "Nothing changed."}`;
+}
+
+function discardedSummary(length: RestLength, spent: number) {
+  if (spent === 0) return undefined;
+  const dice = spent === 1 ? "hit die spent was" : `${spent} hit dice spent were`;
+  return `${TITLE[length]} cancelled. The ${dice} discarded.`;
+}
 
 /**
  * What a rest changes, listed before anything is written. Confirm writes the rested state in
  * one write and hands `onApplied` what it changed; Cancel, Escape and a failed write write
  * nothing. The dialog stays open while the write is in flight, so its outcome is shown. Hit
  * dice are picked only where more than one size was spent; with one size, the most that
- * return come back. A short rest, once confirmed, stays open to spend hit dice, each spend
- * its own write; closing it then announces the rest and keeps every die already spent.
+ * return come back. A short rest spends hit dice before it is taken: the spends are
+ * tentative, so closing the dialog discards them and hands `onClose` a sentence saying so,
+ * and confirm writes them with the rest, then logs each roll. A roll that fails to log keeps
+ * the dialog open on the applied rest to say so.
  */
 export function RestDialog({
   character,
@@ -36,38 +51,55 @@ export function RestDialog({
   derived: CharacterDerived;
   state: CharacterState;
   length: RestLength;
-  onClose: () => void;
+  /** Called on a close that writes nothing, with a sentence to announce where spends were discarded. */
+  onClose: (announcement?: string) => void;
   /** Called with a sentence naming what the rest changed, once the write lands. */
   onApplied: (summary: string) => void;
 }) {
   const { definition } = character;
   const replace = useReplaceCharacterState(character.id);
+  const record = useRecordRoll(character.id);
+  const [spends, setSpends] = useState<DialogSpend[]>([]);
+  const [committing, setCommitting] = useState(false);
+  const busy = replace.writing || committing;
   const pick = length === "long" ? longRestHitDicePick(definition, derived, state) : null;
   const [typed, setTyped] = useState(() => (pick ? largestFirst(pick) : []));
   const picked = pick ? pickedDice(pick, typed) : undefined;
   const [taken, setTaken] = useState<string>();
   const ready = !pick || picked !== undefined;
   const { after, changes } = ready
-    ? restPreview(definition, derived, state, length, picked)
+    ? restPreview(definition, derived, state, length, picked, spends)
     : { after: undefined, changes: undefined };
 
   function close() {
-    if (replace.writing) return;
-    if (taken === undefined) onClose();
-    else onApplied(taken);
+    if (busy) return;
+    if (taken !== undefined) onApplied(taken);
+    else onClose(discardedSummary(length, spends.length));
   }
 
   async function confirm() {
-    if (!after || !changes || replace.writing) return;
+    if (!after || !changes || busy) return;
+    setCommitting(true);
     try {
       await replace.mutateAsync(after);
     } catch {
+      setCommitting(false);
       return;
     }
-    const moved = changes.map((change) => `${change.label} ${change.after}`).join(", ");
-    const summary = `${TITLE[length]} applied. ${moved ? `${moved}.` : "Nothing changed."}`;
-    if (length === "short") setTaken(summary);
-    else onApplied(summary);
+    // The landed state already holds the spends; kept, they would be counted twice.
+    setSpends([]);
+    let failed = false;
+    for (const spend of spends) {
+      try {
+        await record.mutateAsync(spend.roll);
+      } catch {
+        failed = true;
+      }
+    }
+    const summary = appliedSummary(length, changes);
+    if (!failed) return onApplied(summary);
+    setCommitting(false);
+    setTaken(summary);
   }
 
   return (
@@ -78,7 +110,7 @@ export function RestDialog({
           taken !== undefined ? (
             <button
               type="button"
-              aria-disabled={replace.writing}
+              aria-disabled={busy}
               onClick={close}
               className="min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"
             >
@@ -88,7 +120,7 @@ export function RestDialog({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                aria-disabled={replace.writing}
+                aria-disabled={busy}
                 onClick={close}
                 className="min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted"
               >
@@ -96,11 +128,11 @@ export function RestDialog({
               </button>
               <button
                 type="button"
-                aria-disabled={!after || replace.writing}
+                aria-disabled={!after || busy}
                 onClick={confirm}
                 className="min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted"
               >
-                {replace.isPending ? "Resting…" : `Take the ${TITLE[length].toLowerCase()}`}
+                {committing ? "Resting…" : `Take the ${TITLE[length].toLowerCase()}`}
               </button>
             </div>
           )
@@ -109,29 +141,27 @@ export function RestDialog({
         {taken !== undefined && (
           <>
             <p>{taken}</p>
-            <SpendHitDice character={character} derived={derived} state={state} />
+            <p role="alert" className="text-error text-row">
+              The hit die rolls were not logged.
+            </p>
           </>
+        )}
+        {taken === undefined && length === "short" && (
+          <SpendHitDice
+            character={character}
+            derived={derived}
+            state={spentState(definition, derived, state, spends)}
+            spends={spends}
+            busy={busy}
+            onChange={setSpends}
+          />
         )}
         {taken === undefined && pick && pick.spent.length > 1 && (
           <HitDicePicks pick={pick} typed={typed} onChange={setTyped} />
         )}
-        <div aria-live="polite" hidden={taken !== undefined}>
-          {changes === undefined ? (
-            <p className="text-muted">Pick the hit dice to recover to see what the rest changes.</p>
-          ) : changes.length > 0 ? (
-            <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5 text-row">
-              {changes.map((change) => (
-                <div key={change.key} className="contents">
-                  <dt>{change.label}</dt>
-                  <dd className="text-right font-semibold tabular-nums">
-                    {change.before} → {change.after}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="text-muted">This rest changes nothing.</p>
-          )}
+        {/* The short rest's list follows each spend, which its own announcement already speaks. */}
+        <div aria-live={length === "long" ? "polite" : undefined} hidden={taken !== undefined}>
+          <ChangeList changes={changes} />
         </div>
         {replace.error && (
           <p role="alert" className="text-error text-row">

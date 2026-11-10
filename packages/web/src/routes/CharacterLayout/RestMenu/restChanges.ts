@@ -4,10 +4,13 @@ import {
   type CharacterState,
   derivedValue,
   type HitDie,
+  hitDieSpentState,
   type RestLength,
   restedState,
+  type rollRecordSchema,
   sheetState,
 } from "@dnd/character";
+import type { z } from "zod";
 import { levelLabel, ORDINAL } from "../../../lib/spellLevel.ts";
 
 /** `key` tells rows apart where two resources share a name. */
@@ -74,9 +77,36 @@ function restChanges(before: CharacterState, after: CharacterState, maximum: num
   return rows.filter((row) => row.before !== row.after);
 }
 
+/** A hit die spent in the Short rest dialog before the rest is taken: its size and the face it rolled. */
+export type HitDieSpend = { die: HitDie; face: number };
+
+/** A tentative spend with what the dialog shows of it and the roll it logs once the rest is taken. */
+export type DialogSpend = HitDieSpend & {
+  amount: number;
+  calculation: string;
+  roll: z.infer<typeof rollRecordSchema>;
+};
+
+/**
+ * The state after `spends`, each by `hitDieSpentState` in order, written nowhere. A spend
+ * the state no longer allows, such as one from a pool since emptied, is skipped.
+ */
+export function spentState(
+  definition: CharacterDefinition,
+  derived: CharacterDerived,
+  state: CharacterState,
+  spends: readonly HitDieSpend[],
+): CharacterState {
+  return spends.reduce(
+    (held, { die, face }) => hitDieSpentState(definition, derived, held, die, face)?.state ?? held,
+    state,
+  );
+}
+
 /**
  * The state a rest leaves and what it changes on the sheet, so the menu's summary and the
- * dialog's list describe the one rest the dialog writes.
+ * dialog's list describe the one rest the dialog writes. The hit dice in `spends` are spent
+ * before the rest, so the list and the write carry them with its own recovery.
  */
 export function restPreview(
   definition: CharacterDefinition,
@@ -84,8 +114,10 @@ export function restPreview(
   state: CharacterState,
   length: RestLength,
   picked?: HitDie[],
+  spends: readonly HitDieSpend[] = [],
 ): { after: CharacterState; changes: RestChange[] } {
-  const after = restedState(definition, derived, state, length, picked);
+  const during = spentState(definition, derived, state, spends);
+  const after = restedState(definition, derived, during, length, picked);
   const changes = restChanges(
     sheetState(derived, state),
     after,
