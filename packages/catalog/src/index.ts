@@ -95,6 +95,7 @@ export type {
   CharacterFeatures,
   FeatureGroup,
   FeatureOrigin,
+  LimitedUses,
   SheetFeature,
 } from "./features.ts";
 export { characterFeaturesSchema } from "./features.ts";

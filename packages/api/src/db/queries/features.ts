@@ -14,6 +14,7 @@ import {
   characterOptionEntrySchema,
   classFeatureVariantSchema,
   type FeatureGroup,
+  type LimitedUses,
   type SheetFeature,
 } from "@dnd/catalog";
 import {
@@ -23,10 +24,13 @@ import {
   classLevels,
   displayName,
   type EntryRef,
+  entryKey,
   type FeatureKey,
   featureKey,
+  featureUsesKey,
   houseRule,
 } from "@dnd/character";
+import { z } from "zod";
 import { getBackground } from "./backgrounds.ts";
 import {
   type ClassFeatureRow,
@@ -36,7 +40,7 @@ import {
   getSubclassFeatures,
 } from "./classes.ts";
 import { parseJson, raceJson } from "./derived.ts";
-import { getFeat, getOptionalFeature } from "./feats.ts";
+import { getFeat, getOptionalFeature, getUses, type UsesColumns } from "./feats.ts";
 import {
   asHomebrewIdRef,
   getHomebrewBackground,
@@ -49,8 +53,18 @@ import {
   listHomebrewClassFeatures,
   listHomebrewSubclassFeatures,
 } from "./homebrew.ts";
+import { getTraitUses } from "./races.ts";
 
 type Placement = { level?: number; featureType?: string };
+
+/** A row's limited uses under `key`, or undefined where the build read none. */
+const usesOf = (row: UsesColumns | undefined, key: string): LimitedUses | undefined =>
+  row?.uses && row.uses_reset ? { key, count: row.uses, reset: row.uses_reset } : undefined;
+
+const traitUsesSchema = z.record(
+  z.string(),
+  z.object({ uses: z.int().min(1), reset: z.enum(["short", "long"]) }),
+);
 
 /** The row itself where it parses, not zod's copy, so a test can record each field read off it. */
 const entryOf = (json: unknown): CharacterOptionEntry | undefined => {
@@ -76,7 +90,12 @@ const unresolved = (ref: EntryRef, placement: Placement = {}): SheetFeature => (
  * A whole catalog or homebrew row as one feature, unresolved where the row is missing or
  * its `json` does not parse.
  */
-export function rowFeature(json: unknown, ref: EntryRef, placement: Placement = {}): SheetFeature {
+export function rowFeature(
+  json: unknown,
+  ref: EntryRef,
+  placement: Placement = {},
+  uses?: LimitedUses,
+): SheetFeature {
   const entry = entryOf(json);
   if (!entry) return unresolved(ref, placement);
   return {
@@ -85,14 +104,27 @@ export function rowFeature(json: unknown, ref: EntryRef, placement: Placement = 
     ...sourceOf(ref, entry.source),
     ...placement,
     entries: entry.entries ?? [],
+    ...(uses && { uses }),
   };
 }
 
 type EntryNode = Exclude<NonNullable<CharacterOptionEntry["entries"]>[number], string>;
 
 /** A named node inside a row, such as a race's `Darkvision`, as a feature of its own. */
-function nodeFeature(node: EntryNode, name: string, ref: EntryRef, source: string): SheetFeature {
-  return { resolved: true, name, ...sourceOf(ref, source), entries: node.entries ?? [node] };
+function nodeFeature(
+  node: EntryNode,
+  name: string,
+  ref: EntryRef,
+  source: string,
+  uses?: LimitedUses,
+): SheetFeature {
+  return {
+    resolved: true,
+    name,
+    ...sourceOf(ref, source),
+    entries: node.entries ?? [node],
+    ...(uses && { uses }),
+  };
 }
 
 const isNode = (entry: string | EntryNode): entry is EntryNode => typeof entry !== "string";
@@ -139,25 +171,39 @@ function withChoices(
     );
     return leader ? taken(offerOf(leader)).map(({ name }) => name) : [];
   };
+  const usesKey = (row: ClassFeatureRow) =>
+    featureUsesKey(
+      [
+        "feature",
+        owner.className,
+        owner.classSource,
+        owner.subclass?.shortName ?? "",
+        owner.subclass?.source ?? "",
+        String(row.level),
+        row.source,
+      ],
+      row.name,
+    );
+  const asFeature = (row: ClassFeatureRow) =>
+    rowFeature(row.json, row, { level: row.level }, usesOf(row, usesKey(row)));
   return rows.flatMap((row): SheetFeature[] => {
     if (row.offered_by_name !== null) return [];
     const placement = { level: row.level };
-    const feature = rowFeature(row.json, row, placement);
+    const feature = asFeature(row);
     if (row.choose === null && row.follows_name === null) return [feature];
     const optionRows = rows
       .filter((each) => each.level === row.level && each.offered_by_name === row.name)
       .filter((each) => each.offered_by_source === row.source);
-    const listed = (each: ClassFeatureRow) => rowFeature(each.json, each, placement);
     if (row.choose === null) {
       const names = followed(row);
-      return [feature, ...optionRows.filter(({ name }) => names.includes(name)).map(listed)];
+      return [feature, ...optionRows.filter(({ name }) => names.includes(name)).map(asFeature)];
     }
     const options = optionRows.map(({ name, source }) => ({ name, source }));
     const offering = offerOf(row);
     const chosen = taken(offering);
     return [
       { ...feature, choice: { feature: offering, count: row.choose, options } },
-      ...optionRows.filter((each) => chosen.some(sameRef(each))).map(listed),
+      ...optionRows.filter((each) => chosen.some(sameRef(each))).map(asFeature),
       ...chosen
         .filter((ref) => !options.some(sameRef(ref)))
         .map((ref) => unresolved(ref, placement)),
@@ -267,11 +313,20 @@ function raceGroup(
       : subrace?.name;
   const name = subraceName === undefined ? raceName : `${raceName} (${subraceName})`;
   if (!entry) return { origin: "race", name, features: [unresolved(subrace ?? race)] };
-  const features = (entry.entries ?? [])
-    .filter(isNode)
-    .flatMap((node) =>
-      typeof node.name === "string" ? [nodeFeature(node, node.name, race, entry.source)] : [],
-    );
+  const traitUses =
+    "homebrewId" in race
+      ? undefined
+      : parseJson(traitUsesSchema, getTraitUses(dataDir, race, catalogRef(subrace)) ?? "null");
+  const features = (entry.entries ?? []).filter(isNode).flatMap((node) => {
+    if (typeof node.name !== "string") return [];
+    const uses = traitUses?.[node.name];
+    const limited = uses && {
+      key: featureUsesKey(["trait", entryKey(race)], node.name),
+      count: uses.uses,
+      reset: uses.reset,
+    };
+    return [nodeFeature(node, node.name, race, entry.source, limited)];
+  });
   return { origin: "race", name, features };
 }
 
@@ -322,6 +377,12 @@ function featGroup(
         : getFeat(dataDir, ref.name, ref.source)?.json,
       ref,
       level === undefined ? {} : { level },
+      "homebrewId" in ref
+        ? undefined
+        : usesOf(
+            getUses(dataDir, "feats", ref.name, ref.source),
+            featureUsesKey(["feat", ref.source], ref.name),
+          ),
     ),
   );
   return { origin: "feat", features };
@@ -339,6 +400,12 @@ function optionalFeatureGroup(
         : getOptionalFeature(dataDir, ref.name, ref.source)?.json,
       ref,
       { featureType },
+      "homebrewId" in ref
+        ? undefined
+        : usesOf(
+            getUses(dataDir, "optional_features", ref.name, ref.source),
+            featureUsesKey(["optionalFeature", ref.source], ref.name),
+          ),
     ),
   );
   return { origin: "optionalFeature", features };

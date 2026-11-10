@@ -35,6 +35,8 @@ const ELF = { name: "Elf", source: "PHB" };
 const ACOLYTE = { name: "Acolyte", source: "PHB" };
 const ALERT = { name: "Alert", source: "PHB" };
 const ARCHERY = { name: "Archery", source: "PHB" };
+const MAGE_SLAYER = { name: "Mage Slayer", source: "PHB" };
+const MISTY_VISIONS = { name: "Misty Visions", source: "PHB" };
 
 const json = (ref: { name: string; source: string }, extra: object = {}) =>
   JSON.stringify({ ...ref, entries: [`${ref.name} text.`], ...extra });
@@ -156,7 +158,7 @@ describe("featuresRoutes", () => {
         },
       ],
       classFeatures: [
-        classFeature("Second Wind", FIGHTER, 1),
+        { ...classFeature("Second Wind", FIGHTER, 1), uses: 1, uses_reset: "short" },
         classFeature("Ability Score Improvement", FIGHTER, 4),
         classFeature("Extra Attack", FIGHTER, 5),
         classFeature("Ability Score Improvement", BARBARIAN, 4),
@@ -223,6 +225,7 @@ describe("featuresRoutes", () => {
               { type: "entries", name: "Cantrip", entries: ["You know one cantrip."] },
             ],
           }),
+          trait_uses: JSON.stringify({ Cantrip: { uses: 1, reset: "long" } }),
         },
       ],
       backgrounds: [
@@ -250,8 +253,26 @@ describe("featuresRoutes", () => {
           json: json({ name: "Sage", source: "XPHB" }),
         },
       ],
-      feats: [{ ...ALERT, edition: "classic", json: json(ALERT) }],
-      optionalFeatures: [{ ...ARCHERY, edition: "classic", json: json(ARCHERY) }],
+      feats: [
+        { ...ALERT, edition: "classic", json: json(ALERT) },
+        {
+          ...MAGE_SLAYER,
+          edition: "classic",
+          json: json(MAGE_SLAYER),
+          uses: 3,
+          uses_reset: "long",
+        },
+      ],
+      optionalFeatures: [
+        { ...ARCHERY, edition: "classic", json: json(ARCHERY) },
+        {
+          ...MISTY_VISIONS,
+          edition: "classic",
+          json: json(MISTY_VISIONS),
+          uses: 1,
+          uses_reset: "short",
+        },
+      ],
     });
   });
 
@@ -306,6 +327,34 @@ describe("featuresRoutes", () => {
         featureType: "FS:F",
         entries: ["Archery text."],
       },
+    ]);
+  });
+
+  it("carries each limited use the build read, keyed for the state, and none where it read none", async () => {
+    store(
+      definitionWith({
+        feats: [{ ref: ALERT, level: 4 }, { ref: MAGE_SLAYER }],
+        optionalFeatures: [
+          { ref: ARCHERY, featureType: "FS:F", grantedBy: { kind: "class", ref: FIGHTER } },
+          { ref: MISTY_VISIONS, featureType: "EI", grantedBy: { kind: "class", ref: FIGHTER } },
+        ],
+      }),
+    );
+    const uses = (await features()).groups.flatMap((group) =>
+      group.features.map((feature) => [feature.name, feature.resolved ? feature.uses : undefined]),
+    );
+
+    expect(uses).toEqual([
+      ["Second Wind", { key: "feature|Fighter|PHB|||1|PHB|Second Wind", count: 1, reset: "short" }],
+      ["Ability Score Improvement", undefined],
+      ["Improved Critical", undefined],
+      ["Darkvision", undefined],
+      ["Cantrip", { key: "trait|catalog|Elf|PHB|Cantrip", count: 1, reset: "long" }],
+      ["Shelter of the Faithful", undefined],
+      ["Alert", undefined],
+      ["Mage Slayer", { key: "feat|PHB|Mage Slayer", count: 3, reset: "long" }],
+      ["Archery", undefined],
+      ["Misty Visions", { key: "optionalFeature|PHB|Misty Visions", count: 1, reset: "short" }],
     ]);
   });
 

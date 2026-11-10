@@ -29,10 +29,11 @@ export type SubraceFixtureRow = {
   race_source: string;
   edition: string;
   json: string;
+  trait_uses?: string;
 };
 
 export type BackgroundFixtureRow = RaceFixtureRow;
-export type FeatFixtureRow = RaceFixtureRow;
+export type FeatFixtureRow = RaceFixtureRow & { uses?: number; uses_reset?: string };
 export type MetaFixtureRow = { key: string; value: string };
 
 export type ItemFixtureRow = {
@@ -221,6 +222,8 @@ type ClassFeatureFixtureRow = {
   offered_by_source?: string;
   follows_name?: string;
   follows_source?: string;
+  uses?: number;
+  uses_reset?: string;
 };
 
 type SubclassResourceFixtureRow = ClassResourceFixtureRow & {

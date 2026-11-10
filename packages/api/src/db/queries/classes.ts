@@ -2,6 +2,7 @@ import type { PreparedSpellCount } from "@dnd/catalog";
 import type { Edition } from "@dnd/rules";
 import type Database from "better-sqlite3";
 import { openContentDb } from "../content.ts";
+import type { UsesColumns } from "./feats.ts";
 
 export type ClassRow = {
   name: string;
@@ -100,10 +101,10 @@ export type ClassFeatureRow = {
   offered_by_source: string | null;
   follows_name: string | null;
   follows_source: string | null;
-};
+} & UsesColumns;
 
 const FEATURE_COLUMNS =
-  "name, source, level, json, choose, offered_by_name, offered_by_source, follows_name, follows_source";
+  "name, source, level, json, choose, offered_by_name, offered_by_source, follows_name, follows_source, uses, uses_reset";
 
 export type ClassGrantsRow = {
   resources: ClassResourceRow[];

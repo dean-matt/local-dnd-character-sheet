@@ -83,3 +83,32 @@ export function getSubrace(
     db.close();
   }
 }
+
+/**
+ * The `trait_uses` map of a race, or of a subrace where one is named, since a subrace row
+ * holds the race's traits merged with its own. Null where no row answers or no trait has any.
+ */
+export function getTraitUses(
+  dataDir: string,
+  race: { name: string; source: string },
+  subrace?: { name: string; source: string },
+): string | null {
+  const db = openContentDb(dataDir);
+  try {
+    const row = (
+      subrace
+        ? db
+            .prepare(
+              `SELECT trait_uses FROM subraces
+               WHERE name = ? AND source = ? AND race_name = ? AND race_source = ?`,
+            )
+            .get(subrace.name, subrace.source, race.name, race.source)
+        : db
+            .prepare("SELECT trait_uses FROM races WHERE name = ? AND source = ?")
+            .get(race.name, race.source)
+    ) as { trait_uses: string | null } | undefined;
+    return row?.trait_uses ?? null;
+  } finally {
+    db.close();
+  }
+}

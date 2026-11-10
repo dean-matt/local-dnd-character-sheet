@@ -44,6 +44,8 @@ const NO_CHOICE = {
   offered_by_source: null,
   follows_name: null,
   follows_source: null,
+  uses: null,
+  uses_reset: null,
 };
 
 describe("content class queries", () => {
