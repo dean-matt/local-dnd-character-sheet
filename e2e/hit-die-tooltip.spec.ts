@@ -44,10 +44,14 @@ test("a spent hit die's tooltip draws past the Short rest dialog's edge without 
   });
   expect(put.ok()).toBe(true);
 
-  // CI runs with no content.db, so the derived block that sizes the hit dice pool is stubbed.
+  // CI runs with no content.db, so the derived block that sizes the hit dice pool and the
+  // features a rest restores are stubbed.
   const definition = { ...characterRecord(id, "Vex").definition, levels };
   await page.route(`**/api/characters/${id}/derived`, (route) =>
     route.fulfill({ json: derivedRecord(definition) }),
+  );
+  await page.route(`**/api/characters/${id}/features`, (route) =>
+    route.fulfill({ json: { groups: [] } }),
   );
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`/characters/${id}`);
