@@ -18,6 +18,7 @@ export function DiceRoller({ characterId }: { characterId: string }) {
   const [label, setLabel] = useState("");
   const [refused, setRefused] = useState("");
   const [result, setResult] = useState<{ rolled: Roll; logged: boolean } | null>(null);
+  const [messages, setMessages] = useState<HTMLDivElement | null>(null);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -41,6 +42,7 @@ export function DiceRoller({ characterId }: { characterId: string }) {
             setRefused("");
           }}
           error={refused}
+          messageSlot={{ into: messages }}
           autoComplete="off"
           spellCheck={false}
           className="w-24 text-row"
@@ -60,6 +62,8 @@ export function DiceRoller({ characterId }: { characterId: string }) {
           Roll
         </button>
       </div>
+      {/* Below the row, so a refusal neither widens the Dice field nor narrows the Label. */}
+      <div ref={setMessages} className="-mt-1.5 flex flex-col" />
       {result && (
         <p className="flex flex-wrap items-baseline gap-1 text-row">
           <span className="text-muted">{result.rolled.notation}:</span>
