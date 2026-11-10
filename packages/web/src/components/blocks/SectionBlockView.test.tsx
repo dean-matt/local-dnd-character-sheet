@@ -18,11 +18,13 @@ describe("SectionBlockView", () => {
 
   it("renders the spells section, which waits on the character and its derived block", () => {
     render(
-      <SectionBlockView
-        block={{ kind: "section", section: "spells" }}
-        character={characterRecord("1", "Vex")}
-        derived={undefined}
-      />,
+      <QueryClientProvider client={new QueryClient()}>
+        <SectionBlockView
+          block={{ kind: "section", section: "spells" }}
+          character={characterRecord("1", "Vex")}
+          derived={undefined}
+        />
+      </QueryClientProvider>,
     );
     expect(screen.getByText("Spells isn't available yet.")).toBeInTheDocument();
   });

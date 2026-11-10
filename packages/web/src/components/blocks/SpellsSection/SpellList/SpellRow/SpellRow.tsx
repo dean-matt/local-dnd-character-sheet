@@ -44,12 +44,14 @@ export function SpellRow({
   onRemove: () => void;
 }) {
   const classTag = className && <Tag>{className}</Tag>;
-  const remove = spell.fromItem ? undefined : (
+  // An item's or a subclass's spell is no definition entry, so it has nothing to remove.
+  const grantor = spell.fromItem ?? spell.fromSubclass;
+  const remove = grantor ? undefined : (
     <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />
   );
   const alwaysPrepared =
-    spell.resolved && spell.level > 0 && !spell.fromItem && (spell.granted || spell.pickedFor);
-  const mark = <Tag>{spell.fromItem ?? (spell.prepared ? "Prepared" : "Known")}</Tag>;
+    spell.resolved && spell.level > 0 && !grantor && (spell.granted || spell.pickedFor);
+  const mark = <Tag>{grantor ?? (spell.prepared ? "Prepared" : "Known")}</Tag>;
   if (!spell.resolved) {
     return (
       <ListRow
@@ -80,6 +82,7 @@ export function SpellRow({
           <SpellDamageChips spell={spell} />
           {classTag}
           {!preparable && !alwaysPrepared && mark}
+          {spell.cost && <Tag>{`${spell.cost.amount} ${spell.cost.resource}`}</Tag>}
           {spell.concentration && <Tag>Concentration</Tag>}
           {spell.ritual && <Tag>Ritual</Tag>}
         </>
