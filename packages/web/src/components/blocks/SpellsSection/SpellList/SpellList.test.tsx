@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord } from "../../../../test/records.ts";
+import { RollingFor } from "../../../rollerContext.ts";
 import { SpellList } from "./SpellList.tsx";
 
 const WARLOCK = { name: "Warlock", source: "XPHB" };
@@ -123,6 +124,7 @@ function renderList(
   sheet: CharacterSpells = SHEET,
   derived: CharacterDerived = derivedRecord(record.definition),
   homebrew?: HomebrewSpell,
+  rollingFor: string | null = null,
 ) {
   const fetchMock = stubServer(record, sheet, homebrew);
   const client = new QueryClient({
@@ -131,7 +133,9 @@ function renderList(
   client.setQueryData(characterKey(record.id), record);
   render(
     <QueryClientProvider client={client}>
-      <SpellList character={record} derived={derived} />
+      <RollingFor value={rollingFor}>
+        <SpellList character={record} derived={derived} />
+      </RollingFor>
     </QueryClientProvider>,
   );
   return fetchMock;
@@ -147,6 +151,20 @@ beforeAll(async () => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("SpellList", () => {
+  it("records a damage roll in a spell's text as spell damage", async () => {
+    const sheet = { spells: [{ ...spell("Hex", 1, true), entries: ["Deals {@damage 1d6}."] }] };
+    const fetchMock = renderList(vex(), sheet, undefined, undefined, "1");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Hex" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Roll 1d6" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/rolls", expect.anything()),
+    );
+    const post = fetchMock.mock.calls.find(([url]) => url === "/api/characters/1/rolls");
+    expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ type: "spell-damage" });
+  });
+
   it("prepares and unprepares a leveled spell through its toggle", async () => {
     const fetchMock = renderList();
 

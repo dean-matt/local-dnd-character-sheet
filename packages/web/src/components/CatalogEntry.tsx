@@ -17,6 +17,7 @@ import { JsonView } from "./JsonView.tsx";
 import { ModalEntry } from "./ModalEntry.tsx";
 import { RulesEntries } from "./RulesEntries/RulesEntries.tsx";
 import { ResolvedRefs } from "./resolvedRefsContext.ts";
+import { RollingSpell } from "./rollerContext.ts";
 import { SourceChip } from "./SourceChip.tsx";
 import { TypeChip } from "./TypeChip.tsx";
 
@@ -78,8 +79,11 @@ export function CatalogEntry({ address }: { address: string }) {
       {addable && <AddedNotice outcome={added} />}
       {entries.length > 0 ? (
         // A block of its own: the map of the sheet that opened it holds none of this row's references.
+        // Nor is this row the spell whose text opened it, so its rolls are not that spell's.
         <ResolvedRefs value={null}>
-          <RulesEntries entries={entries} headingLevel={3} />
+          <RollingSpell value={false}>
+            <RulesEntries entries={entries} headingLevel={3} />
+          </RollingSpell>
         </ResolvedRefs>
       ) : (
         <EmptyState>This row carries no rules text of its own.</EmptyState>

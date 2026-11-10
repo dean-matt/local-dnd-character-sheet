@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RulesText } from "../../components/RulesText/RulesText.tsx";
@@ -175,6 +175,118 @@ describe("CharacterLayout roll log", () => {
 
     expect(await screen.findByRole("heading", { name: "Roll Log" })).toHaveFocus();
     expect(screen.queryByText("Rolled 1d4: 3")).not.toBeInTheDocument();
+  });
+
+  describe("roll type filter", () => {
+    const LOG = [
+      { ...roll, id: 4, label: "Longsword attack", type: "attack" },
+      { ...roll, id: 3, label: "Longsword damage", type: "damage" },
+      { ...roll, id: 2, label: "Fire Bolt damage", type: "spell-damage" },
+      { ...roll, id: 1, label: "Old roll" },
+    ];
+    const labels = () =>
+      [...document.querySelectorAll("ol > li")].map(
+        (item) => item.querySelector(".font-bold")?.textContent,
+      );
+    async function openFilter() {
+      fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+      await screen.findAllByRole("listitem");
+      fireEvent.click(screen.getByRole("button", { name: /^Filter Roll Log/ }));
+    }
+    async function addType(option: string) {
+      fireEvent.click(screen.getByRole("combobox", { name: "Add roll type" }));
+      fireEvent.click(await screen.findByRole("option", { name: option }));
+    }
+
+    it("offers each roll type a player picks between, showing all until one is picked", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      expect(screen.getByText("Showing all")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("combobox", { name: "Add roll type" }));
+      const options = (await screen.findAllByRole("option")).map((option) => option.textContent);
+      expect(options).toEqual([
+        "Add roll type…",
+        "Attack",
+        "Damage",
+        "Check",
+        "Save",
+        "Spell attack",
+        "Spell damage",
+      ]);
+    });
+
+    it("shows a roll of any picked type, hides an untyped roll, and offers a pick no more", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      await addType("Attack");
+      expect(labels()).toEqual(["Longsword attack"]);
+      await addType("Spell damage");
+      expect(labels()).toEqual(["Longsword attack", "Fire Bolt damage"]);
+      expect(
+        screen.getByRole("button", { name: "Filter Roll Log (1 active)" }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("combobox", { name: "Add roll type" }));
+      expect(screen.queryByRole("option", { name: "Attack" })).toBeNull();
+      fireEvent.keyDown(screen.getByRole("combobox", { name: "Add roll type" }), { key: "Escape" });
+
+      fireEvent.click(screen.getByRole("button", { name: "Remove Attack" }));
+      expect(labels()).toEqual(["Fire Bolt damage"]);
+      fireEvent.click(screen.getByRole("button", { name: "Remove Spell damage" }));
+      expect(screen.getByText("Showing all")).toBeInTheDocument();
+      expect(labels()).toHaveLength(4);
+    });
+
+    it("resets to the whole log", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      await addType("Save");
+      fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+      expect(screen.getByText("Showing all")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Filter Roll Log" })).toBeInTheDocument();
+      expect(labels()).toHaveLength(4);
+    });
+
+    it("says nothing matches when the filter empties the log, apart from a log with no rolls", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      await addType("Check");
+      expect(screen.getByText("Nothing matches the filter.")).toBeInTheDocument();
+      expect(screen.queryByText("No rolls yet.")).toBeNull();
+    });
+
+    it("is driven from the keyboard, and Escape returns focus to the Filter button", async () => {
+      await renderSheet(LOG);
+      fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+      await screen.findAllByRole("listitem");
+      const button = screen.getByRole("button", { name: "Filter Roll Log" });
+      button.focus();
+      fireEvent.click(button);
+      const select = screen.getByRole("combobox", { name: "Add roll type" });
+      select.focus();
+      fireEvent.keyDown(select, { key: "ArrowDown" });
+      fireEvent.keyDown(select, { key: "ArrowDown" });
+      fireEvent.keyDown(select, { key: "Enter" });
+      expect(labels()).toEqual(["Longsword attack"]);
+
+      fireEvent.keyDown(screen.getByRole("button", { name: "Remove Attack" }), { key: "Escape" });
+      expect(screen.queryByRole("group", { name: "Roll Log filter" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Filter Roll Log (1 active)" })).toHaveFocus();
+    });
+
+    it("shows the whole log after a remount", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      await addType("Attack");
+      expect(labels()).toHaveLength(1);
+
+      cleanup();
+      await renderSheet(LOG);
+      fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+      await screen.findAllByRole("listitem");
+      expect(labels()).toHaveLength(4);
+      expect(screen.getByRole("button", { name: "Filter Roll Log" })).toBeInTheDocument();
+    });
   });
 
   it("leaves focus on the rolled tag when the roll opens the panel", async () => {

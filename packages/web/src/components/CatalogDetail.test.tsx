@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { stubFetchByUrl } from "../test/stubFetch.ts";
 import { CatalogDetail } from "./CatalogDetail.tsx";
+import { RollingFor, RollingSpell } from "./rollerContext.ts";
 
 function renderAt(address: string) {
   const onClose = vi.fn();
@@ -387,6 +388,40 @@ describe("CatalogDetail", () => {
     expect(screen.getByRole("heading", { level: 4, name: "Scimitar" })).toBeInTheDocument();
     expect(screen.getByText("Goblin King")).toBeInTheDocument();
     expect(screen.getByText("Monster")).toBeInTheDocument();
+  });
+
+  it("records a roll in a row opened from a spell's text as the row's, not the spell's", async () => {
+    const fetchMock = stubFetchByUrl({
+      "/api/catalog/monster/Wolf/MM": {
+        type: "monster",
+        name: "Wolf",
+        source: "MM",
+        edition: "classic",
+        json: { action: [{ name: "Bite", entries: ["{@hit 4} to hit. {@damage 2d4+2} damage."] }] },
+      },
+    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <RollingFor value="c1">
+            <RollingSpell value>
+              <CatalogDetail address="/catalog/monster/Wolf/MM" onClose={() => {}} />
+            </RollingSpell>
+          </RollingFor>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Roll +4" }));
+    fireEvent.click(screen.getByRole("button", { name: "Roll 2d4+2" }));
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls
+          .filter(([url]) => String(url) === "/api/characters/c1/rolls")
+          .map(([, init]) => JSON.parse(String(init?.body)).type),
+      ).toEqual(["attack", "damage"]),
+    );
   });
 
   it("renders a legendary group as its lair actions and regional effects", async () => {
