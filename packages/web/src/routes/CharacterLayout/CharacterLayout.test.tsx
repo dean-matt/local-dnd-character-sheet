@@ -2,7 +2,7 @@ import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RulesText } from "../../components/RulesText/RulesText.tsx";
-import { derivedRecord, stateRecord, warlockRecord } from "../../test/records.ts";
+import { characterRecord, derivedRecord, stateRecord, warlockRecord } from "../../test/records.ts";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { stubFetchByUrl } from "../../test/stubFetch.ts";
 import { CharacterLayout } from "./CharacterLayout.tsx";
@@ -78,7 +78,10 @@ describe("CharacterLayout roll log", () => {
     critical: false,
   };
 
-  async function renderSheet(rolls: unknown[]) {
+  async function renderSheet(
+    rolls: unknown[],
+    characters: unknown[] = [warlockRecord(), characterRecord("2", "Mira")],
+  ) {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       const bodies: Record<string, unknown> = {
@@ -88,6 +91,11 @@ describe("CharacterLayout roll log", () => {
         "/api/characters/1/pages": [],
         "/api/characters/1/undo": [],
         "/api/characters/1/rolls": roll,
+        "/api/characters/2": characterRecord("2", "Mira"),
+        "/api/characters/2/state": stateRecord(),
+        "/api/characters/2/derived": derivedRecord(),
+        "/api/characters/2/pages": [],
+        "/api/characters": characters,
         "/api/rolls": rolls,
       };
       return url in bodies
@@ -107,6 +115,21 @@ describe("CharacterLayout roll log", () => {
     );
     renderWithClient(<RouterProvider router={router} />);
     await screen.findByRole("heading", { level: 1, name: "Vex" });
+    return router;
+  }
+
+  const labels = () =>
+    [...document.querySelectorAll("ol > li")].map(
+      (item) => item.querySelector(".font-bold")?.textContent,
+    );
+  async function openFilter() {
+    fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+    await screen.findAllByRole("listitem");
+    fireEvent.click(screen.getByRole("button", { name: /^Filter Roll Log/ }));
+  }
+  async function pickCharacter(option: string) {
+    fireEvent.click(screen.getByRole("combobox", { name: "Character" }));
+    fireEvent.click(await screen.findByRole("option", { name: option }));
   }
 
   it("opens from its header button with an empty state, and swaps with History", async () => {
@@ -148,7 +171,8 @@ describe("CharacterLayout roll log", () => {
       { ...roll, id: 2, characterId: "2", characterName: "Mira" },
       { ...roll, id: 1, characterName: "Vex" },
     ]);
-    fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+    await openFilter();
+    await pickCharacter("All characters");
     const items = await screen.findAllByRole("listitem");
     expect(items[0]).toHaveTextContent("Mira");
     expect(items[1]).toHaveTextContent("Vex");
@@ -184,15 +208,6 @@ describe("CharacterLayout roll log", () => {
       { ...roll, id: 2, label: "Fire Bolt damage", type: "spell-damage" },
       { ...roll, id: 1, label: "Old roll" },
     ];
-    const labels = () =>
-      [...document.querySelectorAll("ol > li")].map(
-        (item) => item.querySelector(".font-bold")?.textContent,
-      );
-    async function openFilter() {
-      fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
-      await screen.findAllByRole("listitem");
-      fireEvent.click(screen.getByRole("button", { name: /^Filter Roll Log/ }));
-    }
     async function addType(option: string) {
       fireEvent.click(screen.getByRole("combobox", { name: "Add roll type" }));
       fireEvent.click(await screen.findByRole("option", { name: option }));
@@ -223,7 +238,7 @@ describe("CharacterLayout roll log", () => {
       await addType("Spell damage");
       expect(labels()).toEqual(["Longsword attack", "Fire Bolt damage"]);
       expect(
-        screen.getByRole("button", { name: "Filter Roll Log (1 active)" }),
+        screen.getByRole("button", { name: "Filter Roll Log (2 active)" }),
       ).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole("combobox", { name: "Add roll type" }));
@@ -259,7 +274,7 @@ describe("CharacterLayout roll log", () => {
       await renderSheet(LOG);
       fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
       await screen.findAllByRole("listitem");
-      const button = screen.getByRole("button", { name: "Filter Roll Log" });
+      const button = screen.getByRole("button", { name: "Filter Roll Log (1 active)" });
       button.focus();
       fireEvent.click(button);
       const select = screen.getByRole("combobox", { name: "Add roll type" });
@@ -271,7 +286,7 @@ describe("CharacterLayout roll log", () => {
 
       fireEvent.keyDown(screen.getByRole("button", { name: "Remove Attack" }), { key: "Escape" });
       expect(screen.queryByRole("group", { name: "Roll Log filter" })).toBeNull();
-      expect(screen.getByRole("button", { name: "Filter Roll Log (1 active)" })).toHaveFocus();
+      expect(screen.getByRole("button", { name: "Filter Roll Log (2 active)" })).toHaveFocus();
     });
 
     it("shows the whole log after a remount", async () => {
@@ -285,7 +300,88 @@ describe("CharacterLayout roll log", () => {
       fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
       await screen.findAllByRole("listitem");
       expect(labels()).toHaveLength(4);
+      expect(
+        screen.getByRole("button", { name: "Filter Roll Log (1 active)" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("character filter", () => {
+    const LOG = [
+      {
+        ...roll,
+        id: 4,
+        label: "Mira attack",
+        type: "attack",
+        characterId: "2",
+        characterName: "Mira",
+      },
+      { ...roll, id: 3, label: "Mira save", type: "save", characterId: "2", characterName: "Mira" },
+      { ...roll, id: 2, label: "Vex attack", type: "attack" },
+      { ...roll, id: 1, label: "Vex save", type: "save" },
+    ];
+
+    it("offers every character and All characters, set to the open character", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      const select = screen.getByRole("combobox", { name: "Character" });
+      expect(select).toHaveTextContent("Vex");
+      expect(labels()).toEqual(["Vex attack", "Vex save"]);
+      fireEvent.click(select);
+      const options = (await screen.findAllByRole("option")).map((option) => option.textContent);
+      expect(options).toEqual(["All characters", "Vex", "Mira"]);
+    });
+
+    it("lists one character's rolls, or every character's", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      await pickCharacter("Mira");
+      expect(labels()).toEqual(["Mira attack", "Mira save"]);
+      await pickCharacter("All characters");
+      expect(labels()).toEqual(["Mira attack", "Mira save", "Vex attack", "Vex save"]);
       expect(screen.getByRole("button", { name: "Filter Roll Log" })).toBeInTheDocument();
+    });
+
+    it("shows a roll only where it matches both the character and the roll type", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      fireEvent.click(screen.getByRole("combobox", { name: "Add roll type" }));
+      fireEvent.click(await screen.findByRole("option", { name: "Attack" }));
+      expect(labels()).toEqual(["Vex attack"]);
+      await pickCharacter("Mira");
+      expect(labels()).toEqual(["Mira attack"]);
+    });
+
+    it("re-sets to the newly open character, replacing the choice made for the last", async () => {
+      const router = await renderSheet(LOG);
+      await openFilter();
+      await pickCharacter("All characters");
+      expect(labels()).toHaveLength(4);
+
+      await router.navigate("/characters/2");
+      await screen.findByRole("heading", { level: 1, name: "Mira" });
+      await waitFor(() => expect(labels()).toEqual(["Mira attack", "Mira save"]));
+      expect(screen.getByRole("combobox", { name: "Character" })).toHaveTextContent("Mira");
+    });
+
+    it("offers the characters that exist now", async () => {
+      await renderSheet(LOG, [warlockRecord(), characterRecord("3", "Thorn")]);
+      await openFilter();
+      fireEvent.click(screen.getByRole("combobox", { name: "Character" }));
+      const options = (await screen.findAllByRole("option")).map((option) => option.textContent);
+      expect(options).toEqual(["All characters", "Vex", "Thorn"]);
+    });
+
+    it("starts back at the open character after a remount", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      await pickCharacter("All characters");
+
+      cleanup();
+      await renderSheet(LOG);
+      await openFilter();
+      expect(screen.getByRole("combobox", { name: "Character" })).toHaveTextContent("Vex");
+      expect(labels()).toEqual(["Vex attack", "Vex save"]);
     });
   });
 
