@@ -29,7 +29,7 @@ import {
 } from "react";
 import { useClampToViewport } from "../hooks/useClampToViewport.ts";
 import { useTopLayer } from "../hooks/useTopLayer.ts";
-import { anchorName as toAnchorName } from "../lib/anchoring.ts";
+import { ANCHORED_CLASSES, anchoredStyle, anchorName as toAnchorName } from "../lib/anchoring.ts";
 import { InModal } from "./inModalContext.ts";
 
 const MAX_DEPTH = 1;
@@ -179,17 +179,8 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
           id={contentId}
           role="group"
           aria-label={label}
-          style={
-            inModal
-              ? {
-                  positionAnchor: anchorName,
-                  positionArea: "bottom span-right",
-                  positionTryFallbacks: "flip-block, flip-inline, flip-block flip-inline",
-                  positionVisibility: "anchors-visible",
-                }
-              : undefined
-          }
-          className={`${inModal ? "inset-auto m-0" : "absolute top-full left-0 z-10"} mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-ink text-row shadow-popover`}
+          style={inModal ? anchoredStyle(anchorName, "bottom span-right") : undefined}
+          className={`${inModal ? ANCHORED_CLASSES : "absolute top-full left-0 z-10"} mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-ink text-row shadow-popover`}
         >
           <DepthContext.Provider value={depth + 1}>{children}</DepthContext.Provider>
         </span>

@@ -58,6 +58,12 @@ export function healedState(derived: Sheet, state: CharacterState, amount: numbe
   );
 }
 
+/** Whether the character's hit points stand at the maximum the sheet shows. */
+export function atHitPointMaximum(derived: Sheet, state: CharacterState): boolean {
+  const maximum = derivedValue(derived.hitPointMaximum);
+  return (state.hitPoints.current ?? maximum) >= maximum;
+}
+
 /**
  * Where a character at 0 hit points stands, read from the stored counts, or undefined above
  * 0. Three successes read as stable because the sheet stores them where `deathSave` clears
@@ -93,9 +99,9 @@ export function deathSaveRolledState(
 
 /**
  * The state after spending one `die` hit die on a face of `roll`, or undefined where the
- * character is dead or the sheet's pool for that size has none left. The pool loses one die
- * and the hit points gain the roll plus the Constitution modifier the sheet shows, by
- * `hitDieHealing` and `healedState`, in the one state.
+ * character is dead, already at maximum hit points, or the sheet's pool for that size has
+ * none left. The pool loses one die and the hit points gain the roll plus the Constitution
+ * modifier the sheet shows, by `hitDieHealing` and `healedState`, in the one state.
  */
 export function hitDieSpentState(
   definition: Pick<CharacterDefinition, "edition">,
@@ -105,6 +111,7 @@ export function hitDieSpentState(
   roll: number,
 ): { state: CharacterState; regained: number; modifier: number } | undefined {
   if (deathSaveStatus(derived, state) === "dead") return undefined;
+  if (atHitPointMaximum(derived, state)) return undefined;
   const held = sheetState(derived, state);
   const pool = held.hitDice.find((candidate) => candidate.die === die);
   if (!pool || pool.remaining < 1) return undefined;

@@ -102,6 +102,7 @@ export {
 export { type Derived, derivedSchema } from "./derivedField.ts";
 export { allocatePicks, type FeatPick, grantedSkillLevels, heldSkillLevel } from "./featGrants.ts";
 export {
+  atHitPointMaximum,
   damagedState,
   deathSaveRolledState,
   deathSaveStatus,

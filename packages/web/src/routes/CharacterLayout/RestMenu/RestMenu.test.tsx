@@ -493,6 +493,19 @@ describe("RestMenu", () => {
       expect(await dialog.findByRole("img", { name: /^d8: rolled 5 .* HP$/ })).toBeInTheDocument();
     });
 
+    it("makes every die unavailable at maximum hit points", async () => {
+      const writes = renderLive(
+        { ...spent(), hitPoints: { current: null, temporary: 0 } },
+        { character: classic() },
+      );
+      const dialog = await takeShort();
+      expect(dialog.getByText("Hit points are full.")).toBeInTheDocument();
+      const button = dialog.getByRole("button", { name: "Roll d8, 1 of 3 left" });
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button);
+      expect(writes).toHaveLength(1);
+    });
+
     it("makes every die unavailable for a dead character", async () => {
       const writes = renderLive(
         {
