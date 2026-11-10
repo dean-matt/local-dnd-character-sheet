@@ -273,8 +273,9 @@ export function deleteCharacter(db: CharactersDb, id: string): boolean {
 }
 
 /**
- * Whether a parsed `definition` holds `{homebrewId}` anywhere `entryRefSchema` allows
- * one — background, inventory, spells, feats, optional features and what granted them.
+ * Whether a parsed `definition` or state holds `{homebrewId}` anywhere `entryRefSchema`
+ * allows one — background, inventory, spells, feats, optional features, what granted them
+ * and the spell concentrated on.
  * Walks the JSON rather than naming each field, so a reference added anywhere in that
  * shape is still found without a matching edit here.
  */
@@ -287,16 +288,26 @@ function referencesHomebrewId(value: unknown, homebrewId: string): boolean {
 }
 
 /**
- * The characters whose definition references a homebrew row, so a caller can refuse a
- * delete and name them. A full table scan is fine at single-user scale; an index table
- * is the way out once a save touches enough rows to notice.
+ * The characters whose definition or play state references a homebrew row, so a caller can
+ * refuse a delete and name them. A full table scan is fine at single-user scale; an index
+ * table is the way out once a save touches enough rows to notice.
  */
 export function charactersReferencingHomebrew(
   db: CharactersDb,
   homebrewId: string,
 ): { id: string; name: string }[] {
-  return listCharacters(db)
-    .filter((row) => referencesHomebrewId(row.definition, homebrewId))
+  return db
+    .select({
+      id: characters.id,
+      name: characters.name,
+      definition: characters.definition,
+      state: characterState.state,
+    })
+    .from(characters)
+    .leftJoin(characterState, eq(characterState.characterId, characters.id))
+    .orderBy(characters.createdAt, characters.id)
+    .all()
+    .filter((row) => referencesHomebrewId([row.definition, row.state], homebrewId))
     .map((row) => ({ id: row.id, name: row.name }));
 }
 

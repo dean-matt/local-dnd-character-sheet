@@ -263,6 +263,16 @@ describe("characters queries", () => {
       expect(charactersReferencingHomebrew(db, "hb-5")).toEqual([{ id: "1", name: "Vex" }]);
     });
 
+    it("finds a character concentrating on a homebrew spell its definition does not list", () => {
+      insertCharacter(db, { id: "1", definition: baseDefinition() });
+      updateCharacterState(db, "1", {
+        ...defaultCharacterState(),
+        concentration: { spell: { homebrewId: "hb-6" }, level: 2 },
+      });
+
+      expect(charactersReferencingHomebrew(db, "hb-6")).toEqual([{ id: "1", name: "Vex" }]);
+    });
+
     it("finds nothing for a homebrew id no character references", () => {
       insertCharacter(db, { id: "1", definition: baseDefinition() });
 

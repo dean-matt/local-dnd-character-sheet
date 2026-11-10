@@ -401,6 +401,12 @@ const STATE_CHANGES: {
       (name) => name,
       () => "active",
     ),
+  concentration: (before, after) =>
+    one("concentration", "Concentration", before.concentration, after.concentration, (held) =>
+      held
+        ? `${"homebrewId" in held.spell ? "a homebrew spell" : held.spell.name} at level ${held.level}`
+        : undefined,
+    ),
   deathSaves: (before, after) => [
     ...one(
       "deathSaves.successes",

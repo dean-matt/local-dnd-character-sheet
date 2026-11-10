@@ -175,6 +175,7 @@ export const state: CharacterState = {
   classResources: [],
   featureUses: [{ key: "feat|PHB|Lucky", expended: 1 }],
   activeEffects: [],
+  concentration: { spell: { name: "Hex", source: "PHB" }, level: 2 },
   deathSaves: { successes: 0, failures: 0 },
   exhaustion: 1,
   inspiration: false,

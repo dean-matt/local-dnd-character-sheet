@@ -43,6 +43,7 @@ describe("default state", () => {
       classResources: [],
       featureUses: [],
       activeEffects: [],
+      concentration: null,
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
       inspiration: false,
@@ -118,13 +119,13 @@ describe("a state stored before class resources", () => {
 
 describe("a key the schema does not name", () => {
   it("fails the state parse rather than letting the key vanish on the next save", () => {
-    const newer = { ...state, concentration: { name: "Bless", source: "XPHB" } };
+    const newer = { ...state, readied: { name: "Bless", source: "XPHB" } };
     const result = characterStateSchema.safeParse(newer);
 
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]).toMatchObject({
       code: "unrecognized_keys",
-      keys: ["concentration"],
+      keys: ["readied"],
     });
   });
 
@@ -243,5 +244,38 @@ describe("inspiration", () => {
   it("parses a state stored before it as none", () => {
     const { inspiration: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).inspiration).toBe(false);
+  });
+});
+
+describe("concentration", () => {
+  const hold = { spell: { name: "Hold Person", source: "PHB" }, level: 3 };
+
+  it("holds one catalog or homebrew spell at a level from 0 to 9, or none", () => {
+    for (const concentration of [
+      null,
+      hold,
+      { spell: { homebrewId: "hb-1" }, level: 0 },
+      { ...hold, level: 9 },
+    ]) {
+      const held = { ...state, concentration };
+      expect(characterStateSchema.parse(JSON.parse(JSON.stringify(held)))).toEqual(held);
+    }
+  });
+
+  it("refuses a level outside 0 to 9, a list of spells, or a spell with no reference", () => {
+    for (const concentration of [
+      { ...hold, level: 10 },
+      { ...hold, level: -1 },
+      { ...hold, level: 1.5 },
+      [hold],
+      { level: 1 },
+    ]) {
+      expect(characterStateSchema.safeParse({ ...state, concentration }).success).toBe(false);
+    }
+  });
+
+  it("parses a state stored before it with none held", () => {
+    const { concentration: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).concentration).toBeNull();
   });
 });
