@@ -9,6 +9,7 @@ import { FormField } from "../../../components/FormField.tsx";
 import { Select } from "../../../components/Select.tsx";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
 import { useRolls } from "../../../hooks/useRolls.ts";
+import { DiceRoller } from "./DiceRoller.tsx";
 
 type Roll = z.infer<typeof rollLogEntrySchema>;
 
@@ -40,7 +41,7 @@ const ALL_CHARACTERS = "";
  * The heading takes focus only when the header opened the panel, so a roll keeps focus on the rolled tag.
  * The filter lives in the view, so a reload starts it over. Its Character facet starts at
  * `characterId`, the open character, or at every character without one, and starts over when
- * `characterId` changes.
+ * `characterId` changes. With a character open, a field rolls any notation for it.
  */
 export function RollLog({ latest, characterId }: { latest: Roll | null; characterId?: string }) {
   const log = useRolls();
@@ -114,6 +115,7 @@ export function RollLog({ latest, characterId }: { latest: Roll | null; characte
           />
         </FilterButton>
       </div>
+      {characterId && <DiceRoller characterId={characterId} />}
       <p role="status" aria-live="polite" className="sr-only">
         {announced}
       </p>

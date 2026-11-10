@@ -397,4 +397,73 @@ describe("CharacterLayout roll log", () => {
     await screen.findByText("Rolled 1d4: 3");
     expect(screen.getByRole("heading", { name: "Roll Log" })).not.toHaveFocus();
   });
+
+  describe("dice field", () => {
+    const posted = () =>
+      vi
+        .mocked(fetch)
+        .mock.calls.filter(([, init]) => init?.method === "POST")
+        .map(([, init]) => JSON.parse(String(init?.body)));
+    async function rollField(notation: string, label = "") {
+      fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+      const dice = await screen.findByRole("textbox", { name: "Dice" });
+      fireEvent.change(dice, { target: { value: notation } });
+      fireEvent.change(screen.getByRole("textbox", { name: "Label (optional)" }), {
+        target: { value: label },
+      });
+      fireEvent.submit(dice);
+      return dice;
+    }
+
+    it("rolls typed notation under its label, shows each die and the total, and logs it", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      await renderSheet([]);
+      await rollField("2d8+3", "Pit trap");
+
+      const result = await screen.findByText("2d8+3:");
+      expect(result.parentElement).toHaveTextContent(/^2d8\+3:55\+ 3= 13$/);
+      await waitFor(() =>
+        expect(posted()).toEqual([
+          expect.objectContaining({
+            type: "dice",
+            label: "Pit trap",
+            notation: "2d8+3",
+            total: 13,
+          }),
+        ]),
+      );
+      vi.restoreAllMocks();
+    });
+
+    it("labels a roll given no label", async () => {
+      await renderSheet([]);
+      await rollField("d100");
+      await waitFor(() =>
+        expect(posted()).toEqual([
+          expect.objectContaining({ label: "Dice roll", notation: "1d100" }),
+        ]),
+      );
+    });
+
+    it("refuses notation the parser rejects and logs nothing", async () => {
+      await renderSheet([]);
+      const dice = await rollField("2d");
+
+      expect(await screen.findByRole("alert")).toHaveTextContent('Invalid dice notation: "2d"');
+      expect(dice).toHaveAttribute("aria-invalid", "true");
+      expect(posted()).toEqual([]);
+
+      fireEvent.change(dice, { target: { value: "2d6" } });
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
+
+    it("announces the logged roll and keeps focus in the field", async () => {
+      await renderSheet([]);
+      const dice = await rollField("1d4");
+      dice.focus();
+
+      expect(await screen.findByText("Rolled 1d4: 3")).toBeInTheDocument();
+      expect(dice).toHaveFocus();
+    });
+  });
 });
