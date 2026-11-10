@@ -608,12 +608,121 @@ describe("FeaturesSection", () => {
       ).toBeVisible();
     });
 
-    it("leaves the Race Features card unfiltered, as race features carry no level", async () => {
+    it("offers the Race Features card no level range, as race features carry no level", async () => {
       renderSection(features, undefined, leveled);
       await screen.findByText("Second Wind");
 
-      expect(within(card("Race Features")).queryByRole("button", { name: /^Filter / })).toBeNull();
-      expect(within(card("Race Features")).getByText("Darkvision")).toBeVisible();
+      open("Race Features");
+      expect(within(card("Race Features")).queryByLabelText("Minimum level")).toBeNull();
+      expect(within(card("Race Features")).getByLabelText("Has limited uses")).toBeVisible();
+    });
+
+    describe("by limited uses", () => {
+      const uses = (key: string) => ({ key, count: 1, reset: "long" as const });
+      const spendable: CharacterFeatures = {
+        groups: [
+          {
+            origin: "class",
+            name: "Fighter",
+            class: fighter,
+            features: [
+              { ...feature("Second Wind", 1), uses: uses("second-wind") },
+              feature("Action Surge", 2),
+              { ...feature("Indomitable", 4), uses: uses("indomitable") },
+            ],
+          },
+          {
+            origin: "race",
+            name: "Half-Orc",
+            features: [
+              feature("Darkvision"),
+              { ...feature("Relentless Endurance"), uses: uses("relentless") },
+            ],
+          },
+          {
+            origin: "feat",
+            features: [
+              { ...feature("Lucky", 4), uses: uses("lucky") },
+              { resolved: false, name: "Alert", source: "PHB", level: 4 },
+            ],
+          },
+        ],
+      };
+      const tick = (title: string, box: "Has limited uses" | "No limited uses") =>
+        fireEvent.click(within(card(title)).getByLabelText(box));
+
+      it("lists only the features with or without limited uses, with the level range", async () => {
+        renderSection(spendable, undefined, leveled);
+        await screen.findByText("Second Wind");
+        const classes = within(card("Class Features"));
+
+        open("Class Features");
+        tick("Class Features", "Has limited uses");
+        expect(classes.getByText("Second Wind")).toBeVisible();
+        expect(classes.getByText("Indomitable")).toBeVisible();
+        expect(classes.queryByText("Action Surge")).toBeNull();
+
+        setLevel("Class Features", "Minimum", "2");
+        expect(classes.queryByText("Second Wind")).toBeNull();
+        expect(classes.getByText("Indomitable")).toBeVisible();
+
+        tick("Class Features", "Has limited uses");
+        tick("Class Features", "No limited uses");
+        expect(classes.getByText("Action Surge")).toBeVisible();
+        expect(classes.queryByText("Indomitable")).toBeNull();
+
+        tick("Class Features", "Has limited uses");
+        expect(classes.getByText("Action Surge")).toBeVisible();
+        expect(classes.getByText("Indomitable")).toBeVisible();
+        expect(within(card("Race Features")).getByText("Darkvision")).toBeVisible();
+      });
+
+      it("narrows the Race and Chosen Features cards, leaving out a feature that resolved to nothing", async () => {
+        renderSection(spendable, undefined, leveled);
+        await screen.findByText("Second Wind");
+
+        open("Race Features");
+        tick("Race Features", "No limited uses");
+        expect(within(card("Race Features")).getByText("Darkvision")).toBeVisible();
+        expect(within(card("Race Features")).queryByText("Relentless Endurance")).toBeNull();
+
+        open("Chosen Features");
+        tick("Chosen Features", "Has limited uses");
+        expect(within(card("Chosen Features")).getByText("Lucky")).toBeVisible();
+        expect(within(card("Chosen Features")).queryByText("Alert")).toBeNull();
+
+        tick("Chosen Features", "Has limited uses");
+        tick("Chosen Features", "No limited uses");
+        expect(within(card("Chosen Features")).queryByText("Lucky")).toBeNull();
+        expect(within(card("Chosen Features")).queryByText("Alert")).toBeNull();
+
+        tick("Chosen Features", "Has limited uses");
+        expect(within(card("Chosen Features")).getByText("Lucky")).toBeVisible();
+        expect(within(card("Chosen Features")).queryByText("Alert")).toBeNull();
+      });
+
+      it("badges each active facet once, and Reset clears the boxes with the range", async () => {
+        renderSection(spendable, undefined, leveled);
+        await screen.findByText("Second Wind");
+        const classes = within(card("Class Features"));
+
+        open("Class Features");
+        tick("Class Features", "Has limited uses");
+        tick("Class Features", "No limited uses");
+        expect(
+          classes.getByRole("button", { name: "Filter Class Features (1 active)" }),
+        ).toBeVisible();
+        setLevel("Class Features", "Maximum", "3");
+        expect(
+          classes.getByRole("button", { name: "Filter Class Features (2 active)" }),
+        ).toBeVisible();
+
+        fireEvent.click(classes.getByRole("button", { name: "Reset" }));
+        expect(classes.getByLabelText("Has limited uses")).not.toBeChecked();
+        expect(classes.getByLabelText("No limited uses")).not.toBeChecked();
+        expect(classes.getByText("Indomitable")).toBeVisible();
+        expect(classes.getByRole("button", { name: "Filter Class Features" })).toBeVisible();
+      });
     });
 
     it("closes on Escape with focus back on the button", async () => {

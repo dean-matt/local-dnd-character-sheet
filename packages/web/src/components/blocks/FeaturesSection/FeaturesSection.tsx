@@ -4,7 +4,7 @@
  * is a row whose name opens its rules text in a modal, and a search narrows every feature
  * card by name, so a reader looking for one feature skips the rest.
  */
-import type { FeatureOrigin } from "@dnd/catalog";
+import type { FeatureOrigin, SheetFeature } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
@@ -17,8 +17,9 @@ import { useCharacterFeatures } from "../../../hooks/useCharacterFeatures.ts";
 import { useOptionalFeatureEntitlements } from "../../../hooks/useOptionalFeatureEntitlements.ts";
 import { LoadingState } from "../../../LoadingState.tsx";
 import { Card } from "../../Card.tsx";
+import { CheckFacet } from "../../Filter/CheckFacet.tsx";
 import { FilterButton } from "../../Filter/FilterButton.tsx";
-import { inRange, NO_RANGE, type Range } from "../../Filter/facets.ts";
+import { type Facet, inRange, matchesFacets, NO_RANGE, type Range } from "../../Filter/facets.ts";
 import { RangeFacet } from "../../Filter/RangeFacet.tsx";
 import { RulesBlock } from "../../RulesBlock/RulesBlock.tsx";
 import { ClassResources } from "./ClassResources/ClassResources.tsx";
@@ -32,7 +33,7 @@ const WIDGETS: readonly {
   noun: string;
   origins: readonly FeatureOrigin[];
   byLevel?: "class" | "taken";
-  /** Carries a Filter button narrowing it by the level each feature was gained at. */
+  /** Carries a Filter button narrowing it by limited uses and, where `byLevel`, the level gained. */
   filterable?: true;
   /** Shown with no features in it, where it holds the picks the character may make. */
   picks?: true;
@@ -44,7 +45,7 @@ const WIDGETS: readonly {
     byLevel: "class",
     filterable: true,
   },
-  { title: "Race Features", noun: "race features", origins: ["race"] },
+  { title: "Race Features", noun: "race features", origins: ["race"], filterable: true },
   { title: "Background Features", noun: "background features", origins: ["background"] },
   {
     title: "Chosen Features",
@@ -55,6 +56,18 @@ const WIDGETS: readonly {
     picks: true,
   },
 ];
+
+const USES_OPTIONS = [
+  { value: "has", label: "Has limited uses" },
+  { value: "none", label: "No limited uses" },
+];
+
+/** A feature that resolved to nothing has unknown uses, so it holds neither value. */
+const USES_FACET: Facet<{ feature: SheetFeature }> = {
+  key: "uses",
+  label: "Limited uses",
+  valuesOf: ({ feature }) => (feature.resolved ? [feature.uses ? "has" : "none"] : []),
+};
 
 export function FeaturesSection({
   character,
@@ -67,6 +80,7 @@ export function FeaturesSection({
   const entitlements = useOptionalFeatureEntitlements(character?.id ?? "");
   const [query, setQuery] = useState("");
   const [ranges, setRanges] = useState<Record<string, Range>>({});
+  const [usesPicks, setUsesPicks] = useState<Record<string, string[]>>({});
   const inputId = useId();
 
   if (!character) return <EmptyState>Features isn't available yet.</EmptyState>;
@@ -105,8 +119,14 @@ export function FeaturesSection({
     const entries = widget.byLevel ? byLevelGained(listed, levelOf) : listed;
     const named = entries.filter(({ feature }) => feature.name.toLowerCase().includes(needle));
     const range = ranges[widget.title] ?? NO_RANGE;
-    const matches = named.filter((entry) => inRange(levelOf(entry), range));
-    return { ...widget, entries, named, matches, range };
+    const uses = usesPicks[widget.title] ?? [];
+    const matches = named.filter(
+      (entry) =>
+        inRange(levelOf(entry), range) &&
+        matchesFacets(entry, [USES_FACET], { [USES_FACET.key]: uses }),
+    );
+    const active = (range.min !== "" || range.max !== "" ? 1 : 0) + (uses.length > 0 ? 1 : 0);
+    return { ...widget, entries, named, matches, range, uses, active };
   }).filter((widget) => widget.entries.length > 0 || (widget.picks && picking));
   const noMatches = widgets.every((widget) => widget.named.length === 0);
 
@@ -142,14 +162,25 @@ export function FeaturesSection({
               widget.entries.length > 0 && (
                 <FilterButton
                   label={widget.title}
-                  active={widget.range.min !== "" || widget.range.max !== "" ? 1 : 0}
-                  onReset={() => setRanges((at) => ({ ...at, [widget.title]: NO_RANGE }))}
+                  active={widget.active}
+                  onReset={() => {
+                    setRanges((at) => ({ ...at, [widget.title]: NO_RANGE }));
+                    setUsesPicks((at) => ({ ...at, [widget.title]: [] }));
+                  }}
                 >
-                  <RangeFacet
-                    label="Level"
-                    range={widget.range}
-                    bounds={{ min: 1, max: 20 }}
-                    onChange={(next) => setRanges((at) => ({ ...at, [widget.title]: next }))}
+                  {widget.byLevel && (
+                    <RangeFacet
+                      label="Level"
+                      range={widget.range}
+                      bounds={{ min: 1, max: 20 }}
+                      onChange={(next) => setRanges((at) => ({ ...at, [widget.title]: next }))}
+                    />
+                  )}
+                  <CheckFacet
+                    label={USES_FACET.label}
+                    options={USES_OPTIONS}
+                    picked={widget.uses}
+                    onChange={(next) => setUsesPicks((at) => ({ ...at, [widget.title]: next }))}
                   />
                 </FilterButton>
               )
