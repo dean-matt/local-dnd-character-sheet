@@ -13,6 +13,7 @@ import { ListRow } from "../../../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../../../NotFoundTag.tsx";
 import { RemoveButton } from "../../../../RemoveButton.tsx";
 import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
+import { RollingSpell } from "../../../../rollerContext.ts";
 import { Tag } from "../../../../Tag.tsx";
 import { AlwaysPrepared } from "./AlwaysPrepared.tsx";
 import { PreparedToggle } from "./PreparedToggle.tsx";
@@ -115,7 +116,11 @@ export function SpellRow({
         footer: spell.homebrewId && (
           <EditHomebrewButton collection="spells" id={spell.homebrewId} />
         ),
-        children: <RulesEntries entries={spell.entries} />,
+        children: (
+          <RollingSpell value>
+            <RulesEntries entries={spell.entries} />
+          </RollingSpell>
+        ),
       }}
     />
   );

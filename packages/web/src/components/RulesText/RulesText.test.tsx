@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderWithClient } from "../../test/renderWithClient.tsx";
 import { stubFetch, stubFetchByUrl } from "../../test/stubFetch.ts";
-import { OnRolled, RollingFor } from "../rollerContext.ts";
+import { OnRolled, RollingFor, RollingSpell } from "../rollerContext.ts";
 import { RulesText } from "./RulesText.tsx";
 
 describe("RulesText", () => {
@@ -326,6 +326,31 @@ describe("reference resolution", () => {
       const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
       expect(JSON.parse(String(init.body))).toMatchObject({ type });
     });
+
+    it.each([
+      ["{@hit 5}", "Roll +5", "spell-attack"],
+      ["{@damage 1d6}", "Roll 1d6", "spell-damage"],
+      ["{@scaledamage 2d6|2-9|1d6}", "Roll 1d6", "spell-damage"],
+      ["{@savingThrow con 3}", "Roll +3", "save"],
+      ["{@dice 1d4}", "Roll 1d4", "dice"],
+    ])(
+      "records %s in a spell's text, rolled by its %s button, as type %s",
+      async (text, name, type) => {
+        const fetchMock = stubFetch(new Response(JSON.stringify(entry(9)), { status: 201 }));
+        renderWithClient(
+          <RollingFor value="c1">
+            <RollingSpell value>
+              <RulesText text={text} />
+            </RollingSpell>
+          </RollingFor>,
+        );
+        fireEvent.click(screen.getByRole("button", { name }));
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+        const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
+        expect(JSON.parse(String(init.body))).toMatchObject({ type });
+      },
+    );
 
     it("hands the recorded roll to its listener", async () => {
       stubFetch(new Response(JSON.stringify(entry(9)), { status: 201 }));
