@@ -9,16 +9,31 @@ import {
   type CharacterSpells,
   deityAlignmentCode,
   entriesSchema,
+  grantedSpellCosts,
+  grantedSpellKey,
   type SheetSpell,
   spellCastingFacts,
   spellEffectSchema,
 } from "@dnd/catalog";
-import { type CharacterDefinition, displayName, entryKey } from "@dnd/character";
+import {
+  type CharacterDefinition,
+  catalogRef,
+  classLevels,
+  displayName,
+  entryKey,
+  spellBlockKey,
+} from "@dnd/character";
 import type { ZodType } from "zod";
 import { getCatalogRow } from "./catalog-row.ts";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
 import { resolveItemRows } from "./inventory.ts";
-import { type SpellRow as CatalogSpellRow, findSpells, getSpells } from "./spells.ts";
+import {
+  type SpellRow as CatalogSpellRow,
+  findSpells,
+  getGrantedSpells,
+  getGrantorJson,
+  getSpells,
+} from "./spells.ts";
 
 type SpellEntry = CharacterDefinition["spells"][number];
 
@@ -75,14 +90,19 @@ function rowFacts(
   });
 }
 
-function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, fromItem?: string) {
+type Cost = NonNullable<SheetSpell["cost"]>;
+
+/** What the sheet says of a spell beyond its definition entry. */
+type Grant = { fromItem?: string; fromSubclass?: string; cost?: Cost };
+
+function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, grant: Grant = {}) {
   const { ref, prepared, granted, origin, pickedFor } = entry;
   const fields = {
     name: row?.name ?? displayName(ref),
     ...("homebrewId" in ref ? { homebrewId: ref.homebrewId } : { source: ref.source }),
     prepared,
     ...(granted && { granted }),
-    ...(fromItem && { fromItem }),
+    ...grant,
     ...(origin && { origin }),
     ...(pickedFor && { pickedFor }),
   };
@@ -104,9 +124,45 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, fromItem?: str
   };
 }
 
+type SubclassSpell = { row: CatalogSpellRow; subclass: string; cost?: Cost };
+
+/**
+ * The spells each catalog subclass the character holds gives outright by its class's level,
+ * by `entryKey`, each once under the first subclass that gives it, with what casting it costs.
+ * A subclass offering alternative blocks gives its chosen block's. A homebrew class or
+ * subclass gives none here.
+ */
+function subclassSpells(
+  dataDir: string,
+  definition: CharacterDefinition,
+): Map<string, SubclassSpell> {
+  const found = new Map<string, SubclassSpell>();
+  for (const group of classLevels(definition)) {
+    const cls = catalogRef(group.class);
+    const subclass = catalogRef(group.subclass);
+    if (!cls || !subclass) continue;
+    const key = spellBlockKey({ kind: "subclass", ref: subclass, class: cls });
+    const block = definition.spellBlocks.find((choice) => spellBlockKey(choice.grantor) === key);
+    const grantor = {
+      kind: "subclass" as const,
+      ...subclass,
+      parent: cls,
+      ...(block && { block: block.block }),
+    };
+    const costs = grantedSpellCosts(getGrantorJson(dataDir, grantor), grantor.block);
+    const refs = getGrantedSpells(dataDir, grantor, group.level).spells;
+    for (const row of getSpells(dataDir, refs)) {
+      if (!row || found.has(entryKey(row))) continue;
+      const cost = costs.get(grantedSpellKey(`${row.name}|${row.source}`));
+      found.set(entryKey(row), { row, subclass: subclass.name, ...(cost && { cost }) });
+    }
+  }
+  return found;
+}
+
 /**
  * The spells equipped items let the character cast, in inventory order, each marked granted
- * and citing its item. A spell the definition already lists stays as that entry, and one
+ * and citing its item. A spell `known` holds by `entryKey` stays as that entry, and one
  * several items attach lists once, citing them all. An item may add spells by the alignment of
  * the character's deity row; a character with no deity, or an unknown one, gets none. An item
  * that waits on attunement lists none until attuned. A name no row answers is left out: no
@@ -116,6 +172,7 @@ function itemSpells(
   dataDir: string,
   homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
+  known: ReadonlySet<string>,
 ): SheetSpell[] {
   const rows = resolveItemRows(dataDir, homebrewDb, definition.inventory);
   let deityCode: string | undefined | null = null;
@@ -142,9 +199,6 @@ function itemSpells(
     definition.edition,
     attached.map(({ name }) => name),
   );
-  const known = new Set(
-    definition.spells.flatMap(({ ref }) => ("homebrewId" in ref ? [] : [entryKey(ref)])),
-  );
   const byKey = new Map<string, { row: CatalogSpellRow; items: string[] }>();
   attached.forEach(({ item }, index) => {
     const row = found[index];
@@ -157,18 +211,42 @@ function itemSpells(
   });
   return [...byKey.values()].map(({ row, items }) => {
     const ref = { name: row.name, source: row.source };
-    return sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), items.join(", "));
+    return sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), {
+      fromItem: items.join(", "),
+    });
   });
 }
 
+/**
+ * The definition's spells in order, then those its subclasses give that it does not list,
+ * then its equipped items'. A granted entry a subclass also gives carries the subclass's cost.
+ */
 export function resolveCharacterSpells(
   dataDir: string,
   homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
 ): CharacterSpells {
   const rows = rowFacts(dataDir, homebrewDb, definition.spells);
-  const spells: SheetSpell[] = definition.spells.map((entry, index) =>
-    sheetSpell(entry, rows[index]),
-  );
-  return { spells: [...spells, ...itemSpells(dataDir, homebrewDb, definition)] };
+  const bySubclass = subclassSpells(dataDir, definition);
+  const known = new Set<string>();
+  const spells: SheetSpell[] = definition.spells.map((entry, index) => {
+    if ("homebrewId" in entry.ref) return sheetSpell(entry, rows[index]);
+    known.add(entryKey(entry.ref));
+    const cost = entry.granted ? bySubclass.get(entryKey(entry.ref))?.cost : undefined;
+    return sheetSpell(entry, rows[index], cost && { cost });
+  });
+  const subclass = [...bySubclass].flatMap(([key, { row, subclass, cost }]) => {
+    if (known.has(key)) return [];
+    known.add(key);
+    const ref = { name: row.name, source: row.source };
+    return [
+      sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), {
+        fromSubclass: subclass,
+        ...(cost && { cost }),
+      }),
+    ];
+  });
+  return {
+    spells: [...spells, ...subclass, ...itemSpells(dataDir, homebrewDb, definition, known)],
+  };
 }

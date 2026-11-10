@@ -53,6 +53,7 @@ let publishCount = 0;
 
 function placeholder(column: { name: string; type: string }): string | number {
   if (column.name === "edition") return EDITIONS[0];
+  if (column.name === "json") return "{}";
   return column.type === "INTEGER" ? 1 : "";
 }
 
@@ -66,8 +67,8 @@ function placeholder(column: { name: string; type: string }): string | number {
  * Stamped with this schema's fingerprint, as a build is, so `openContentDb` accepts it,
  * unless the `meta` rows name a stamp of their own.
  * A row names only the columns its test cares about. Each NOT NULL column it leaves out
- * gets the first edition, 1 for an integer or an empty string, which the edition and
- * range CHECK constraints accept. Rows stay small, a value no real build could hold fails
+ * gets the first edition, an empty object for `json`, 1 for an integer or an empty string,
+ * which the edition and range CHECK constraints accept. Rows stay small, a value no real build could hold fails
  * its insert, and a column the schema no longer has fails the insert or the query that
  * names it.
  *
@@ -110,13 +111,8 @@ export function publishMeta(dataDir: string, rows: MetaFixtureRow[]): void {
   publishContent(dataDir, { meta: rows });
 }
 
-export function publishSpells(
-  dataDir: string,
-  rows: SpellFixtureRow[],
-  items: ItemFixtureRow[] = [],
-  lookups: LookupFixtureRow[] = [],
-): void {
-  publishContent(dataDir, { spells: rows, items, lookups });
+export function publishSpells(dataDir: string, rows: SpellFixtureRow[]): void {
+  publishContent(dataDir, { spells: rows });
 }
 
 export function publishRaces(dataDir: string, rows: RaceFixtureRow[]): void {
@@ -394,10 +390,13 @@ export function publishReferencesFixture(dataDir: string, fixture: ReferencesFix
   publishContent(dataDir, fixture);
 }
 
-/** The rows a class's spell list and a grantor's spells are read from. */
+/** The rows a class's spell list, a grantor's spells and a character's spells are read from. */
 export type SpellListFixture = {
   spells?: SpellFixtureRow[];
   feats?: FeatFixtureRow[];
+  subclasses?: SubclassFixtureRow[];
+  items?: ItemFixtureRow[];
+  lookups?: LookupFixtureRow[];
   spellClasses?: {
     spell_name: string;
     spell_source: string;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockLabels, eitherPicks, offeredPicks } from "./index.ts";
+import { blockLabels, eitherPicks, grantedSpellCosts, offeredPicks } from "./index.ts";
 
 const row = (...additionalSpells: unknown[]) => ({ additionalSpells });
 
@@ -113,5 +113,34 @@ describe("eitherPicks", () => {
     expect(offeredPicks(lore, 6)).toMatchObject({ cantrips: 1, spells: 3 });
     const prepared = row({ prepared: { "6": [{ choose: "level=0;1;2;3", count: 2 }] } });
     expect(eitherPicks(prepared, 6)).toEqual({ either: 2, learned: 0 });
+  });
+});
+
+describe("grantedSpellCosts", () => {
+  it("costs each spell under a resource key in the block's resource, keyed by name and source", () => {
+    const shadow = row({
+      known: { "3": ["minor illusion#c"] },
+      innate: { "3": { resource: { "2": ["darkness", "silence|XPHB"] } } },
+      resourceName: "Ki",
+    });
+    expect(Object.fromEntries(grantedSpellCosts(shadow))).toEqual({
+      "darkness|phb": { amount: 2, resource: "Ki" },
+      "silence|xphb": { amount: 2, resource: "Ki" },
+    });
+  });
+
+  it("reads the chosen block alone, and none until one is chosen", () => {
+    const choice = row(
+      { innate: { "3": { resource: { "1": ["darkness"] } } }, resourceName: "Ki" },
+      { innate: { "3": { resource: { "2": ["silence"] } } }, resourceName: "Ki" },
+    );
+    expect(grantedSpellCosts(choice).size).toBe(0);
+    expect([...grantedSpellCosts(choice, 1).keys()]).toEqual(["silence|phb"]);
+  });
+
+  it("costs nothing a block names no resource for", () => {
+    expect(
+      grantedSpellCosts(row({ innate: { "3": { resource: { "2": ["darkness"] } } } })).size,
+    ).toBe(0);
   });
 });
