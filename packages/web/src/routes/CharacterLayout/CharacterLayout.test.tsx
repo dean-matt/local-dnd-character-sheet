@@ -397,4 +397,100 @@ describe("CharacterLayout roll log", () => {
     await screen.findByText("Rolled 1d4: 3");
     expect(screen.getByRole("heading", { name: "Roll Log" })).not.toHaveFocus();
   });
+
+  describe("dice field", () => {
+    afterEach(() => vi.restoreAllMocks());
+    const posted = () =>
+      vi
+        .mocked(fetch)
+        .mock.calls.filter(([, init]) => init?.method === "POST")
+        .map(([, init]) => JSON.parse(String(init?.body)));
+    async function rollField(notation: string, label = "") {
+      fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+      const dice = await screen.findByRole("textbox", { name: "Dice" });
+      fireEvent.change(dice, { target: { value: notation } });
+      fireEvent.change(screen.getByRole("textbox", { name: "Label (optional)" }), {
+        target: { value: label },
+      });
+      dice.focus();
+      fireEvent.submit(dice);
+      return dice;
+    }
+
+    it("rolls typed notation under its label, shows each die and the total, and logs it", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      await renderSheet([]);
+      await rollField("2d8+3", "Pit trap");
+
+      const result = await screen.findByText("2d8+3:");
+      expect(result.parentElement).toHaveTextContent(/^2d8\+3:55\+ 3= 13$/);
+      await waitFor(() =>
+        expect(posted()).toEqual([
+          expect.objectContaining({
+            type: "dice",
+            label: "Pit trap",
+            notation: "2d8+3",
+            total: 13,
+          }),
+        ]),
+      );
+    });
+
+    it("strikes through a discarded die and signs a subtracted one", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      await renderSheet([]);
+      await rollField("4d6kh3-1d4");
+
+      const result = await screen.findByText("4d6kh3-1d4:");
+      expect(result.parentElement).toHaveTextContent(/^4d6kh3-1d4:4444−3= 9$/);
+      const discarded = screen.getAllByTitle("d6, discarded");
+      expect(discarded).toHaveLength(1);
+      expect(discarded[0]).toHaveClass("line-through");
+    });
+
+    it("shows and announces a roll the server could not record as not logged", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      await renderSheet([]);
+      const answer = vi.mocked(fetch).getMockImplementation();
+      vi.mocked(fetch).mockImplementation(async (input, init) =>
+        init?.method === "POST"
+          ? new Response("{}", { status: 500 })
+          : (answer as typeof fetch)(input, init),
+      );
+      await rollField("1d4", "Trap");
+
+      expect(await screen.findByText("not logged")).toBeInTheDocument();
+      expect(screen.getByText("Rolled Trap: 3, not logged")).toHaveAttribute("role", "status");
+    });
+
+    it("labels a roll given no label", async () => {
+      await renderSheet([]);
+      await rollField("d100");
+      await waitFor(() =>
+        expect(posted()).toEqual([
+          expect.objectContaining({ label: "Dice roll", notation: "1d100" }),
+        ]),
+      );
+    });
+
+    it("refuses notation the parser rejects and logs nothing", async () => {
+      await renderSheet([]);
+      const dice = await rollField("2d");
+
+      expect(await screen.findByRole("alert")).toHaveTextContent('Invalid dice notation: "2d"');
+      expect(dice).toHaveAttribute("aria-invalid", "true");
+      expect(posted()).toEqual([]);
+
+      fireEvent.change(dice, { target: { value: "2d6" } });
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
+
+    it("announces the logged roll and keeps focus in the field", async () => {
+      await renderSheet([]);
+      const dice = await rollField("1d4");
+
+      expect(await screen.findByText("Rolled 1d4: 3")).toBeInTheDocument();
+      expect(dice).toHaveFocus();
+    });
+  });
 });

@@ -112,7 +112,9 @@ export function CharacterLayout() {
             {historyOpen ? (
               <UndoHistory characterId={id} />
             ) : (
-              <RollLog latest={latestRoll} characterId={id} />
+              <OnRolled value={showRoll}>
+                <RollLog latest={latestRoll} characterId={id} />
+              </OnRolled>
             )}
           </Dock>
         )}

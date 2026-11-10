@@ -64,7 +64,7 @@ widget, panel, or nav element:
   with what it was rolled for (a weapon, a spell, an ability check…) and which character
   made it, with a Clear button. Character sheet only, not Settings. Forward design for #282,
   which only specified the list; the dock, the collapse, and Clear are this mockup's own
-  call. The app's Roll Log filter leads, so the artboard draws none.
+  call. The app's Roll Log filter and dice field lead, so the artboard draws neither.
 - Overlays: Add Widget Picker.
 - Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)

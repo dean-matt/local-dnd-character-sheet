@@ -9,7 +9,7 @@ type Roll = ReturnType<typeof rollDice>;
 /**
  * Rolls `notation`, records it under `label` and `type` in the character's roll log and hands the
  * recorded entry to the layout. `settled` hears the roll and whether it was recorded; a
- * notation that does not parse rolls nothing.
+ * notation that does not parse rolls nothing and returns the parser's error.
  */
 export function useRollAndRecord(characterId: string) {
   const record = useRecordRoll(characterId);
@@ -20,12 +20,12 @@ export function useRollAndRecord(characterId: string) {
     label: string,
     type: RollType,
     settled?: (rolled: Roll, logged: boolean) => void,
-  ) {
+  ): Error | undefined {
     let rolled: Roll;
     try {
       rolled = rollDice(notation);
-    } catch {
-      return;
+    } catch (error) {
+      return error as Error;
     }
     record.mutate(
       {
@@ -45,6 +45,7 @@ export function useRollAndRecord(characterId: string) {
         onError: () => settled?.(rolled, false),
       },
     );
+    return undefined;
   }
 
   return { roll, failed: record.isError };
