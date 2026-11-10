@@ -180,6 +180,7 @@ function expand(inner: string, depth: number): Token[] {
       return [
         {
           kind: "roll",
+          tag,
           notation,
           display: display(args, spec.display, depth),
           rollable: isRollable(notation),
