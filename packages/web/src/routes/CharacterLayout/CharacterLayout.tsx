@@ -109,7 +109,11 @@ export function CharacterLayout() {
         </div>
         {panel && (
           <Dock id={dockId} label="Side panel" onClose={closePanel}>
-            {historyOpen ? <UndoHistory characterId={id} /> : <RollLog latest={latestRoll} />}
+            {historyOpen ? (
+              <UndoHistory characterId={id} />
+            ) : (
+              <RollLog latest={latestRoll} characterId={id} />
+            )}
           </Dock>
         )}
       </SidebarFrame>

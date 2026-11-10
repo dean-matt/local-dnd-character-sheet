@@ -62,11 +62,9 @@ widget, panel, or nav element:
   Panel is a right-docked, collapsible rail — the counterpart to the tab rail on the left —
   listing every character's rolls newest first, whichever character is open, each tagged
   with what it was rolled for (a weapon, a spell, an ability check…) and which character
-  made it, with a Clear button and a Filter button (by roll type) in the same shape as the
-  other list widgets' filters. There is no filter by character. Character sheet only, not
-  Settings. Forward design for #282, which only specified the list; the dock, the collapse,
-  and Clear are this mockup's own call. The Filter button widens past #282's own "out of
-  scope" line ("Filtering or searching the log") — #311 settles it.
+  made it, with a Clear button. Character sheet only, not Settings. Forward design for #282,
+  which only specified the list; the dock, the collapse, and Clear are this mockup's own
+  call. The app's Roll Log filter leads, so the artboard draws none.
 - Overlays: Add Widget Picker.
 - Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)
@@ -80,7 +78,7 @@ widget, panel, or nav element:
   the picker. Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level,
   Backstory, Notes) never get this — their widgets are fixed.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
-  RaceFeaturesFilter, ChosenFeaturesFilter, RollsPanelFilter — each is mounted into its
+  RaceFeaturesFilter, ChosenFeaturesFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that
   widget on the canvas. Forward design for #311, since none of these widgets' own
   issues had settled a filter yet.
@@ -157,8 +155,7 @@ says how much of the artboard the app builds today.
 | `ChosenFeatures` | #231, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the portrait upload and the Rest menu, the rest read-only |
-| `RollsPanel` | #282, #311, #312 | nothing |
-| `RollsPanelFilter` | #311 | nothing |
+| `RollsPanel` | #1391 | the list |
 | `WidgetPicker` | #819 | nothing |
 | `CustomTab` | #819 | nothing |
 
