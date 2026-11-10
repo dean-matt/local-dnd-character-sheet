@@ -122,6 +122,27 @@ describe("FeatureUses", () => {
     await waitFor(() => expect(row("Lucky")).toHaveTextContent("2 / 3 Long rest"));
   });
 
+  it("spends a use in a card filtered to its limited uses as it does unfiltered", async () => {
+    const { writes } = renderFeatures();
+    await waitFor(() => expect(row("Second Wind")).toHaveTextContent("1 / 1"));
+    const classes = within(
+      screen
+        .getByRole("heading", { level: 3, name: "Class Features" })
+        .closest("section") as HTMLElement,
+    );
+    fireEvent.click(classes.getByRole("button", { name: /^Filter / }));
+    fireEvent.click(classes.getByLabelText("Has limited uses"));
+    expect(classes.queryByText("Fighting Style")).toBeNull();
+
+    fireEvent.click(classes.getByRole("button", { name: "Spend a use of Second Wind" }));
+
+    await waitFor(() => expect(row("Second Wind")).toHaveTextContent("0 / 1"));
+    expect(writes[0]?.featureUses).toEqual([
+      { key: "feature|Fighter|PHB|||1|PHB|Second Wind", expended: 1 },
+    ]);
+    expect(classes.getByLabelText("Has limited uses")).toBeChecked();
+  });
+
   it("offers no spend once every use is gone, and restores one", async () => {
     const { writes } = renderFeatures({ featureUses: [{ key: RELENTLESS, expended: 2 }] });
     await waitFor(() => expect(row("Relentless Endurance")).toHaveTextContent("0 / 2"));
