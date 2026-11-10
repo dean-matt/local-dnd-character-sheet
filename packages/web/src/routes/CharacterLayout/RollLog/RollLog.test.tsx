@@ -1,4 +1,5 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
@@ -30,5 +31,22 @@ describe("RollLog with no open character", () => {
     expect(await screen.findAllByRole("listitem")).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: "Filter Roll Log" }));
     expect(screen.getByRole("combobox", { name: "Character" })).toHaveTextContent("All characters");
+  });
+});
+
+describe("RollLog when the characters fail to load", () => {
+  it("shows the error in place of the Character select", async () => {
+    stubFetchByUrl({ "/api/rolls": [roll(1, "1", "Vex")] });
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <RollLog latest={null} characterId="1" />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findAllByRole("listitem")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Filter Roll Log (1 active)" }));
+    expect(await screen.findByText("nothing at /api/characters")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Character" })).toBeNull();
   });
 });
