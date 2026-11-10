@@ -54,7 +54,8 @@ export function RollLog({ latest }: { latest: Roll | null }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2.5">
-      <div className="flex items-center justify-between gap-2">
+      {/* pr-8 clears the dock's Close button, which sits over the panel's top right. */}
+      <div className="flex items-center justify-between gap-2 pr-8">
         <h2 ref={heading} tabIndex={-1} className="font-bold text-title">
           Roll Log
         </h2>
