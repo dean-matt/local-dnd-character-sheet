@@ -194,7 +194,7 @@ function nonSubclassSpells(dataDir: string, definition: CharacterDefinition): Se
       at("class", group.class).map((each) => ({ ...each, level: group.level })),
     ),
     // A subrace's grants already hold its race's.
-    ...(definition.subrace && race
+    ...(catalogRef(definition.subrace) && race
       ? at("subrace", definition.subrace, { race })
       : at("race", definition.race)),
     ...at("background", definition.background),

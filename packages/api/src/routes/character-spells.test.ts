@@ -109,6 +109,8 @@ const DRUID = { name: "Druid", source: "PHB" };
 const LAND = { name: "Circle of the Land", source: "PHB" };
 const TIEFLING = { name: "Tiefling", source: "PHB" };
 const GLOOM_TOUCHED = { name: "Gloom Touched", source: "PHB" };
+const ASMODEUS = { name: "Asmodeus", source: "MTF" };
+const HAUNTED_ONE = { name: "Haunted One", source: "CoS" };
 
 /** A spell row carrying only what the sheet's facts read. */
 const spellRow = (name: string, source: string, level: number) => ({
@@ -299,16 +301,18 @@ describe("characterSpellsRoutes", () => {
         })),
         ...(
           [
-            ["races", TIEFLING, 5],
-            ["feats", GLOOM_TOUCHED, 0],
+            ["races", TIEFLING, 5, undefined],
+            ["subraces", ASMODEUS, 0, TIEFLING],
+            ["backgrounds", HAUNTED_ONE, 0, undefined],
+            ["feats", GLOOM_TOUCHED, 0, undefined],
           ] as const
-        ).map(([granted_by, row, level]) => ({
+        ).map(([granted_by, row, level, parent]) => ({
           spell_name: "Darkness",
           spell_source: "PHB",
           granted_by,
           ...row,
-          parent_name: "",
-          parent_source: "",
+          parent_name: parent?.name ?? "",
+          parent_source: parent?.source ?? "",
           chosen: 0 as const,
           level,
         })),
@@ -583,6 +587,37 @@ describe("characterSpellsRoutes", () => {
 
       it("leaves a feat's entry free", async () => {
         monk(MONK, SHADOW, 3, [DARKNESS], { feats: [GLOOM_TOUCHED] });
+        expect(await darkness()).toEqual([free, costed]);
+      });
+
+      it("leaves a background's entry free", async () => {
+        monk(MONK, SHADOW, 3, [DARKNESS], { background: HAUNTED_ONE });
+        expect(await darkness()).toEqual([free, costed]);
+      });
+
+      it("leaves a subrace's entry free", async () => {
+        monk(MONK, SHADOW, 3, [DARKNESS], { race: TIEFLING, subrace: ASMODEUS });
+        expect(await darkness()).toEqual([free, costed]);
+      });
+
+      it("reads the race's grants under a homebrew subrace", async () => {
+        monk(MONK, SHADOW, 5, [DARKNESS], { race: TIEFLING, subrace: { homebrewId: "h" } });
+        expect(await darkness()).toEqual([free, costed]);
+      });
+
+      it("folds an equipped item's grant into the free entry", async () => {
+        monk(MONK, SHADOW, 5, [DARKNESS], {
+          race: TIEFLING,
+          inventory: [
+            {
+              ref: { name: "Cloak of Shade", source: "DMG" },
+              quantity: 1,
+              carried: true,
+              equipped: true,
+              attuned: false,
+            },
+          ],
+        });
         expect(await darkness()).toEqual([free, costed]);
       });
 
