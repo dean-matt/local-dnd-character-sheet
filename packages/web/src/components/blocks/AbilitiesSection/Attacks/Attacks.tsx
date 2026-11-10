@@ -137,6 +137,7 @@ export function Attacks({
                   rollAttack={
                     <RollBonusButton
                       label={`${name} attack`}
+                      type="attack"
                       bonus={derivedValue(attack.attackBonus)}
                     />
                   }
@@ -144,6 +145,7 @@ export function Attacks({
                     attack.damage && (
                       <RollBonusButton
                         label={`${name} damage`}
+                        type="damage"
                         dice={attack.damage.dice}
                         bonus={derivedValue(attack.damage.modifier)}
                       />
@@ -176,7 +178,11 @@ export function Attacks({
                   }
                   damage={NONE}
                   rollAttack={
-                    <RollBonusButton label={name} bonus={derivedValue(caster.attackBonus)} />
+                    <RollBonusButton
+                      label={name}
+                      type="spell-attack"
+                      bonus={derivedValue(caster.attackBonus)}
+                    />
                   }
                   effects={effectsOnRoll(rollEffects, { roll: "attack", ability: caster.ability })}
                   notes={<CastingBlockedNote armor={derived.castingBlockedBy} />}

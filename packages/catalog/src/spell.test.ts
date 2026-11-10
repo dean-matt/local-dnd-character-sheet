@@ -57,7 +57,13 @@ describe("spellEntrySchema", () => {
     const roll = tokens.find(
       (token): token is Extract<Token, { kind: "roll" }> => token.kind === "roll",
     );
-    expect(roll).toEqual({ kind: "roll", notation: "2d6", display: "2d6", rollable: true });
+    expect(roll).toEqual({
+      kind: "roll",
+      tag: "damage",
+      notation: "2d6",
+      display: "2d6",
+      rollable: true,
+    });
   });
 });
 

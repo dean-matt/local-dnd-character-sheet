@@ -132,6 +132,17 @@ describe("CharacterLayout roll log", () => {
     expect(item).toHaveTextContent("14");
   });
 
+  it("lists a roll stored before rolls carried a type beside a typed one", async () => {
+    await renderSheet([
+      { ...roll, id: 2, label: "Longsword attack", type: "attack" },
+      { ...roll, id: 1, label: "Old roll" },
+    ]);
+    fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+    const items = await screen.findAllByRole("listitem");
+    expect(items[0]).toHaveTextContent("Longsword attack");
+    expect(items[1]).toHaveTextContent("Old roll");
+  });
+
   it("tags each roll with its character, another character's included", async () => {
     await renderSheet([
       { ...roll, id: 2, characterId: "2", characterName: "Mira" },

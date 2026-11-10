@@ -50,7 +50,7 @@ plain text, instead of the tag parser treating it as a tag.
 type Token =
   | { kind: "text"; value: string }
   | { kind: "ref"; tag: string; name: string; source?: string; qualifier?: string; owner?: FeatureOwner; display: string }
-  | { kind: "roll"; notation: string; display: string; rollable: boolean }
+  | { kind: "roll"; tag: string; notation: string; display: string; rollable: boolean }
   | { kind: "style"; style: Emphasis; children: Token[] };
 ```
 

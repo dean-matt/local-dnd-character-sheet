@@ -126,7 +126,11 @@ export function ProficiencyRow({
         </span>
       </span>
       <span className="flex w-5 shrink-0 justify-center empty:hidden">
-        <RollBonusButton label={ability ? roll : title} bonus={derivedValue(modifier)} />
+        <RollBonusButton
+          label={ability ? roll : title}
+          type={ability ? "check" : "save"}
+          bonus={derivedValue(modifier)}
+        />
       </span>
     </li>
   );

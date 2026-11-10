@@ -11,7 +11,21 @@ const rolledDieSchema = z.strictObject({
   sign: z.union([z.literal(1), z.literal(-1)]),
 });
 
+/** What a roll was for. `dice` is a roll the rules text asks for without saying what it is. */
+const rollTypeSchema = z.enum([
+  "attack",
+  "damage",
+  "check",
+  "save",
+  "spell-attack",
+  "hit-die",
+  "dice",
+]);
+
+export type RollType = z.infer<typeof rollTypeSchema>;
+
 export const rollRecordSchema = z.strictObject({
+  type: rollTypeSchema,
   label: z.string().min(1),
   notation: z.string().min(1),
   total: z.int(),
@@ -24,8 +38,12 @@ export const rollRecordSchema = z.strictObject({
 
 export type RollRecord = z.infer<typeof rollRecordSchema>;
 
-/** A `roll_log` row as an endpoint lists it, with the character that rolled it; each character keeps its newest 200. */
+/**
+ * A `roll_log` row as an endpoint lists it, with the character that rolled it; each character
+ * keeps its newest 200. A roll stored before rolls carried a type has none.
+ */
 export const rollLogEntrySchema = rollRecordSchema.extend({
+  type: rollTypeSchema.optional(),
   id: z.int(),
   characterId: z.string(),
   characterName: z.string(),

@@ -26,6 +26,7 @@ const definition = characterDefinitionSchema.parse({
 });
 
 const roll = (total: number, label = "Stealth") => ({
+  type: "check",
   label,
   notation: "1d20+3",
   total,
@@ -78,22 +79,34 @@ describe("rollsRoutes", () => {
     expect(await list()).toEqual([stored]);
   });
 
-  it("round-trips the mode and the reason a d20 option gave the roll", async () => {
+  it("stores the roll's type within its detail, beside no column of its own", async () => {
+    const id = await create();
+    await record(id, { ...roll(15), type: "attack" });
+
+    const [row] = opened.charactersDb.select().from(rollLog).all();
+    expect(row?.detail).toMatchObject({ type: "attack" });
+    expect(row).not.toHaveProperty("type");
+    expect(await list()).toMatchObject([{ type: "attack" }]);
+  });
+
+  it("round-trips the mode, the reason and the type a d20 option gave the roll", async () => {
     const id = await create();
     const lucky = {
       ...roll(15),
-      mode: "normal",
+      type: "save",
+      mode: "advantage",
       reason: "lucky",
     };
 
     const stored = await (await record(id, lucky)).json();
-    expect(stored).toMatchObject({ mode: "normal", reason: "lucky" });
+    expect(stored).toMatchObject({ type: "save", mode: "advantage", reason: "lucky" });
     expect(await list()).toEqual([stored]);
   });
 
-  it("loads a row written before a roll carried a mode or a reason", async () => {
+  it("loads a row written before a roll carried a type, a mode or a reason", async () => {
     const id = await create();
-    const { dice, modifier, critical, total, label, notation } = roll(11);
+    const { type: _none, ...untyped } = roll(11);
+    const { dice, modifier, critical, total, label, notation } = untyped;
     opened.charactersDb
       .insert(rollLog)
       .values({
@@ -107,9 +120,15 @@ describe("rollsRoutes", () => {
       .run();
 
     const [legacy] = await list();
-    expect(legacy).toMatchObject(roll(11));
+    expect(legacy).toMatchObject(untyped);
+    expect(legacy).not.toHaveProperty("type");
     expect(legacy).not.toHaveProperty("reason");
     expect(legacy).not.toHaveProperty("mode");
+  });
+
+  it("rejects a type outside the vocabulary", async () => {
+    const id = await create();
+    expect((await record(id, { ...roll(15), type: "initiative" })).status).toBe(400);
   });
 
   it("rejects a reason that is not a d20 option", async () => {

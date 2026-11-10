@@ -364,7 +364,12 @@ describe("Hit Dice rolls", () => {
 
     await waitFor(() => expect(onRolled).toHaveBeenCalledWith(logged));
     const post = calls.find((call) => call.method === "POST");
-    expect(post?.body).toMatchObject({ label: "d10 Hit Die", notation: "1d10+2", modifier: 2 });
+    expect(post?.body).toMatchObject({
+      type: "hit-die",
+      label: "d10 Hit Die",
+      notation: "1d10+2",
+      modifier: 2,
+    });
     expect(screen.getByRole("button", { name: "Roll d8 Hit Die" })).toBeInTheDocument();
   });
 

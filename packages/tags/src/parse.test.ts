@@ -70,7 +70,7 @@ describe("grammar", () => {
   it("splits text around a tag", () => {
     expect(parseTags("Deals {@damage 8d6} fire damage.")).toEqual([
       { kind: "text", value: "Deals " },
-      { kind: "roll", notation: "8d6", display: "8d6", rollable: true },
+      { kind: "roll", tag: "damage", notation: "8d6", display: "8d6", rollable: true },
       { kind: "text", value: " fire damage." },
     ]);
   });
@@ -200,6 +200,7 @@ describe("nesting", () => {
   it("flattens a tag nested in a computed display", () => {
     expect(only("{@hit +3|{@hit 3} to hit}")).toEqual({
       kind: "roll",
+      tag: "hit",
       notation: "1d20+3",
       display: "+3 to hit",
       rollable: true,
@@ -257,6 +258,7 @@ describe("rolls", () => {
   it("marks plain notation rollable", () => {
     expect(only("{@dice 1d4 + 4}")).toEqual({
       kind: "roll",
+      tag: "dice",
       notation: "1d4 + 4",
       display: "1d4 + 4",
       rollable: true,
@@ -266,6 +268,7 @@ describe("rolls", () => {
   it("marks notation it cannot read unrollable rather than guessing", () => {
     expect(only("{@damage (summonSpellLevel - 4)d4 + 3|1d4 + 3}")).toEqual({
       kind: "roll",
+      tag: "damage",
       notation: "(summonSpellLevel - 4)d4 + 3",
       display: "1d4 + 3",
       rollable: false,
@@ -275,6 +278,7 @@ describe("rolls", () => {
   it("synthesizes the d20 notation for an attack bonus", () => {
     expect(only("{@hit 5}")).toEqual({
       kind: "roll",
+      tag: "hit",
       notation: "1d20+5",
       display: "+5",
       rollable: true,
@@ -284,6 +288,7 @@ describe("rolls", () => {
   it("keeps a negative attack bonus signed once", () => {
     expect(only("{@hit -1}")).toEqual({
       kind: "roll",
+      tag: "hit",
       notation: "1d20-1",
       display: "-1",
       rollable: true,
@@ -293,6 +298,7 @@ describe("rolls", () => {
   it("makes a plain d20 bonus rollable", () => {
     expect(only("{@d20 3}")).toEqual({
       kind: "roll",
+      tag: "d20",
       notation: "1d20+3",
       display: "+3",
       rollable: true,
@@ -302,6 +308,7 @@ describe("rolls", () => {
   it("prefers the display a scaling dice tag names for itself", () => {
     expect(only("{@scaledice 2d6|1,3,5,7,9|1d6|psi|extra amount}")).toEqual({
       kind: "roll",
+      tag: "scaledice",
       notation: "1d6",
       display: "extra amount",
       rollable: true,
@@ -318,6 +325,7 @@ describe("rolls", () => {
   it("reads the per-level dice out of a scaling dice tag", () => {
     expect(only("{@scaledice 8d6|3-9|1d6}")).toEqual({
       kind: "roll",
+      tag: "scaledice",
       notation: "1d6",
       display: "1d6",
       rollable: true,
@@ -327,6 +335,7 @@ describe("rolls", () => {
   it("reads the current tier out of a scaling damage tag", () => {
     expect(only("{@scaledamage 2d6;3d6|2-9|1d6}")).toEqual({
       kind: "roll",
+      tag: "scaledamage",
       notation: "1d6",
       display: "1d6",
       rollable: true,
@@ -336,6 +345,7 @@ describe("rolls", () => {
   it("reads the bonus out of a skill check", () => {
     expect(only("{@skillCheck survival 4}")).toEqual({
       kind: "roll",
+      tag: "skillCheck",
       notation: "1d20+4",
       display: "+4",
       rollable: true,
@@ -357,6 +367,7 @@ describe("prompt templates nested in dice notation", () => {
   it("keeps a bare title and drops the template", () => {
     expect(only("{@dice 1d6 + #$prompt_number:title=Enter a Modifier$#}")).toEqual({
       kind: "roll",
+      tag: "dice",
       notation: "1d6 + #$prompt_number:title=Enter a Modifier$#",
       display: "1d6 + [Enter a Modifier]",
       rollable: false,

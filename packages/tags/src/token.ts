@@ -48,7 +48,7 @@ export type Token =
       owner?: FeatureOwner;
       display: string;
     }
-  | { kind: "roll"; notation: string; display: string; rollable: boolean }
+  | { kind: "roll"; tag: string; notation: string; display: string; rollable: boolean }
   | { kind: "style"; style: Emphasis; children: Token[] };
 
 export type RefToken = Extract<Token, { kind: "ref" }>;
@@ -83,11 +83,11 @@ export function arg(args: string[], index: number): string | undefined {
  * Shared by every tag that renders a d20 bonus rather than notation. A tag that omits
  * the bonus has nothing to roll, and a lone `+` is worse than nothing.
  */
-export function d20(bonus: string): Token {
+export function d20(tag: string, bonus: string): Token {
   const signed = /^[+-]/.test(bonus) ? bonus : `+${bonus}`;
   // Nothing to roll without a number, but a placeholder like `<$to_hit__str$>` still
   // reads as a bonus and keeps its sign. A lone sign says nothing and goes.
   if (!/\d/.test(bonus)) return text(/\w/.test(bonus) ? signed : "");
   const notation = `1d20${signed}`;
-  return { kind: "roll", notation, display: signed, rollable: isRollable(notation) };
+  return { kind: "roll", tag, notation, display: signed, rollable: isRollable(notation) };
 }

@@ -44,7 +44,8 @@ const spent = (): Partial<CharacterState> => ({
   exhaustion: 1,
 });
 
-const rolls: { label: string; notation: string; total: number; modifier: number }[] = [];
+const rolls: { type: string; label: string; notation: string; total: number; modifier: number }[] =
+  [];
 
 let stored = stateRecord();
 
@@ -437,7 +438,11 @@ describe("RestMenu", () => {
         pactSlots: { level: 1, total: 1, expended: 0 },
       });
       expect(rolls).toHaveLength(2);
-      expect(rolls[0]).toMatchObject({ label: "Hit die d10", modifier: conModifier });
+      expect(rolls[0]).toMatchObject({
+        type: "hit-die",
+        label: "Hit die d10",
+        modifier: conModifier,
+      });
       await waitFor(() =>
         expect(sheet()).toHaveTextContent(`${2 + 2 * regained} hp; 1/3 d8, 0/2 d10`),
       );

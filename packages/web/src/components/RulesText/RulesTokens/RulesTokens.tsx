@@ -18,6 +18,7 @@ function renderToken(token: Token, key: string, characterId: string | null): Rea
           <RollButton
             key={key}
             characterId={characterId}
+            tag={token.tag}
             notation={token.notation}
             display={token.display}
           />

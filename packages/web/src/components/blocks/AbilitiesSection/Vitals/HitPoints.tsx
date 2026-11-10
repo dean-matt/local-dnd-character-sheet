@@ -86,6 +86,7 @@ export function HitPoints({
                   <span className="flex w-6 justify-center">
                     <RollBonusButton
                       label={`d${pool.die} Hit Die`}
+                      type="hit-die"
                       dice={`1d${pool.die}`}
                       bonus={derivedValue(derived.abilityModifiers.con)}
                     />
