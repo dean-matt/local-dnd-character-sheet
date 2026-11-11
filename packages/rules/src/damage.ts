@@ -66,6 +66,28 @@ function unchanged(hitPoints: HitPoints, saves: DeathSaves, maximum: number): Hi
   return { hitPoints, deathSaves: saves, outcome };
 }
 
+/** A defense a creature holds against one damage type. */
+export type DamageDefense = "immunity" | "resistance" | "vulnerability";
+
+/**
+ * `amount` of one damage type against the defenses `held` to that type, and those that changed
+ * it, in the order applied. Immunity leaves 0 and outranks the rest. Otherwise resistance
+ * halves, rounding down, and then vulnerability doubles; a defense held twice applies once.
+ * Both rulesets print the same order, so this takes no `Edition`.
+ */
+export function adjustedDamage(
+  amount: number,
+  held: readonly DamageDefense[],
+): { amount: number; applied: DamageDefense[] } {
+  if (!Number.isInteger(amount) || amount < 0) {
+    throw new RangeError(`An amount of damage is 0 or more, got ${amount}`);
+  }
+  if (held.includes("immunity")) return { amount: 0, applied: ["immunity"] };
+  const applied = (["resistance", "vulnerability"] as const).filter((each) => held.includes(each));
+  const halved = applied.includes("resistance") ? Math.floor(amount / 2) : amount;
+  return { amount: applied.includes("vulnerability") ? halved * 2 : halved, applied };
+}
+
 /**
  * `amount` is the damage after resistance, vulnerability and immunity. Temporary hit points
  * take it first, and only what passes them reaches `current` or counts toward instant death.

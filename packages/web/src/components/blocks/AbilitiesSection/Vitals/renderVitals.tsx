@@ -33,8 +33,13 @@ function lookedUp(body: string) {
   return { spells: [spell ? { name: spell.name, level: spell.level } : null] };
 }
 
-function derived(): CharacterDerived {
-  return { ...derivedRecord(), hitPointMaximum: { computed: 20, manual: null, terms: [] } };
+function derived(defenses?: CharacterDerived["defenses"]): CharacterDerived {
+  const record = derivedRecord();
+  return {
+    ...record,
+    hitPointMaximum: { computed: 20, manual: null, terms: [] },
+    defenses: defenses ?? record.defenses,
+  };
 }
 
 /** Vex, with the `noInstantDeath` house rule as given. */
@@ -51,12 +56,23 @@ export function vex(noInstantDeath?: boolean): CharacterRecord {
  * each state write sends and answers later reads with it, as a reload would. `fail` answers
  * every write with a 500 whose error names the attempt, "Disk full, write 2". `hold` keeps
  * each write unanswered until `release`. A spell search answers Bless, Hold Person and the
- * homebrew Hexing Ward. Returns the writes, in order, the spell search URLs, `release`, and
- * `reload`, which renders the cards again over a fresh cache.
+ * homebrew Hexing Ward. `defenses` stands in for the derived block's. Returns the writes, in
+ * order, the spell search URLs, `release`, and `reload`, which renders the cards again over a
+ * fresh cache.
  */
 export function renderVitals(
   state: Partial<CharacterState>,
-  { character = vex(), fail = false, hold = false } = {},
+  {
+    character = vex(),
+    fail = false,
+    hold = false,
+    defenses,
+  }: {
+    character?: CharacterRecord;
+    fail?: boolean;
+    hold?: boolean;
+    defenses?: CharacterDerived["defenses"];
+  } = {},
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
@@ -93,7 +109,8 @@ export function renderVitals(
       return new Response(JSON.stringify(stored), { status: 200 });
     }),
   );
-  const render = () => renderWithClient(<Vitals character={character} derived={derived()} />);
+  const render = () =>
+    renderWithClient(<Vitals character={character} derived={derived(defenses)} />);
   const view = render();
   return {
     writes,
