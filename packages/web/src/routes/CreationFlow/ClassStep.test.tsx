@@ -592,6 +592,21 @@ describe("ClassStep", () => {
     expect(values.departures).toEqual([]);
   });
 
+  it("holds Use on a typed class name that would break its features' tags, naming the character", () => {
+    const fetchMock = stubCatalog();
+    renderStep();
+
+    click("Not listed? Type a class");
+    fireEvent.change(screen.getByRole("textbox", { name: "Class name" }), {
+      target: { value: "War|den" },
+    });
+    click("d10");
+
+    expect(screen.getByRole("alert")).toHaveTextContent('Class "War|den" cannot contain "|"');
+    expect(screen.getByRole("button", { name: "Use" })).toBeDisabled();
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
   it("reuses a stored homebrew class of the same name, edition and die", async () => {
     ROWS["/api/homebrew/classes"] = [BLOOD_HUNTER];
     const fetchMock = stubCatalog();

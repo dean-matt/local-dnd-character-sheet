@@ -7,6 +7,8 @@ export interface TypedEscapeProps {
   onUse: (name: string) => void;
   /** Whatever else the typed row needs before it can be used, such as a hit die. */
   canUse?: boolean;
+  /** Why the typed name cannot be used, if it cannot; Use stays disabled while it says so. */
+  refuse?: (name: string) => string | undefined;
   error?: string;
   /** Fields beyond the name, between it and Use. */
   children?: ReactNode;
@@ -16,7 +18,14 @@ export interface TypedEscapeProps {
  * The way past the catalog: a row typed by name, for one the picker does not offer. Opening
  * it moves focus to the name, where the link it replaced held it.
  */
-export function TypedEscape({ noun, onUse, canUse = true, error, children }: TypedEscapeProps) {
+export function TypedEscape({
+  noun,
+  onUse,
+  canUse = true,
+  refuse,
+  error,
+  children,
+}: TypedEscapeProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -35,7 +44,9 @@ export function TypedEscape({ noun, onUse, canUse = true, error, children }: Typ
     );
   }
   const typed = name.trim();
-  const ready = typed !== "" && canUse;
+  const refusal = typed === "" ? undefined : refuse?.(typed);
+  const ready = typed !== "" && canUse && !refusal;
+  const message = refusal ?? error;
   return (
     <div className="flex flex-col gap-1">
       <InputField
@@ -59,9 +70,9 @@ export function TypedEscape({ noun, onUse, canUse = true, error, children }: Typ
       >
         Use
       </button>
-      {error && (
+      {message && (
         <p role="alert" className="text-error text-row">
-          {error}
+          {message}
         </p>
       )}
     </div>

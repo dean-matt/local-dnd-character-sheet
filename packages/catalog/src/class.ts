@@ -253,13 +253,23 @@ export const homebrewClassSchema = classEntrySchema.extend({
 
 export type HomebrewClass = z.infer<typeof homebrewClassSchema>;
 
+/** The `|` or `}` in a name that would split or end the `{@classFeature}` tag it enters. */
+export const tagBreaker = (name: string) => /[|}]/.exec(name)?.[0];
+
 /**
  * What a caller submits to create or rename a homebrew class. `source` is never here —
  * the server always stamps `HOMEBREW_SOURCE` — and `edition` rides beside the entry
  * rather than inside it, since it is a `homebrew_classes` column, not a field the 5etools
- * shape carries.
+ * shape carries. The name enters each of its features' tags, so `|` and `}` are refused;
+ * a read parses with `homebrewClassRecordSchema`, so a name stored before that still loads.
  */
 export const homebrewClassInputSchema = homebrewClassSchema.omit({ source: true }).extend({
+  name: homebrewClassSchema.shape.name.superRefine((name, context) => {
+    const breaker = tagBreaker(name);
+    if (breaker) {
+      context.addIssue({ code: "custom", message: `Class "${name}" cannot contain "${breaker}"` });
+    }
+  }),
   edition: z.enum(EDITIONS),
 });
 
@@ -386,7 +396,7 @@ export const homebrewClassFeaturesSchema = z
 export const homebrewClassFeaturesInputSchema = homebrewClassFeaturesSchema.superRefine(
   (features, context) => {
     features.forEach(({ name }, index) => {
-      const breaker = /[|}]/.exec(name)?.[0];
+      const breaker = tagBreaker(name);
       if (breaker) {
         context.addIssue({
           code: "custom",

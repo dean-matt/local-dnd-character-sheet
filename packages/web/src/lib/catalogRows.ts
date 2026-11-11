@@ -33,6 +33,7 @@ import {
   subclassEntries,
   subclassRecordSchema,
   subraceRecordSchema,
+  tagBreaker,
 } from "@dnd/catalog";
 import type { CharacterRecord } from "@dnd/character";
 import { matchPath, type Params } from "react-router";
@@ -166,9 +167,6 @@ async function subclassPath(key: Params): Promise<string> {
   return `${classPath(key)}/subclasses/${segments(subclass.name, subclass.source)}`;
 }
 
-/** A `|` or `}` in a name would split or end its tag, so such a feature stays out of the table. */
-const TAG_BREAKERS = /[|}]/;
-
 const homebrewClassRoute = homebrew("classes", "class", homebrewClassDetailSchema, classEntries);
 
 /**
@@ -183,8 +181,10 @@ const homebrewClass: CatalogTarget = {
       `/homebrew/classes/${segments(key.id)}/features`,
       homebrewClassFeaturesSchema,
     ).catch(() => []);
+    // The API refuses `|` and `}` in a name it writes, but one stored before that still
+    // reads, and would split or end its tag, so such a feature stays out of the table.
     const classFeatures = features
-      .filter(({ name }) => !TAG_BREAKERS.test(name) && !TAG_BREAKERS.test(row.name))
+      .filter(({ name }) => !tagBreaker(name) && !tagBreaker(row.name))
       .map(({ name, level }) => `${name}|${row.name}|${HOMEBREW_SOURCE}|${level}`);
     return { ...row, entries: classEntries({ ...row.json, classFeatures }) };
   },
