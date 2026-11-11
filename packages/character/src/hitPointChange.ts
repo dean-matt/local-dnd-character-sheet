@@ -9,6 +9,7 @@ import {
   takeDamage,
 } from "@dnd/rules";
 import type { CharacterDerived } from "./characterDerived.ts";
+import { concentrationLapsed } from "./concentration.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import { sheetState } from "./rest.ts";
@@ -56,7 +57,8 @@ function defensesAgainst(
  * shows and under the table's `noInstantDeath`. Typed damage first meets the defenses the sheet
  * shows against it, by `adjustedDamage`; untyped damage applies as given. Returns the amount
  * taken and the defenses that changed it. Damage at 0 counts as one failure: for a critical hit
- * the player marks the second failure by hand.
+ * the player marks the second failure by hand. Damage that leaves the character at 0 ends
+ * concentration, by `concentrationLapsed`.
  */
 export function damagedState(
   definition: Pick<CharacterDefinition, "houseRules" | "addedDefenses">,
@@ -76,7 +78,8 @@ export function damagedState(
     adjusted.amount,
     { instantDeath: !houseRule(definition, "noInstantDeath") },
   );
-  return { ...changed(state, result), ...adjusted };
+  const after = changed(state, result);
+  return { ...after, state: concentrationLapsed(after.state), ...adjusted };
 }
 
 /** The state after `amount` healing, by `heal`, against the maximum the sheet shows. */

@@ -77,6 +77,7 @@ export { resourceLabel, withClassResource } from "./classResources.ts";
 export {
   concentrationCheck,
   concentrationEnded,
+  concentrationLapsed,
   concentrationStarted,
 } from "./concentration.ts";
 export {
