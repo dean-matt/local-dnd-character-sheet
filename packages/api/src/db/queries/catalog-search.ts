@@ -92,7 +92,8 @@ const SEARCH_LOOKUP_KINDS = [
  * the base items it admits — and an item hit carries its kinds, rarity and weapon category
  * as `item`. `classList` narrows spells to those a class's list holds, and leaves homebrew
  * spells out, since no class list holds one. `offer` narrows spells to those a row leaves to
- * a pick, and leaves homebrew spells out the same way. `featureTypes` narrows optional features to
+ * a pick, and leaves homebrew spells out the same way. `concentration` narrows spells to those
+ * that need it, homebrew among them. `featureTypes` narrows optional features to
  * those carrying any one of the codes named, such as `EI`, and an optional feature hit
  * carries its prerequisites as `optionalFeature`.
  */
@@ -102,6 +103,7 @@ export type SearchFilter = {
   types?: readonly string[];
   spellLevels?: { min: number; max: number };
   schools?: readonly string[];
+  concentration?: boolean;
   rarities?: readonly string[];
   itemKinds?: readonly string[];
   classList?: ClassList;
@@ -161,6 +163,7 @@ function narrowKind(conditions: Conditions, type: string, filter: SearchFilter) 
     const { clause, params } = offerClause(filter.offer);
     conditions.add(clause, ...params);
   }
+  if (type === "spell" && filter.concentration) conditions.add("concentration = 1");
   if (type === "spell" && schools?.length) {
     conditions.add(`school IN (${placeholders(schools)})`, ...schools);
   }

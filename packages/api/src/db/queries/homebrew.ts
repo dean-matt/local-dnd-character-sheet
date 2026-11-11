@@ -265,7 +265,7 @@ export function listHomebrewSpells(db: HomebrewDb) {
 }
 
 export function searchHomebrewSpells(db: HomebrewDb, filter: SearchFilter) {
-  const { edition, term, spellLevels, schools } = filter;
+  const { edition, term, spellLevels, schools, concentration } = filter;
   return db
     .select()
     .from(homebrewSpells)
@@ -275,6 +275,7 @@ export function searchHomebrewSpells(db: HomebrewDb, filter: SearchFilter) {
         term ? nameHolds(homebrewSpells.name, term) : undefined,
         spellLevels ? between(homebrewSpells.level, spellLevels.min, spellLevels.max) : undefined,
         schools?.length ? inArray(homebrewSpells.school, [...schools]) : undefined,
+        concentration ? eq(homebrewSpells.concentration, true) : undefined,
       ),
     )
     .all();
