@@ -94,12 +94,32 @@ describe("RollLog's Clear button", () => {
     renderWithClient(<RollLog latest={null} />);
     expect(await screen.findAllByRole("listitem")).toHaveLength(1);
 
-    const clear = screen.getByRole("button", { name: "Clear Roll Log" });
-    clear.focus();
-    fireEvent.click(clear);
+    fireEvent.click(screen.getByRole("button", { name: "Clear Roll Log" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("disk full");
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
-    expect(clear).toHaveFocus();
+  });
+
+  it("stays focusable and ignores a second click while the clear is pending", async () => {
+    let finish = (_: Response) => {};
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "DELETE") return new Promise<Response>((resolve) => (finish = resolve));
+      const body = String(input) === "/api/rolls" ? [roll(1, "1", "Vex")] : [];
+      return Promise.resolve(new Response(JSON.stringify(body), { status: 200 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithClient(<RollLog latest={null} />);
+    expect(await screen.findAllByRole("listitem")).toHaveLength(1);
+
+    const clear = screen.getByRole("button", { name: "Clear Roll Log" });
+    fireEvent.click(clear);
+    await waitFor(() => expect(clear).toHaveAttribute("aria-disabled", "true"));
+    expect(clear).not.toBeDisabled();
+    fireEvent.click(clear);
+
+    const deletes = fetchMock.mock.calls.filter(([, init]) => init?.method === "DELETE");
+    expect(deletes).toHaveLength(1);
+    finish(new Response(JSON.stringify({ error: "disk full" }), { status: 500 }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("disk full");
   });
 });
