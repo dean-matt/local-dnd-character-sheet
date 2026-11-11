@@ -147,7 +147,7 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
  * class, race, background or feat gives rather than one the player picked. `pickedFor`
  * names the race, subrace, background, feat or optional feature a pick was made for; its
  * `kind` stays a string because `@dnd/character` owns that vocabulary. `fromItem` names the
- * equipped item that lets the character cast a spell the definition does not list, and
+ * equipped item that lets the character cast a spell the player did not pick, and
  * `fromSubclass` the subclass that grants one by its class's level. `cost` is what casting a
  * granted spell spends, such as 2 Ki.
  */
