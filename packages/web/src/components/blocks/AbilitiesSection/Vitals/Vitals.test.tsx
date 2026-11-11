@@ -424,6 +424,10 @@ describe("Vitals", () => {
       expect(writes[0]?.conditions).toEqual([prone]);
       await waitFor(() => expect(announced()).toHaveTextContent("Concentration on Bless ended"));
 
+      await waitFor(() =>
+        expect(screen.getByRole("combobox", { name: "Concentrate on a spell" })).toHaveFocus(),
+      );
+
       reload();
       await screen.findByRole("combobox", { name: "Concentrate on a spell" });
       expect(status().queryByText(/Concentrating on/)).toBeNull();

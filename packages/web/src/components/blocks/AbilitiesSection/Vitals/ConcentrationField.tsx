@@ -39,17 +39,26 @@ export function ConcentrationField({
 }) {
   const [picked, setPicked] = useState<{ ref: EntryRef; name: string }>();
   const [level, setLevel] = useState<number>();
-  // Where focus goes once a pick ends: End concentration after a set, since the picker opens
-  // its list on focus and would cover the new held line, and the picker after a cancel.
-  const [returnTo, setReturnTo] = useState<"end" | "picker">();
+  // Where focus goes, once, after a set, a cancel or an end: End concentration after a set,
+  // since the picker opens its list on focus and would cover the new held line, else the open
+  // pick's Concentrate or the picker. Cleared once moved, so an undo that changes `held` leaves
+  // focus where the user put it.
+  const [focusNext, setFocusNext] = useState<"end" | "picker">();
+  const root = useRef<HTMLDivElement>(null);
   const confirm = useRef<HTMLButtonElement>(null);
   const end = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (picked) confirm.current?.focus();
   }, [picked]);
   useEffect(() => {
-    if (returnTo === "end" && held) end.current?.focus();
-  }, [returnTo, held]);
+    if (focusNext === undefined || (focusNext === "end" && !held)) return;
+    const target =
+      focusNext === "end"
+        ? end.current
+        : (confirm.current ?? root.current?.querySelector<HTMLElement>('[role="combobox"]'));
+    target?.focus();
+    setFocusNext(undefined);
+  }, [focusNext, held]);
   const heldLookup = useSpellLookup(held ? [held.spell] : [], noContext);
   const pickedLookup = useSpellLookup(picked ? [picked.ref] : [], noContext);
   const heldLabel =
@@ -67,7 +76,11 @@ export function ConcentrationField({
 
   function leave(to: "end" | "picker") {
     setPicked(undefined);
-    setReturnTo(to);
+    setFocusNext(to);
+  }
+
+  async function endHeld() {
+    if (!busy && (await onEnd(`Concentration on ${heldLabel} ended`))) setFocusNext("picker");
   }
 
   async function concentrate() {
@@ -78,22 +91,14 @@ export function ConcentrationField({
   }
 
   return (
-    <div className="mt-2 flex flex-col gap-1.5">
+    <div ref={root} className="mt-2 flex flex-col gap-1.5">
       {held && (
         <div className="flex items-center gap-2">
           <p className="min-w-0 flex-1 text-row">
             <span className="text-muted">Concentrating on </span>
             <span className="font-semibold">{heldLabel}</span>, {levelName(held.level)}
           </p>
-          <button
-            ref={end}
-            type="button"
-            aria-disabled={busy}
-            onClick={() => {
-              if (!busy) onEnd(`Concentration on ${heldLabel} ended`);
-            }}
-            className={BUTTON}
-          >
+          <button ref={end} type="button" aria-disabled={busy} onClick={endHeld} className={BUTTON}>
             End concentration
           </button>
         </div>
@@ -149,7 +154,6 @@ export function ConcentrationField({
           filters={CONCENTRATION_FILTER}
           onPick={(ref, hit) => pick(ref, hit.name)}
           placeholder="Concentrate on a spell…"
-          focusOnMount={returnTo === "picker"}
         />
       )}
     </div>
