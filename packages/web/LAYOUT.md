@@ -1,14 +1,13 @@
 # Page chrome
 
-How the pieces around a page grow. `docs/mockup/components/Layout.dc.html` fixes the
-arrangement at 1440px and says nothing about stretching, so this is the rule for that.
+How the pieces around a page grow.
 
 - **Top bar** is full-bleed above everything and pinned to the top of the viewport. Nothing
   beside it changes its width. Its height is `--spacing-topbar` in `src/index.css`; anything
-  sized against it uses the token. Its own content sits at 24px, not the gutter, as the
-  mockup draws it. Below the `sm` breakpoint it narrows to fit a 320px phone: 12px padding,
-  tighter triggers with no gap between them, the app name cut to "D&D", and Feedback and
-  Settings cut to their icons, each keeping its full text for screen readers.
+  sized against it uses the token. Its own content sits at 24px, not the gutter. Below the `sm`
+  breakpoint it narrows to fit a 320px phone: 12px padding, tighter triggers with no gap
+  between them, the app name cut to "D&D", and Feedback and Settings cut to their icons, each
+  keeping its full text for screen readers.
 - **Sidebar** fills its column, sticky under the top bar. In a window too short to hold its
   rows, they scroll above the collapse toggle, which stays pinned at the foot. The scrollbar
   is hidden so the collapsed icons stay centered, and `scroll-shadow` shades the clipped
@@ -29,9 +28,9 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   and `py-6` everywhere else: Settings, search, character creation, and `ContentLayout` in
   `src/routes/ContentLayout.tsx`, which the homepage, list and 404 pages use.
 
-A side panel joins the flex row in `src/routes/CharacterLayout/CharacterLayout.tsx`. The content column
-and the character header follow it; the top bar never does. The mockup's Rolls Panel, a
-right-docked collapsible rail, is the first one expected.
+A side panel joins the flex row in `src/routes/CharacterLayout/CharacterLayout.tsx`, inside
+`Dock`, the right-docked column History and the Roll Log share. The content column and the
+character header follow it; the top bar never does.
 
 ## Traps
 

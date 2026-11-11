@@ -1,5 +1,5 @@
-import { ChevronLeft } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { CollapseToggle } from "../components/CollapseToggle.tsx";
 
 const COLLAPSED_KEY = "sidebar-collapsed";
 
@@ -49,24 +49,12 @@ export function Rail({ children }: { children: (collapsed: boolean) => ReactNode
       </div>
 
       <div className="mx-4 mb-5 border-t border-border pt-3">
-        <button
-          type="button"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!collapsed}
-          onClick={toggleCollapse}
-          className={`flex w-full items-center gap-3 rounded-control px-2.5 py-2.5 text-sm font-medium text-muted hover:bg-subtle ${collapsed ? "justify-center" : ""}`}
-        >
-          {/* The margin widens the 16px arrow to the rows' 19px icon column, so it centers under them. */}
-          <ChevronLeft
-            size={16}
-            className="mx-[1.5px] shrink-0"
-            style={{
-              transform: collapsed ? "rotate(180deg)" : undefined,
-              transition: "transform var(--duration-standard)",
-            }}
-          />
-          {!collapsed && <span>Collapse</span>}
-        </button>
+        <CollapseToggle
+          name="sidebar"
+          edge="left"
+          collapsed={collapsed}
+          onToggle={toggleCollapse}
+        />
       </div>
     </div>
   );
