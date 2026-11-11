@@ -68,8 +68,8 @@ function concentrating(state: CharacterState, status?: string) {
 }
 
 /**
- * The amount field and the damage type with Damage and Heal, which write what `damagedState`
- * or `healedState` returns, and Grant temp and Clear temp, which write the temporary hit points
+ * The amount field, the damage type and Critical hit with Damage and Heal, which write what
+ * `damagedState` or `healedState` returns, and Grant temp and Clear temp, which write the temporary hit points
  * alone. Each is one state write. Typed damage names the defense that changed it, and damage a
  * defense reduces to nothing writes nothing. Damage that leaves the character dead asks first.
  * Temporary hit points do not stack, so a grant no larger than those held keeps them and offers
@@ -93,6 +93,7 @@ export function HitPointChange({
   const replace = useAnnouncedStateWrite(character.id);
   const [typed, setTyped] = useState("");
   const [damageType, setDamageType] = useState(UNTYPED);
+  const [critical, setCritical] = useState(false);
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ changed: Damaged; defense?: string }>();
   const [notice, setNotice] = useState<{ text: string; instead?: number; read: string }>();
@@ -135,6 +136,7 @@ export function HitPointChange({
     ];
     if (!(await write(after, text.filter(Boolean).join(" ")))) return;
     setDamageType(UNTYPED);
+    setCritical(false);
     if (check) setSaving({ ...check, read: concentrating(after, outcome) });
     if (defense) {
       setNotice({ text: defense, read: standing(after, outcome) });
@@ -184,11 +186,12 @@ export function HitPointChange({
 
   function damage(entered: number) {
     const type = damageType === UNTYPED ? undefined : damageType;
-    const changed = damagedState(character.definition, derived, state, entered, type);
+    const changed = damagedState(character.definition, derived, state, entered, { type, critical });
     const defense = type && defended(type, entered, changed);
     if (changed.amount === 0) {
       setTyped("");
       setDamageType(UNTYPED);
+      setCritical(false);
       say(`${defense} Hit points are unchanged.`);
       return;
     }
@@ -254,6 +257,15 @@ export function HitPointChange({
             />
           )}
         </FormField>
+        <label className="flex items-center gap-1.5 text-row">
+          <input
+            type="checkbox"
+            checked={critical}
+            aria-disabled={replace.writing}
+            onChange={() => !replace.writing && setCritical(!critical)}
+          />
+          Critical hit
+        </label>
         <button
           ref={damageButton}
           type="button"

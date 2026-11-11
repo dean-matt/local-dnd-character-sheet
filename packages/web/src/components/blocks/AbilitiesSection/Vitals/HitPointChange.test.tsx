@@ -185,7 +185,34 @@ describe("HitPointChange", () => {
       expect(spoken("Death Saves")).toHaveTextContent("0 successes, 1 failure, dying."),
     );
     expect(card("Hit Points").queryByText("Dying")).not.toBeInTheDocument();
-    expect(card("Hit Points").queryByRole("button", { name: /critical/i })).not.toBeInTheDocument();
+  });
+
+  it("records two failures in one write for a critical hit at 0, then clears Critical hit", async () => {
+    const { writes } = renderVitals({ hitPoints: { current: 0, temporary: 0 } });
+    const critical = await screen.findByRole("checkbox", { name: "Critical hit" });
+    fireEvent.click(critical);
+    expect(critical).toBeChecked();
+    await apply("1", "Damage");
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 2 });
+    await waitFor(() =>
+      expect(spoken("Death Saves")).toHaveTextContent("0 successes, 2 failures, dying."),
+    );
+    expect(critical).not.toBeChecked();
+  });
+
+  it("asks before a critical hit at 0 makes the third failure", async () => {
+    const { writes } = renderVitals({
+      hitPoints: { current: 0, temporary: 0 },
+      deathSaves: { successes: 0, failures: 1 },
+    });
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Critical hit" }));
+    await apply("1", "Damage");
+    fireEvent.click(button("Apply the damage"));
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.deathSaves).toEqual({ successes: 0, failures: 3 });
   });
 
   it("announces a result again when it repeats the last one", async () => {
