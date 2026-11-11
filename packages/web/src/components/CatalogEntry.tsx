@@ -81,7 +81,7 @@ export function CatalogEntry({ address }: { address: string }) {
         // A block of its own: the map of the sheet that opened it holds none of this row's references.
         // Nor is this row the spell whose text opened it, so its rolls are not that spell's.
         <ResolvedRefs value={null}>
-          <RollingSpell value={false}>
+          <RollingSpell value={null}>
             <RulesEntries entries={entries} headingLevel={3} />
           </RollingSpell>
         </ResolvedRefs>

@@ -405,7 +405,7 @@ describe("CatalogDetail", () => {
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
           <RollingFor value="c1">
-            <RollingSpell value>
+            <RollingSpell value="Fire Bolt">
               <CatalogDetail address="/catalog/monster/Wolf/MM" onClose={() => {}} />
             </RollingSpell>
           </RollingFor>

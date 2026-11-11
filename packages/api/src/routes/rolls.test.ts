@@ -89,21 +89,27 @@ describe("rollsRoutes", () => {
     expect(await list()).toMatchObject([{ type: "attack" }]);
   });
 
-  it("round-trips the mode, the reason and the type a d20 option gave the roll", async () => {
+  it("round-trips the origin, and the mode, the reason and the type a d20 option gave the roll", async () => {
     const id = await create();
     const lucky = {
       ...roll(15),
       type: "save",
+      origin: "Dexterity",
       mode: "advantage",
       reason: "lucky",
     };
 
     const stored = await (await record(id, lucky)).json();
-    expect(stored).toMatchObject({ type: "save", mode: "advantage", reason: "lucky" });
+    expect(stored).toMatchObject({
+      type: "save",
+      origin: "Dexterity",
+      mode: "advantage",
+      reason: "lucky",
+    });
     expect(await list()).toEqual([stored]);
   });
 
-  it("loads a row written before a roll carried a type, a mode or a reason", async () => {
+  it("loads a row written before a roll carried a type, an origin, a mode or a reason", async () => {
     const id = await create();
     const { type: _none, ...untyped } = roll(11);
     const { dice, modifier, critical, total, label, notation } = untyped;
@@ -122,6 +128,7 @@ describe("rollsRoutes", () => {
     const [legacy] = await list();
     expect(legacy).toMatchObject(untyped);
     expect(legacy).not.toHaveProperty("type");
+    expect(legacy).not.toHaveProperty("origin");
     expect(legacy).not.toHaveProperty("reason");
     expect(legacy).not.toHaveProperty("mode");
   });
@@ -129,6 +136,11 @@ describe("rollsRoutes", () => {
   it("rejects a type outside the vocabulary", async () => {
     const id = await create();
     expect((await record(id, { ...roll(15), type: "initiative" })).status).toBe(400);
+  });
+
+  it("rejects an empty origin", async () => {
+    const id = await create();
+    expect((await record(id, { ...roll(15), origin: "" })).status).toBe(400);
   });
 
   it("rejects a reason that is not a d20 option", async () => {

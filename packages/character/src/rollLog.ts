@@ -32,6 +32,8 @@ export type RollType = z.infer<typeof rollTypeSchema>;
 export const rollRecordSchema = z.strictObject({
   type: rollTypeSchema,
   label: z.string().min(1),
+  /** What the roll came from, such as a weapon, a spell or a skill; absent where nothing on the sheet made it. */
+  origin: z.string().min(1).optional(),
   notation: z.string().min(1),
   total: z.int(),
   dice: z.array(rolledDieSchema),

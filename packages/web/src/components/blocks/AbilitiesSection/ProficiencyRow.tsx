@@ -129,6 +129,7 @@ export function ProficiencyRow({
         <RollBonusButton
           label={ability ? roll : title}
           type={ability ? "check" : "save"}
+          origin={name}
           bonus={derivedValue(modifier)}
         />
       </span>
