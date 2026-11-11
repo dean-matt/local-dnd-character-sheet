@@ -199,7 +199,7 @@ describe("HitPointChange", () => {
     await waitFor(() =>
       expect(spoken("Death Saves")).toHaveTextContent("0 successes, 2 failures, dying."),
     );
-    expect(critical).not.toBeChecked();
+    await waitFor(() => expect(critical).not.toBeChecked());
   });
 
   it("asks before a critical hit at 0 makes the third failure", async () => {
