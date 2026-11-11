@@ -47,7 +47,7 @@ widget, panel, or nav element:
 - Spells: Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
-- Page chrome: Character Header, Rolls Panel. Character Header is one 52px
+- Page chrome: Character Header, one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the app's character list tile), then the subtitle
   — total level, race and classes — after a `·`, with the save status, then Inspiration
@@ -58,13 +58,7 @@ widget, panel, or nav element:
   no card changes height. The header artboard's `save` tweak switches between them. The name takes the room it needs and
   the subtitle the rest, never under 160px, so some of it always shows. A long name or
   subtitle ends in an ellipsis and keeps its full text in a tooltip; the `longText`
-  tweak shows both truncated. Rolls
-  Panel is a right-docked, collapsible rail — the counterpart to the tab rail on the left —
-  listing every character's rolls newest first, whichever character is open, each tagged
-  with what it was rolled for (a weapon, a spell, an ability check…) and which character
-  made it, with a Clear button. Character sheet only, not Settings. Forward design for #282,
-  which only specified the list; the dock, the collapse, and Clear are this mockup's own
-  call. The app's Roll Log filter and dice field lead, so the artboard draws neither.
+  tweak shows both truncated.
 - Overlays: Add Widget Picker.
 - Add Widget Picker is a category sidebar (a tab list, same pattern as the tab rail)
   plus search narrowing a grid of preview cards (a category icon, name, and category)
@@ -132,7 +126,7 @@ says how much of the artboard the app builds today.
 
 | Artboard | Retired by | Shipped |
 |---|---|---|
-| `Layout` | #282 | all but the Rolls Panel |
+| `Layout` | #282 | all |
 | `Abilities` | #227, #487 | the scores edit, the rest read-only |
 | `Saves` | #227, #487 | read-only |
 | `Skills` | #227, #399, #487 | the rings and homebrew skills edit, the rest read-only |
@@ -155,7 +149,6 @@ says how much of the artboard the app builds today.
 | `ChosenFeatures` | #231, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the portrait upload and the Rest menu, the rest read-only |
-| `RollsPanel` | #1391, #1398, #1399 | the list and its Clear button |
 | `WidgetPicker` | #819 | nothing |
 | `CustomTab` | #819 | nothing |
 
