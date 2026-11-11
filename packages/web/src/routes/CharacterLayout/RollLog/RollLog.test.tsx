@@ -116,10 +116,10 @@ describe("RollLog's Clear button", () => {
     await waitFor(() => expect(clear).toHaveAttribute("aria-disabled", "true"));
     expect(clear).not.toBeDisabled();
     fireEvent.click(clear);
+    finish(new Response(JSON.stringify({ error: "disk full" }), { status: 500 }));
 
+    expect(await screen.findByRole("alert")).toHaveTextContent("disk full");
     const deletes = fetchMock.mock.calls.filter(([, init]) => init?.method === "DELETE");
     expect(deletes).toHaveLength(1);
-    finish(new Response(JSON.stringify({ error: "disk full" }), { status: 500 }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("disk full");
   });
 });
