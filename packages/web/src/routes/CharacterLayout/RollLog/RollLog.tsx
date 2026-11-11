@@ -10,30 +10,40 @@ import { Select } from "../../../components/Select.tsx";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
 import { useClearRolls } from "../../../hooks/useClearRolls.ts";
 import { useRolls } from "../../../hooks/useRolls.ts";
+import { when } from "../../../lib/when.ts";
 import { DiceRoller } from "./DiceRoller.tsx";
 
 type Roll = z.infer<typeof rollLogEntrySchema>;
 
 const announcement = (roll: Roll) => `Rolled ${roll.label}: ${roll.total}`;
 
-const TYPE_LABEL: Partial<Record<RollType, string>> = {
+const TYPE_LABEL: Record<RollType, string> = {
   attack: "Attack",
   damage: "Damage",
   check: "Check",
   save: "Save",
   "spell-attack": "Spell attack",
   "spell-damage": "Spell damage",
+  "hit-die": "Hit Die",
+  dice: "Rules text",
   custom: "Dice",
 };
+
+const FACET_TYPES: readonly RollType[] = [
+  "attack",
+  "damage",
+  "check",
+  "save",
+  "spell-attack",
+  "spell-damage",
+  "custom",
+];
 
 /** A roll stored before rolls carried a type, or of a type no facet names, matches no pick. */
 const TYPE_FACET: Facet<Roll> = {
   key: "type",
   label: "Roll type",
-  valuesOf: (roll) => {
-    const label = roll.type && TYPE_LABEL[roll.type];
-    return label ? [label] : [];
-  },
+  valuesOf: (roll) => (roll.type && FACET_TYPES.includes(roll.type) ? [TYPE_LABEL[roll.type]] : []),
 };
 
 const ALL_CHARACTERS = "";
@@ -129,7 +139,7 @@ export function RollLog({ latest, characterId }: { latest: Roll | null; characte
             </div>
             <ChipFacet
               label={TYPE_FACET.label}
-              options={Object.values(TYPE_LABEL)}
+              options={FACET_TYPES.map((type) => TYPE_LABEL[type])}
               picked={filter.picks[TYPE_FACET.key] ?? []}
               onChange={(next) => filter.set(TYPE_FACET.key, next)}
             />
@@ -156,15 +166,28 @@ export function RollLog({ latest, characterId }: { latest: Roll | null; characte
         {shown.map((roll) => (
           <li
             key={roll.id}
-            className="flex items-baseline justify-between gap-2 rounded-control border border-border px-3 py-2"
+            className="flex flex-col gap-0.5 rounded-control border border-border px-3 py-2"
           >
-            <span className="min-w-0">
-              <span className="block truncate font-bold">{roll.label}</span>
-              <span className="text-muted text-row">
-                {roll.characterName} · {roll.notation}
-              </span>
+            <span className="flex items-baseline justify-between gap-2">
+              <span className="min-w-0 truncate font-bold">{roll.label}</span>
+              <time dateTime={roll.rolledAt} className="shrink-0 text-label text-muted">
+                {when.format(new Date(roll.rolledAt))}
+              </time>
             </span>
-            <strong className="text-title">{roll.total}</strong>
+            {roll.origin && <span className="truncate text-muted text-row">{roll.origin}</span>}
+            <span className="flex items-baseline justify-between gap-2">
+              <span className="flex min-w-0 items-baseline gap-1.5 text-muted text-row">
+                {roll.type && (
+                  <span className="shrink-0 rounded-control border border-border px-1 font-semibold text-label uppercase tracking-label">
+                    {TYPE_LABEL[roll.type]}
+                  </span>
+                )}
+                <span className="truncate">
+                  {roll.characterName} · {roll.notation}
+                </span>
+              </span>
+              <strong className="text-title">{roll.total}</strong>
+            </span>
           </li>
         ))}
       </ol>

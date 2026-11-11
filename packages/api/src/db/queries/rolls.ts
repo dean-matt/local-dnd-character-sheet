@@ -10,7 +10,10 @@ const entry = (row: typeof rollLog.$inferSelect, characterName: string) => {
     ...rest,
     characterName,
     total: result,
-    ...(detail as Pick<RollRecord, "dice" | "modifier" | "critical" | "mode" | "reason"> &
+    ...(detail as Pick<
+      RollRecord,
+      "dice" | "modifier" | "critical" | "mode" | "reason" | "origin"
+    > &
       Partial<Pick<RollRecord, "type">>),
     rolledAt: rolledAt.toISOString(),
   };
@@ -41,7 +44,7 @@ export function recordRoll(db: CharactersDb, characterId: string, roll: RollReco
       .where(eq(characters.id, characterId))
       .get();
     if (!owner) return undefined;
-    const { type, dice, modifier, critical, mode, reason, total, label, notation } = roll;
+    const { type, origin, dice, modifier, critical, mode, reason, total, label, notation } = roll;
     const row = tx
       .insert(rollLog)
       .values({
@@ -49,7 +52,7 @@ export function recordRoll(db: CharactersDb, characterId: string, roll: RollReco
         label,
         notation,
         result: total,
-        detail: { type, dice, modifier, critical, mode, reason },
+        detail: { type, origin, dice, modifier, critical, mode, reason },
         rolledAt: now,
       })
       .returning()

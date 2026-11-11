@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { when } from "../../../lib/when.ts";
 import { characterRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { stubFetchByUrl } from "../../../test/stubFetch.ts";
@@ -19,6 +20,42 @@ const roll = (id: number, characterId: string, characterName: string) => ({
   dice: [],
   modifier: 0,
   critical: false,
+});
+
+describe("RollLog's row", () => {
+  const time = when.format(new Date("2026-01-01T00:00:00.000Z"));
+  const listed = async (rolls: unknown[]) => {
+    stubFetchByUrl({ "/api/rolls": rolls, "/api/characters": [characterRecord("1", "Vex")] });
+    renderWithClient(<RollLog latest={null} />);
+    return screen.findAllByRole("listitem");
+  };
+
+  it("shows the time it was rolled", async () => {
+    const [row] = await listed([roll(1, "1", "Vex")]);
+    const shown = row?.querySelector("time");
+    expect(shown).toHaveAttribute("datetime", "2026-01-01T00:00:00.000Z");
+    expect(shown).toHaveTextContent(time);
+  });
+
+  it("shows its origin, and none where it was stored without one", async () => {
+    const [withOrigin, without] = await listed([
+      { ...roll(2, "1", "Vex"), label: "Longsword attack", origin: "Longsword" },
+      { ...roll(1, "1", "Vex"), label: "Pit trap" },
+    ]);
+    expect(withOrigin?.textContent).toBe(`Longsword attack${time}LongswordVex · 1d43`);
+    expect(without?.textContent).toBe(`Pit trap${time}Vex · 1d43`);
+  });
+
+  it("tags a roll with its type, and an untyped one with nothing", async () => {
+    const [typed, hitDie, untyped] = await listed([
+      { ...roll(3, "1", "Vex"), type: "spell-attack" },
+      { ...roll(2, "1", "Vex"), type: "hit-die" },
+      roll(1, "1", "Vex"),
+    ]);
+    expect(typed?.textContent).toBe(`Vex roll${time}Spell attackVex · 1d43`);
+    expect(hitDie?.textContent).toBe(`Vex roll${time}Hit DieVex · 1d43`);
+    expect(untyped?.textContent).toBe(`Vex roll${time}Vex · 1d43`);
+  });
 });
 
 describe("RollLog with no open character", () => {

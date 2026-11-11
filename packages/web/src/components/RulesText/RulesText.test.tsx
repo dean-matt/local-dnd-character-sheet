@@ -317,15 +317,20 @@ describe("reference resolution", () => {
       ["{@dice 1d4}", "Roll 1d4", "dice"],
       ["{@d20 2}", "Roll +2", "dice"],
       ["{@scaledice 2d6|1-9|1d6}", "Roll 1d6", "dice"],
-    ])("records %s, rolled by its %s button, as type %s", async (text, name, type) => {
-      const fetchMock = stubFetch(new Response(JSON.stringify(entry(9)), { status: 201 }));
-      onSheet(text);
-      fireEvent.click(screen.getByRole("button", { name }));
+    ])(
+      "records %s, rolled by its %s button, as type %s with no origin",
+      async (text, name, type) => {
+        const fetchMock = stubFetch(new Response(JSON.stringify(entry(9)), { status: 201 }));
+        onSheet(text);
+        fireEvent.click(screen.getByRole("button", { name }));
 
-      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-      const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
-      expect(JSON.parse(String(init.body))).toMatchObject({ type });
-    });
+        await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+        const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
+        const body = JSON.parse(String(init.body));
+        expect(body).toMatchObject({ type });
+        expect(body).not.toHaveProperty("origin");
+      },
+    );
 
     it.each([
       ["{@hit 5}", "Roll +5", "spell-attack"],
@@ -334,12 +339,12 @@ describe("reference resolution", () => {
       ["{@savingThrow con 3}", "Roll +3", "save"],
       ["{@dice 1d4}", "Roll 1d4", "dice"],
     ])(
-      "records %s in a spell's text, rolled by its %s button, as type %s",
+      "records %s in a spell's text, rolled by its %s button, as type %s from the spell",
       async (text, name, type) => {
         const fetchMock = stubFetch(new Response(JSON.stringify(entry(9)), { status: 201 }));
         renderWithClient(
           <RollingFor value="c1">
-            <RollingSpell value>
+            <RollingSpell value="Fire Bolt">
               <RulesText text={text} />
             </RollingSpell>
           </RollingFor>,
@@ -348,7 +353,7 @@ describe("reference resolution", () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalled());
         const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
-        expect(JSON.parse(String(init.body))).toMatchObject({ type });
+        expect(JSON.parse(String(init.body))).toMatchObject({ type, origin: "Fire Bolt" });
       },
     );
 

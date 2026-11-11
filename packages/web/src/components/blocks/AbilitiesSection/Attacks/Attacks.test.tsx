@@ -269,17 +269,17 @@ describe("Attacks", () => {
       return { posts, onRolled };
     }
 
-    it("rolls a weapon's attack and damage and a spell attack, each labelled and typed", async () => {
+    it("rolls a weapon's attack and damage and a spell attack, each labelled, typed and from its origin", async () => {
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
       fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
       fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
       fireEvent.click(screen.getByRole("button", { name: "Roll Warlock spell attack" }));
 
       await waitFor(() => expect(posts).toHaveLength(3));
-      expect(posts.map((post) => [post.label, post.notation, post.type])).toEqual([
-        ["Longsword attack", "1d20+5", "attack"],
-        ["Longsword damage", "1d8-1", "damage"],
-        ["Warlock spell attack", "1d20+5", "spell-attack"],
+      expect(posts.map((post) => [post.label, post.notation, post.type, post.origin])).toEqual([
+        ["Longsword attack", "1d20+5", "attack", "Longsword"],
+        ["Longsword damage", "1d8-1", "damage", "Longsword"],
+        ["Warlock spell attack", "1d20+5", "spell-attack", "Warlock"],
       ]);
     });
 

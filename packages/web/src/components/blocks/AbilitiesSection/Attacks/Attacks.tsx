@@ -138,6 +138,7 @@ export function Attacks({
                     <RollBonusButton
                       label={`${name} attack`}
                       type="attack"
+                      origin={name}
                       bonus={derivedValue(attack.attackBonus)}
                     />
                   }
@@ -146,6 +147,7 @@ export function Attacks({
                       <RollBonusButton
                         label={`${name} damage`}
                         type="damage"
+                        origin={name}
                         dice={attack.damage.dice}
                         bonus={derivedValue(attack.damage.modifier)}
                       />
@@ -163,7 +165,8 @@ export function Attacks({
               );
             })}
             {derived.spellcasting.map((caster) => {
-              const name = `${displayName(caster.class, names)} spell attack`;
+              const origin = displayName(caster.class, names);
+              const name = `${origin} spell attack`;
               return (
                 <AttackRow
                   key={entryKey(caster.class)}
@@ -181,6 +184,7 @@ export function Attacks({
                     <RollBonusButton
                       label={name}
                       type="spell-attack"
+                      origin={origin}
                       bonus={derivedValue(caster.attackBonus)}
                     />
                   }

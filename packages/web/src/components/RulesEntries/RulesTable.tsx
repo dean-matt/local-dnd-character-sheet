@@ -29,7 +29,7 @@ export function RulesTable({
   const die = characterId === null ? undefined : tableDie(colLabels[0]);
 
   function rollTable(notation: string) {
-    roll(notation, caption ?? notation, "dice", ({ total }) => {
+    roll(notation, { label: caption ?? notation, type: "dice" }, ({ total }) => {
       const row = rowFor(rows, total);
       setRolledRow(row);
       const cells = [...(body.current?.rows[row]?.cells ?? [])].slice(1);

@@ -8,8 +8,8 @@ import type { z } from "zod";
  */
 export const RollingFor = createContext<string | null>(null);
 
-/** Set around a spell's own rules text, whose attack and damage rolls are the spell's. */
-export const RollingSpell = createContext(false);
+/** The name of the spell whose own rules text this is, whose attack and damage rolls are the spell's. */
+export const RollingSpell = createContext<string | null>(null);
 
 /** Called with each roll once it is recorded; the character layout opens the roll log on it. */
 export const OnRolled = createContext<(roll: z.infer<typeof rollLogEntrySchema>) => void>(() => {});

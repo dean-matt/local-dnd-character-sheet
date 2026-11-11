@@ -21,7 +21,7 @@ const SPELL_TAG_TYPE: Readonly<Record<string, RollType>> = {
 
 /**
  * Rolls its notation and records the roll, typed by its tag and by whether a spell's own text
- * holds it; the character layout shows it in the roll log. The status region exists before the
+ * holds it, that spell its origin; the character layout shows it in the roll log. The status region exists before the
  * first roll so a reader speaks the one failure that has no entry to show: a roll that could
  * not be recorded.
  */
@@ -37,13 +37,16 @@ export function RollButton({
   display: string;
 }) {
   const { roll, failed } = useRollAndRecord(characterId);
-  const types = useContext(RollingSpell) ? SPELL_TAG_TYPE : TAG_TYPE;
+  const spell = useContext(RollingSpell);
+  const types = spell === null ? TAG_TYPE : SPELL_TAG_TYPE;
 
   return (
     <span data-notation={notation} data-rollable="true">
       <button
         type="button"
-        onClick={() => roll(notation, display, types[tag] ?? "dice")}
+        onClick={() =>
+          roll(notation, { label: display, type: types[tag] ?? "dice", origin: spell ?? undefined })
+        }
         aria-label={`Roll ${display}`}
         className="cursor-pointer underline decoration-dotted underline-offset-2"
       >

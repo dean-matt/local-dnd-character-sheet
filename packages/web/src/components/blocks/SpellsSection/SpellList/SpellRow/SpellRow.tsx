@@ -117,7 +117,7 @@ export function SpellRow({
           <EditHomebrewButton collection="spells" id={spell.homebrewId} />
         ),
         children: (
-          <RollingSpell value>
+          <RollingSpell value={spell.name}>
             <RulesEntries entries={spell.entries} />
           </RollingSpell>
         ),
