@@ -112,12 +112,7 @@ export function CharacterLayout() {
           </div>
         </div>
         {panel && (
-          <Dock
-            id={dockId}
-            label="Side panel"
-            onClose={closePanel}
-            collapsed={rollsOpen && rollsCollapsed}
-          >
+          <Dock id={dockId} label="Side panel" onClose={closePanel} collapsed={rollsCollapsed}>
             {historyOpen ? (
               <UndoHistory characterId={id} />
             ) : (

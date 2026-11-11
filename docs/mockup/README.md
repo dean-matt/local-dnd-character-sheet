@@ -43,7 +43,7 @@ lives in the app; `packages/web/LAYOUT.md` says how it grows.
 - Spells: Known Spells.
 - Features: Class Features, Race Features, Chosen Features — each its own widget,
   the same list-plus-search-and-filter shape as Inventory and Spells.
-- Page chrome: Character Header, one 52px
+- Page chrome: Character Header. Character Header is one 52px
   line: a 32px avatar with its upload badge, the name, the character's edition as a
   `2014` or `2024` chip (the same chip as the app's character list tile), then the subtitle
   — total level, race and classes — after a `·`, with the save status, then Inspiration
@@ -61,11 +61,12 @@ lives in the app; `packages/web/LAYOUT.md` says how it grows.
   for the full catalog of addable widgets. Clicking a card always adds another copy —
   nothing caps a widget to one instance — and the card's "+ Add" label picks up a
   running count once one is on the tab. Used only by Custom Tab.
-- Custom Tab is sized like the page's active section content area and shows the widget canvas a user-created tab gets: an Edit button gates
-  drag-to-move and drag-a-corner-to-resize (each card previews as a title over a few
-  skeleton content lines, not the real widget), and a ghost "Add Widget" button opens
-  the picker. Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level,
-  Backstory, Notes) never get this — their widgets are fixed.
+- Custom Tab is sized like the page's active section content area and shows the widget
+  canvas a user-created tab gets: an Edit button gates drag-to-move and
+  drag-a-corner-to-resize (each card previews as a title over a few skeleton content
+  lines, not the real widget), and a ghost "Add Widget" button opens the picker.
+  Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level, Backstory, Notes)
+  never get this — their widgets are fixed.
 - Filters: WeaponsFilter, ArmorFilter, GearFilter, SpellListFilter, ClassFeaturesFilter,
   RaceFeaturesFilter, ChosenFeaturesFilter — each is mounted into its
   list widget from a Filter button in that widget's header, and sits next to that

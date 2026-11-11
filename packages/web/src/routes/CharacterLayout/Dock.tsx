@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  * sticky under the top bar, out of print, holding `children` under a close button at its
  * top right that calls `onClose`. `label` names the dock rather than a panel; each panel
  * names itself with its heading, so another can join this one. `collapsed` narrows it to a
- * strip with no close button, leaving the panel to draw its own expand control.
+ * strip with no close button; the caller draws the expand control among `children`.
  */
 export function Dock({
   id,
@@ -25,7 +25,7 @@ export function Dock({
     <aside
       id={id}
       aria-label={label}
-      className="sticky top-topbar flex h-[calc(100vh-var(--spacing-topbar))] shrink-0 flex-col self-start border-border border-l bg-surface px-4 py-5 print:hidden"
+      className="sticky top-topbar flex h-[calc(100vh-var(--spacing-topbar))] shrink-0 flex-col self-start overflow-x-hidden border-border border-l bg-surface px-4 py-5 print:hidden"
       style={{
         width: collapsed ? "var(--spacing-sidebar-collapsed)" : "20rem",
         transition: "width var(--duration-standard)",
