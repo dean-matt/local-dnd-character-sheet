@@ -38,6 +38,14 @@ const FIREBALL = {
   json: JSON.stringify({ name: "Fireball", source: "PHB", level: 3, school: "V" }),
 };
 
+const FLAME_BLADE = {
+  ...FIREBALL,
+  name: "Flame Blade",
+  level: 2,
+  concentration: 1 as const,
+  json: JSON.stringify({ name: "Flame Blade", source: "PHB", level: 2, school: "V" }),
+};
+
 const FIRE_ELEMENTAL = {
   type: "monster",
   name: "Fire Elemental",
@@ -67,7 +75,10 @@ describe("searchRoutes", () => {
 
   beforeAll(() => {
     dataDir = mkdtempSync(join(tmpdir(), "search-routes-"));
-    publishSearchFixture(dataDir, { spells: [FIREBALL], entities: [FIRE_ELEMENTAL, AZER] });
+    publishSearchFixture(dataDir, {
+      spells: [FIREBALL, FLAME_BLADE],
+      entities: [FIRE_ELEMENTAL, AZER],
+    });
   });
 
   afterAll(() => {
@@ -352,6 +363,34 @@ describe("searchRoutes", () => {
     expect(await names("minLevel=4")).toEqual(["Fire Shield", "Fire Elemental", "Azer"]);
     expect(await names("school=V&type=spell")).toEqual(["Fireball"]);
     expect(await names("minLevel=9&maxLevel=4&type=spell")).toEqual(["Fire Shield"]);
+  });
+
+  it("narrows spells, homebrew among them, to those that need concentration", async () => {
+    insertHomebrewSpell(opened.homebrewDb, "1", {
+      name: "Flame Ward",
+      edition: "classic",
+      level: 1,
+      school: "A",
+      duration: [{ type: "timed", duration: { type: "minute", amount: 1 }, concentration: true }],
+    });
+    insertHomebrewSpell(opened.homebrewDb, "2", {
+      name: "Flame Flash",
+      edition: "classic",
+      level: 1,
+      school: "V",
+      duration: [{ type: "instant" }],
+    });
+    const names = async (query: string) =>
+      (await (await routes.request(`/search?edition=classic&q=fla&${query}`)).json()).items.map(
+        (hit: { name: string }) => hit.name,
+      );
+
+    expect(await names("type=spell&concentration=true")).toEqual(["Flame Ward", "Flame Blade"]);
+    expect(await names("type=spell&concentration=false")).toEqual([
+      "Flame Ward",
+      "Flame Blade",
+      "Flame Flash",
+    ]);
   });
 
   it("narrows items, homebrew among them, by rarity", async () => {

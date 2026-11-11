@@ -1,4 +1,10 @@
-import type { CharacterRecord, CharacterState } from "@dnd/character";
+import {
+  type CharacterRecord,
+  type CharacterState,
+  type Concentration,
+  concentrationEnded,
+  concentrationStarted,
+} from "@dnd/character";
 import { Minus, Plus, X } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { PILL } from "../../../../lib/chipStyles.ts";
@@ -6,14 +12,16 @@ import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
 import { AddCondition } from "./AddCondition.tsx";
+import { ConcentrationField } from "./ConcentrationField.tsx";
 
 const STEP =
   "flex size-8 items-center justify-center rounded-control border border-border bg-surface hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
 /**
  * The Status Effects card: a chip per held condition with a remove control, an add control
- * over the edition's catalog conditions or a custom name, and an exhaustion stepper from 0 to
- * 6. Each change is one state write, announced once it lands.
+ * over the edition's catalog conditions or a custom name, an exhaustion stepper from 0 to 6,
+ * and the held concentration with controls that set and end it. Each change is one state
+ * write, announced once it lands.
  */
 export function StatusEffects({
   character,
@@ -112,6 +120,15 @@ export function StatusEffects({
           <Plus size={14} aria-hidden />
         </button>
       </div>
+      <ConcentrationField
+        edition={character.edition}
+        held={state.concentration}
+        busy={replace.writing}
+        onSet={(concentration: Concentration, text) =>
+          replace.write(concentrationStarted(state, concentration).state, text)
+        }
+        onEnd={(text) => replace.write(concentrationEnded(state), text)}
+      />
       {state.activeEffects.length > 0 && (
         <p className="mt-2 text-row">
           <span className="text-muted">Active effects: </span>

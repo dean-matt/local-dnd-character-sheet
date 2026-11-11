@@ -1,5 +1,5 @@
 import type { CharacterDerived, CharacterState } from "@dnd/character";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
@@ -30,6 +30,12 @@ function renderVitals(state: Partial<CharacterState>, derivedBlock = derived()) 
 }
 
 const card = async (name: string) => within(await screen.findByRole("region", { name }));
+
+/** The Status Effects card's announcer, beside the status line each picker field shows. */
+const announced = () =>
+  within(screen.getByRole("region", { name: "Status Effects" }))
+    .getAllByRole("status")
+    .find((region) => region.className === "sr-only");
 
 const bar = (hp: HTMLElement) => hp.querySelector("[aria-hidden='true'] > div") as HTMLElement;
 
@@ -142,7 +148,7 @@ describe("Vitals", () => {
         { name: "Prone", source: "XPHB" },
         { name: "Poisoned", source: "XPHB" },
       ]);
-      await waitFor(() => expect(status().getByRole("status")).toHaveTextContent("Poisoned added"));
+      await waitFor(() => expect(announced()).toHaveTextContent("Poisoned added"));
 
       reload();
       await screen.findByRole("combobox", { name: "Condition to add" });
@@ -159,7 +165,7 @@ describe("Vitals", () => {
       await waitFor(() => expect(writes).toHaveLength(1));
       expect(writes[0]?.customConditions).toEqual(["Marked"]);
       expect(writes[0]?.conditions).toEqual([]);
-      await waitFor(() => expect(status().getByRole("status")).toHaveTextContent("Marked added"));
+      await waitFor(() => expect(announced()).toHaveTextContent("Marked added"));
 
       reload();
       await screen.findByRole("combobox", { name: "Condition to add" });
@@ -172,7 +178,7 @@ describe("Vitals", () => {
 
       await waitFor(() => expect(writes).toHaveLength(1));
       expect(writes[0]?.customConditions).toEqual(["Cursed"]);
-      await waitFor(() => expect(status().getByRole("status")).toHaveTextContent("Marked removed"));
+      await waitFor(() => expect(announced()).toHaveTextContent("Marked removed"));
 
       reload();
       await screen.findByRole("combobox", { name: "Condition to add" });
@@ -235,9 +241,7 @@ describe("Vitals", () => {
 
       await waitFor(() => expect(writes).toHaveLength(1));
       expect(writes[0]?.conditions).toEqual([{ name: "Prone", source: "XPHB" }]);
-      await waitFor(() =>
-        expect(status().getByRole("status")).toHaveTextContent("Poisoned removed"),
-      );
+      await waitFor(() => expect(announced()).toHaveTextContent("Poisoned removed"));
     });
 
     it("steps exhaustion by one within 0 to 6", async () => {
@@ -248,7 +252,7 @@ describe("Vitals", () => {
       await waitFor(() => expect(writes.at(-1)?.exhaustion).toBe(6));
       await waitFor(() => expect(raise).toHaveAttribute("aria-disabled", "true"));
       expect(chips()).toEqual(["Exhaustion 6"]);
-      expect(status().getByRole("status")).toHaveTextContent("Exhaustion 6");
+      expect(announced()).toHaveTextContent("Exhaustion 6");
 
       fireEvent.click(raise);
       expect(writes).toHaveLength(1);
@@ -300,6 +304,160 @@ describe("Vitals", () => {
       expect(await status().findByRole("alert")).toHaveTextContent(
         "Status effects were not changed: Disk full",
       );
+    });
+  });
+
+  describe("concentration", () => {
+    const status = () => within(screen.getByRole("region", { name: "Status Effects" }));
+    const bless = { spell: { name: "Bless", source: "XPHB" }, level: 1 };
+    const holdPerson = { name: "Hold Person", source: "XPHB" };
+    const heldLine = async () =>
+      (
+        await within(await screen.findByRole("region", { name: "Status Effects" })).findByText(
+          /Concentrating on/,
+        )
+      ).closest("p");
+
+    async function pickSpell(name: string) {
+      fireEvent.focus(await screen.findByRole("combobox", { name: "Concentrate on a spell" }));
+      fireEvent.click(await screen.findByRole("option", { name: new RegExp(`^${name}`) }));
+    }
+
+    async function chooseLevel(label: string) {
+      const level = await status().findByRole("combobox", { name: "Spell level" });
+      await waitFor(() => expect(level).toHaveTextContent(/Level|Cantrip/));
+      fireEvent.click(level);
+      fireEvent.click(screen.getByRole("option", { name: label }));
+    }
+
+    it("shows the held spell and its level, and nothing for concentration when none is held", async () => {
+      renderWriting({ concentration: { ...bless, level: 3 } });
+      await screen.findByRole("region", { name: "Status Effects" });
+      expect(await heldLine()).toHaveTextContent("Concentrating on Bless, level 3");
+
+      cleanup();
+      renderWriting({});
+      await screen.findByRole("region", { name: "Status Effects" });
+      await screen.findByRole("combobox", { name: "Concentrate on a spell" });
+      expect(status().queryByText(/Concentrating on/)).toBeNull();
+      expect(status().queryByRole("button", { name: "End concentration" })).toBeNull();
+    });
+
+    it("names a held homebrew spell from its row", async () => {
+      renderWriting({ concentration: { spell: { homebrewId: "hb1" }, level: 9 } });
+      await screen.findByRole("region", { name: "Status Effects" });
+      await waitFor(async () =>
+        expect(await heldLine()).toHaveTextContent("Concentrating on Hexing Ward, level 9"),
+      );
+    });
+
+    it("searches only spells that need concentration", async () => {
+      const { searches } = renderWriting({});
+      await screen.findByRole("region", { name: "Status Effects" });
+      fireEvent.focus(await screen.findByRole("combobox", { name: "Concentrate on a spell" }));
+      await screen.findByRole("option", { name: /^Hold Person/ });
+      expect(searches.every((url) => url.includes("concentration=true"))).toBe(true);
+    });
+
+    it("sets a spell at a chosen level from its own up, its own by default", async () => {
+      const { writes, reload } = renderWriting({});
+      await screen.findByRole("region", { name: "Status Effects" });
+      await pickSpell("Hold Person");
+      const level = await status().findByRole("combobox", { name: "Spell level" });
+      await waitFor(() => expect(level).toHaveTextContent("Level 2"));
+      fireEvent.click(level);
+      expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(
+        [2, 3, 4, 5, 6, 7, 8, 9].map((each) => `Level ${each}`),
+      );
+      fireEvent.click(screen.getByRole("option", { name: "Level 4" }));
+      fireEvent.click(status().getByRole("button", { name: "Concentrate" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.concentration).toEqual({ spell: holdPerson, level: 4 });
+      await waitFor(() =>
+        expect(announced()).toHaveTextContent("Concentrating on Hold Person at level 4"),
+      );
+      await waitFor(() =>
+        expect(status().getByRole("button", { name: "End concentration" })).toHaveFocus(),
+      );
+
+      reload();
+      expect(await heldLine()).toHaveTextContent("Concentrating on Hold Person, level 4");
+    });
+
+    it("sets a homebrew spell by its id at its own level", async () => {
+      const { writes } = renderWriting({});
+      await screen.findByRole("region", { name: "Status Effects" });
+      await pickSpell("Hexing Ward");
+      await chooseLevel("Level 9");
+      fireEvent.click(status().getByRole("button", { name: "Concentrate" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.concentration).toEqual({ spell: { homebrewId: "hb1" }, level: 9 });
+    });
+
+    it("replaces a held spell and names the one it ends", async () => {
+      const { writes } = renderWriting({ concentration: bless });
+      await screen.findByRole("region", { name: "Status Effects" });
+      await pickSpell("Hold Person");
+      expect(status().getByText("Ends concentration on Bless.")).toBeInTheDocument();
+      await chooseLevel("Level 2");
+      fireEvent.click(status().getByRole("button", { name: "Concentrate" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.concentration).toEqual({ spell: holdPerson, level: 2 });
+      await waitFor(() =>
+        expect(announced()).toHaveTextContent(
+          "Concentrating on Hold Person at level 2; Bless ended",
+        ),
+      );
+    });
+
+    it("ends the held concentration and nothing else", async () => {
+      const prone = { name: "Prone", source: "XPHB" };
+      const { writes, reload } = renderWriting({ concentration: bless, conditions: [prone] });
+      await screen.findByRole("region", { name: "Status Effects" });
+      fireEvent.click(await status().findByRole("button", { name: "End concentration" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.concentration).toBeNull();
+      expect(writes[0]?.conditions).toEqual([prone]);
+      await waitFor(() => expect(announced()).toHaveTextContent("Concentration on Bless ended"));
+
+      await waitFor(() =>
+        expect(screen.getByRole("combobox", { name: "Concentrate on a spell" })).toHaveFocus(),
+      );
+
+      reload();
+      await screen.findByRole("combobox", { name: "Concentrate on a spell" });
+      expect(status().queryByText(/Concentrating on/)).toBeNull();
+    });
+
+    it("makes each set and end one state write, so one undo entry", async () => {
+      const { writes } = renderWriting({ concentration: bless });
+      await screen.findByRole("region", { name: "Status Effects" });
+      await pickSpell("Hold Person");
+      await chooseLevel("Level 2");
+      fireEvent.click(status().getByRole("button", { name: "Concentrate" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+
+      fireEvent.click(await status().findByRole("button", { name: "End concentration" }));
+      await waitFor(() => expect(writes).toHaveLength(2));
+      expect(writes.map((write) => write.concentration)).toEqual([
+        { spell: holdPerson, level: 2 },
+        null,
+      ]);
+    });
+
+    it("cancels a pick without a write, and returns focus to the picker", async () => {
+      const { writes } = renderWriting({});
+      await screen.findByRole("region", { name: "Status Effects" });
+      await pickSpell("Bless");
+      expect(status().getByRole("button", { name: "Concentrate" })).toHaveFocus();
+      fireEvent.click(status().getByRole("button", { name: "Cancel" }));
+
+      expect(screen.getByRole("combobox", { name: "Concentrate on a spell" })).toHaveFocus();
+      expect(writes).toHaveLength(0);
     });
   });
 

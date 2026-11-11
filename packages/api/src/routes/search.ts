@@ -130,6 +130,11 @@ const listQuery = z.object({
   minLevel: spellLevel.openapi({ description: "The lowest spell level to read" }),
   maxLevel: spellLevel.openapi({ description: "The highest spell level to read" }),
   school: csv("Comma-separated spell school codes to narrow spells to", "V,A"),
+  concentration: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value === "true")
+    .openapi({ description: "true narrows spells to those that need concentration" }),
   rarity: csv("Comma-separated rarities to narrow items to", "rare,very rare"),
   kind: z
     .string()
@@ -208,7 +213,7 @@ const search = createRoute({
   tags: ["search"],
   summary: "Search the catalog and homebrew together, one ranked list",
   description:
-    "minLevel, maxLevel and school narrow spells alone, rarity and kind items alone, and featureType optional features alone, passing every other kind through. " +
+    "minLevel, maxLevel, school and concentration narrow spells alone, rarity and kind items alone, and featureType optional features alone, passing every other kind through. " +
     "A source narrows rows to those citing it, homebrew's HB among them.",
   request: { query: listQuery },
   responses: {
@@ -322,6 +327,7 @@ export function searchRoutes(dataDir: string, homebrewDb: HomebrewDb) {
       term,
       types: typeList,
       schools: list(query.school),
+      concentration: query.concentration,
       rarities: list(query.rarity),
       itemKinds: list(query.kind),
       featureTypes: list(query.featureType),

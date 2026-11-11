@@ -189,6 +189,7 @@ export {
 export {
   type CharacterState,
   type CharacterStateRecord,
+  type Concentration,
   characterStateRecordSchema,
   characterStateSchema,
   defaultCharacterState,
