@@ -18,6 +18,91 @@ async function apply(typed: string, action: "Damage" | "Heal") {
 
 afterEach(() => vi.unstubAllGlobals());
 
+const grant = (name: string, from: string) => ({ name, from: [from] });
+
+/** Raging, so resistant to slashing; immune to fire; vulnerable to cold. */
+const defenses = {
+  computed: {
+    resistances: [grant("slashing", "Rage")],
+    damageImmunities: [grant("fire", "Ring of Fire Immunity")],
+    conditionImmunities: [],
+    vulnerabilities: [grant("cold", "Curse")],
+    resistanceChoice: null,
+  },
+  manual: null,
+  terms: [],
+};
+
+function pickType(label: string) {
+  fireEvent.click(screen.getByRole("combobox", { name: "Damage type" }));
+  fireEvent.click(screen.getByRole("option", { name: label }));
+}
+
+describe("typed damage", () => {
+  it("applies untyped damage as entered, whatever the character resists", async () => {
+    const { writes } = renderVitals({ hitPoints: { current: 12, temporary: 0 } }, { defenses });
+    expect(await screen.findByRole("combobox", { name: "Damage type" })).toHaveTextContent(
+      "Untyped",
+    );
+    await apply("5", "Damage");
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.hitPoints).toEqual({ current: 7, temporary: 0 });
+    expect(announced()).toHaveTextContent(/^7 hit points\.$/);
+  });
+
+  it("halves damage a rage resists in one write, temporary hit points first, and names it", async () => {
+    const { writes } = renderVitals({ hitPoints: { current: 12, temporary: 2 } }, { defenses });
+    await screen.findByRole("spinbutton");
+    pickType("Slashing");
+    await apply("9", "Damage");
+
+    const named = "Slashing resistance halved 9 damage to 4.";
+    await waitFor(() => expect(announced()).toHaveTextContent(`${named} 10 hit points.`));
+    expect(writes).toHaveLength(1);
+    expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 0 });
+    expect(await card("Hit Points").findByText(named, { selector: "p" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Damage type" })).toHaveTextContent("Untyped");
+  });
+
+  it("doubles damage the character is vulnerable to", async () => {
+    const { writes } = renderVitals({ hitPoints: { current: 12, temporary: 0 } }, { defenses });
+    await screen.findByRole("spinbutton");
+    pickType("Cold");
+    await apply("3", "Damage");
+
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent(
+        "Cold vulnerability doubled 3 damage to 6. 6 hit points.",
+      ),
+    );
+    expect(writes[0]?.hitPoints).toEqual({ current: 6, temporary: 0 });
+  });
+
+  it("writes nothing for damage an immunity reduces to 0, and says so", async () => {
+    const { writes } = renderVitals({ hitPoints: { current: 12, temporary: 0 } }, { defenses });
+    await screen.findByRole("spinbutton");
+    pickType("Fire");
+    await apply("8", "Damage");
+
+    const named = "Fire immunity reduced 8 damage to 0. Hit points are unchanged.";
+    expect(card("Hit Points").getByText(named, { selector: "p" })).toBeInTheDocument();
+    expect(announced()).toHaveTextContent(named);
+    expect(writes).toEqual([]);
+    expect(amount()).toHaveValue(null);
+  });
+
+  it("weighs the adjusted amount when asking before damage kills", async () => {
+    renderVitals({ hitPoints: { current: 5, temporary: 0 } }, { defenses });
+    await screen.findByRole("spinbutton");
+    pickType("Cold");
+    await apply("13", "Damage");
+
+    const dialog = within(screen.getByRole("dialog", { name: "26 damage kills Vex" }));
+    expect(dialog.getByText("Cold vulnerability doubled 13 damage to 26.")).toBeVisible();
+  });
+});
+
 describe("HitPointChange", () => {
   it("takes damage through temporary hit points first, and announces what is left", async () => {
     const { writes } = renderVitals({ hitPoints: { current: 12, temporary: 3 } });
