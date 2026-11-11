@@ -402,3 +402,99 @@ describe("temporary hit points", () => {
     expect(amount()).toHaveValue(6);
   });
 });
+
+describe("concentration", () => {
+  const bless = { spell: { name: "Bless", source: "XPHB" }, level: 1 };
+  const hitPoints = card.bind(null, "Hit Points");
+  const prompt = () =>
+    screen.queryByText(
+      (_, element) =>
+        element?.tagName === "P" && element.textContent?.startsWith("Concentration:") === true,
+    );
+
+  it("shows the DC for the damage taken and the save, and End concentration is one write", async () => {
+    const { writes } = renderVitals({
+      hitPoints: { current: 20, temporary: 5 },
+      concentration: bless,
+    });
+    await apply("26", "Damage");
+
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent(
+        "0 hit points. DC 13 Constitution save to keep concentration.",
+      ),
+    );
+    expect(prompt()).toHaveTextContent("Concentration: DC 13 Constitution save, +2");
+    fireEvent.click(hitPoints().getByRole("button", { name: "End concentration" }));
+
+    await waitFor(() => expect(announced()).toHaveTextContent(/^Concentration ended\.$/));
+    expect(writes).toHaveLength(2);
+    expect(writes[1]).toEqual({ ...writes[0], concentration: null });
+    expect(prompt()).not.toBeInTheDocument();
+    expect(button("Damage")).toHaveFocus();
+  });
+
+  it("keeps concentration without a write, and says so", async () => {
+    const { writes } = renderVitals({
+      hitPoints: { current: 20, temporary: 0 },
+      concentration: bless,
+    });
+    await apply("4", "Damage");
+    await waitFor(() => expect(prompt()).toHaveTextContent("DC 10"));
+    fireEvent.click(hitPoints().getByRole("button", { name: "Keep" }));
+
+    expect(announced()).toHaveTextContent(/^Concentration kept\.$/);
+    expect(prompt()).not.toBeInTheDocument();
+    expect(button("Damage")).toHaveFocus();
+    expect(writes).toHaveLength(1);
+    expect(writes[0]?.concentration).toEqual(bless);
+  });
+
+  it("asks nothing of a character not concentrating", async () => {
+    renderVitals({ hitPoints: { current: 20, temporary: 0 }, concentration: null });
+    await apply("4", "Damage");
+
+    await waitFor(() => expect(announced()).toHaveTextContent(/^16 hit points\.$/));
+    expect(prompt()).not.toBeInTheDocument();
+  });
+
+  it("asks nothing once the damage kills", async () => {
+    const { writes } = renderVitals({
+      hitPoints: { current: 5, temporary: 0 },
+      concentration: bless,
+    });
+    await apply("30", "Damage");
+    fireEvent.click(await screen.findByRole("button", { name: "Apply the damage" }));
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(announced()).toHaveTextContent(/^0 hit points\.$/);
+    expect(prompt()).not.toBeInTheDocument();
+  });
+
+  it("weighs the concentration save an item adds to, and drops once concentration ends elsewhere", async () => {
+    const character = vex();
+    const derived = {
+      ...derivedRecord(),
+      hitPointMaximum: { computed: 20, manual: null, terms: [] },
+      concentrationSave: { computed: 4, manual: null, terms: [] },
+    };
+    const at = (current: number, concentration: typeof bless | null) => ({
+      ...stateRecord().state,
+      hitPoints: { current, temporary: 0 },
+      concentration,
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(stateRecord()), { status: 200 })),
+    );
+    const view = renderWithClient(
+      <HitPointChange character={character} derived={derived} state={at(20, bless)} />,
+    );
+    await apply("5", "Damage");
+    view.rerender(<HitPointChange character={character} derived={derived} state={at(15, bless)} />);
+    await waitFor(() => expect(prompt()).toHaveTextContent("DC 10 Constitution save, +4"));
+
+    view.rerender(<HitPointChange character={character} derived={derived} state={at(15, null)} />);
+    expect(prompt()).not.toBeInTheDocument();
+  });
+});
