@@ -29,9 +29,9 @@ arrangement at 1440px and says nothing about stretching, so this is the rule for
   and `py-6` everywhere else: Settings, search, character creation, and `ContentLayout` in
   `src/routes/ContentLayout.tsx`, which the homepage, list and 404 pages use.
 
-A side panel joins the flex row in `src/routes/CharacterLayout/CharacterLayout.tsx`. The content column
-and the character header follow it; the top bar never does. The mockup's Rolls Panel, a
-right-docked collapsible rail, is the first one expected.
+A side panel joins the flex row in `src/routes/CharacterLayout/CharacterLayout.tsx`, inside
+`Dock`, the right-docked column History and the Roll Log share. The content column and the
+character header follow it; the top bar never does.
 
 ## Traps
 

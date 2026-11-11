@@ -146,6 +146,41 @@ describe("CharacterLayout roll log", () => {
     expect(screen.queryByRole("heading", { name: "Roll Log" })).not.toBeInTheDocument();
   });
 
+  it("collapses to a strip that still announces a roll, and expands again", async () => {
+    await renderSheet([roll]);
+    fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
+    await screen.findByRole("listitem");
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse Roll Log" }));
+    expect(screen.queryByRole("heading", { name: "Roll Log" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("listitem")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Close side panel" })).not.toBeInTheDocument();
+    const expand = screen.getByRole("button", { name: "Expand Roll Log" });
+    expect(expand).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(screen.getByRole("button", { name: "Roll 1d4" }));
+    expect(await screen.findByText("Rolled 1d4: 3")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Roll Log" })).not.toBeInTheDocument();
+
+    expand.focus();
+    fireEvent.click(expand);
+    expect(screen.getByRole("heading", { name: "Roll Log" })).toBeInTheDocument();
+    expect(await screen.findByRole("listitem")).toHaveTextContent("1d4");
+    expect(screen.getByRole("button", { name: "Collapse Roll Log" })).toHaveFocus();
+  });
+
+  it("reopens from its header button expanded", async () => {
+    await renderSheet([]);
+    const button = screen.getByRole("button", { name: "Roll Log" });
+    fireEvent.click(button);
+    fireEvent.click(await screen.findByRole("button", { name: "Collapse Roll Log" }));
+
+    fireEvent.click(button);
+    fireEvent.click(button);
+
+    expect(await screen.findByRole("heading", { name: "Roll Log" })).toHaveFocus();
+  });
+
   it("lists stored rolls with label, notation and total", async () => {
     await renderSheet([{ ...roll, label: "Fire Bolt", notation: "2d10", total: 14 }]);
     fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));

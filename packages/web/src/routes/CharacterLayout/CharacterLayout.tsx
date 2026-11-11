@@ -3,6 +3,7 @@ import { Settings } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router";
 import type { z } from "zod";
+import { CollapseToggle } from "../../components/CollapseToggle.tsx";
 import { OnRolled, RollingFor } from "../../components/rollerContext.ts";
 import { useCharacter } from "../../hooks/useCharacter.ts";
 import { useCharacterPages } from "../../hooks/useCharacterPages.ts";
@@ -29,16 +30,19 @@ export function CharacterLayout() {
   const manageButtonRef = useRef<HTMLButtonElement>(null);
   const [panel, setPanel] = useState<"history" | "rolls" | null>(null);
   const [latestRoll, setLatestRoll] = useState<z.infer<typeof rollLogEntrySchema> | null>(null);
+  const [rollsCollapsed, setRollsCollapsed] = useState(false);
   const historyOpen = panel === "history";
   const rollsOpen = panel === "rolls";
   const historyButtonRef = useReturnFocus<HTMLButtonElement>(historyOpen);
   const rollsButtonRef = useReturnFocus<HTMLButtonElement>(rollsOpen);
   const closePanel = () => {
     setLatestRoll(null);
+    setRollsCollapsed(false);
     setPanel(null);
   };
   const toggle = (which: "history" | "rolls") => () => {
     setLatestRoll(null);
+    setRollsCollapsed(false);
     setPanel((open) => (open === which ? null : which));
   };
   const showRoll = (roll: z.infer<typeof rollLogEntrySchema>) => {
@@ -108,12 +112,25 @@ export function CharacterLayout() {
           </div>
         </div>
         {panel && (
-          <Dock id={dockId} label="Side panel" onClose={closePanel}>
+          <Dock
+            id={dockId}
+            label="Side panel"
+            onClose={closePanel}
+            collapsed={rollsOpen && rollsCollapsed}
+          >
             {historyOpen ? (
               <UndoHistory characterId={id} />
             ) : (
               <OnRolled value={showRoll}>
-                <RollLog latest={latestRoll} characterId={id} />
+                <RollLog latest={latestRoll} characterId={id} collapsed={rollsCollapsed} />
+                <div className="mt-2.5 shrink-0 border-border border-t pt-3">
+                  <CollapseToggle
+                    name="Roll Log"
+                    edge="right"
+                    collapsed={rollsCollapsed}
+                    onToggle={() => setRollsCollapsed((collapsed) => !collapsed)}
+                  />
+                </div>
               </OnRolled>
             )}
           </Dock>
