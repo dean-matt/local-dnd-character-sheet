@@ -27,6 +27,11 @@ export function listRolls(db: CharactersDb) {
     .map(({ roll, characterName }) => entry(roll, characterName));
 }
 
+/** Deletes every character's rolls. */
+export function clearRolls(db: CharactersDb) {
+  db.delete(rollLog).run();
+}
+
 /** Stores `roll` as the character's newest and prunes the oldest past the bound. */
 export function recordRoll(db: CharactersDb, characterId: string, roll: RollRecord, now: Date) {
   return db.transaction((tx) => {

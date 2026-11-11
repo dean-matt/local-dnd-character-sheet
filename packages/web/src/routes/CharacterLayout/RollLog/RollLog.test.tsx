@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
@@ -48,5 +48,55 @@ describe("RollLog when the characters fail to load", () => {
     fireEvent.click(screen.getByRole("button", { name: "Filter Roll Log (1 active)" }));
     expect(await screen.findByText("nothing at /api/characters")).toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Character" })).toBeNull();
+  });
+});
+
+describe("RollLog's Clear button", () => {
+  it("empties every character's rolls, whatever the filter shows, and focuses the heading", async () => {
+    let rolls: unknown[] = [roll(2, "2", "Mira"), roll(1, "1", "Vex")];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/rolls" && init?.method === "DELETE") {
+        rolls = [];
+        return new Response(null, { status: 204 });
+      }
+      if (url === "/api/rolls") return new Response(JSON.stringify(rolls), { status: 200 });
+      return new Response(JSON.stringify([characterRecord("1", "Vex")]), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    renderWithClient(<RollLog latest={null} characterId="1" />);
+    expect(await screen.findAllByRole("listitem")).toHaveLength(1);
+
+    const clear = screen.getByRole("button", { name: "Clear Roll Log" });
+    clear.focus();
+    fireEvent.click(clear);
+
+    expect(await screen.findByText("No rolls yet.")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/rolls",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(screen.queryByRole("button", { name: "Clear Roll Log" })).toBeNull();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Roll Log" })).toHaveFocus());
+  });
+
+  it("shows the error and keeps the rolls when the clear fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "DELETE") {
+          return new Response(JSON.stringify({ error: "disk full" }), { status: 500 });
+        }
+        const body = String(input) === "/api/rolls" ? [roll(1, "1", "Vex")] : [];
+        return new Response(JSON.stringify(body), { status: 200 });
+      }),
+    );
+    renderWithClient(<RollLog latest={null} />);
+    expect(await screen.findAllByRole("listitem")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear Roll Log" }));
+
+    expect(await screen.findByText("disk full")).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
 });

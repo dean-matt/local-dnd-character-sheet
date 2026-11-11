@@ -155,7 +155,7 @@ says how much of the artboard the app builds today.
 | `ChosenFeatures` | #231, #311 | the optional-feature picks, the rest read-only |
 | `ChosenFeaturesFilter` | #311 | nothing |
 | `CharacterHeader` | #227, #241, #281, #391, #394, #395, #396, #452, #674 | the settings gear, the portrait upload and the Rest menu, the rest read-only |
-| `RollsPanel` | #1391 | the list |
+| `RollsPanel` | #1391, #1398, #1399 | the list and its Clear button |
 | `WidgetPicker` | #819 | nothing |
 | `CustomTab` | #819 | nothing |
 
