@@ -1,14 +1,8 @@
 import type { undoLogSchema } from "@dnd/character";
 import type { z } from "zod";
+import { when } from "../../../lib/when.ts";
 
 type Entry = z.infer<typeof undoLogSchema>[number];
-
-const when = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-});
 
 /**
  * One undo entry: a button naming what it changed and when, stretched over the whole
