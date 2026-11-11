@@ -466,10 +466,11 @@ describe("characterSpellsRoutes", () => {
       } as CharacterDefinition);
     };
     const listed = async () =>
-      (await spells()).map(({ name, source, fromSubclass, cost, granted }) => ({
+      (await spells()).map(({ name, source, fromSubclass, fromItem, cost, granted }) => ({
         name,
         source,
         fromSubclass,
+        fromItem,
         cost,
         granted,
       }));
@@ -605,20 +606,40 @@ describe("characterSpellsRoutes", () => {
         expect(await darkness()).toEqual([free, costed]);
       });
 
-      it("folds an equipped item's grant into the free entry", async () => {
-        monk(MONK, SHADOW, 5, [DARKNESS], {
-          race: TIEFLING,
-          inventory: [
-            {
-              ref: { name: "Cloak of Shade", source: "DMG" },
-              quantity: 1,
-              carried: true,
-              equipped: true,
-              attuned: false,
-            },
-          ],
+      describe("and an equipped item attaches it", () => {
+        const cloak = (equipped: boolean) => [
+          {
+            ref: { name: "Cloak of Shade", source: "DMG" },
+            quantity: 1,
+            carried: true,
+            equipped,
+            attuned: false,
+          },
+        ];
+        const fromCloak = { ...free, fromItem: "Cloak of Shade" };
+
+        it("lists the item's row beside the race's and the subclass's", async () => {
+          monk(MONK, SHADOW, 5, [DARKNESS], { race: TIEFLING, inventory: cloak(true) });
+          expect(await darkness()).toEqual([free, costed, fromCloak]);
         });
-        expect(await darkness()).toEqual([free, costed]);
+
+        it("lists it beside a feat's entry", async () => {
+          monk(MONK, SHADOW, 3, [DARKNESS], { feats: [GLOOM_TOUCHED], inventory: cloak(true) });
+          expect(await darkness()).toEqual([free, costed, fromCloak]);
+        });
+
+        it("lists it beside a background's entry", async () => {
+          monk(MONK, SHADOW, 3, [DARKNESS], {
+            background: HAUNTED_ONE,
+            inventory: cloak(true),
+          });
+          expect(await darkness()).toEqual([free, costed, fromCloak]);
+        });
+
+        it("drops only the item's row once it is unequipped", async () => {
+          monk(MONK, SHADOW, 5, [DARKNESS], { race: TIEFLING, inventory: cloak(false) });
+          expect(await darkness()).toEqual([free, costed]);
+        });
       });
 
       it("reads the entry as the subclass's before the race gives it", async () => {

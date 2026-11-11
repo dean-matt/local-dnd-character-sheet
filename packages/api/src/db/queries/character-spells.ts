@@ -210,7 +210,7 @@ function nonSubclassSpells(dataDir: string, definition: CharacterDefinition): Se
 
 /**
  * The spells equipped items let the character cast, in inventory order, each marked granted
- * and citing its item. A spell `known` holds by `entryKey` stays as that entry, and one
+ * and citing its item. A spell `picked` holds by `entryKey` stays as that entry, and one
  * several items attach lists once, citing them all. An item may add spells by the alignment of
  * the character's deity row; a character with no deity, or an unknown one, gets none. An item
  * that waits on attunement lists none until attuned. A name no row answers is left out: no
@@ -220,7 +220,7 @@ function itemSpells(
   dataDir: string,
   homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
-  known: ReadonlySet<string>,
+  picked: ReadonlySet<string>,
 ): SheetSpell[] {
   const rows = resolveItemRows(dataDir, homebrewDb, definition.inventory);
   let deityCode: string | undefined | null = null;
@@ -252,7 +252,7 @@ function itemSpells(
     const row = found[index];
     if (!row) return;
     const key = entryKey(row);
-    if (known.has(key)) return;
+    if (picked.has(key)) return;
     const listed = byKey.get(key);
     if (!listed) byKey.set(key, { row, items: [item] });
     else if (!listed.items.includes(item)) listed.items.push(item);
@@ -270,7 +270,8 @@ function itemSpells(
  * then its equipped items'. An entry does not record its grantor, so a granted entry a
  * subclass gives is that subclass's, carrying its cost, unless another row gives the spell
  * too: a Tiefling Shadow Monk's free Darkness stays free, and Way of Shadow's costed
- * Darkness lists beside it. An item's spell lists beside a subclass's.
+ * Darkness lists beside it. An item's spell folds into an entry the character picked, and
+ * lists beside every granted one, so the sheet always cites the item.
  */
 export function resolveCharacterSpells(
   dataDir: string,
@@ -282,14 +283,14 @@ export function resolveCharacterSpells(
   const elsewhere =
     bySubclass.size > 0 ? nonSubclassSpells(dataDir, definition) : new Set<string>();
   const listed = new Set<string>();
-  const heldForItems = new Set<string>();
+  const picked = new Set<string>();
   const spells: SheetSpell[] = definition.spells.map((entry, index) => {
     if ("homebrewId" in entry.ref) return sheetSpell(entry, rows[index]);
     const key = entryKey(entry.ref);
     const given = entry.granted ? bySubclass.get(key) : undefined;
     const subclassOwn = given && !elsewhere.has(key);
     if (!given || subclassOwn) listed.add(key);
-    if (!subclassOwn) heldForItems.add(key);
+    if (!entry.granted) picked.add(key);
     return sheetSpell(entry, rows[index], subclassOwn && given.cost ? { cost: given.cost } : {});
   });
   const subclass = [...bySubclass].flatMap(([key, { row, subclass, cost }]) => {
@@ -303,6 +304,6 @@ export function resolveCharacterSpells(
     ];
   });
   return {
-    spells: [...spells, ...subclass, ...itemSpells(dataDir, homebrewDb, definition, heldForItems)],
+    spells: [...spells, ...subclass, ...itemSpells(dataDir, homebrewDb, definition, picked)],
   };
 }
