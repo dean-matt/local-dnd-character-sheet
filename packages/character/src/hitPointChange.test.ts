@@ -62,14 +62,22 @@ describe("damagedState", () => {
     ["poison", 0, ["immunity"]],
     ["thunder", 11, []],
   ])("meets %s damage with the defenses the sheet shows", (type, amount, applied) => {
-    const after = damagedState(unhurt, defended, state(null), 11, type);
+    const after = damagedState(unhurt, defended, state(null), 11, { type });
     expect(after).toMatchObject({ amount, applied });
     expect(after.state.hitPoints.current).toBe(amount === 0 ? null : 30 - amount);
   });
 
+  it("counts two death save failures for a critical hit at 0", () => {
+    const down = state(0);
+    expect(damagedState(unhurt, defended, down, 3).state.deathSaves.failures).toBe(1);
+    expect(
+      damagedState(unhurt, defended, down, 3, { critical: true }).state.deathSaves.failures,
+    ).toBe(2);
+  });
+
   it("lets temporary hit points absorb the adjusted amount", () => {
     const held = { ...state(30), hitPoints: { current: 30, temporary: 4 } };
-    expect(damagedState(unhurt, defended, held, 11, "acid").state.hitPoints).toEqual({
+    expect(damagedState(unhurt, defended, held, 11, { type: "acid" }).state.hitPoints).toEqual({
       current: 29,
       temporary: 0,
     });

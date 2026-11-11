@@ -57,6 +57,34 @@ describe("takeDamage", () => {
     expect(takeDamage(hp(0), { successes: 0, failures: 2 }, 20, 1, printed).outcome).toBe("dead");
   });
 
+  describe("a critical hit", () => {
+    const critical = { ...printed, critical: true };
+
+    it("records two failures at 0", () => {
+      expect(takeDamage(hp(0), { successes: 2, failures: 0 }, 20, 4, critical)).toEqual({
+        hitPoints: hp(0),
+        deathSaves: { successes: 2, failures: 2 },
+        outcome: "dying",
+      });
+    });
+
+    it("kills at 0 with one failure already marked", () => {
+      expect(takeDamage(hp(0), { successes: 0, failures: 1 }, 20, 1, critical)).toEqual({
+        hitPoints: hp(0),
+        deathSaves: { successes: 0, failures: 3 },
+        outcome: "dead",
+      });
+    });
+
+    it("records nothing for the hit that drops the character to 0", () => {
+      expect(takeDamage(hp(5), clear, 20, 8, critical).deathSaves).toEqual(clear);
+    });
+
+    it("records nothing when temporary hit points absorb it", () => {
+      expect(takeDamage(hp(0, 5), clear, 20, 5, critical).deathSaves).toEqual(clear);
+    });
+  });
+
   it("records nothing when temporary hit points absorb damage at 0", () => {
     expect(takeDamage(hp(0, 5), { successes: 1, failures: 1 }, 20, 5, printed)).toEqual({
       hitPoints: hp(0, 0),
