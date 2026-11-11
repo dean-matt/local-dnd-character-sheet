@@ -3,6 +3,7 @@ import {
   type CharacterState,
   type Concentration,
   concentrationEnded,
+  concentrationLapsed,
   concentrationStarted,
 } from "@dnd/character";
 import { Minus, Plus, X } from "lucide-react";
@@ -21,7 +22,7 @@ const STEP =
  * The Status Effects card: a chip per held condition with a remove control, an add control
  * over the edition's catalog conditions or a custom name, an exhaustion stepper from 0 to 6,
  * and the held concentration with controls that set and end it. Each change is one state
- * write, announced once it lands.
+ * write, announced once it lands, and a condition that incapacitates ends concentration in it.
  */
 export function StatusEffects({
   character,
@@ -37,15 +38,18 @@ export function StatusEffects({
   ];
   const { exhaustion } = state;
 
+  function addCondition(added: CharacterState, name: string) {
+    const after = concentrationLapsed(added);
+    const ended = state.concentration && !after.concentration ? "; concentration ended" : "";
+    replace.write(after, `${name} added${ended}`);
+  }
+
   function add(ref: { name: string; source: string }) {
-    replace.write({ ...state, conditions: [...state.conditions, ref] }, `${ref.name} added`);
+    addCondition({ ...state, conditions: [...state.conditions, ref] }, ref.name);
   }
 
   function addCustom(name: string) {
-    replace.write(
-      { ...state, customConditions: [...state.customConditions, name] },
-      `${name} added`,
-    );
+    addCondition({ ...state, customConditions: [...state.customConditions, name] }, name);
   }
 
   function remove(name: string) {
