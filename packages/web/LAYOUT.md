@@ -6,7 +6,8 @@ How the pieces around a page grow.
   beside it changes its width. Its height is `--spacing-topbar` in `src/index.css`; anything
   sized against it uses the token. Its own content sits at 24px, not the gutter. Below the `sm`
   breakpoint it narrows to fit a 320px phone: 12px padding, tighter triggers with no gap
-  between them, the app name cut to "D&D", and Feedback and Settings cut to their icons, each keeping its full text for screen readers.
+  between them, the app name cut to "D&D", and Feedback and Settings cut to their icons, each
+  keeping its full text for screen readers.
 - **Sidebar** fills its column, sticky under the top bar. In a window too short to hold its
   rows, they scroll above the collapse toggle, which stays pinned at the foot. The scrollbar
   is hidden so the collapsed icons stay centered, and `scroll-shadow` shades the clipped
