@@ -467,7 +467,7 @@ describe("concentration", () => {
     expect(prompt()).not.toBeInTheDocument();
   });
 
-  it("asks nothing once the damage kills", async () => {
+  it("ends concentration in the write that kills, and asks nothing", async () => {
     const { writes } = renderVitals({
       hitPoints: { current: 5, temporary: 0 },
       concentration: bless,
@@ -475,8 +475,11 @@ describe("concentration", () => {
     await apply("30", "Damage");
     fireEvent.click(await screen.findByRole("button", { name: "Apply the damage" }));
 
-    await waitFor(() => expect(announced()).toHaveTextContent(/^0 hit points\.$/));
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent(/^0 hit points\. Concentration ended\.$/),
+    );
     expect(writes).toHaveLength(1);
+    expect(writes[0]?.concentration).toBeNull();
     expect(prompt()).not.toBeInTheDocument();
   });
 
@@ -484,16 +487,20 @@ describe("concentration", () => {
     ["drops the character to 0", 0],
     ["lands at 0", 1],
   ])(
-    "asks nothing once the damage %s, since unconscious ends concentration",
+    "ends concentration in the write once the damage %s, and asks nothing",
     async (_, failures) => {
-      renderVitals({
+      const { writes } = renderVitals({
         hitPoints: { current: failures === 0 ? 5 : 0, temporary: 0 },
         deathSaves: { successes: 0, failures },
         concentration: bless,
       });
       await apply("6", "Damage");
 
-      await waitFor(() => expect(announced()).toHaveTextContent(/^0 hit points\.$/));
+      await waitFor(() =>
+        expect(announced()).toHaveTextContent(/^0 hit points\. Concentration ended\.$/),
+      );
+      expect(writes).toHaveLength(1);
+      expect(writes[0]).toMatchObject({ hitPoints: { current: 0 }, concentration: null });
       expect(prompt()).not.toBeInTheDocument();
     },
   );

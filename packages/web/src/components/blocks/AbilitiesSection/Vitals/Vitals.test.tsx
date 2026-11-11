@@ -433,6 +433,35 @@ describe("Vitals", () => {
       expect(status().queryByText(/Concentrating on/)).toBeNull();
     });
 
+    it("ends concentration in the write that adds a condition that incapacitates", async () => {
+      const { writes } = renderWriting({ concentration: bless, conditions: [] });
+      fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+        target: { value: "Stunned" },
+      });
+      fireEvent.click(status().getByRole("button", { name: "Add condition" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]).toMatchObject({
+        conditions: [{ name: "Stunned", source: "XPHB" }],
+        concentration: null,
+      });
+      await waitFor(() =>
+        expect(announced()).toHaveTextContent(/^Stunned added; concentration ended$/),
+      );
+    });
+
+    it("keeps concentration when the condition added does not incapacitate", async () => {
+      const { writes } = renderWriting({ concentration: bless, conditions: [] });
+      fireEvent.change(await screen.findByRole("combobox", { name: "Condition to add" }), {
+        target: { value: "Poisoned" },
+      });
+      fireEvent.click(status().getByRole("button", { name: "Add condition" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.concentration).toEqual(bless);
+      await waitFor(() => expect(announced()).toHaveTextContent(/^Poisoned added$/));
+    });
+
     it("makes each set and end one state write, so one undo entry", async () => {
       const { writes } = renderWriting({ concentration: bless });
       await screen.findByRole("region", { name: "Status Effects" });

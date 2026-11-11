@@ -42,6 +42,17 @@ const state = (current: number | null) => ({
 });
 
 describe("damagedState", () => {
+  const bless = { spell: { name: "Bless", source: "XPHB" }, level: 1 };
+
+  it("ends concentration in the same state when the damage leaves 0 hit points", () => {
+    const held = { ...state(5), concentration: bless };
+    expect(damagedState(unhurt, defended, held, 5).state).toMatchObject({
+      hitPoints: { current: 0 },
+      concentration: null,
+    });
+    expect(damagedState(unhurt, defended, held, 4).state.concentration).toEqual(bless);
+  });
+
   it.each([
     [undefined, 11, []],
     ["slashing", 10, ["resistance", "vulnerability"]],

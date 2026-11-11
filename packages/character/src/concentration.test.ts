@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { concentrationCheck, concentrationEnded, concentrationStarted } from "./index.ts";
+import {
+  concentrationCheck,
+  concentrationEnded,
+  concentrationLapsed,
+  concentrationStarted,
+} from "./index.ts";
 import { definition, state } from "./test/vex.ts";
 
 const bless = { spell: { name: "Bless", source: "PHB" }, level: 1 };
@@ -23,6 +28,41 @@ describe("concentrationStarted", () => {
 describe("concentrationEnded", () => {
   it("holds none and changes nothing else", () => {
     expect(concentrationEnded(state)).toEqual({ ...state, concentration: null });
+  });
+});
+
+describe("concentrationLapsed", () => {
+  const at = (current: number | null) => ({
+    ...state,
+    hitPoints: { current, temporary: 0 },
+    conditions: [],
+    customConditions: [],
+  });
+
+  it("ends concentration at 0 hit points and nothing else", () => {
+    expect(concentrationLapsed(at(0))).toEqual({ ...at(0), concentration: null });
+  });
+
+  it.each(["Incapacitated", "Paralyzed", "Petrified", "Stunned", "Unconscious"])(
+    "ends concentration under %s",
+    (name) => {
+      const held = { ...at(5), conditions: [{ name, source: "XPHB" }] };
+      expect(concentrationLapsed(held).concentration).toBeNull();
+    },
+  );
+
+  it("ends concentration under a custom condition that names one, in any case", () => {
+    const held = { ...at(5), customConditions: ["stunned"] };
+    expect(concentrationLapsed(held).concentration).toBeNull();
+  });
+
+  it("keeps concentration above 0 under conditions that do not incapacitate", () => {
+    const held = {
+      ...at(null),
+      conditions: [{ name: "Prone", source: "XPHB" }],
+      customConditions: ["Marked"],
+    };
+    expect(concentrationLapsed(held)).toBe(held);
   });
 });
 

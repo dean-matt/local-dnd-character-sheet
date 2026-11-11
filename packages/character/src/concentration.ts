@@ -19,6 +19,27 @@ export const concentrationEnded = (state: CharacterState): CharacterState => ({
   concentration: null,
 });
 
+/** The conditions that incapacitate under both editions, Incapacitated among them, lowercased. */
+const INCAPACITATING = new Set([
+  "incapacitated",
+  "paralyzed",
+  "petrified",
+  "stunned",
+  "unconscious",
+]);
+
+/**
+ * The state with concentration ended where its character can no longer hold it, at 0 hit points
+ * or under a condition that incapacitates, catalog or custom, else the state as given.
+ */
+export function concentrationLapsed(state: CharacterState): CharacterState {
+  const held = [...state.conditions.map(({ name }) => name), ...state.customConditions];
+  const incapacitated = held.some((name) => INCAPACITATING.has(name.toLowerCase()));
+  return state.concentration && (state.hitPoints.current === 0 || incapacitated)
+    ? concentrationEnded(state)
+    : state;
+}
+
 /**
  * The Constitution save `damage` taken calls for: its DC by `concentrationSaveDc` under the
  * definition's edition, and the save the sheet shows, the concentration save where an item
