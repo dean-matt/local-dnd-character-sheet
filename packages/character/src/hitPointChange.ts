@@ -1,4 +1,6 @@
 import {
+  adjustedDamage,
+  type DamageDefense,
   deathSave,
   type HitDie,
   heal,
@@ -30,24 +32,51 @@ function changed(state: CharacterState, result: ReturnType<typeof heal>): Change
 }
 
 /**
- * The state after `amount` damage, by `takeDamage`, against the maximum the sheet shows and
- * under the table's `noInstantDeath`. Damage at 0 counts as one failure: for a critical hit
+ * The defenses the sheet shows against damage of `type`: those the derived block grants, a
+ * rage's among them while one is active, and those the player added by hand.
+ */
+function defensesAgainst(
+  definition: Pick<CharacterDefinition, "addedDefenses">,
+  derived: Pick<CharacterDerived, "defenses">,
+  type: string,
+): DamageDefense[] {
+  const granted = derivedValue(derived.defenses);
+  const { addedDefenses: added } = definition;
+  const holds = (grants: readonly { name: string }[], names: readonly string[] = []) =>
+    grants.some(({ name }) => name === type) || names.includes(type);
+  return [
+    ...(holds(granted.damageImmunities, added.damageImmunities) ? (["immunity"] as const) : []),
+    ...(holds(granted.resistances, added.resistances) ? (["resistance"] as const) : []),
+    ...(holds(granted.vulnerabilities) ? (["vulnerability"] as const) : []),
+  ];
+}
+
+/**
+ * The state after `amount` damage of `type`, by `takeDamage`, against the maximum the sheet
+ * shows and under the table's `noInstantDeath`. Typed damage first meets the defenses the sheet
+ * shows against it, by `adjustedDamage`; untyped damage applies as given. Returns the amount
+ * taken and the defenses that changed it. Damage at 0 counts as one failure: for a critical hit
  * the player marks the second failure by hand.
  */
 export function damagedState(
-  definition: Pick<CharacterDefinition, "houseRules">,
-  derived: Sheet,
+  definition: Pick<CharacterDefinition, "houseRules" | "addedDefenses">,
+  derived: Sheet & Pick<CharacterDerived, "defenses">,
   state: CharacterState,
   amount: number,
-): Changed {
+  type?: string,
+): Changed & ReturnType<typeof adjustedDamage> {
+  const adjusted = adjustedDamage(
+    amount,
+    type === undefined ? [] : defensesAgainst(definition, derived, type),
+  );
   const result = takeDamage(
     state.hitPoints,
     state.deathSaves,
     derivedValue(derived.hitPointMaximum),
-    amount,
+    adjusted.amount,
     { instantDeath: !houseRule(definition, "noInstantDeath") },
   );
-  return changed(state, result);
+  return { ...changed(state, result), ...adjusted };
 }
 
 /** The state after `amount` healing, by `heal`, against the maximum the sheet shows. */

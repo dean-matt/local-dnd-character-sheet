@@ -1,9 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { damageAtZeroHitPoints, deathSave, heal, takeDamage } from "./index.ts";
+import { adjustedDamage, damageAtZeroHitPoints, deathSave, heal, takeDamage } from "./index.ts";
 
 const clear = { successes: 0, failures: 0 };
 const printed = { instantDeath: true };
 const hp = (current: number | null, temporary = 0) => ({ current, temporary });
+
+describe("adjustedDamage", () => {
+  it.each([
+    [[], 11, 11, []],
+    [["resistance"], 11, 5, ["resistance"]],
+    [["resistance", "resistance"], 11, 5, ["resistance"]],
+    [["vulnerability"], 11, 22, ["vulnerability"]],
+    [["vulnerability", "resistance"], 11, 10, ["resistance", "vulnerability"]],
+    [["resistance", "immunity", "vulnerability"], 11, 0, ["immunity"]],
+    [["resistance"], 1, 0, ["resistance"]],
+  ] as const)("against %j turns %d into %d", (held, amount, adjusted, applied) => {
+    expect(adjustedDamage(amount, held)).toEqual({ amount: adjusted, applied });
+  });
+
+  it.each([-1, 1.5])("throws a RangeError for %d", (amount) => {
+    expect(() => adjustedDamage(amount, [])).toThrow(RangeError);
+  });
+});
 
 describe("takeDamage", () => {
   it("spends temporary hit points before current ones", () => {

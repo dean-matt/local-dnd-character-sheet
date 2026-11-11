@@ -10,22 +10,70 @@ import {
 
 const sheet = { hitPointMaximum: { computed: 20, manual: 30, terms: [] } };
 
+const grant = (name: string, from: string) => ({ name, from: [from] });
+
+const defended = {
+  ...sheet,
+  defenses: {
+    computed: {
+      resistances: [grant("slashing", "Rage"), grant("fire", "Tiefling")],
+      damageImmunities: [grant("fire", "Ring of Fire Immunity")],
+      conditionImmunities: [],
+      vulnerabilities: [grant("cold", "Curse"), grant("slashing", "Curse")],
+      resistanceChoice: null,
+    },
+    manual: null,
+    terms: [],
+  },
+};
+
+const unhurt = {
+  houseRules: {},
+  addedDefenses: {
+    resistances: ["acid"],
+    damageImmunities: ["poison"],
+    conditionImmunities: ["poison"],
+  },
+};
+
 const state = (current: number | null) => ({
   ...defaultCharacterState(),
   hitPoints: { current, temporary: 0 },
 });
 
 describe("damagedState", () => {
+  it.each([
+    [undefined, 11, []],
+    ["slashing", 10, ["resistance", "vulnerability"]],
+    ["fire", 0, ["immunity"]],
+    ["cold", 22, ["vulnerability"]],
+    ["acid", 5, ["resistance"]],
+    ["poison", 0, ["immunity"]],
+    ["thunder", 11, []],
+  ])("meets %s damage with the defenses the sheet shows", (type, amount, applied) => {
+    const after = damagedState(unhurt, defended, state(null), 11, type);
+    expect(after).toMatchObject({ amount, applied });
+    expect(after.state.hitPoints.current).toBe(amount === 0 ? null : 30 - amount);
+  });
+
+  it("lets temporary hit points absorb the adjusted amount", () => {
+    const held = { ...state(30), hitPoints: { current: 30, temporary: 4 } };
+    expect(damagedState(unhurt, defended, held, 11, "acid").state.hitPoints).toEqual({
+      current: 29,
+      temporary: 0,
+    });
+  });
+
   it("kills outright on massive damage past the maximum the sheet shows", () => {
-    expect(damagedState({ houseRules: {} }, sheet, state(5), 34).outcome).toBe("dying");
-    const { state: after, outcome } = damagedState({ houseRules: {} }, sheet, state(5), 35);
+    expect(damagedState(unhurt, defended, state(5), 34).outcome).toBe("dying");
+    const { state: after, outcome } = damagedState(unhurt, defended, state(5), 35);
     expect(outcome).toBe("dead");
     expect(after.deathSaves).toEqual({ successes: 0, failures: 3 });
   });
 
   it("leaves massive damage dying under noInstantDeath", () => {
-    const rules = { houseRules: { noInstantDeath: true } };
-    const { state: after, outcome } = damagedState(rules, sheet, state(5), 35);
+    const rules = { ...unhurt, houseRules: { noInstantDeath: true } };
+    const { state: after, outcome } = damagedState(rules, defended, state(5), 35);
     expect(outcome).toBe("dying");
     expect(after.hitPoints).toEqual({ current: 0, temporary: 0 });
   });
