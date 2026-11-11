@@ -74,7 +74,11 @@ export {
   legacyCharacterFileSchema,
 } from "./characterFile.ts";
 export { resourceLabel, withClassResource } from "./classResources.ts";
-export { concentrationEnded, concentrationStarted } from "./concentration.ts";
+export {
+  concentrationCheck,
+  concentrationEnded,
+  concentrationStarted,
+} from "./concentration.ts";
 export {
   carriesCustomSkills,
   convertCustomSkills,

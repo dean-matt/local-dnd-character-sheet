@@ -2,6 +2,8 @@ import {
   type CharacterDerived,
   type CharacterRecord,
   type CharacterState,
+  concentrationCheck,
+  concentrationEnded,
   damagedState,
   deathSaveStatus,
   derivedValue,
@@ -18,6 +20,7 @@ import { InputField } from "../../../InputField.tsx";
 import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
 import { Select } from "../../../Select.tsx";
+import { signed } from "../../signed.ts";
 
 type Changed = ReturnType<typeof healedState>;
 type Damaged = ReturnType<typeof damagedState>;
@@ -59,16 +62,23 @@ function standing({ hitPoints }: CharacterState, status?: string) {
   return `${hitPoints.current} ${hitPoints.temporary} ${status}`;
 }
 
+/** What a concentration prompt depends on: the hit points it followed and the spell held. */
+function concentrating(state: CharacterState, status?: string) {
+  return `${standing(state, status)} ${JSON.stringify(state.concentration)}`;
+}
+
 /**
  * The amount field and the damage type with Damage and Heal, which write what `damagedState`
  * or `healedState` returns, and Grant temp and Clear temp, which write the temporary hit points
  * alone. Each is one state write. Typed damage names the defense that changed it, and damage a
  * defense reduces to nothing writes nothing. Damage that leaves the character dead asks first.
  * Temporary hit points do not stack, so a grant no larger than those held keeps them and offers
- * to take the grant instead; a grant to the dead writes nothing. A notice lasts only while the
- * hit points, temporary hit points and death-save status it read stand. A failed write keeps the
- * amount and names the error, and the card goes on showing what the server holds, since the
- * cache takes only a write that lands.
+ * to take the grant instead; a grant to the dead writes nothing. Damage that leaves a
+ * concentrating character above 0 hit points shows the Constitution save it calls for, with End
+ * concentration, one write, and Keep, which writes nothing. A notice lasts only while the hit
+ * points, temporary hit points and death-save status it read stand, and the concentration prompt
+ * while those and the spell held stand. A failed write keeps the amount and names the error, and
+ * the card goes on showing what the server holds, since the cache takes only a write that lands.
  */
 export function HitPointChange({
   character,
@@ -85,6 +95,8 @@ export function HitPointChange({
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ changed: Damaged; defense?: string }>();
   const [notice, setNotice] = useState<{ text: string; instead?: number; read: string }>();
+  const [ending, setEnding] = useState(false);
+  const [saving, setSaving] = useState<{ dc: number; save: number; read: string }>();
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
   const grantButton = useRef<HTMLButtonElement>(null);
@@ -93,8 +105,10 @@ export function HitPointChange({
   const status = deathSaveStatus(derived, state);
   const read = standing(state, status);
   const shown = notice?.read === read ? notice : undefined;
+  const prompt = saving?.read === concentrating(state, status) ? saving : undefined;
 
   async function write(after: CharacterState, text: string) {
+    setEnding(false);
     if (!(await replace.write(after, text))) return false;
     setTyped("");
     setNotice(undefined);
@@ -105,17 +119,41 @@ export function HitPointChange({
     return write(after, `${after.hitPoints.current ?? maximum} hit points.`);
   }
 
-  /** The damage, with the defense that changed it shown until the state it left changes. */
-  async function writeDamage({ state: after }: Damaged, defense?: string) {
-    const left = `${after.hitPoints.current ?? maximum} hit points.`;
-    if (!(await write(after, defense ? `${defense} ${left}` : left))) return;
+  /**
+   * The damage, with the defense that changed it shown until the state it left changes, and
+   * the concentration save it calls for while a spell is held by a character it leaves above 0
+   * hit points. At 0 the character is unconscious and loses concentration with no save.
+   */
+  async function writeDamage({ state: after, amount }: Damaged, defense?: string) {
+    const outcome = deathSaveStatus(derived, after);
+    const check =
+      after.concentration &&
+      outcome === undefined &&
+      concentrationCheck(character.definition, derived, amount);
+    const text = [
+      defense,
+      `${after.hitPoints.current ?? maximum} hit points.`,
+      check && `DC ${check.dc} Constitution save to keep concentration.`,
+    ];
+    if (!(await write(after, text.filter(Boolean).join(" ")))) return;
     setDamageType(UNTYPED);
+    if (check) setSaving({ ...check, read: concentrating(after, outcome) });
     if (defense) {
-      setNotice({
-        text: defense,
-        read: standing(after, deathSaveStatus(derived, after)),
-      });
+      setNotice({ text: defense, read: standing(after, outcome) });
     }
+  }
+
+  /** For a prompt control the answer removes, so focus does not fall to the page. */
+  async function answerConcentration(end: boolean) {
+    if (replace.writing) return;
+    if (end) {
+      setEnding(true);
+      if (!(await replace.write(concentrationEnded(state), "Concentration ended."))) return;
+    } else {
+      replace.announce("Concentration kept.");
+    }
+    setSaving(undefined);
+    damageButton.current?.focus();
   }
 
   function writeTemporary(amount: number) {
@@ -258,7 +296,8 @@ export function HitPointChange({
       <div ref={setMessages} className="flex flex-col">
         {replace.error && (
           <p role="alert" className="mt-1 text-error text-row">
-            Hit points were not changed: {replace.error.message}
+            {ending ? "Concentration was not ended" : "Hit points were not changed"}:{" "}
+            {replace.error.message}
           </p>
         )}
         {shown && (
@@ -275,6 +314,31 @@ export function HitPointChange({
               </button>
             )}
           </p>
+        )}
+        {prompt && (
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-row">
+            <p>
+              <span className="text-muted">Concentration: </span>DC {prompt.dc} Constitution save,{" "}
+              {signed(prompt.save)}
+            </p>
+            <button
+              type="button"
+              aria-disabled={replace.writing}
+              onClick={() => answerConcentration(true)}
+              className={`${BUTTON} border-border`}
+            >
+              End concentration
+            </button>
+            <button
+              type="button"
+              aria-disabled={replace.writing}
+              aria-label="Keep concentration"
+              onClick={() => answerConcentration(false)}
+              className={`${BUTTON} border-border`}
+            >
+              Keep
+            </button>
+          </div>
         )}
       </div>
       <Announcer announced={replace.announced} />
