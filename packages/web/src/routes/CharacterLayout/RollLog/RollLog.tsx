@@ -85,9 +85,12 @@ export function RollLog({ latest, characterId }: { latest: Roll | null; characte
             <button
               type="button"
               aria-label="Clear Roll Log"
-              disabled={clear.isPending}
-              onClick={() => clear.mutate(undefined, { onSuccess: () => heading.current?.focus() })}
-              className="rounded-control border border-border px-2 py-0.5 font-semibold text-label text-muted hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50"
+              aria-disabled={clear.isPending || undefined}
+              onClick={() => {
+                if (clear.isPending) return;
+                clear.mutate(undefined, { onSuccess: () => heading.current?.focus() });
+              }}
+              className="rounded-control border border-border px-2 py-0.5 font-semibold text-label text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
             >
               Clear
             </button>
@@ -132,7 +135,11 @@ export function RollLog({ latest, characterId }: { latest: Roll | null; characte
           </FilterButton>
         </div>
       </div>
-      {clear.isError && <p className="text-error text-row">{clear.error.message}</p>}
+      {clear.isError && (
+        <p role="alert" className="text-error text-row">
+          {clear.error.message}
+        </p>
+      )}
       {characterId && <DiceRoller characterId={characterId} />}
       <p role="status" aria-live="polite" className="sr-only">
         {announced}

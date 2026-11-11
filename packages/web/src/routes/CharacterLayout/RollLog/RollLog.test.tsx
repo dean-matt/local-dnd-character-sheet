@@ -94,9 +94,12 @@ describe("RollLog's Clear button", () => {
     renderWithClient(<RollLog latest={null} />);
     expect(await screen.findAllByRole("listitem")).toHaveLength(1);
 
-    fireEvent.click(screen.getByRole("button", { name: "Clear Roll Log" }));
+    const clear = screen.getByRole("button", { name: "Clear Roll Log" });
+    clear.focus();
+    fireEvent.click(clear);
 
-    expect(await screen.findByText("disk full")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("disk full");
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
+    expect(clear).toHaveFocus();
   });
 });
