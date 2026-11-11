@@ -56,8 +56,9 @@ export function vex(noInstantDeath?: boolean): CharacterRecord {
  * each state write sends and answers later reads with it, as a reload would. `fail` answers
  * every write with a 500 whose error names the attempt, "Disk full, write 2". `hold` keeps
  * each write unanswered until `release`. A spell search answers Bless, Hold Person and the
- * homebrew Hexing Ward. `defenses` stands in for the derived block's. Returns the writes, in order, the spell search URLs, `release`, and
- * `reload`, which renders the cards again over a fresh cache.
+ * homebrew Hexing Ward. `defenses` stands in for the derived block's. Returns the writes, in
+ * order, the spell search URLs, `release`, and `reload`, which renders the cards again over a
+ * fresh cache.
  */
 export function renderVitals(
   state: Partial<CharacterState>,

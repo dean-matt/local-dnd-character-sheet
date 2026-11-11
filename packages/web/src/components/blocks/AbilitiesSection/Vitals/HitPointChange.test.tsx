@@ -1,5 +1,8 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { derivedRecord, stateRecord } from "../../../../test/records.ts";
+import { renderWithClient } from "../../../../test/renderWithClient.tsx";
+import { HitPointChange } from "./HitPointChange.tsx";
 import { renderVitals, vex } from "./renderVitals.tsx";
 
 const amount = () => screen.getByRole("spinbutton", { name: "Hit point amount" });
@@ -90,6 +93,50 @@ describe("typed damage", () => {
     expect(announced()).toHaveTextContent(named);
     expect(writes).toEqual([]);
     expect(amount()).toHaveValue(null);
+  });
+
+  it("names both defenses when a type is resisted and doubled", async () => {
+    const torn = {
+      ...defenses,
+      computed: { ...defenses.computed, vulnerabilities: [grant("slashing", "Curse")] },
+    };
+    const { writes } = renderVitals(
+      { hitPoints: { current: 12, temporary: 0 } },
+      { defenses: torn },
+    );
+    await screen.findByRole("spinbutton");
+    pickType("Slashing");
+    await apply("11", "Damage");
+
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent(
+        "Slashing resistance and vulnerability changed 11 damage to 10. 2 hit points.",
+      ),
+    );
+    expect(writes[0]?.hitPoints).toEqual({ current: 2, temporary: 0 });
+  });
+
+  it("drops a defense's notice once the hit points change elsewhere, as an undo does", async () => {
+    const character = vex();
+    const derived = {
+      ...derivedRecord(),
+      hitPointMaximum: { computed: 20, manual: null, terms: [] },
+      defenses,
+    };
+    const at = (current: number) => ({
+      ...stateRecord().state,
+      hitPoints: { current, temporary: 0 },
+    });
+    const view = renderWithClient(
+      <HitPointChange character={character} derived={derived} state={at(12)} />,
+    );
+    pickType("Fire");
+    await apply("8", "Damage");
+    const named = "Fire immunity reduced 8 damage to 0. Hit points are unchanged.";
+    expect(screen.getByText(named, { selector: "p" })).toBeInTheDocument();
+
+    view.rerender(<HitPointChange character={character} derived={derived} state={at(20)} />);
+    expect(screen.queryByText(named, { selector: "p" })).not.toBeInTheDocument();
   });
 
   it("weighs the adjusted amount when asking before damage kills", async () => {

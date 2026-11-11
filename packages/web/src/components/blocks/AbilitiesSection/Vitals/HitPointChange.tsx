@@ -28,14 +28,14 @@ const DAMAGE_TYPES = [{ value: UNTYPED, label: "Untyped" }, ...DAMAGE_TYPE_NAMES
 
 const VERBS = { immunity: "reduced", resistance: "halved", vulnerability: "doubled" } as const;
 
-const both = new Intl.ListFormat("en", { type: "conjunction" });
+const conjunction = new Intl.ListFormat("en", { type: "conjunction" });
 
 /** What the defenses did to typed damage, or nothing where none changed it. */
 function defended(type: string, entered: number, { amount, applied }: Damaged) {
   const [only] = applied;
   if (only === undefined) return undefined;
   const verb = applied.length === 1 ? VERBS[only] : "changed";
-  return `${capitalize(type)} ${both.format(applied)} ${verb} ${entered} damage to ${amount}.`;
+  return `${capitalize(type)} ${conjunction.format(applied)} ${verb} ${entered} damage to ${amount}.`;
 }
 
 const BUTTON =
@@ -54,16 +54,21 @@ function withTemporary(state: CharacterState, temporary: number): CharacterState
   return { ...state, hitPoints: { ...state.hitPoints, temporary } };
 }
 
+/** What a notice depends on: it shows only while these stand, so an undo or a rest drops it. */
+function standing({ hitPoints }: CharacterState, status?: string) {
+  return `${hitPoints.current} ${hitPoints.temporary} ${status}`;
+}
+
 /**
  * The amount field and the damage type with Damage and Heal, which write what `damagedState`
  * or `healedState` returns, and Grant temp and Clear temp, which write the temporary hit points
  * alone. Each is one state write. Typed damage names the defense that changed it, and damage a
- * defense reduces to nothing writes nothing. Damage that leaves the character dead asks first. Temporary hit points do
- * not stack, so a grant no larger than those held keeps them and offers to take the grant
- * instead; a grant to the dead writes nothing. Either notice lasts only while the temporary hit
- * points and the death-save status it read stand. A failed write
- * keeps the amount and names the error, and the card goes on showing what the server holds,
- * since the cache takes only a write that lands.
+ * defense reduces to nothing writes nothing. Damage that leaves the character dead asks first.
+ * Temporary hit points do not stack, so a grant no larger than those held keeps them and offers
+ * to take the grant instead; a grant to the dead writes nothing. A notice lasts only while the
+ * hit points, temporary hit points and death-save status it read stand. A failed write keeps the
+ * amount and names the error, and the card goes on showing what the server holds, since the
+ * cache takes only a write that lands.
  */
 export function HitPointChange({
   character,
@@ -86,7 +91,7 @@ export function HitPointChange({
   const maximum = derivedValue(derived.hitPointMaximum);
   const { temporary } = state.hitPoints;
   const status = deathSaveStatus(derived, state);
-  const read = `${temporary} ${status}`;
+  const read = standing(state, status);
   const shown = notice?.read === read ? notice : undefined;
 
   async function write(after: CharacterState, text: string) {
@@ -100,7 +105,7 @@ export function HitPointChange({
     return write(after, `${after.hitPoints.current ?? maximum} hit points.`);
   }
 
-  /** The damage, with the defense that changed it shown until the hit points it left change. */
+  /** The damage, with the defense that changed it shown until the state it left changes. */
   async function writeDamage({ state: after }: Damaged, defense?: string) {
     const left = `${after.hitPoints.current ?? maximum} hit points.`;
     if (!(await write(after, defense ? `${defense} ${left}` : left))) return;
@@ -108,7 +113,7 @@ export function HitPointChange({
     if (defense) {
       setNotice({
         text: defense,
-        read: `${after.hitPoints.temporary} ${deathSaveStatus(derived, after)}`,
+        read: standing(after, deathSaveStatus(derived, after)),
       });
     }
   }
