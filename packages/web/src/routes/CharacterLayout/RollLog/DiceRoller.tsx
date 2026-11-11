@@ -27,7 +27,7 @@ export function DiceRoller({ characterId }: { characterId: string }) {
     if (notation.trim() === "") return;
     setResult(null);
     const named = label.trim() || "Dice roll";
-    const error = roll(notation, named, "dice", (rolled, logged) =>
+    const error = roll(notation, named, "custom", (rolled, logged) =>
       setResult({ rolled, label: named, logged }),
     );
     setRefused(error?.message ?? "");

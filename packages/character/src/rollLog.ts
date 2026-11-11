@@ -11,7 +11,10 @@ const rolledDieSchema = z.strictObject({
   sign: z.union([z.literal(1), z.literal(-1)]),
 });
 
-/** What a roll was for. `dice` is a roll the rules text asks for without saying what it is. */
+/**
+ * What a roll was for. `dice` is a roll the rules text asks for without saying what it is;
+ * `custom` is notation the player typed into the roll log.
+ */
 const rollTypeSchema = z.enum([
   "attack",
   "damage",
@@ -21,6 +24,7 @@ const rollTypeSchema = z.enum([
   "spell-damage",
   "hit-die",
   "dice",
+  "custom",
 ]);
 
 export type RollType = z.infer<typeof rollTypeSchema>;

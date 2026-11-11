@@ -203,6 +203,8 @@ describe("CharacterLayout roll log", () => {
 
   describe("roll type filter", () => {
     const LOG = [
+      { ...roll, id: 6, label: "Pit trap", type: "custom" },
+      { ...roll, id: 5, label: "1d4", type: "dice" },
       { ...roll, id: 4, label: "Longsword attack", type: "attack" },
       { ...roll, id: 3, label: "Longsword damage", type: "damage" },
       { ...roll, id: 2, label: "Fire Bolt damage", type: "spell-damage" },
@@ -227,7 +229,17 @@ describe("CharacterLayout roll log", () => {
         "Save",
         "Spell attack",
         "Spell damage",
+        "Dice",
       ]);
+    });
+
+    it("shows under Dice only the rolls typed into the Dice field, beside another picked type", async () => {
+      await renderSheet(LOG);
+      await openFilter();
+      await addType("Dice");
+      expect(labels()).toEqual(["Pit trap"]);
+      await addType("Attack");
+      expect(labels()).toEqual(["Pit trap", "Longsword attack"]);
     });
 
     it("shows a roll of any picked type, hides an untyped roll, and offers a pick no more", async () => {
@@ -249,7 +261,7 @@ describe("CharacterLayout roll log", () => {
       expect(labels()).toEqual(["Fire Bolt damage"]);
       fireEvent.click(screen.getByRole("button", { name: "Remove Spell damage" }));
       expect(screen.getByText("Showing all")).toBeInTheDocument();
-      expect(labels()).toHaveLength(4);
+      expect(labels()).toHaveLength(6);
     });
 
     it("resets to the whole log", async () => {
@@ -259,7 +271,7 @@ describe("CharacterLayout roll log", () => {
       fireEvent.click(screen.getByRole("button", { name: "Reset" }));
       expect(screen.getByText("Showing all")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Filter Roll Log" })).toBeInTheDocument();
-      expect(labels()).toHaveLength(4);
+      expect(labels()).toHaveLength(6);
     });
 
     it("says nothing matches when the filter empties the log, apart from a log with no rolls", async () => {
@@ -299,7 +311,7 @@ describe("CharacterLayout roll log", () => {
       await renderSheet(LOG);
       fireEvent.click(screen.getByRole("button", { name: "Roll Log" }));
       await screen.findAllByRole("listitem");
-      expect(labels()).toHaveLength(4);
+      expect(labels()).toHaveLength(6);
       expect(
         screen.getByRole("button", { name: "Filter Roll Log (1 active)" }),
       ).toBeInTheDocument();
@@ -427,7 +439,7 @@ describe("CharacterLayout roll log", () => {
       await waitFor(() =>
         expect(posted()).toEqual([
           expect.objectContaining({
-            type: "dice",
+            type: "custom",
             label: "Pit trap",
             notation: "2d8+3",
             total: 13,

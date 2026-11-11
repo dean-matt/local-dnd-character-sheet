@@ -23,6 +23,7 @@ const TYPE_LABEL: Partial<Record<RollType, string>> = {
   save: "Save",
   "spell-attack": "Spell attack",
   "spell-damage": "Spell damage",
+  custom: "Dice",
 };
 
 /** A roll stored before rolls carried a type, or of a type no facet names, matches no pick. */
