@@ -20,12 +20,8 @@ markup.
 
 ## What is here
 
-`Layout.dc.html` is a labeled wireframe of the page structure — top bar, collapsible
-sidebar, content region, plus an optional character-header row — shared by the
-character sheet and the settings page alike; read it first to see how the pieces fit
-together. It is a fixed 1440px with no stretch behavior, so it fixes the arrangement and
-not how each piece grows; `packages/web/LAYOUT.md` says that. Every other file matches a
-widget, panel, or nav element:
+Each file matches a widget, panel, or nav element. The page structure around them
+lives in the app; `packages/web/LAYOUT.md` says how it grows.
 
 - Stats: the seven widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status).
 - Inventory: Weapons, Armor, Gear. A price is a gold chip with a coin icon,
@@ -65,8 +61,7 @@ widget, panel, or nav element:
   for the full catalog of addable widgets. Clicking a card always adds another copy —
   nothing caps a widget to one instance — and the card's "+ Add" label picks up a
   running count once one is on the tab. Used only by Custom Tab.
-- Custom Tab is sized like the real "active section content" area from Layout.dc.html
-  and shows the widget canvas a user-created tab gets: an Edit button gates
+- Custom Tab is sized like the page's active section content area and shows the widget canvas a user-created tab gets: an Edit button gates
   drag-to-move and drag-a-corner-to-resize (each card previews as a title over a few
   skeleton content lines, not the real widget), and a ghost "Add Widget" button opens
   the picker. Built-in tabs (Stats, Inventory, Spells, Features, Identity, Level,
@@ -126,7 +121,6 @@ says how much of the artboard the app builds today.
 
 | Artboard | Retired by | Shipped |
 |---|---|---|
-| `Layout` | #282 | all |
 | `Abilities` | #227, #487 | the scores edit, the rest read-only |
 | `Saves` | #227, #487 | read-only |
 | `Skills` | #227, #399, #487 | the rings and homebrew skills edit, the rest read-only |
