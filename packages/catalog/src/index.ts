@@ -74,6 +74,7 @@ export {
   subclassListItemSchema,
   subclassParentLabel,
   subclassRecordSchema,
+  tagBreaker,
 } from "./class.ts";
 export { classEntries, subclassEntries } from "./class-entries.ts";
 export { defenseTraitSchema } from "./defense.ts";

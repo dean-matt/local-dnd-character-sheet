@@ -254,7 +254,7 @@ export const homebrewClassSchema = classEntrySchema.extend({
 export type HomebrewClass = z.infer<typeof homebrewClassSchema>;
 
 /** The `|` or `}` in a name that would split or end the `{@classFeature}` tag it enters. */
-const tagBreaker = (name: string) => /[|}]/.exec(name)?.[0];
+export const tagBreaker = (name: string) => /[|}]/.exec(name)?.[0];
 
 /**
  * What a caller submits to create or rename a homebrew class. `source` is never here —

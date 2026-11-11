@@ -1,3 +1,4 @@
+import { homebrewClassInputSchema } from "@dnd/catalog";
 import { HIT_DICE } from "@dnd/character";
 import { useState } from "react";
 import { ChoicePills } from "../../components/ChoicePills.tsx";
@@ -16,6 +17,9 @@ export function ClassEscape({ onUse, pending, error }: ClassEscapeProps) {
     <TypedEscape
       noun="class"
       canUse={faces !== undefined && !pending}
+      refuse={(name) =>
+        homebrewClassInputSchema.shape.name.safeParse(name).error?.issues[0]?.message
+      }
       error={error}
       onUse={(name) => faces !== undefined && onUse(name, faces)}
     >
