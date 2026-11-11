@@ -39,12 +39,17 @@ export function ConcentrationField({
 }) {
   const [picked, setPicked] = useState<{ ref: EntryRef; name: string }>();
   const [level, setLevel] = useState<number>();
-  // Set once a pick is confirmed or cancelled, so focus returns to the picker it left.
-  const [returned, setReturned] = useState(false);
+  // Where focus goes once a pick ends: End concentration after a set, since the picker opens
+  // its list on focus and would cover the new held line, and the picker after a cancel.
+  const [returnTo, setReturnTo] = useState<"end" | "picker">();
   const confirm = useRef<HTMLButtonElement>(null);
+  const end = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (picked) confirm.current?.focus();
   }, [picked]);
+  useEffect(() => {
+    if (returnTo === "end" && held) end.current?.focus();
+  }, [returnTo, held]);
   const heldLookup = useSpellLookup(held ? [held.spell] : [], noContext);
   const pickedLookup = useSpellLookup(picked ? [picked.ref] : [], noContext);
   const heldLabel =
@@ -60,16 +65,16 @@ export function ConcentrationField({
     setLevel(undefined);
   }
 
-  function leave() {
+  function leave(to: "end" | "picker") {
     setPicked(undefined);
-    setReturned(true);
+    setReturnTo(to);
   }
 
   async function concentrate() {
     if (busy || !picked || chosen === undefined) return;
     const started = `Concentrating on ${picked.name} at ${levelName(chosen)}`;
     const announced = held ? `${started}; ${heldLabel} ended` : started;
-    if (await onSet({ spell: picked.ref, level: chosen }, announced)) leave();
+    if (await onSet({ spell: picked.ref, level: chosen }, announced)) leave("end");
   }
 
   return (
@@ -81,6 +86,7 @@ export function ConcentrationField({
             <span className="font-semibold">{heldLabel}</span>, {levelName(held.level)}
           </p>
           <button
+            ref={end}
             type="button"
             aria-disabled={busy}
             onClick={() => {
@@ -129,7 +135,7 @@ export function ConcentrationField({
             >
               Concentrate
             </button>
-            <button type="button" onClick={leave} className={BUTTON}>
+            <button type="button" onClick={() => leave("picker")} className={BUTTON}>
               Cancel
             </button>
           </div>
@@ -143,7 +149,7 @@ export function ConcentrationField({
           filters={CONCENTRATION_FILTER}
           onPick={(ref, hit) => pick(ref, hit.name)}
           placeholder="Concentrate on a spell…"
-          focusOnMount={returned}
+          focusOnMount={returnTo === "picker"}
         />
       )}
     </div>

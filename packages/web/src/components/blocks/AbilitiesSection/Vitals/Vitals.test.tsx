@@ -377,6 +377,9 @@ describe("Vitals", () => {
       await waitFor(() =>
         expect(announced()).toHaveTextContent("Concentrating on Hold Person at level 4"),
       );
+      await waitFor(() =>
+        expect(status().getByRole("button", { name: "End concentration" })).toHaveFocus(),
+      );
 
       reload();
       expect(await heldLine()).toHaveTextContent("Concentrating on Hold Person, level 4");
