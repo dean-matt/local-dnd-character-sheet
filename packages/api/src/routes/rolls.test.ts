@@ -181,6 +181,14 @@ describe("rollsRoutes", () => {
     expect(await list()).toEqual([]);
   });
 
+  it("clears every character's rolls", async () => {
+    await record(await create(), roll(10));
+    await record(await create(), roll(11));
+
+    expect((await rolls.request("/rolls", { method: "DELETE" })).status).toBe(204);
+    expect(await list()).toEqual([]);
+  });
+
   it("404s recording a roll for an unknown character", async () => {
     const res = await record("missing", roll(12));
     expect(res.status).toBe(404);

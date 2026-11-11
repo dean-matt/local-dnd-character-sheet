@@ -1,8 +1,8 @@
-/** Record a roll the client made, and read every character's recent rolls. The server never rolls. */
+/** Record a roll the client made, read every character's recent rolls, and clear them. The server never rolls. */
 import { rollLogEntrySchema, rollRecordSchema } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { CharactersDb } from "../db/queries/characters.ts";
-import { listRolls, recordRoll } from "../db/queries/rolls.ts";
+import { clearRolls, listRolls, recordRoll } from "../db/queries/rolls.ts";
 import { notFound } from "./errors.ts";
 
 const idParam = z.object({ id: z.string() });
@@ -19,6 +19,16 @@ const list = createRoute({
       description: "The rolls, each with the character that made it",
       content: { "application/json": { schema: z.array(rollLogEntrySchema) } },
     },
+  },
+});
+
+const clear = createRoute({
+  method: "delete",
+  path: "/rolls",
+  tags: ["characters"],
+  summary: "Clear every character's rolls",
+  responses: {
+    204: { description: "The rolls were cleared" },
   },
 });
 
@@ -44,6 +54,11 @@ export function rollsRoutes(db: CharactersDb) {
   const routes = new OpenAPIHono();
 
   routes.openapi(list, (c) => c.json(listRolls(db), 200));
+
+  routes.openapi(clear, (c) => {
+    clearRolls(db);
+    return c.body(null, 204);
+  });
 
   routes.openapi(record, (c) => {
     const stored = recordRoll(db, c.req.valid("param").id, c.req.valid("json"), new Date());

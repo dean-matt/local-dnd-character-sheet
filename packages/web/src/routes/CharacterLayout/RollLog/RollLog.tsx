@@ -8,6 +8,7 @@ import { type Facet, matchesFacets, useFacetPicks } from "../../../components/Fi
 import { FormField } from "../../../components/FormField.tsx";
 import { Select } from "../../../components/Select.tsx";
 import { useCharacters } from "../../../hooks/useCharacters.ts";
+import { useClearRolls } from "../../../hooks/useClearRolls.ts";
 import { useRolls } from "../../../hooks/useRolls.ts";
 import { DiceRoller } from "./DiceRoller.tsx";
 
@@ -41,10 +42,13 @@ const ALL_CHARACTERS = "";
  * The heading takes focus only when the header opened the panel, so a roll keeps focus on the rolled tag.
  * The filter lives in the view, so a reload starts it over. Its Character facet starts at
  * `characterId`, the open character, or at every character without one, and starts over when
- * `characterId` changes. With a character open, a field rolls any notation for it.
+ * `characterId` changes. With a character open, a field rolls any notation for it. Clear
+ * empties every character's rolls, whatever the filter shows, then focuses the heading,
+ * since the button leaves with the last roll.
  */
 export function RollLog({ latest, characterId }: { latest: Roll | null; characterId?: string }) {
   const log = useRolls();
+  const clear = useClearRolls();
   const characters = useCharacters();
   const heading = useRef<HTMLHeadingElement>(null);
   const [announced, setAnnounced] = useState("");
@@ -76,45 +80,66 @@ export function RollLog({ latest, characterId }: { latest: Roll | null; characte
         <h2 ref={heading} tabIndex={-1} className="font-bold text-title">
           Roll Log
         </h2>
-        <FilterButton
-          label="Roll Log"
-          active={filter.active + (character === ALL_CHARACTERS ? 0 : 1)}
-          onReset={() => {
-            filter.reset();
-            pickCharacter(ALL_CHARACTERS);
-          }}
-        >
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold text-label text-muted uppercase tracking-label">
-              Character
-            </span>
-            {characters.isError && (
-              <p className="text-error text-row">{characters.error.message}</p>
-            )}
-            {characters.data && (
-              <FormField label="Character" labelHidden>
-                {(control) => (
-                  <Select
-                    {...control}
-                    options={[
-                      { value: ALL_CHARACTERS, label: "All characters" },
-                      ...characters.data.map(({ id, name }) => ({ value: id, label: name })),
-                    ]}
-                    value={character}
-                    onChange={pickCharacter}
-                  />
-                )}
-              </FormField>
-            )}
-          </div>
-          <ChipFacet
-            label={TYPE_FACET.label}
-            options={Object.values(TYPE_LABEL)}
-            picked={filter.picks[TYPE_FACET.key] ?? []}
-            onChange={(next) => filter.set(TYPE_FACET.key, next)}
-          />
-        </FilterButton>
+        <div className="flex items-center gap-1.5">
+          {rolls.length > 0 && (
+            <button
+              type="button"
+              aria-label="Clear Roll Log"
+              aria-disabled={clear.isPending || undefined}
+              onClick={() => {
+                if (clear.isPending) return;
+                clear.mutate(undefined, { onSuccess: () => heading.current?.focus() });
+              }}
+              className="rounded-control border border-border px-2 py-0.5 font-semibold text-label text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+            >
+              Clear
+            </button>
+          )}
+          <FilterButton
+            label="Roll Log"
+            active={filter.active + (character === ALL_CHARACTERS ? 0 : 1)}
+            onReset={() => {
+              filter.reset();
+              pickCharacter(ALL_CHARACTERS);
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-label text-muted uppercase tracking-label">
+                Character
+              </span>
+              {characters.isError && (
+                <p className="text-error text-row">{characters.error.message}</p>
+              )}
+              {characters.data && (
+                <FormField label="Character" labelHidden>
+                  {(control) => (
+                    <Select
+                      {...control}
+                      options={[
+                        { value: ALL_CHARACTERS, label: "All characters" },
+                        ...characters.data.map(({ id, name }) => ({ value: id, label: name })),
+                      ]}
+                      value={character}
+                      onChange={pickCharacter}
+                    />
+                  )}
+                </FormField>
+              )}
+            </div>
+            <ChipFacet
+              label={TYPE_FACET.label}
+              options={Object.values(TYPE_LABEL)}
+              picked={filter.picks[TYPE_FACET.key] ?? []}
+              onChange={(next) => filter.set(TYPE_FACET.key, next)}
+            />
+          </FilterButton>
+        </div>
       </div>
+      {clear.isError && (
+        <p role="alert" className="text-error text-row">
+          {clear.error.message}
+        </p>
+      )}
       {characterId && <DiceRoller characterId={characterId} />}
       <p role="status" aria-live="polite" className="sr-only">
         {announced}
