@@ -47,7 +47,7 @@ export function FilterButton({
         aria-controls={open ? id : undefined}
         aria-label={active > 0 ? `Filter ${label} (${active} active)` : `Filter ${label}`}
         onClick={() => setOpen(!open)}
-        className="relative flex cursor-pointer items-center gap-0.5 rounded-control p-1 font-semibold text-accent-text hover:bg-subtle"
+        className="relative flex cursor-pointer items-center gap-0.5 rounded-control p-1 font-semibold text-accent-text text-label hover:bg-subtle"
       >
         <ListFilter aria-hidden="true" size={12} />
         Filter
