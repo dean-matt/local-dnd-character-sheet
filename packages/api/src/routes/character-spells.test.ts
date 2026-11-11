@@ -741,6 +741,21 @@ describe("characterSpellsRoutes", () => {
       expect(shield).not.toHaveProperty("fromItem");
     });
 
+    it("lists its own row beside a spell another row grants, with no subclass in play", async () => {
+      store({
+        ...withSpells(
+          [{ ref: { name: "Darkness", source: "PHB" }, prepared: true, granted: true }],
+          [held("Cloak of Shade", { equipped: true })],
+        ),
+        race: TIEFLING,
+      });
+      expect(
+        (await spells())
+          .filter(({ name }) => name === "Darkness")
+          .map(({ granted, fromItem }) => ({ granted, fromItem })),
+      ).toEqual([{ granted: true }, { granted: true, fromItem: "Cloak of Shade" }]);
+    });
+
     describe("by the alignment of the character's deity", () => {
       const worshipping = (extra: object) =>
         store({
