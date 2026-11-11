@@ -73,12 +73,12 @@ function concentrating(state: CharacterState, status?: string) {
  * alone. Each is one state write. Typed damage names the defense that changed it, and damage a
  * defense reduces to nothing writes nothing. Damage that leaves the character dead asks first.
  * Temporary hit points do not stack, so a grant no larger than those held keeps them and offers
- * to take the grant instead; a grant to the dead writes nothing. Damage a concentrating character
- * survives shows the Constitution save it calls for, with End concentration, one write, and Keep,
- * which writes nothing. A notice lasts only while the hit points, temporary hit points and death-save
- * status it read stand, and the concentration prompt while those and the spell held stand. A
- * failed write keeps the amount and names the error, and the card goes on showing what the
- * server holds, since the cache takes only a write that lands.
+ * to take the grant instead; a grant to the dead writes nothing. Damage that leaves a
+ * concentrating character above 0 hit points shows the Constitution save it calls for, with End
+ * concentration, one write, and Keep, which writes nothing. A notice lasts only while the hit
+ * points, temporary hit points and death-save status it read stand, and the concentration prompt
+ * while those and the spell held stand. A failed write keeps the amount and names the error, and
+ * the card goes on showing what the server holds, since the cache takes only a write that lands.
  */
 export function HitPointChange({
   character,
@@ -121,13 +121,14 @@ export function HitPointChange({
 
   /**
    * The damage, with the defense that changed it shown until the state it left changes, and
-   * the concentration save it calls for while a spell is held by a character it leaves alive.
+   * the concentration save it calls for while a spell is held by a character it leaves above 0
+   * hit points. At 0 the character is unconscious and loses concentration with no save.
    */
   async function writeDamage({ state: after, amount }: Damaged, defense?: string) {
     const outcome = deathSaveStatus(derived, after);
     const check =
       after.concentration &&
-      outcome !== "dead" &&
+      outcome === undefined &&
       concentrationCheck(character.definition, derived, amount);
     const text = [
       defense,
@@ -331,6 +332,7 @@ export function HitPointChange({
             <button
               type="button"
               aria-disabled={replace.writing}
+              aria-label="Keep concentration"
               onClick={() => answerConcentration(false)}
               className={`${BUTTON} border-border`}
             >

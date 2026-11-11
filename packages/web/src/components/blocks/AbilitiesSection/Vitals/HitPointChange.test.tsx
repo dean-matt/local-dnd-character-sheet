@@ -411,26 +411,35 @@ describe("concentration", () => {
       (_, element) =>
         element?.tagName === "P" && element.textContent?.startsWith("Concentration:") === true,
     );
+  const alone = {
+    ...derivedRecord(),
+    hitPointMaximum: { computed: 20, manual: null, terms: [] },
+  };
+  const at = (current: number, concentration: typeof bless | null) => ({
+    ...stateRecord().state,
+    hitPoints: { current, temporary: 0 },
+    concentration,
+  });
 
   it("shows the DC for the damage taken and the save, and End concentration is one write", async () => {
     const { writes } = renderVitals({
-      hitPoints: { current: 20, temporary: 5 },
+      hitPoints: { current: 20, temporary: 10 },
       concentration: bless,
     });
     await apply("26", "Damage");
 
     await waitFor(() =>
-      expect(announced()).toHaveTextContent(
-        "0 hit points. DC 13 Constitution save to keep concentration.",
-      ),
+      expect(prompt()).toHaveTextContent("Concentration: DC 13 Constitution save, +2"),
     );
-    expect(prompt()).toHaveTextContent("Concentration: DC 13 Constitution save, +2");
+    expect(announced()).toHaveTextContent(
+      "4 hit points. DC 13 Constitution save to keep concentration.",
+    );
     fireEvent.click(hitPoints().getByRole("button", { name: "End concentration" }));
 
-    await waitFor(() => expect(announced()).toHaveTextContent(/^Concentration ended\.$/));
+    await waitFor(() => expect(prompt()).not.toBeInTheDocument());
+    expect(announced()).toHaveTextContent(/^Concentration ended\.$/);
     expect(writes).toHaveLength(2);
     expect(writes[1]).toEqual({ ...writes[0], concentration: null });
-    expect(prompt()).not.toBeInTheDocument();
     expect(button("Damage")).toHaveFocus();
   });
 
@@ -441,7 +450,7 @@ describe("concentration", () => {
     });
     await apply("4", "Damage");
     await waitFor(() => expect(prompt()).toHaveTextContent("DC 10"));
-    fireEvent.click(hitPoints().getByRole("button", { name: "Keep" }));
+    fireEvent.click(hitPoints().getByRole("button", { name: "Keep concentration" }));
 
     expect(announced()).toHaveTextContent(/^Concentration kept\.$/);
     expect(prompt()).not.toBeInTheDocument();
@@ -466,23 +475,59 @@ describe("concentration", () => {
     await apply("30", "Damage");
     fireEvent.click(await screen.findByRole("button", { name: "Apply the damage" }));
 
-    await waitFor(() => expect(writes).toHaveLength(1));
-    expect(announced()).toHaveTextContent(/^0 hit points\.$/);
+    await waitFor(() => expect(announced()).toHaveTextContent(/^0 hit points\.$/));
+    expect(writes).toHaveLength(1);
     expect(prompt()).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["drops the character to 0", 0],
+    ["lands at 0", 1],
+  ])(
+    "asks nothing once the damage %s, since unconscious ends concentration",
+    async (_, failures) => {
+      renderVitals({
+        hitPoints: { current: failures === 0 ? 5 : 0, temporary: 0 },
+        deathSaves: { successes: 0, failures },
+        concentration: bless,
+      });
+      await apply("6", "Damage");
+
+      await waitFor(() => expect(announced()).toHaveTextContent(/^0 hit points\.$/));
+      expect(prompt()).not.toBeInTheDocument();
+    },
+  );
+
+  it("keeps the prompt and names the error when End concentration fails", async () => {
+    let puts = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_: RequestInfo | URL, init?: RequestInit) =>
+        init?.method === "PUT" && ++puts > 1
+          ? new Response(JSON.stringify({ error: "Disk full" }), { status: 500 })
+          : new Response(JSON.stringify(stateRecord()), { status: 200 }),
+      ),
+    );
+    const view = renderWithClient(
+      <HitPointChange character={vex()} derived={alone} state={at(20, bless)} />,
+    );
+    await apply("4", "Damage");
+    view.rerender(<HitPointChange character={vex()} derived={alone} state={at(16, bless)} />);
+    await waitFor(() => expect(prompt()).toHaveTextContent("DC 10"));
+    fireEvent.click(screen.getByRole("button", { name: "End concentration" }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("alert")).toHaveTextContent(
+        "Concentration was not ended: Disk full",
+      ),
+    );
+    expect(prompt()).toHaveTextContent("DC 10");
+    expect(puts).toBe(2);
   });
 
   it("weighs the concentration save an item adds to, and drops once concentration ends elsewhere", async () => {
     const character = vex();
-    const derived = {
-      ...derivedRecord(),
-      hitPointMaximum: { computed: 20, manual: null, terms: [] },
-      concentrationSave: { computed: 4, manual: null, terms: [] },
-    };
-    const at = (current: number, concentration: typeof bless | null) => ({
-      ...stateRecord().state,
-      hitPoints: { current, temporary: 0 },
-      concentration,
-    });
+    const derived = { ...alone, concentrationSave: { computed: 4, manual: null, terms: [] } };
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response(JSON.stringify(stateRecord()), { status: 200 })),
