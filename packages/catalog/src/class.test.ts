@@ -100,6 +100,30 @@ describe("homebrewClassInputSchema", () => {
     expect(homebrewClassInputSchema.parse(withUnmodeledFields)).toEqual(withUnmodeledFields);
   });
 
+  it.each(["|", "}"])("refuses a name containing %s, naming it, and reads it stored", (bad) => {
+    const name = `War${bad}den`;
+    const result = homebrewClassInputSchema.safeParse({
+      name,
+      hd: { number: 1, faces: 10 },
+      edition: "one",
+    });
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["name"],
+        message: `Class "${name}" cannot contain "${bad}"`,
+      }),
+    ]);
+    const stored = {
+      id: "a",
+      name,
+      edition: "one",
+      hitDie: 10,
+      json: { name, source: "HB", hd: { number: 1, faces: 10 } },
+      createdAt: "2026-01-01T00:00:00.000Z",
+    };
+    expect(homebrewClassRecordSchema.parse(stored)).toEqual(stored);
+  });
+
   it("rejects a missing hd, naming the failed field", () => {
     const result = homebrewClassInputSchema.safeParse({ name: "Warden", edition: "one" });
     expect(result.success).toBe(false);

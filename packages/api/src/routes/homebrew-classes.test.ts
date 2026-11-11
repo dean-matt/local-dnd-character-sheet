@@ -1,6 +1,8 @@
 import { tmpdir } from "node:os";
+import type { HomebrewClassInput } from "@dnd/catalog";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { insertCharacter } from "../db/queries/characters.ts";
+import { insertHomebrewClass } from "../db/queries/homebrew.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { charactersRoutes } from "./characters.ts";
 import { homebrewClassesRoutes } from "./homebrew-classes.ts";
@@ -80,6 +82,41 @@ describe("homebrewClassesRoutes", () => {
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body).toMatchObject({ id: created.id, name: "Warden II" });
+    });
+
+    it.each(["|", "}"])("refuses a name containing %s on create and rename", async (bad) => {
+      const name = `War${bad}den`;
+      const message = `Class "${name}" cannot contain "${bad}"`;
+      const posted = await routes.request("/homebrew/classes", json(warden({ name })));
+      expect(posted.status).toBe(400);
+      expect(JSON.parse((await posted.json()).error.message)[0].message).toBe(message);
+
+      const created = await (await routes.request("/homebrew/classes", json(warden()))).json();
+      const put = await routes.request(`/homebrew/classes/${created.id}`, {
+        ...json(warden({ name })),
+        method: "PUT",
+      });
+      expect(put.status).toBe(400);
+      expect(JSON.parse((await put.json()).error.message)[0].message).toBe(message);
+      expect(await (await routes.request("/homebrew/classes")).json()).toEqual([created]);
+    });
+
+    it("reads and renames a class stored with a name containing |", async () => {
+      insertHomebrewClass(opened.homebrewDb, "legacy", {
+        ...warden({ name: "War|den" }),
+        edition: "one",
+      } as HomebrewClassInput);
+
+      const read = await routes.request("/homebrew/classes/legacy");
+      expect(read.status).toBe(200);
+      expect(await read.json()).toMatchObject({ name: "War|den" });
+
+      const renamed = await routes.request("/homebrew/classes/legacy", {
+        ...json(warden()),
+        method: "PUT",
+      });
+      expect(renamed.status).toBe(200);
+      expect(await renamed.json()).toMatchObject({ id: "legacy", name: "Warden" });
     });
 
     describe("a held class's hit die", () => {

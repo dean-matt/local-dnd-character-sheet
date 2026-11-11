@@ -166,7 +166,10 @@ async function subclassPath(key: Params): Promise<string> {
   return `${classPath(key)}/subclasses/${segments(subclass.name, subclass.source)}`;
 }
 
-/** A `|` or `}` in a name would split or end its tag, so such a feature stays out of the table. */
+/**
+ * A `|` or `}` in a name would split or end its tag, so such a feature stays out of the table.
+ * The API refuses both in a class or feature name it writes, but a name stored before that still reads.
+ */
 const TAG_BREAKERS = /[|}]/;
 
 const homebrewClassRoute = homebrew("classes", "class", homebrewClassDetailSchema, classEntries);
