@@ -56,16 +56,16 @@ function defensesAgainst(
  * The state after `amount` damage of `type`, by `takeDamage`, against the maximum the sheet
  * shows and under the table's `noInstantDeath`. Typed damage first meets the defenses the sheet
  * shows against it, by `adjustedDamage`; untyped damage applies as given. Returns the amount
- * taken and the defenses that changed it. Damage at 0 counts as one failure: for a critical hit
- * the player marks the second failure by hand. Damage that leaves the character at 0 ends
- * concentration, by `concentrationLapsed`.
+ * taken and the defenses that changed it. Damage at 0 counts one death save failure, or two
+ * from a `critical` hit. Damage that leaves the character at 0 ends concentration, by
+ * `concentrationLapsed`.
  */
 export function damagedState(
   definition: Pick<CharacterDefinition, "houseRules" | "addedDefenses">,
   derived: Sheet & Pick<CharacterDerived, "defenses">,
   state: CharacterState,
   amount: number,
-  type?: string,
+  { type, critical = false }: { type?: string; critical?: boolean } = {},
 ): Changed & ReturnType<typeof adjustedDamage> {
   const adjusted = adjustedDamage(
     amount,
@@ -76,7 +76,7 @@ export function damagedState(
     state.deathSaves,
     derivedValue(derived.hitPointMaximum),
     adjusted.amount,
-    { instantDeath: !houseRule(definition, "noInstantDeath") },
+    { instantDeath: !houseRule(definition, "noInstantDeath"), critical },
   );
   const after = changed(state, result);
   return { ...after, state: concentrationLapsed(after.state), ...adjusted };

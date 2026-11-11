@@ -33,6 +33,8 @@ type HitPointResult = {
 type DamageOptions = {
   /** False: a massive hit follows the death saves like any other. */
   instantDeath: boolean;
+  /** A critical hit at 0 hit points counts two death save failures rather than one. */
+  critical?: boolean;
 };
 
 function assertInputs(hitPoints: HitPoints, saves: DeathSaves, maximum: number, amount: number) {
@@ -98,7 +100,7 @@ export function takeDamage(
   saves: DeathSaves,
   maximum: number,
   amount: number,
-  { instantDeath }: DamageOptions,
+  { instantDeath, critical = false }: DamageOptions,
 ): HitPointResult {
   assertInputs(hitPoints, saves, maximum, amount);
   if (amount === 0 || saves.failures >= FATAL_FAILURES) {
@@ -120,7 +122,7 @@ export function takeDamage(
     };
   }
   if (current === 0) {
-    const { outcome, ...deathSaves } = damageAtZeroHitPoints(saves, false);
+    const { outcome, ...deathSaves } = damageAtZeroHitPoints(saves, critical);
     return {
       hitPoints: { current: 0, temporary },
       deathSaves,
