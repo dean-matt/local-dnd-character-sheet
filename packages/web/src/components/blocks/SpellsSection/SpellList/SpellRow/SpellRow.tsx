@@ -95,20 +95,22 @@ export function SpellRow({
       }
       remove={remove}
       preview={firstLine(spell.entries)}
-      actions={<CastSpell characterId={characterId} derived={derived} spell={spell} />}
       controls={
-        alwaysPrepared ? (
-          <AlwaysPrepared name={spell.name} source={spell.pickedFor?.ref.name} />
-        ) : (
-          preparable && (
-            <PreparedToggle
-              name={spell.name}
-              prepared={spell.prepared}
-              onChange={onPrepare}
-              busy={busy}
-            />
-          )
-        )
+        <>
+          {alwaysPrepared ? (
+            <AlwaysPrepared name={spell.name} source={spell.pickedFor?.ref.name} />
+          ) : (
+            preparable && (
+              <PreparedToggle
+                name={spell.name}
+                prepared={spell.prepared}
+                onChange={onPrepare}
+                busy={busy}
+              />
+            )
+          )}
+          <CastSpell characterId={characterId} derived={derived} spell={spell} />
+        </>
       }
       detail={{
         meta: (
