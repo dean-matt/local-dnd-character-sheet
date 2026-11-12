@@ -6,6 +6,7 @@ import { useClassFeatures } from "../../../hooks/useClassFeatures.ts";
 import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { improvementText } from "../../../lib/improvementChoice.ts";
 import { type HistoryFeature, levelHistory } from "../../../lib/levelHistory.ts";
+import { isLevelTerm } from "../../../lib/levelTerm.ts";
 import { Card } from "../../Card.tsx";
 import { DetailTrigger } from "../../DetailTrigger.tsx";
 import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
@@ -34,10 +35,7 @@ export function LevelHistory({ character }: { character: CharacterRecord }) {
   const { definition } = character;
   const features = useClassFeatures(definition.levels);
   const derived = useCharacterDerived(character.id);
-  // A feat or a held reduction adds its own term after the levels' `Level N:` terms.
-  const terms = derived.data?.hitPointMaximum.terms?.filter(({ label }) =>
-    /^Level \d+:/.test(label),
-  );
+  const terms = derived.data?.hitPointMaximum.terms?.filter(isLevelTerm);
   const hitPoints = terms?.length === definition.levels.length ? terms : undefined;
   const rows = levelHistory(definition.levels, features.featuresOf, names);
   const [focusLevel, setFocusLevel] = useState<number>();

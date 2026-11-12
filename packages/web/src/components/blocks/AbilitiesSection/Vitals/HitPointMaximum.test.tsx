@@ -331,3 +331,66 @@ describe("the override in the hit point maximum's breakdown", () => {
     expect(within(breakdown()).getByText("Maximum").nextSibling).toHaveTextContent("20");
   });
 });
+
+describe("the hit point maximum's per-level terms", () => {
+  const levels = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      label: `Level ${index + 1}: d8 average 5 +2 Con`,
+      value: index === 0 ? 10 : 7,
+    }));
+  const maximum = (terms: { label: string; value: number }[]) => ({
+    computed: terms.reduce((sum, term) => sum + term.value, 0),
+    manual: null,
+    terms,
+  });
+  const toggle = () => within(breakdown()).queryByRole("button", { name: /^Levels 1–/ });
+  const shown = () =>
+    within(breakdown())
+      .queryAllByRole("listitem")
+      .map((item) => item.textContent);
+
+  it("folds the levels into one line naming their range and total, beside the other terms", async () => {
+    renderVitals({}, { hitPointMaximum: maximum([...levels(20), { label: "Tough", value: 40 }]) });
+    await open("Hit point maximum 183");
+
+    expect(toggle()).toHaveTextContent("Levels 1–20143");
+    expect(toggle()).toHaveAttribute("aria-expanded", "false");
+    expect(shown()).toEqual(["Tough40"]);
+  });
+
+  it("lists each level's term in place when expanded, and hides them when collapsed", async () => {
+    renderVitals({}, { hitPointMaximum: maximum([...levels(3), { label: "Tough", value: 6 }]) });
+    await open("Hit point maximum 30");
+
+    fireEvent.click(toggle() as HTMLElement);
+    expect(toggle()).toHaveAttribute("aria-expanded", "true");
+    expect(shown()).toEqual([
+      "Level 1: d8 average 5 +2 Con10",
+      "Level 2: d8 average 5 +2 Con7",
+      "Level 3: d8 average 5 +2 Con7",
+      "Tough6",
+    ]);
+
+    fireEvent.click(toggle() as HTMLElement);
+    expect(toggle()).toHaveAttribute("aria-expanded", "false");
+    expect(shown()).toEqual(["Tough6"]);
+  });
+
+  it("opens collapsed each time the breakdown opens", async () => {
+    renderVitals({}, { hitPointMaximum: maximum(levels(2)) });
+    await open("Hit point maximum 17");
+    fireEvent.click(toggle() as HTMLElement);
+    fireEvent.click(within(breakdown()).getByRole("button", { name: "Close" }));
+
+    await open("Hit point maximum 17");
+    expect(toggle()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("lists a single level's term as its own line, with nothing to expand", async () => {
+    renderVitals({}, { hitPointMaximum: maximum(levels(1)) });
+    await open("Hit point maximum 10");
+
+    expect(toggle()).toBeNull();
+    expect(shown()).toEqual(["Level 1: d8 average 5 +2 Con10"]);
+  });
+});

@@ -16,7 +16,8 @@ const parseNumber = (raw: string) =>
  * The terms behind a derived number and, where an `overrideKey` names it on the character
  * page, a field that types over it. An overridden value names its computed one in place of
  * the terms, which no longer add up to what the sheet shows. Clearing the field drops the
- * override, and the terms return. `children` go between the terms and the field.
+ * override, and the terms return. `termList` draws the terms, one per line by default.
+ * `children` go between the terms and the field.
  *
  * `schema` must match the field's own in `characterDerivedSchema`: `applyOverrides` drops a
  * value that schema refuses without a word, so a looser one here saves an override that never shows.
@@ -28,6 +29,7 @@ export function DerivedBreakdown({
   format,
   overrideKey,
   schema = z.int(),
+  termList = (terms) => <TermList terms={terms} />,
   children,
 }: {
   name: string;
@@ -36,6 +38,7 @@ export function DerivedBreakdown({
   format: (value: number) => string;
   overrideKey?: string;
   schema?: z.ZodType<number>;
+  termList?: (terms: readonly { label: string; value: number }[]) => ReactNode;
   children?: ReactNode;
 }) {
   const save = useContext(SaveOverride);
@@ -49,7 +52,7 @@ export function DerivedBreakdown({
           {editable && " Clear the override to return to it."}
         </p>
       ) : (
-        terms.length > 0 && <TermList terms={terms} />
+        terms.length > 0 && termList(terms)
       )}
       {children}
       {editable && (

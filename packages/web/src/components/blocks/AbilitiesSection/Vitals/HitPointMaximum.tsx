@@ -19,6 +19,7 @@ import { Field } from "../../../Field/Field.tsx";
 import { SaveOverride } from "../../../overrideContext.ts";
 import { Popover } from "../../../Popover.tsx";
 import { DerivedBreakdown } from "../../DerivedBreakdown.tsx";
+import { HitPointTermList } from "./HitPointTermList.tsx";
 import { HATCH } from "./hitPointRing.ts";
 import { SwatchRow } from "./SwatchRow.tsx";
 
@@ -160,6 +161,7 @@ export function HitPointMaximum({
               format={String}
               overrideKey="hitPointMaximum"
               schema={shape.hitPointMaximum.shape.computed}
+              termList={(terms) => <HitPointTermList terms={terms} />}
             >
               <SwatchRow label="Reduction" swatch={HATCH}>
                 <Field
