@@ -23,7 +23,12 @@ markup.
 Each file matches a widget, panel, or nav element. The page structure around them
 lives in the app; `packages/web/LAYOUT.md` says how it grows.
 
-- Stats: the seven widgets (Abilities, Saves, Skills, Combat, HP, Attacks, Status).
+- Stats: the eight widgets (Abilities, Saves, Skills, Combat, HP, Hit Dice, Attacks, Status).
+  HP draws current plus temporary hit points over the maximum inside a ring: red for current,
+  blue for temporary hit points straight after, and a hatched segment at the end for a
+  reduction to the maximum, which temporary hit points cover where they reach it. Hovering
+  or clicking the maximum opens its breakdown, which edits temporary hit points, the
+  reduction and the override.
 - Inventory: Weapons, Armor, Gear. A price is a gold chip with a coin icon,
   read aloud as its cost. A versatile weapon's row has a 1h/2h grip toggle beside its
   Equip button, a gray pill track with the chosen grip on an accent-red thumb; the
@@ -126,7 +131,8 @@ says how much of the artboard the app builds today.
 | `Saves` | #227, #487 | read-only |
 | `Skills` | #227, #399, #487 | the rings and homebrew skills edit, the rest read-only |
 | `Combat` | #227, #228 | read-only |
-| `HP` | #277, #487, #1026 | Damage, Heal and temporary hit points, the rest read-only |
+| `HP` | #277, #487, #1026, #1418, #1419 | Damage, Heal and temporary hit points, the rest read-only |
+| `HitDice` | #1420 | nothing |
 | `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |
 | `Weapons` | #311, #398, #400 | all but the filter and its own search |
