@@ -196,6 +196,7 @@ export {
   rollLogEntrySchema,
   rollRecordSchema,
 } from "./rollLog.ts";
+export { type SpellCastOption, spellCast, spellCastOptions } from "./spellCast.ts";
 export {
   type CharacterState,
   type CharacterStateRecord,

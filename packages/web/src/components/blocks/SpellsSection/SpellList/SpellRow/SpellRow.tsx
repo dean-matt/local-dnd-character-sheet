@@ -1,4 +1,5 @@
 import type { SheetSpell } from "@dnd/catalog";
+import type { CharacterDerived } from "@dnd/character";
 import { renamedAt } from "../../../../../lib/renamed.ts";
 import { firstLine } from "../../../../../lib/rulesProse.ts";
 import {
@@ -16,6 +17,7 @@ import { RulesEntries } from "../../../../RulesEntries/RulesEntries.tsx";
 import { RollingSpell } from "../../../../rollerContext.ts";
 import { Tag } from "../../../../Tag.tsx";
 import { AlwaysPrepared } from "./AlwaysPrepared.tsx";
+import { CastSpell } from "./CastSpell.tsx";
 import { PreparedToggle } from "./PreparedToggle.tsx";
 import { SpellDamageChips } from "./SpellDamageChips.tsx";
 import { SpellFact } from "./SpellFact.tsx";
@@ -23,12 +25,14 @@ import { SpellFact } from "./SpellFact.tsx";
 /**
  * `index` is the spell's place in the definition, which names its field in the report.
  * `className` names the class the spell belongs to, where more than one casts. A spell
- * `preparable` prepares through its toggle; any other carries a Prepared or Known mark.
+ * `preparable` prepares through its toggle; any other carries a Prepared or Known mark. A
+ * spell that resolved can be cast from the row.
  */
 export function SpellRow({
   spell,
   index,
   characterId,
+  derived,
   className,
   preparable,
   busy,
@@ -38,6 +42,7 @@ export function SpellRow({
   spell: SheetSpell;
   index: number;
   characterId: string;
+  derived: CharacterDerived;
   className: string | undefined;
   preparable: boolean;
   busy: boolean;
@@ -91,18 +96,21 @@ export function SpellRow({
       remove={remove}
       preview={firstLine(spell.entries)}
       controls={
-        alwaysPrepared ? (
-          <AlwaysPrepared name={spell.name} source={spell.pickedFor?.ref.name} />
-        ) : (
-          preparable && (
-            <PreparedToggle
-              name={spell.name}
-              prepared={spell.prepared}
-              onChange={onPrepare}
-              busy={busy}
-            />
-          )
-        )
+        <>
+          {alwaysPrepared ? (
+            <AlwaysPrepared name={spell.name} source={spell.pickedFor?.ref.name} />
+          ) : (
+            preparable && (
+              <PreparedToggle
+                name={spell.name}
+                prepared={spell.prepared}
+                onChange={onPrepare}
+                busy={busy}
+              />
+            )
+          )}
+          <CastSpell characterId={characterId} derived={derived} spell={spell} />
+        </>
       }
       detail={{
         meta: (
