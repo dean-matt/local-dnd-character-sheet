@@ -35,11 +35,15 @@ const spell = (name: string, level: number, more: Partial<Resolved> = {}): Resol
 
 const HEX = { name: "Hex", source: "XPHB" };
 
-/** Renders the button over a stand-in API that keeps each state write and answers reads with it. */
+/**
+ * Renders the button over a stand-in API that keeps each state write and answers reads with it.
+ * `refuse`, where given, answers each write in its place and keeps nothing.
+ */
 function renderCast(
   cast: Resolved,
   state: Partial<CharacterState> = {},
   sheet: CharacterDerived = derived,
+  refuse?: () => Promise<Response>,
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
@@ -47,6 +51,7 @@ function renderCast(
     "fetch",
     vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === "PUT") {
+        if (refuse) return refuse();
         const written = JSON.parse(String(init.body));
         writes.push(written);
         stored = { ...stored, state: written };
@@ -198,5 +203,37 @@ describe("CastSpell", () => {
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(writes).toEqual([]);
+  });
+
+  it("keeps the dialog open on a failed write, naming the error and announcing nothing", async () => {
+    renderCast(spell("Shield", 1), {}, derived, async () =>
+      Response.json({ error: "disk full" }, { status: 500 }),
+    );
+    const dialog = await openDialog("Shield");
+    fireEvent.click(castButton(dialog));
+
+    expect(await dialog.findByRole("alert")).toHaveTextContent("Shield was not cast: disk full");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("");
+  });
+
+  it("holds the dialog open on Cancel while the write is in flight", async () => {
+    renderCast(spell("Shield", 1), {}, derived, () => new Promise<Response>(() => {}));
+    const dialog = await openDialog("Shield");
+    fireEvent.click(castButton(dialog));
+    const cancel = dialog.getByRole("button", { name: "Cancel" });
+    await waitFor(() => expect(cancel).toHaveAttribute("aria-disabled", "true"));
+    fireEvent.click(cancel);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("names a spell no slot can cast and refuses the cast", async () => {
+    renderCast(spell("Fireball", 4));
+    const dialog = await openDialog("Fireball");
+
+    expect(dialog.getByRole("alert")).toHaveTextContent("No spell slot can cast Fireball.");
+    expect(dialog.queryAllByRole("radio")).toEqual([]);
+    expect(castButton(dialog)).toHaveAttribute("aria-disabled", "true");
   });
 });

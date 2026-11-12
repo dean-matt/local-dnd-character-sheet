@@ -5,7 +5,7 @@ const noContext = () => ({});
 
 /**
  * The name of the spell `held` concentrates on: a catalog reference's own, a homebrew one's as
- * looked up, or "a homebrew spell" until the lookup answers. Undefined where none is held.
+ * looked up, or "a homebrew spell" where the lookup has not named it. Undefined where none is held.
  */
 export function useConcentrationName(held: Concentration | null): string | undefined {
   const homebrew = held && "homebrewId" in held.spell ? [held.spell] : [];

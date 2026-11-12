@@ -60,7 +60,7 @@ export function ConcentrationField({
     target?.focus();
     setFocusNext(undefined);
   }, [focusNext, held]);
-  const heldLabel = useConcentrationName(held) ?? "a homebrew spell";
+  const heldLabel = useConcentrationName(held);
   const pickedLookup = useSpellLookup(picked ? [picked.ref] : [], noContext);
   const own = pickedLookup.looked[0];
   const unread = pickedLookup.failed || own === null;

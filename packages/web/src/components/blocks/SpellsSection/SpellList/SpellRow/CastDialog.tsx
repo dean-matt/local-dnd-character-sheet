@@ -27,7 +27,8 @@ function optionLabel(option: SpellCastOption) {
  * The choices a cast takes before it is applied: the slot level, pact slot or ritual cast it
  * goes by, refusing a slot with none left while the spend is on; whether it spends that slot;
  * and, for a spell that needs concentration, whether it concentrates, naming the held spell it
- * ends. A cantrip offers no slot. `onCast` applies the choice and resolves whether it landed.
+ * ends. A cantrip offers no slot. The caller applies the choice and closes the dialog once it
+ * lands.
  */
 export function CastDialog({
   name,
@@ -75,7 +76,12 @@ export function CastDialog({
         meta={cantrip ? "Cantrip" : levelLabel(level)}
         footer={
           <div className="flex items-center gap-2">
-            <button type="button" aria-disabled={busy} onClick={onClose} className={SECONDARY}>
+            <button
+              type="button"
+              aria-disabled={busy}
+              onClick={() => !busy && onClose()}
+              className={SECONDARY}
+            >
               Cancel
             </button>
             <button type="button" aria-disabled={busy || !ready} onClick={cast} className={PRIMARY}>
