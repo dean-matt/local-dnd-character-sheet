@@ -44,12 +44,21 @@ export interface PopoverProps {
   label: string;
   /** Names the trigger where its content alone (a bare number) says too little. */
   triggerLabel?: string;
+  /** A pointer tooltip on the trigger, for one whose breakdown holds more than its terms. */
+  title?: string;
   /** For a caller that hands focus back to the trigger, such as after a modal it opened. */
   triggerRef?: RefObject<HTMLButtonElement | null>;
   children: ReactNode;
 }
 
-export function Popover({ trigger, label, triggerLabel, triggerRef, children }: PopoverProps) {
+export function Popover({
+  trigger,
+  label,
+  triggerLabel,
+  title,
+  triggerRef,
+  children,
+}: PopoverProps) {
   const depth = useContext(DepthContext);
   const inModal = useContext(InModal) !== null;
   // Hover and focus drive one flag, a click or tap the other, because a real
@@ -163,6 +172,7 @@ export function Popover({ trigger, label, triggerLabel, triggerRef, children }: 
         type="button"
         ref={triggerButton}
         aria-label={triggerLabel}
+        title={title}
         aria-expanded={open}
         aria-controls={open ? contentId : undefined}
         onFocus={handleTriggerFocus}

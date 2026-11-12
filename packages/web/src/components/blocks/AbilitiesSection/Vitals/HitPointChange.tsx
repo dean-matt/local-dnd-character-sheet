@@ -9,7 +9,7 @@ import {
   derivedValue,
   healedState,
 } from "@dnd/character";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
 import { capitalize } from "../../../../lib/capitalize.ts";
@@ -42,10 +42,6 @@ function defended(type: string, entered: number, { amount, applied }: Damaged) {
   return `${capitalize(type)} ${conjunction.format(applied)} ${verb} ${entered} damage to ${amount}.`;
 }
 
-function withTemporary(state: CharacterState, temporary: number): CharacterState {
-  return { ...state, hitPoints: { ...state.hitPoints, temporary } };
-}
-
 /** What a notice depends on: it shows only while these stand, so an undo or a rest drops it. */
 function standing({ hitPoints }: CharacterState, status?: string) {
   return `${hitPoints.current} ${hitPoints.temporary} ${status}`;
@@ -58,12 +54,9 @@ function concentrating(state: CharacterState, status?: string) {
 
 /**
  * The amount field, the damage type and, at 0 hit points, Critical hit with Damage and Heal,
- * which write what `damagedState` or `healedState` returns, and Grant temp and Clear temp,
- * which write the temporary hit points alone. Each is one state write. Typed damage names the
- * defense that changed it, and damage a defense reduces to nothing writes nothing. Damage that
- * leaves the character dead asks first. Temporary hit points do not stack, so a grant no larger
- * than those held keeps them and offers to take the grant instead; a grant to the dead writes
- * nothing. Damage that leaves a concentrating character at 0 ends concentration in the same
+ * which write what `damagedState` or `healedState` returns. Each is one state write. Typed
+ * damage names the defense that changed it, and damage a defense reduces to nothing writes
+ * nothing. Damage that leaves the character dead asks first. Damage that leaves a concentrating character at 0 ends concentration in the same
  * write, and says so; above 0 it shows the Constitution save it calls for, with End
  * concentration, one write, and Keep, which writes nothing. A notice lasts only while the hit
  * points, temporary hit points and death-save status it read stand, and the concentration
@@ -86,14 +79,12 @@ export function HitPointChange({
   const [criticalAt, setCriticalAt] = useState<string>();
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ changed: Damaged; defense?: string }>();
-  const [notice, setNotice] = useState<{ text: string; instead?: number; read: string }>();
+  const [notice, setNotice] = useState<{ text: string; read: string }>();
   const [ending, setEnding] = useState(false);
   const [saving, setSaving] = useState<{ dc: number; save: number; read: string }>();
   const [messages, setMessages] = useState<HTMLElement | null>(null);
   const damageButton = useReturnFocus<HTMLButtonElement>(confirming !== undefined);
-  const grantButton = useRef<HTMLButtonElement>(null);
   const maximum = derivedValue(derived.hitPointMaximum);
-  const { temporary } = state.hitPoints;
   const status = deathSaveStatus(derived, state);
   const read = standing(state, status);
   const shown = notice?.read === read ? notice : undefined;
@@ -148,32 +139,9 @@ export function HitPointChange({
     damageButton.current?.focus();
   }
 
-  function writeTemporary(amount: number) {
-    return write(withTemporary(state, amount), `${amount} temporary hit points.`);
-  }
-
-  /** For a control the write removes, so focus does not fall to the page. */
-  async function writeTemporaryFrom(amount: number) {
-    if (replace.writing) return;
-    if (await writeTemporary(amount)) grantButton.current?.focus();
-  }
-
-  function say(text: string, instead?: number) {
-    setNotice({ text, instead, read });
+  function say(text: string) {
+    setNotice({ text, read });
     replace.announce(text);
-  }
-
-  function grant(amount: number) {
-    if (status === "dead") {
-      say(`${character.name} is dead, so temporary hit points were not granted.`);
-    } else if (amount > temporary) {
-      writeTemporary(amount);
-    } else {
-      say(
-        `Kept ${temporary} temporary hit points: they do not stack, and ${amount} is no more.`,
-        amount < temporary ? amount : undefined,
-      );
-    }
   }
 
   function damage(entered: number) {
@@ -198,16 +166,12 @@ export function HitPointChange({
     writeDamage(changed, defense);
   }
 
-  function apply(kind: "damage" | "heal" | "temporary") {
+  function apply(kind: "damage" | "heal") {
     if (replace.writing) return;
     setNotice(undefined);
     const parsed = parseAmount(typed);
     if ("error" in parsed) {
       setInvalid(parsed.error);
-      return;
-    }
-    if (kind === "temporary") {
-      grant(parsed.amount);
       return;
     }
     if (kind === "heal") {
@@ -281,27 +245,6 @@ export function HitPointChange({
           <span aria-hidden="true">+ </span>Heal
         </button>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <button
-          ref={grantButton}
-          type="button"
-          aria-disabled={replace.writing}
-          onClick={() => apply("temporary")}
-          className={`${BUTTON} border-border`}
-        >
-          Grant temp
-        </button>
-        {temporary > 0 && (
-          <button
-            type="button"
-            aria-disabled={replace.writing}
-            onClick={() => writeTemporaryFrom(0)}
-            className={`${BUTTON} border-border`}
-          >
-            Clear temp
-          </button>
-        )}
-      </div>
       <div ref={setMessages} className="flex flex-col">
         {replace.error && (
           <p role="alert" className="mt-1 text-error text-row">
@@ -309,21 +252,7 @@ export function HitPointChange({
             {replace.error.message}
           </p>
         )}
-        {shown && (
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-secondary text-row">
-            {shown.text}
-            {shown.instead !== undefined && (
-              <button
-                type="button"
-                aria-disabled={replace.writing}
-                onClick={() => shown.instead !== undefined && writeTemporaryFrom(shown.instead)}
-                className={`${BUTTON} border-border text-ink`}
-              >
-                Take {shown.instead} instead
-              </button>
-            )}
-          </p>
-        )}
+        {shown && <p className="mt-1 text-secondary text-row">{shown.text}</p>}
         {prompt && (
           <div className="mt-1 flex flex-wrap items-center gap-2 text-row">
             <p>

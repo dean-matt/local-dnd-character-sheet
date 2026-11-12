@@ -139,9 +139,8 @@ export {
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {
   hitPointMaximumUnder,
+  maximumBeforeReduction,
   maximumReducedState,
-  type OverrideReduction,
-  overrideReduction,
 } from "./maximumReduction.ts";
 export {
   grantorKey,

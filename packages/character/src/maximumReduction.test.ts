@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   defaultCharacterState,
   hitPointMaximumUnder,
+  maximumBeforeReduction,
   maximumReducedState,
-  overrideReduction,
 } from "./index.ts";
 
 const reduction = (amount: number) => ({ amount, clearsOnLongRest: true });
@@ -44,20 +44,26 @@ describe("hitPointMaximumUnder", () => {
   });
 });
 
-describe("overrideReduction", () => {
-  it("names the override as typed and what the reduction takes from it", () => {
-    expect(overrideReduction(typing(40), sheet(5, 35))).toEqual({
-      typed: 40,
-      terms: [{ label: "Maximum reduction", value: -5 }],
+describe("maximumBeforeReduction", () => {
+  it("drops the reduction's term from the computed total and its terms", () => {
+    expect(maximumBeforeReduction(plain, sheet(5))).toEqual({
+      computed: 30,
+      manual: null,
+      terms: [{ label: "Hit dice", value: 30 }],
     });
-    expect(overrideReduction(typing(3), sheet(5, 1))?.terms).toEqual([
-      { label: "Maximum reduction", value: -2 },
-    ]);
   });
 
-  it("is absent with no override, or one no reduction lowers", () => {
-    expect(overrideReduction(plain, sheet(5))).toBeUndefined();
-    expect(overrideReduction(typing(40), sheet(undefined, 40))).toBeUndefined();
+  it("reads the override as the definition holds it, not as the derived block last showed it", () => {
+    expect(maximumBeforeReduction(typing(40), sheet(5, 35)).manual).toBe(40);
+    expect(maximumBeforeReduction(typing(40), sheet(5)).manual).toBe(40);
+    expect(maximumBeforeReduction(plain, sheet(5, 35)).manual).toBeNull();
+    expect(hitPointMaximumUnder(plain, sheet(5, 35), null)).toBe(30);
+  });
+
+  it("reads an override the derived schema refuses as none", () => {
+    for (const hitPointMaximum of [0, 2.5, "40"]) {
+      expect(maximumBeforeReduction({ overrides: { hitPointMaximum } }, sheet()).manual).toBeNull();
+    }
   });
 });
 
