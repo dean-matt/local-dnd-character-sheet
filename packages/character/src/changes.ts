@@ -332,6 +332,15 @@ const STATE_CHANGES: {
       after.hitPoints.temporary,
     ),
   ],
+  hitPointMaximumReduction: (before, after) =>
+    one(
+      "hitPointMaximumReduction",
+      "Hit point maximum reduction",
+      before.hitPointMaximumReduction,
+      after.hitPointMaximumReduction,
+      (held) =>
+        held ? `${held.amount} ${held.clearsOnLongRest ? "until" : "past"} a long rest` : undefined,
+    ),
   hitDice: (before, after) =>
     keyed(
       "hitDice",

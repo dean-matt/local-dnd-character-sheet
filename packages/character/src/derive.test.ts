@@ -264,6 +264,47 @@ describe("deriveCharacter", () => {
     expect(derived.speed.computed).toEqual({ walk: 30 });
   });
 
+  describe("a reduction to the hit point maximum", () => {
+    const reduced = (amount: number) => ({
+      activeEffects: [],
+      hitPointMaximumReduction: { amount, clearsOnLongRest: true },
+    });
+    const term = (value: number) => ({ label: "Maximum reduction", value });
+
+    it("lowers the maximum by its amount, named in the breakdown", () => {
+      const field = deriveCharacter(equipped, catalog, reduced(5)).hitPointMaximum;
+      expect(field.computed).toBe(derived.hitPointMaximum.computed - 5);
+      expect(field.terms.at(-1)).toEqual(term(-5));
+    });
+
+    it("leaves a maximum of at least 1", () => {
+      const field = deriveCharacter(equipped, catalog, reduced(500)).hitPointMaximum;
+      expect(field.computed).toBe(1);
+      expect(field.terms.at(-1)).toEqual(term(1 - derived.hitPointMaximum.computed));
+    });
+
+    it("lowers an override of the maximum too, leaving at least 1", () => {
+      const overridden = (typed: number) => ({
+        ...equipped,
+        overrides: { hitPointMaximum: typed },
+      });
+      const field = deriveCharacter(overridden(40), catalog, reduced(5)).hitPointMaximum;
+      expect(field.manual).toBe(35);
+      expect(field.terms.at(-1)).toEqual(term(-5));
+      expect(deriveCharacter(overridden(3), catalog, reduced(5)).hitPointMaximum.manual).toBe(1);
+      expect(deriveCharacter(overridden(40), catalog).hitPointMaximum.manual).toBe(40);
+    });
+
+    it("holds across a level-up, which changes the definition alone", () => {
+      const leveled = { ...equipped, levels: [...equipped.levels, { class: WARLOCK }] };
+      const unreduced = deriveCharacter(leveled, catalog).hitPointMaximum.computed;
+      expect(unreduced).toBeGreaterThan(derived.hitPointMaximum.computed);
+      expect(deriveCharacter(leveled, catalog, reduced(5)).hitPointMaximum.computed).toBe(
+        unreduced - 5,
+      );
+    });
+  });
+
   it("takes the size the definition picks where the race offers it, and the largest otherwise", () => {
     const sizes = ["tiny" as const, "medium" as const];
     const sized = (size?: "tiny" | "small") =>
@@ -2682,8 +2723,8 @@ describe("deriveCharacter", () => {
       inventory: [carried(GREATAXE), carried(SHORTBOW), carried(RAPIER)],
       ...extra,
     });
-    const raging = { activeEffects: [{ name: "Rage" }] };
-    const calm = { activeEffects: [] };
+    const raging = { activeEffects: [{ name: "Rage" }], hitPointMaximumReduction: null };
+    const calm = { activeEffects: [], hitPointMaximumReduction: null };
     const damageOf = (block: CharacterDerived, entry: number) =>
       block.attacks.find((attack) => attack.entry === entry)?.damage?.modifier;
 

@@ -1,4 +1,4 @@
-import type { Derived } from "@dnd/character";
+import type { Derived, OverrideReduction } from "@dnd/character";
 import { useContext } from "react";
 import { z } from "zod";
 import { Field } from "../Field/Field.tsx";
@@ -15,8 +15,8 @@ const parseNumber = (raw: string) =>
 /**
  * The terms behind a derived number and, where an `overrideKey` names it on the character
  * page, a field that types over it. An overridden value names its computed one in place of
- * the terms, which no longer add up to what the sheet shows. Clearing the field drops the
- * override, and the terms return.
+ * the terms, which no longer add up to what the sheet shows, and lists any `overlay` under the
+ * override. Clearing the field drops the override, and the terms return.
  *
  * `schema` must match the field's own in `characterDerivedSchema`: `applyOverrides` drops a
  * value that schema refuses without a word, so a looser one here saves an override that never shows.
@@ -28,6 +28,7 @@ export function DerivedBreakdown({
   format,
   overrideKey,
   schema = z.int(),
+  overlay,
 }: {
   name: string;
   label?: string;
@@ -35,6 +36,7 @@ export function DerivedBreakdown({
   format: (value: number) => string;
   overrideKey?: string;
   schema?: z.ZodType<number>;
+  overlay?: OverrideReduction;
 }) {
   const save = useContext(SaveOverride);
   const terms = value.terms ?? [];
@@ -42,10 +44,15 @@ export function DerivedBreakdown({
   return (
     <div className="flex flex-col gap-1.5">
       {value.manual !== null ? (
-        <p>
-          Overridden from {format(value.computed)}.
-          {editable && " Clear the override to return to it."}
-        </p>
+        <>
+          <p>
+            Overridden from {format(value.computed)}.
+            {editable && " Clear the override to return to it."}
+          </p>
+          {overlay && (
+            <TermList terms={[{ label: "Override", value: overlay.typed }, ...overlay.terms]} />
+          )}
+        </>
       ) : (
         terms.length > 0 && <TermList terms={terms} />
       )}
@@ -58,7 +65,7 @@ export function DerivedBreakdown({
             mode="edit"
             label={`${name} override`}
             labelHidden
-            value={value}
+            value={overlay ? { ...value, manual: overlay.typed } : value}
             format={String}
             parse={parseNumber}
             schema={schema}
