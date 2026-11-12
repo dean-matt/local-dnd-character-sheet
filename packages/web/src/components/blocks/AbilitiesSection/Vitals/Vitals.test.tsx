@@ -51,11 +51,27 @@ describe("Vitals", () => {
     const hp = await card("Hit Points");
     expect(hp.getByText("12")).toBeInTheDocument();
     expect(hp.getByText("20")).toBeInTheDocument();
-    const pools = hp.getAllByRole("listitem");
-    expect(pools[0]).toHaveTextContent("1/3 d8");
-    expect(pools[1]).toHaveTextContent("2/2 d10");
     expect(await ring()).toHaveAccessibleName("12 of 20 hit points");
     expect(hp.getByText("12")).not.toHaveClass("text-temporary");
+    const pools = (await card("Hit Dice")).getAllByRole("listitem");
+    expect(pools[0]).toHaveTextContent("1 / 3 d8");
+    expect(pools[1]).toHaveTextContent("2 / 2 d10");
+  });
+
+  it("keeps the Hit Dice and their rolls off the Hit Points card", async () => {
+    stubFetchByUrl({ "/api/characters/1/state": stateRecord() });
+    renderWithClient(
+      <RollingFor value="1">
+        <Vitals character={characterRecord("1", "Vex")} derived={derived()} />
+      </RollingFor>,
+    );
+
+    const hp = await card("Hit Points");
+    expect(hp.queryByText(/Hit Di/)).not.toBeInTheDocument();
+    expect(hp.queryByRole("list")).not.toBeInTheDocument();
+    const dice = await card("Hit Dice");
+    expect(dice.getByRole("button", { name: "Roll d8 Hit Die" })).toBeInTheDocument();
+    expect(dice.getByRole("button", { name: "Roll d10 Hit Die" })).toBeInTheDocument();
   });
 
   it("reads a new character at its maximum", async () => {
