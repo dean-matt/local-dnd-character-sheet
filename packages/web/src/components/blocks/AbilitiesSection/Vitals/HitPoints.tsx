@@ -11,12 +11,14 @@ import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
 import { HitPointChange } from "./HitPointChange.tsx";
+import { MaximumReduction } from "./MaximumReduction.tsx";
 
 const { shape } = characterDerivedSchema;
 
 /**
  * Current, temporary and each die's remaining hit dice, read against the derived totals by
- * `sheetState`, and the controls that apply damage, healing and temporary hit points.
+ * `sheetState`, and the controls that apply damage, healing, temporary hit points and a
+ * reduction to the maximum.
  */
 export function HitPoints({
   character,
@@ -100,6 +102,7 @@ export function HitPoints({
           <div className="h-full bg-accent" style={{ width: `${filled}%` }} />
         </div>
         <HitPointChange character={character} derived={derived} state={state} />
+        <MaximumReduction character={character} derived={derived} state={state} />
       </div>
     </Card>
   );

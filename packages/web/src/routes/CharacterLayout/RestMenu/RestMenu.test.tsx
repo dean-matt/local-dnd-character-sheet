@@ -245,6 +245,26 @@ describe("RestMenu", () => {
     expect(writes).toEqual([]);
   });
 
+  it("reads hit points after a long rest against the maximum its cleared reduction restores", async () => {
+    const reduced = {
+      computed: 15,
+      manual: null,
+      terms: [
+        { label: "Hit dice", value: 20 },
+        { label: "Maximum reduction", value: -5 },
+      ],
+    };
+    const writes = renderLive(
+      {
+        hitPoints: { current: 12, temporary: 0 },
+        hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true },
+      },
+      { derivedBlock: { ...derived(), hitPointMaximum: reduced } },
+    );
+    expect(listed(await open("Long rest"))).toContain("Hit points: 12/15 → 20/20");
+    expect(writes).toEqual([]);
+  });
+
   it("lists only what a short rest resets", async () => {
     renderLive({
       ...spent(),
