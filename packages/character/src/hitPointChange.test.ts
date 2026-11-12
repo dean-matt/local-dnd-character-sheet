@@ -53,6 +53,17 @@ describe("damagedState", () => {
     expect(damagedState(unhurt, defended, held, 4).state.concentration).toEqual(bless);
   });
 
+  it("ends a rage in the same state when the damage leaves 0 hit points", () => {
+    const raging = { ...state(5), activeEffects: [{ name: "Rage" }, { name: "Haste" }] };
+    expect(damagedState(unhurt, defended, raging, 5).state).toMatchObject({
+      hitPoints: { current: 0 },
+      activeEffects: [{ name: "Haste" }],
+    });
+    expect(damagedState(unhurt, defended, raging, 4).state.activeEffects).toEqual(
+      raging.activeEffects,
+    );
+  });
+
   it.each([
     [undefined, 11, []],
     ["slashing", 10, ["resistance", "vulnerability"]],
