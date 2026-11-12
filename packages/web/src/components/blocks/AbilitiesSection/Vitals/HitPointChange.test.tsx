@@ -313,6 +313,18 @@ describe("HitPointChange", () => {
     expect(writes).toEqual([]);
   });
 
+  it("ends a rage in the write that drops the character to 0, and says so", async () => {
+    const { writes } = renderVitals({
+      hitPoints: { current: 5, temporary: 0 },
+      activeEffects: [{ name: "Rage" }],
+    });
+    await apply("6", "Damage");
+
+    await waitFor(() => expect(announced()).toHaveTextContent(/^0 hit points\. Rage ended\.$/));
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({ hitPoints: { current: 0 }, activeEffects: [] });
+  });
+
   it("keeps the stored hit points and the amount when the write fails", async () => {
     renderVitals({ hitPoints: { current: 12, temporary: 0 } }, { fail: true });
     await apply("5", "Damage");

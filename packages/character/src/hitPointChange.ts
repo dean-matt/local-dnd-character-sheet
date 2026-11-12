@@ -11,6 +11,7 @@ import {
 import type { CharacterDerived } from "./characterDerived.ts";
 import { concentrationLapsed } from "./concentration.ts";
 import type { CharacterDefinition } from "./definition.ts";
+import { rageEnded } from "./rage.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import { sheetState } from "./rest.ts";
 import type { CharacterState } from "./state.ts";
@@ -58,7 +59,7 @@ function defensesAgainst(
  * shows against it, by `adjustedDamage`; untyped damage applies as given. Returns the amount
  * taken and the defenses that changed it. Damage at 0 counts one death save failure, or two
  * from a `critical` hit. Damage that leaves the character at 0 ends concentration, by
- * `concentrationLapsed`.
+ * `concentrationLapsed`, and any rage, by `rageEnded`.
  */
 export function damagedState(
   definition: Pick<CharacterDefinition, "houseRules" | "addedDefenses">,
@@ -79,7 +80,12 @@ export function damagedState(
     { instantDeath: !houseRule(definition, "noInstantDeath"), critical },
   );
   const after = changed(state, result);
-  return { ...after, state: concentrationLapsed(after.state), ...adjusted };
+  const lapsed = concentrationLapsed(after.state);
+  return {
+    ...after,
+    state: lapsed.hitPoints.current === 0 ? rageEnded(lapsed) : lapsed,
+    ...adjusted,
+  };
 }
 
 /** The state after `amount` healing, by `heal`, against the maximum the sheet shows. */
