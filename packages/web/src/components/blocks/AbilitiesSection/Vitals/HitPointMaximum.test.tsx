@@ -174,6 +174,62 @@ describe("the hit point maximum's breakdown", () => {
     expect(lasts()).toBeChecked();
   });
 
+  it("writes nothing when the reduction a toggle reads was cleared first", async () => {
+    const { writes, release } = renderVitals(
+      {
+        hitPoints: { current: 15, temporary: 0 },
+        hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true },
+      },
+      { hitPointMaximum: reducedMaximum, hold: true },
+    );
+    await open("Hit point maximum 15");
+    type("Hit point maximum reduction", "");
+    await act(async () => {});
+    fireEvent.click(lasts() as HTMLElement);
+    release();
+
+    await waitFor(() => expect(announced()).toBe("Reduction cleared. 15 hit points."));
+    // The toggle's write must not come, so nothing signals it; its edit runs as soon as the
+    // clear lands, well inside 50 ms.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+    expect(writes).toHaveLength(1);
+    expect(writes[0]?.hitPointMaximumReduction).toBeNull();
+  });
+
+  it("lands each change on the state the one before it left", async () => {
+    const { writes, release } = renderVitals(
+      { hitPoints: { current: 18, temporary: 0 } },
+      { hold: true },
+    );
+    await open();
+    type("Temporary hit points", "7");
+    type("Hit point maximum reduction", "5");
+    release();
+
+    await waitFor(() => expect(writes).toHaveLength(2));
+    expect(writes[1]).toMatchObject({
+      hitPoints: { current: 15, temporary: 7 },
+      hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true },
+    });
+  });
+
+  it("refuses temporary hit points to the dead, and still clears them", async () => {
+    const { writes } = renderVitals({
+      hitPoints: { current: 0, temporary: 3 },
+      deathSaves: { successes: 0, failures: 3 },
+    });
+    await open();
+    type("Temporary hit points", "5");
+    await waitFor(() =>
+      expect(field("Temporary hit points")).toHaveAttribute("aria-invalid", "true"),
+    );
+    expect(writes).toHaveLength(0);
+
+    type("Temporary hit points", "");
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.hitPoints.temporary).toBe(0);
+  });
+
   it("refuses a reduction that is no whole number or would leave no maximum", async () => {
     const { writes } = renderVitals({});
     await open();
@@ -215,8 +271,9 @@ describe("the override in the hit point maximum's breakdown", () => {
     state = stateRecord().state,
   ) {
     const character = vex();
+    const save = vi.fn(async () => {});
     renderWithClient(
-      <SaveOverride.Provider value={vi.fn(async () => {})}>
+      <SaveOverride.Provider value={save}>
         <HitPointMaximum
           character={{ ...character, definition: { ...character.definition, overrides } }}
           derived={{ ...derivedRecord(), hitPointMaximum }}
@@ -224,7 +281,18 @@ describe("the override in the hit point maximum's breakdown", () => {
         />
       </SaveOverride.Provider>,
     );
+    return save;
   }
+
+  it("saves the override typed, and clearing the field drops it", async () => {
+    const save = renderOverridden({}, { computed: 20, manual: null, terms: [] });
+    await open();
+    type("Hit point maximum override", "30");
+    await waitFor(() => expect(save).toHaveBeenCalledWith("hitPointMaximum", 30));
+
+    type("Hit point maximum override", "");
+    await waitFor(() => expect(save).toHaveBeenLastCalledWith("hitPointMaximum", null));
+  });
 
   it("names the maximum before the reduction it overrode, as the override field holds it", async () => {
     renderOverridden(
@@ -232,7 +300,7 @@ describe("the override in the hit point maximum's breakdown", () => {
       { computed: 15, manual: 35, terms: reducedMaximum.terms },
       { ...stateRecord().state, hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true } },
     );
-    await open("Hit point maximum 35, overridden from 15");
+    await open("Hit point maximum 35, overridden from 20");
 
     expect(within(breakdown()).getByText(/^Overridden from 20\./)).toBeInTheDocument();
     expect(within(breakdown()).queryByRole("list")).toBeNull();

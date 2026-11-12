@@ -56,9 +56,10 @@ function concentrating(state: CharacterState, status?: string) {
  * The amount field, the damage type and, at 0 hit points, Critical hit with Damage and Heal,
  * which write what `damagedState` or `healedState` returns. Each is one state write. Typed
  * damage names the defense that changed it, and damage a defense reduces to nothing writes
- * nothing. Damage that leaves the character dead asks first. Damage that leaves a concentrating character at 0 ends concentration in the same
- * write, and says so; above 0 it shows the Constitution save it calls for, with End
- * concentration, one write, and Keep, which writes nothing. A notice lasts only while the hit
+ * nothing. Damage that leaves the character dead asks first. Damage that leaves a
+ * concentrating character at 0 ends concentration in the same write, and says so; above 0 it
+ * shows the Constitution save it calls for, with End concentration, one write, and Keep, which
+ * writes nothing. A notice lasts only while the hit
  * points, temporary hit points and death-save status it read stand, and the concentration
  * prompt while those and the spell held stand. A failed write keeps the amount and names the
  * error, and the card goes on showing what the server holds, since the cache takes only a write

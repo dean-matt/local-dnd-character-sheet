@@ -1,5 +1,5 @@
 import { type Breakdown, breakdown } from "@dnd/rules";
-import type { CharacterDerived } from "./characterDerived.ts";
+import { type CharacterDerived, characterDerivedSchema } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived, TermReference } from "./derivedField.ts";
 import { derivedValue } from "./resolve.ts";
@@ -7,6 +7,8 @@ import type { CharacterState, HitPointMaximumReduction } from "./state.ts";
 
 /** The label of the term a reduction adds to the hit point maximum's breakdown. */
 const REDUCTION_LABEL = "Maximum reduction";
+
+const overrideSchema = characterDerivedSchema.shape.hitPointMaximum.shape.computed;
 
 type Sheet = Pick<CharacterDerived, "hitPointMaximum">;
 type Overrides = Pick<CharacterDefinition, "overrides">;
@@ -43,10 +45,10 @@ export function reducedOverride(
  */
 export function maximumBeforeReduction(definition: Overrides, derived: Sheet): Derived<number> {
   const { computed, terms = [] } = derived.hitPointMaximum;
-  const typed = definition.overrides.hitPointMaximum;
+  const typed = overrideSchema.safeParse(definition.overrides.hitPointMaximum);
   return {
     computed: computed - (terms.find((term) => term.label === REDUCTION_LABEL)?.value ?? 0),
-    manual: typeof typed === "number" && Number.isInteger(typed) && typed >= 1 ? typed : null,
+    manual: typed.success ? typed.data : null,
     terms: terms.filter((term) => term.label !== REDUCTION_LABEL),
   };
 }

@@ -14,8 +14,8 @@ export const characterDefinitionWriteKey = (id: string) =>
 /** Tags an undo, which a state control waits on, since an undo can restore the state. */
 export const characterUndoWriteKey = (id: string) =>
   [...characterDefinitionWriteKey(id), "undo"] as const;
-/** Writes to one character's definition run one at a time, an undo among them. */
-export const characterDefinitionWriteScope = (id: string) => `definition-write:${id}`;
+/** Writes to one character's definition and state run one at a time, an undo among them. */
+export const characterWriteScope = (id: string) => `write:${id}`;
 export const characterUndoKey = (id: string) => [...characterKey(id), "undo"] as const;
 /** Every character's rolls, under `charactersKey` so a deleted character leaves the panel. */
 export const rollsKey = [...charactersKey, "rolls"] as const;

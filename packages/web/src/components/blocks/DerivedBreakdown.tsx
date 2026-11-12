@@ -1,5 +1,5 @@
 import type { Derived } from "@dnd/character";
-import { useContext } from "react";
+import { type ReactNode, useContext } from "react";
 import { z } from "zod";
 import { Field } from "../Field/Field.tsx";
 import { SaveOverride } from "../overrideContext.ts";
@@ -16,7 +16,7 @@ const parseNumber = (raw: string) =>
  * The terms behind a derived number and, where an `overrideKey` names it on the character
  * page, a field that types over it. An overridden value names its computed one in place of
  * the terms, which no longer add up to what the sheet shows. Clearing the field drops the
- * override, and the terms return.
+ * override, and the terms return. `children` go between the terms and the field.
  *
  * `schema` must match the field's own in `characterDerivedSchema`: `applyOverrides` drops a
  * value that schema refuses without a word, so a looser one here saves an override that never shows.
@@ -28,6 +28,7 @@ export function DerivedBreakdown({
   format,
   overrideKey,
   schema = z.int(),
+  children,
 }: {
   name: string;
   label?: string;
@@ -35,6 +36,7 @@ export function DerivedBreakdown({
   format: (value: number) => string;
   overrideKey?: string;
   schema?: z.ZodType<number>;
+  children?: ReactNode;
 }) {
   const save = useContext(SaveOverride);
   const terms = value.terms ?? [];
@@ -49,6 +51,7 @@ export function DerivedBreakdown({
       ) : (
         terms.length > 0 && <TermList terms={terms} />
       )}
+      {children}
       {editable && (
         <div className="flex items-baseline justify-between gap-4">
           <span aria-hidden="true" className="text-muted">
