@@ -13,6 +13,7 @@ const spoken = (name: string) =>
     .getAllByRole("status")
     .find((region) => region.className === "sr-only");
 const announced = () => spoken("Hit Points");
+const ring = () => card("Hit Points").getByRole("img");
 
 async function apply(typed: string, action: "Damage" | "Heal") {
   fireEvent.change(await screen.findByRole("spinbutton"), { target: { value: typed } });
@@ -157,8 +158,7 @@ describe("HitPointChange", () => {
 
     await waitFor(() => expect(announced()).toHaveTextContent("10 hit points."));
     expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 0 });
-    expect(card("Hit Points").getByText("10")).toBeInTheDocument();
-    expect(card("Hit Points").queryByText(/^\+\d+ temp$/)).not.toBeInTheDocument();
+    expect(ring()).toHaveAccessibleName("10 of 20 hit points");
     expect(amount()).toHaveValue(null);
   });
 
@@ -200,6 +200,25 @@ describe("HitPointChange", () => {
       expect(spoken("Death Saves")).toHaveTextContent("0 successes, 2 failures, dying."),
     );
     await waitFor(() => expect(critical).not.toBeChecked());
+  });
+
+  it("offers Critical hit only at 0 hit points", async () => {
+    renderVitals({ hitPoints: { current: 5, temporary: 0 } });
+
+    await screen.findByRole("button", { name: "Damage" });
+    expect(screen.queryByRole("checkbox", { name: "Critical hit" })).not.toBeInTheDocument();
+  });
+
+  it("clears Critical hit once the hit points change without damage", async () => {
+    renderVitals({ hitPoints: { current: 0, temporary: 0 } });
+    const critical = await screen.findByRole("checkbox", { name: "Critical hit" });
+    fireEvent.click(critical);
+    expect(critical).toBeChecked();
+    fireEvent.change(amount(), { target: { value: "5" } });
+    fireEvent.click(button("Grant temp"));
+
+    await waitFor(() => expect(announced()).toHaveTextContent("5 temporary hit points."));
+    expect(screen.getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
   });
 
   it("asks before a critical hit at 0 makes the third failure", async () => {
@@ -323,7 +342,7 @@ describe("temporary hit points", () => {
     expect(writes).toHaveLength(1);
     expect(writes[0]?.hitPoints).toEqual({ current: 0, temporary: 8 });
     expect(writes[0]?.deathSaves).toEqual({ successes: 1, failures: 1 });
-    expect(card("Hit Points").getByText("+8 temp")).toBeInTheDocument();
+    expect(ring()).toHaveAccessibleName("0 of 20 hit points, 8 temporary");
     expect(amount()).toHaveValue(null);
   });
 
@@ -425,7 +444,7 @@ describe("temporary hit points", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Hit points were not changed: Disk full",
     );
-    expect(card("Hit Points").getByText("+2 temp")).toBeInTheDocument();
+    expect(ring()).toHaveAccessibleName("12 of 20 hit points, 2 temporary");
     expect(amount()).toHaveValue(6);
   });
 });
