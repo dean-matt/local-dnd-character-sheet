@@ -13,98 +13,180 @@
   body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
   * { box-sizing: border-box; }
   button { font-family: inherit; cursor: pointer; }
-  input { font-family: inherit; }
+  input, select { font-family: inherit; }
   input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"] { -moz-appearance: textfield; }
+  .hp-max:hover, .hp-max:focus-visible { background: #eceef1; }
+  .hp-max:focus-visible { outline: 2px solid #1f2430; outline-offset: 1px; }
 </style>
 </helmet>
 
-<div style="width: 420px; height: 340px; box-sizing: border-box; padding: 32px; display: flex; align-items: center; background: #f4f5f7; position: relative;">
-  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+<div style="width: 560px; height: 420px; box-sizing: border-box; padding: 32px; display: flex; align-items: flex-start; background: #f4f5f7; position: relative;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px; position: relative;">
     <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Hit Points</div>
-    <div style="display: flex; align-items: baseline; gap: 6px; position: relative;">
-      <div style="font-size: 26px; font-weight: 700; color: #1f2430;">{{hpCur}}</div>
-      <button aria-label="View max hit points details" onClick="{{openMaxDetail}}" onMouseEnter="{{showMaxCalc}}" onMouseLeave="{{hideMaxCalc}}" onFocus="{{showMaxCalc}}" onBlur="{{hideMaxCalc}}" aria-describedby="hp-max-calc" style="all: unset; cursor: pointer; font-size: 15px; color: #6b7280;">/ {{hpMax}}</button>
-      <sc-if value="{{maxCalcOpen}}" hint-placeholder-val="{{false}}">
-        <div role="tooltip" id="hp-max-calc" style="position: absolute; top: calc(100% + 6px); left: 40px; z-index: 20; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 8px 10px; white-space: nowrap; pointer-events: none;">
-          <div style="font-size: 11px; font-weight: 700; margin-bottom: 2px;">Max Hit Points</div>
-          <div style="font-size: 11px; color: #6b7280;">{{maxCalcText}}</div>
+    <div style="display: flex; align-items: center; gap: 18px;">
+      <div style="position: relative; width: 132px; height: 132px; flex: none;">
+        <svg width="132" height="132" viewBox="0 0 120 120" role="img" aria-label="{{ringLabel}}">
+          <defs>
+            <pattern id="hp-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="5" height="5" fill="#eceef1"></rect>
+              <rect width="2" height="5" fill="#9aa1ab"></rect>
+            </pattern>
+          </defs>
+          <g transform="rotate(-90 60 60)" fill="none" stroke-width="12" stroke-linecap="butt">
+            <circle cx="60" cy="60" r="50" stroke="#eceef1"></circle>
+            <circle cx="60" cy="60" r="50" stroke="url(#hp-hatch)" style="{{reducedArc}}"></circle>
+            <circle cx="60" cy="60" r="50" stroke="{{accent}}" style="{{currentArc}}"></circle>
+            <circle cx="60" cy="60" r="50" stroke="#2f6fb5" style="{{tempArc}}"></circle>
+          </g>
+        </svg>
+        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 4px; pointer-events: none;">
+          <span aria-hidden="true" style="font-size: 26px; font-weight: 700; color: {{shownColor}};">{{shown}}</span>
+          <span aria-hidden="true" style="font-size: 15px; color: #6b7280;">/</span>
+          <span onMouseEnter="{{hoverOpen}}" onMouseLeave="{{hoverClose}}" onBlur="{{blurClose}}" onKeyDown="{{escClose}}" style="pointer-events: auto; position: relative; display: inline-block;">
+            <button class="hp-max" aria-label="{{maxLabel}}" aria-expanded="{{popoverOpen}}" aria-controls="hp-breakdown" title="Breakdown, temporary hit points, reduction and override" onClick="{{togglePin}}" onFocus="{{hoverOpen}}" style="all: unset; cursor: pointer; font-size: 15px; color: #6b7280; border-bottom: 1px dotted #6b7280; line-height: 18px; padding: 0 1px; border-radius: 2px;">{{hpMax}}</button>
+            <sc-if value="{{popoverOpen}}" hint-placeholder-val="{{false}}">
+              <div style="position: absolute; top: 100%; left: 0; z-index: 20; padding-top: 6px;">
+                <div id="hp-breakdown" role="dialog" aria-label="Hit points breakdown" style="width: 280px; background: #ffffff; color: #1f2430; border: 1px solid #dde1e6; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.18); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-size: 11px; font-weight: 700;">Hit Points</div>
+                    <sc-if value="{{pinned}}" hint-placeholder-val="{{false}}">
+                      <button aria-label="Close" onClick="{{unpin}}" style="width: 20px; height: 20px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+                    </sc-if>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                    <span style="width: 8px; height: 8px; border-radius: 2px; background: #2f6fb5;"></span>
+                    <label for="tempHp" style="flex: 1;">Temporary</label>
+                    <input id="tempHp" type="number" min="0" placeholder="0" value="{{tempInput}}" onChange="{{onTempChange}}" style="width: 56px; padding: 4px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; text-align: right;">
+                  </div>
+                  <div style="height: 1px; background: #eceef1;"></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 11px; color: #6b7280;">
+                    <span>Levels 1&ndash;7: d10, +2 Con</span><span>{{base}}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                    <span style="width: 8px; height: 8px; border-radius: 2px; background: repeating-linear-gradient(45deg, #9aa1ab 0 2px, #eceef1 2px 4px);"></span>
+                    <label for="hpReduction" style="flex: 1;">Reduction</label>
+                    <input id="hpReduction" type="number" min="0" placeholder="0" value="{{reductionInput}}" onChange="{{onReductionChange}}" style="width: 56px; padding: 4px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; text-align: right;">
+                  </div>
+                  <sc-if value="{{hasReduction}}" hint-placeholder-val="{{true}}">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b7280; padding-left: 16px;">
+                      <input type="checkbox" checked="{{lastsPastRest}}" onChange="{{toggleLasts}}">
+                      Lasts past a long rest
+                    </label>
+                  </sc-if>
+                  <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                    <span style="width: 8px;"></span>
+                    <label for="hpOverride" style="flex: 1;">Override</label>
+                    <input id="hpOverride" type="number" min="1" placeholder="&mdash;" value="{{overrideInput}}" onChange="{{onOverrideChange}}" style="width: 56px; padding: 4px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; text-align: right;">
+                  </div>
+                  <div style="height: 1px; background: #eceef1;"></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;">
+                    <span>Maximum</span><span>{{hpMax}}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </span>
         </div>
-      </sc-if>
-      <sc-if value="{{hasTempHp}}" hint-placeholder-val="{{false}}">
-        <div title="Temporary hit points &mdash; absorb damage before real HP" style="font-size: 12px; font-weight: 600; color: #2f6b4f;">+{{tempHp}} temp</div>
-      </sc-if>
-      <div style="font-size: 11px; color: #6b7280; margin-left: auto;">Hit Dice {{hitDice}}</div>
-    </div>
-    <div style="width: 100%; height: 8px; border-radius: 999px; background: #eceef1; overflow: hidden;">
-      <div style="width: {{hpPct}}%; height: 100%; background: {{accent}};"></div>
-    </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <label for="hpAmount" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Amount</label>
-      <input id="hpAmount" type="number" min="0" placeholder="0" value="{{dmgInput}}" onChange="{{onDmgInputChange}}" style="width: 64px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; background: #ffffff; color: #1f2430;">
-      <button onClick="{{applyDamage}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid {{accent}}; background: #ffffff; color: {{accent}}; font-size: 12px; font-weight: 600;">&minus; Damage</button>
-      <button onClick="{{applyHeal}}" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #2f6b4f; background: #ffffff; color: #2f6b4f; font-size: 12px; font-weight: 600;">+ Heal</button>
-    </div>
-    <div style="display: flex; align-items: center; gap: 6px;">
-      <label for="tempHpInput" style="font-size: 11px; color: #6b7280;">Temp HP</label>
-      <input id="tempHpInput" type="number" min="0" value="{{tempHp}}" onChange="{{onTempHpChange}}" style="width: 56px; padding: 5px 6px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 12px; background: #ffffff; color: #1f2430;">
-    </div>
-  </div>
-  <sc-if value="{{modalOpen}}" hint-placeholder-val="{{false}}">
-    <div role="presentation" onClick="{{closeModal}}" style="position: fixed; inset: 0; background: rgba(15,17,21,0.5); display: flex; align-items: center; justify-content: center; z-index: 50;">
-      <div role="dialog" aria-modal="true" aria-label="Max hit points" onClick="{{stopPropagation}}" style="background: #ffffff; border-radius: 10px; padding: 20px; width: min(320px, 85%); max-height: 80%; overflow: auto; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
-          <div style="font-size: 15px; font-weight: 700;">Max Hit Points</div>
-          <button aria-label="Close" onClick="{{closeModal}}" style="width: 24px; height: 24px; border: none; background: none; cursor: pointer; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+        <div style="display: flex; gap: 8px;">
+          <label for="hpAmount" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Amount</label>
+          <input id="hpAmount" type="number" min="0" placeholder="0" value="{{dmgInput}}" onChange="{{onDmgInputChange}}" style="width: 64px; height: 32px; padding: 6px 8px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; background: #ffffff; color: #1f2430;">
+          <label for="hpType" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Damage type</label>
+          <select id="hpType" style="height: 32px; padding: 0 8px; border: 1px solid #dde1e6; border-radius: 4px; font-size: 13px; background: #ffffff; color: #1f2430;">
+            <option>Untyped</option><option>Bludgeoning</option><option>Fire</option><option>Necrotic</option><option>Poison</option>
+          </select>
         </div>
-        <div style="font-size: 26px; font-weight: 700; color: #1f2430; margin-bottom: 10px;">{{hpMax}}</div>
-        <div style="font-size: 12px; color: #6b7280; margin-bottom: 10px;">{{maxCalcText}}</div>
-        <div style="font-size: 13px; color: #1f2430; line-height: 1.5;">Rolled (or averaged) per Hit Die at each level, plus your Constitution modifier per level. Recalculates automatically on level up.</div>
+        <div style="display: flex; gap: 8px;">
+          <button onClick="{{applyDamage}}" style="height: 32px; padding: 0 12px; border-radius: 4px; border: 1px solid {{accent}}; background: #ffffff; color: {{accent}}; font-size: 12px; font-weight: 600;">&minus; Damage</button>
+          <button onClick="{{applyHeal}}" style="height: 32px; padding: 0 12px; border-radius: 4px; border: 1px solid #2f6b4f; background: #ffffff; color: #2f6b4f; font-size: 12px; font-weight: 600;">+ Heal</button>
+        </div>
+        <div role="status" style="font-size: 11px; color: #6b7280; min-height: 15px;">{{announcement}}</div>
       </div>
     </div>
-  </sc-if>
+  </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":420,"height":340}}'>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#c1272d"},"$preview":{"width":560,"height":420}}'>
 class Component extends DCLogic {
   constructor(props) {
     super(props);
-    this.state = { hpCur: 54, hpMax: 58, tempHp: 0, hitDice: '7d10', conScore: 14, dmgInput: '', maxCalcOpen: false, modalOpen: false };
+    this.state = { hpCur: 44, base: 58, temp: 6, reduction: 6, lastsPastRest: false, override: null, dmgInput: '', hover: false, pinned: false, announcement: '' };
   }
   renderVals() {
     const accent = this.props.accent ?? '#c1272d';
-    const mod = (s) => Math.floor((s - 10) / 2);
-    const fmt = (n) => (n >= 0 ? '+' + n : String(n));
-    const { hpCur, hpMax, tempHp, hitDice, conScore, dmgInput } = this.state;
+    const C = 2 * Math.PI * 50;
+    const { hpCur, base, temp, reduction, override, dmgInput } = this.state;
     const amount = parseInt(dmgInput, 10) || 0;
-    const hpPct = Math.max(0, Math.min(100, Math.round((hpCur / hpMax) * 100)));
-    const conMod = mod(conScore);
-    const maxCalcText = 'Hit Dice ' + hitDice + ' + CON modifier ' + fmt(conMod) + ' per level';
+    const unreduced = override ?? base;
+    const hpMax = Math.max(1, unreduced - reduction);
+    const arc = (start, len) => len <= 0
+      ? 'stroke-dasharray: 0 ' + C + ';'
+      : 'stroke-dasharray: ' + (len / ringScale) * C + ' ' + C + '; stroke-dashoffset: ' + (-(start / ringScale) * C) + ';';
+    const ringScale = Math.max(unreduced, hpCur + temp);
+    const set = (patch, announcement) => this.setState({ ...patch, announcement });
+    const clampCur = (max) => Math.min(this.state.hpCur, max);
+    const parts = [hpCur + ' of ' + hpMax + ' hit points'];
+    if (reduction > 0) parts.push('maximum reduced by ' + reduction);
+    if (temp > 0) parts.push(temp + ' temporary');
     return {
       accent,
       hpCur,
       hpMax,
-      hpPct,
-      hitDice,
-      tempHp,
-      hasTempHp: !!tempHp,
-      maxCalcOpen: this.state.maxCalcOpen,
-      maxCalcText,
-      showMaxCalc: () => this.setState({ maxCalcOpen: true }),
-      hideMaxCalc: () => this.setState({ maxCalcOpen: false }),
-      openMaxDetail: () => this.setState({ modalOpen: true }),
+      base,
+      ringLabel: parts.join(', '),
+      maxLabel: 'Hit point maximum, ' + hpMax + '. Breakdown, temporary hit points, reduction and override',
+      currentArc: arc(0, hpCur),
+      tempArc: arc(hpCur, temp),
+      reducedArc: arc(hpMax, reduction),
+      shown: hpCur + temp,
+      shownColor: temp > 0 ? '#2f6fb5' : '#1f2430',
+      popoverOpen: this.state.hover || this.state.pinned,
+      pinned: this.state.pinned,
+      hoverOpen: () => this.setState({ hover: true }),
+      hoverClose: () => this.setState({ hover: false }),
+      togglePin: () => this.setState(this.state.pinned ? { pinned: false, hover: false } : { pinned: true }),
+      blurClose: (e) => {
+        const el = e.currentTarget;
+        if (!el.contains(e.relatedTarget) && !el.matches(':hover')) this.setState({ hover: false });
+      },
+      escClose: (e) => {
+        if (e.key !== 'Escape') return;
+        e.currentTarget.querySelector('.hp-max').focus();
+        this.setState({ hover: false, pinned: false });
+      },
+      unpin: () => this.setState({ pinned: false, hover: false }),
+      tempInput: temp || '',
+      reductionInput: reduction || '',
+      overrideInput: override ?? '',
+      hasReduction: reduction > 0,
+      lastsPastRest: this.state.lastsPastRest,
+      announcement: this.state.announcement,
       dmgInput,
       onDmgInputChange: (e) => this.setState({ dmgInput: e.target.value }),
-      applyDamage: () => {
-        const fromTemp = Math.min(tempHp || 0, amount);
-        const remaining = amount - fromTemp;
-        this.setState({ hpCur: Math.max(0, hpCur - remaining), tempHp: (tempHp || 0) - fromTemp, dmgInput: '' });
+      onTempChange: (e) => {
+        const t = Math.max(0, parseInt(e.target.value, 10) || 0);
+        set({ temp: t }, t ? t + ' temporary hit points.' : 'Temporary hit points cleared.');
       },
-      applyHeal: () => this.setState({ hpCur: Math.min(hpMax, hpCur + amount), dmgInput: '' }),
-      onTempHpChange: (e) => this.setState({ tempHp: Math.max(0, parseInt(e.target.value, 10) || 0) }),
-      modalOpen: this.state.modalOpen,
-      closeModal: () => this.setState({ modalOpen: false }),
-      stopPropagation: (e) => e.stopPropagation()
+      onReductionChange: (e) => {
+        const r = Math.max(0, Math.min(unreduced - 1, parseInt(e.target.value, 10) || 0));
+        const max = Math.max(1, unreduced - r);
+        set({ reduction: r, hpCur: clampCur(max) }, r ? 'Maximum reduced by ' + r + '.' : 'Reduction cleared.');
+      },
+      toggleLasts: () => this.setState({ lastsPastRest: !this.state.lastsPastRest }),
+      onOverrideChange: (e) => {
+        const v = parseInt(e.target.value, 10);
+        const o = v > 0 ? v : null;
+        const r = Math.min(reduction, (o ?? base) - 1);
+        const max = (o ?? base) - r;
+        set({ override: o, reduction: r, hpCur: clampCur(max) }, o ? 'Maximum overridden to ' + o + '.' : 'Override cleared.');
+      },
+      applyDamage: () => {
+        const fromTemp = Math.min(temp, amount);
+        set({ hpCur: Math.max(0, hpCur - (amount - fromTemp)), temp: temp - fromTemp, dmgInput: '' }, amount + ' damage.');
+      },
+      applyHeal: () => set({ hpCur: Math.min(hpMax, hpCur + amount), dmgInput: '' }, 'Healed ' + amount + '.')
     };
   }
 }

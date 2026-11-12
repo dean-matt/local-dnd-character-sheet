@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Widget — Hit Dice</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+  body { margin: 0; background: #f4f5f7; font-family: 'Noto Sans', sans-serif; color: #1f2430; }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="width: 300px; height: 200px; box-sizing: border-box; padding: 32px; display: flex; align-items: flex-start; background: #f4f5f7;">
+  <div style="width: 100%; background: #ffffff; border: 1px solid #dde1e6; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 8px;">
+    <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #6b7280; text-transform: uppercase;">Hit Dice</div>
+    <sc-for list="{{pools}}" as="pool" hint-placeholder-count="2">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+        <span style="flex: 1;"><strong>{{pool.remaining}}</strong><span style="color: #6b7280;"> / {{pool.total}}</span> d{{pool.die}}</span>
+        <button aria-label="{{pool.rollLabel}}" style="width: 24px; height: 24px; border: none; background: none; color: #6b7280; display: flex; align-items: center; justify-content: center; padding: 0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="12" height="12" x="2" y="10" rx="2" ry="2"></rect><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"></path><path d="M6 18h.01"></path><path d="M10 14h.01"></path><path d="M15 6h.01"></path><path d="M18 9h.01"></path></svg></button>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":300,"height":200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const pools = [{ die: 10, remaining: 5, total: 7 }, { die: 6, remaining: 2, total: 2 }];
+    return { pools: pools.map((p) => ({ ...p, rollLabel: 'Roll a d' + p.die + ' Hit Die' })) };
+  }
+}
+</script>
+</body>
+</html>
