@@ -5,13 +5,13 @@ import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { Vitals } from "./Vitals.tsx";
 
 const CONDITIONS = {
-  items: ["Exhaustion", "Poisoned", "Prone", "Stunned"].map((name) => ({
+  items: ["Exhaustion", "Poisoned", "Prone", "Stunned", "Unconscious"].map((name) => ({
     type: "condition",
     name,
     source: "XPHB",
     edition: "one",
   })),
-  total: 4,
+  total: 5,
   limit: 100,
   offset: 0,
 };

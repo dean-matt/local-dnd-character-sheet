@@ -1,10 +1,12 @@
 import {
+  type CharacterDerived,
   type CharacterRecord,
   type CharacterState,
   type Concentration,
   concentrationEnded,
   concentrationLapsed,
   concentrationStarted,
+  deathSaveStatus,
 } from "@dnd/character";
 import { Minus, Plus, X } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
@@ -15,6 +17,8 @@ import { EmptyNote } from "../../../EmptyNote.tsx";
 import { AddCondition } from "./AddCondition.tsx";
 import { ConcentrationField } from "./ConcentrationField.tsx";
 
+const UNCONSCIOUS = "Unconscious";
+
 const STEP =
   "flex size-8 items-center justify-center rounded-control border border-border bg-surface hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
 
@@ -23,19 +27,29 @@ const STEP =
  * over the edition's catalog conditions or a custom name, an exhaustion stepper from 0 to 6,
  * and the held concentration with controls that set and end it. Each change is one state
  * write, announced once it lands, and a condition that incapacitates ends concentration in it.
+ * At 0 hit points the sheet owns Unconscious: dying or stable shows it, named as from 0 hit
+ * points and with no remove control, and dead shows it not at all, whether or not it is held.
  */
 export function StatusEffects({
   character,
+  derived,
   state,
 }: {
   character: CharacterRecord;
+  derived: Pick<CharacterDerived, "hitPointMaximum">;
   state: CharacterState;
 }) {
   const replace = useAnnouncedStateWrite(character.id);
+  const status = deathSaveStatus(derived, state);
+  const down = status === "dying" || status === "stable";
   // A chip shows the name alone, so one condition held from two sources reads as one chip.
-  const names = [
+  const held = [
     ...new Set([...state.conditions.map((condition) => condition.name), ...state.customConditions]),
   ];
+  const names =
+    status === undefined
+      ? held
+      : held.filter((name) => name.toLowerCase() !== UNCONSCIOUS.toLowerCase());
   const { exhaustion } = state;
 
   function addCondition(added: CharacterState, name: string) {
@@ -75,10 +89,15 @@ export function StatusEffects({
 
   return (
     <Card title="Status Effects">
-      {names.length === 0 && exhaustion === 0 ? (
+      {names.length === 0 && exhaustion === 0 && !down ? (
         <EmptyNote>No active conditions.</EmptyNote>
       ) : (
         <ul className="flex flex-wrap gap-1">
+          {down && (
+            <li className={PILL}>
+              {UNCONSCIOUS} <span className="text-muted">from 0 hit points</span>
+            </li>
+          )}
           {names.map((name) => (
             <li key={name} className={`${PILL} flex items-center gap-1`}>
               {name}
@@ -98,7 +117,7 @@ export function StatusEffects({
       )}
       <AddCondition
         edition={character.edition}
-        held={new Set(names)}
+        held={new Set(status === undefined ? names : [...names, UNCONSCIOUS])}
         busy={replace.writing}
         onAdd={add}
         onAddCustom={addCustom}

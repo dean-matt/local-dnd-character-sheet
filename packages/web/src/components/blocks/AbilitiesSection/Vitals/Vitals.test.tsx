@@ -180,7 +180,7 @@ describe("Vitals", () => {
       const { writes, reload } = renderWriting({ conditions: [{ name: "Prone", source: "XPHB" }] });
       fireEvent.click(await screen.findByRole("combobox", { name: "Condition to add" }));
       const offered = (await screen.findAllByRole("option")).map((option) => option.textContent);
-      expect(offered).toEqual(["Poisoned", "Stunned"]);
+      expect(offered).toEqual(["Poisoned", "Stunned", "Unconscious"]);
 
       await addCondition("Poisoned");
       await waitFor(() => expect(writes).toHaveLength(1));
@@ -210,6 +210,49 @@ describe("Vitals", () => {
       reload();
       await screen.findByRole("combobox", { name: "Condition to add" });
       expect(chips()).toEqual(["Marked"]);
+    });
+
+    const atZero = (successes: number, failures: number) => ({
+      hitPoints: { current: 0, temporary: 0 },
+      deathSaves: { successes, failures },
+    });
+
+    it.each([
+      ["dying", 0],
+      ["stable", 3],
+    ])(
+      "shows Unconscious from 0 hit points while %s, with no remove control",
+      async (_, successes) => {
+        renderWriting({ ...atZero(successes, 0), customConditions: ["unconscious"] });
+        fireEvent.click(await screen.findByRole("combobox", { name: "Condition to add" }));
+        const offered = (await screen.findAllByRole("option")).map((option) => option.textContent);
+
+        expect(chips()).toEqual(["Unconscious from 0 hit points"]);
+        expect(status().queryByRole("button", { name: /^Remove/ })).not.toBeInTheDocument();
+        expect(offered).not.toContain("Unconscious");
+        expect(status().queryByText("No active conditions.")).not.toBeInTheDocument();
+      },
+    );
+
+    it("drops Unconscious once healing lifts the character above 0", async () => {
+      const { writes } = renderWriting(atZero(0, 1));
+      expect(await findInStatus("listitem", {})).toHaveTextContent("Unconscious from 0 hit points");
+
+      fireEvent.change(screen.getByRole("spinbutton", { name: "Hit point amount" }), {
+        target: { value: "1" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Heal" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      await waitFor(() => expect(chips()).toEqual([]));
+      expect(status().getByText("No active conditions.")).toBeInTheDocument();
+    });
+
+    it("shows a dead character as dead, not Unconscious", async () => {
+      renderWriting({ ...atZero(0, 3), conditions: [{ name: "Unconscious", source: "XPHB" }] });
+
+      expect(await (await card("Death Saves")).findByText("Dead")).toBeInTheDocument();
+      expect(chips()).toEqual([]);
     });
 
     it("removes a custom condition, and it stays gone after a reload", async () => {

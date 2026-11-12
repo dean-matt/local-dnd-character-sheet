@@ -28,7 +28,7 @@ export function Vitals({
       <HitPoints character={character} derived={derived} state={state.data.state} />
       <DeathSaves character={character} derived={derived} state={state.data.state} />
       <HitDice character={character} derived={derived} state={state.data.state} />
-      <StatusEffects character={character} state={state.data.state} />
+      <StatusEffects character={character} derived={derived} state={state.data.state} />
     </div>
   );
 }
