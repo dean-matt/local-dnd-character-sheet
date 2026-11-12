@@ -35,6 +35,7 @@ describe("default state", () => {
   it("is unhurt, unspent and unconditioned", () => {
     expect(defaultCharacterState()).toEqual({
       hitPoints: { current: null, temporary: 0 },
+      hitPointMaximumReduction: null,
       hitDice: [],
       spellSlots: [],
       pactSlots: null,
@@ -240,6 +241,22 @@ describe("custom conditions", () => {
   it("parses a state stored before them with none", () => {
     const { customConditions: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).customConditions).toEqual([]);
+  });
+});
+
+describe("a reduction to the hit point maximum", () => {
+  it("stores an amount of 1 or more and whether a long rest clears it", () => {
+    const reduced = { ...state, hitPointMaximumReduction: { amount: 5, clearsOnLongRest: false } };
+    expect(characterStateSchema.parse(structuredClone(reduced))).toEqual(reduced);
+    for (const amount of [0, 1.5]) {
+      const invalid = { ...state, hitPointMaximumReduction: { amount, clearsOnLongRest: true } };
+      expect(characterStateSchema.safeParse(invalid).success).toBe(false);
+    }
+  });
+
+  it("parses a state stored before it as none", () => {
+    const { hitPointMaximumReduction: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).hitPointMaximumReduction).toBeNull();
   });
 });
 

@@ -59,6 +59,7 @@ import {
 } from "./itemEffects.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
+import { reducedMaximum } from "./maximumReduction.ts";
 import { applyOverrides } from "./overrides.ts";
 import { RAGE, RAGE_RESISTANCES, rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
@@ -918,7 +919,10 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
 export function deriveCharacter(
   stored: CharacterDefinition,
   catalog: CharacterCatalog,
-  state: Pick<CharacterState, "activeEffects"> = { activeEffects: [] },
+  state: Pick<CharacterState, "activeEffects" | "hitPointMaximumReduction"> = {
+    activeEffects: [],
+    hitPointMaximumReduction: null,
+  },
   names?: HomebrewNames,
 ): CharacterDerived {
   const feats = featGrants(stored, catalog);
@@ -1010,7 +1014,12 @@ export function deriveCharacter(
     abilityModifiers: perAbility((ability) =>
       fromBreakdown(abilityModifierBreakdown(scores[ability].total)),
     ),
-    hitPointMaximum: fromBreakdown(hitPointMaximum(definition, catalog.hitDice, grants)),
+    hitPointMaximum: fromBreakdown(
+      reducedMaximum(
+        hitPointMaximum(definition, catalog.hitDice, grants),
+        state.hitPointMaximumReduction,
+      ),
+    ),
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
     speed: { computed: speed.speed, manual: null, terms: speed.terms },

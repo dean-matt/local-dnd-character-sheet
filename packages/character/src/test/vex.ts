@@ -166,6 +166,7 @@ export const definition: CharacterDefinition = {
 
 export const state: CharacterState = {
   hitPoints: { current: 21, temporary: 5 },
+  hitPointMaximumReduction: null,
   hitDice: [{ die: 8, total: 5, remaining: 1 }],
   spellSlots: [],
   pactSlots: { level: 2, total: 2, expended: 1 },

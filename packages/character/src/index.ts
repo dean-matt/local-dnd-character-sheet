@@ -137,6 +137,7 @@ export {
   spellBlockKey,
 } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
+export { hitPointMaximumUnder, maximumReducedState } from "./maximumReduction.ts";
 export {
   grantorKey,
   type OptionalFeatureEntitlement,
@@ -199,6 +200,7 @@ export {
   characterStateSchema,
   defaultCharacterState,
   featureUsesSpent,
+  type HitPointMaximumReduction,
   hitDicePoolSchema,
   resourceSchema,
   spellSlotSchema,

@@ -275,6 +275,25 @@ describe("a rest and concentration", () => {
   });
 });
 
+describe("a rest and a reduction to the hit point maximum", () => {
+  const definition = { edition: "one" as const, houseRules: {} };
+  const reduced = (clearsOnLongRest: boolean) => ({
+    ...defaultCharacterState(),
+    hitPointMaximumReduction: { amount: 5, clearsOnLongRest },
+  });
+  const after = (clearsOnLongRest: boolean, length: "short" | "long") =>
+    restedState(definition, sheet, reduced(clearsOnLongRest), length).hitPointMaximumReduction;
+
+  it("clears on a long rest and holds through a short one", () => {
+    expect(after(true, "long")).toBeNull();
+    expect(after(true, "short")).toEqual({ amount: 5, clearsOnLongRest: true });
+  });
+
+  it("holds through a long rest where marked to", () => {
+    expect(after(false, "long")).toEqual({ amount: 5, clearsOnLongRest: false });
+  });
+});
+
 describe("a rest and a feature's limited uses", () => {
   const features = [
     { key: "Race|Dwarf|PHB|Stone's Endurance", reset: "short" as const },

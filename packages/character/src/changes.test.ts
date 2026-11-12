@@ -247,6 +247,22 @@ describe("describeStateChange", () => {
     expect(stateChangePhrases(held("hb-1"), held("hb-2"))).toEqual(["Concentration edited"]);
   });
 
+  it("names a reduction to the hit point maximum, and whether a long rest clears it", () => {
+    const reduced = (amount: number, clearsOnLongRest: boolean): CharacterState => ({
+      ...state,
+      hitPointMaximumReduction: { amount, clearsOnLongRest },
+    });
+    expect(stateChangePhrases(state, reduced(5, true))).toEqual([
+      "Hit point maximum reduction set to 5",
+    ]);
+    expect(stateChangePhrases(reduced(5, true), reduced(8, false))).toEqual([
+      "Hit point maximum reduction 5 to 8, lasting past a long rest",
+    ]);
+    expect(stateChangePhrases(reduced(5, true), state)).toEqual([
+      "Hit point maximum reduction cleared",
+    ]);
+  });
+
   it("names an effect starting and ending", () => {
     const raging: CharacterState = { ...state, activeEffects: [{ name: "Rage" }] };
     expect(stateChangePhrases(state, raging)).toEqual(["Rage set to active"]);
