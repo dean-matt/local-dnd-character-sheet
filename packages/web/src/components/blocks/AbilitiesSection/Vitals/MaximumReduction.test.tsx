@@ -85,6 +85,58 @@ describe("a reduction to the hit point maximum", () => {
       hitPointMaximumReduction: null,
     });
     await waitFor(() => expect(announced()).toContain("Reduction cleared. 15 hit points."));
+    expect(button("Reduce maximum")).toHaveFocus();
+  });
+
+  it.each([
+    [true, false],
+    [false, true],
+  ])(
+    "opens Change reduction on the held amount, a long rest clearing it %s",
+    async (clearsOnLongRest, checked) => {
+      renderVitals(
+        { hitPointMaximumReduction: { amount: 5, clearsOnLongRest } },
+        { hitPointMaximum: reducedMaximum },
+      );
+      fireEvent.click(await screen.findByRole("button", { name: "Change reduction" }));
+
+      expect(reduction()).toHaveValue(5);
+      expect(hp().getByRole("checkbox", { name: "Lasts past a long rest" })).toHaveProperty(
+        "checked",
+        checked,
+      );
+      expect(hp().queryByRole("button", { name: "Clear reduction" })).toBeNull();
+    },
+  );
+
+  it("replaces a held reduction with a larger one, lowering hit points to the new maximum", async () => {
+    const { writes } = renderVitals(
+      {
+        hitPoints: { current: 15, temporary: 0 },
+        hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true },
+      },
+      { hitPointMaximum: reducedMaximum },
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Change reduction" }));
+    fireEvent.change(reduction(), { target: { value: "8" } });
+    fireEvent.click(button("Reduce"));
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]).toMatchObject({
+      hitPoints: { current: 12, temporary: 0 },
+      hitPointMaximumReduction: { amount: 8, clearsOnLongRest: true },
+    });
+  });
+
+  it("says the maximum's override replaces a held reduction", async () => {
+    renderVitals(
+      { hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true } },
+      { hitPointMaximum: { computed: 15, manual: 25, terms: reducedMaximum.terms } },
+    );
+
+    expect(
+      await screen.findByText("The maximum's override replaces this reduction."),
+    ).toBeInTheDocument();
   });
 
   it("refuses an amount that is no whole number or would leave no maximum, writing nothing", async () => {

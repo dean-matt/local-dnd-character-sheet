@@ -339,9 +339,7 @@ const STATE_CHANGES: {
       before.hitPointMaximumReduction,
       after.hitPointMaximumReduction,
       (held) =>
-        held
-          ? `${held.amount}${held.clearsOnLongRest ? "" : ", lasting past a long rest"}`
-          : undefined,
+        held ? `${held.amount} ${held.clearsOnLongRest ? "until" : "past"} a long rest` : undefined,
     ),
   hitDice: (before, after) =>
     keyed(

@@ -98,14 +98,16 @@ export function MaximumReduction({
             <span className="text-muted">Maximum reduced by </span>
             <span className="font-semibold">{held.amount}</span>, {lasting(held)}
           </p>
-          <button
-            type="button"
-            aria-disabled={replace.writing}
-            onClick={clear}
-            className={`${BUTTON} border-border`}
-          >
-            Clear reduction
-          </button>
+          {!open && (
+            <button
+              type="button"
+              aria-disabled={replace.writing}
+              onClick={clear}
+              className={`${BUTTON} border-border`}
+            >
+              Clear reduction
+            </button>
+          )}
         </div>
       )}
       {held && overridden && (
