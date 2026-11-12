@@ -81,6 +81,15 @@ const concentrationSchema = z.strictObject({
   level: z.int().min(0).max(9),
 });
 
+/**
+ * A reduction to the hit point maximum, such as a wraith's Life Drain, lasting until a long rest
+ * or, where `clearsOnLongRest` is false, until the player clears it.
+ */
+const hitPointMaximumReductionSchema = z.strictObject({
+  amount: z.int().min(1),
+  clearsOnLongRest: z.boolean(),
+});
+
 const deathSavesSchema = z.strictObject({
   successes: z.int().min(0).max(3).default(0),
   failures: z.int().min(0).max(3).default(0),
@@ -91,6 +100,8 @@ const EXHAUSTION = "Exhaustion";
 
 export const characterStateSchema = z.strictObject({
   hitPoints: hitPointsSchema,
+  /** One reduction at most; a second one changes its amount. */
+  hitPointMaximumReduction: hitPointMaximumReductionSchema.nullable().default(null),
   hitDice: z
     .array(hitDicePoolSchema)
     .refine((pools) => isUnique(pools, (pool) => String(pool.die)), {
@@ -183,6 +194,8 @@ export function defaultCharacterState(): CharacterState {
 export type CharacterState = z.infer<typeof characterStateSchema>;
 
 export type Concentration = z.infer<typeof concentrationSchema>;
+
+export type HitPointMaximumReduction = z.infer<typeof hitPointMaximumReductionSchema>;
 
 /**
  * One feature's spent uses, capped at its count: a spent count past it, left by a catalog whose

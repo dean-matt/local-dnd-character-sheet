@@ -138,6 +138,12 @@ export {
 } from "./keys.ts";
 export { carriedWeight, encumberedSpeed } from "./load.ts";
 export {
+  hitPointMaximumUnder,
+  maximumReducedState,
+  type OverrideReduction,
+  overrideReduction,
+} from "./maximumReduction.ts";
+export {
   grantorKey,
   type OptionalFeatureEntitlement,
   type OptionalFeatureTally,
@@ -199,6 +205,7 @@ export {
   characterStateSchema,
   defaultCharacterState,
   featureUsesSpent,
+  type HitPointMaximumReduction,
   hitDicePoolSchema,
   resourceSchema,
   spellSlotSchema,

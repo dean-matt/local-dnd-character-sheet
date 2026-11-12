@@ -381,6 +381,29 @@ describe("LevelHistory", () => {
     expect(within(history()).getByRole("rowheader", { name: "3" })).toBeVisible();
   });
 
+  it("shows each level's hit points while a feat and a reduction add terms after them", async () => {
+    const character = warlock(2);
+    const derived = derivedRecord(character.definition);
+    derived.hitPointMaximum.terms = [
+      ...(derived.hitPointMaximum.terms ?? []),
+      { label: "Tough", value: 4 },
+      { label: "Maximum reduction", value: -5 },
+    ];
+    stubFetchByUrl({
+      "/api/classes/Warlock/XPHB/at/2": grants(2, []),
+      "/api/classes/Warlock/XPHB/subclasses/Fiend%20Patron/XPHB/at/2": grants(2, []),
+      "/api/characters/1/derived": derived,
+    });
+    renderSeeded(character);
+
+    await waitFor(() =>
+      expect(rows().map((row) => row[2])).toEqual([
+        "+10 (Level 1: d8 highest 8 +2 Con)",
+        "+7 (Level 2: d8 average 5 +2 Con)",
+      ]),
+    );
+  });
+
   it("opens a feature's rules text from its name", async () => {
     const character = warlock();
     stubHistory(character);

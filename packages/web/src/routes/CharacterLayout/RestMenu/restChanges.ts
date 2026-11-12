@@ -7,6 +7,7 @@ import {
   featureUsesSpent,
   type HitDie,
   hitDieSpentState,
+  hitPointMaximumUnder,
   type RestLength,
   type RollRecord,
   restedState,
@@ -46,21 +47,22 @@ function usesLeft(state: CharacterState, feature: FeatureUse): string {
 /**
  * Each field a rest changes, before and after, in the order the sheet reads them. Both states
  * are measured against the sheet by `sheetState`, so their pools and slots line up one to one;
- * a null current reads as `maximum`. A field the rest leaves alone is omitted.
+ * a null current reads as the maximum under each state's own reduction. A field the rest leaves
+ * alone is omitted.
  */
 function restChanges(
+  definition: CharacterDefinition,
+  derived: CharacterDerived,
   before: CharacterState,
   after: CharacterState,
-  maximum: number,
   features: readonly FeatureUse[],
 ): RestChange[] {
+  const hitPoints = ({ hitPoints, hitPointMaximumReduction }: CharacterState) => {
+    const maximum = hitPointMaximumUnder(definition, derived, hitPointMaximumReduction);
+    return `${hitPoints.current ?? maximum}/${maximum}`;
+  };
   const rows: RestChange[] = [
-    {
-      key: "hitPoints",
-      label: "Hit points",
-      before: `${before.hitPoints.current ?? maximum}/${maximum}`,
-      after: `${after.hitPoints.current ?? maximum}/${maximum}`,
-    },
+    { key: "hitPoints", label: "Hit points", before: hitPoints(before), after: hitPoints(after) },
     {
       key: "temporary",
       label: "Temporary hit points",
@@ -165,11 +167,6 @@ export function restPreview(
 ): { after: CharacterState; changes: RestChange[] } {
   const during = spentState(definition, derived, state, spends).state;
   const after = restedState(definition, derived, during, length, picked, features);
-  const changes = restChanges(
-    sheetState(derived, state),
-    after,
-    derivedValue(derived.hitPointMaximum),
-    features,
-  );
+  const changes = restChanges(definition, derived, sheetState(derived, state), after, features);
   return { after, changes };
 }

@@ -33,11 +33,14 @@ function lookedUp(body: string) {
   return { spells: [spell ? { name: spell.name, level: spell.level } : null] };
 }
 
-function derived(defenses?: CharacterDerived["defenses"]): CharacterDerived {
+function derived(
+  defenses?: CharacterDerived["defenses"],
+  hitPointMaximum: CharacterDerived["hitPointMaximum"] = { computed: 20, manual: null, terms: [] },
+): CharacterDerived {
   const record = derivedRecord();
   return {
     ...record,
-    hitPointMaximum: { computed: 20, manual: null, terms: [] },
+    hitPointMaximum,
     defenses: defenses ?? record.defenses,
   };
 }
@@ -56,9 +59,9 @@ export function vex(noInstantDeath?: boolean): CharacterRecord {
  * each state write sends and answers later reads with it, as a reload would. `fail` answers
  * every write with a 500 whose error names the attempt, "Disk full, write 2". `hold` keeps
  * each write unanswered until `release`. A spell search answers Bless, Hold Person and the
- * homebrew Hexing Ward. `defenses` stands in for the derived block's. Returns the writes, in
- * order, the spell search URLs, `release`, and `reload`, which renders the cards again over a
- * fresh cache.
+ * homebrew Hexing Ward. `defenses` and `hitPointMaximum` stand in for the derived block's.
+ * Returns the writes, in order, the spell search URLs, `release`, and `reload`, which renders
+ * the cards again over a fresh cache.
  */
 export function renderVitals(
   state: Partial<CharacterState>,
@@ -67,11 +70,13 @@ export function renderVitals(
     fail = false,
     hold = false,
     defenses,
+    hitPointMaximum,
   }: {
     character?: CharacterRecord;
     fail?: boolean;
     hold?: boolean;
     defenses?: CharacterDerived["defenses"];
+    hitPointMaximum?: CharacterDerived["hitPointMaximum"];
   } = {},
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
@@ -110,7 +115,7 @@ export function renderVitals(
     }),
   );
   const render = () =>
-    renderWithClient(<Vitals character={character} derived={derived(defenses)} />);
+    renderWithClient(<Vitals character={character} derived={derived(defenses, hitPointMaximum)} />);
   const view = render();
   return {
     writes,

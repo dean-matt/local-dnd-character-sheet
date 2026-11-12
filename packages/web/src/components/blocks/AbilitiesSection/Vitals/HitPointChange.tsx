@@ -21,6 +21,7 @@ import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
 import { Select } from "../../../Select.tsx";
 import { signed } from "../../signed.ts";
+import { BUTTON, parseAmount } from "./hitPointAmount.ts";
 
 type Changed = ReturnType<typeof healedState>;
 type Damaged = ReturnType<typeof damagedState>;
@@ -39,18 +40,6 @@ function defended(type: string, entered: number, { amount, applied }: Damaged) {
   if (only === undefined) return undefined;
   const verb = applied.length === 1 ? VERBS[only] : "changed";
   return `${capitalize(type)} ${conjunction.format(applied)} ${verb} ${entered} damage to ${amount}.`;
-}
-
-const BUTTON =
-  "h-8 rounded-control border bg-surface px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
-
-/** Why `typed` is no amount of hit points, or the whole number it is. */
-function parseAmount(typed: string): { amount: number } | { error: string } {
-  if (typed.trim() === "") return { error: "Enter an amount." };
-  const amount = Number(typed);
-  if (!Number.isInteger(amount)) return { error: "The amount is a whole number." };
-  if (amount < 1) return { error: "The amount is 1 or more." };
-  return { amount };
 }
 
 function withTemporary(state: CharacterState, temporary: number): CharacterState {

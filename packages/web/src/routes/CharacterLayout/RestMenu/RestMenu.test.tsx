@@ -245,6 +245,54 @@ describe("RestMenu", () => {
     expect(writes).toEqual([]);
   });
 
+  it("reads hit points after a long rest against the maximum its cleared reduction restores", async () => {
+    const reduced = {
+      computed: 15,
+      manual: null,
+      terms: [
+        { label: "Hit dice", value: 20 },
+        { label: "Maximum reduction", value: -5 },
+      ],
+    };
+    const writes = renderLive(
+      {
+        hitPoints: { current: 12, temporary: 0 },
+        hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true },
+      },
+      { derivedBlock: { ...derived(), hitPointMaximum: reduced } },
+    );
+    expect(listed(await open("Long rest"))).toContain("Hit points: 12/15 → 20/20");
+    expect(writes).toEqual([]);
+  });
+
+  it("reads hit points after a long rest against the override its cleared reduction lowered", async () => {
+    const character = characterRecord("1", "Vex") as CharacterRecord;
+    renderLive(
+      {
+        hitPoints: { current: 30, temporary: 0 },
+        hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true },
+      },
+      {
+        character: {
+          ...character,
+          definition: { ...character.definition, overrides: { hitPointMaximum: 40 } },
+        },
+        derivedBlock: {
+          ...derived(),
+          hitPointMaximum: {
+            computed: 15,
+            manual: 35,
+            terms: [
+              { label: "Hit dice", value: 20 },
+              { label: "Maximum reduction", value: -5 },
+            ],
+          },
+        },
+      },
+    );
+    expect(listed(await open("Long rest"))).toContain("Hit points: 30/35 → 40/40");
+  });
+
   it("lists only what a short rest resets", async () => {
     renderLive({
       ...spent(),
