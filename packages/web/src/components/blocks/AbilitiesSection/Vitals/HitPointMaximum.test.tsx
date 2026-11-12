@@ -48,6 +48,7 @@ describe("the hit point maximum's breakdown", () => {
     try {
       fireEvent.focus(trigger);
       expect(breakdown()).toBeInTheDocument();
+      expect(within(breakdown()).queryByRole("button", { name: "Close" })).toBeNull();
       fireEvent.keyDown(trigger, { key: "Escape" });
       fireEvent.mouseEnter(trigger);
       expect(breakdown()).toBeInTheDocument();
@@ -55,8 +56,9 @@ describe("the hit point maximum's breakdown", () => {
       fireEvent.mouseLeave(trigger);
       act(() => vi.advanceTimersByTime(1000));
       expect(breakdown()).toBeInTheDocument();
-      fireEvent.keyDown(trigger, { key: "Escape" });
+      fireEvent.click(within(breakdown()).getByRole("button", { name: "Close" }));
       expect(screen.queryByRole("group", { name: "Hit point maximum breakdown" })).toBeNull();
+      expect(trigger).toHaveFocus();
     } finally {
       vi.useRealTimers();
     }

@@ -11,6 +11,7 @@ import {
   maximumReducedState,
 } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { useContext, useRef, useState } from "react";
 import { z } from "zod";
 import { characterStateKey } from "../../../../hooks/characterKeys.ts";
@@ -37,7 +38,7 @@ const lasting = ({ clearsOnLongRest }: HitPointMaximumReduction) =>
   clearsOnLongRest ? "until a long rest" : "past a long rest";
 
 /**
- * The hit point maximum, behind a breakdown that sets temporary hit points, the reduction to the
+ * The hit point maximum, behind a breakdown, with Close while a click holds it open, that sets temporary hit points, the reduction to the
  * maximum and whether it lasts past a long rest, and on the character page the override. The
  * terms and "Overridden from" both read the maximum before the reduction, which the override
  * replaces. Each change is one state write, made in turn against the state the last one left,
@@ -110,103 +111,121 @@ export function HitPointMaximum({
         title={holds}
         label="Hit point maximum breakdown"
       >
-        <span className="flex w-56 flex-col gap-1.5">
-          <SwatchRow label="Temporary" swatch="var(--color-temporary)">
-            <Field
-              mode="edit"
-              label="Temporary hit points"
-              labelHidden
-              current={temporary}
-              format={count}
-              parse={parseCount}
-              schema={z.int(WHOLE)}
-              inputMode="numeric"
-              placeholder="0"
-              inputClassName="w-16 py-0.5 text-right"
-              onSave={(next: number) =>
-                save((latest) => ({
-                  after: { ...latest, hitPoints: { ...latest.hitPoints, temporary: next } },
-                  text:
-                    next === 0 ? "Temporary hit points cleared." : `${next} temporary hit points.`,
-                }))
-              }
-            />
-          </SwatchRow>
-          <hr className="border-border" />
-          {before.manual !== null ? (
-            <p>
-              Overridden from {before.computed}.
-              {saveOverride && " Clear the override to return to it."}
-            </p>
-          ) : (
-            before.terms && before.terms.length > 0 && <TermList terms={before.terms} />
-          )}
-          <SwatchRow label="Reduction" swatch={HATCH}>
-            <Field
-              mode="edit"
-              label="Hit point maximum reduction"
-              labelHidden
-              current={held?.amount ?? 0}
-              format={count}
-              parse={parseCount}
-              schema={z.int(WHOLE).max(unreduced - 1, {
-                error: `The reduction is less than the maximum, ${unreduced}.`,
-              })}
-              inputMode="numeric"
-              placeholder="0"
-              inputClassName="w-16 py-0.5 text-right"
-              onSave={(amount: number) =>
-                reduce((latest) =>
-                  amount === 0
-                    ? null
-                    : { amount, clearsOnLongRest: latest?.clearsOnLongRest ?? true },
-                )
-              }
-            />
-          </SwatchRow>
-          {held && (
-            <label className="flex items-center gap-1.5 pl-4 text-muted">
-              <input
-                type="checkbox"
-                checked={!held.clearsOnLongRest}
-                onChange={() => {
-                  setLastingError(undefined);
-                  reduce(
-                    (latest) => latest && { ...latest, clearsOnLongRest: !latest.clearsOnLongRest },
-                  ).catch((error) =>
-                    setLastingError(error instanceof Error ? error.message : "Save failed."),
-                  );
-                }}
-              />
-              Lasts past a long rest
-            </label>
-          )}
-          {lastingError && (
-            <p role="alert" className="text-error">
-              The reduction was not changed: {lastingError}
-            </p>
-          )}
-          {saveOverride && (
-            <SwatchRow label="Override">
+        {({ pinned, close }) => (
+          <span className="flex w-56 flex-col gap-1.5">
+            <span className="flex items-center justify-between">
+              <span className="font-semibold">Hit Points</span>
+              {pinned && (
+                <button
+                  type="button"
+                  aria-label="Close"
+                  onClick={close}
+                  className="flex size-5 items-center justify-center text-muted"
+                >
+                  <X size={12} aria-hidden="true" />
+                </button>
+              )}
+            </span>
+            <SwatchRow label="Temporary" swatch="var(--color-temporary)">
               <Field
                 mode="edit"
-                label="Hit point maximum override"
+                label="Temporary hit points"
                 labelHidden
-                value={before}
-                format={String}
+                current={temporary}
+                format={count}
                 parse={parseCount}
-                schema={shape.hitPointMaximum.shape.computed}
+                schema={z.int(WHOLE)}
+                inputMode="numeric"
+                placeholder="0"
                 inputClassName="w-16 py-0.5 text-right"
-                onSave={(next: number | null) => saveOverride("hitPointMaximum", next)}
+                onSave={(next: number) =>
+                  save((latest) => ({
+                    after: { ...latest, hitPoints: { ...latest.hitPoints, temporary: next } },
+                    text:
+                      next === 0
+                        ? "Temporary hit points cleared."
+                        : `${next} temporary hit points.`,
+                  }))
+                }
               />
             </SwatchRow>
-          )}
-          <hr className="border-border" />
-          <span className="flex justify-between gap-4 font-semibold">
-            <span>Maximum</span>
-            <span>{hitPointMaximumUnder(definition, derived, held)}</span>
+            <hr className="border-border" />
+            {before.manual !== null ? (
+              <p>
+                Overridden from {before.computed}.
+                {saveOverride && " Clear the override to return to it."}
+              </p>
+            ) : (
+              before.terms && before.terms.length > 0 && <TermList terms={before.terms} />
+            )}
+            <SwatchRow label="Reduction" swatch={HATCH}>
+              <Field
+                mode="edit"
+                label="Hit point maximum reduction"
+                labelHidden
+                current={held?.amount ?? 0}
+                format={count}
+                parse={parseCount}
+                schema={z.int(WHOLE).max(unreduced - 1, {
+                  error: `The reduction is less than the maximum, ${unreduced}.`,
+                })}
+                inputMode="numeric"
+                placeholder="0"
+                inputClassName="w-16 py-0.5 text-right"
+                onSave={(amount: number) =>
+                  reduce((latest) =>
+                    amount === 0
+                      ? null
+                      : { amount, clearsOnLongRest: latest?.clearsOnLongRest ?? true },
+                  )
+                }
+              />
+            </SwatchRow>
+            {held && (
+              <label className="flex items-center gap-1.5 pl-4 text-muted">
+                <input
+                  type="checkbox"
+                  checked={!held.clearsOnLongRest}
+                  onChange={() => {
+                    setLastingError(undefined);
+                    reduce(
+                      (latest) =>
+                        latest && { ...latest, clearsOnLongRest: !latest.clearsOnLongRest },
+                    ).catch((error) =>
+                      setLastingError(error instanceof Error ? error.message : "Save failed."),
+                    );
+                  }}
+                />
+                Lasts past a long rest
+              </label>
+            )}
+            {lastingError && (
+              <p role="alert" className="text-error">
+                The reduction was not changed: {lastingError}
+              </p>
+            )}
+            {saveOverride && (
+              <SwatchRow label="Override">
+                <Field
+                  mode="edit"
+                  label="Hit point maximum override"
+                  labelHidden
+                  value={before}
+                  format={String}
+                  parse={parseCount}
+                  schema={shape.hitPointMaximum.shape.computed}
+                  inputClassName="w-16 py-0.5 text-right"
+                  onSave={(next: number | null) => saveOverride("hitPointMaximum", next)}
+                />
+              </SwatchRow>
+            )}
+            <hr className="border-border" />
+            <span className="flex justify-between gap-4 font-semibold">
+              <span>Maximum</span>
+              <span>{hitPointMaximumUnder(definition, derived, held)}</span>
+            </span>
           </span>
-        </span>
+        )}
       </Popover>
       <Announcer announced={replace.announced} />
     </>

@@ -48,7 +48,8 @@ export interface PopoverProps {
   title?: string;
   /** For a caller that hands focus back to the trigger, such as after a modal it opened. */
   triggerRef?: RefObject<HTMLButtonElement | null>;
-  children: ReactNode;
+  /** The content, or a function of whether a click pinned it open and a `close` that unpins it. */
+  children: ReactNode | ((pinned: { pinned: boolean; close: () => void }) => ReactNode);
 }
 
 export function Popover({
@@ -192,7 +193,9 @@ export function Popover({
           style={inModal ? anchoredStyle(anchorName, "bottom span-right") : undefined}
           className={`${inModal ? ANCHORED_CLASSES : "absolute top-full left-0 z-10"} mt-1 w-max max-w-xs rounded-card border border-border bg-surface p-2 text-ink text-row shadow-popover`}
         >
-          <DepthContext.Provider value={depth + 1}>{children}</DepthContext.Provider>
+          <DepthContext.Provider value={depth + 1}>
+            {typeof children === "function" ? children({ pinned, close }) : children}
+          </DepthContext.Provider>
         </span>
       )}
     </span>
