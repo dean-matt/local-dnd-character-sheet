@@ -209,6 +209,18 @@ describe("HitPointChange", () => {
     expect(screen.queryByRole("checkbox", { name: "Critical hit" })).not.toBeInTheDocument();
   });
 
+  it("clears Critical hit once the hit points change without damage", async () => {
+    renderVitals({ hitPoints: { current: 0, temporary: 0 } });
+    const critical = await screen.findByRole("checkbox", { name: "Critical hit" });
+    fireEvent.click(critical);
+    expect(critical).toBeChecked();
+    fireEvent.change(amount(), { target: { value: "5" } });
+    fireEvent.click(button("Grant temp"));
+
+    await waitFor(() => expect(announced()).toHaveTextContent("5 temporary hit points."));
+    expect(screen.getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
+  });
+
   it("asks before a critical hit at 0 makes the third failure", async () => {
     const { writes } = renderVitals({
       hitPoints: { current: 0, temporary: 0 },
