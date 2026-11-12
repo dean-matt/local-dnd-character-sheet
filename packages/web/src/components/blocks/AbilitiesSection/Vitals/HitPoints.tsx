@@ -6,22 +6,21 @@ import {
   derivedValue,
   hitPointMaximumUnder,
   overrideKey,
-  overrideReduction,
   sheetState,
 } from "@dnd/character";
 import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
 import { HitPointChange } from "./HitPointChange.tsx";
+import { HitPointMaximum } from "./HitPointMaximum.tsx";
 import { HitPointRing } from "./HitPointRing.tsx";
-import { MaximumReduction } from "./MaximumReduction.tsx";
 
 const { shape } = characterDerivedSchema;
 
 /**
- * Current and temporary hit points over the maximum in a ring, each die's remaining hit dice
- * read against the derived totals by `sheetState`, and beside the ring the controls that apply
- * damage, healing, temporary hit points and a reduction to the maximum.
+ * Current and temporary hit points over the maximum in a ring, the maximum's breakdown setting
+ * temporary hit points and the reduction, each die's remaining hit dice read against the
+ * derived totals by `sheetState`, and beside the ring the controls that apply damage and healing.
  */
 export function HitPoints({
   character,
@@ -59,19 +58,11 @@ export function HitPoints({
           </span>
           <span className="text-muted text-title">
             <span aria-hidden="true">/ </span>
-            <DerivedValue
-              name="Hit point maximum"
-              value={derived.hitPointMaximum}
-              format={String}
-              overrideKey="hitPointMaximum"
-              schema={shape.hitPointMaximum.shape.computed}
-              overlay={overrideReduction(character.definition, derived)}
-            />
+            <HitPointMaximum character={character} derived={derived} state={state} />
           </span>
         </HitPointRing>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <HitPointChange character={character} derived={derived} state={state} />
-          <MaximumReduction character={character} derived={derived} state={state} />
           {dice.length > 0 && (
             <div className="text-label text-muted">
               <h3 className="font-semibold text-[10px] uppercase tracking-[0.06em]">Hit Dice</h3>

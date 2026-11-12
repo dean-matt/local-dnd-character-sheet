@@ -1,4 +1,4 @@
-import { type Derived, derivedValue, type OverrideReduction } from "@dnd/character";
+import { type Derived, derivedValue } from "@dnd/character";
 import { useContext } from "react";
 import type { z } from "zod";
 import { Field } from "../Field/Field.tsx";
@@ -19,7 +19,6 @@ export function DerivedValue({
   named = false,
   overrideKey,
   schema,
-  overlay,
 }: {
   name: string;
   value: Derived<number>;
@@ -29,8 +28,6 @@ export function DerivedValue({
   /** The definition's `overrides` key for this value; without one it offers no override. */
   overrideKey?: string;
   schema?: z.ZodType<number>;
-  /** Where set on an override, terms taken from it and the value as typed, which the field edits. */
-  overlay?: OverrideReduction;
 }) {
   const save = useContext(SaveOverride);
   const field = (
@@ -53,7 +50,6 @@ export function DerivedValue({
         format={format}
         overrideKey={overrideKey}
         schema={schema}
-        overlay={overlay}
       />
     </Popover>
   );

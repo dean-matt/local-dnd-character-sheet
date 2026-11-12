@@ -3,11 +3,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { z } from "zod";
 import { apiMutate } from "../lib/api.ts";
 import {
-  characterDefinitionWriteScope,
   characterKey,
   charactersKey,
   characterUndoKey,
   characterUndoWriteKey,
+  characterWriteScope,
 } from "./characterKeys.ts";
 
 /**
@@ -34,7 +34,7 @@ export function useUndoCharacterChange(id: string) {
 
   return useMutation<CharacterRecord, Error, UndoBackTo | undefined>({
     mutationKey: characterUndoWriteKey(id),
-    scope: { id: characterDefinitionWriteScope(id) },
+    scope: { id: characterWriteScope(id) },
     mutationFn: (target) =>
       apiMutate(
         "POST",

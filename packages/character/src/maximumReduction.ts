@@ -1,11 +1,14 @@
-import { type Breakdown, breakdown, type Term } from "@dnd/rules";
-import type { CharacterDerived } from "./characterDerived.ts";
+import { type Breakdown, breakdown } from "@dnd/rules";
+import { type CharacterDerived, characterDerivedSchema } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
-import type { TermReference } from "./derivedField.ts";
+import type { Derived, TermReference } from "./derivedField.ts";
+import { derivedValue } from "./resolve.ts";
 import type { CharacterState, HitPointMaximumReduction } from "./state.ts";
 
 /** The label of the term a reduction adds to the hit point maximum's breakdown. */
 const REDUCTION_LABEL = "Maximum reduction";
+
+const overrideSchema = characterDerivedSchema.shape.hitPointMaximum.shape.computed;
 
 type Sheet = Pick<CharacterDerived, "hitPointMaximum">;
 type Overrides = Pick<CharacterDefinition, "overrides">;
@@ -35,29 +38,19 @@ export function reducedOverride(
 }
 
 /**
- * The maximum before any reduction: the override as typed where the derived block applied one,
- * otherwise the computed total less the reduction's term.
+ * The hit point maximum before any reduction: the computed total and terms less the reduction's
+ * term, and the override the definition holds, read from the definition rather than the derived
+ * block so it stays current while the derived block reloads after an edit. An override the
+ * derived schema refuses, which the derived block drops, reads as none.
  */
-function unreducedMaximum(definition: Overrides, derived: Sheet): number {
-  const { computed, manual, terms = [] } = derived.hitPointMaximum;
-  if (manual !== null) return Number(definition.overrides.hitPointMaximum);
-  return computed - (terms.find((term) => term.label === REDUCTION_LABEL)?.value ?? 0);
-}
-
-/** An override as typed and the terms the sheet takes from it, for a breakdown that names both. */
-export type OverrideReduction = { typed: number; terms: Term<TermReference>[] };
-
-/** The override and the reduction's term over it, where a held reduction lowers an override. */
-export function overrideReduction(
-  definition: Overrides,
-  derived: Sheet,
-): OverrideReduction | undefined {
-  const { manual } = derived.hitPointMaximum;
-  if (manual === null) return undefined;
-  const typed = unreducedMaximum(definition, derived);
-  return typed === manual
-    ? undefined
-    : { typed, terms: [{ label: REDUCTION_LABEL, value: manual - typed }] };
+export function maximumBeforeReduction(definition: Overrides, derived: Sheet): Derived<number> {
+  const { computed, terms = [] } = derived.hitPointMaximum;
+  const typed = overrideSchema.safeParse(definition.overrides.hitPointMaximum);
+  return {
+    computed: computed - (terms.find((term) => term.label === REDUCTION_LABEL)?.value ?? 0),
+    manual: typed.success ? typed.data : null,
+    terms: terms.filter((term) => term.label !== REDUCTION_LABEL),
+  };
 }
 
 /** The hit point maximum the sheet would show with `reduction` held in place of the derived block's. */
@@ -66,7 +59,7 @@ export function hitPointMaximumUnder(
   derived: Sheet,
   reduction: HitPointMaximumReduction | null,
 ): number {
-  const unreduced = unreducedMaximum(definition, derived);
+  const unreduced = derivedValue(maximumBeforeReduction(definition, derived));
   return unreduced - taken(unreduced, reduction);
 }
 

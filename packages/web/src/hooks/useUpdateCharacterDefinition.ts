@@ -7,9 +7,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiMutate } from "../lib/api.ts";
 import {
   characterDefinitionWriteKey,
-  characterDefinitionWriteScope,
   characterKey,
   charactersKey,
+  characterWriteScope,
 } from "./characterKeys.ts";
 
 export type DefinitionEdit = (definition: CharacterDefinition) => CharacterDefinition;
@@ -39,7 +39,7 @@ export function useUpdateCharacterDefinition(id: string) {
 
   return useMutation<CharacterRecord, Error, DefinitionWrite>({
     mutationKey: characterDefinitionWriteKey(id),
-    scope: { id: characterDefinitionWriteScope(id) },
+    scope: { id: characterWriteScope(id) },
     mutationFn: (write) => {
       const record = queryClient.getQueryData<CharacterRecord>(characterKey(id));
       if (!record) throw new Error("The character has not loaded yet.");

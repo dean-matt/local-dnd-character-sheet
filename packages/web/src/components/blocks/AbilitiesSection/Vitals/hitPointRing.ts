@@ -35,7 +35,7 @@ export function hitPointRing({
   };
 }
 
-const HATCH =
+export const HATCH =
   "repeating-linear-gradient(45deg, var(--color-muted) 0 2px, var(--color-subtle) 2px 5px)";
 
 /**

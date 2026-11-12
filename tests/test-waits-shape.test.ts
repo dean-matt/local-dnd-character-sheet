@@ -29,6 +29,10 @@ const ALLOWED_SLEEPS = new Map<string, { count: number; why: string }>([
     { count: 2, why: "a save that must not fire, past the debounce window, has no signal" },
   ],
   [
+    "packages/web/src/components/blocks/AbilitiesSection/Vitals/HitPointMaximum.test.tsx",
+    { count: 1, why: "a state write that must not follow a cleared reduction has no signal" },
+  ],
+  [
     "packages/web/src/hooks/useCharacterPages.test.tsx",
     { count: 2, why: "a request that must not go out has no signal" },
   ],
