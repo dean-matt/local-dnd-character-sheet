@@ -74,6 +74,13 @@ describe("Vitals", () => {
     expect(dice.getByRole("button", { name: "Roll d10 Hit Die" })).toBeInTheDocument();
   });
 
+  it("drops the Hit Dice card for a character with no hit dice", async () => {
+    renderVitals({ hitDice: [] }, { ...derived(), hitDice: [] });
+
+    await card("Hit Points");
+    expect(screen.queryByRole("region", { name: "Hit Dice" })).not.toBeInTheDocument();
+  });
+
   it("reads a new character at its maximum", async () => {
     renderVitals({});
 

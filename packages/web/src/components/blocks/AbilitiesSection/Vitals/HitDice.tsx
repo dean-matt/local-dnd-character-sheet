@@ -13,7 +13,7 @@ import { DerivedValue } from "../../DerivedValue.tsx";
 
 const { shape } = characterDerivedSchema;
 
-/** Each die's remaining hit dice, read by `sheetState` against its derived total, with a roll of one die plus Constitution. */
+/** Renders nothing for a character with no hit dice pools. */
 export function HitDice({
   character,
   derived,
