@@ -1,12 +1,7 @@
-import { expect, type Locator, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { derivedRecord } from "../packages/web/src/test/records.ts";
-import { box } from "./box.ts";
+import { middle } from "./box.ts";
 import { createCharacter } from "./character.ts";
-
-async function middle(locator: Locator) {
-  const b = await box(locator);
-  return b.y + b.height / 2;
-}
 
 for (const { trigger, name } of [
   { trigger: /^Hit point maximum \d+/, name: "Hit point maximum" },
