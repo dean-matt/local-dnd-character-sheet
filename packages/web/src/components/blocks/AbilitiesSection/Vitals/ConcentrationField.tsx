@@ -1,5 +1,6 @@
 import type { CharacterRecord, Concentration, EntryRef } from "@dnd/character";
 import { useEffect, useRef, useState } from "react";
+import { useConcentrationName } from "../../../../hooks/useConcentrationName.ts";
 import { useSpellLookup } from "../../../../hooks/useSpellLookup.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
 import { FormField } from "../../../FormField.tsx";
@@ -59,11 +60,8 @@ export function ConcentrationField({
     target?.focus();
     setFocusNext(undefined);
   }, [focusNext, held]);
-  const heldLookup = useSpellLookup(held ? [held.spell] : [], noContext);
+  const heldLabel = useConcentrationName(held) ?? "a homebrew spell";
   const pickedLookup = useSpellLookup(picked ? [picked.ref] : [], noContext);
-  const heldLabel =
-    (held && ("name" in held.spell ? held.spell.name : heldLookup.looked[0]?.name)) ??
-    "a homebrew spell";
   const own = pickedLookup.looked[0];
   const unread = pickedLookup.failed || own === null;
   const chosen = level ?? own?.level;
