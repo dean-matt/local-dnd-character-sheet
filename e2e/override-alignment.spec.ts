@@ -1,0 +1,38 @@
+import { expect, type Locator, test } from "@playwright/test";
+import { derivedRecord } from "../packages/web/src/test/records.ts";
+import { box } from "./box.ts";
+import { createCharacter } from "./character.ts";
+
+async function middle(locator: Locator) {
+  const b = await box(locator);
+  return b.y + b.height / 2;
+}
+
+for (const { trigger, name } of [
+  { trigger: /^Hit point maximum \d+/, name: "Hit point maximum" },
+  { trigger: /^Armor Class \d+/, name: "Armor Class" },
+]) {
+  test(`the ${name} breakdown centers its Override field on its label`, async ({
+    page,
+    request,
+  }) => {
+    const id = await createCharacter(request, `E2E Override ${Date.now()}`);
+    try {
+      // CI runs with no content.db, so the derived block the breakdowns draw from is stubbed.
+      await page.route(`**/api/characters/${id}/derived`, (route) =>
+        route.fulfill({ json: derivedRecord() }),
+      );
+      await page.setViewportSize({ width: 1440, height: 800 });
+      await page.goto(`/characters/${id}`);
+      await page.getByRole("button", { name: trigger }).click();
+
+      const dialog = page.getByRole("group", { name: `${name} breakdown` });
+      const field = dialog.getByRole("textbox", { name: `${name} override` });
+      const label = dialog.getByText("Override", { exact: true });
+      await expect(field).toBeVisible();
+      expect(Math.abs((await middle(field)) - (await middle(label)))).toBeLessThanOrEqual(1);
+    } finally {
+      await request.delete(`/api/characters/${id}`);
+    }
+  });
+}
