@@ -1,11 +1,6 @@
 import { expect, type Locator, test } from "@playwright/test";
-import { box } from "./box.ts";
+import { middle } from "./box.ts";
 import { createCharacter } from "./character.ts";
-
-async function middle(locator: Locator) {
-  const b = await box(locator);
-  return b.y + b.height / 2;
-}
 
 const fontSize = (locator: Locator) =>
   locator.evaluate((element) => getComputedStyle(element).fontSize);

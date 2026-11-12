@@ -56,7 +56,7 @@ export function DerivedBreakdown({
       )}
       {children}
       {editable && (
-        <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <span aria-hidden="true" className="text-muted">
             {label}
           </span>

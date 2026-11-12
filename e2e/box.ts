@@ -10,3 +10,8 @@ export async function edges(locator: Locator) {
   const b = await box(locator);
   return { top: b.y, bottom: b.y + b.height };
 }
+
+export async function middle(locator: Locator) {
+  const b = await box(locator);
+  return b.y + b.height / 2;
+}
