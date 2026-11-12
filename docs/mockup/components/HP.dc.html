@@ -147,7 +147,10 @@ class Component extends DCLogic {
       hoverOpen: () => this.setState({ hover: true }),
       hoverClose: () => this.setState({ hover: false }),
       togglePin: () => this.setState(this.state.pinned ? { pinned: false, hover: false } : { pinned: true }),
-      blurClose: (e) => { if (!e.currentTarget.contains(e.relatedTarget)) this.setState({ hover: false }); },
+      blurClose: (e) => {
+        const el = e.currentTarget;
+        if (!el.contains(e.relatedTarget) && !el.matches(':hover')) this.setState({ hover: false });
+      },
       escClose: (e) => {
         if (e.key !== 'Escape') return;
         e.currentTarget.querySelector('.hp-max').focus();
