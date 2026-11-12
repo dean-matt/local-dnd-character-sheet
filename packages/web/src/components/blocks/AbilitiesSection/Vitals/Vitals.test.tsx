@@ -37,7 +37,7 @@ const announced = () =>
     .getAllByRole("status")
     .find((region) => region.className === "sr-only");
 
-const bar = (hp: HTMLElement) => hp.querySelector("[aria-hidden='true'] > div") as HTMLElement;
+const ring = async () => (await card("Hit Points")).getByRole("img");
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -54,28 +54,45 @@ describe("Vitals", () => {
     const pools = hp.getAllByRole("listitem");
     expect(pools[0]).toHaveTextContent("1/3 d8");
     expect(pools[1]).toHaveTextContent("2/2 d10");
-    expect(hp.queryByText(/^\+\d+ temp$/)).not.toBeInTheDocument();
-    expect(bar(screen.getByRole("region", { name: "Hit Points" })).style.width).toBe("60%");
+    expect(await ring()).toHaveAccessibleName("12 of 20 hit points");
+    expect(hp.getByText("12")).not.toHaveClass("text-temporary");
   });
 
-  it("reads a new character at its maximum, with a full bar", async () => {
+  it("reads a new character at its maximum", async () => {
     renderVitals({});
 
     const hp = await card("Hit Points");
     expect(hp.getAllByText("20")).toHaveLength(2);
-    expect(bar(screen.getByRole("region", { name: "Hit Points" })).style.width).toBe("100%");
+    expect(await ring()).toHaveAccessibleName("20 of 20 hit points");
   });
 
-  it("shows temporary hit points only when there are some", async () => {
+  it("counts temporary hit points into the first number, and marks it", async () => {
     renderVitals({ hitPoints: { current: 20, temporary: 5 } });
 
-    expect((await card("Hit Points")).getByText("+5 temp")).toHaveClass("text-positive");
+    expect((await card("Hit Points")).getByText("25")).toHaveClass("text-temporary");
+    expect(await ring()).toHaveAccessibleName("20 of 20 hit points, 5 temporary");
   });
 
-  it("keeps the bar inside its track when current leaves the range", async () => {
-    renderVitals({ hitPoints: { current: -3, temporary: 0 } });
-    await card("Hit Points");
-    expect(bar(screen.getByRole("region", { name: "Hit Points" })).style.width).toBe("0%");
+  it("names a reduction to the maximum", async () => {
+    renderVitals(
+      {
+        hitPoints: { current: 10, temporary: 0 },
+        hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true },
+      },
+      {
+        ...derived(),
+        hitPointMaximum: {
+          computed: 15,
+          manual: null,
+          terms: [
+            { label: "Hit dice", value: 20 },
+            { label: "Maximum reduction", value: -5 },
+          ],
+        },
+      },
+    );
+
+    expect(await ring()).toHaveAccessibleName("10 of 15 hit points, maximum reduced by 5");
   });
 
   it("marks a maximum the user typed over", async () => {

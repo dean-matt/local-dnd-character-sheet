@@ -53,8 +53,10 @@
    * Dark mixes 10% white into Tailwind's red-400 in oklab; red-400 alone measures 4.30:1 on subtle.
    */
   --color-error: light-dark(#9f0712, #ff7676);
-  /* What restores hit points or shields them: temporary hit points, healing. */
+  /* What restores hit points: healing, a stable character. */
   --color-positive: light-dark(#2f6b4f, color-mix(in oklab, #2f6b4f 50%, white));
+  /* Temporary hit points, apart from the accent of the hit points they shield. */
+  --color-temporary: light-dark(#2f6fb5, color-mix(in oklab, #2f6fb5 60%, white));
   /* A price: the gold chip a row's cost sits in. */
   --color-money: light-dark(#7a5b00, #e5cf8f);
   --color-money-tint: light-dark(#fbf3dc, color-mix(in oklab, #7a5b00 30%, var(--color-gray-800)));

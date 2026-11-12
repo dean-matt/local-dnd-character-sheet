@@ -131,7 +131,7 @@ says how much of the artboard the app builds today.
 | `Saves` | #227, #487 | read-only |
 | `Skills` | #227, #399, #487 | the rings and homebrew skills edit, the rest read-only |
 | `Combat` | #227, #228 | read-only |
-| `HP` | #277, #487, #1026, #1418, #1419 | Damage, Heal, the damage type, temporary hit points, the reduction and the override, not the ring or the breakdown's temporary and reduction fields |
+| `HP` | #277, #487, #1026, #1418, #1419 | the ring, Damage, Heal, the damage type, temporary hit points, the reduction and the override, not the breakdown's temporary and reduction fields |
 | `HitDice` | #1420 | nothing |
 | `Attacks` | #398, #487 | read-only |
 | `Status` | #280 | read-only |

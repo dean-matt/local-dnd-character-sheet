@@ -57,8 +57,8 @@ function concentrating(state: CharacterState, status?: string) {
 }
 
 /**
- * The amount field, the damage type and Critical hit with Damage and Heal, which write what
- * `damagedState` or `healedState` returns, and Grant temp and Clear temp, which write the
+ * The amount field, the damage type and, at 0 hit points, Critical hit with Damage and Heal,
+ * which write what `damagedState` or `healedState` returns, and Grant temp and Clear temp, which write the
  * temporary hit points alone. Each is one state write. Typed damage names the defense that
  * changed it, and damage a defense reduces to nothing writes nothing. Damage that leaves the
  * character dead asks first. Temporary hit points do not stack, so a grant no larger than those
@@ -82,7 +82,7 @@ export function HitPointChange({
   const replace = useAnnouncedStateWrite(character.id);
   const [typed, setTyped] = useState("");
   const [damageType, setDamageType] = useState(UNTYPED);
-  const [critical, setCritical] = useState(false);
+  const [criticalAt, setCriticalAt] = useState<string>();
   const [invalid, setInvalid] = useState<string>();
   const [confirming, setConfirming] = useState<{ changed: Damaged; defense?: string }>();
   const [notice, setNotice] = useState<{ text: string; instead?: number; read: string }>();
@@ -96,6 +96,8 @@ export function HitPointChange({
   const status = deathSaveStatus(derived, state);
   const read = standing(state, status);
   const shown = notice?.read === read ? notice : undefined;
+  const atZero = (state.hitPoints.current ?? maximum) === 0;
+  const critical = atZero && criticalAt === read;
   const prompt = saving?.read === concentrating(state, status) ? saving : undefined;
 
   async function write(after: CharacterState, text: string) {
@@ -125,7 +127,7 @@ export function HitPointChange({
     ];
     if (!(await write(after, text.filter(Boolean).join(" ")))) return;
     setDamageType(UNTYPED);
-    setCritical(false);
+    setCriticalAt(undefined);
     if (check) setSaving({ ...check, read: concentrating(after, outcome) });
     if (defense) {
       setNotice({ text: defense, read: standing(after, outcome) });
@@ -180,7 +182,7 @@ export function HitPointChange({
     if (changed.amount === 0) {
       setTyped("");
       setDamageType(UNTYPED);
-      setCritical(false);
+      setCriticalAt(undefined);
       say(`${defense} Hit points are unchanged.`);
       return;
     }
@@ -246,16 +248,8 @@ export function HitPointChange({
             />
           )}
         </FormField>
-        <label className="flex items-center gap-1.5 text-row">
-          <input
-            type="checkbox"
-            checked={critical}
-            aria-disabled={replace.writing}
-            className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-            onChange={() => !replace.writing && setCritical(!critical)}
-          />
-          Critical hit
-        </label>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <button
           ref={damageButton}
           type="button"
@@ -265,6 +259,18 @@ export function HitPointChange({
         >
           <span aria-hidden="true">− </span>Damage
         </button>
+        {atZero && (
+          <label className="flex items-center gap-1.5 text-row">
+            <input
+              type="checkbox"
+              checked={critical}
+              aria-disabled={replace.writing}
+              className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+              onChange={() => !replace.writing && setCriticalAt(critical ? undefined : read)}
+            />
+            Critical hit
+          </label>
+        )}
         <button
           type="button"
           aria-disabled={replace.writing}
@@ -273,6 +279,8 @@ export function HitPointChange({
         >
           <span aria-hidden="true">+ </span>Heal
         </button>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <button
           ref={grantButton}
           type="button"
