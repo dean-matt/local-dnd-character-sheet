@@ -5,6 +5,7 @@ import {
   characterDerivedSchema,
   derivedValue,
   overrideKey,
+  overrideReduction,
   sheetState,
 } from "@dnd/character";
 import { Card } from "../../../Card.tsx";
@@ -56,6 +57,7 @@ export function HitPoints({
               format={String}
               overrideKey="hitPointMaximum"
               schema={shape.hitPointMaximum.shape.computed}
+              overlay={overrideReduction(character.definition, derived)}
             />
           </span>
           {temporary > 0 && (

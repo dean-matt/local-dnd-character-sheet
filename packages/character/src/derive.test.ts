@@ -283,6 +283,18 @@ describe("deriveCharacter", () => {
       expect(field.terms.at(-1)).toEqual(term(1 - derived.hitPointMaximum.computed));
     });
 
+    it("lowers an override of the maximum too, leaving at least 1", () => {
+      const overridden = (typed: number) => ({
+        ...equipped,
+        overrides: { hitPointMaximum: typed },
+      });
+      const field = deriveCharacter(overridden(40), catalog, reduced(5)).hitPointMaximum;
+      expect(field.manual).toBe(35);
+      expect(field.terms.at(-1)).toEqual(term(-5));
+      expect(deriveCharacter(overridden(3), catalog, reduced(5)).hitPointMaximum.manual).toBe(1);
+      expect(deriveCharacter(overridden(40), catalog).hitPointMaximum.manual).toBe(40);
+    });
+
     it("holds across a level-up, which changes the definition alone", () => {
       const leveled = { ...equipped, levels: [...equipped.levels, { class: WARLOCK }] };
       const unreduced = deriveCharacter(leveled, catalog).hitPointMaximum.computed;

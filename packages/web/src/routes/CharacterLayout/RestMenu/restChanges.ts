@@ -51,13 +51,14 @@ function usesLeft(state: CharacterState, feature: FeatureUse): string {
  * alone is omitted.
  */
 function restChanges(
+  definition: CharacterDefinition,
   derived: CharacterDerived,
   before: CharacterState,
   after: CharacterState,
   features: readonly FeatureUse[],
 ): RestChange[] {
   const hitPoints = ({ hitPoints, hitPointMaximumReduction }: CharacterState) => {
-    const maximum = hitPointMaximumUnder(derived, hitPointMaximumReduction);
+    const maximum = hitPointMaximumUnder(definition, derived, hitPointMaximumReduction);
     return `${hitPoints.current ?? maximum}/${maximum}`;
   };
   const rows: RestChange[] = [
@@ -166,6 +167,6 @@ export function restPreview(
 ): { after: CharacterState; changes: RestChange[] } {
   const during = spentState(definition, derived, state, spends).state;
   const after = restedState(definition, derived, during, length, picked, features);
-  const changes = restChanges(derived, sheetState(derived, state), after, features);
+  const changes = restChanges(definition, derived, sheetState(derived, state), after, features);
   return { after, changes };
 }

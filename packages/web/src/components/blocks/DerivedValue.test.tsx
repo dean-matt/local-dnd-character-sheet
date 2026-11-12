@@ -69,6 +69,24 @@ describe("DerivedValue", () => {
     expect(save).not.toHaveBeenCalled();
   });
 
+  it("lists an overlay under the override and edits the override as typed", () => {
+    onPage(
+      <DerivedValue
+        name="Hit point maximum"
+        value={{ ...computed, manual: 35 }}
+        format={String}
+        overrideKey="hitPointMaximum"
+        overlay={{ typed: 40, terms: [{ label: "Maximum reduction", value: -5 }] }}
+      />,
+    );
+    open("Hit point maximum 35, overridden from 15");
+    expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Override40",
+      "Maximum reduction-5",
+    ]);
+    expect(screen.getByRole("textbox", { name: "Hit point maximum override" })).toHaveValue("40");
+  });
+
   it("names the computed value in place of terms that no longer add up", () => {
     onPage(
       <DerivedValue

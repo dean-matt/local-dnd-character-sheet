@@ -39,8 +39,7 @@ export function MaximumReduction({
   const [focusToggle, setFocusToggle] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const amountField = useRef<HTMLInputElement>(null);
-  const unreduced = hitPointMaximumUnder(derived, null);
-  const overridden = derived.hitPointMaximum.manual !== null;
+  const unreduced = hitPointMaximumUnder(character.definition, derived, null);
 
   useEffect(() => {
     if (open) amountField.current?.focus();
@@ -65,8 +64,8 @@ export function MaximumReduction({
 
   async function write(reduction: HitPointMaximumReduction | null, text: string) {
     if (replace.writing) return false;
-    const after = maximumReducedState(derived, state, reduction);
-    const maximum = hitPointMaximumUnder(derived, reduction);
+    const after = maximumReducedState(character.definition, derived, state, reduction);
+    const maximum = hitPointMaximumUnder(character.definition, derived, reduction);
     return replace.write(after, `${text} ${after.hitPoints.current ?? maximum} hit points.`);
   }
 
@@ -109,9 +108,6 @@ export function MaximumReduction({
             </button>
           )}
         </div>
-      )}
-      {held && overridden && (
-        <p className="text-muted text-row">The maximum's override replaces this reduction.</p>
       )}
       {open ? (
         <form

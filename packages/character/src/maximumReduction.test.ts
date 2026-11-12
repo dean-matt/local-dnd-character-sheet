@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { defaultCharacterState, hitPointMaximumUnder, maximumReducedState } from "./index.ts";
+import {
+  defaultCharacterState,
+  hitPointMaximumUnder,
+  maximumReducedState,
+  overrideReduction,
+} from "./index.ts";
 
 const reduction = (amount: number) => ({ amount, clearsOnLongRest: true });
+
+const plain = { overrides: {} };
+/** A definition with the hit point maximum overridden to `typed`. */
+const typing = (typed: number) => ({ overrides: { hitPointMaximum: typed } });
 
 /** A 30 maximum, reduced by `held` where given, as the derived block shows it. */
 const sheet = (held?: number, manual: number | null = null) => ({
@@ -23,30 +32,58 @@ const at = (current: number | null, held?: number) => ({
 
 describe("hitPointMaximumUnder", () => {
   it("reads the maximum with another reduction in place of the one held", () => {
-    expect(hitPointMaximumUnder(sheet(5), null)).toBe(30);
-    expect(hitPointMaximumUnder(sheet(5), reduction(8))).toBe(22);
-    expect(hitPointMaximumUnder(sheet(), reduction(40))).toBe(1);
+    expect(hitPointMaximumUnder(plain, sheet(5), null)).toBe(30);
+    expect(hitPointMaximumUnder(plain, sheet(5), reduction(8))).toBe(22);
+    expect(hitPointMaximumUnder(plain, sheet(), reduction(40))).toBe(1);
   });
 
-  it("reads an override as typed, since it replaces every term", () => {
-    expect(hitPointMaximumUnder(sheet(5, 40), reduction(8))).toBe(40);
+  it("takes the reduction from an override as typed, leaving at least 1", () => {
+    expect(hitPointMaximumUnder(typing(40), sheet(5, 35), reduction(8))).toBe(32);
+    expect(hitPointMaximumUnder(typing(40), sheet(5, 35), null)).toBe(40);
+    expect(hitPointMaximumUnder(typing(3), sheet(5, 1), null)).toBe(3);
+  });
+});
+
+describe("overrideReduction", () => {
+  it("names the override as typed and what the reduction takes from it", () => {
+    expect(overrideReduction(typing(40), sheet(5, 35))).toEqual({
+      typed: 40,
+      terms: [{ label: "Maximum reduction", value: -5 }],
+    });
+    expect(overrideReduction(typing(3), sheet(5, 1))?.terms).toEqual([
+      { label: "Maximum reduction", value: -2 },
+    ]);
+  });
+
+  it("is absent with no override, or one no reduction lowers", () => {
+    expect(overrideReduction(plain, sheet(5))).toBeUndefined();
+    expect(overrideReduction(typing(40), sheet(undefined, 40))).toBeUndefined();
   });
 });
 
 describe("maximumReducedState", () => {
   it("lowers current hit points above the reduced maximum to it, a full character's among them", () => {
-    expect(maximumReducedState(sheet(), at(28), reduction(5))).toEqual({
+    expect(maximumReducedState(plain, sheet(), at(28), reduction(5))).toEqual({
       ...at(25),
       hitPointMaximumReduction: reduction(5),
     });
-    expect(maximumReducedState(sheet(), at(null), reduction(5)).hitPoints.current).toBe(25);
+    expect(maximumReducedState(plain, sheet(), at(null), reduction(5)).hitPoints.current).toBe(25);
   });
 
   it("leaves current hit points at or below the reduced maximum alone", () => {
-    expect(maximumReducedState(sheet(), at(12), reduction(5)).hitPoints).toEqual(at(12).hitPoints);
+    expect(maximumReducedState(plain, sheet(), at(12), reduction(5)).hitPoints).toEqual(
+      at(12).hitPoints,
+    );
+  });
+
+  it("lowers current hit points to an override less the reduction", () => {
+    expect(maximumReducedState(typing(40), sheet(undefined, 40), at(38), reduction(5))).toEqual({
+      ...at(35),
+      hitPointMaximumReduction: reduction(5),
+    });
   });
 
   it("clears the reduction and restores no hit points", () => {
-    expect(maximumReducedState(sheet(5), at(25, 5), null)).toEqual(at(25));
+    expect(maximumReducedState(plain, sheet(5), at(25, 5), null)).toEqual(at(25));
   });
 });

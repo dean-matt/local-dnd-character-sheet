@@ -59,7 +59,7 @@ import {
 } from "./itemEffects.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
-import { reducedMaximum } from "./maximumReduction.ts";
+import { reducedMaximum, reducedOverride } from "./maximumReduction.ts";
 import { applyOverrides } from "./overrides.ts";
 import { RAGE, RAGE_RESISTANCES, rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
@@ -913,7 +913,8 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
 /**
  * The whole derived block for one character: every value `characterDerivedSchema`
  * holds, assembled from the definition and the catalog facts the caller resolved for
- * it, with the definition's `overrides` folded into each `manual`. Every number reads the
+ * it, with the definition's `overrides` folded into each `manual`. A held reduction to the hit
+ * point maximum lowers its override as well as its computed total. Every number reads the
  * proficiencies together with what feats grant.
  */
 export function deriveCharacter(
@@ -1059,7 +1060,11 @@ export function deriveCharacter(
     castingBlockedBy: unproficientArmorWorn(definition, catalog),
     heavyArmorWorn,
   };
-  return applyOverrides(block, stored);
+  const folded = applyOverrides(block, stored);
+  return {
+    ...folded,
+    hitPointMaximum: reducedOverride(folded.hitPointMaximum, state.hitPointMaximumReduction),
+  };
 }
 
 /** The definition's pick where the race offers it, otherwise the largest size it offers. */

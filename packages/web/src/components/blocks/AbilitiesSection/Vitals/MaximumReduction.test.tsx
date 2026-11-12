@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderVitals } from "./renderVitals.tsx";
+import { renderVitals, vex } from "./renderVitals.tsx";
 
 const hp = () => within(screen.getByRole("region", { name: "Hit Points" }));
 const button = (name: string) => hp().getByRole("button", { name });
@@ -128,15 +128,43 @@ describe("a reduction to the hit point maximum", () => {
     });
   });
 
-  it("says the maximum's override replaces a held reduction", async () => {
+  it("takes the reduction from an override of the maximum, named in its breakdown", async () => {
+    const character = vex();
+    const overridden = {
+      ...character,
+      definition: { ...character.definition, overrides: { hitPointMaximum: 40 } },
+    };
+    const { writes } = renderVitals(
+      { hitPoints: { current: 38, temporary: 0 } },
+      {
+        character: overridden,
+        hitPointMaximum: { computed: 20, manual: 40, terms: [{ label: "Hit dice", value: 20 }] },
+      },
+    );
+    await reduce("5");
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.hitPoints.current).toBe(35);
+    await waitFor(() => expect(announced()).toContain("35 hit points."));
+  });
+
+  it("shows an override less the held reduction, the breakdown naming both", async () => {
+    const character = vex();
     renderVitals(
       { hitPointMaximumReduction: { amount: 5, clearsOnLongRest: true } },
-      { hitPointMaximum: { computed: 15, manual: 25, terms: reducedMaximum.terms } },
+      {
+        character: {
+          ...character,
+          definition: { ...character.definition, overrides: { hitPointMaximum: 40 } },
+        },
+        hitPointMaximum: { computed: 15, manual: 35, terms: reducedMaximum.terms },
+      },
     );
-
-    expect(
-      await screen.findByText("The maximum's override replaces this reduction."),
-    ).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Hit point maximum 35, overridden from 15" }),
+    );
+    expect(await screen.findByText("Override")).toBeInTheDocument();
+    expect(screen.getByText("Maximum reduction")).toBeInTheDocument();
   });
 
   it("refuses an amount that is no whole number or would leave no maximum, writing nothing", async () => {
