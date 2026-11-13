@@ -820,18 +820,58 @@ describe("ItemList", () => {
       expect(names).not.toContain("Potion of Healing");
     });
 
-    it("offers no Use on an item that is not a consumable or is not carried", async () => {
+    it("offers no Use on an item that is not carried", async () => {
       renderList(derivedRecord(), potion(1, false));
 
       await screen.findByText("Potion of Healing");
       expect(screen.queryByLabelText("Use Potion of Healing")).toBeNull();
     });
 
-    it("is a keyboard operable button", async () => {
-      renderList(derivedRecord(), potion(2), { firstEntry: { ...potionEntry, quantity: 2 } });
+    it("offers no Use on a carried item that is not a consumable", async () => {
+      renderList(derivedRecord(), [
+        { ...(potion(1)[0] as ResolvedItem), type: { abbreviation: "A", name: "Armor" } },
+      ]);
 
-      const use = await screen.findByRole("button", { name: "Use Potion of Healing" });
-      expect(use).not.toHaveAttribute("aria-disabled", "true");
+      await screen.findByText("Potion of Healing");
+      expect(screen.queryByLabelText("Use Potion of Healing")).toBeNull();
+    });
+
+    it("offers Use on a homebrew consumable by the same rule", async () => {
+      renderList(derivedRecord(), [
+        { ...(potion(2)[0] as ResolvedItem), name: "Lucky Draught", homebrewId: "hb-1" },
+      ]);
+
+      expect(await screen.findByLabelText("Use Lucky Draught")).toBeInTheDocument();
+    });
+
+    it("toasts and announces a use that failed to save, keeping the item", async () => {
+      renderList(derivedRecord(), potion(3), { firstEntry: { ...potionEntry, quantity: 3 } });
+      const use = await screen.findByLabelText("Use Potion of Healing");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => json({ error: "disk full" }, 500)),
+      );
+
+      fireEvent.click(use);
+
+      expect(await saveToasts().findByText(/Potion of Healing was not used: /)).toBeInTheDocument();
+      expect(screen.getByText("Potion of Healing was not used")).toBeInTheDocument();
+      expect(screen.queryByText(/^Used Potion of Healing/)).toBeNull();
+    });
+
+    it("takes a second Use while the first is still saving as no write", async () => {
+      const fetchMock = renderList(derivedRecord(), potion(3), {
+        firstEntry: { ...potionEntry, quantity: 3 },
+        holdFirstPut: true,
+      });
+      const use = await screen.findByLabelText("Use Potion of Healing");
+
+      fireEvent.click(use);
+      fireEvent.click(use);
+      releasePut();
+
+      expect(await screen.findByText("Used Potion of Healing, 2 left")).toBeInTheDocument();
+      expect(puts(fetchMock)).toHaveLength(1);
     });
   });
 
