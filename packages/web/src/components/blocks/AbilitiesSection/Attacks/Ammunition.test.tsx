@@ -187,5 +187,24 @@ describe("firing ammunition", () => {
     await waitFor(() => expect(writes).toHaveLength(2));
     expect(writes[1]?.definition.inventory.map((entry) => entry.quantity)).toEqual([1, 1]);
     expect(writes[1]?.definition.inventory[1]?.ref).toEqual({ name: "Arrow", source: "PHB" });
+    expect(await screen.findByText("Recovered one Arrow, 1 left")).toBeInTheDocument();
+  });
+
+  it("offers no recovery for a piece whose spend failed", async () => {
+    const show = renderBow([1]);
+    failWrites = true;
+    fire();
+    await screen.findByRole("alert");
+    show([]);
+
+    expect(screen.queryByRole("button", { name: "Recover one piece" })).toBeNull();
+  });
+
+  it("says nothing was recovered when the write fails", async () => {
+    renderBow([3]);
+    failWrites = true;
+    fireEvent.click(await screen.findByRole("button", { name: "Recover one piece" }));
+
+    expect(await screen.findByText(/Nothing recovered/)).toBeInTheDocument();
   });
 });

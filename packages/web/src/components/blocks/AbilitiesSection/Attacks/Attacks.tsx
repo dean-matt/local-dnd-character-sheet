@@ -146,7 +146,6 @@ export function Attacks({
     const drawn = from && definition.inventory[from.entry];
     if (!from || !drawn) return refuse(`${name} has no ammunition left to fire.`);
     if (replace.writing) return false;
-    setSpent((now) => ({ ...now, [attack.entry]: drawn }));
     setRefused(({ [attack.entry]: _gone, ...rest }) => rest);
     try {
       await both.mutateAsync({
@@ -159,6 +158,7 @@ export function Attacks({
     } catch (error) {
       return refuse(`${name} was not fired: ${(error as Error).message}`);
     }
+    setSpent((now) => ({ ...now, [attack.entry]: drawn }));
     if (from.quantity === 1) setPicked(({ [attack.entry]: _gone, ...rest }) => rest);
     replace.announce(`Spent one ${nameOf(from.entry)}, ${leftIn(attack) - 1} left`);
     return true;
