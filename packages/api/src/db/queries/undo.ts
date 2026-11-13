@@ -1,6 +1,6 @@
 /**
- * Reads and writes for `undo_log`. A row holds the definition or the play state a write
- * replaced, as its `kind` says, so undo restores it whole. Only `characters.ts` records and
+ * Reads and writes for `undo_log`. A row holds the definition, the play state or both that a
+ * write replaced, as its `kind` says, so undo restores it whole. Only `characters.ts` records and
  * pops a row, inside the same transaction as the write.
  */
 import {
@@ -14,7 +14,7 @@ import {
   stateChangePhrases,
   UNDO_LOG_LIMIT,
 } from "@dnd/character";
-import { and, asc, desc, eq, gte, notInArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, notInArray } from "drizzle-orm";
 import { type UNDO_KINDS, undoLog } from "../characters.ts";
 import type { CharactersDb, CharactersWriter as Db } from "./characters.ts";
 
@@ -31,6 +31,16 @@ const COALESCE_WINDOW_MS = 30_000;
 
 const sameFields = (a: string[], b: string[]) =>
   a.length === b.length && a.every((path) => b.includes(path));
+
+/** The snapshot of `kind` a row holds, absent where the row replaced the other one alone. */
+export function snapshotOf(
+  entry: { kind: (typeof UNDO_KINDS)[number]; previousState: unknown },
+  kind: "definition" | "state",
+): unknown {
+  if (entry.kind === kind) return entry.previousState;
+  if (entry.kind === "both") return (entry.previousState as Record<string, unknown>)[kind];
+  return undefined;
+}
 
 export function newestUndoEntry(db: Db, characterId: string) {
   return db
@@ -67,17 +77,19 @@ export function listUndoEntries(
   let definitionAfter = characterDefinitionSchema.safeParse(current.definition);
   let stateAfter = characterStateSchema.safeParse(current.state);
   return rows.map(({ previousState, kind, ...entry }) => {
-    let phrases: string[] = [];
-    if (kind === "state") {
-      const before = characterStateSchema.safeParse(previousState);
-      if (before.success && stateAfter.success)
-        phrases = stateChangePhrases(before.data, stateAfter.data);
-      stateAfter = before;
-    } else {
-      const before = characterDefinitionSchema.safeParse(previousState);
+    const row = { kind, previousState };
+    const phrases: string[] = [];
+    if (kind !== "state") {
+      const before = characterDefinitionSchema.safeParse(snapshotOf(row, "definition"));
       if (before.success && definitionAfter.success)
-        phrases = changePhrases(before.data, definitionAfter.data);
+        phrases.push(...changePhrases(before.data, definitionAfter.data));
       definitionAfter = before;
+    }
+    if (kind !== "definition") {
+      const before = characterStateSchema.safeParse(snapshotOf(row, "state"));
+      if (before.success && stateAfter.success)
+        phrases.push(...stateChangePhrases(before.data, stateAfter.data));
+      stateAfter = before;
     }
     return { ...entry, changes: phrases.length > 0 ? phrases : [entry.describedAs] };
   });
@@ -95,17 +107,23 @@ export function deleteUndoEntry(db: Db, id: number) {
   db.delete(undoLog).where(eq(undoLog.id, id)).run();
 }
 
-/** The oldest entry of `kind` from `id` on, which an undo back to `id` restores. */
+/** The oldest entry from `id` on that replaced `kind`, alone or with the other, which an undo back to `id` restores. */
 export function oldestUndoEntryFrom(
   db: Db,
   characterId: string,
   id: number,
-  kind: (typeof UNDO_KINDS)[number],
+  kind: "definition" | "state",
 ) {
   return db
     .select()
     .from(undoLog)
-    .where(and(eq(undoLog.characterId, characterId), eq(undoLog.kind, kind), gte(undoLog.id, id)))
+    .where(
+      and(
+        eq(undoLog.characterId, characterId),
+        inArray(undoLog.kind, [kind, "both"]),
+        gte(undoLog.id, id),
+      ),
+    )
     .orderBy(asc(undoLog.id))
     .limit(1)
     .get();
@@ -181,6 +199,32 @@ export function recordStateChange(
   if (!describedAs) return;
   db.insert(undoLog)
     .values({ characterId, kind: "state", previousState: before, describedAs, changedAt: now })
+    .run();
+  prune(db, characterId);
+}
+
+/** One entry holding both snapshots, so undo restores the definition and the state together. */
+export function recordBothChange(
+  db: Db,
+  characterId: string,
+  before: { definition: CharacterDefinition; state: CharacterState },
+  after: { definition: CharacterDefinition; state: CharacterState },
+  now: Date,
+) {
+  const parts = [
+    describeChange(before.definition, after.definition)?.describedAs,
+    describeStateChange(before.state, after.state),
+  ].filter((part) => part !== undefined);
+  if (parts.length === 0) return;
+  db.insert(undoLog)
+    .values({
+      characterId,
+      kind: "both",
+      previousState: before,
+      describedAs: parts.join("; "),
+      changedAt: now,
+      sealed: true,
+    })
     .run();
   prune(db, characterId);
 }

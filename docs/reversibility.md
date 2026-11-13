@@ -5,7 +5,9 @@ Every decision the app stores, where it is written, and the way back from it. Pa
 `hooks/useUpdateCharacterDefinition.ts`, and `updateCharacterDefinition`
 (`packages/api/src/db/queries/characters.ts`) records the definition it replaced in `undo_log`.
 Each play-state change reaches it through `hooks/useReplaceCharacterState.ts`, and
-`updateCharacterState` records the state it replaced there too.
+`updateCharacterState` records the state it replaced there too. A change to both at once,
+`PUT /characters/{id}/definition-and-state` (`updateCharacterAndState`), records one entry of
+kind `both` holding the definition and the state it replaced. No hook calls it yet.
 
 ## What Undo reaches
 
@@ -15,7 +17,8 @@ undo history panel (`routes/CharacterLayout/UndoHistory/UndoHistory.tsx`) lists 
 undoes back to any one in a single write, after a confirmation, reversing every newer entry
 of either kind. Saves to the same fields within 30 seconds merge into one entry, except a
 level-up or a Level History change, which is always its own entry. A play-state change never
-merges: each Damage, mark or rest is its own entry. It does not reach:
+merges: each Damage, mark or rest is its own entry, and so is a combined write. Undoing to an
+entry restores each kind changed by it or any later entry. It does not reach:
 
 | Not reached | Reversed instead by |
 |---|---|

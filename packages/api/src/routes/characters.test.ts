@@ -881,6 +881,81 @@ describe("the undo log", () => {
     });
   });
 
+  describe("a definition and a state edit together", () => {
+    const putBoth = (body: unknown) =>
+      routes.request(`/characters/${id}/definition-and-state`, { ...json(body), method: "PUT" });
+    const state = { ...defaultCharacterState(), hitPoints: { current: 5, temporary: 0 } };
+    const readState = async () =>
+      (await (await routes.request(`/characters/${id}/state`)).json()).state;
+    const readDefinition = async () =>
+      (await (await routes.request(`/characters/${id}`)).json()).definition;
+    const edited = baseDefinition({ name: "Vex the Bold" });
+
+    it("lands both and lists one entry carrying every change", async () => {
+      const res = await putBoth({ definition: edited, state });
+      expect(res.status).toBe(200);
+      expect(await readDefinition()).toEqual(edited);
+      expect(await readState()).toEqual(state);
+      const log = await entries();
+      expect(log).toHaveLength(1);
+      expect(log[0]?.changes).toHaveLength(2);
+    });
+
+    it("writes neither where the state is refused", async () => {
+      const res = await putBoth({ definition: edited, state: {} });
+      expect(res.status).toBe(400);
+      expect(await readDefinition()).toEqual(baseDefinition());
+      expect(await entries()).toEqual([]);
+    });
+
+    it("refuses with 412, writing neither, where the character changed since it was read", async () => {
+      await put(withCha(18));
+      const res = await routes.request(`/characters/${id}/definition-and-state`, {
+        ...json({ definition: edited, state }),
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "If-Unmodified-Since": new Date(0).toUTCString(),
+        },
+      });
+      expect(res.status).toBe(412);
+      expect(await readState()).toEqual(defaultCharacterState());
+    });
+
+    it("undoes as one step, restoring both", async () => {
+      await putBoth({ definition: edited, state });
+      expect((await undo()).status).toBe(200);
+      expect(await readDefinition()).toEqual(baseDefinition());
+      expect(await readState()).toEqual(defaultCharacterState());
+      expect(await entries()).toEqual([]);
+    });
+
+    it("restores both for a combined entry passed when undoing back past it", async () => {
+      await put(withCha(18), own);
+      await putBoth({ definition: edited, state });
+      await put(withCha(19), own);
+      const log = await entries();
+      const res = await routes.request(`/characters/${id}/undo`, {
+        ...json({ to: log.at(-1)?.id, newest: log[0]?.id }),
+      });
+      expect(res.status).toBe(200);
+      expect(await readDefinition()).toEqual(baseDefinition());
+      expect(await readState()).toEqual(defaultCharacterState());
+      expect(await entries()).toEqual([]);
+    });
+
+    it("counts toward the bound of 50", async () => {
+      for (let at = 1; at <= 30; at++) {
+        await putBoth({
+          definition: baseDefinition({ name: `Vex ${at}` }),
+          state: { ...state, hitPoints: { current: at, temporary: 0 } },
+        });
+      }
+      for (let at = 1; at <= 25; at++) await put(baseDefinition({ name: `Wex ${at}` }), own);
+      expect(await entries()).toHaveLength(50);
+    });
+  });
+
   it("404s listing or undoing for an id that does not exist", async () => {
     expect((await routes.request("/characters/missing/undo")).status).toBe(404);
     expect((await routes.request("/characters/missing/undo", { method: "POST" })).status).toBe(404);
