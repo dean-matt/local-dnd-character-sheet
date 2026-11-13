@@ -42,6 +42,13 @@ const ring = async () => (await card("Hit Points")).getByRole("img");
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Vitals", () => {
+  it("sizes the Hit Points column to its content and gives the rest of the row to the card beside it", async () => {
+    renderVitals({});
+
+    const grid = (await card("Hit Points")).getByRole("img").closest(".grid");
+    expect(grid).toHaveClass("md:grid-cols-[auto_1fr]");
+  });
+
   it("reads current over maximum, and each die's remaining over its total", async () => {
     renderVitals({
       hitPoints: { current: 12, temporary: 0 },

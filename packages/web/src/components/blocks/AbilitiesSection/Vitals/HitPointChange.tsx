@@ -248,7 +248,7 @@ export function HitPointChange({
           <span aria-hidden="true">+ </span>Heal
         </button>
       </div>
-      <div ref={setMessages} className="flex flex-col">
+      <div ref={setMessages} className="flex w-0 min-w-full flex-col">
         {replace.error && (
           <p role="alert" className="mt-1 text-error text-row">
             {ending ? "Concentration was not ended" : "Hit points were not changed"}:{" "}
