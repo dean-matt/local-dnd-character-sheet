@@ -24,6 +24,7 @@ import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CatalogSkills } from "./CatalogSkills.tsx";
 import { CombatStats } from "./CombatStats.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
+import { Encounter } from "./Encounter/Encounter.tsx";
 import { FeatGrants } from "./FeatGrants.tsx";
 import { ItemGrants } from "./ItemGrants.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
@@ -54,6 +55,7 @@ export function AbilitiesSection({
     <div className="flex flex-col gap-3">
       <AbilityScores character={character} derived={derived} />
       <CombatStats definition={definition} derived={derived} />
+      <Encounter character={character} derived={derived} />
       <Vitals character={character} derived={derived} />
       <Attacks character={character} derived={derived} />
       <Defenses character={character} derived={derived} />

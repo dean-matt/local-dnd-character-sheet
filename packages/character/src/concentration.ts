@@ -8,10 +8,28 @@ import type { CharacterState, Concentration } from "./state.ts";
  * The state holding `concentration`, and the concentration that ended to make room, or null
  * where none was held. Starting never refuses: a caster may drop one spell for another.
  */
-export const concentrationStarted = (state: CharacterState, concentration: Concentration) => ({
-  state: { ...state, concentration },
+export const concentrationStarted = (
+  state: CharacterState,
+  concentration: Pick<Concentration, "spell" | "level">,
+) => ({
+  state: {
+    ...state,
+    concentration: {
+      ...concentration,
+      ...(state.encounter && { round: state.encounter.round }),
+    },
+  },
   ended: state.concentration,
 });
+
+/**
+ * The rounds an encounter has run since concentration began, or null where none is held or
+ * no encounter is running. A spell held from before the encounter counts from its round 1.
+ */
+export function concentrationRounds(state: CharacterState): number | null {
+  if (!state.concentration || !state.encounter) return null;
+  return state.encounter.round - (state.concentration.round ?? 1);
+}
 
 /** The state with no concentration held and nothing else changed, whatever broke it. */
 export const concentrationEnded = (state: CharacterState): CharacterState => ({

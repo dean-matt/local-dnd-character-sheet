@@ -5,6 +5,7 @@ import {
   type Concentration,
   concentrationEnded,
   concentrationLapsed,
+  concentrationRounds,
   concentrationStarted,
   deathSaveStatus,
 } from "@dnd/character";
@@ -146,6 +147,7 @@ export function StatusEffects({
       <ConcentrationField
         edition={character.edition}
         held={state.concentration}
+        rounds={concentrationRounds(state)}
         busy={replace.writing}
         onSet={(concentration: Concentration, text) =>
           replace.write(concentrationStarted(state, concentration).state, text)

@@ -16,6 +16,7 @@ function Harness() {
       <ConcentrationField
         edition="one"
         held={held}
+        rounds={null}
         busy={false}
         onSet={async (next) => {
           setHeld(next);
@@ -45,6 +46,24 @@ function Harness() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("ConcentrationField", () => {
+  it("shows the rounds an encounter has run since it began", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ spells: [null] }))),
+    );
+    renderWithClient(
+      <ConcentrationField
+        edition="one"
+        held={{ spell: { name: "Bless", source: "XPHB" }, level: 1, round: 2 }}
+        rounds={3}
+        busy={false}
+        onSet={async () => true}
+        onEnd={async () => true}
+      />,
+    );
+    expect(screen.getByText(/3 rounds in/)).toBeInTheDocument();
+  });
+
   it("moves focus to End concentration once after a set, and not when held changes later", async () => {
     vi.stubGlobal(
       "fetch",

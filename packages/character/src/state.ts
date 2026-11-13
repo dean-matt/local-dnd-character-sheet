@@ -97,9 +97,23 @@ const activeEffectSchema = z.strictObject({ name: z.string().min(1) });
  * slot cast, the spell's own level for a slotless one, 0 for a cantrip. The level is kept
  * because an upcast spell is a different effect from the same row.
  */
+/** Far past any fight, so a round counter left running stays a small number. */
+export const MAX_ROUND = 999;
+
+/**
+ * The encounter the character is in: its round, from 1, and the initiative rolled for it.
+ * Session state, ended by the player, never an audit trail.
+ */
+const encounterSchema = z.strictObject({
+  round: z.int().min(1).max(MAX_ROUND),
+  initiative: z.int().nullable().default(null),
+});
+
 const concentrationSchema = z.strictObject({
   spell: entryRefSchema,
   level: z.int().min(0).max(9),
+  /** The encounter round it took effect in; absent where no encounter was running. */
+  round: z.int().min(1).max(MAX_ROUND).optional(),
 });
 
 /**
@@ -194,6 +208,8 @@ export const characterStateSchema = z.strictObject({
     .default([]),
   /** One spell at most; a state stored before concentration holds none. */
   concentration: concentrationSchema.nullable().default(null),
+  /** None where no encounter is running. */
+  encounter: encounterSchema.nullable().default(null),
   deathSaves: deathSavesSchema,
   exhaustion: z.int().min(0).max(6).default(0),
   /** One inspiration held or not; a count above one is a different rule. */

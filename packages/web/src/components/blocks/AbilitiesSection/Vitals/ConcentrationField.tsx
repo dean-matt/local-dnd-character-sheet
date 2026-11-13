@@ -28,12 +28,15 @@ const levelsFrom = (own: number) =>
 export function ConcentrationField({
   edition,
   held,
+  rounds,
   busy,
   onSet,
   onEnd,
 }: {
   edition: CharacterRecord["edition"];
   held: Concentration | null;
+  /** The rounds an encounter has run since it began, or null where none is running. */
+  rounds: number | null;
   busy: boolean;
   onSet: (concentration: Concentration, announced: string) => Promise<boolean>;
   onEnd: (announced: string) => Promise<boolean>;
@@ -95,6 +98,7 @@ export function ConcentrationField({
           <p className="min-w-0 flex-1 text-row">
             <span className="text-muted">Concentrating on </span>
             <span className="font-semibold">{heldLabel}</span>, {levelName(held.level)}
+            {rounds !== null && `, ${rounds} ${rounds === 1 ? "round" : "rounds"} in`}
           </p>
           <button ref={end} type="button" aria-disabled={busy} onClick={endHeld} className={BUTTON}>
             End concentration

@@ -4,6 +4,7 @@ import {
   type CharacterStateRecord,
   characterRecordSchema,
   characterStateRecordSchema,
+  type RollRecord,
 } from "@dnd/character";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -26,6 +27,8 @@ const bothSchema = z.strictObject({
 export interface DefinitionAndState {
   state: StateWrite;
   edit: (definition: CharacterDefinition) => CharacterDefinition;
+  /** A roll logged in the same write, which undoing the entry deletes. */
+  roll?: RollRecord;
 }
 
 /**
@@ -38,13 +41,14 @@ export function useReplaceDefinitionAndState(id: string) {
   return useMutation<z.infer<typeof bothSchema>, Error, DefinitionAndState>({
     mutationKey: characterStateWriteKey(id),
     scope: { id: characterWriteScope(id) },
-    mutationFn: ({ state, edit }) => {
+    mutationFn: ({ state, edit, roll }) => {
       const record = queryClient.getQueryData<CharacterRecord>(characterKey(id));
       const play = queryClient.getQueryData<CharacterStateRecord>(characterStateKey(id));
       if (!record || !play) throw new Error("The character has not loaded yet.");
       return apiMutate("PUT", `/characters/${id}/definition-and-state`, bothSchema, {
         definition: edit(record.definition),
         state: typeof state === "function" ? state(play.state) : state,
+        roll,
       });
     },
     onSuccess: ({ character, state }) => {
