@@ -5,6 +5,7 @@ import {
   type ContentRef,
   displayName,
   type EntryRef,
+  houseRule,
 } from "@dnd/character";
 import { useState } from "react";
 import { ErrorState } from "../../../../ErrorState.tsx";
@@ -186,6 +187,7 @@ export function SpellList({
                     characterId={character.id}
                     derived={derived}
                     characterLevel={character.definition.levels.length}
+                    waiveComponents={houseRule(character.definition, "waiveMaterialComponents")}
                     className={classOf(spell)}
                     preparable={preparable(spell)}
                     busy={busy}

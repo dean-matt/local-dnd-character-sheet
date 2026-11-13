@@ -34,6 +34,7 @@ export function SpellRow({
   characterId,
   derived,
   characterLevel,
+  waiveComponents,
   className,
   preparable,
   busy,
@@ -45,6 +46,7 @@ export function SpellRow({
   characterId: string;
   derived: CharacterDerived;
   characterLevel: number;
+  waiveComponents: boolean;
   className: string | undefined;
   preparable: boolean;
   busy: boolean;
@@ -115,6 +117,7 @@ export function SpellRow({
             characterId={characterId}
             derived={derived}
             characterLevel={characterLevel}
+            waiveComponents={waiveComponents}
             spell={spell}
           />
         </>

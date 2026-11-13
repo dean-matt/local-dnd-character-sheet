@@ -46,7 +46,20 @@ describe("HouseRulesCard", () => {
       "Replace a duplicate tool",
       "Equipping without proficiency",
       "Massive damage",
+      "Material components",
     ]);
+  });
+
+  it("saves the waiver of material components", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(classic({}))));
+    const group = within(
+      renderCard(classic({})).getByRole("group", { name: "Material components" }),
+    );
+    expect(group.getByRole("radio", { name: /Components as printed/ })).toBeChecked();
+
+    fireEvent.click(group.getByRole("radio", { name: "Waive components" }));
+
+    await waitFor(() => expect(written(fetchMock)).toEqual({ waiveMaterialComponents: true }));
   });
 
   it("offers the hit dice option to a classic character", () => {
