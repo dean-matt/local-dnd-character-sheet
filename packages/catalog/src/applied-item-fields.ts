@@ -98,6 +98,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
     'Speed: {"bonus": {"walk": 10}} adds feet, {"static": {"fly": 30}} sets a speed, {"equal": {"swim": "walk"}} matches one to another, and {"multiply": {"walk": 2}} scales one. "*" in bonus means every speed.',
   stack:
     'Lets this item\'s bonuses stack with other equipped items naming the same group, up to a cap: {"group": "ring-of-protection", "cap": 3}. Together the group adds at most cap. Members of one group should state the same cap.',
+  resourceBonus:
+    'Adds to a class resource\'s maximum while the item is equipped, attuned where it must be, for a character with that class only: {"resource": "Ki", "amount": 2, "class": "Monk"}. The resource is a class table column such as "Ki" or "Focus Points".',
   grantsProficiency: "true where the item grants a proficiency its text names.",
   attachedSpells:
     'Spells the item lets its bearer cast, such as ["fireball", "shield|phb"]. A name with no source reads from the character\'s edition. The spells show on the sheet while the item is equipped, attuned where it must be.',

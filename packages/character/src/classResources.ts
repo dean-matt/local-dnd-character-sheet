@@ -1,5 +1,5 @@
 import type { Edition, ResetTrigger } from "@dnd/rules";
-import type { CharacterCatalog } from "./catalog.ts";
+import type { CharacterCatalog, ItemBonusTrait } from "./catalog.ts";
 import type { CharacterDerived } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { classResourceKey, entryKey } from "./keys.ts";
@@ -48,22 +48,40 @@ export const resourceLabel = (key: string) => {
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
-const computed = (value: number) => ({ computed: value, manual: null, terms: [] });
+const words = (text: string) =>
+  text
+    .toLowerCase()
+    .replaceAll(/[\s_]+/g, " ")
+    .trim();
+
+/** Whether an item's `resource` names a class table column: `Ki` and `Ki Points` both name `ki_points`. */
+const namesPool = (resource: string, key: string) =>
+  [words(key), words(key).replace(/ points$/, "")].includes(words(resource));
 
 /**
  * Each pool a class table prints at the character's level in that class, and every cell
  * of a homebrew class, whose resource tables name their own pools. A class the catalog
  * holds no cells for prints none. Throws a RangeError
- * on a pool cell that is neither a count nor `Unlimited`, rather than guess a maximum.
+ * on a pool cell that is neither a count nor `Unlimited`, rather than guess a maximum. Each
+ * of `bonuses` that names the pool for its class adds to the maximum, as a term.
  */
 export function classResourcePools(
   definition: CharacterDefinition,
   catalog: Pick<CharacterCatalog, "classResources">,
+  bonuses: readonly ItemBonusTrait[] = [],
 ): CharacterDerived["classResources"] {
   return classLevels(definition).flatMap((group) =>
     (catalog.classResources.get(entryKey(group.class)) ?? [])
       .filter((cell) => cell.homebrew || POOL_RESETS.has(cell.key))
       .map((cell) => {
+        const terms = bonuses.flatMap(({ name, resourceBonus: bonus }) =>
+          bonus &&
+          "name" in group.class &&
+          words(bonus.class) === words(group.class.name) &&
+          namesPool(bonus.resource, cell.key)
+            ? [{ label: name, value: bonus.amount }]
+            : [],
+        );
         if (cell.value === UNLIMITED) {
           return {
             class: group.class,
@@ -79,7 +97,11 @@ export function classResourcePools(
         return {
           class: group.class,
           key: cell.key,
-          maximum: computed(maximum),
+          maximum: {
+            computed: maximum + terms.reduce((sum, { value }) => sum + value, 0),
+            manual: null,
+            terms,
+          },
           ...(cell.homebrew && { resets: cell.homebrew.resets }),
         };
       }),

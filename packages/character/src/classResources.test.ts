@@ -44,6 +44,43 @@ describe("classResourcePools", () => {
     ]);
   });
 
+  it("adds an item's resource bonus to that class's pool only, naming the item", () => {
+    const ring = {
+      name: "Ring of Ki",
+      requiresAttunement: true,
+      ac: 0,
+      save: 0,
+      concentration: 0,
+      spellAttack: 0,
+      spellSaveDc: 0,
+      spellDamage: 0,
+      abilityCheck: 0,
+      proficiencyBonus: 0,
+      grantsProficiency: false,
+      grantsLanguage: false,
+      resourceBonus: { resource: "Focus Points", amount: 2, class: "Monk" },
+    };
+    const cells: [typeof MONK, { key: string; value: string }[]][] = [
+      [MONK, [{ key: "focus_points", value: "3" }]],
+      [BARBARIAN, [{ key: "rages", value: "2" }]],
+    ];
+    const catalog = { classResources: new Map(cells.map(([ref, row]) => [entryKey(ref), row])) };
+    expect(classResourcePools(levels(MONK, BARBARIAN), catalog, [ring])).toEqual([
+      {
+        class: MONK,
+        key: "focus_points",
+        maximum: { computed: 5, manual: null, terms: [{ label: "Ring of Ki", value: 2 }] },
+      },
+      { class: BARBARIAN, key: "rages", maximum: { computed: 2, manual: null, terms: [] } },
+    ]);
+    expect(classResourcePools(levels(BARBARIAN), catalog, [ring])[0]?.maximum?.computed).toBe(2);
+    const kiRing = { ...ring, resourceBonus: { ...ring.resourceBonus, resource: "Ki" } };
+    const kiCatalog = {
+      classResources: new Map([[entryKey(MONK), [{ key: "ki_points", value: "3" }]]]),
+    };
+    expect(classResourcePools(levels(MONK), kiCatalog, [kiRing])[0]?.maximum?.computed).toBe(5);
+  });
+
   it("gives an Unlimited pool no maximum", () => {
     expect(pools(levels(BARBARIAN), [[BARBARIAN, [{ key: "rages", value: "Unlimited" }]]])).toEqual(
       [{ class: BARBARIAN, key: "rages", maximum: null }],
