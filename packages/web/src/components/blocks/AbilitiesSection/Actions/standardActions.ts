@@ -1,8 +1,4 @@
-import type { CharacterDefinition } from "@dnd/character";
-
-export type ActionType = "action" | "bonus action" | "reaction" | "free";
-
-export const ACTION_TYPES: readonly ActionType[] = ["action", "bonus action", "reaction", "free"];
+import type { ActionType, CharacterDefinition } from "@dnd/character";
 
 /** A standard action's catalog row in `actions.json` and the kind of action it takes. */
 export interface StandardAction {

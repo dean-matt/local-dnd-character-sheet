@@ -125,6 +125,7 @@ function stubRules(entries: unknown[]) {
   const reads: Record<string, unknown> = {
     "/api/characters/1/state": stateRecord(),
     "/api/characters/1/inventory": { items: [] },
+    "/api/characters/1/features": { groups: [] },
     "/api/homebrew/skills": [],
     "/api/homebrew/races": [],
     "/api/homebrew/classes": [],

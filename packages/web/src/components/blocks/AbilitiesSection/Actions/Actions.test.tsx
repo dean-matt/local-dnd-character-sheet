@@ -10,7 +10,7 @@ function renderActions(edition: "classic" | "one") {
   const base: CharacterRecord = characterRecord("1", "Vex");
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <Actions definition={{ ...base.definition, edition }} />
+      <Actions character={{ ...base, definition: { ...base.definition, edition } }} />
     </QueryClientProvider>,
   );
   return screen.getByRole("region", { name: "Actions" });
@@ -58,8 +58,56 @@ describe("Actions", () => {
     fireEvent.click(dash);
 
     expect(await screen.findByText("Gain extra Speed.")).toBeInTheDocument();
-    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).refs).toEqual([
-      { tag: "action", name: "Dash", source: "XPHB" },
-    ]);
+    expect(
+      JSON.parse(String(fetchMock.mock.calls.find((call) => call[1]?.body)?.[1]?.body)).refs,
+    ).toEqual([{ tag: "action", name: "Dash", source: "XPHB" }]);
+  });
+
+  it("lists a held feature under its action type with its rules text one click away", async () => {
+    stubFetchByUrl({
+      "/api/characters/1/features": {
+        groups: [
+          {
+            origin: "class",
+            name: "Fighter",
+            features: [
+              {
+                resolved: true,
+                name: "Second Wind",
+                source: "XPHB",
+                level: 1,
+                entries: ["Regain hit points."],
+              },
+              {
+                resolved: true,
+                name: "Second Wind",
+                source: "XPHB",
+                level: 5,
+                entries: ["Regain hit points."],
+              },
+              {
+                resolved: true,
+                name: "Fighting Style",
+                source: "XPHB",
+                level: 1,
+                entries: ["Pick one."],
+              },
+              { resolved: false, name: "Action Surge", source: "XPHB" },
+            ],
+          },
+        ],
+      },
+    });
+    const card = renderActions("one");
+
+    const bonus = (await within(card).findByRole("button", { name: "Second Wind" })).closest("ul");
+    expect(names(bonus as HTMLElement)).toEqual(["Two-Weapon Fighting", "Second Wind"]);
+    expect(within(card).queryByRole("button", { name: "Fighting Style" })).toBeNull();
+    expect(within(card).queryByRole("button", { name: "Action Surge" })).toBeNull();
+
+    const button = within(card).getByRole("button", { name: "Second Wind" });
+    expect(button.tagName).toBe("BUTTON");
+    fireEvent.click(button);
+    expect(await screen.findByText("Regain hit points.")).toBeInTheDocument();
   });
 });
