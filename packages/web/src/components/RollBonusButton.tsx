@@ -8,7 +8,7 @@ import { RollingFor } from "./rollerContext.ts";
  * Rolls `dice` (a d20 unless told otherwise) plus `bonus` and records it under `label`, `type` and `origin`; nothing where no character's
  * sheet is open to record to. Its status region speaks what was rolled and the total
  * without moving focus, and says so when the roll could not be logged. `beforeRoll` runs
- * first and rolls nothing when it resolves false.
+ * first and rolls nothing when it resolves false. A `mode` rolls with advantage or disadvantage and says so.
  */
 export function RollBonusButton({
   label,
@@ -16,8 +16,9 @@ export function RollBonusButton({
   origin,
   bonus,
   dice = "1d20",
+  mode,
   beforeRoll,
-}: Pick<RollRecord, "label" | "type" | "origin"> & {
+}: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & {
   bonus: number;
   dice?: string;
   beforeRoll?: () => Promise<boolean>;
@@ -35,8 +36,10 @@ export function RollBonusButton({
         onClick={async () => {
           setHeard("");
           if (beforeRoll && !(await beforeRoll())) return;
-          roll(notation, { label, type, origin }, (rolled, logged) =>
-            setHeard(`${label}: ${rolled.total}${logged ? "" : ", not logged"}`),
+          roll(notation, { label, type, origin, mode }, (rolled, logged) =>
+            setHeard(
+              `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}: ${rolled.total}${logged ? "" : ", not logged"}`,
+            ),
           );
         }}
         aria-label={`Roll ${label}`}

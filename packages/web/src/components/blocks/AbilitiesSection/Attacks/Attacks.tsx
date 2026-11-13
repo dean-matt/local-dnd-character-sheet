@@ -4,8 +4,10 @@
  * off `/characters/{id}/inventory`, since the derived block keys a weapon by its entry.
  */
 import {
+  type Ability,
   type CharacterDerived,
   type CharacterRecord,
+  conditionAttackEffects,
   derivedValue,
   displayName,
   effectsOnRoll,
@@ -31,6 +33,7 @@ import { damageText } from "../../attack.ts";
 import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
 import { AttackDamage } from "./AttackDamage.tsx";
+import { AttackRoll } from "./AttackRoll.tsx";
 import { AttackRow } from "./AttackRow.tsx";
 import { WeaponMasteryChoice } from "./WeaponMasteryChoice.tsx";
 
@@ -135,6 +138,11 @@ export function Attacks({
   const [picked, setPicked] = useState<Record<number, number>>({});
   const play = useCharacterState(character.id);
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
+  const heldEffects = play.data ? conditionAttackEffects(play.data.state, definition.edition) : [];
+  const attackEffects = (ability: Ability) => [
+    ...effectsOnRoll(rollEffects, { roll: "attack", ability }),
+    ...heldEffects,
+  ];
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
     const ref = definition.inventory[entry]?.ref;
@@ -227,7 +235,7 @@ export function Attacks({
             <col />
             <col className="w-[88px]" />
             <col />
-            <col className="w-6" />
+            <col className="w-[120px]" />
             <col className="w-6" />
           </colgroup>
           <thead className="font-semibold text-[10px] text-muted uppercase tracking-[0.06em]">
@@ -257,7 +265,7 @@ export function Attacks({
                 <AttackRow
                   key={attack.entry}
                   name={name}
-                  effects={effectsOnRoll(rollEffects, { roll: "attack", ability: attack.ability })}
+                  effects={attackEffects(attack.ability)}
                   notes={
                     <>
                       {attack.mastery.map((ref) => (
@@ -288,11 +296,12 @@ export function Attacks({
                     />
                   }
                   rollAttack={
-                    <RollBonusButton
+                    <AttackRoll
                       label={`${name} attack`}
                       type="attack"
                       origin={name}
                       bonus={derivedValue(attack.attackBonus)}
+                      effects={attackEffects(attack.ability)}
                       beforeRoll={attack.ammunition ? () => spend(attack, name) : undefined}
                     />
                   }
@@ -335,14 +344,15 @@ export function Attacks({
                   }
                   damage={NONE}
                   rollAttack={
-                    <RollBonusButton
+                    <AttackRoll
                       label={name}
                       type="spell-attack"
                       origin={origin}
                       bonus={derivedValue(caster.attackBonus)}
+                      effects={attackEffects(caster.ability)}
                     />
                   }
-                  effects={effectsOnRoll(rollEffects, { roll: "attack", ability: caster.ability })}
+                  effects={attackEffects(caster.ability)}
                   notes={<CastingBlockedNote armor={derived.castingBlockedBy} />}
                 />
               );
