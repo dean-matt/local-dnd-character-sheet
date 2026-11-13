@@ -257,6 +257,7 @@ test("a keyboard user edits a homebrew item from a sheet's inventory, and focus 
               weapon: null,
               armor: null,
               offers: { abilities: null, proficiency: false, language: false },
+              charges: null,
               entries: row.json.entries ?? [],
               requiresAttunement: false,
               weight: null,

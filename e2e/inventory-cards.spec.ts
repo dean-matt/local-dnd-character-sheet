@@ -55,6 +55,7 @@ const item = (name: string, type: { abbreviation: string; name: string } | null)
   weapon: null,
   armor: null,
   offers: { abilities: null, proficiency: false, language: false },
+  charges: null,
   entries: [],
   requiresAttunement: true,
   weight: 6,
