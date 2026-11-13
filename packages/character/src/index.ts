@@ -73,7 +73,7 @@ export {
   type LegacyCharacterFile,
   legacyCharacterFileSchema,
 } from "./characterFile.ts";
-export { resourceLabel, withClassResource } from "./classResources.ts";
+export { poolReset, resourceLabel, withClassResource } from "./classResources.ts";
 export {
   concentrationCheck,
   concentrationEnded,
@@ -110,7 +110,13 @@ export {
 export { type Derived, derivedSchema } from "./derivedField.ts";
 export { encounterEnded, encounterStarted, initiativeRolled, roundAdvanced } from "./encounter.ts";
 export { allocatePicks, type FeatPick, grantedSkillLevels, heldSkillLevel } from "./featGrants.ts";
-export { ACTION_TYPES, type ActionType, featureActionType } from "./featureActions.ts";
+export {
+  ACTION_TURN_MARK,
+  ACTION_TYPES,
+  type ActionType,
+  featureActionType,
+  featurePoolKey,
+} from "./featureActions.ts";
 export {
   atHitPointMaximum,
   damagedState,
@@ -237,4 +243,4 @@ export {
   totalLevel,
   withExperienceFloor,
 } from "./summaries.ts";
-export { TURN_LABELS, turnMarkToggled, turnReset } from "./turn.ts";
+export { TURN_LABELS, turnMarkSpent, turnMarkToggled, turnReset } from "./turn.ts";

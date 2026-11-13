@@ -1,7 +1,8 @@
-import type { SheetFeature } from "@dnd/catalog";
+import type { FeatureGroup, SheetFeature } from "@dnd/catalog";
 import {
   ACTION_TYPES,
   type ActionType,
+  type CharacterDerived,
   type CharacterRecord,
   featureActionType,
 } from "@dnd/character";
@@ -10,21 +11,28 @@ import { Card } from "../../../Card.tsx";
 import { DetailTrigger } from "../../../DetailTrigger.tsx";
 import { RulesEntries } from "../../../RulesEntries/RulesEntries.tsx";
 import { ActionRules } from "./ActionRules.tsx";
+import { FeatureUse } from "./FeatureUse.tsx";
 import { STANDARD_ACTIONS } from "./standardActions.ts";
 
-type HeldFeature = Extract<SheetFeature, { resolved: true }> & { source: string; type: ActionType };
+type HeldFeature = Extract<SheetFeature, { resolved: true }> & {
+  source: string;
+  type: ActionType;
+  group: Pick<FeatureGroup, "class">;
+};
 
 /** The resolved features the curated table maps to an action type, once each however many levels name them. */
-function heldActions(groups: { features: SheetFeature[] }[]): HeldFeature[] {
+function heldActions(groups: FeatureGroup[]): HeldFeature[] {
   const seen = new Set<string>();
   const held: HeldFeature[] = [];
-  for (const feature of groups.flatMap((group) => group.features)) {
+  for (const { feature, group } of groups.flatMap((group) =>
+    group.features.map((feature) => ({ feature, group })),
+  )) {
     if (!feature.resolved || !feature.source) continue;
     const type = featureActionType({ name: feature.name, source: feature.source });
     const key = `${feature.name}|${feature.source}`;
     if (!type || seen.has(key)) continue;
     seen.add(key);
-    held.push({ ...feature, source: feature.source, type });
+    held.push({ ...feature, source: feature.source, type, group });
   }
   return held;
 }
@@ -32,9 +40,15 @@ function heldActions(groups: { features: SheetFeature[] }[]): HeldFeature[] {
 /**
  * The Actions card: the standard actions the character's edition prints, then the features the
  * character holds that take an action, grouped by the kind of action each takes. A name is a
- * button that opens the catalog's rules text for it.
+ * button that opens the catalog's rules text for it, beside the resource it spends and a Use control.
  */
-export function Actions({ character }: { character: CharacterRecord }) {
+export function Actions({
+  character,
+  derived,
+}: {
+  character: CharacterRecord;
+  derived: CharacterDerived;
+}) {
   const actions = STANDARD_ACTIONS[character.definition.edition];
   const held = heldActions(useCharacterFeatures(character.id).data?.groups ?? []);
   return (
@@ -60,8 +74,8 @@ export function Actions({ character }: { character: CharacterRecord }) {
                     </DetailTrigger>
                   </li>
                 ))}
-                {features.map(({ name, source, entries }) => (
-                  <li key={`${name}|${source}`}>
+                {features.map(({ name, source, entries, uses, group }) => (
+                  <li key={`${name}|${source}`} className="flex items-center gap-1.5">
                     <DetailTrigger
                       title={name}
                       meta={`Feature • ${type}`}
@@ -70,6 +84,15 @@ export function Actions({ character }: { character: CharacterRecord }) {
                     >
                       {name}
                     </DetailTrigger>
+                    <FeatureUse
+                      character={character}
+                      derived={derived}
+                      name={name}
+                      source={source}
+                      type={type}
+                      group={group}
+                      uses={uses}
+                    />
                   </li>
                 ))}
               </ul>
