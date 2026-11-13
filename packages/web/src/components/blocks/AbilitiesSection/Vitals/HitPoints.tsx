@@ -49,7 +49,7 @@ export function HitPoints({
             <HitPointMaximum character={character} derived={derived} state={state} />
           </span>
         </HitPointRing>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <HitPointChange character={character} derived={derived} state={state} />
         </div>
       </div>

@@ -24,7 +24,7 @@ export function Vitals({
   if (state.isError) return <ErrorState error={state.error} />;
 
   return (
-    <div className="grid items-start gap-3 md:grid-cols-2">
+    <div className="grid items-start gap-3 md:grid-cols-[auto_1fr]">
       <HitPoints character={character} derived={derived} state={state.data.state} />
       <DeathSaves character={character} derived={derived} state={state.data.state} />
       <HitDice character={character} derived={derived} state={state.data.state} />

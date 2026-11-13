@@ -128,9 +128,6 @@ export function DeathSaves({
   return (
     <Card
       title="Death Saves"
-      // One width in every state, sized for "Stable" or "Dying" and "Rolled 20", so the
-      // card never grows when the Roll row appears.
-      className="w-52 max-w-full justify-self-start"
       aside={
         status && (
           <span
