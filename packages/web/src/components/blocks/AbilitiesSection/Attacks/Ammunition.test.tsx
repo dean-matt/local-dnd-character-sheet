@@ -90,18 +90,20 @@ function renderBow(quantities: number[]) {
   const client = new QueryClient();
   client.setQueryData(characterKey("1"), character);
   client.setQueryData(characterStateKey("1"), stateRecord());
-  render(
+  const tree = (loose: typeof stacks) => (
     <QueryClientProvider client={client}>
       <RollingFor value="1">
         <OnRolled value={vi.fn()}>
           <Attacks
             character={character}
-            derived={{ ...derivedRecord(), spellcasting: [], attacks: [bowAttack(stacks)] }}
+            derived={{ ...derivedRecord(), spellcasting: [], attacks: [bowAttack(loose)] }}
           />
         </OnRolled>
       </RollingFor>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+  const { rerender } = render(tree(stacks));
+  return (loose: typeof stacks) => rerender(tree(loose));
 }
 
 const fire = () => fireEvent.click(screen.getByRole("button", { name: "Roll Shortbow attack" }));
@@ -164,5 +166,26 @@ describe("firing ammunition", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Shortbow was not fired");
     expect(posts).toHaveLength(0);
+  });
+
+  it("returns one recovered piece to the stack in one write, and announces it", async () => {
+    renderBow([3]);
+    fireEvent.click(await screen.findByRole("button", { name: "Recover one piece" }));
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.definition.inventory[1]?.quantity).toBe(4);
+    expect(await screen.findByText("Recovered one Arrow, 4 left")).toBeInTheDocument();
+  });
+
+  it("adds a loose one-piece entry where the last piece removed the entry", async () => {
+    const show = renderBow([1]);
+    fire();
+    await waitFor(() => expect(writes).toHaveLength(1));
+    show([]);
+    fireEvent.click(await screen.findByRole("button", { name: "Recover one piece" }));
+
+    await waitFor(() => expect(writes).toHaveLength(2));
+    expect(writes[1]?.definition.inventory.map((entry) => entry.quantity)).toEqual([1, 1]);
+    expect(writes[1]?.definition.inventory[1]?.ref).toEqual({ name: "Arrow", source: "PHB" });
   });
 });
