@@ -718,7 +718,7 @@ describe("derivedRoutes", () => {
     ]);
   });
 
-  it("shows a ranged weapon's range and counts the ammunition it fires, a pack by its contents", async () => {
+  it("shows a ranged weapon's range and lists the loose ammunition it fires, leaving a pack out", async () => {
     store(
       definitionWith({
         inventory: [
@@ -732,7 +732,7 @@ describe("derivedRoutes", () => {
 
     expect(attack).toMatchObject({
       range: { normal: 80, long: 320 },
-      ammunition: { type: "arrow|phb", carried: 43 },
+      ammunition: { type: "arrow|phb", stacks: [{ entry: 2, quantity: 3 }] },
       reload: null,
     });
   });

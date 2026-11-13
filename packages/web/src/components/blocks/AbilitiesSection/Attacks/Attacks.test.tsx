@@ -194,14 +194,14 @@ describe("Attacks", () => {
     expect(screen.queryByText(/Mastery/)).not.toBeInTheDocument();
   });
 
-  it("shows a ranged weapon's range, its ammunition with the count carried, and a firearm's reload", async () => {
+  it("shows a ranged weapon's range, its ammunition with the count left, and a firearm's reload", async () => {
     renderAttacks({
       ...derivedRecord(),
       attacks: [
         {
           ...attack(0, 5),
           range: { normal: 80, long: 320 },
-          ammunition: { type: "arrow|phb", carried: 12 },
+          ammunition: { type: "arrow|phb", stacks: [{ entry: 1, quantity: 12 }] },
           reload: 2,
         },
       ],
@@ -209,7 +209,7 @@ describe("Attacks", () => {
 
     const row = await screen.findByRole("rowheader", { name: /Longsword/ });
     expect(row).toHaveTextContent("Range 80/320 ft");
-    expect(row).toHaveTextContent("Ammunition: arrow (12 carried)");
+    expect(row).toHaveTextContent("Ammunition: arrow (12 left)");
     expect(row).toHaveTextContent("Reload 2");
   });
 

@@ -12,8 +12,13 @@ import {
   entryKey,
   overrideKey,
 } from "@dnd/character";
+import { useState } from "react";
+import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
+import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
+import { editInventoryEntry } from "../../../../lib/editInventoryEntry.ts";
+import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
@@ -38,9 +43,29 @@ function critRange({ critThreshold }: CharacterDerived["attacks"][number]) {
   return lowest < 20 ? ` · Crit ${lowest}–20` : null;
 }
 
-/** Range, the ammunition fired with a count of what is carried, and a firearm's reload. */
-function weaponNotes(attack: CharacterDerived["attacks"][number]) {
+type Attack = CharacterDerived["attacks"][number];
+
+/** The stack an attack spends from: the one picked while it is still a stack, else the first. */
+function spendFrom(attack: Attack, picked: number | undefined) {
+  const stacks = attack.ammunition?.stacks ?? [];
+  return stacks.find(({ entry }) => entry === picked) ?? stacks[0];
+}
+
+const leftIn = ({ ammunition }: Attack) =>
+  ammunition?.stacks.reduce((total, { quantity }) => total + quantity, 0) ?? 0;
+
+/** Range, the ammunition fired with a count of what is left, and a firearm's reload. */
+function weaponNotes(
+  attack: Attack,
+  ammo: {
+    name: (entry: number) => string;
+    picked: number | undefined;
+    pick: (entry: number) => void;
+  },
+  refused: string | undefined,
+) {
   const { range, ammunition, reload } = attack;
+  const from = spendFrom(attack, ammo.picked);
   return (
     <>
       {range && (
@@ -50,8 +75,28 @@ function weaponNotes(attack: CharacterDerived["attacks"][number]) {
       )}
       {ammunition && (
         <p className="text-label text-muted">
-          Ammunition: <RulesText text={`{@item ${ammunition.type}}`} /> ({ammunition.carried}{" "}
-          carried)
+          Ammunition: <RulesText text={`{@item ${ammunition.type}}`} /> ({leftIn(attack)} left)
+        </p>
+      )}
+      {ammunition && ammunition.stacks.length > 1 && from && (
+        <label className="flex items-center gap-1 text-label text-muted">
+          Spend from
+          <select
+            value={from.entry}
+            onChange={(event) => ammo.pick(Number(event.target.value))}
+            className="min-h-6 min-w-0 rounded-control border border-border bg-surface"
+          >
+            {ammunition.stacks.map(({ entry, quantity }) => (
+              <option key={entry} value={entry}>
+                {ammo.name(entry)} ({quantity})
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {refused && (
+        <p role="alert" className="text-error text-label">
+          {refused}
         </p>
       )}
       {reload && <p className="text-label text-muted">Reload {reload}</p>}
@@ -70,11 +115,43 @@ export function Attacks({
   const inventory = useCharacterInventory(character.id);
   const { definition } = character;
   const rollEffects = derivedValue(derived.rollEffects);
+  const replace = useAnnouncedStateWrite(character.id);
+  const both = useReplaceDefinitionAndState(character.id);
+  const [picked, setPicked] = useState<Record<number, number>>({});
+  const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
     const ref = definition.inventory[entry]?.ref;
     return inventory.data?.items[entry]?.name ?? (ref ? displayName(ref, names) : "Weapon");
   };
+
+  /** Spends one piece before the attack roll; false, with the reason shown, where none is spent. */
+  async function spend(attack: Attack, name: string) {
+    const refuse = (message: string) => {
+      setRefused((now) => ({ ...now, [attack.entry]: { message, left: leftIn(attack) } }));
+      return false;
+    };
+    const from = spendFrom(attack, picked[attack.entry]);
+    const drawn = from && definition.inventory[from.entry];
+    if (!from || !drawn) return refuse(`${name} has no ammunition left to fire.`);
+    if (replace.writing) return false;
+    setRefused(({ [attack.entry]: _gone, ...rest }) => rest);
+    try {
+      await both.mutateAsync({
+        state: (latest) => latest,
+        edit: (latest) =>
+          editInventoryEntry(latest, from.entry, drawn, (entry) =>
+            entry.quantity > 1 ? { ...entry, quantity: entry.quantity - 1 } : null,
+          ),
+      });
+    } catch (error) {
+      return refuse(`${name} was not fired: ${(error as Error).message}`);
+    }
+    if (from.quantity === 1) setPicked(({ [attack.entry]: _gone, ...rest }) => rest);
+    replace.announce(`Spent one ${nameOf(from.entry)}, ${leftIn(attack) - 1} left`);
+    return true;
+  }
+
   return (
     <Card title="Attacks & Spellcasting">
       {weapons.length === 0 && derived.spellcasting.length === 0 ? (
@@ -123,7 +200,17 @@ export function Attacks({
                           Mastery: <RulesText text={`{@itemMastery ${ref.name}|${ref.source}}`} />
                         </p>
                       ))}
-                      {weaponNotes(attack)}
+                      {weaponNotes(
+                        attack,
+                        {
+                          name: nameOf,
+                          picked: picked[attack.entry],
+                          pick: (entry) => setPicked((now) => ({ ...now, [attack.entry]: entry })),
+                        },
+                        refused[attack.entry]?.left === leftIn(attack)
+                          ? refused[attack.entry]?.message
+                          : undefined,
+                      )}
                     </>
                   }
                   bonus={
@@ -140,6 +227,7 @@ export function Attacks({
                       type="attack"
                       origin={name}
                       bonus={derivedValue(attack.attackBonus)}
+                      beforeRoll={attack.ammunition ? () => spend(attack, name) : undefined}
                     />
                   }
                   rollDamage={
@@ -197,6 +285,7 @@ export function Attacks({
         </table>
       )}
       <WeaponMasteryChoice character={character} derived={derived} />
+      <Announcer announced={replace.announced} />
     </Card>
   );
 }

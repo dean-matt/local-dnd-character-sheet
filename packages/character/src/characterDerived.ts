@@ -244,8 +244,13 @@ export const characterDerivedSchema = z.strictObject({
       mastery: z.array(contentRefSchema),
       /** Feet, null for a weapon that states no range. */
       range: z.strictObject({ normal: z.int().min(0), long: z.int().min(0) }).nullable(),
-      /** The ammunition a weapon fires, as the lowercase uid it names, and how many the carried inventory holds. Null for a weapon that fires none. */
-      ammunition: z.strictObject({ type: z.string().min(1), carried: z.int().min(0) }).nullable(),
+      /** The ammunition a weapon fires, as the lowercase uid it names, and the carried loose one-piece stacks of it, each by inventory index with its quantity. Null for a weapon that fires none. */
+      ammunition: z
+        .strictObject({
+          type: z.string().min(1),
+          stacks: z.array(z.strictObject({ entry: z.int().min(0), quantity: z.int().min(1) })),
+        })
+        .nullable(),
       /** A firearm's shots between reloads, null for any other weapon. */
       reload: z.int().min(1).nullable(),
     }),
