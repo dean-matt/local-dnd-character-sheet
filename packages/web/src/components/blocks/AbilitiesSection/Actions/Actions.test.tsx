@@ -103,7 +103,7 @@ describe("Actions", () => {
     });
     const card = renderActions("one");
 
-    const bonus = (await within(card).findByRole("button", { name: "Second Wind" })).closest("ul");
+    const bonus = (await within(card).findByRole("button", { name: "Second Wind" })).closest("div");
     expect(names(bonus as HTMLElement)).toEqual(["Two-Weapon Fighting", "Second Wind"]);
     expect(within(card).queryByRole("button", { name: "Fighting Style" })).toBeNull();
     expect(within(card).queryByRole("button", { name: "Action Surge" })).toBeNull();

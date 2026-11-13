@@ -61,41 +61,50 @@ export function Actions({
           return (
             <div key={type}>
               <h4 className="font-semibold text-label text-muted capitalize">{type}</h4>
-              <ul className="flex flex-wrap gap-x-3 gap-y-0.5 text-body">
-                {group.map(({ name, source }) => (
-                  <li key={name}>
-                    <DetailTrigger
-                      title={name}
-                      meta={type}
-                      detail={<ActionRules name={name} source={source} />}
-                      className="hover:underline"
+              {group.length > 0 && (
+                <ul className="flex flex-wrap gap-x-3 gap-y-0.5 text-body">
+                  {group.map(({ name, source }) => (
+                    <li key={name}>
+                      <DetailTrigger
+                        title={name}
+                        meta={type}
+                        detail={<ActionRules name={name} source={source} />}
+                        className="hover:underline"
+                      >
+                        {name}
+                      </DetailTrigger>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {features.length > 0 && (
+                <ul className="grid grid-cols-[auto_auto_auto] justify-start gap-x-3 gap-y-0.5 text-body">
+                  {features.map(({ name, source, entries, uses, group }) => (
+                    <li
+                      key={`${name}|${source}`}
+                      className="col-span-3 grid grid-cols-subgrid items-center"
                     >
-                      {name}
-                    </DetailTrigger>
-                  </li>
-                ))}
-                {features.map(({ name, source, entries, uses, group }) => (
-                  <li key={`${name}|${source}`} className="flex items-center gap-1.5">
-                    <DetailTrigger
-                      title={name}
-                      meta={`Feature • ${type}`}
-                      detail={<RulesEntries entries={entries} />}
-                      className="hover:underline"
-                    >
-                      {name}
-                    </DetailTrigger>
-                    <FeatureUse
-                      character={character}
-                      derived={derived}
-                      name={name}
-                      source={source}
-                      type={type}
-                      group={group}
-                      uses={uses}
-                    />
-                  </li>
-                ))}
-              </ul>
+                      <DetailTrigger
+                        title={name}
+                        meta={`Feature • ${type}`}
+                        detail={<RulesEntries entries={entries} />}
+                        className="hover:underline"
+                      >
+                        {name}
+                      </DetailTrigger>
+                      <FeatureUse
+                        character={character}
+                        derived={derived}
+                        name={name}
+                        source={source}
+                        type={type}
+                        group={group}
+                        uses={uses}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           );
         })}
