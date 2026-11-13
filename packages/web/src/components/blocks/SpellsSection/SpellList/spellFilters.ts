@@ -22,10 +22,9 @@ export const TIME_FACET: Facet<SheetSpell> = {
 const ONLY = {
   prepared: {
     label: "Prepared",
-    // A cantrip is always ready, so it counts as prepared.
-    holds: (spell: SheetSpell) =>
-      spell.resolved &&
-      (spell.prepared || spell.level === 0 || !!spell.granted || !!spell.pickedFor),
+    // What the character does not prepare (a cantrip, a granted spell, a known spell) is always ready.
+    holds: (spell: SheetSpell, preparable: boolean) =>
+      spell.resolved && (spell.prepared || !preparable || !!spell.pickedFor),
   },
   concentration: {
     label: "Concentration",
@@ -36,5 +35,5 @@ const ONLY = {
 
 export const ONLY_OPTIONS = Object.entries(ONLY).map(([value, { label }]) => ({ value, label }));
 
-export const holdsEvery = (spell: SheetSpell, ticked: readonly string[]) =>
-  ticked.every((key) => ONLY[key as keyof typeof ONLY]?.holds(spell));
+export const holdsEvery = (spell: SheetSpell, ticked: readonly string[], preparable: boolean) =>
+  ticked.every((key) => ONLY[key as keyof typeof ONLY]?.holds(spell, preparable));

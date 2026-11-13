@@ -124,7 +124,7 @@ export function SpellList({
     .filter(
       ({ spell }) =>
         matchesFacets(spell, [SCHOOL_FACET, TIME_FACET], schools.picks) &&
-        holdsEvery(spell, only) &&
+        holdsEvery(spell, only, preparable(spell)) &&
         inRange(spell.resolved ? spell.level : undefined, levels),
     );
   return (

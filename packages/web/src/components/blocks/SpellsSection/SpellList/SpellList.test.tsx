@@ -604,6 +604,19 @@ describe("SpellList", () => {
         }
       });
 
+      it("keeps every known spell for a class that knows rather than prepares", async () => {
+        const [warlock] = derivedRecord().spellcasting;
+        const { preparedSpells: _, ...knower } =
+          warlock as CharacterDerived["spellcasting"][number];
+        renderList(filtered(), NOW, { ...derivedRecord(), spellcasting: [knower] });
+        await screen.findByText("Hex");
+        open();
+        tick("Prepared");
+        for (const name of ["Hex", "Shield", "Find Familiar"]) {
+          expect(screen.getByText(name)).toBeInTheDocument();
+        }
+      });
+
       it("narrows by casting time, with longer for anything past a reaction", async () => {
         renderList(filtered(), NOW);
         await screen.findByText("Hex");
