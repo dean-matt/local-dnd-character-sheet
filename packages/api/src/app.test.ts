@@ -85,6 +85,7 @@ describe("/openapi.json", () => {
       "/characters",
       "/characters/import",
       "/characters/{id}",
+      "/characters/{id}/definition-and-state",
       "/characters/{id}/derived",
       "/characters/{id}/duplicate",
       "/characters/{id}/export",

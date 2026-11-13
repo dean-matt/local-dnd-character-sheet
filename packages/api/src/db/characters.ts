@@ -107,7 +107,7 @@ export const rollLog = sqliteTable(
   (t) => [index("roll_log_by_character").on(t.characterId, t.id)],
 );
 
-export const UNDO_KINDS = ["definition", "state"] as const;
+export const UNDO_KINDS = ["definition", "state", "both"] as const;
 
 /** Bounded by `UNDO_LOG_LIMIT` from `@dnd/character`, pruned on insert. Session affordance, not an audit trail. */
 export const undoLog = sqliteTable(
@@ -117,7 +117,7 @@ export const undoLog = sqliteTable(
     characterId: text("character_id")
       .notNull()
       .references(() => characters.id, { onDelete: "cascade" }),
-    /** What the write replaced, whole: the definition, or `character_state` where `kind` is `state`. */
+    /** What the write replaced, whole: the definition, `character_state` where `kind` is `state`, or both as `{ definition, state }` where it is `both`. */
     previousState: text("previous_state", { mode: "json" }).notNull(),
     kind: text("kind", { enum: UNDO_KINDS }).notNull().default("definition"),
     describedAs: text("described_as").notNull(),

@@ -42,6 +42,7 @@ import {
   insertCharacter,
   listCharacters,
   undoChanges,
+  updateCharacterAndState,
   updateCharacterDefinition,
   updateCharacterState,
 } from "../db/queries/characters.ts";
@@ -290,6 +291,49 @@ const writeState = createRoute({
   },
 });
 
+const updateBoth = createRoute({
+  method: "put",
+  path: "/characters/{id}/definition-and-state",
+  tags: ["characters"],
+  summary: "Replace a character's definition and state together",
+  description:
+    "One write, so a failure of either writes neither, and one undo entry that holds both " +
+    "the definition and the state it replaced. Undoing it, or any older entry, restores both. " +
+    "`If-Unmodified-Since` refuses with 412 as it does on `PUT /characters/{id}`.",
+  request: {
+    params: idParam,
+    headers: z.object({ "if-unmodified-since": ifUnmodifiedSince }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.strictObject({
+            definition: characterDefinitionSchema,
+            state: characterStateSchema,
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "The updated character and state",
+      content: {
+        "application/json": {
+          schema: z.strictObject({
+            character: characterRecordSchema,
+            state: characterStateRecordSchema,
+          }),
+        },
+      },
+    },
+    404: notFound("character"),
+    412: {
+      description: "The character was written after `If-Unmodified-Since`, so nothing was written",
+      content: { "application/json": { schema: errorSchema } },
+    },
+  },
+});
+
 const readUndo = createRoute({
   method: "get",
   path: "/characters/{id}/undo",
@@ -298,7 +342,7 @@ const readUndo = createRoute({
   description:
     "Each `PUT /characters/{id}` records the definition it replaced, merging an autosave " +
     "burst on one field into one entry, and each `PUT /characters/{id}/state` that changes " +
-    "something records the state it replaced as its own entry. The log covers neither " +
+    "something records the state it replaced as its own entry, and each `PUT /characters/{id}/definition-and-state` records both as one. The log covers neither " +
     `pages nor a deleted character, and keeps the newest ${UNDO_LOG_LIMIT} of both kinds.`,
   request: { params: idParam },
   responses: {
@@ -446,6 +490,24 @@ export function charactersRoutes(
       return c.json({ error: "The character changed since it was read; reload it" }, 412);
     }
     return c.json(record(row), 200);
+  });
+
+  routes.openapi(updateBoth, (c) => {
+    const { id } = c.req.valid("param");
+    const since = c.req.valid("header")["if-unmodified-since"];
+    const body = c.req.valid("json");
+    const result = updateCharacterAndState(
+      db,
+      id,
+      body.definition,
+      body.state,
+      since === undefined ? undefined : new Date(since),
+    );
+    if (!result) return c.json({ error: NOT_FOUND }, 404);
+    if (result === "stale") {
+      return c.json({ error: "The character changed since it was read; reload it" }, 412);
+    }
+    return c.json({ character: record(result.row), state: toStateRecord(result.stateRow) }, 200);
   });
 
   routes.openapi(remove, (c) => {

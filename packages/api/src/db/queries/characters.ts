@@ -27,8 +27,10 @@ import {
   deleteUndoEntry,
   newestUndoEntry,
   oldestUndoEntryFrom,
+  recordBothChange,
   recordChange,
   recordStateChange,
+  snapshotOf,
   undoEntry,
 } from "./undo.ts";
 
@@ -226,8 +228,9 @@ function snapshotsFrom(tx: CharactersWriter, id: string, from: number) {
   const definitionEntry = oldestUndoEntryFrom(tx, id, from, "definition");
   const stateEntry = oldestUndoEntryFrom(tx, id, from, "state");
   const definition =
-    definitionEntry && characterDefinitionSchema.safeParse(definitionEntry.previousState);
-  const state = stateEntry && characterStateSchema.safeParse(stateEntry.previousState);
+    definitionEntry &&
+    characterDefinitionSchema.safeParse(snapshotOf(definitionEntry, "definition"));
+  const state = stateEntry && characterStateSchema.safeParse(snapshotOf(stateEntry, "state"));
   if (definition?.success === false) return { refused: definitionEntry } as const;
   if (state?.success === false) return { refused: stateEntry } as const;
   return { definition: definition?.data, state: state?.data } as const;
@@ -406,6 +409,49 @@ function writeState(db: CharactersWriter, characterId: string, state: CharacterS
     .where(eq(characterState.characterId, characterId))
     .returning()
     .get();
+}
+
+/**
+ * Replaces the definition and the state in one transaction and records one undo entry holding
+ * both, so a failure of either writes neither. Results as `updateCharacterDefinition`.
+ */
+export function updateCharacterAndState(
+  db: CharactersDb,
+  id: string,
+  definition: CharacterDefinition,
+  state: CharacterState,
+  unmodifiedSince?: Date,
+) {
+  return db.transaction((tx) => {
+    const current = tx
+      .select({ definition: characters.definition, updatedAt: characters.updatedAt })
+      .from(characters)
+      .where(eq(characters.id, id))
+      .get();
+    const currentState = tx
+      .select({ state: characterState.state })
+      .from(characterState)
+      .where(eq(characterState.characterId, id))
+      .get();
+    if (!current || !currentState) return undefined;
+    if (unmodifiedSince && current.updatedAt.getTime() > unmodifiedSince.getTime())
+      return "stale" as const;
+    const now = new Date();
+    const beforeDefinition = characterDefinitionSchema.safeParse(current.definition);
+    const beforeState = characterStateSchema.safeParse(currentState.state);
+    if (beforeDefinition.success && beforeState.success) {
+      recordBothChange(
+        tx,
+        id,
+        { definition: beforeDefinition.data, state: beforeState.data },
+        { definition, state },
+        now,
+      );
+    }
+    const row = writeDefinition(tx, id, definition, now);
+    const stateRow = writeState(tx, id, state, now);
+    return { row, stateRow };
+  });
 }
 
 /**
