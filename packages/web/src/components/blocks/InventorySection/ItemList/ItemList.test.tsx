@@ -292,6 +292,7 @@ describe("ItemList", () => {
     expect(definition.inventory).toHaveLength(4);
     expect(definition.inventory[3]).toEqual({
       ref: { name: "Rope", source: "XPHB" },
+      id: expect.any(String),
       ...flags,
     });
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(1);
@@ -348,6 +349,7 @@ describe("ItemList", () => {
 
     expect((await written(fetchMock)).inventory[3]).toEqual({
       ref: { homebrewId: "hb-1" },
+      id: expect.any(String),
       ...flags,
     });
   });

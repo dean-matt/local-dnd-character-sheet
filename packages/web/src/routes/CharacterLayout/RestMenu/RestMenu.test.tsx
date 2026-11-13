@@ -65,6 +65,27 @@ function storeElsewhere(state: Partial<CharacterState>) {
  * endpoints, or `failFeatures` fails the features one. `fail` answers every write with a 500, `failRolls` the
  * first that many roll logs; `hold` keeps each write in flight until it settles.
  */
+/** `characterRecord`'s Vex carrying a Wand of Wonder entry whose id is `wand`. */
+function heldWand(): CharacterRecord {
+  const base = characterRecord("1", "Vex") as CharacterRecord;
+  return {
+    ...base,
+    definition: {
+      ...base.definition,
+      inventory: [
+        {
+          ref: { name: "Wand of Wonder", source: "DMG" },
+          id: "wand",
+          quantity: 1,
+          carried: true,
+          equipped: false,
+          attuned: false,
+        },
+      ],
+    },
+  };
+}
+
 function renderLive(
   state: Partial<CharacterState>,
   {
@@ -486,9 +507,11 @@ describe("RestMenu", () => {
         ],
       }) as CharacterInventory;
     const used = { itemCharges: [{ id: "wand", expended: 5 }] };
+    const holder = heldWand();
 
     it("rolls the printed recharge on a long rest, returns that many charges and logs the roll", async () => {
       const writes = renderLive(used, {
+        character: holder,
         inventory: wand({ kind: "roll", notation: "1d1 + 1" }),
       });
       const dialog = await open("Long rest");
@@ -506,7 +529,7 @@ describe("RestMenu", () => {
     });
 
     it("returns every charge where the item prints no amount, and rolls nothing", async () => {
-      const writes = renderLive(used, { inventory: wand({ kind: "all" }) });
+      const writes = renderLive(used, { character: holder, inventory: wand({ kind: "all" }) });
       const dialog = await open("Long rest");
       fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
       await waitFor(() => expect(writes).toHaveLength(1));
@@ -514,8 +537,19 @@ describe("RestMenu", () => {
       expect(rolls).toEqual([]);
     });
 
+    it("keeps the spent charges of a special recharge on a long rest", async () => {
+      const writes = renderLive(used, {
+        character: holder,
+        inventory: wand({ kind: "all" }, "special"),
+      });
+      const dialog = await open("Long rest");
+      fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.itemCharges).toEqual(used.itemCharges);
+    });
+
     it("leaves a special recharge and a short rest alone", async () => {
-      renderLive(used, { inventory: wand({ kind: "all" }, "special") });
+      renderLive(used, { character: holder, inventory: wand({ kind: "all" }, "special") });
       expect(listed(await open("Long rest"))).not.toContain("Wand of Wonder charges: 2/7 → 7/7");
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
       await openMenu();
