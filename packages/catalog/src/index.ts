@@ -149,7 +149,14 @@ export type { ItemCharges, ItemRegains } from "./item-charges.ts";
 export { itemCharges, rechargesOnLongRest } from "./item-charges.ts";
 export { itemEntries } from "./item-entries.ts";
 export type { ItemHitFacts, ItemKind, ToolType } from "./item-kind.ts";
-export { armsGroupKinds, ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";
+export {
+  armsGroupKinds,
+  ITEM_KINDS,
+  isConsumable,
+  itemHitFacts,
+  itemKinds,
+  ofWantedKind,
+} from "./item-kind.ts";
 export { itemSkillGrantsSchema } from "./item-skill.ts";
 export { alignmentWords, monsterEntries } from "./monster.ts";
 export type { ScoreMinimums } from "./multiclass.ts";

@@ -76,6 +76,12 @@ export function itemKinds(item: { type?: unknown; wondrous?: unknown; staff?: un
   return [...kinds];
 }
 
+const CONSUMABLE_TYPES = new Set(["P", "SC", "EXP", "FD"]);
+
+/** Whether an item of upstream type `type`, with or without its source suffix, is used up: a potion, scroll, explosive or food. */
+export const isConsumable = (type: string | null | undefined): boolean =>
+  CONSUMABLE_TYPES.has(type?.split("|")[0] ?? "");
+
 /** Whether an item of `kinds` is one `wanted` admits; every item is where it names none. */
 export function ofWantedKind(kinds: readonly ItemKind[], wanted?: readonly string[]) {
   return !wanted?.length || kinds.some((kind) => wanted.includes(kind));

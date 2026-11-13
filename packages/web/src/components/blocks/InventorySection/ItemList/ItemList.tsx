@@ -1,4 +1,4 @@
-import type { SheetItem } from "@dnd/catalog";
+import { isConsumable, type SheetItem } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
@@ -23,6 +23,7 @@ import {
   type InventoryEntry,
   placeInventoryEntry,
 } from "../../../../lib/editInventoryEntry.ts";
+import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
 import { ChipFacet } from "../../../Filter/ChipFacet.tsx";
@@ -31,6 +32,7 @@ import { matchesFacets, useFacetPicks } from "../../../Filter/facets.ts";
 import { AddItemButton } from "./AddItemButton.tsx";
 import { ItemCharges } from "./ItemCharges.tsx";
 import { ItemPicks } from "./ItemPicks.tsx";
+import { ItemUse } from "./ItemUse.tsx";
 import { GROUP_FACETS, GROUPS, groupOf } from "./itemGroups.ts";
 import { PlaceField } from "./PlaceField.tsx";
 import { QuantityField } from "./QuantityField.tsx";
@@ -112,6 +114,33 @@ export function ItemList({
     await hold(() =>
       counts.mutateAsync((latest) => editInventoryEntry(latest, index, entry, change)),
     );
+  };
+  const [announced, setAnnounced] = useState({ text: "", count: 0 });
+  const [useFailure, setUseFailure] = useState<string>();
+  useSaveToast("Use", useFailure);
+  // Announced here, not by the row, which unmounts with the last item.
+  const speak = (text: string) => setAnnounced(({ count }) => ({ text, count: count + 1 }));
+  const use = async (index: number, name: string) => {
+    const entry = drawn[index];
+    if (!entry || !settled()) return;
+    const left = entry.quantity - 1;
+    try {
+      await hold(() =>
+        counts.mutateAsync({
+          ownUndoEntry: true,
+          edit: (latest) =>
+            editInventoryEntry(latest, index, entry, (at) =>
+              at.quantity > 1 ? { ...at, quantity: at.quantity - 1 } : null,
+            ),
+        }),
+      );
+    } catch (error) {
+      setUseFailure(`${name} was not used: ${(error as Error).message}`);
+      speak(`${name} was not used`);
+      return;
+    }
+    setUseFailure(undefined);
+    speak(left > 0 ? `Used ${name}, ${left} left` : `Used ${name}, none left`);
   };
   const add = (entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">) =>
     write(`add:${JSON.stringify([entry.ref, entry.variant])}`, (latest) => withItem(latest, entry));
@@ -223,6 +252,11 @@ export function ItemList({
                       />
                     )
                   }
+                  use={
+                    item.carried && isConsumable(item.type?.abbreviation) ? (
+                      <ItemUse name={item.name} busy={busy} onUse={() => use(index, item.name)} />
+                    ) : null
+                  }
                   placement={placementField(index, item.name)}
                   picks={picksFor(index, item)}
                   busy={busy}
@@ -257,5 +291,10 @@ export function ItemList({
     );
   });
   // A third of the content column fits a row's controls only from xl, beside the sidebar.
-  return <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">{cards}</div>;
+  return (
+    <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+      {cards}
+      <Announcer announced={announced} />
+    </div>
+  );
 }

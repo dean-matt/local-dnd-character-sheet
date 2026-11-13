@@ -20,7 +20,7 @@ type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 
 /**
  * `quantity` is the control that edits the count, `charges` the counter of an item that prints
- * charges, `placement` the one that picks a container,
+ * charges, `use` the control that spends a consumable, `placement` the one that picks a container,
  * and `picks` the controls for what the wearer chooses on the item.
  * `busy` marks the row's toggles and Remove disabled while the list drops clicks.
  * `equipRequires` names the proficiency the table requires before the item equips.
@@ -30,6 +30,7 @@ export function ResolvedItemRow({
   attack,
   quantity,
   charges,
+  use,
   placement,
   picks,
   busy,
@@ -43,6 +44,7 @@ export function ResolvedItemRow({
   attack: Attack | undefined;
   quantity: ReactNode;
   charges: ReactNode;
+  use: ReactNode;
   placement: ReactNode;
   picks: ReactNode;
   busy: boolean;
@@ -87,6 +89,7 @@ export function ResolvedItemRow({
           )}
           {quantity}
           {charges}
+          {use}
           {placement}
           {picks}
           <EquipToggle item={item} requires={equipRequires} onChange={onEquip} busy={busy} />

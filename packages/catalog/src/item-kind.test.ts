@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemHitFacts, itemKinds, ofWantedKind } from "./index.ts";
+import { isConsumable, itemHitFacts, itemKinds, ofWantedKind } from "./index.ts";
 
 describe("itemKinds", () => {
   it.each([
@@ -82,5 +82,14 @@ describe("ofWantedKind", () => {
     expect(ofWantedKind(["ring"], ["melee"])).toBe(false);
     expect(ofWantedKind(["ring"], [])).toBe(true);
     expect(ofWantedKind(["ring"])).toBe(true);
+  });
+});
+
+describe("isConsumable", () => {
+  it("reads the type code with or without its source suffix", () => {
+    expect(isConsumable("P")).toBe(true);
+    expect(isConsumable("SC|XPHB")).toBe(true);
+    expect(isConsumable("A|XPHB")).toBe(false);
+    expect(isConsumable(undefined)).toBe(false);
   });
 });

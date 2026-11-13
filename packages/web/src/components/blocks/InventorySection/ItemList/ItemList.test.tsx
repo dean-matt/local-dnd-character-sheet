@@ -776,6 +776,105 @@ describe("ItemList", () => {
     expect(cloak.querySelector("svg")).toHaveClass("lucide-backpack");
   });
 
+  describe("a consumable", () => {
+    const potion = (quantity: number, carried = true): SheetItem[] => [
+      {
+        ...ITEMS[0],
+        name: "Potion of Healing",
+        weapon: null,
+        quantity,
+        carried,
+        type: { abbreviation: "P", name: "Potion" },
+      } as SheetItem,
+    ];
+    const potionEntry = { ref: { name: "Potion of Healing", source: "XDMG" } };
+    const puts = (fetchMock: ReturnType<typeof stubApi>) =>
+      fetchMock.mock.calls.filter(
+        ([url, init]) => url === "/api/characters/1" && init?.method === "PUT",
+      );
+
+    it("spends one in a write of its own and announces what is left", async () => {
+      const fetchMock = renderList(derivedRecord(), potion(3), {
+        firstEntry: { ...potionEntry, quantity: 3 },
+      });
+
+      fireEvent.click(await screen.findByLabelText("Use Potion of Healing"));
+
+      expect(await screen.findByText("Used Potion of Healing, 2 left")).toBeInTheDocument();
+      expect(puts(fetchMock)).toHaveLength(1);
+      expect(puts(fetchMock)[0]?.[1]?.headers).toMatchObject({ "Undo-Entry": "own" });
+      expect((await written(fetchMock)).inventory[0].quantity).toBe(2);
+    });
+
+    it("removes the entry in the same write when the last is used", async () => {
+      const fetchMock = renderList(derivedRecord(), potion(1), { firstEntry: potionEntry });
+
+      fireEvent.click(await screen.findByLabelText("Use Potion of Healing"));
+
+      expect(await screen.findByText("Used Potion of Healing, none left")).toBeInTheDocument();
+      expect(puts(fetchMock)).toHaveLength(1);
+      expect(puts(fetchMock)[0]?.[1]?.headers).toMatchObject({ "Undo-Entry": "own" });
+      const names = (await written(fetchMock)).inventory.map(
+        (entry: { ref: { name: string } }) => entry.ref.name,
+      );
+      expect(names).not.toContain("Potion of Healing");
+    });
+
+    it("offers no Use on an item that is not carried", async () => {
+      renderList(derivedRecord(), potion(1, false));
+
+      await screen.findByText("Potion of Healing");
+      expect(screen.queryByLabelText("Use Potion of Healing")).toBeNull();
+    });
+
+    it("offers no Use on a carried item that is not a consumable", async () => {
+      renderList(derivedRecord(), [
+        { ...(potion(1)[0] as ResolvedItem), type: { abbreviation: "A", name: "Armor" } },
+      ]);
+
+      await screen.findByText("Potion of Healing");
+      expect(screen.queryByLabelText("Use Potion of Healing")).toBeNull();
+    });
+
+    it("offers Use on a homebrew consumable by the same rule", async () => {
+      renderList(derivedRecord(), [
+        { ...(potion(2)[0] as ResolvedItem), name: "Lucky Draught", homebrewId: "hb-1" },
+      ]);
+
+      expect(await screen.findByLabelText("Use Lucky Draught")).toBeInTheDocument();
+    });
+
+    it("toasts and announces a use that failed to save, keeping the item", async () => {
+      renderList(derivedRecord(), potion(3), { firstEntry: { ...potionEntry, quantity: 3 } });
+      const use = await screen.findByLabelText("Use Potion of Healing");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => json({ error: "disk full" }, 500)),
+      );
+
+      fireEvent.click(use);
+
+      expect(await saveToasts().findByText(/Potion of Healing was not used: /)).toBeInTheDocument();
+      expect(screen.getByText("Potion of Healing was not used")).toBeInTheDocument();
+      expect(screen.queryByText(/^Used Potion of Healing/)).toBeNull();
+    });
+
+    it("takes a second Use while the first is still saving as no write", async () => {
+      const fetchMock = renderList(derivedRecord(), potion(3), {
+        firstEntry: { ...potionEntry, quantity: 3 },
+        holdFirstPut: true,
+      });
+      const use = await screen.findByLabelText("Use Potion of Healing");
+
+      fireEvent.click(use);
+      fireEvent.click(use);
+      releasePut();
+
+      expect(await screen.findByText("Used Potion of Healing, 2 left")).toBeInTheDocument();
+      expect(puts(fetchMock)).toHaveLength(1);
+    });
+  });
+
   describe("an item's charges", () => {
     const wand = (): SheetItem[] => [
       {
