@@ -70,6 +70,8 @@
       "srd": true,
       "type": "WD|DMG",
       "rarity": "uncommon",
+      "recharge": "dawn",
+      "rechargeAmount": "{@dice 1d6 + 1}",
       "charges": 7,
       "entries": [
         "Elided. {@spell magic missile} Elided.",

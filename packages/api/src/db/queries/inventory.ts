@@ -9,6 +9,7 @@ import {
   armorTraitSchema,
   type CharacterInventory,
   itemBonusSchema,
+  itemCharges,
   itemEntries,
   type SheetItem,
   weaponTraitSchema,
@@ -141,12 +142,14 @@ function sheetItem(
   row: ItemFacts | undefined,
   typeNames: ReadonlyMap<string, string>,
 ): SheetItem {
-  const { ref, variant, variantOverride, quantity, carried, equipped, attuned } = entry;
+  const { ref, variant, variantOverride, quantity, carried, equipped, attuned, id, chargesMax } =
+    entry;
   const flags = { quantity, carried, equipped, attuned };
   if (!row) {
     return {
       resolved: false,
       name: displayName(ref),
+      ...(id && { id }),
       ...("homebrewId" in ref ? { homebrewId: ref.homebrewId } : { source: ref.source }),
       ...flags,
       ...(variant && { variant }),
@@ -158,6 +161,7 @@ function sheetItem(
   return {
     resolved: true,
     name: row.name,
+    ...(id && { id }),
     ...("homebrewId" in ref && { homebrewId: ref.homebrewId }),
     ...(!("homebrewId" in ref) && typeof source === "string" && { source }),
     ...flags,
@@ -170,6 +174,7 @@ function sheetItem(
     weapon: weaponFacts(row),
     armor: armorTraitSchema.safeParse(row.json).data ?? null,
     offers: itemOffers(row),
+    charges: itemCharges(row.json, chargesMax),
     entries: itemEntries(row.json),
     ...(variantOverride && {
       overridden:

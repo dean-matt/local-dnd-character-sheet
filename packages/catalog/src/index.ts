@@ -145,6 +145,8 @@ export {
   itemAdvantagesOf,
 } from "./item-advantage.ts";
 export { itemBonusSchema } from "./item-bonus.ts";
+export type { ItemCharges, ItemRegains } from "./item-charges.ts";
+export { itemCharges, rechargesOnLongRest } from "./item-charges.ts";
 export { itemEntries } from "./item-entries.ts";
 export type { ItemHitFacts, ItemKind, ToolType } from "./item-kind.ts";
 export { armsGroupKinds, ITEM_KINDS, itemHitFacts, itemKinds, ofWantedKind } from "./item-kind.ts";

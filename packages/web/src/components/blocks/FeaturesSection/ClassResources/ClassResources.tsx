@@ -21,8 +21,8 @@ import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
+import { PoolButton } from "../../../PoolButton.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
-import { PoolButton } from "../PoolButton.tsx";
 
 type Pool = CharacterState["classResources"][number];
 

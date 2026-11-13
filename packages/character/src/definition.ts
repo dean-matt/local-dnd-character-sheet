@@ -180,6 +180,8 @@ const inventoryEntrySchema = z
     variant: contentRefSchema.optional(),
     variantOverride: variantOverrideSchema.optional(),
     quantity: z.int().min(1).default(1),
+    /** The maximum charges the table gives this item in place of the ones the catalog prints. */
+    chargesMax: z.int().min(1).optional(),
     carried: z.boolean().default(true),
     equipped: z.boolean().default(false),
     attuned: z.boolean().default(false),

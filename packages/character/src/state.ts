@@ -66,6 +66,15 @@ const featureUseSchema = z.strictObject({
 });
 
 /**
+ * The charges spent from one inventory entry's item, keyed by the entry's `id`. The maximum
+ * is the sheet's, so a reader caps what is spent at it.
+ */
+const itemChargeSchema = z.strictObject({
+  id: z.string().min(1),
+  expended: z.int().min(1),
+});
+
+/**
  * Something in force until the user ends it, such as a rage. Keyed by `name`, so a second
  * effect needs no change to this shape; what an effect does is the rule that reads the name.
  */
@@ -147,6 +156,12 @@ export const characterStateSchema = z.strictObject({
       error: "the same feature is listed twice",
     })
     .default([]),
+  itemCharges: z
+    .array(itemChargeSchema)
+    .refine((charges) => isUnique(charges, (spent) => spent.id), {
+      error: "the same item is listed twice",
+    })
+    .default([]),
   activeEffects: z
     .array(activeEffectSchema)
     .refine((effects) => isUnique(effects, (effect) => effect.name), {
@@ -214,4 +229,25 @@ export function withFeatureUse(
 ): CharacterState {
   const others = state.featureUses.filter((use) => use.key !== key);
   return { ...state, featureUses: [...others, { key, expended }] };
+}
+
+/** One entry's spent charges, capped at its maximum: a count past it, left by a lowered maximum, reads as none left. */
+export function itemChargesSpent(state: CharacterState, id: string, max: number): number {
+  const expended = state.itemCharges.find((spent) => spent.id === id)?.expended ?? 0;
+  return Math.min(expended, max);
+}
+
+/**
+ * The state with one entry's spent charges replaced. A counter whose id is not in `ids`, the
+ * entries the definition lists, is dropped, which is how removing an entry removes its
+ * counter; one at nothing spent is not stored.
+ */
+export function withItemChargesSpent(
+  state: CharacterState,
+  ids: ReadonlySet<string>,
+  id: string,
+  expended: number,
+): CharacterState {
+  const others = state.itemCharges.filter((spent) => spent.id !== id && ids.has(spent.id));
+  return { ...state, itemCharges: expended > 0 ? [...others, { id, expended }] : others };
 }

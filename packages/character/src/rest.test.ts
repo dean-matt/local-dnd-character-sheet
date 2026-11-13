@@ -314,3 +314,33 @@ describe("a rest and a feature's limited uses", () => {
     expect(spent("short")).toEqual([{ key: features[1]?.key, expended: 1 }]);
   });
 });
+
+describe("a rest and an item's charges", () => {
+  const used = {
+    ...defaultCharacterState(),
+    itemCharges: [
+      { id: "wand", expended: 5 },
+      { id: "rod", expended: 2 },
+      { id: "staff", expended: 4 },
+    ],
+  };
+  const recharges = [
+    { id: "wand", max: 7, regained: 3 },
+    { id: "rod", max: 3, regained: 6 },
+  ];
+
+  it("returns the regained charges to each recharging item on a long rest, never past what was spent", () => {
+    expect(restedState(classic, sheet, used, "long", undefined, [], recharges).itemCharges).toEqual(
+      [
+        { id: "wand", expended: 2 },
+        { id: "staff", expended: 4 },
+      ],
+    );
+  });
+
+  it("restores nothing on a short rest", () => {
+    expect(
+      restedState(classic, sheet, used, "short", undefined, [], recharges).itemCharges,
+    ).toEqual(used.itemCharges);
+  });
+});

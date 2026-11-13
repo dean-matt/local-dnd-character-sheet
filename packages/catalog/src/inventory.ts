@@ -1,6 +1,7 @@
 import { ABILITIES } from "@dnd/rules";
 import { z } from "zod";
 import { entriesSchema } from "./entry.ts";
+import { itemChargesSchema } from "./item-charges.ts";
 
 const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().min(1) });
 
@@ -12,6 +13,8 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
  */
 const sheetItemFields = {
   name: z.string().min(1),
+  /** The entry's `id`, absent until something needs to refer to it. */
+  id: z.string().min(1).optional(),
   source: z.string().min(1).optional(),
   homebrewId: z.string().min(1).optional(),
   quantity: z.int().min(1),
@@ -86,6 +89,8 @@ const sheetItemSchema = z.discriminatedUnion("resolved", [
     weapon: weaponFactsSchema.nullable(),
     armor: armorFactsSchema.nullable(),
     offers: itemOffersSchema,
+    /** Null for an item that prints no charge count. */
+    charges: itemChargesSchema.nullable(),
     entries: entriesSchema,
     /** The refusal a table overrode to hold this variant on this base item. */
     overridden: z.string().min(1).optional(),

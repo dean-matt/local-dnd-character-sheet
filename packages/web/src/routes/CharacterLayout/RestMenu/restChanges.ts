@@ -1,4 +1,10 @@
-import type { CharacterFeatures, LimitedUses } from "@dnd/catalog";
+import {
+  type CharacterFeatures,
+  type CharacterInventory,
+  type ItemRegains,
+  type LimitedUses,
+  rechargesOnLongRest,
+} from "@dnd/catalog";
 import {
   type CharacterDefinition,
   type CharacterDerived,
@@ -8,11 +14,13 @@ import {
   type HitDie,
   hitDieSpentState,
   hitPointMaximumUnder,
+  itemChargesSpent,
   type RestLength,
   type RollRecord,
   restedState,
   sheetState,
 } from "@dnd/character";
+import { rollDice } from "@dnd/dice";
 import { levelLabel, ORDINAL } from "../../../lib/spellLevel.ts";
 
 /** Why the long rest is unavailable to a character at 0 hit points. */
@@ -40,6 +48,49 @@ export function featureUses(features: CharacterFeatures): FeatureUse[] {
   return [...byKey.values()];
 }
 
+/** An item with charges that a long rest restores, as the inventory lists it. */
+export type ChargedItem = { id: string; name: string; max: number; regains: ItemRegains };
+
+/** Each resolved item whose entry has an `id` and whose printed recharge a long rest applies. */
+export function chargedItems(inventory: CharacterInventory): ChargedItem[] {
+  return inventory.items.flatMap((item) =>
+    item.resolved && item.id && item.charges && rechargesOnLongRest(item.charges.recharge)
+      ? [{ id: item.id, name: item.name, max: item.charges.max, regains: item.charges.regains }]
+      : [],
+  );
+}
+
+/** A charged item with the charges its recharge returned and the roll it logs, where the recharge is a roll. */
+export type RolledRecharge = ChargedItem & { regained: number; roll?: RollRecord };
+
+/** What the item's recharge returns, rolling it where it prints a roll. A roll that does not parse returns every charge. */
+export function rechargeOf(item: ChargedItem): RolledRecharge {
+  const { regains } = item;
+  if (regains.kind === "fixed") return { ...item, regained: regains.count };
+  if (regains.kind === "roll") {
+    try {
+      const rolled = rollDice(regains.notation);
+      return {
+        ...item,
+        regained: Math.max(0, rolled.total),
+        roll: {
+          type: "dice",
+          label: `${item.name} recharge`,
+          origin: item.name,
+          notation: rolled.notation,
+          total: rolled.total,
+          dice: rolled.dice,
+          modifier: rolled.modifier,
+          critical: rolled.critical,
+        },
+      };
+    } catch {
+      return { ...item, regained: item.max };
+    }
+  }
+  return { ...item, regained: item.max };
+}
+
 function usesLeft(state: CharacterState, feature: FeatureUse): string {
   return `${feature.count - featureUsesSpent(state, feature.key, feature.count)}/${feature.count}`;
 }
@@ -56,6 +107,7 @@ function restChanges(
   before: CharacterState,
   after: CharacterState,
   features: readonly FeatureUse[],
+  recharges: readonly RolledRecharge[],
 ): RestChange[] {
   const hitPoints = ({ hitPoints, hitPointMaximumReduction }: CharacterState) => {
     const maximum = hitPointMaximumUnder(definition, derived, hitPointMaximumReduction);
@@ -102,6 +154,12 @@ function restChanges(
       label: feature.name,
       before: usesLeft(before, feature),
       after: usesLeft(after, feature),
+    })),
+    ...recharges.map((item) => ({
+      key: `item:${item.id}`,
+      label: `${item.name} charges`,
+      before: `${item.max - itemChargesSpent(before, item.id, item.max)}/${item.max}`,
+      after: `${item.max - itemChargesSpent(after, item.id, item.max)}/${item.max}`,
     })),
     {
       key: "exhaustion",
@@ -154,7 +212,8 @@ export function spentState<Spend extends HitDieSpend>(
  * The state a rest leaves and what it changes on the sheet, so the menu's summary and the
  * dialog's list describe the one rest the dialog writes. The hit dice in `spends` are spent
  * before the rest, so the list and the write carry them with its own recovery. Each of
- * `features` whose reset the rest meets has its uses restored.
+ * `features` whose reset the rest meets has its uses restored, and a long rest returns each of
+ * `recharges` its charges.
  */
 export function restPreview(
   definition: CharacterDefinition,
@@ -164,9 +223,17 @@ export function restPreview(
   length: RestLength,
   picked?: HitDie[],
   spends: readonly HitDieSpend[] = [],
+  recharges: readonly RolledRecharge[] = [],
 ): { after: CharacterState; changes: RestChange[] } {
   const during = spentState(definition, derived, state, spends).state;
-  const after = restedState(definition, derived, during, length, picked, features);
-  const changes = restChanges(definition, derived, sheetState(derived, state), after, features);
+  const after = restedState(definition, derived, during, length, picked, features, recharges);
+  const changes = restChanges(
+    definition,
+    derived,
+    sheetState(derived, state),
+    after,
+    features,
+    length === "long" ? recharges : [],
+  );
   return { after, changes };
 }

@@ -401,6 +401,15 @@ const STATE_CHANGES: {
       (at) => `${at.slice(at.lastIndexOf("|") + 1)} uses`,
       (use) => `${use.expended} spent`,
     ),
+  itemCharges: (before, after) =>
+    keyed(
+      "itemCharges",
+      before.itemCharges,
+      after.itemCharges,
+      (spent) => spent.id,
+      () => "Item charges",
+      (spent) => `${spent.expended} spent`,
+    ),
   activeEffects: (before, after) =>
     keyed(
       "activeEffects",
