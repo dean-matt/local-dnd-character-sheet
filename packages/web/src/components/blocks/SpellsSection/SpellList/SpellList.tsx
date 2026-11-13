@@ -19,6 +19,7 @@ import { levelLabel } from "../../../../lib/spellLevel.ts";
 import { SCHOOLS, schoolName } from "../../../../lib/spellSchool.ts";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
+import { CheckFacet } from "../../../Filter/CheckFacet.tsx";
 import { ChipFacet } from "../../../Filter/ChipFacet.tsx";
 import { FilterButton } from "../../../Filter/FilterButton.tsx";
 import {
@@ -34,6 +35,7 @@ import { LearnSpellField } from "./LearnSpellField.tsx";
 import { PreparedTallies } from "./PreparedTallies.tsx";
 import { SpellRow } from "./SpellRow/SpellRow.tsx";
 import { preparedTallies, spellCaster } from "./spellCaster.ts";
+import { holdsEvery, ONLY_OPTIONS, TIME_FACET, TIME_OPTIONS } from "./spellFilters.ts";
 
 const SCHOOL_FACET: Facet<SheetSpell> = {
   key: "school",
@@ -84,6 +86,7 @@ export function SpellList({
   const names = useHomebrewNames();
   const schools = useFacetPicks();
   const [levels, setLevels] = useState(NO_RANGE);
+  const [only, setOnly] = useState<string[]>([]);
   const spells = useCharacterSpells(character.id);
   const write = useHeldSave(character.id, "Spells");
   const { settled, hold, writing } = useRowWrites(characterSpellsKey(character.id));
@@ -114,12 +117,14 @@ export function SpellList({
     spell.level > 0 &&
     !spell.granted &&
     spellCaster(spell, casters)?.preparedSpells !== undefined;
-  const active = schools.active + (levels.min !== "" || levels.max !== "" ? 1 : 0);
+  const active =
+    schools.active + (levels.min !== "" || levels.max !== "" ? 1 : 0) + (only.length > 0 ? 1 : 0);
   const shown = list
     .map((spell, index) => ({ spell, index }))
     .filter(
       ({ spell }) =>
-        matchesFacets(spell, [SCHOOL_FACET], schools.picks) &&
+        matchesFacets(spell, [SCHOOL_FACET, TIME_FACET], schools.picks) &&
+        holdsEvery(spell, only) &&
         inRange(spell.resolved ? spell.level : undefined, levels),
     );
   return (
@@ -132,6 +137,7 @@ export function SpellList({
           onReset={() => {
             schools.reset();
             setLevels(NO_RANGE);
+            setOnly([]);
           }}
         >
           <ChipFacet
@@ -146,6 +152,13 @@ export function SpellList({
             bounds={{ min: 0, max: 9 }}
             onChange={setLevels}
           />
+          <CheckFacet
+            label={TIME_FACET.label}
+            options={TIME_OPTIONS}
+            picked={schools.picks.time ?? []}
+            onChange={(next) => schools.set("time", next)}
+          />
+          <CheckFacet label="Show only" options={ONLY_OPTIONS} picked={only} onChange={setOnly} />
         </FilterButton>
       }
     >
