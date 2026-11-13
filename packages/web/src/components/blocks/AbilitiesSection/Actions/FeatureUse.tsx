@@ -13,9 +13,9 @@ import { Announcer } from "../../../Announcer.tsx";
 import { featureResource } from "./featureResource.ts";
 
 /**
- * A held feature's resource and its Use control, as the last two cells of its row's grid. A Use spends the resource, if the feature has
- * one, and marks the feature's action type spent on the Turn Economy, as one state write
- * announced once it lands. Nothing shows until state loads, since the count left is read from it.
+ * A held feature's resource and its Use control. A Use spends the resource, if any, and marks
+ * the feature's action type spent on the Turn Economy, as one announced state write. Nothing
+ * shows until state loads, since the count left is read from it.
  */
 export function FeatureUse({
   character,
@@ -67,11 +67,13 @@ export function FeatureUse({
   }
 
   return (
-    <>
-      <span className="text-row">
-        {resource && (counted ? `${resource.left} / ${resource.total}` : "Unlimited")}
-        {resource?.rest && <span className="text-muted"> {resource.rest}</span>}
-      </span>
+    <span className="flex items-center gap-1.5">
+      {resource && (
+        <span className="text-row">
+          {counted ? `${resource.left} / ${resource.total}` : "Unlimited"}
+          {resource.rest && <span className="text-muted"> {resource.rest}</span>}
+        </span>
+      )}
       <button
         type="button"
         aria-label={`Use ${name}`}
@@ -83,11 +85,11 @@ export function FeatureUse({
         Use
       </button>
       {replace.error && (
-        <span role="alert" className="col-span-3 text-error text-row">
+        <span role="alert" className="text-error text-row">
           {name} was not changed: {replace.error.message}
         </span>
       )}
       <Announcer announced={replace.announced} />
-    </>
+    </span>
   );
 }

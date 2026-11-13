@@ -3,13 +3,13 @@ import { box } from "./box.ts";
 
 test.beforeEach(({ page }) => page.setViewportSize({ width: 1280, height: 900 }));
 
-test("the Actions card's rows share a name column and a Use column, with or without a Use button", async ({
+test("the Actions card's items in a row share a vertical centre, with or without a Use button", async ({
   page,
   request,
 }) => {
   const created = await request.post("/api/characters", {
     data: {
-      name: `Actions Columns ${test.info().retry}${Date.now()}`,
+      name: `Actions Row ${test.info().retry}${Date.now()}`,
       edition: "one",
       levels: [
         { class: { name: "Fighter", source: "XPHB" } },
@@ -35,21 +35,27 @@ test("the Actions card's rows share a name column and a Use column, with or with
   try {
     await page.goto(`/characters/${id}`);
     const card = page.getByRole("region", { name: "Actions" });
-    const uses = card.getByRole("button", { name: /^Use / });
-    await expect(uses.first()).toBeVisible();
-    const feature = (name: string) =>
-      card.getByRole("listitem").filter({ has: page.getByRole("button", { name, exact: true }) });
-    const withUse = feature("Second Wind");
-    const without = feature("Action Surge");
-    const [a, b] = [
-      await box(withUse.getByRole("button", { name: "Second Wind", exact: true })),
-      await box(without.getByRole("button", { name: "Action Surge", exact: true })),
-    ];
-    expect(Math.abs(a.x - b.x)).toBeLessThanOrEqual(0.5);
-    expect(Math.abs(a.width - b.width)).toBeGreaterThan(0.5);
-    expect(Math.abs((await box(withUse)).x - (await box(without)).x)).toBeLessThanOrEqual(0.5);
-    const use = await box(uses.first());
-    expect(use.x).toBeGreaterThan(a.x + a.width);
+    await expect(card.getByRole("button", { name: /^Use / }).first()).toBeVisible();
+    const items = card.getByRole("listitem");
+    const boxes = await Promise.all((await items.all()).map((item) => box(item)));
+    expect(boxes.length).toBeGreaterThan(3);
+
+    const centre = (b: { y: number; height: number }) => b.y + b.height / 2;
+    const rows = boxes
+      .toSorted((a, b) => a.y - b.y)
+      .reduce<(typeof boxes)[]>((acc, b) => {
+        const row = acc.at(-1);
+        if (row && b.y < Math.max(...row.map((r) => r.y + r.height))) row.push(b);
+        else acc.push([b]);
+        return acc;
+      }, []);
+    expect(rows.some((row) => row.length > 1)).toBe(true);
+    for (const row of rows) {
+      const line = centre(row.reduce((a, b) => (a.height >= b.height ? a : b)));
+      for (const b of row) expect(Math.abs(centre(b) - line)).toBeLessThanOrEqual(0.5);
+    }
+    const tallest = Math.max(...boxes.map((b) => b.height));
+    for (const b of boxes) expect(Math.abs(b.height - tallest)).toBeLessThanOrEqual(0.5);
   } finally {
     await request.delete(`/api/characters/${id}`);
   }
