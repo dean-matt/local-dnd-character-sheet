@@ -105,6 +105,23 @@ const encounterSchema = z.strictObject({
 });
 
 /**
+ * What the character has used this turn, each mark spent or not. Session state for the current
+ * turn only, never a history.
+ */
+export const TURN_MARKS = ["action", "bonusAction", "reaction", "movement"] as const;
+export type TurnMark = (typeof TURN_MARKS)[number];
+
+const turnSchema = z.strictObject({
+  action: z.boolean().default(false),
+  bonusAction: z.boolean().default(false),
+  reaction: z.boolean().default(false),
+  movement: z.boolean().default(false),
+});
+
+/** Every mark available, the turn a character starts with. */
+export const TURN_AVAILABLE: z.infer<typeof turnSchema> = turnSchema.parse({});
+
+/**
  * The spell a character concentrates on and the level it took effect at: the slot level for a
  * slot cast, the spell's own level for a slotless one, 0 for a cantrip. The level is kept
  * because an upcast spell is a different effect from the same row.
@@ -210,6 +227,7 @@ export const characterStateSchema = z.strictObject({
   concentration: concentrationSchema.nullable().default(null),
   /** None where no encounter is running. */
   encounter: encounterSchema.nullable().default(null),
+  turn: turnSchema.default(TURN_AVAILABLE),
   deathSaves: deathSavesSchema,
   exhaustion: z.int().min(0).max(6).default(0),
   /** One inspiration held or not; a count above one is a different rule. */

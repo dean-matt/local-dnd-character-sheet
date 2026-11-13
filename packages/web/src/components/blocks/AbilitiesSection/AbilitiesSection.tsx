@@ -31,6 +31,7 @@ import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { Senses } from "./Senses.tsx";
+import { TurnEconomy } from "./TurnEconomy/TurnEconomy.tsx";
 import { Vitals } from "./Vitals/Vitals.tsx";
 
 export function AbilitiesSection({
@@ -56,6 +57,7 @@ export function AbilitiesSection({
       <AbilityScores character={character} derived={derived} />
       <CombatStats definition={definition} derived={derived} />
       <Encounter character={character} derived={derived} />
+      <TurnEconomy characterId={character.id} />
       <Vitals character={character} derived={derived} />
       <Attacks character={character} derived={derived} />
       <Defenses character={character} derived={derived} />

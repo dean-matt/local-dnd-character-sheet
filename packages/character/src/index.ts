@@ -220,6 +220,8 @@ export {
   type SpentAmmunition,
   spellSlotSchema,
   spentAmmunitionOf,
+  TURN_MARKS,
+  type TurnMark,
   withAmmunitionSpent,
   withFeatureUse,
   withItemChargesSpent,
@@ -234,3 +236,4 @@ export {
   totalLevel,
   withExperienceFloor,
 } from "./summaries.ts";
+export { TURN_LABELS, turnMarkToggled, turnReset } from "./turn.ts";
