@@ -44,8 +44,7 @@ export function ItemCharges({
   const entry = character.definition.inventory[index];
   if (!state.isSuccess || !entry) return null;
 
-  const play = state.data.state;
-  const spent = entry.id ? itemChargesSpent(play, entry.id, charges.max) : 0;
+  const spent = entry.id ? itemChargesSpent(state.data.state, entry.id, charges.max) : 0;
   const left = charges.max - spent;
   const disabled = busy || replace.writing;
 
@@ -59,7 +58,7 @@ export function ItemCharges({
         await replace.mutateAsync((latest) => withItemChargesSpent(latest, ids, id, next));
       } else {
         await both.mutateAsync({
-          state: withItemChargesSpent(play, ids, id, next),
+          state: (latest) => withItemChargesSpent(latest, ids, id, next),
           edit: (latest) => editInventoryEntry(latest, index, entry, (at) => ({ ...at, id })),
         });
       }
