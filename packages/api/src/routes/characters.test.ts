@@ -998,6 +998,16 @@ describe("the undo log", () => {
         expect(rolls()).toEqual([]);
       });
 
+      it("logs no roll over a stored definition its schema now refuses, as no entry could undo it", async () => {
+        opened.charactersDb
+          .update(characters)
+          .set({ definition: { name: "" } })
+          .run();
+        expect((await putBoth({ definition: edited, state, roll })).status).toBe(200);
+        expect(rolls()).toEqual([]);
+        expect(await entries()).toEqual([]);
+      });
+
       it("logs nothing for a write without a roll", async () => {
         await putBoth({ definition: edited, state });
         expect(rolls()).toEqual([]);

@@ -416,7 +416,8 @@ function writeState(db: CharactersWriter, characterId: string, state: CharacterS
 /**
  * Replaces the definition and the state in one transaction and records one undo entry holding
  * both, so a failure of either writes neither. A `roll` is logged in the same write, and
- * undoing the entry deletes it. Results as `updateCharacterDefinition`.
+ * undoing the entry deletes it; a stored pair its schemas now refuse records no entry, so the
+ * roll is not logged either. Results as `updateCharacterDefinition`.
  */
 export function updateCharacterAndState(
   db: CharactersDb,
@@ -441,10 +442,10 @@ export function updateCharacterAndState(
     if (unmodifiedSince && current.updatedAt.getTime() > unmodifiedSince.getTime())
       return "stale" as const;
     const now = new Date();
-    const rollId = roll && insertRoll(tx, id, roll, now).id;
     const beforeDefinition = characterDefinitionSchema.safeParse(current.definition);
     const beforeState = characterStateSchema.safeParse(currentState.state);
     if (beforeDefinition.success && beforeState.success) {
+      const rollId = roll && insertRoll(tx, id, roll, now).id;
       recordBothChange(
         tx,
         id,

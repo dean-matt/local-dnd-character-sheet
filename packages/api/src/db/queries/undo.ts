@@ -138,7 +138,7 @@ export function deleteUndoEntriesFrom(db: Db, characterId: string, id: number) {
     .all()
     .flatMap(({ previousState }) => {
       const { rollId } = previousState as { rollId?: number };
-      return rollId === undefined ? [] : [rollId];
+      return typeof rollId === "number" ? [rollId] : [];
     });
   if (rollIds.length > 0)
     db.delete(rollLog)
