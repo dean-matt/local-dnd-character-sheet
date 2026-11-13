@@ -87,7 +87,7 @@ export function SpellRow({
       chips={
         <>
           <Tag>{schoolName(spell.school)}</Tag>
-          <SpellDamageChips spell={spell} />
+          <SpellDamageChips spell={spell} characterLevel={characterLevel} />
           {classTag}
           {!preparable && !alwaysPrepared && mark}
           {spell.cost && <Tag>{`${spell.cost.amount} ${spell.cost.resource}`}</Tag>}

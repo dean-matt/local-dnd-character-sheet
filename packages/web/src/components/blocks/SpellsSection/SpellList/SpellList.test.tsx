@@ -165,6 +165,31 @@ describe("SpellList", () => {
     expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ type: "spell-damage" });
   });
 
+  it("shows a cantrip's dice and beams for the character's level", async () => {
+    const bolt = {
+      ...spell("Fire Bolt", 0),
+      damageDice: "1d10",
+      damageTypes: ["fire"],
+      damageTiers: [
+        { level: 1, dice: "1d10" },
+        { level: 2, dice: "2d10" },
+      ],
+    };
+    const blast = {
+      ...spell("Eldritch Blast", 0),
+      beamTiers: [
+        { level: 1, count: 2 },
+        { level: 3, count: 3 },
+      ],
+    };
+    const record = vex();
+    record.definition.levels = [WARLOCK, WARLOCK].map((cls) => ({ class: cls }));
+    renderList(record, { spells: [bolt, blast] });
+
+    expect(await screen.findByText("2d10 fire")).toBeInTheDocument();
+    expect(screen.getByText("2 beams")).toBeInTheDocument();
+  });
+
   it("prepares and unprepares a leveled spell through its toggle", async () => {
     const fetchMock = renderList();
 

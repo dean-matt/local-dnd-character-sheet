@@ -198,6 +198,7 @@ export {
 } from "./rollLog.ts";
 export {
   type SpellCastOption,
+  spellBeams,
   spellCast,
   spellCastOptions,
   spellDamageDice,

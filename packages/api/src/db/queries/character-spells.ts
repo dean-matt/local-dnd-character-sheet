@@ -56,6 +56,20 @@ const pick = <T>(schema: ZodType<T>, value: unknown): T | undefined => {
 const DAMAGE_TAG = /\{@damage ([^|}]+)/;
 const SCALE_TAG = /\{@scaledamage ([^|}]+)\|[^|}]*\|([^|}]+)\}/;
 
+const BEAM_COUNTS = ["two", "three", "four", "five", "six"];
+const BEAMS = /\b(two|three|four|five|six) beams? at (?:level )?(\d+)/g;
+
+/** A cantrip's "two beams at 5th level" and "three beams at level 11", counted from the printed text. */
+function beamTiers(json: Record<string, unknown>) {
+  const text = JSON.stringify([json.entries, json.entriesHigherLevel]);
+  return [...text.matchAll(BEAMS)]
+    .map(([, word = "", level = ""]) => ({
+      level: Number(level),
+      count: BEAM_COUNTS.indexOf(word) + 2,
+    }))
+    .sort((a, b) => a.level - b.level);
+}
+
 /**
  * Scans the serialized text, whose key order is the order the entries print in. The upcast
  * step counts only where it scales the first roll, since a spell with two damage rolls
@@ -70,8 +84,10 @@ function damageFacts(json: Record<string, unknown>) {
     .map(([level, tier]) => ({ level: Number(level), dice: tier }))
     .filter(({ level }) => Number.isInteger(level) && level >= 1)
     .sort((a, b) => a.level - b.level);
+  const beams = beamTiers(json);
   return {
     ...(dice && { damageDice: dice }),
+    ...(beams.length > 0 && { beamTiers: beams }),
     damageTypes: pick(spellEffectSchema.shape.damageInflict, json.damageInflict),
     ...(pick(spellEffectSchema.shape.spellAttack, json.spellAttack) && { attack: true as const }),
     ...(tiers.length > 0 && { damageTiers: tiers }),

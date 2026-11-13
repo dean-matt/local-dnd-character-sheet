@@ -257,6 +257,25 @@ describe("characterSpellsRoutes", () => {
           }),
         },
         {
+          name: "Eldritch Blast",
+          source: "PHB",
+          edition: "classic",
+          level: 0,
+          school: "E",
+          concentration: 0,
+          ritual: 0,
+          json: JSON.stringify({
+            name: "Eldritch Blast",
+            source: "PHB",
+            level: 0,
+            school: "E",
+            entries: [
+              "It deals {@damage 1d10} force damage.",
+              "It makes two beams at 5th level, three beams at 11th level, and four beams at 17th level. Aim the beams at the same target or at different ones.",
+            ],
+          }),
+        },
+        {
           name: "Fireball",
           source: "PHB",
           edition: "classic",
@@ -453,6 +472,19 @@ describe("characterSpellsRoutes", () => {
     });
     expect(fireball).toMatchObject({ damageDice: "8d6", damageUpcast: "1d6" });
     expect(fireball).not.toHaveProperty("attack");
+  });
+
+  it("counts a cantrip's beams by level from its text", async () => {
+    store(withSpells([{ ref: { name: "Eldritch Blast", source: "PHB" } }]));
+    const [blast] = await spells();
+
+    expect(blast).toMatchObject({
+      beamTiers: [
+        { level: 5, count: 2 },
+        { level: 11, count: 3 },
+        { level: 17, count: 4 },
+      ],
+    });
   });
 
   it("resolves a homebrew spell by id and gives it no source", async () => {
