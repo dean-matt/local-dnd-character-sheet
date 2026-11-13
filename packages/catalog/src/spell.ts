@@ -124,6 +124,8 @@ export const spellCastingFactsSchema = z.strictObject({
  */
 export const spellEffectSchema = z.looseObject({
   damageInflict: z.array(z.string().min(1)).min(1).optional(),
+  spellAttack: z.array(z.string().min(1)).min(1).optional(),
+  scalingLevelDice: z.looseObject({ scaling: z.record(z.string(), z.string().min(1)) }).optional(),
   entriesHigherLevel: entriesSchema.optional(),
 });
 
@@ -179,6 +181,15 @@ const sheetSpellSchema = z.discriminatedUnion("resolved", [
     damageDice: z.string().min(1).optional(),
     /** Upstream's `damageInflict`, which names every type the spell deals. */
     damageTypes: z.array(z.string().min(1)).min(1).optional(),
+    /** Set where the spell makes a spell attack roll. */
+    attack: z.literal(true).optional(),
+    /** A cantrip's damage dice from each character level up, lowest first. */
+    damageTiers: z
+      .array(z.strictObject({ level: z.int().min(1), dice: z.string().min(1) }))
+      .min(1)
+      .optional(),
+    /** What each slot level above the spell's adds to `damageDice`. */
+    damageUpcast: z.string().min(1).optional(),
     entries: entriesSchema,
   }),
   z.strictObject({ resolved: z.literal(false), ...sheetSpellFields }),

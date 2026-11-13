@@ -1,5 +1,5 @@
 import type { SheetSpell } from "@dnd/catalog";
-import type { CharacterDerived, CharacterState } from "@dnd/character";
+import type { CharacterDerived, CharacterState, RollRecord } from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { derivedRecord, stateRecord } from "../../../../../test/records.ts";
@@ -33,6 +33,8 @@ const spell = (name: string, level: number, more: Partial<Resolved> = {}): Resol
   ...more,
 });
 
+let posted: RollRecord[] = [];
+
 const HEX = { name: "Hex", source: "XPHB" };
 
 /**
@@ -50,6 +52,20 @@ function renderCast(
   vi.stubGlobal(
     "fetch",
     vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        const roll = JSON.parse(String(init.body)) as RollRecord;
+        posted.push(roll);
+        return Response.json(
+          {
+            ...roll,
+            id: posted.length,
+            characterId: "1",
+            characterName: "Ada",
+            rolledAt: "2026-01-01T00:00:00.000Z",
+          },
+          { status: 201 },
+        );
+      }
       if (init?.method === "PUT") {
         if (refuse) return refuse();
         const written = JSON.parse(String(init.body));
@@ -59,7 +75,7 @@ function renderCast(
       return new Response(JSON.stringify(stored), { status: 200 });
     }),
   );
-  renderWithClient(<CastSpell characterId="1" derived={sheet} spell={cast} />);
+  renderWithClient(<CastSpell characterId="1" derived={sheet} characterLevel={5} spell={cast} />);
   return writes;
 }
 
@@ -73,7 +89,11 @@ async function openDialog(name: string) {
 const castButton = (dialog: ReturnType<typeof within>) =>
   dialog.getByRole("button", { name: "Cast" });
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  posted = [];
+});
 
 describe("CastSpell", () => {
   it("offers each slot level from the spell's own up, refusing one with none left", async () => {
@@ -235,5 +255,110 @@ describe("CastSpell", () => {
     expect(dialog.getByRole("alert")).toHaveTextContent("No spell slot can cast Fireball.");
     expect(dialog.queryAllByRole("radio")).toEqual([]);
     expect(castButton(dialog)).toHaveAttribute("aria-disabled", "true");
+  });
+
+  describe("rolling", () => {
+    const withCaster: CharacterDerived = {
+      ...derived,
+      spellcasting: [
+        {
+          class: { name: "Wizard", source: "XPHB" },
+          ability: "int",
+          saveDc: computed(14),
+          attackBonus: computed(6),
+        },
+      ],
+    };
+    const fireBolt = spell("Fire Bolt", 0, {
+      attack: true,
+      damageDice: "1d10",
+      damageTiers: [
+        { level: 1, dice: "1d10" },
+        { level: 5, dice: "2d10" },
+      ],
+    });
+    const fireball = spell("Fireball", 3, { damageDice: "8d6", damageUpcast: "1d6" });
+
+    it("rolls a cantrip's attack and its damage at the character's level, logging each", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      renderCast(fireBolt, {}, withCaster);
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(2));
+      expect(posted).toMatchObject([
+        {
+          type: "spell-attack",
+          label: "Fire Bolt attack",
+          origin: "Fire Bolt",
+          notation: "1d20+6",
+        },
+        { type: "spell-damage", label: "Fire Bolt damage", origin: "Fire Bolt", notation: "2d10" },
+      ]);
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent("Cast Fire Bolt; attack 7, damage 2"),
+      );
+    });
+
+    it("rolls a spell's damage at the slot level it is cast at, and no attack where it makes none", async () => {
+      renderCast(fireball, {}, withCaster);
+      const dialog = await openDialog("Fireball");
+      fireEvent.click(dialog.getByRole("radio", { name: "Level 3 slot, 1 left" }));
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(1));
+      expect(posted[0]).toMatchObject({ type: "spell-damage", notation: "8d6" });
+    });
+
+    it("upcasts the damage by each level above the spell's", async () => {
+      renderCast(
+        fireball,
+        { spellSlots: [{ level: 3, total: 1, expended: 1 }] },
+        {
+          ...withCaster,
+          spellSlots: [
+            { level: 3, total: computed(1) },
+            { level: 5, total: computed(1) },
+          ],
+        },
+      );
+      const dialog = await openDialog("Fireball");
+      fireEvent.click(dialog.getByRole("radio", { name: "Level 5 slot, 1 left" }));
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(1));
+      expect(posted[0]).toMatchObject({ notation: "10d6" });
+    });
+
+    it("calls out a natural 20 on the attack as a critical hit", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.99);
+      renderCast(fireBolt, {}, withCaster);
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          "Cast Fire Bolt; attack 26, critical hit, damage 20",
+        ),
+      );
+    });
+
+    it("rolls nothing where the roll is switched off", async () => {
+      renderCast(fireBolt, {}, withCaster);
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(dialog.getByRole("checkbox", { name: "Roll attack and damage" }));
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Cast Fire Bolt"));
+      expect(screen.getByRole("status")).not.toHaveTextContent("attack");
+      expect(posted).toEqual([]);
+    });
+
+    it("offers no roll for a spell with neither an attack nor damage", async () => {
+      renderCast(spell("Shield", 1), {}, withCaster);
+      const dialog = await openDialog("Shield");
+
+      expect(dialog.queryByRole("checkbox", { name: "Roll attack and damage" })).toBeNull();
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultCharacterState, spellCast, spellCastOptions } from "./index.ts";
+import { defaultCharacterState, spellCast, spellCastOptions, spellDamageDice } from "./index.ts";
 
 const total = (computed: number, manual: number | null = null) => ({ computed, manual, terms: [] });
 
@@ -111,5 +111,35 @@ describe("spellCast", () => {
     const option = { via: "slot" as const, level: 2, left: 0 };
     const cast = spellCast(sheet, state, { spell: BLESS, option, spend: false, concentrate: true });
     expect(cast.state).toEqual({ ...state, concentration: { spell: BLESS, level: 2 } });
+  });
+});
+
+describe("spellDamageDice", () => {
+  const bolt = {
+    level: 0,
+    damageDice: "1d10",
+    damageTiers: [
+      { level: 1, dice: "1d10" },
+      { level: 5, dice: "2d10" },
+      { level: 11, dice: "3d10" },
+    ],
+  };
+  const fireball = { level: 3, damageDice: "8d6", damageUpcast: "1d6" };
+
+  it("rolls a cantrip's tier at the character's level", () => {
+    expect(spellDamageDice(bolt, 0, 4)).toBe("1d10");
+    expect(spellDamageDice(bolt, 0, 5)).toBe("2d10");
+    expect(spellDamageDice(bolt, 0, 20)).toBe("3d10");
+  });
+
+  it("adds the upcast step once per slot level above the spell's", () => {
+    expect(spellDamageDice(fireball, 3, 9)).toBe("8d6");
+    expect(spellDamageDice(fireball, 5, 9)).toBe("10d6");
+    expect(spellDamageDice({ ...fireball, damageUpcast: "1d8" }, 4, 9)).toBe("8d6+1d8");
+  });
+
+  it("rolls the printed dice where nothing scales, and nothing where none print", () => {
+    expect(spellDamageDice({ level: 1, damageDice: "1d4 + 1" }, 3, 9)).toBe("1d4 + 1");
+    expect(spellDamageDice({ level: 1 }, 3, 9)).toBeUndefined();
   });
 });

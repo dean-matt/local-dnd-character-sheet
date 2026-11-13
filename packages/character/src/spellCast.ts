@@ -77,3 +77,38 @@ function slotSpent(derived: Sheet, state: CharacterState, option: SpellCastOptio
   const others = state.spellSlots.filter((held) => held.level !== used.level);
   return { ...state, spellSlots: [...others, used].sort((a, b) => a.level - b.level) };
 }
+
+/** What a spell prints of its damage: its dice, a cantrip's tiers by character level, and the dice each slot level above its own adds. */
+type SpellDamageFacts = {
+  level: number;
+  damageDice?: string;
+  damageTiers?: readonly { level: number; dice: string }[];
+  damageUpcast?: string;
+};
+
+const POOL = /^(\d+)d(\d+)$/;
+
+/**
+ * The notation a cast rolls for damage: a cantrip's tier at `characterLevel`, or the spell's
+ * dice plus the upcast step once for each slot level `castLevel` is above the spell's. Undefined
+ * where the spell prints no damage dice.
+ */
+export function spellDamageDice(
+  spell: SpellDamageFacts,
+  castLevel: number,
+  characterLevel: number,
+): string | undefined {
+  const { damageDice: dice, damageUpcast: step } = spell;
+  if (spell.level === 0) {
+    const tier = spell.damageTiers?.findLast((each) => each.level <= characterLevel);
+    return tier?.dice ?? dice;
+  }
+  const extra = castLevel - spell.level;
+  if (!dice || !step || extra <= 0) return dice;
+  const base = POOL.exec(dice);
+  const add = POOL.exec(step);
+  if (base && add && base[2] === add[2]) {
+    return `${Number(base[1]) + Number(add[1]) * extra}d${base[2]}`;
+  }
+  return dice + `+${step}`.repeat(extra);
+}

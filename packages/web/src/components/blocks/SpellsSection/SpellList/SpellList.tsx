@@ -172,6 +172,7 @@ export function SpellList({
                     index={index}
                     characterId={character.id}
                     derived={derived}
+                    characterLevel={character.definition.levels.length}
                     className={classOf(spell)}
                     preparable={preparable(spell)}
                     busy={busy}

@@ -33,6 +33,7 @@ export function SpellRow({
   index,
   characterId,
   derived,
+  characterLevel,
   className,
   preparable,
   busy,
@@ -43,6 +44,7 @@ export function SpellRow({
   index: number;
   characterId: string;
   derived: CharacterDerived;
+  characterLevel: number;
   className: string | undefined;
   preparable: boolean;
   busy: boolean;
@@ -109,7 +111,12 @@ export function SpellRow({
               />
             )
           )}
-          <CastSpell characterId={characterId} derived={derived} spell={spell} />
+          <CastSpell
+            characterId={characterId}
+            derived={derived}
+            characterLevel={characterLevel}
+            spell={spell}
+          />
         </>
       }
       detail={{

@@ -29,8 +29,12 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
     'Such as [{"type": "instant"}], or [{"type": "timed", "duration": {"type": "minute", "amount": 1}, "concentration": true}]. "concentration": true marks the spell as needing concentration.',
   meta: '{"ritual": true} where the spell can be cast as a ritual.',
   damageInflict: 'Damage types the spell deals, such as ["fire"].',
+  spellAttack:
+    'Set to ["R"] for a ranged spell attack or ["M"] for a melee one, and a cast rolls the attack.',
+  scalingLevelDice:
+    'A cantrip\'s damage by character level, such as {"label": "Fire damage", "scaling": {"1": "1d10", "5": "2d10", "11": "3d10", "17": "4d10"}}.',
   entries:
-    "The rules text, {@tags} included. The first {@damage 8d6} roll it prints is the damage the sheet shows for the spell.",
+    "The rules text, {@tags} included. The first {@damage 8d6} roll it prints is the damage the sheet shows for the spell. A {@scaledamage 8d6|3-9|1d6} in the higher-level text, starting from that roll, adds its 1d6 per slot level above the spell's.",
   entriesHigherLevel:
     'What a higher-level slot or a cantrip\'s upgrade adds, such as [{"type": "entries", "name": "Using a Higher-Level Spell Slot", "entries": ["The damage increases by 1d6 for each spell slot level above 3."]}]. Prints after the rules text.',
 };
