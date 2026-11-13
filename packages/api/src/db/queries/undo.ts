@@ -15,7 +15,7 @@ import {
   UNDO_LOG_LIMIT,
 } from "@dnd/character";
 import { and, asc, desc, eq, gte, inArray, notInArray } from "drizzle-orm";
-import { type UNDO_KINDS, undoLog } from "../characters.ts";
+import { rollLog, type UNDO_KINDS, undoLog } from "../characters.ts";
 import type { CharactersDb, CharactersWriter as Db } from "./characters.ts";
 
 /**
@@ -129,8 +129,21 @@ export function oldestUndoEntryFrom(
     .get();
 }
 
-/** Drops the entry `id` and every newer one, which an undo back to `id` reverses. */
+/** Drops the entry `id` and every newer one, which an undo back to `id` reverses, with the rolls they logged. */
 export function deleteUndoEntriesFrom(db: Db, characterId: string, id: number) {
+  const rollIds = db
+    .select({ previousState: undoLog.previousState })
+    .from(undoLog)
+    .where(and(eq(undoLog.characterId, characterId), gte(undoLog.id, id), eq(undoLog.kind, "both")))
+    .all()
+    .flatMap(({ previousState }) => {
+      const { rollId } = previousState as { rollId?: number };
+      return rollId === undefined ? [] : [rollId];
+    });
+  if (rollIds.length > 0)
+    db.delete(rollLog)
+      .where(and(eq(rollLog.characterId, characterId), inArray(rollLog.id, rollIds)))
+      .run();
   db.delete(undoLog)
     .where(and(eq(undoLog.characterId, characterId), gte(undoLog.id, id)))
     .run();
@@ -203,13 +216,17 @@ export function recordStateChange(
   prune(db, characterId);
 }
 
-/** One entry holding both snapshots, so undo restores the definition and the state together. */
+/**
+ * One entry holding both snapshots, so undo restores the definition and the state together.
+ * A `rollId` is the roll logged in the same write, which undoing the entry deletes.
+ */
 export function recordBothChange(
   db: Db,
   characterId: string,
   before: { definition: CharacterDefinition; state: CharacterState },
   after: { definition: CharacterDefinition; state: CharacterState },
   now: Date,
+  rollId?: number,
 ) {
   const parts = [
     describeChange(before.definition, after.definition)?.describedAs,
@@ -220,7 +237,7 @@ export function recordBothChange(
     .values({
       characterId,
       kind: "both",
-      previousState: before,
+      previousState: rollId === undefined ? before : { ...before, rollId },
       describedAs: parts.join("; "),
       changedAt: now,
       sealed: true,

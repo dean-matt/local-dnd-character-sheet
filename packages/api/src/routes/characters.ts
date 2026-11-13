@@ -24,6 +24,7 @@ import {
   type LegacyCharacterFile,
   legacyCharacterFileSchema,
   raceSummary,
+  rollRecordSchema,
   UNDO_LOG_LIMIT,
   undoLogSchema,
   withExperienceFloor,
@@ -298,7 +299,7 @@ const updateBoth = createRoute({
   summary: "Replace a character's definition and state together",
   description:
     "One write, so a failure of either writes neither, and one undo entry that holds both " +
-    "the definition and the state it replaced. Undoing to an entry restores each kind changed by it or any later entry. " +
+    "the definition and the state it replaced. An optional `roll` is logged in the same write, and undoing the entry deletes it. Undoing to an entry restores each kind changed by it or any later entry. " +
     "`If-Unmodified-Since` refuses with 412 as it does on `PUT /characters/{id}`.",
   request: {
     params: idParam,
@@ -309,6 +310,7 @@ const updateBoth = createRoute({
           schema: z.strictObject({
             definition: characterDefinitionSchema,
             state: characterStateSchema,
+            roll: rollRecordSchema.optional(),
           }),
         },
       },
@@ -502,6 +504,7 @@ export function charactersRoutes(
       body.definition,
       body.state,
       since === undefined ? undefined : new Date(since),
+      body.roll,
     );
     if (!result) return c.json({ error: NOT_FOUND }, 404);
     if (result === "stale") {

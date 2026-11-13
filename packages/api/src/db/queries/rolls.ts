@@ -2,7 +2,7 @@
 import type { RollRecord } from "@dnd/character";
 import { and, desc, eq, notInArray } from "drizzle-orm";
 import { characters, ROLL_LOG_LIMIT, rollLog } from "../characters.ts";
-import type { CharactersDb } from "./characters.ts";
+import type { CharactersDb, CharactersWriter } from "./characters.ts";
 
 const entry = (row: typeof rollLog.$inferSelect, characterName: string) => {
   const { detail, result, rolledAt, ...rest } = row;
@@ -35,6 +35,33 @@ export function clearRolls(db: CharactersDb) {
   db.delete(rollLog).run();
 }
 
+/** Stores `roll` as the character's newest, pruning the oldest past the bound; the character must exist. */
+export function insertRoll(tx: CharactersWriter, characterId: string, roll: RollRecord, now: Date) {
+  const { type, origin, dice, modifier, critical, mode, reason, total, label, notation } = roll;
+  const row = tx
+    .insert(rollLog)
+    .values({
+      characterId,
+      label,
+      notation,
+      result: total,
+      detail: { type, origin, dice, modifier, critical, mode, reason },
+      rolledAt: now,
+    })
+    .returning()
+    .get();
+  const kept = tx
+    .select({ id: rollLog.id })
+    .from(rollLog)
+    .where(eq(rollLog.characterId, characterId))
+    .orderBy(desc(rollLog.id))
+    .limit(ROLL_LOG_LIMIT);
+  tx.delete(rollLog)
+    .where(and(eq(rollLog.characterId, characterId), notInArray(rollLog.id, kept)))
+    .run();
+  return row;
+}
+
 /** Stores `roll` as the character's newest and prunes the oldest past the bound. */
 export function recordRoll(db: CharactersDb, characterId: string, roll: RollRecord, now: Date) {
   return db.transaction((tx) => {
@@ -44,28 +71,6 @@ export function recordRoll(db: CharactersDb, characterId: string, roll: RollReco
       .where(eq(characters.id, characterId))
       .get();
     if (!owner) return undefined;
-    const { type, origin, dice, modifier, critical, mode, reason, total, label, notation } = roll;
-    const row = tx
-      .insert(rollLog)
-      .values({
-        characterId,
-        label,
-        notation,
-        result: total,
-        detail: { type, origin, dice, modifier, critical, mode, reason },
-        rolledAt: now,
-      })
-      .returning()
-      .get();
-    const kept = tx
-      .select({ id: rollLog.id })
-      .from(rollLog)
-      .where(eq(rollLog.characterId, characterId))
-      .orderBy(desc(rollLog.id))
-      .limit(ROLL_LOG_LIMIT);
-    tx.delete(rollLog)
-      .where(and(eq(rollLog.characterId, characterId), notInArray(rollLog.id, kept)))
-      .run();
-    return entry(row, owner.name);
+    return entry(insertRoll(tx, characterId, roll, now), owner.name);
   });
 }
