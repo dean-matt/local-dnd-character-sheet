@@ -198,6 +198,16 @@ function stubApi({
       })
     : undefined;
   const stateReply = stateStub(raging);
+  const bothReply = (url: string, init?: RequestInit) => {
+    if (init?.method !== "PUT" || url !== "/api/characters/1/definition-and-state")
+      return undefined;
+    const body = JSON.parse(String(init.body));
+    record = { ...record, definition: body.definition };
+    return json({
+      character: record,
+      state: { characterId: "1", state: body.state, updatedAt: "2026-01-01T00:00:00.000Z" },
+    });
+  };
   const answer = async (url: string, init?: RequestInit) => {
     if (init?.method === "PUT") {
       const wait = held;
@@ -220,7 +230,9 @@ function stubApi({
   };
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    return homebrewReply(url, init) ?? stateReply(url, init) ?? answer(url, init);
+    return (
+      homebrewReply(url, init) ?? stateReply(url, init) ?? bothReply(url, init) ?? answer(url, init)
+    );
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -807,14 +819,21 @@ describe("ItemList", () => {
       expect(stateWrites(fetchMock)[1]?.itemCharges).toEqual([]);
     });
 
-    it("gives an entry with no id one before its first charge is spent", async () => {
+    it("gives an entry with no id one in the same write as its first spent charge", async () => {
       const fetchMock = renderList(derivedRecord(), wand());
       fireEvent.click(await screen.findByLabelText("Spend a charge of Wand of Wonder"));
 
-      await waitFor(() => expect(stateWrites(fetchMock)).toHaveLength(1));
-      const id = JSON.parse(String(definitionWrites(fetchMock)[0]?.[1]?.body)).inventory[0].id;
+      expect(await screen.findByText("Wand of Wonder: 6 of 7 charges left.")).toBeInTheDocument();
+      const both = fetchMock.mock.calls.filter(
+        ([url, init]) => url === "/api/characters/1/definition-and-state" && init?.method === "PUT",
+      );
+      expect(both).toHaveLength(1);
+      const body = JSON.parse(String(both[0]?.[1]?.body));
+      const id = body.definition.inventory[0].id;
       expect(id).toEqual(expect.any(String));
-      expect(stateWrites(fetchMock)[0]?.itemCharges).toEqual([{ id, expended: 1 }]);
+      expect(body.state.itemCharges).toEqual([{ id, expended: 1 }]);
+      expect(definitionWrites(fetchMock)).toHaveLength(0);
+      expect(stateWrites(fetchMock)).toHaveLength(0);
     });
 
     it("keeps a restore unavailable while nothing is spent", async () => {

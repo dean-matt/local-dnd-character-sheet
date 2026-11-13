@@ -1,7 +1,7 @@
 import {
   type CharacterDefinition,
   type CharacterRecord,
-  type CharacterState,
+  type CharacterStateRecord,
   characterRecordSchema,
   characterStateRecordSchema,
 } from "@dnd/character";
@@ -15,15 +15,16 @@ import {
   charactersKey,
   characterWriteScope,
 } from "./characterKeys.ts";
+import type { StateWrite } from "./useReplaceCharacterState.ts";
 
 const bothSchema = z.strictObject({
   character: characterRecordSchema,
   state: characterStateRecordSchema,
 });
 
-/** A new state and an edit that runs when the write starts against the definition in the cache. */
+/** A new state and an edit that run when the write starts against the cache. */
 export interface DefinitionAndState {
-  state: CharacterState;
+  state: StateWrite;
   edit: (definition: CharacterDefinition) => CharacterDefinition;
 }
 
@@ -39,10 +40,11 @@ export function useReplaceDefinitionAndState(id: string) {
     scope: { id: characterWriteScope(id) },
     mutationFn: ({ state, edit }) => {
       const record = queryClient.getQueryData<CharacterRecord>(characterKey(id));
-      if (!record) throw new Error("The character has not loaded yet.");
+      const play = queryClient.getQueryData<CharacterStateRecord>(characterStateKey(id));
+      if (!record || !play) throw new Error("The character has not loaded yet.");
       return apiMutate("PUT", `/characters/${id}/definition-and-state`, bothSchema, {
         definition: edit(record.definition),
-        state,
+        state: typeof state === "function" ? state(play.state) : state,
       });
     },
     onSuccess: ({ character, state }) => {
