@@ -1,4 +1,4 @@
-import type { CharacterState, TurnMark } from "./state.ts";
+import { type CharacterState, TURN_AVAILABLE, type TurnMark } from "./state.ts";
 
 export const TURN_LABELS: Record<TurnMark, string> = {
   action: "Action",
@@ -16,5 +16,5 @@ export const turnMarkToggled = (state: CharacterState, mark: TurnMark): Characte
 /** The state with every mark available. */
 export const turnReset = (state: CharacterState): CharacterState => ({
   ...state,
-  turn: { action: false, bonusAction: false, reaction: false, movement: false },
+  turn: TURN_AVAILABLE,
 });

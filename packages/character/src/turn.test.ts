@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { characterStateSchema, describeStateChange, turnMarkToggled, turnReset } from "./index.ts";
+import {
+  characterStateSchema,
+  describeStateChange,
+  TURN_MARKS,
+  turnMarkToggled,
+  turnReset,
+} from "./index.ts";
 import { state } from "./test/vex.ts";
 
 describe("turn marks", () => {
@@ -15,10 +21,7 @@ describe("turn marks", () => {
   });
 
   it("resets every mark", () => {
-    const all = (["action", "bonusAction", "reaction", "movement"] as const).reduce(
-      turnMarkToggled,
-      state,
-    );
+    const all = TURN_MARKS.reduce(turnMarkToggled, state);
     expect(turnReset(all).turn).toEqual(state.turn);
   });
 

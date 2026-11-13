@@ -1,5 +1,6 @@
 import type { HitDie } from "@dnd/rules";
 import { type CharacterDefinition, type CharacterState, entryKey } from "../index.ts";
+import { TURN_AVAILABLE } from "../state.ts";
 
 export const WARLOCK = { name: "Warlock", source: "XPHB" };
 export const ROGUE = { name: "Rogue", source: "XPHB" };
@@ -180,7 +181,7 @@ export const state: CharacterState = {
   activeEffects: [],
   concentration: { spell: { name: "Hex", source: "PHB" }, level: 2 },
   encounter: null,
-  turn: { action: false, bonusAction: false, reaction: false, movement: false },
+  turn: TURN_AVAILABLE,
   deathSaves: { successes: 0, failures: 0 },
   exhaustion: 1,
   inspiration: false,
