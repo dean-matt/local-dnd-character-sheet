@@ -17,7 +17,7 @@ import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
-import { editInventoryEntry } from "../../../../lib/editInventoryEntry.ts";
+import { editInventoryEntry, type InventoryEntry } from "../../../../lib/editInventoryEntry.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
@@ -61,6 +61,7 @@ function weaponNotes(
     name: (entry: number) => string;
     picked: number | undefined;
     pick: (entry: number) => void;
+    recover: (() => void) | undefined;
   },
   refused: string | undefined,
 ) {
@@ -94,6 +95,15 @@ function weaponNotes(
           </select>
         </label>
       )}
+      {ammo.recover && (
+        <button
+          type="button"
+          onClick={ammo.recover}
+          className="min-h-6 self-start rounded-control border border-border bg-surface px-1 text-label"
+        >
+          Recover one piece
+        </button>
+      )}
       {refused && (
         <p role="alert" className="text-error text-label">
           {refused}
@@ -118,6 +128,7 @@ export function Attacks({
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
   const [picked, setPicked] = useState<Record<number, number>>({});
+  const [spent, setSpent] = useState<Record<number, InventoryEntry>>({});
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
@@ -147,9 +158,41 @@ export function Attacks({
     } catch (error) {
       return refuse(`${name} was not fired: ${(error as Error).message}`);
     }
+    setSpent((now) => ({ ...now, [attack.entry]: drawn }));
     if (from.quantity === 1) setPicked(({ [attack.entry]: _gone, ...rest }) => rest);
     replace.announce(`Spent one ${nameOf(from.entry)}, ${leftIn(attack) - 1} left`);
     return true;
+  }
+
+  /** Returns one piece to the stack it would be spent from, or adds a loose one where the last was spent. */
+  async function recover(attack: Attack, piece: InventoryEntry, stack: number | undefined) {
+    if (replace.writing) return;
+    try {
+      await both.mutateAsync({
+        state: (latest) => latest,
+        edit: (latest) => {
+          if (stack !== undefined) {
+            return editInventoryEntry(latest, stack, piece, (entry) => ({
+              ...entry,
+              quantity: entry.quantity + 1,
+            }));
+          }
+          const { id: _id, inside: _inside, ...loose } = piece;
+          return { ...latest, inventory: [...latest.inventory, { ...loose, quantity: 1 }] };
+        },
+      });
+    } catch (error) {
+      replace.announce(`Nothing recovered: ${(error as Error).message}`);
+      return;
+    }
+    replace.announce(`Recovered one ${displayName(piece.ref, names)}, ${leftIn(attack) + 1} left`);
+  }
+
+  function recoverer(attack: Attack) {
+    if (!attack.ammunition) return undefined;
+    const stack = spendFrom(attack, picked[attack.entry]);
+    const piece = stack ? definition.inventory[stack.entry] : spent[attack.entry];
+    return piece ? () => recover(attack, piece, stack?.entry) : undefined;
   }
 
   return (
@@ -206,6 +249,7 @@ export function Attacks({
                           name: nameOf,
                           picked: picked[attack.entry],
                           pick: (entry) => setPicked((now) => ({ ...now, [attack.entry]: entry })),
+                          recover: recoverer(attack),
                         },
                         refused[attack.entry]?.left === leftIn(attack)
                           ? refused[attack.entry]?.message
