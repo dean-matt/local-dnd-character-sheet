@@ -233,6 +233,15 @@ describe("describeStateChange", () => {
     expect(stateChangePhrases(spent, state)).toEqual(["Item charges cleared"]);
   });
 
+  it("names ammunition fired by what is spent", () => {
+    const fired: CharacterState = {
+      ...state,
+      spentAmmunition: [{ type: "arrow|phb", ref: { name: "Arrow", source: "PHB" }, count: 1 }],
+    };
+    expect(stateChangePhrases(state, fired)).toEqual(["Ammunition set to 1 spent"]);
+    expect(stateChangePhrases(fired, state)).toEqual(["Ammunition cleared"]);
+  });
+
   it("names the spell concentrated on and its level, starting and ending", () => {
     const hex: CharacterState = {
       ...state,

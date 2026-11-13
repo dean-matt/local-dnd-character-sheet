@@ -215,7 +215,10 @@ export {
   hitDicePoolSchema,
   itemChargesSpent,
   resourceSchema,
+  type SpentAmmunition,
   spellSlotSchema,
+  spentAmmunitionOf,
+  withAmmunitionSpent,
   withFeatureUse,
   withItemChargesSpent,
 } from "./state.ts";

@@ -10,14 +10,19 @@ import {
   displayName,
   effectsOnRoll,
   entryKey,
+  itemKey,
   overrideKey,
+  type SpentAmmunition,
+  spentAmmunitionOf,
+  withAmmunitionSpent,
 } from "@dnd/character";
 import { useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
+import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
-import { editInventoryEntry, type InventoryEntry } from "../../../../lib/editInventoryEntry.ts";
+import { editInventoryEntry } from "../../../../lib/editInventoryEntry.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
@@ -128,7 +133,7 @@ export function Attacks({
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
   const [picked, setPicked] = useState<Record<number, number>>({});
-  const [spent, setSpent] = useState<Record<number, InventoryEntry>>({});
+  const play = useCharacterState(character.id);
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
@@ -144,12 +149,18 @@ export function Attacks({
     };
     const from = spendFrom(attack, picked[attack.entry]);
     const drawn = from && definition.inventory[from.entry];
-    if (!from || !drawn) return refuse(`${name} has no ammunition left to fire.`);
+    const ammunition = attack.ammunition;
+    if (!from || !drawn || !ammunition) return refuse(`${name} has no ammunition left to fire.`);
     if (replace.writing) return false;
     setRefused(({ [attack.entry]: _gone, ...rest }) => rest);
     try {
       await both.mutateAsync({
-        state: (latest) => latest,
+        state: (latest) =>
+          withAmmunitionSpent(
+            latest,
+            { type: ammunition.type, ref: drawn.ref, variant: drawn.variant },
+            1,
+          ),
         edit: (latest) =>
           editInventoryEntry(latest, from.entry, drawn, (entry) =>
             entry.quantity > 1 ? { ...entry, quantity: entry.quantity - 1 } : null,
@@ -158,27 +169,34 @@ export function Attacks({
     } catch (error) {
       return refuse(`${name} was not fired: ${(error as Error).message}`);
     }
-    setSpent((now) => ({ ...now, [attack.entry]: drawn }));
     if (from.quantity === 1) setPicked(({ [attack.entry]: _gone, ...rest }) => rest);
     replace.announce(`Spent one ${nameOf(from.entry)}, ${leftIn(attack) - 1} left`);
     return true;
   }
 
-  /** Returns one piece to the stack it would be spent from, or adds a loose one where the last was spent. */
-  async function recover(attack: Attack, piece: InventoryEntry, stack: number | undefined) {
+  /** Returns one piece to the stack holding that item, or adds a loose one where the last was spent. */
+  async function recover(attack: Attack, piece: SpentAmmunition, stack: number | undefined) {
     if (replace.writing) return;
+    const drawn = stack === undefined ? undefined : definition.inventory[stack];
     try {
       await both.mutateAsync({
-        state: (latest) => latest,
+        state: (latest) => withAmmunitionSpent(latest, piece, -1),
         edit: (latest) => {
-          if (stack !== undefined) {
-            return editInventoryEntry(latest, stack, piece, (entry) => ({
+          if (stack !== undefined && drawn) {
+            return editInventoryEntry(latest, stack, drawn, (entry) => ({
               ...entry,
               quantity: entry.quantity + 1,
             }));
           }
-          const { id: _id, inside: _inside, ...loose } = piece;
-          return { ...latest, inventory: [...latest.inventory, { ...loose, quantity: 1 }] };
+          // The record keeps only the item, so a loose piece carries no override, id or container.
+          const { ref, variant } = piece;
+          return {
+            ...latest,
+            inventory: [
+              ...latest.inventory,
+              { ref, variant, quantity: 1, carried: true, equipped: false, attuned: false },
+            ],
+          };
         },
       });
     } catch (error) {
@@ -189,10 +207,14 @@ export function Attacks({
   }
 
   function recoverer(attack: Attack) {
-    if (!attack.ammunition) return undefined;
-    const stack = spendFrom(attack, picked[attack.entry]);
-    const piece = stack ? definition.inventory[stack.entry] : spent[attack.entry];
-    return piece ? () => recover(attack, piece, stack?.entry) : undefined;
+    if (!attack.ammunition || !play.data) return undefined;
+    const piece = spentAmmunitionOf(play.data.state, attack.ammunition.type);
+    if (!piece) return undefined;
+    const held = attack.ammunition.stacks.find((stack) => {
+      const entry = definition.inventory[stack.entry];
+      return entry && itemKey(entry) === itemKey(piece);
+    });
+    return () => recover(attack, piece, held?.entry);
   }
 
   return (
