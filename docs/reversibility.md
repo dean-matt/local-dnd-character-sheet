@@ -18,7 +18,8 @@ undoes back to any one in a single write, after a confirmation, reversing every 
 of either kind. Saves to the same fields within 30 seconds merge into one entry, except a
 level-up or a Level History change, which is always its own entry. A play-state change never
 merges: each Damage, mark or rest is its own entry, and so is a combined write. Undoing a
-combined entry, or any older entry, restores its definition and its state together. It does not reach:
+combined entry, or any entry before it, restores both kinds it replaced; an older entry of one
+kind restores only that kind. It does not reach:
 
 | Not reached | Reversed instead by |
 |---|---|

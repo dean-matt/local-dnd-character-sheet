@@ -298,7 +298,8 @@ const updateBoth = createRoute({
   summary: "Replace a character's definition and state together",
   description:
     "One write, so a failure of either writes neither, and one undo entry that holds both " +
-    "the definition and the state it replaced. Undoing it, or any older entry, restores both. " +
+    "the definition and the state it replaced. Undoing it, or any entry before it, restores both kinds it replaced; " +
+    "an older entry of one kind restores only that kind. " +
     "`If-Unmodified-Since` refuses with 412 as it does on `PUT /characters/{id}`.",
   request: {
     params: idParam,
