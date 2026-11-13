@@ -89,4 +89,36 @@ describe("Encounter", () => {
     );
     expect(writes).toHaveLength(0);
   });
+
+  it("moves focus to the control that replaces the one pressed", async () => {
+    renderEncounter();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Start encounter" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Next round" })).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("button", { name: "End encounter" }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Start encounter" })).toHaveFocus(),
+    );
+  });
+
+  it("announces a failed initiative roll and starts no encounter", async () => {
+    renderEncounter();
+    const ok = fetch;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+        init?.method === "PUT"
+          ? Response.json({ error: "nope" }, { status: 500 })
+          : ok(input, init),
+      ),
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("Initiative was not rolled"),
+    );
+    expect(screen.getByText("No encounter running.")).toBeInTheDocument();
+  });
 });

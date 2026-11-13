@@ -9,6 +9,7 @@ import {
   roundAdvanced,
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
+import { useEffect, useRef, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
@@ -35,6 +36,16 @@ export function Encounter({
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
+  const start = useRef<HTMLButtonElement>(null);
+  const next = useRef<HTMLButtonElement>(null);
+  // The control that took focus unmounts on press, so focus moves to the one that replaces it.
+  const [focusNext, setFocusNext] = useState<"start" | "next">();
+  const running = play.data?.state.encounter != null;
+  useEffect(() => {
+    if (focusNext === undefined || running !== (focusNext === "next")) return;
+    (focusNext === "next" ? next : start).current?.focus();
+    setFocusNext(undefined);
+  }, [focusNext, running]);
   if (!play.data) return null;
   const state = play.data.state;
   const { encounter } = state;
@@ -88,7 +99,11 @@ export function Encounter({
           <button
             type="button"
             aria-disabled={busy}
-            onClick={() => change(encounterStarted(state), "Encounter started, round 1")}
+            ref={start}
+            onClick={() => {
+              change(encounterStarted(state), "Encounter started, round 1");
+              setFocusNext("next");
+            }}
             className={BUTTON}
           >
             Start encounter
@@ -101,6 +116,7 @@ export function Encounter({
           <>
             <button
               type="button"
+              ref={next}
               aria-disabled={busy || advanced === state}
               onClick={() =>
                 advanced !== state && change(advanced, `Round ${advanced.encounter?.round}`)
@@ -112,7 +128,10 @@ export function Encounter({
             <button
               type="button"
               aria-disabled={busy}
-              onClick={() => change(encounterEnded(state), "Encounter ended")}
+              onClick={() => {
+                change(encounterEnded(state), "Encounter ended");
+                setFocusNext("start");
+              }}
               className={BUTTON}
             >
               End encounter

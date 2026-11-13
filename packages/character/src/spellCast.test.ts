@@ -113,6 +113,18 @@ describe("spellCast", () => {
     expect(cast.ended).toEqual({ spell: HEX, level: 1 });
   });
 
+  it("records the encounter round a concentration spell was cast in", () => {
+    const running = { ...state, encounter: { round: 3, initiative: null } };
+    const option = { via: "slot" as const, level: 2, left: 0 };
+    const cast = spellCast(sheet, running, {
+      spell: BLESS,
+      option,
+      spend: false,
+      concentrate: true,
+    });
+    expect(cast.state.concentration).toEqual({ spell: BLESS, level: 2, round: 3 });
+  });
+
   it("leaves the slot alone where the spend is switched off", () => {
     const option = { via: "slot" as const, level: 2, left: 0 };
     const cast = spellCast(sheet, state, { spell: BLESS, option, spend: false, concentrate: true });

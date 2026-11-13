@@ -92,11 +92,6 @@ const spentAmmunitionSchema = z.strictObject({
  */
 const activeEffectSchema = z.strictObject({ name: z.string().min(1) });
 
-/**
- * The spell a character concentrates on and the level it took effect at: the slot level for a
- * slot cast, the spell's own level for a slotless one, 0 for a cantrip. The level is kept
- * because an upcast spell is a different effect from the same row.
- */
 /** Far past any fight, so a round counter left running stays a small number. */
 export const MAX_ROUND = 999;
 
@@ -109,6 +104,11 @@ const encounterSchema = z.strictObject({
   initiative: z.int().nullable().default(null),
 });
 
+/**
+ * The spell a character concentrates on and the level it took effect at: the slot level for a
+ * slot cast, the spell's own level for a slotless one, 0 for a cantrip. The level is kept
+ * because an upcast spell is a different effect from the same row.
+ */
 const concentrationSchema = z.strictObject({
   spell: entryRefSchema,
   level: z.int().min(0).max(9),
