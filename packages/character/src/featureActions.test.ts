@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { featureActionType, featurePoolKey } from "./featureActions.ts";
+import { ACTION_TURN_MARK, featureActionType, featurePoolKey } from "./featureActions.ts";
 
 describe("featureActionType", () => {
   it("names the action a curated feature takes, by source", () => {
@@ -25,5 +25,16 @@ describe("featurePoolKey", () => {
   it("is undefined for a feature that spends no pool", () => {
     expect(featurePoolKey({ name: "Second Wind", source: "PHB" })).toBeUndefined();
     expect(featurePoolKey({ name: "Action Surge", source: "XPHB" })).toBeUndefined();
+  });
+});
+
+describe("ACTION_TURN_MARK", () => {
+  it("marks the turn slot an action type spends, and none for a free action", () => {
+    expect(ACTION_TURN_MARK).toEqual({
+      action: "action",
+      "bonus action": "bonusAction",
+      reaction: "reaction",
+      free: undefined,
+    });
   });
 });
