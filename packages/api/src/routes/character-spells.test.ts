@@ -245,9 +245,34 @@ describe("characterSpellsRoutes", () => {
             level: 0,
             school: "V",
             damageInflict: ["fire"],
+            spellAttack: ["R"],
+            scalingLevelDice: {
+              label: "fire damage",
+              scaling: { "1": "1d10", "5": "2d10", "11": "3d10", "17": "4d10" },
+            },
             entries: [
               "A target takes {@damage 1d10} fire damage.",
               { type: "entries", entries: ["It rises to {@damage 2d10} at 5th level."] },
+            ],
+          }),
+        },
+        {
+          name: "Fireball",
+          source: "PHB",
+          edition: "classic",
+          level: 3,
+          school: "V",
+          concentration: 0,
+          ritual: 0,
+          json: JSON.stringify({
+            name: "Fireball",
+            source: "PHB",
+            level: 3,
+            school: "V",
+            damageInflict: ["fire"],
+            entries: ["It takes {@damage 8d6} fire damage."],
+            entriesHigherLevel: [
+              { type: "entries", entries: ["Damage rises by {@scaledamage 8d6|3-9|1d6}."] },
             ],
           }),
         },
@@ -406,6 +431,28 @@ describe("characterSpellsRoutes", () => {
     const [bolt] = await spells();
 
     expect(bolt).toMatchObject({ damageDice: "1d10", damageTypes: ["fire"] });
+  });
+
+  it("flags a spell attack and carries a cantrip's tiers and an upcast step", async () => {
+    store(
+      withSpells([
+        { ref: { name: "Fire Bolt", source: "PHB" } },
+        { ref: { name: "Fireball", source: "PHB" } },
+      ]),
+    );
+    const [bolt, fireball] = await spells();
+
+    expect(bolt).toMatchObject({
+      attack: true,
+      damageTiers: [
+        { level: 1, dice: "1d10" },
+        { level: 5, dice: "2d10" },
+        { level: 11, dice: "3d10" },
+        { level: 17, dice: "4d10" },
+      ],
+    });
+    expect(fireball).toMatchObject({ damageDice: "8d6", damageUpcast: "1d6" });
+    expect(fireball).not.toHaveProperty("attack");
   });
 
   it("resolves a homebrew spell by id and gives it no source", async () => {

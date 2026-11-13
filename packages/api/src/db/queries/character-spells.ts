@@ -54,13 +54,28 @@ const pick = <T>(schema: ZodType<T>, value: unknown): T | undefined => {
 };
 
 const DAMAGE_TAG = /\{@damage ([^|}]+)/;
+const SCALE_TAG = /\{@scaledamage ([^|}]+)\|[^|}]*\|([^|}]+)\}/;
 
-/** Scans the serialized text, whose key order is the order the entries print in. */
+/**
+ * Scans the serialized text, whose key order is the order the entries print in. The upcast
+ * step counts only where it scales the first roll, since a spell with two damage rolls
+ * upcasts the other.
+ */
 function damageFacts(json: Record<string, unknown>) {
   const dice = DAMAGE_TAG.exec(JSON.stringify(json.entries ?? []))?.[1]?.trim();
+  const scale = SCALE_TAG.exec(JSON.stringify(json.entriesHigherLevel ?? []));
+  const upcast = scale?.[1]?.trim() === dice ? scale?.[2]?.trim() : undefined;
+  const scaling = pick(spellEffectSchema.shape.scalingLevelDice, json.scalingLevelDice)?.scaling;
+  const tiers = Object.entries(scaling ?? {})
+    .map(([level, tier]) => ({ level: Number(level), dice: tier }))
+    .filter(({ level }) => Number.isInteger(level) && level >= 1)
+    .sort((a, b) => a.level - b.level);
   return {
     ...(dice && { damageDice: dice }),
     damageTypes: pick(spellEffectSchema.shape.damageInflict, json.damageInflict),
+    ...(pick(spellEffectSchema.shape.spellAttack, json.spellAttack) && { attack: true as const }),
+    ...(tiers.length > 0 && { damageTiers: tiers }),
+    ...(upcast && { damageUpcast: upcast }),
   };
 }
 

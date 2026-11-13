@@ -10,7 +10,12 @@ const PRIMARY =
 const SECONDARY =
   "min-h-11 rounded-control px-3.5 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:text-muted";
 
-type CastChoice = { option: SpellCastOption; spend: boolean; concentrate: boolean };
+type CastChoice = {
+  option: SpellCastOption;
+  spend: boolean;
+  concentrate: boolean;
+  roll: boolean;
+};
 
 const optionKey = (option: SpellCastOption) => `${option.via}:${option.level}`;
 
@@ -27,13 +32,15 @@ function optionLabel(option: SpellCastOption) {
  * The choices a cast takes before it is applied: the slot level, pact slot or ritual cast it
  * goes by, refusing a slot with none left while the spend is on; whether it spends that slot;
  * and, for a spell that needs concentration, whether it concentrates, naming the held spell it
- * ends. A cantrip offers no slot. The caller applies the choice and closes the dialog once it
+ * ends; and, for a spell that makes an attack or deals damage, whether to roll them. A cantrip
+ * offers no slot. The caller applies the choice and closes the dialog once it
  * lands.
  */
 export function CastDialog({
   name,
   level,
   concentration,
+  rolls,
   options,
   held,
   busy,
@@ -44,6 +51,8 @@ export function CastDialog({
   name: string;
   level: number;
   concentration: boolean;
+  /** Whether the spell has an attack or damage to roll. */
+  rolls: boolean;
   options: readonly SpellCastOption[];
   /** The spell concentration is held on, or undefined where none is. */
   held: string | undefined;
@@ -55,6 +64,7 @@ export function CastDialog({
   const id = useId();
   const [spend, setSpend] = useState(true);
   const [concentrate, setConcentrate] = useState(concentration);
+  const [roll, setRoll] = useState(true);
   const usable = (option: SpellCastOption) => !(spend && spendsSlot(option) && option.left === 0);
   const [picked, setPicked] = useState(() => {
     const first = options.find((option) => option.left !== 0);
@@ -66,7 +76,7 @@ export function CastDialog({
 
   function cast() {
     if (busy || !option || !ready) return;
-    onCast({ option, spend: spend && spendsSlot(option), concentrate });
+    onCast({ option, spend: spend && spendsSlot(option), concentrate, roll: rolls && roll });
   }
 
   return (
@@ -129,6 +139,12 @@ export function CastDialog({
               onChange={() => setConcentrate(!concentrate)}
             />
             Concentrate
+          </label>
+        )}
+        {rolls && (
+          <label className="flex items-center gap-2 text-row">
+            <input type="checkbox" checked={roll} onChange={() => setRoll(!roll)} />
+            Roll attack and damage
           </label>
         )}
         {concentration && concentrate && held && (
