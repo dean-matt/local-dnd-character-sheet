@@ -7,7 +7,8 @@ import { RollingFor } from "./rollerContext.ts";
 /**
  * Rolls `dice` (a d20 unless told otherwise) plus `bonus` and records it under `label`, `type` and `origin`; nothing where no character's
  * sheet is open to record to. Its status region speaks what was rolled and the total
- * without moving focus, and says so when the roll could not be logged.
+ * without moving focus, and says so when the roll could not be logged. `beforeRoll` runs
+ * first and rolls nothing when it resolves false.
  */
 export function RollBonusButton({
   label,
@@ -15,9 +16,11 @@ export function RollBonusButton({
   origin,
   bonus,
   dice = "1d20",
+  beforeRoll,
 }: Pick<RollRecord, "label" | "type" | "origin"> & {
   bonus: number;
   dice?: string;
+  beforeRoll?: () => Promise<boolean>;
 }) {
   const characterId = useContext(RollingFor);
   const { roll } = useRollAndRecord(characterId ?? "");
@@ -29,8 +32,9 @@ export function RollBonusButton({
     <>
       <button
         type="button"
-        onClick={() => {
+        onClick={async () => {
           setHeard("");
+          if (beforeRoll && !(await beforeRoll())) return;
           roll(notation, { label, type, origin }, (rolled, logged) =>
             setHeard(`${label}: ${rolled.total}${logged ? "" : ", not logged"}`),
           );

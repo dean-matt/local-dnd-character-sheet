@@ -417,29 +417,26 @@ function weaponMasteryLimit(
 }
 
 /**
- * How many units of `type` the carried inventory holds, a pack counted by its contents. A
- * type with no source (`energy cell`) matches any source, as upstream leaves it open.
- * Walks the inventory once per weapon, which an inventory's size makes free.
+ * The carried entries that are loose one-piece ammunition of `type`, by inventory index. A
+ * pack such as `Arrows (20)` is neither listed nor counted. A type with no source
+ * (`energy cell`) matches any source, as upstream leaves it open.
  */
-function ammunitionCarried(
+function looseAmmunition(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   type: string,
-): number {
+): { entry: number; quantity: number }[] {
   const sourced = type.includes("|");
-  return definition.inventory.reduce((total, entry) => {
+  return definition.inventory.flatMap((entry, index) => {
     const held = entry.carried ? (catalog.ammunition.get(itemKey(entry)) ?? []) : [];
-    return (
-      total +
-      entry.quantity *
-        held
-          .filter(({ uid }) => (sourced ? uid === type : uid.split("|")[0] === type))
-          .reduce((sum, { count }) => sum + count, 0)
+    const loose = held.some(
+      ({ uid, count }) => count === 1 && (sourced ? uid === type : uid.split("|")[0] === type),
     );
-  }, 0);
+    return loose ? [{ entry: index, quantity: entry.quantity }] : [];
+  });
 }
 
-/** The range, the ammunition fired with the count carried, and the reload, each null where the weapon states none. */
+/** The range, the ammunition fired with the loose stacks carried, and the reload, each null where the weapon states none. */
 function rangedFacts(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
@@ -448,7 +445,7 @@ function rangedFacts(
   return {
     range: range ?? null,
     ammunition: ammoType
-      ? { type: ammoType, carried: ammunitionCarried(definition, catalog, ammoType) }
+      ? { type: ammoType, stacks: looseAmmunition(definition, catalog, ammoType) }
       : null,
     reload: reload ?? null,
   };

@@ -1025,17 +1025,19 @@ describe("deriveCharacter", () => {
     it("carries the range, the ammunition type and the reload from the weapon", () => {
       expect(shot(archer())).toMatchObject({
         range: { normal: 80, long: 320 },
-        ammunition: { type: ARROW, carried: 0 },
+        ammunition: { type: ARROW, stacks: [] },
         reload: 2,
       });
     });
 
-    it("counts loose ammunition and a pack by its contents, times the quantity held", () => {
-      expect(shot(archer(held(QUIVER, 2), held(LOOSE, 3)))?.ammunition?.carried).toBe(43);
+    it("lists loose ammunition by inventory index and quantity, and leaves a pack out", () => {
+      expect(shot(archer(held(QUIVER, 2), held(LOOSE, 3)))?.ammunition?.stacks).toEqual([
+        { entry: 2, quantity: 3 },
+      ]);
     });
 
     it("skips ammunition that is not carried", () => {
-      expect(shot(archer(held(QUIVER, 2, false), held(LOOSE, 3)))?.ammunition?.carried).toBe(3);
+      expect(shot(archer(held(QUIVER, 2), held(LOOSE, 3, false)))?.ammunition?.stacks).toEqual([]);
     });
 
     it("matches a type that names no source against any source", () => {
@@ -1047,7 +1049,7 @@ describe("deriveCharacter", () => {
         ammunition: new Map([[entryKey(cell), [{ uid: "energy cell|xdmg", count: 1 }]]]),
       });
 
-      expect(block?.ammunition?.carried).toBe(4);
+      expect(block?.ammunition?.stacks).toEqual([{ entry: 1, quantity: 4 }]);
     });
 
     it("leaves a weapon that states none with null for each", () => {
