@@ -160,6 +160,8 @@ export type ItemBonusTrait = {
   speed?: SpeedModifier;
   /** Bonuses of equipped items sharing a `group` add up to at most `cap`. */
   stack?: { group: string; cap: number };
+  /** Added to the named class resource's maximum, for a character with that class. */
+  resourceBonus?: { resource: string; amount: number; class: string };
 };
 
 /**

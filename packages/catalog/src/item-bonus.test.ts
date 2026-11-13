@@ -43,6 +43,15 @@ describe("itemBonusSchema", () => {
     expect(itemBonusSchema.parse({ stack })).toBeUndefined();
   });
 
+  it("reads a resource bonus and ignores a malformed one", () => {
+    const resourceBonus = { resource: "Ki", amount: 2, class: "Monk" };
+    expect(itemBonusSchema.parse({ resourceBonus })).toMatchObject({ resourceBonus });
+    expect(itemBonusSchema.parse({ resourceBonus: { resource: "Ki", amount: 2 } })).toBeUndefined();
+    expect(
+      itemBonusSchema.parse({ resourceBonus: { ...resourceBonus, amount: 0 } }),
+    ).toBeUndefined();
+  });
+
   it("reads spell attack, save DC and damage bonuses", () => {
     expect(
       itemBonusSchema.parse({

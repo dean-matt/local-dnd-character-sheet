@@ -1045,7 +1045,7 @@ export function deriveCharacter(
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
-    classResources: classResourcePools(definition, catalog),
+    classResources: classResourcePools(definition, catalog, bonuses),
     ...carrying,
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),

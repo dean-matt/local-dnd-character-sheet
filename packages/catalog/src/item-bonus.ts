@@ -31,6 +31,18 @@ const stackSchema = z
   .optional()
   .catch(undefined);
 
+/** A malformed resource bonus adds nothing, so the item's other bonuses still count. */
+const resourceBonusSchema = z
+  .object({ resource: z.string().min(1), amount: z.int().positive(), class: z.string().min(1) })
+  .optional()
+  .catch(undefined);
+
+/** `fields` without the keys the row did not state. */
+const present = <T extends Record<string, unknown>>(fields: T) =>
+  Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
+
 const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
 
 /**
@@ -39,7 +51,9 @@ const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
  * number, so reading it here would count it twice. `save` is `bonusSavingThrow`, added to
  * every save, and `concentration` is `bonusSavingThrowConcentration`, added to concentration
  * saves alone. `stack` groups the item's bonuses with other equipped items naming the same
- * `group`: together they add at most `cap`. `spellAttack`, `spellSaveDc` and `spellDamage` are the three `bonusSpell*` fields.
+ * `group`: together they add at most `cap`. `resourceBonus` adds `amount` to the named
+ * class resource's maximum, for a character with that class. `spellAttack`, `spellSaveDc`
+ * and `spellDamage` are the three `bonusSpell*` fields.
  * `abilityCheck` is `bonusAbilityCheck`, `proficiencyBonus` is `bonusProficiencyBonus`, and
  * `critThreshold` is the lowest d20 result that scores a critical hit, absent for a row
  * that states none. `grantsProficiency` and `grantsLanguage` are upstream's flags: they
@@ -61,6 +75,7 @@ export const itemBonusSchema = z
     critThreshold: z.int().min(2).max(19).optional().catch(undefined),
     modifySpeed: speedModifierSchema,
     stack: stackSchema,
+    resourceBonus: resourceBonusSchema,
     grantsProficiency: z.literal(true).optional().catch(undefined),
     grantsLanguage: z.literal(true).optional().catch(undefined),
   })
@@ -79,6 +94,7 @@ export const itemBonusSchema = z
       grantsLanguage: row.grantsLanguage === true,
       ...(row.critThreshold && { critThreshold: row.critThreshold }),
       ...(row.modifySpeed && { speed: row.modifySpeed }),
+      ...present({ resourceBonus: row.resourceBonus }),
     };
     const none = Object.values(bonus).every((value) => value === 0 || value === false);
     return none || code === "P" ? undefined : { ...bonus, ...(row.stack && { stack: row.stack }) };
