@@ -9,7 +9,8 @@ import { resourceLabel } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { classResourceKey, itemKey } from "./keys.ts";
 import type { Ability, EntryRef } from "./refs.ts";
-import type { CharacterState } from "./state.ts";
+import { type CharacterState, TURN_MARKS } from "./state.ts";
+import { TURN_LABELS } from "./turn.ts";
 
 /** Newest kept per character; the insert that passes it prunes the oldest. */
 export const UNDO_LOG_LIMIT = 50;
@@ -458,6 +459,12 @@ const STATE_CHANGES: {
       (rolled) => rolled ?? undefined,
     ),
   ],
+  turn: (before, after) =>
+    TURN_MARKS.flatMap((mark) =>
+      one(`turn.${mark}`, TURN_LABELS[mark], before.turn[mark], after.turn[mark], (spent) =>
+        spent ? "spent" : undefined,
+      ),
+    ),
   deathSaves: (before, after) => [
     ...one(
       "deathSaves.successes",

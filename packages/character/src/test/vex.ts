@@ -180,6 +180,7 @@ export const state: CharacterState = {
   activeEffects: [],
   concentration: { spell: { name: "Hex", source: "PHB" }, level: 2 },
   encounter: null,
+  turn: { action: false, bonusAction: false, reaction: false, movement: false },
   deathSaves: { successes: 0, failures: 0 },
   exhaustion: 1,
   inspiration: false,

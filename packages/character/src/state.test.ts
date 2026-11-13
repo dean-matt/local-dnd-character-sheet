@@ -53,6 +53,7 @@ describe("default state", () => {
       activeEffects: [],
       concentration: null,
       encounter: null,
+      turn: { action: false, bonusAction: false, reaction: false, movement: false },
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
       inspiration: false,
