@@ -137,6 +137,18 @@ const OPTIONS: Record<
     },
     editions: ["classic"],
   },
+  waiveMaterialComponents: {
+    name: "Material components",
+    printed: {
+      label: "Components as printed",
+      description: "Casting a spell names the costly material component it consumes.",
+    },
+    house: {
+      label: "Waive components",
+      description: "Casting a spell ignores material components, so the dialog names none.",
+    },
+    editions: ["classic", "one"],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];

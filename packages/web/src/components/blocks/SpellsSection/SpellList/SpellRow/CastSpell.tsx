@@ -59,10 +59,13 @@ export function CastSpell({
   derived,
   spell,
   characterLevel,
+  waiveComponents,
 }: {
   characterId: string;
   derived: CharacterDerived;
   characterLevel: number;
+  /** The table's house rule that ignores material components. */
+  waiveComponents: boolean;
   spell: Extract<SheetSpell, { resolved: true }>;
 }) {
   const [open, setOpen] = useState(false);
@@ -161,7 +164,7 @@ export function CastSpell({
           rolls={rolls}
           options={options}
           held={held}
-          consumed={consumedComponent(spell.components)}
+          consumed={waiveComponents ? undefined : consumedComponent(spell.components)}
           busy={replace.writing}
           error={replace.error?.message}
           onCast={cast}

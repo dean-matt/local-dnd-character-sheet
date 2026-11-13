@@ -73,6 +73,11 @@ const houseRulesObject = z
      * `everyHitDie`.
      */
     everyHitDieOnLongRest: z.boolean().optional(),
+    /**
+     * Material components are waived: the Cast dialog no longer names a consumed, costly
+     * one. Absent, it does, as both rulesets print.
+     */
+    waiveMaterialComponents: z.boolean().optional(),
   })
   .prefault({});
 
@@ -104,6 +109,7 @@ export const PRINTED_RULE: Required<HouseRules> = {
   requireEquipProficiency: false,
   noInstantDeath: false,
   everyHitDieOnLongRest: false,
+  waiveMaterialComponents: false,
 };
 
 /**

@@ -47,6 +47,7 @@ function renderCast(
   state: Partial<CharacterState> = {},
   sheet: CharacterDerived = derived,
   refuse?: () => Promise<Response>,
+  waiveComponents = false,
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
@@ -77,7 +78,15 @@ function renderCast(
       return new Response(JSON.stringify(stored), { status: 200 });
     }),
   );
-  renderWithClient(<CastSpell characterId="1" derived={sheet} characterLevel={5} spell={cast} />);
+  renderWithClient(
+    <CastSpell
+      characterId="1"
+      derived={sheet}
+      characterLevel={5}
+      waiveComponents={waiveComponents}
+      spell={cast}
+    />,
+  );
   return writes;
 }
 
@@ -118,6 +127,25 @@ describe("CastSpell", () => {
     expect(
       dialog.getByText("Consumes a diamond worth 300+ GP, which the spell consumes (300 gp)."),
     ).toBeInTheDocument();
+  });
+
+  it("names no consumed component where the house rule waives material components", async () => {
+    renderCast(
+      spell("Revivify", 3, {
+        components: {
+          v: true,
+          s: true,
+          m: { text: "a diamond worth 300+ GP", cost: 30000, consume: true },
+        },
+      }),
+      {},
+      derived,
+      undefined,
+      true,
+    );
+    const dialog = await openDialog("Revivify");
+
+    expect(dialog.queryByText(/Consumes/)).toBeNull();
   });
 
   it("names no component for a spell that consumes none", async () => {
