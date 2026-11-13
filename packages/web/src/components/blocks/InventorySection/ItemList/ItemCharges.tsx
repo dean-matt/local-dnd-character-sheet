@@ -8,7 +8,7 @@ import {
 import { Minus, Plus } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
-import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
+import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
 import { editInventoryEntry } from "../../../../lib/editInventoryEntry.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Field } from "../../../Field/Field.tsx";
@@ -20,8 +20,8 @@ const maxSchema = characterDefinitionSchema.shape.inventory.element.shape.charge
 /**
  * An item's charges left against its maximum and when it recharges, with a spend, a restore and
  * a field for the table's own maximum, each one write announced once it lands. Spent charges
- * are play state keyed by the entry's `id`, so an entry without one is given its `id` by a
- * definition write before its first charge is spent. Nothing shows until state loads.
+ * are play state keyed by the entry's `id`, so an entry without one is given its `id` in the
+ * same write and undo entry as its first spent charge. Nothing shows until state loads.
  */
 export function ItemCharges({
   character,
@@ -40,33 +40,36 @@ export function ItemCharges({
 }) {
   const state = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
-  const definition = useUpdateCharacterDefinition(character.id);
+  const both = useReplaceDefinitionAndState(character.id);
   const entry = character.definition.inventory[index];
   if (!state.isSuccess || !entry) return null;
 
-  const spent = entry.id ? itemChargesSpent(state.data.state, entry.id, charges.max) : 0;
+  const play = state.data.state;
+  const spent = entry.id ? itemChargesSpent(play, entry.id, charges.max) : 0;
   const left = charges.max - spent;
-  const disabled = busy || replace.writing || definition.isPending;
+  const disabled = busy || replace.writing;
 
   async function change(next: number) {
     if (!entry) return;
     const id = entry.id ?? crypto.randomUUID();
+    const ids = new Set(character.definition.inventory.flatMap((at) => at.id ?? []));
+    ids.add(id);
     try {
-      if (!entry.id) {
-        await definition.mutateAsync((latest) =>
-          editInventoryEntry(latest, index, entry, (at) => ({ ...at, id })),
-        );
+      if (entry.id) {
+        await replace.mutateAsync((latest) => withItemChargesSpent(latest, ids, id, next));
+      } else {
+        await both.mutateAsync({
+          state: withItemChargesSpent(play, ids, id, next),
+          edit: (latest) => editInventoryEntry(latest, index, entry, (at) => ({ ...at, id })),
+        });
       }
-      const ids = new Set(character.definition.inventory.flatMap((at) => at.id ?? []));
-      ids.add(id);
-      await replace.mutateAsync((latest) => withItemChargesSpent(latest, ids, id, next));
     } catch {
       return;
     }
     replace.announce(`${name}: ${charges.max - next} of ${charges.max} charges left.`);
   }
 
-  const failure = replace.error ?? definition.error;
+  const failure = replace.error ?? both.error;
   return (
     <span className="flex flex-wrap items-center gap-1.5">
       <span className="text-row">
