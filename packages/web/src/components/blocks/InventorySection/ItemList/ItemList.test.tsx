@@ -776,6 +776,65 @@ describe("ItemList", () => {
     expect(cloak.querySelector("svg")).toHaveClass("lucide-backpack");
   });
 
+  describe("a consumable", () => {
+    const potion = (quantity: number, carried = true): SheetItem[] => [
+      {
+        ...ITEMS[0],
+        name: "Potion of Healing",
+        weapon: null,
+        quantity,
+        carried,
+        type: { abbreviation: "P", name: "Potion" },
+      } as SheetItem,
+    ];
+    const potionEntry = { ref: { name: "Potion of Healing", source: "XDMG" } };
+    const puts = (fetchMock: ReturnType<typeof stubApi>) =>
+      fetchMock.mock.calls.filter(
+        ([url, init]) => url === "/api/characters/1" && init?.method === "PUT",
+      );
+
+    it("spends one in a write of its own and announces what is left", async () => {
+      const fetchMock = renderList(derivedRecord(), potion(3), {
+        firstEntry: { ...potionEntry, quantity: 3 },
+      });
+
+      fireEvent.click(await screen.findByLabelText("Use Potion of Healing"));
+
+      expect(await screen.findByText("Used Potion of Healing, 2 left")).toBeInTheDocument();
+      expect(puts(fetchMock)).toHaveLength(1);
+      expect(puts(fetchMock)[0]?.[1]?.headers).toMatchObject({ "Undo-Entry": "own" });
+      expect((await written(fetchMock)).inventory[0].quantity).toBe(2);
+    });
+
+    it("removes the entry in the same write when the last is used", async () => {
+      const fetchMock = renderList(derivedRecord(), potion(1), { firstEntry: potionEntry });
+
+      fireEvent.click(await screen.findByLabelText("Use Potion of Healing"));
+
+      expect(await screen.findByText("Used Potion of Healing, none left")).toBeInTheDocument();
+      expect(puts(fetchMock)).toHaveLength(1);
+      expect(puts(fetchMock)[0]?.[1]?.headers).toMatchObject({ "Undo-Entry": "own" });
+      const names = (await written(fetchMock)).inventory.map(
+        (entry: { ref: { name: string } }) => entry.ref.name,
+      );
+      expect(names).not.toContain("Potion of Healing");
+    });
+
+    it("offers no Use on an item that is not a consumable or is not carried", async () => {
+      renderList(derivedRecord(), potion(1, false));
+
+      await screen.findByText("Potion of Healing");
+      expect(screen.queryByLabelText("Use Potion of Healing")).toBeNull();
+    });
+
+    it("is a keyboard operable button", async () => {
+      renderList(derivedRecord(), potion(2), { firstEntry: { ...potionEntry, quantity: 2 } });
+
+      const use = await screen.findByRole("button", { name: "Use Potion of Healing" });
+      expect(use).not.toHaveAttribute("aria-disabled", "true");
+    });
+  });
+
   describe("an item's charges", () => {
     const wand = (): SheetItem[] => [
       {

@@ -94,7 +94,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 
 | Decision | Written in | Reversed by |
 |---|---|---|
-| Adding, removing, quantity, placing in a container | `components/blocks/InventorySection/ItemList/ItemList.tsx`, `lib/editInventoryEntry.ts` | Undo, a direct edit |
+| Adding, removing, quantity, placing in a container, Use on a consumable (an undo entry of its own) | `components/blocks/InventorySection/ItemList/ItemList.tsx`, `lib/editInventoryEntry.ts` | Undo, a direct edit |
 | Equipped, attuned, grip | `ItemList/ResolvedItemRow/EquipToggle.tsx`, `AttuneToggle.tsx`, `GripToggle.tsx` | Undo, toggling back |
 | Coins | `components/blocks/InventorySection/CoinField.tsx` | Undo, a direct edit |
 | An item's ability, proficiency or language pick | `ItemList/ItemPicks.tsx`, beside the entry | Undo, a direct edit |
