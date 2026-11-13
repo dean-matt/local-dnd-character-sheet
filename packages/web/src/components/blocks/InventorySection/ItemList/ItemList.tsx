@@ -18,17 +18,17 @@ import { useSaveToast } from "../../../../hooks/useSaveToast.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { withItem } from "../../../../lib/addedEntries.ts";
+import {
+  editInventoryEntry,
+  type InventoryEntry,
+  placeInventoryEntry,
+} from "../../../../lib/editInventoryEntry.ts";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
 import { ChipFacet } from "../../../Filter/ChipFacet.tsx";
 import { FilterButton } from "../../../Filter/FilterButton.tsx";
 import { matchesFacets, useFacetPicks } from "../../../Filter/facets.ts";
 import { AddItemButton } from "./AddItemButton.tsx";
-import {
-  editInventoryEntry,
-  type InventoryEntry,
-  placeInventoryEntry,
-} from "./editInventoryEntry.ts";
 import { ItemCharges } from "./ItemCharges.tsx";
 import { ItemPicks } from "./ItemPicks.tsx";
 import { GROUP_FACETS, GROUPS, groupOf } from "./itemGroups.ts";

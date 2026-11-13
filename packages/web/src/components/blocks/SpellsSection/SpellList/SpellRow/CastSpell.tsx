@@ -1,6 +1,8 @@
 import type { SheetSpell } from "@dnd/catalog";
 import {
   type CharacterDerived,
+  type CharacterRecord,
+  type CharacterState,
   derivedValue,
   type EntryRef,
   entryKey,
@@ -9,17 +11,25 @@ import {
   spellCastOptions,
   spellDamageDice,
 } from "@dnd/character";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
+import { characterKey } from "../../../../../hooks/characterKeys.ts";
 import { useAnnouncedStateWrite } from "../../../../../hooks/useAnnouncedStateWrite.ts";
+import { useCharacterInventory } from "../../../../../hooks/useCharacterInventory.ts";
 import { useCharacterState } from "../../../../../hooks/useCharacterState.ts";
 import { useConcentrationName } from "../../../../../hooks/useConcentrationName.ts";
+import { useReplaceDefinitionAndState } from "../../../../../hooks/useReplaceDefinitionAndState.ts";
 import { useRollAndRecord } from "../../../../../hooks/useRollAndRecord.ts";
 import { TOGGLE_PILL } from "../../../../../lib/chipStyles.ts";
+import { editInventoryEntry, type InventoryEntry } from "../../../../../lib/editInventoryEntry.ts";
 import { consumedComponent } from "../../../../../lib/spellFacts.ts";
 import { Announcer } from "../../../../Announcer.tsx";
 import { CastDialog } from "./CastDialog.tsx";
 
-type Choice = Omit<Parameters<typeof spellCast>[2], "spell"> & { roll: boolean };
+type Choice = Omit<Parameters<typeof spellCast>[2], "spell"> & {
+  roll: boolean;
+  spendEntry: number | undefined;
+};
 
 type Rolled = { total: number; natural20: boolean; logged: boolean };
 
@@ -48,7 +58,9 @@ const signed = (bonus: number) => (bonus < 0 ? `${bonus}` : `+${bonus}`);
 
 /**
  * The Cast button of a spell on the sheet and the dialog it opens. The cast's spend and
- * concentration land in one state write, so one undo reverses them, and its outcome is
+ * concentration land in one state write, so one undo reverses them; a consumed component
+ * spent from the inventory joins that write, one request and one undo entry, and an entry at
+ * quantity 1 is removed since a quantity is at least 1, and its outcome is
  * announced once it lands. A cast that changes nothing writes nothing and is announced alone.
  * The dialog can add the spell's attack and damage rolls, made at the level it is cast at, or
  * at the character's level for a cantrip, and logged once the cast lands; a natural 20 on the
@@ -72,6 +84,10 @@ export function CastSpell({
   const button = useRef<HTMLButtonElement>(null);
   const state = useCharacterState(characterId);
   const replace = useAnnouncedStateWrite(characterId);
+  const both = useReplaceDefinitionAndState(characterId);
+  const queryClient = useQueryClient();
+  const consumed = waiveComponents ? undefined : consumedComponent(spell.components);
+  const inventory = useCharacterInventory(characterId, open && consumed !== undefined);
   const stored = state.data?.state;
   const held = useConcentrationName(stored?.concentration ?? null);
   const attackRoll = useRollAndRecord(characterId);
@@ -81,6 +97,10 @@ export function CastSpell({
     bonus !== undefined || spellDamageDice(spell, spell.level, characterLevel) !== undefined;
   const options: SpellCastOption[] = stored ? spellCastOptions(spell, derived, stored) : [];
   const ref = spellRef(spell);
+  const entries = (inventory.data?.items ?? []).map((item, index) => ({
+    index,
+    label: `${item.name} (${item.quantity})`,
+  }));
 
   function close() {
     setOpen(false);
@@ -130,15 +150,62 @@ export function CastSpell({
     if (results.length > 0) replace.announce(`${text}; ${results.join(", ")}`);
   }
 
-  async function cast(choice: Choice) {
-    if (!stored || !ref) return;
-    const { state: after, ended } = spellCast(derived, stored, { spell: ref, ...choice });
+  /** The entry at `index` as the sheet drew it and its shown name, or undefined where it is gone. */
+  function entryAt(index: number) {
+    const drawn = queryClient.getQueryData<CharacterRecord>(characterKey(characterId))?.definition
+      .inventory[index];
+    return drawn && { drawn, name: inventory.data?.items[index]?.name ?? "item" };
+  }
+
+  async function writeWithEntry(after: CharacterState, index: number, drawn: InventoryEntry) {
+    if (replace.writing) return false;
+    try {
+      await both.mutateAsync({
+        state: after,
+        edit: (latest) =>
+          editInventoryEntry(latest, index, drawn, (entry) =>
+            entry.quantity > 1 ? { ...entry, quantity: entry.quantity - 1 } : null,
+          ),
+      });
+    } catch {
+      return false;
+    }
+    return true;
+  }
+
+  function castText(choice: Choice, ended: boolean, spentName: string | undefined) {
     const parts = [castWords(spell.name, choice)];
     if (choice.concentrate) parts.push(`concentrating on ${spell.name}`);
     if (ended && held) parts.push(`${held} ended`);
-    const text = parts.join("; ");
-    if (after === stored) replace.announce(text);
-    else if (!(await replace.write(after, text))) return;
+    if (spentName) parts.push(`spent one ${spentName}`);
+    return parts.join("; ");
+  }
+
+  async function land(
+    after: CharacterState,
+    text: string,
+    paid: { index: number; drawn: InventoryEntry } | undefined,
+  ) {
+    if (paid) {
+      if (!(await writeWithEntry(after, paid.index, paid.drawn))) return false;
+      replace.announce(text);
+      return true;
+    }
+    if (after !== stored) return replace.write(after, text);
+    replace.announce(text);
+    return true;
+  }
+
+  async function cast(choice: Choice) {
+    if (!stored || !ref) return;
+    both.reset();
+    const { state: after, ended } = spellCast(derived, stored, { spell: ref, ...choice });
+    const { spendEntry: index } = choice;
+    const entry = index === undefined ? undefined : entryAt(index);
+    if (index !== undefined && !entry) return;
+    const text = castText(choice, ended !== null, entry?.name);
+    const paid = index !== undefined && entry ? { index, drawn: entry.drawn } : undefined;
+    if (!(await land(after, text, paid))) return;
     close();
     if (choice.roll) await announceRolls(choice, text);
   }
@@ -164,9 +231,10 @@ export function CastSpell({
           rolls={rolls}
           options={options}
           held={held}
-          consumed={waiveComponents ? undefined : consumedComponent(spell.components)}
+          consumed={consumed}
+          inventory={entries}
           busy={replace.writing}
-          error={replace.error?.message}
+          error={(both.error ?? replace.error)?.message}
           onCast={cast}
           onClose={close}
         />

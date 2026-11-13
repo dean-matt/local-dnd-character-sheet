@@ -15,7 +15,11 @@ type CastChoice = {
   spend: boolean;
   concentrate: boolean;
   roll: boolean;
+  /** The index of the inventory entry to spend, or undefined to spend none. */
+  spendEntry: number | undefined;
 };
+
+const NO_ENTRY = "none";
 
 const optionKey = (option: SpellCastOption) => `${option.via}:${option.level}`;
 
@@ -32,8 +36,9 @@ function optionLabel(option: SpellCastOption) {
  * The choices a cast takes before it is applied: the slot level, pact slot or ritual cast it
  * goes by, refusing a slot with none left while the spend is on; whether it spends that slot;
  * and, for a spell that needs concentration, whether it concentrates, naming the held spell it
- * ends; and, for a spell that makes an attack or deals damage, whether to roll them. A cantrip
- * offers no slot. The caller applies the choice and closes the dialog once it
+ * ends; and, for a spell that makes an attack or deals damage, whether to roll them. A cast
+ * that consumes a costly component asks which inventory entry pays for it, or to cast
+ * without one, before it can go. A cantrip offers no slot. The caller applies the choice and closes the dialog once it
  * lands.
  */
 export function CastDialog({
@@ -44,6 +49,7 @@ export function CastDialog({
   options,
   held,
   consumed,
+  inventory,
   busy,
   error,
   onCast,
@@ -59,6 +65,8 @@ export function CastDialog({
   held: string | undefined;
   /** The costly material component the cast uses up, where it uses one up. */
   consumed: { text: string; cost: string } | undefined;
+  /** The entries a consumed component can be spent from, by their index in the inventory. */
+  inventory: readonly { index: number; label: string }[];
   busy: boolean;
   error: string | undefined;
   onCast: (choice: CastChoice) => void;
@@ -68,18 +76,25 @@ export function CastDialog({
   const [spend, setSpend] = useState(true);
   const [concentrate, setConcentrate] = useState(concentration);
   const [roll, setRoll] = useState(true);
+  const [paidBy, setPaidBy] = useState("");
   const usable = (option: SpellCastOption) => !(spend && spendsSlot(option) && option.left === 0);
   const [picked, setPicked] = useState(() => {
     const first = options.find((option) => option.left !== 0);
     return first && optionKey(first);
   });
   const option = options.find((each) => optionKey(each) === picked);
-  const ready = option !== undefined && usable(option);
+  const ready = option !== undefined && usable(option) && !(consumed && paidBy === "");
   const cantrip = level === 0;
 
   function cast() {
     if (busy || !option || !ready) return;
-    onCast({ option, spend: spend && spendsSlot(option), concentrate, roll: rolls && roll });
+    onCast({
+      option,
+      spend: spend && spendsSlot(option),
+      concentrate,
+      roll: rolls && roll,
+      spendEntry: consumed && paidBy !== NO_ENTRY ? Number(paidBy) : undefined,
+    });
   }
 
   return (
@@ -154,9 +169,29 @@ export function CastDialog({
           <p className="text-muted text-row">Ends concentration on {held}.</p>
         )}
         {consumed && (
-          <p className="text-row">
-            Consumes {consumed.text} ({consumed.cost}).
-          </p>
+          <>
+            <p className="text-row">
+              Consumes {consumed.text} ({consumed.cost}).
+            </p>
+            <label className="flex flex-col gap-1 text-row">
+              Spend from the inventory
+              <select
+                value={paidBy}
+                onChange={(event) => setPaidBy(event.target.value)}
+                className="min-h-11 rounded-control border border-border bg-surface px-2"
+              >
+                <option value="" disabled>
+                  Choose…
+                </option>
+                <option value={NO_ENTRY}>Cast without spending one</option>
+                {inventory.map(({ index, label }) => (
+                  <option key={index} value={index}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
         )}
         {error && (
           <p role="alert" className="text-error text-row">

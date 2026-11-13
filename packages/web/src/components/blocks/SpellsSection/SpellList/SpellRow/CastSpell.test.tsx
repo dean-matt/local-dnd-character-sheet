@@ -1,9 +1,10 @@
 import type { SheetSpell } from "@dnd/catalog";
 import type { CharacterDerived, CharacterState, RollRecord } from "@dnd/character";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { derivedRecord, stateRecord } from "../../../../../test/records.ts";
-import { renderWithClient } from "../../../../../test/renderWithClient.tsx";
+import { characterKey } from "../../../../../hooks/characterKeys.ts";
+import { characterRecord, derivedRecord, stateRecord } from "../../../../../test/records.ts";
 import { CastSpell } from "./CastSpell.tsx";
 
 const computed = (value: number) => ({ computed: value, manual: null, terms: [] });
@@ -35,8 +36,38 @@ const spell = (name: string, level: number, more: Partial<Resolved> = {}): Resol
 
 let posted: RollRecord[] = [];
 let refuseRolls = false;
+let bothWrites: { definition: { inventory: { quantity: number }[] }; state: CharacterState }[] = [];
 
 const HEX = { name: "Hex", source: "XPHB" };
+
+function answerRoll(init: RequestInit) {
+  if (refuseRolls) return new Response("{}", { status: 500 });
+  const roll = JSON.parse(String(init.body)) as RollRecord;
+  posted.push(roll);
+  return Response.json(
+    {
+      ...roll,
+      id: posted.length,
+      characterId: "1",
+      characterName: "Ada",
+      rolledAt: "2026-01-01T00:00:00.000Z",
+    },
+    { status: 201 },
+  );
+}
+
+const inventoryAnswer = (held: { name: string; quantity: number }[]) =>
+  Response.json({
+    items: held.map(({ name, quantity }) => ({
+      resolved: false,
+      name,
+      source: "XPHB",
+      quantity,
+      carried: true,
+      equipped: false,
+      attuned: false,
+    })),
+  });
 
 /**
  * Renders the button over a stand-in API that keeps each state write and answers reads with it.
@@ -48,26 +79,35 @@ function renderCast(
   sheet: CharacterDerived = derived,
   refuse?: () => Promise<Response>,
   waiveComponents = false,
+  held: { name: string; quantity: number }[] = [],
 ) {
+  const inventory = held.map(({ name, quantity }) => ({
+    ref: { name, source: "XPHB" },
+    quantity,
+    carried: true,
+    equipped: false,
+    attuned: false,
+  }));
+  const base = characterRecord("1", "Ada");
+  const character = { ...base, definition: { ...base.definition, inventory } };
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-      if (init?.method === "POST") {
-        if (refuseRolls) return new Response("{}", { status: 500 });
-        const roll = JSON.parse(String(init.body)) as RollRecord;
-        posted.push(roll);
-        return Response.json(
-          {
-            ...roll,
-            id: posted.length,
-            characterId: "1",
-            characterName: "Ada",
-            rolledAt: "2026-01-01T00:00:00.000Z",
-          },
-          { status: 201 },
-        );
+      if (init?.method === "POST") return answerRoll(init);
+      const url = String(_input);
+      if (url.endsWith("/inventory")) return inventoryAnswer(held);
+      if (init?.method === "PUT" && url.endsWith("/definition-and-state")) {
+        if (refuse) return refuse();
+        const body = JSON.parse(String(init.body));
+        bothWrites.push(body);
+        writes.push(body.state);
+        stored = { ...stored, state: body.state };
+        return Response.json({
+          character: { ...character, definition: body.definition },
+          state: stored,
+        });
       }
       if (init?.method === "PUT") {
         if (refuse) return refuse();
@@ -78,7 +118,9 @@ function renderCast(
       return new Response(JSON.stringify(stored), { status: 200 });
     }),
   );
-  renderWithClient(
+  const client = new QueryClient();
+  client.setQueryData(characterKey("1"), character);
+  render(
     <CastSpell
       characterId="1"
       derived={sheet}
@@ -86,6 +128,11 @@ function renderCast(
       waiveComponents={waiveComponents}
       spell={cast}
     />,
+    {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
   );
   return writes;
 }
@@ -105,6 +152,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   posted = [];
   refuseRolls = false;
+  bothWrites = [];
 });
 
 describe("CastSpell", () => {
@@ -146,6 +194,97 @@ describe("CastSpell", () => {
     const dialog = await openDialog("Revivify");
 
     expect(dialog.queryByText(/Consumes/)).toBeNull();
+  });
+
+  describe("a consumed, costly component", () => {
+    const revivify = spell("Revivify", 3, {
+      components: {
+        v: true,
+        s: true,
+        m: { text: "a diamond worth 300+ GP", cost: 30000, consume: true },
+      },
+    });
+    const diamond = { name: "Diamond", quantity: 2 };
+
+    async function pick(held: { name: string; quantity: number }[], choice: string) {
+      const writes = renderCast(revivify, {}, derived, undefined, false, held);
+      const dialog = await openDialog("Revivify");
+      await waitFor(() => expect(dialog.getAllByRole("option").length).toBeGreaterThan(2));
+      if (choice) {
+        fireEvent.change(dialog.getByLabelText("Spend from the inventory"), {
+          target: { value: choice },
+        });
+      }
+      return { writes, dialog };
+    }
+
+    it("refuses the cast until the player picks an entry or casts without one", async () => {
+      const { dialog } = await pick([diamond], "");
+
+      expect(castButton(dialog)).toHaveAttribute("aria-disabled", "true");
+    });
+
+    it("spends one from the entry in the same write as the cast, announced", async () => {
+      const { writes, dialog } = await pick([diamond], "0");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          "Cast Revivify with a level 3 slot, 0 left; spent one Diamond",
+        ),
+      );
+      expect(bothWrites).toHaveLength(1);
+      expect(bothWrites[0]?.definition.inventory.map((entry) => entry.quantity)).toEqual([1]);
+      expect(writes[0]?.spellSlots).toEqual([{ level: 3, total: 1, expended: 1 }]);
+    });
+
+    it("removes an entry at quantity 1", async () => {
+      const { dialog } = await pick([{ name: "Diamond", quantity: 1 }], "0");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(bothWrites).toHaveLength(1));
+      expect(bothWrites[0]?.definition.inventory).toEqual([]);
+    });
+
+    it("casts without spending one, as a state write alone", async () => {
+      const { writes, dialog } = await pick([diamond], "none");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(bothWrites).toEqual([]);
+    });
+
+    it("keeps the dialog open and the inventory as it was on a failed write", async () => {
+      renderCast(
+        revivify,
+        {},
+        derived,
+        async () => Response.json({ error: "disk full" }, { status: 500 }),
+        false,
+        [diamond],
+      );
+      const dialog = await openDialog("Revivify");
+      await waitFor(() => expect(dialog.getAllByRole("option").length).toBeGreaterThan(2));
+      fireEvent.change(dialog.getByLabelText("Spend from the inventory"), {
+        target: { value: "0" },
+      });
+      fireEvent.click(castButton(dialog));
+
+      expect(await dialog.findByRole("alert")).toHaveTextContent(
+        "Revivify was not cast: disk full",
+      );
+      expect(bothWrites).toEqual([]);
+    });
+
+    it("offers no entry to spend where the house rule waives components", async () => {
+      renderCast(revivify, {}, derived, undefined, true, [diamond]);
+      const dialog = await openDialog("Revivify");
+
+      expect(dialog.queryByLabelText("Spend from the inventory")).toBeNull();
+      fireEvent.click(castButton(dialog));
+      await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Cast Revivify"));
+      expect(bothWrites).toEqual([]);
+    });
   });
 
   it("names no component for a spell that consumes none", async () => {

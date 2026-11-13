@@ -1,11 +1,11 @@
 import type { SheetItem } from "@dnd/catalog";
 import { ABILITY_LABEL, type Ability, type CharacterRecord, refKey } from "@dnd/character";
 import { z } from "zod";
+import type { InventoryEntry } from "../../../../lib/editInventoryEntry.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
 import { Field } from "../../../Field/Field.tsx";
 import { MultiSelect } from "../../../MultiSelect.tsx";
 import { RemovableChipList } from "../../../RemovableChipList.tsx";
-import type { InventoryEntry } from "./editInventoryEntry.ts";
 
 type ResolvedItem = Extract<SheetItem, { resolved: true }>;
 
