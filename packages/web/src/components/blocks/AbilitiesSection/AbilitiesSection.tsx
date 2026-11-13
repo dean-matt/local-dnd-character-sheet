@@ -59,7 +59,7 @@ export function AbilitiesSection({
       <CombatStats definition={definition} derived={derived} />
       <Encounter character={character} derived={derived} />
       <TurnEconomy characterId={character.id} />
-      <Actions definition={definition} />
+      <Actions character={character} />
       <Vitals character={character} derived={derived} />
       <Attacks character={character} derived={derived} />
       <Defenses character={character} derived={derived} />
