@@ -38,8 +38,8 @@ function optionLabel(option: SpellCastOption) {
  * and, for a spell that needs concentration, whether it concentrates, naming the held spell it
  * ends; and, for a spell that makes an attack or deals damage, whether to roll them. A cast
  * that consumes a costly component asks which inventory entry pays for it, or to cast
- * without one, before it can go. A cantrip offers no slot. The caller applies the choice and closes the dialog once it
- * lands.
+ * without one, before it can go. A cantrip offers no slot. The caller applies the choice and
+ * closes the dialog once it lands.
  */
 export function CastDialog({
   name,

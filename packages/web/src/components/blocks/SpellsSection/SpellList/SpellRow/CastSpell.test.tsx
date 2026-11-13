@@ -36,6 +36,7 @@ const spell = (name: string, level: number, more: Partial<Resolved> = {}): Resol
 
 let posted: RollRecord[] = [];
 let refuseRolls = false;
+let cache: QueryClient;
 let bothWrites: { definition: { inventory: { quantity: number }[] }; state: CharacterState }[] = [];
 
 const HEX = { name: "Hex", source: "XPHB" };
@@ -119,6 +120,7 @@ function renderCast(
     }),
   );
   const client = new QueryClient();
+  cache = client;
   client.setQueryData(characterKey("1"), character);
   render(
     <CastSpell
@@ -244,6 +246,20 @@ describe("CastSpell", () => {
 
       await waitFor(() => expect(bothWrites).toHaveLength(1));
       expect(bothWrites[0]?.definition.inventory).toEqual([]);
+    });
+
+    it("keeps the dialog open, naming the item, where the chosen entry is gone", async () => {
+      const { writes, dialog } = await pick([diamond], "0");
+      const key = characterKey("1");
+      const record = cache.getQueryData<{ definition: object }>(key);
+      cache.setQueryData(key, { ...record, definition: { ...record?.definition, inventory: [] } });
+      fireEvent.click(castButton(dialog));
+
+      expect(await dialog.findByRole("alert")).toHaveTextContent(
+        "that item is no longer in the inventory",
+      );
+      expect(writes).toEqual([]);
+      expect(bothWrites).toEqual([]);
     });
 
     it("casts without spending one, as a state write alone", async () => {

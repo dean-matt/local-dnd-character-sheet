@@ -59,9 +59,9 @@ const signed = (bonus: number) => (bonus < 0 ? `${bonus}` : `+${bonus}`);
 /**
  * The Cast button of a spell on the sheet and the dialog it opens. The cast's spend and
  * concentration land in one state write, so one undo reverses them; a consumed component
- * spent from the inventory joins that write, one request and one undo entry, and an entry at
- * quantity 1 is removed since a quantity is at least 1, and its outcome is
- * announced once it lands. A cast that changes nothing writes nothing and is announced alone.
+ * spent from the inventory joins that write, one request and one undo entry; an entry at
+ * quantity 1 is removed, since a quantity is at least 1. The outcome is announced once it
+ * lands. A cast that changes nothing writes nothing and is announced alone.
  * The dialog can add the spell's attack and damage rolls, made at the level it is cast at, or
  * at the character's level for a cantrip, and logged once the cast lands; a natural 20 on the
  * attack is announced as a critical hit.
@@ -81,6 +81,7 @@ export function CastSpell({
   spell: Extract<SheetSpell, { resolved: true }>;
 }) {
   const [open, setOpen] = useState(false);
+  const [gone, setGone] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const state = useCharacterState(characterId);
   const replace = useAnnouncedStateWrite(characterId);
@@ -199,10 +200,14 @@ export function CastSpell({
   async function cast(choice: Choice) {
     if (!stored || !ref) return;
     both.reset();
+    setGone(false);
     const { state: after, ended } = spellCast(derived, stored, { spell: ref, ...choice });
     const { spendEntry: index } = choice;
     const entry = index === undefined ? undefined : entryAt(index);
-    if (index !== undefined && !entry) return;
+    if (index !== undefined && !entry) {
+      setGone(true);
+      return;
+    }
     const text = castText(choice, ended !== null, entry?.name);
     const paid = index !== undefined && entry ? { index, drawn: entry.drawn } : undefined;
     if (!(await land(after, text, paid))) return;
@@ -234,7 +239,11 @@ export function CastSpell({
           consumed={consumed}
           inventory={entries}
           busy={replace.writing}
-          error={(both.error ?? replace.error)?.message}
+          error={
+            gone
+              ? "that item is no longer in the inventory"
+              : (both.error ?? replace.error)?.message
+          }
           onCast={cast}
           onClose={close}
         />
