@@ -18,6 +18,7 @@ import { useRef, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
+import { Actions } from "./Actions/Actions.tsx";
 import { AddHomebrewSkill } from "./AddHomebrewSkill.tsx";
 import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
@@ -58,6 +59,7 @@ export function AbilitiesSection({
       <CombatStats definition={definition} derived={derived} />
       <Encounter character={character} derived={derived} />
       <TurnEconomy characterId={character.id} />
+      <Actions definition={definition} />
       <Vitals character={character} derived={derived} />
       <Attacks character={character} derived={derived} />
       <Defenses character={character} derived={derived} />
