@@ -6,6 +6,22 @@ import { definition } from "./test/vex.ts";
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
 const MONK = { name: "Monk", source: "XPHB" };
 
+const ring = {
+  name: "Ring of Ki",
+  requiresAttunement: true,
+  ac: 0,
+  save: 0,
+  concentration: 0,
+  spellAttack: 0,
+  spellSaveDc: 0,
+  spellDamage: 0,
+  abilityCheck: 0,
+  proficiencyBonus: 0,
+  grantsProficiency: false,
+  grantsLanguage: false,
+  resourceBonus: { resource: "Focus Points", amount: 2, class: "Monk" },
+};
+
 const levels = (...classes: (typeof BARBARIAN)[]) => ({
   ...definition,
   levels: classes.map((ref) => ({ class: ref })),
@@ -45,21 +61,6 @@ describe("classResourcePools", () => {
   });
 
   it("adds an item's resource bonus to that class's pool only, naming the item", () => {
-    const ring = {
-      name: "Ring of Ki",
-      requiresAttunement: true,
-      ac: 0,
-      save: 0,
-      concentration: 0,
-      spellAttack: 0,
-      spellSaveDc: 0,
-      spellDamage: 0,
-      abilityCheck: 0,
-      proficiencyBonus: 0,
-      grantsProficiency: false,
-      grantsLanguage: false,
-      resourceBonus: { resource: "Focus Points", amount: 2, class: "Monk" },
-    };
     const cells: [typeof MONK, { key: string; value: string }[]][] = [
       [MONK, [{ key: "focus_points", value: "3" }]],
       [BARBARIAN, [{ key: "rages", value: "2" }]],
@@ -81,10 +82,14 @@ describe("classResourcePools", () => {
     expect(classResourcePools(levels(MONK), kiCatalog, [kiRing])[0]?.maximum?.computed).toBe(5);
   });
 
-  it("gives an Unlimited pool no maximum", () => {
-    expect(pools(levels(BARBARIAN), [[BARBARIAN, [{ key: "rages", value: "Unlimited" }]]])).toEqual(
-      [{ class: BARBARIAN, key: "rages", maximum: null }],
-    );
+  it("gives an Unlimited pool no maximum, whatever an item adds", () => {
+    const belt = { ...ring, resourceBonus: { resource: "Rages", amount: 1, class: "Barbarian" } };
+    const catalog = {
+      classResources: new Map([[entryKey(BARBARIAN), [{ key: "rages", value: "Unlimited" }]]]),
+    };
+    expect(classResourcePools(levels(BARBARIAN), catalog, [belt])).toEqual([
+      { class: BARBARIAN, key: "rages", maximum: null },
+    ]);
   });
 
   it("throws on a pool cell that is no count", () => {

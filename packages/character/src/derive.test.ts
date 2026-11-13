@@ -2257,6 +2257,40 @@ describe("deriveCharacter", () => {
         { class: BARBARIAN, key: "rages", maximum: { computed: 2, manual: 4, terms: [] } },
       ]);
     });
+
+    it("adds an item's resource bonus only while it is equipped, and attuned where it must be", () => {
+      const BELT = { name: "Belt of Rage", source: "HB" };
+      const withBelt = (flags: { equipped: boolean; attuned: boolean }) =>
+        deriveCharacter(
+          { ...barbarian, inventory: [{ ref: BELT, quantity: 1, carried: true, ...flags }] },
+          {
+            ...catalog,
+            hitDice: new Map([[entryKey(BARBARIAN), 12 as const]]),
+            weights: new Map([...catalog.weights, [entryKey(BELT), 0]]),
+            classResources: new Map([[entryKey(BARBARIAN), [{ key: "rages", value: "2" }]]]),
+            itemBonuses: new Map<string, ItemBonusTrait>([
+              [
+                entryKey(BELT),
+                {
+                  name: BELT.name,
+                  requiresAttunement: true,
+                  ac: 0,
+                  save: 0,
+                  concentration: 0,
+                  spellAttack: 0,
+                  spellSaveDc: 0,
+                  spellDamage: 0,
+                  ...noEffects,
+                  resourceBonus: { resource: "Rages", amount: 1, class: "Barbarian" },
+                },
+              ],
+            ]),
+          },
+        ).classResources[0]?.maximum?.computed;
+      expect(withBelt({ equipped: true, attuned: true })).toBe(3);
+      expect(withBelt({ equipped: true, attuned: false })).toBe(2);
+      expect(withBelt({ equipped: false, attuned: true })).toBe(2);
+    });
   });
 
   describe("spell slots", () => {

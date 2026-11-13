@@ -38,8 +38,10 @@ const resourceBonusSchema = z
   .catch(undefined);
 
 /** `fields` without the keys the row did not state. */
-const present = (fields: Record<string, unknown>) =>
-  Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
+const present = <T extends Record<string, unknown>>(fields: T) =>
+  Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
 
 const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
 
@@ -50,7 +52,8 @@ const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
  * every save, and `concentration` is `bonusSavingThrowConcentration`, added to concentration
  * saves alone. `stack` groups the item's bonuses with other equipped items naming the same
  * `group`: together they add at most `cap`. `resourceBonus` adds `amount` to the named
- * class resource's maximum, for a character with that class. `spellAttack`, `spellSaveDc` and `spellDamage` are the three `bonusSpell*` fields.
+ * class resource's maximum, for a character with that class. `spellAttack`, `spellSaveDc`
+ * and `spellDamage` are the three `bonusSpell*` fields.
  * `abilityCheck` is `bonusAbilityCheck`, `proficiencyBonus` is `bonusProficiencyBonus`, and
  * `critThreshold` is the lowest d20 result that scores a critical hit, absent for a row
  * that states none. `grantsProficiency` and `grantsLanguage` are upstream's flags: they
@@ -89,11 +92,9 @@ export const itemBonusSchema = z
       proficiencyBonus: row.bonusProficiencyBonus ?? 0,
       grantsProficiency: row.grantsProficiency === true,
       grantsLanguage: row.grantsLanguage === true,
-      ...present({
-        critThreshold: row.critThreshold,
-        speed: row.modifySpeed,
-        resourceBonus: row.resourceBonus,
-      }),
+      ...(row.critThreshold && { critThreshold: row.critThreshold }),
+      ...(row.modifySpeed && { speed: row.modifySpeed }),
+      ...present({ resourceBonus: row.resourceBonus }),
     };
     const none = Object.values(bonus).every((value) => value === 0 || value === false);
     return none || code === "P" ? undefined : { ...bonus, ...(row.stack && { stack: row.stack }) };
