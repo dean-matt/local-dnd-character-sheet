@@ -1,5 +1,16 @@
 import { expect, test } from "@playwright/test";
+import { derivedRecord } from "../packages/web/src/test/records.ts";
 import { box } from "./box.ts";
+import { createCharacter } from "./character.ts";
+
+const FIGHTER = { name: "Fighter", source: "XPHB" };
+const feature = (name: string, level: number) => ({
+  resolved: true,
+  name,
+  source: "XPHB",
+  level,
+  entries: ["Rules."],
+});
 
 test.beforeEach(({ page }) => page.setViewportSize({ width: 1280, height: 900 }));
 
@@ -7,32 +18,37 @@ test("the Actions card's items in a row share a vertical centre, with or without
   page,
   request,
 }) => {
-  const created = await request.post("/api/characters", {
-    data: {
-      name: `Actions Row ${test.info().retry}${Date.now()}`,
-      edition: "one",
-      levels: [
-        { class: { name: "Fighter", source: "XPHB" } },
-        { class: { name: "Fighter", source: "XPHB" } },
-      ],
-      race: { name: "Human", source: "XPHB" },
-      background: { name: "Soldier", source: "XPHB" },
-      abilityScores: { str: 16, dex: 14, con: 14, int: 10, wis: 12, cha: 8 },
-      proficiencies: {
-        savingThrows: [],
-        skills: [],
-        armor: [],
-        weapons: [],
-        tools: [],
-        languages: [],
-      },
-      inventory: [],
-      spells: [],
-    },
-  });
-  expect(created.ok()).toBe(true);
-  const id = (await created.json()).id as string;
+  const id = await createCharacter(request, `Actions Row ${test.info().retry}${Date.now()}`);
   try {
+    // CI runs with no content.db, so the features and the pool behind Second Wind are stubbed.
+    await page.route(`**/api/characters/${id}/features`, (route) =>
+      route.fulfill({
+        json: {
+          groups: [
+            {
+              origin: "class",
+              name: "Fighter",
+              class: FIGHTER,
+              features: [feature("Second Wind", 1), feature("Action Surge", 2)],
+            },
+          ],
+        },
+      }),
+    );
+    await page.route(`**/api/characters/${id}/derived`, (route) =>
+      route.fulfill({
+        json: {
+          ...derivedRecord(),
+          classResources: [
+            {
+              class: FIGHTER,
+              key: "second_wind",
+              maximum: { computed: 2, manual: null, terms: [] },
+            },
+          ],
+        },
+      }),
+    );
     await page.goto(`/characters/${id}`);
     const card = page.getByRole("region", { name: "Actions" });
     await expect(card.getByRole("button", { name: /^Use / }).first()).toBeVisible();
