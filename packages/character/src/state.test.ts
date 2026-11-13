@@ -52,6 +52,7 @@ describe("default state", () => {
       spentAmmunition: [],
       activeEffects: [],
       concentration: null,
+      encounter: null,
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
       inspiration: false,

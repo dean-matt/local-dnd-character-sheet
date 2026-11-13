@@ -3,6 +3,7 @@ import {
   concentrationCheck,
   concentrationEnded,
   concentrationLapsed,
+  concentrationRounds,
   concentrationStarted,
 } from "./index.ts";
 import { definition, state } from "./test/vex.ts";
@@ -22,6 +23,41 @@ describe("concentrationStarted", () => {
       state: { ...state, concentration: bless },
       ended: null,
     });
+  });
+});
+
+describe("concentration through an encounter", () => {
+  it("records the round it began in", () => {
+    const running = { ...state, encounter: { round: 3, initiative: null } };
+    expect(concentrationStarted(running, bless).state.concentration).toEqual({
+      ...bless,
+      round: 3,
+    });
+  });
+
+  it("counts the rounds since it began", () => {
+    const held = {
+      ...state,
+      concentration: { ...bless, round: 2 },
+      encounter: { round: 5, initiative: 12 },
+    };
+    expect(concentrationRounds(held)).toBe(3);
+  });
+
+  it("counts a spell held before the encounter from round 1", () => {
+    const held = { ...state, concentration: bless, encounter: { round: 4, initiative: null } };
+    expect(concentrationRounds(held)).toBe(3);
+  });
+
+  it("counts nothing without an encounter or a held spell", () => {
+    expect(concentrationRounds({ ...state, concentration: bless, encounter: null })).toBeNull();
+    expect(
+      concentrationRounds({
+        ...state,
+        concentration: null,
+        encounter: { round: 2, initiative: null },
+      }),
+    ).toBeNull();
   });
 });
 

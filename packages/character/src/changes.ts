@@ -429,11 +429,35 @@ const STATE_CHANGES: {
       () => "active",
     ),
   concentration: (before, after) =>
-    one("concentration", "Concentration", before.concentration, after.concentration, (held) =>
-      held
-        ? `${"homebrewId" in held.spell ? "a homebrew spell" : held.spell.name} at level ${held.level}`
-        : undefined,
+    one(
+      "concentration",
+      "Concentration",
+      before.concentration && {
+        spell: before.concentration.spell,
+        level: before.concentration.level,
+      },
+      after.concentration && { spell: after.concentration.spell, level: after.concentration.level },
+      (held) =>
+        held
+          ? `${"homebrewId" in held.spell ? "a homebrew spell" : held.spell.name} at level ${held.level}`
+          : undefined,
     ),
+  encounter: (before, after) => [
+    ...one(
+      "encounter",
+      "Encounter",
+      before.encounter && { round: before.encounter.round },
+      after.encounter && { round: after.encounter.round },
+      (held) => (held ? `round ${held.round}` : undefined),
+    ),
+    ...one(
+      "encounter.initiative",
+      "Initiative",
+      before.encounter?.initiative ?? null,
+      after.encounter?.initiative ?? null,
+      (rolled) => rolled ?? undefined,
+    ),
+  ],
   deathSaves: (before, after) => [
     ...one(
       "deathSaves.successes",

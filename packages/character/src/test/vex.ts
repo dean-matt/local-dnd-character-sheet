@@ -179,6 +179,7 @@ export const state: CharacterState = {
   spentAmmunition: [],
   activeEffects: [],
   concentration: { spell: { name: "Hex", source: "PHB" }, level: 2 },
+  encounter: null,
   deathSaves: { successes: 0, failures: 0 },
   exhaustion: 1,
   inspiration: false,
