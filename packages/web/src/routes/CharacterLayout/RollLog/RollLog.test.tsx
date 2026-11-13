@@ -46,6 +46,25 @@ describe("RollLog's row", () => {
     expect(without?.textContent).toBe(`Pit trap${time}Vex · 1d43`);
   });
 
+  it("lists an attack's mode and dice, a discarded one struck through, so the total can be checked", async () => {
+    const [row] = await listed([
+      {
+        ...roll(1, "1", "Vex"),
+        type: "attack",
+        notation: "1d20+5",
+        total: 19,
+        mode: "advantage",
+        modifier: 5,
+        dice: [
+          { faces: 20, value: 14, kept: true, sign: 1 },
+          { faces: 20, value: 3, kept: false, sign: 1 },
+        ],
+      },
+    ]);
+    expect(row).toHaveTextContent("advantage143 discarded+ 5");
+    expect(row?.querySelector('[title="d20, discarded"]')).toHaveClass("line-through");
+  });
+
   it("tags a roll with its type, and an untyped one with nothing", async () => {
     const [typed, hitDie, untyped] = await listed([
       { ...roll(3, "1", "Vex"), type: "spell-attack" },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RollEffectEntry } from "./characterDerived.ts";
-import { effectsOnRoll, netRollEffect } from "./rollEffects.ts";
+import { conditionAttackEffects, effectsOnRoll, netRollEffect } from "./rollEffects.ts";
 
 const effect = (rest: Omit<RollEffectEntry, "source">): RollEffectEntry => ({
   source: "Item",
@@ -72,5 +72,37 @@ describe("netRollEffect", () => {
       mode: "cancel",
       conditional: true,
     });
+  });
+});
+
+describe("conditionAttackEffects", () => {
+  const held = (...names: string[]) => ({
+    conditions: names.map((name) => ({ name })),
+    exhaustion: 0,
+  });
+
+  it("names each condition that bears on an attack roll, and none that does not", () => {
+    expect(conditionAttackEffects(held("Poisoned", "Invisible", "Charmed"), "one")).toEqual([
+      { source: "Invisible", mode: "advantage", roll: "attack" },
+      { source: "Poisoned", mode: "disadvantage", roll: "attack" },
+    ]);
+  });
+
+  it("keeps Frightened conditional on the source being in sight", () => {
+    expect(conditionAttackEffects(held("Frightened"), "one")).toEqual([
+      {
+        source: "Frightened",
+        mode: "disadvantage",
+        roll: "attack",
+        condition: "while the source of fear is in line of sight",
+      },
+    ]);
+  });
+
+  it("counts exhaustion from level 3, in the classic ruleset only", () => {
+    const tired = { conditions: [], exhaustion: 3 };
+    expect(conditionAttackEffects(tired, "classic")).toHaveLength(1);
+    expect(conditionAttackEffects(tired, "one")).toEqual([]);
+    expect(conditionAttackEffects({ ...tired, exhaustion: 2 }, "classic")).toEqual([]);
   });
 });

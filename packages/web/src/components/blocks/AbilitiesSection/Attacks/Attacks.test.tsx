@@ -1,7 +1,7 @@
 import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord, derivedRecord } from "../../../../test/records.ts";
+import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { stubFetchByUrl } from "../../../../test/stubFetch.ts";
 import { OnRolled, RollingFor } from "../../../rollerContext.ts";
@@ -249,10 +249,18 @@ describe("Attacks", () => {
       critical: false,
     };
 
-    function renderRolling(derived: CharacterDerived, status = 201) {
+    function renderRolling(
+      derived: CharacterDerived,
+      status = 201,
+      conditions: { name: string; source: string }[] = [],
+    ) {
       const onRolled = vi.fn();
       const posts: Record<string, unknown>[] = [];
-      stubFetchByUrl({ "/api/characters/1/inventory": { items: [{ name: "Longsword" }] } });
+      const play = stateRecord();
+      stubFetchByUrl({
+        "/api/characters/1/inventory": { items: [{ name: "Longsword" }] },
+        "/api/characters/1/state": { ...play, state: { ...play.state, conditions } },
+      });
       const base = globalThis.fetch;
       vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
         if (String(url) !== "/api/characters/1/rolls") return base(url, init);
@@ -281,6 +289,70 @@ describe("Attacks", () => {
         ["Longsword damage", "1d8-1", "damage", "Longsword"],
         ["Warlock spell attack", "1d20+5", "spell-attack", "Warlock"],
       ]);
+    });
+
+    const effects = (...list: CharacterDerived["rollEffects"]["computed"]) => ({
+      computed: list,
+      manual: null,
+      terms: [],
+    });
+
+    it("rolls two dice and records the mode and the discarded die when rolled with advantage", async () => {
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      const mode = await screen.findByRole("combobox", { name: "Longsword attack mode" });
+      expect(mode).toHaveValue("normal");
+      fireEvent.change(mode, { target: { value: "advantage" } });
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      const [post] = posts as { mode: string; dice: { kept: boolean }[] }[];
+      expect(post?.mode).toBe("advantage");
+      expect(post?.dice.map(({ kept }) => kept).sort()).toEqual([false, true]);
+      expect(await screen.findByText(/^Longsword attack with advantage: \d+$/)).toHaveAttribute(
+        "role",
+        "status",
+      );
+    });
+
+    it("starts on the net of what holds, and names every source, a conditional one too", async () => {
+      renderRolling({
+        ...derivedRecord(),
+        attacks: [attack(0, 5)],
+        rollEffects: effects(
+          { source: "Oathbow", mode: "advantage", roll: "attack" },
+          { source: "Ring", mode: "disadvantage", roll: "attack", condition: "in sunlight" },
+        ),
+      });
+      const mode = await screen.findByRole("combobox", { name: "Longsword attack mode" });
+      expect(mode).toHaveValue("advantage");
+      expect(mode).toHaveAccessibleDescription(
+        "Oathbow: advantage; Ring: disadvantage in sunlight",
+      );
+    });
+
+    it("offers a normal roll where advantage and disadvantage cancel", async () => {
+      renderRolling({
+        ...derivedRecord(),
+        attacks: [attack(0, 5)],
+        rollEffects: effects(
+          { source: "Oathbow", mode: "advantage", roll: "attack" },
+          { source: "Armor", mode: "disadvantage", roll: "attack" },
+        ),
+      });
+      expect(await screen.findByRole("combobox", { name: "Longsword attack mode" })).toHaveValue(
+        "normal",
+      );
+    });
+
+    it("starts a poisoned character's attack on disadvantage", async () => {
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] }, 201, [
+        { name: "Poisoned", source: "XPHB" },
+      ]);
+      const mode = await screen.findByRole("combobox", { name: "Longsword attack mode" });
+      await waitFor(() => expect(mode).toHaveValue("disadvantage"));
+      expect(mode).toHaveAccessibleDescription("Poisoned: disadvantage");
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(posts[0]?.mode).toBe("disadvantage"));
     });
 
     it("has no damage button on a weapon with no damage", async () => {

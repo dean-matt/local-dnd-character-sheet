@@ -199,6 +199,25 @@ export function RollLog({
                 </span>
                 <strong className="text-title">{roll.total}</strong>
               </span>
+              {(roll.type === "attack" || roll.type === "spell-attack") && (
+                <span className="flex flex-wrap items-baseline gap-1 text-muted text-row">
+                  {roll.mode && roll.mode !== "normal" && <span>{roll.mode}</span>}
+                  {roll.dice.map((die, index) => (
+                    <span
+                      // biome-ignore lint/suspicious/noArrayIndexKey: a roll's dice never reorder.
+                      key={index}
+                      className={die.kept ? "" : "line-through"}
+                      title={`d${die.faces}${die.kept ? "" : ", discarded"}`}
+                    >
+                      {die.value}
+                      {!die.kept && <span className="sr-only"> discarded</span>}
+                    </span>
+                  ))}
+                  {roll.modifier !== 0 && (
+                    <span>{roll.modifier < 0 ? `− ${-roll.modifier}` : `+ ${roll.modifier}`}</span>
+                  )}
+                </span>
+              )}
             </li>
           ))}
         </ol>

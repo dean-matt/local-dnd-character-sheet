@@ -49,3 +49,40 @@ export function netRollEffect(
     conditional: effects.some((effect) => effect.condition !== undefined),
   };
 }
+
+const ATTACK_CONDITIONS = [
+  { name: "Blinded", mode: "disadvantage" },
+  { name: "Invisible", mode: "advantage" },
+  { name: "Poisoned", mode: "disadvantage" },
+  { name: "Prone", mode: "disadvantage" },
+  { name: "Restrained", mode: "disadvantage" },
+  {
+    name: "Frightened",
+    mode: "disadvantage",
+    condition: "while the source of fear is in line of sight",
+  },
+] as const;
+
+/**
+ * The advantage and disadvantage the sheet's own conditions put on its attack rolls, in the
+ * shape a held item's effect takes. Exhaustion counts only in the classic ruleset, from level 3; the one ruleset's
+ * penalty is a flat number.
+ */
+export function conditionAttackEffects(
+  state: { conditions: readonly { name: string }[]; exhaustion: number },
+  edition: "classic" | "one",
+): RollEffectEntry[] {
+  const held = new Set(state.conditions.map(({ name }) => name));
+  const effects: RollEffectEntry[] = ATTACK_CONDITIONS.filter(({ name }) => held.has(name)).map(
+    (entry) => ({
+      source: entry.name,
+      mode: entry.mode,
+      roll: "attack",
+      ...("condition" in entry && { condition: entry.condition }),
+    }),
+  );
+  if (edition === "classic" && state.exhaustion >= 3) {
+    effects.push({ source: "Exhaustion", mode: "disadvantage", roll: "attack" });
+  }
+  return effects;
+}
