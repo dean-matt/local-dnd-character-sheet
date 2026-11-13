@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { castingTime, spellComponents, spellDuration, spellRange } from "./spellFacts.ts";
+import {
+  castingTime,
+  consumedComponent,
+  spellComponents,
+  spellDuration,
+  spellRange,
+} from "./spellFacts.ts";
 
 describe("castingTime", () => {
   it("names the unit, pluralized past one, and joins alternatives", () => {
@@ -49,6 +55,20 @@ describe("spellComponents", () => {
 
   it("prints nothing for a spell that needs none", () => {
     expect(spellComponents({})).toBeUndefined();
+  });
+});
+
+describe("consumedComponent", () => {
+  it("names a consumed component and its cost, and nothing else", () => {
+    const text = "a diamond worth 300+ GP, which the spell consumes";
+    expect(consumedComponent({ m: { text, cost: 30000, consume: true } })).toEqual({
+      text,
+      cost: "300 gp",
+    });
+    expect(consumedComponent({ m: { text, cost: 30000 } })).toBeUndefined();
+    expect(consumedComponent({ m: { text, cost: 30000, consume: "optional" } })).toBeUndefined();
+    expect(consumedComponent({ m: { text, consume: true } })).toBeUndefined();
+    expect(consumedComponent({ m: "a pinch of salt" })).toBeUndefined();
   });
 });
 

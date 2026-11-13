@@ -43,6 +43,7 @@ export function CastDialog({
   rolls,
   options,
   held,
+  consumed,
   busy,
   error,
   onCast,
@@ -56,6 +57,8 @@ export function CastDialog({
   options: readonly SpellCastOption[];
   /** The spell concentration is held on, or undefined where none is. */
   held: string | undefined;
+  /** The costly material component the cast uses up, where it uses one up. */
+  consumed: { text: string; cost: string } | undefined;
   busy: boolean;
   error: string | undefined;
   onCast: (choice: CastChoice) => void;
@@ -149,6 +152,11 @@ export function CastDialog({
         )}
         {concentration && concentrate && held && (
           <p className="text-muted text-row">Ends concentration on {held}.</p>
+        )}
+        {consumed && (
+          <p className="text-row">
+            Consumes {consumed.text} ({consumed.cost}).
+          </p>
         )}
         {error && (
           <p role="alert" className="text-error text-row">

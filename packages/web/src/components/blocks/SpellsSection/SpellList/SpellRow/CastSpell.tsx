@@ -15,6 +15,7 @@ import { useCharacterState } from "../../../../../hooks/useCharacterState.ts";
 import { useConcentrationName } from "../../../../../hooks/useConcentrationName.ts";
 import { useRollAndRecord } from "../../../../../hooks/useRollAndRecord.ts";
 import { TOGGLE_PILL } from "../../../../../lib/chipStyles.ts";
+import { consumedComponent } from "../../../../../lib/spellFacts.ts";
 import { Announcer } from "../../../../Announcer.tsx";
 import { CastDialog } from "./CastDialog.tsx";
 
@@ -160,6 +161,7 @@ export function CastSpell({
           rolls={rolls}
           options={options}
           held={held}
+          consumed={consumedComponent(spell.components)}
           busy={replace.writing}
           error={replace.error?.message}
           onCast={cast}

@@ -6,6 +6,7 @@
  * upstream spells it rather than failing.
  */
 import type { SheetSpell } from "@dnd/catalog";
+import { copperLabel } from "./coins.ts";
 
 type Resolved = Extract<SheetSpell, { resolved: true }>;
 
@@ -68,6 +69,13 @@ export function spellComponents(components: Resolved["components"]): string | un
         : `M (${typeof m === "string" ? m : m.text})`;
   const parts = [v && "V", s && "S", material, r && "R"].filter(Boolean);
   return parts.length === 0 ? undefined : parts.join(", ");
+}
+
+/** The material component a cast uses up, with its cost: undefined where it is not consumed or has no cost. */
+export function consumedComponent(components: Resolved["components"]) {
+  const m = components?.m;
+  if (typeof m !== "object" || m.consume !== true || !m.cost) return undefined;
+  return { text: m.text, cost: copperLabel(m.cost) };
 }
 
 const ENDS: Record<string, string> = {
