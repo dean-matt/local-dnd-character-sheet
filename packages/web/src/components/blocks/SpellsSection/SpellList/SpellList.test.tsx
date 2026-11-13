@@ -579,6 +579,81 @@ describe("SpellList", () => {
       expect(screen.getByRole("button", { name: "Filter Known Spells (2 active)" })).toBeVisible();
     });
 
+    describe("what can be cast now", () => {
+      const timed = (name: string, unit: string, extra: Partial<SheetSpell> = {}) =>
+        ({ ...spell(name, 1), time: [{ number: 1, unit }], ...extra }) as SheetSpell;
+      const NOW: CharacterSpells = {
+        spells: [
+          timed("Hex", "bonus", { prepared: true, concentration: true }),
+          timed("Shield", "reaction"),
+          timed("Find Familiar", "minute", { ritual: true, prepared: true }),
+          timed("Magic Missile", "action", { granted: true, prepared: true }),
+          timed("Misty Step", "bonus", { fromItem: "Ring", granted: true, prepared: true }),
+        ],
+      };
+      const tick = (name: string) => fireEvent.click(screen.getByRole("checkbox", { name }));
+
+      it("narrows to prepared spells, counting granted and item spells", async () => {
+        renderList(filtered(), NOW);
+        await screen.findByText("Hex");
+        open();
+        tick("Prepared");
+        expect(screen.queryByText("Shield")).toBeNull();
+        for (const name of ["Hex", "Find Familiar", "Magic Missile", "Misty Step"]) {
+          expect(screen.getByText(name)).toBeInTheDocument();
+        }
+      });
+
+      it("keeps every known spell for a class that knows rather than prepares", async () => {
+        const [warlock] = derivedRecord().spellcasting;
+        const { preparedSpells: _, ...knower } =
+          warlock as CharacterDerived["spellcasting"][number];
+        renderList(filtered(), NOW, { ...derivedRecord(), spellcasting: [knower] });
+        await screen.findByText("Hex");
+        open();
+        tick("Prepared");
+        for (const name of ["Hex", "Shield", "Find Familiar"]) {
+          expect(screen.getByText(name)).toBeInTheDocument();
+        }
+      });
+
+      it("narrows by casting time, with longer for anything past a reaction", async () => {
+        renderList(filtered(), NOW);
+        await screen.findByText("Hex");
+        open();
+        tick("Bonus action");
+        expect(screen.queryByText("Shield")).toBeNull();
+        expect(screen.getByText("Misty Step")).toBeInTheDocument();
+        tick("Reaction");
+        expect(screen.getByText("Shield")).toBeInTheDocument();
+        tick("Bonus action");
+        tick("Reaction");
+        tick("Longer");
+        expect(screen.getByText("Find Familiar")).toBeInTheDocument();
+        expect(screen.queryByText("Hex")).toBeNull();
+      });
+
+      it("narrows to concentration or ritual spells, combining with the rest and clearing on Reset", async () => {
+        renderList(filtered(), NOW);
+        await screen.findByText("Hex");
+        open();
+        tick("Ritual");
+        expect(screen.getByText("Find Familiar")).toBeInTheDocument();
+        expect(screen.queryByText("Hex")).toBeNull();
+        tick("Ritual");
+        tick("Concentration");
+        tick("Bonus action");
+        expect(screen.getByText("Hex")).toBeInTheDocument();
+        expect(screen.queryByText("Misty Step")).toBeNull();
+        expect(
+          screen.getByRole("button", { name: "Filter Known Spells (2 active)" }),
+        ).toBeVisible();
+        fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+        expect(screen.getByText("Shield")).toBeInTheDocument();
+        expect(screen.getByRole("checkbox", { name: "Concentration" })).not.toBeChecked();
+      });
+    });
+
     it("removes a chip by its ×, offers a picked school no more, and resets both facets", async () => {
       renderList(filtered(), FILTERED);
       await screen.findByText("Hex");
