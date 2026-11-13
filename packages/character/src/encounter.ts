@@ -1,4 +1,5 @@
 import { type CharacterState, MAX_ROUND } from "./state.ts";
+import { turnReset } from "./turn.ts";
 
 /**
  * The state holding `initiative`: an encounter already running keeps its round, and none
@@ -15,11 +16,11 @@ export const encounterStarted = (state: CharacterState): CharacterState => ({
   encounter: { round: 1, initiative: null },
 });
 
-/** The state one round on, or as given where no encounter runs or the last round is reached. */
+/** The state one round on with every turn mark available, or as given where no encounter runs or the last round is reached. */
 export function roundAdvanced(state: CharacterState): CharacterState {
   const { encounter } = state;
   if (!encounter || encounter.round >= MAX_ROUND) return state;
-  return { ...state, encounter: { ...encounter, round: encounter.round + 1 } };
+  return turnReset({ ...state, encounter: { ...encounter, round: encounter.round + 1 } });
 }
 
 /** The state with no encounter, and the round concentration began in forgotten with it. */

@@ -78,6 +78,23 @@ describe("Encounter", () => {
     ]);
   });
 
+  it("makes the spent turn marks available in the same write that advances the round", async () => {
+    const writes = renderEncounter({
+      encounter: { round: 2, initiative: null },
+      turn: { action: true, bonusAction: true, reaction: false, movement: true },
+    });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Next round" }));
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.body.state.turn).toEqual({
+      action: false,
+      bonusAction: false,
+      reaction: false,
+      movement: false,
+    });
+  });
+
   it("writes nothing past the last round", async () => {
     const writes = renderEncounter({ encounter: { round: 999, initiative: null } });
 

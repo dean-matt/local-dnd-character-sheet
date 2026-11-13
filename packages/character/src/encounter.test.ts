@@ -6,6 +6,7 @@ import {
   encounterStarted,
   initiativeRolled,
   roundAdvanced,
+  turnMarkToggled,
 } from "./index.ts";
 import { state } from "./test/vex.ts";
 
@@ -28,6 +29,13 @@ describe("encounter", () => {
     const last = { ...idle, encounter: { round: 999, initiative: null } };
     expect(roundAdvanced(last)).toBe(last);
     expect(roundAdvanced(idle)).toBe(idle);
+  });
+
+  it("makes every turn mark available when a round begins", () => {
+    const spent = turnMarkToggled(encounterStarted(idle), "action");
+    expect(roundAdvanced(spent).turn).toEqual(state.turn);
+    const last = { ...spent, encounter: { round: 999, initiative: null } };
+    expect(roundAdvanced(last).turn.action).toBe(true);
   });
 
   it("ends with nothing left, concentration's round included", () => {
