@@ -42,10 +42,12 @@ const bowAttack = (
 
 let posts: unknown[] = [];
 let writes: { definition: CharacterDefinition }[] = [];
+let failWrites = false;
 
 function renderBow(quantities: number[]) {
   posts = [];
   writes = [];
+  failWrites = false;
   const character = archer(quantities);
   const stacks = quantities.map((quantity, index) => ({ entry: index + 1, quantity }));
   vi.stubGlobal(
@@ -76,6 +78,7 @@ function renderBow(quantities: number[]) {
         );
       }
       if (init?.method !== "PUT") return Response.json({ refs: [] });
+      if (failWrites) return Response.json({ error: "down" }, { status: 500 });
       const body = JSON.parse(String(init?.body));
       writes.push(body);
       return Response.json({
@@ -152,5 +155,14 @@ describe("firing ammunition", () => {
     );
     expect(posts).toHaveLength(0);
     expect(writes).toHaveLength(0);
+  });
+
+  it("does not roll when the spend fails, and says the weapon was not fired", async () => {
+    renderBow([3]);
+    failWrites = true;
+    fire();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Shortbow was not fired");
+    expect(posts).toHaveLength(0);
   });
 });

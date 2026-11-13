@@ -118,7 +118,7 @@ export function Attacks({
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
   const [picked, setPicked] = useState<Record<number, number>>({});
-  const [refused, setRefused] = useState<Record<number, string>>({});
+  const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
     const ref = definition.inventory[entry]?.ref;
@@ -128,7 +128,7 @@ export function Attacks({
   /** Spends one piece before the attack roll; false, with the reason shown, where none is spent. */
   async function spend(attack: Attack, name: string) {
     const refuse = (message: string) => {
-      setRefused((now) => ({ ...now, [attack.entry]: message }));
+      setRefused((now) => ({ ...now, [attack.entry]: { message, left: leftIn(attack) } }));
       return false;
     };
     const from = spendFrom(attack, picked[attack.entry]);
@@ -207,7 +207,9 @@ export function Attacks({
                           picked: picked[attack.entry],
                           pick: (entry) => setPicked((now) => ({ ...now, [attack.entry]: entry })),
                         },
-                        refused[attack.entry],
+                        refused[attack.entry]?.left === leftIn(attack)
+                          ? refused[attack.entry]?.message
+                          : undefined,
                       )}
                     </>
                   }
