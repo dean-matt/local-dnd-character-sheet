@@ -286,7 +286,7 @@ export function spentAmmunitionOf(
   return state.spentAmmunition.find((spent) => spent.type === type);
 }
 
-/** The state with one more piece of `piece` recorded as fired, or one fewer where `change` is -1; a count at zero is not stored. */
+/** The state with one more piece of `piece` recorded as fired, or one fewer where `change` is -1; a count at zero is not stored, and recovering a piece not recorded throws. */
 export function withAmmunitionSpent(
   state: CharacterState,
   piece: Omit<SpentAmmunition, "count">,
@@ -294,6 +294,7 @@ export function withAmmunitionSpent(
 ): CharacterState {
   const key = spentAmmunitionKey(piece);
   const held = state.spentAmmunition.find((spent) => spentAmmunitionKey(spent) === key);
+  if (!held && change < 0) throw new Error("no such ammunition is recorded as fired");
   const count = (held?.count ?? 0) + change;
   const others = state.spentAmmunition.filter((spent) => spentAmmunitionKey(spent) !== key);
   return { ...state, spentAmmunition: count > 0 ? [...others, { ...piece, count }] : others };

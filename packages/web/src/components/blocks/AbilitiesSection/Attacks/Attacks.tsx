@@ -10,6 +10,7 @@ import {
   displayName,
   effectsOnRoll,
   entryKey,
+  itemKey,
   overrideKey,
   type SpentAmmunition,
   spentAmmunitionOf,
@@ -173,7 +174,7 @@ export function Attacks({
     return true;
   }
 
-  /** Returns one piece to the stack it would be spent from, or adds a loose one where the last was spent. */
+  /** Returns one piece to the stack holding that item, or adds a loose one where the last was spent. */
   async function recover(attack: Attack, piece: SpentAmmunition, stack: number | undefined) {
     if (replace.writing) return;
     const drawn = stack === undefined ? undefined : definition.inventory[stack];
@@ -187,6 +188,7 @@ export function Attacks({
               quantity: entry.quantity + 1,
             }));
           }
+          // The record keeps only the item, so a loose piece carries no override, id or container.
           const { ref, variant } = piece;
           return {
             ...latest,
@@ -208,7 +210,11 @@ export function Attacks({
     if (!attack.ammunition || !play.data) return undefined;
     const piece = spentAmmunitionOf(play.data.state, attack.ammunition.type);
     if (!piece) return undefined;
-    return () => recover(attack, piece, spendFrom(attack, picked[attack.entry])?.entry);
+    const held = attack.ammunition.stacks.find((stack) => {
+      const entry = definition.inventory[stack.entry];
+      return entry && itemKey(entry) === itemKey(piece);
+    });
+    return () => recover(attack, piece, held?.entry);
   }
 
   return (

@@ -356,6 +356,18 @@ describe("spent ammunition", () => {
     expect(spentAmmunitionOf(none, "arrow|phb")).toBeUndefined();
   });
 
+  it("refuses to recover a piece that is not recorded as fired", () => {
+    expect(() => withAmmunitionSpent(state, arrow, -1)).toThrow("no such ammunition");
+  });
+
+  it("keeps two items of one ammunition type apart", () => {
+    const variant = { ...arrow, ref: { name: "Arrow", source: "XGE" } };
+    const both = withAmmunitionSpent(withAmmunitionSpent(state, arrow, 1), variant, 1);
+    expect(withAmmunitionSpent(both, variant, -1).spentAmmunition).toEqual([
+      { ...arrow, count: 1 },
+    ]);
+  });
+
   it("parses a state stored before it with none spent", () => {
     const { spentAmmunition: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).spentAmmunition).toEqual([]);

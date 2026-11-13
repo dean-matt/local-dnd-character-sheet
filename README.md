@@ -127,6 +127,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/class-tables.md`](docs/class-tables.md) | Class resource tables, what the ETL takes from them, and resource counters |
 | [`docs/optional-features.md`](docs/optional-features.md) | Optional-feature counts per level, and how the three tables sum |
 | [`docs/items.md`](docs/items.md) | The four item arrays, magic variants, and attunement |
+| [`docs/item-ammunition.md`](docs/item-ammunition.md) | An item's range, the ammunition an attack lists, and the pieces fired and not yet recovered |
 | [`docs/item-skills.md`](docs/item-skills.md) | The skill proficiencies and expertise a homebrew item grants, and when they count |
 | [`docs/homebrew-skills.md`](docs/homebrew-skills.md) | How a character and an item cite a homebrew skill, and why a rename or delete is refused |
 | [`docs/homebrew-subclasses.md`](docs/homebrew-subclasses.md) | How a homebrew subclass names its class, takes its edition, and merges into a class's subclass list |
