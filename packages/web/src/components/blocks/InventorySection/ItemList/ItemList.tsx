@@ -29,6 +29,7 @@ import {
   type InventoryEntry,
   placeInventoryEntry,
 } from "./editInventoryEntry.ts";
+import { ItemCharges } from "./ItemCharges.tsx";
 import { ItemPicks } from "./ItemPicks.tsx";
 import { GROUP_FACETS, GROUPS, groupOf } from "./itemGroups.ts";
 import { PlaceField } from "./PlaceField.tsx";
@@ -207,6 +208,20 @@ export function ItemList({
                       quantity={item.quantity}
                       onSave={(quantity) => saveEntry(index, (entry) => ({ ...entry, quantity }))}
                     />
+                  }
+                  charges={
+                    item.charges && (
+                      <ItemCharges
+                        character={character}
+                        index={index}
+                        name={item.name}
+                        charges={item.charges}
+                        busy={busy}
+                        onMax={(chargesMax) =>
+                          saveEntry(index, (entry) => ({ ...entry, chargesMax }))
+                        }
+                      />
+                    )
                   }
                   placement={placementField(index, item.name)}
                   picks={picksFor(index, item)}

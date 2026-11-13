@@ -218,7 +218,7 @@ describe("useAddToCharacter", () => {
       "Noted: +1 Weapon (DMG) is a magic variant, held only beside a base item.",
     );
     expect(writes[0]?.inventory).toEqual([
-      { ref, quantity: 1, carried: true, equipped: false, attuned: false },
+      { ref, id: expect.any(String), quantity: 1, carried: true, equipped: false, attuned: false },
     ]);
   });
 

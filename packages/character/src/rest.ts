@@ -7,15 +7,18 @@ import type { Derived } from "./derivedField.ts";
 import { classResourceKey } from "./keys.ts";
 import { rageEnded } from "./rage.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
-import type { CharacterState } from "./state.ts";
+import { type CharacterState, itemChargesSpent } from "./state.ts";
 
 export type RestLength = "short" | "long";
 
-type Resting = Pick<CharacterDefinition, "edition" | "houseRules">;
+type Resting = Pick<CharacterDefinition, "edition" | "houseRules" | "inventory">;
 
 type Sheet = Pick<CharacterDerived, "hitDice" | "spellSlots" | "pactSlots" | "classResources">;
 
 type Slot = NonNullable<CharacterState["pactSlots"]>;
+
+/** An item's charges as the inventory endpoint lists them, and how many a long rest returns to it. */
+type ItemRecharge = { id: string; max: number; regained: number };
 
 /** A feature's limited uses as the features endpoint lists them: `short` uses return on any rest. */
 type FeatureReset = { key: string; reset: RestLength };
@@ -101,8 +104,10 @@ function longRestEnded(state: CharacterState): CharacterState {
  * where it is missing or out of bounds. Each class pool whose reset the rest meets has no
  * use spent; a 2024 pool with a partial recharge regains one use on a short rest, and the
  * others keep what was spent. Each feature in `features` whose reset the rest meets has no
- * use spent. Any rest ends a rage; a long rest also ends concentration and clears a reduction
- * to the hit point maximum that a long rest clears.
+ * use spent. A long rest returns `regained` charges to each of `itemRecharges`, never past
+ * what was spent. A rest drops the charges of an entry the inventory no longer lists. Any rest
+ * ends a rage; a long rest also ends concentration and clears a reduction to the hit point
+ * maximum that a long rest clears.
  */
 export function restedState(
   definition: Resting,
@@ -111,6 +116,7 @@ export function restedState(
   length: RestLength,
   picked?: readonly HitDie[],
   features: readonly FeatureReset[] = [],
+  itemRecharges: readonly ItemRecharge[] = [],
 ): CharacterState {
   const rested = rest(sheetState(derived, state), {
     length,
@@ -133,6 +139,14 @@ export function restedState(
         ? { ...pool, expended: Math.max(0, pool.expended - 1) }
         : pool;
     }),
+    itemCharges: rested.itemCharges
+      .filter(({ id }) => definition.inventory.some((entry) => entry.id === id))
+      .flatMap(({ id, expended }) => {
+        const recharge = length === "long" && itemRecharges.find((item) => item.id === id);
+        if (!recharge) return [{ id, expended }];
+        const left = itemChargesSpent(rested, id, recharge.max) - recharge.regained;
+        return left > 0 ? [{ id, expended: left }] : [];
+      }),
     featureUses: rested.featureUses.filter(
       (use) =>
         !features.some((feature) => feature.key === use.key && resets(feature.reset, length)),

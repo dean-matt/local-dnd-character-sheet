@@ -1,13 +1,19 @@
-import { benefitsFromLongRest, type CharacterRecord, type RestLength } from "@dnd/character";
+import {
+  benefitsFromLongRest,
+  type CharacterRecord,
+  itemChargesSpent,
+  type RestLength,
+} from "@dnd/character";
 import { FlameKindling } from "lucide-react";
 import { useId, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
 import { useCharacterFeatures } from "../../../hooks/useCharacterFeatures.ts";
+import { useCharacterInventory } from "../../../hooks/useCharacterInventory.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { RestDialog } from "./RestDialog.tsx";
 import { recoverySummary } from "./recoverySummary.ts";
-import { featureUses, LONG_REST_REFUSAL, restPreview } from "./restChanges.ts";
+import { chargedItems, featureUses, LONG_REST_REFUSAL, restPreview } from "./restChanges.ts";
 
 /**
  * The header's Rest button and the menu under it, whose items open the dialog for a short or
@@ -15,21 +21,32 @@ import { featureUses, LONG_REST_REFUSAL, restPreview } from "./restChanges.ts";
  * the dialog closes, and a rest applied or hit dice spends cancelled are announced, since the
  * dialog closes on them. The short rest's line names what it would recover, from the same
  * changes its dialog lists. The button waits on the sheet's derived block, state and features,
- * which the dialog reads, and names why where any failed to load. At 0 hit points the long
+ * and inventory, which the dialog reads, and names why where any failed to load. At 0 hit points the long
  * rest is unavailable, its line saying why.
  */
 export function RestMenu({ character }: { character: CharacterRecord }) {
   const derived = useCharacterDerived(character.id);
   const state = useCharacterState(character.id);
   const features = useCharacterFeatures(character.id);
+  const inventory = useCharacterInventory(character.id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [resting, setResting] = useState<RestLength>();
   const [applied, setApplied] = useState<string>();
   const button = useReturnFocus<HTMLButtonElement>(resting !== undefined);
   const menuId = useId();
   const uses = features.data && featureUses(features.data);
-  const ready = derived.data !== undefined && state.data !== undefined && uses !== undefined;
-  const failed = derived.error ?? state.error ?? features.error;
+  const items =
+    inventory.data &&
+    state.data &&
+    chargedItems(inventory.data).filter(
+      (item) => itemChargesSpent(state.data.state, item.id, item.max) > 0,
+    );
+  const ready =
+    derived.data !== undefined &&
+    state.data !== undefined &&
+    uses !== undefined &&
+    items !== undefined;
+  const failed = derived.error ?? state.error ?? features.error ?? inventory.error;
   const refused = state.data && !benefitsFromLongRest(state.data.state.hitPoints.current);
   const rests: { length: RestLength; title: string; description: string; blocked?: boolean }[] = [
     {
@@ -114,12 +131,13 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
           ))}
         </div>
       )}
-      {resting && derived.data && state.data && uses && (
+      {resting && derived.data && state.data && uses && items && (
         <RestDialog
           character={character}
           derived={derived.data}
           state={state.data.state}
           features={uses}
+          items={items}
           length={resting}
           onClose={(announcement) => {
             setResting(undefined);

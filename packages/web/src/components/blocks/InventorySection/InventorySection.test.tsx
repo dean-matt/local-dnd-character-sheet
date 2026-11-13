@@ -17,13 +17,22 @@ import { InventorySection } from "./InventorySection.tsx";
 
 const flags = { quantity: 1, carried: true, equipped: false, attuned: false };
 const offers = { abilities: null, proficiency: false, language: false };
-const plain = { type: null, value: null, estimate: null, weapon: null, armor: null, offers };
+const plain = {
+  type: null,
+  value: null,
+  estimate: null,
+  weapon: null,
+  armor: null,
+  offers,
+  charges: null,
+};
 
 const INVENTORY: CharacterInventory = {
   items: [
     {
       resolved: true,
       offers,
+      charges: null,
       name: "+1 Longsword",
       source: "DMG",
       ...flags,
@@ -93,6 +102,7 @@ const INVENTORY: CharacterInventory = {
     {
       resolved: true,
       offers,
+      charges: null,
       name: "Shield",
       source: "PHB",
       ...flags,
@@ -109,6 +119,7 @@ const INVENTORY: CharacterInventory = {
     {
       resolved: true,
       offers,
+      charges: null,
       name: "Chain Mail",
       source: "PHB",
       ...flags,

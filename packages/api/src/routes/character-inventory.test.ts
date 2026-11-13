@@ -26,6 +26,7 @@ const MIND_CARAPACE = { name: "Mind Carapace Armor", source: "VGM" };
 const MAP = { name: "Map of Nowhere", source: "DMG" };
 const DECK = { name: "Deck of Many Things", source: "DMG" };
 const TOME = { name: "Tome of Tongues", source: "DMG" };
+const WAND = { name: "Wand of Magic Missiles", source: "DMG" };
 
 const row = (
   ref: { name: string; source: string },
@@ -134,6 +135,7 @@ describe("characterInventoryRoutes", () => {
       row(MAP, "item", {}, { rarity: "varies" }),
       row(DECK, "item", { ability: { from: ["str", "dex"], count: 2, amount: 2 } }),
       row(TOME, "item", { grantsProficiency: true, grantsLanguage: true }),
+      row(WAND, "item", { charges: 7, recharge: "dawn", rechargeAmount: "{@dice 1d6 + 1}" }),
     ];
     publishDerivedFixture(dataDir, {
       items,
@@ -192,10 +194,33 @@ describe("characterInventoryRoutes", () => {
         weapon: null,
         armor: null,
         offers: { abilities: null, proficiency: false, language: false },
+        charges: null,
         entries: ["A +1 bonus to AC."],
       },
       expect.objectContaining({ name: "Longsword", weight: 3, attuned: false }),
     ]);
+  });
+
+  it("carries an item's printed charges, an override of the maximum and the entry's id", async () => {
+    store(
+      withInventory([
+        { ref: WAND, id: "first" },
+        { ref: WAND, chargesMax: 10 },
+        { ref: LONGSWORD },
+      ]),
+    );
+    const [first, second, sword] = await items();
+    expect(first).toMatchObject({
+      id: "first",
+      charges: {
+        max: 7,
+        printedMax: 7,
+        recharge: "dawn",
+        regains: { kind: "roll", notation: "1d6 + 1" },
+      },
+    });
+    expect(second).toMatchObject({ charges: { max: 10, printedMax: 7 } });
+    expect(sword).toMatchObject({ charges: null });
   });
 
   it("carries a weapon's and an armor's printed numbers, and names the item's type from its source", async () => {

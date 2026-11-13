@@ -4,7 +4,7 @@ import { Minus, Plus } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { Announcer } from "../../Announcer.tsx";
-import { PoolButton } from "./PoolButton.tsx";
+import { PoolButton } from "../../PoolButton.tsx";
 
 /** `short` is restored by either rest, so it reads as the shorter one. */
 const RESET: Record<LimitedUses["reset"], string> = { short: "Short rest", long: "Long rest" };

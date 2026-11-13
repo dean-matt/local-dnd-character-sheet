@@ -227,6 +227,12 @@ describe("describeStateChange", () => {
     ]);
   });
 
+  it("names an item's charges by what is spent", () => {
+    const spent: CharacterState = { ...state, itemCharges: [{ id: "wand", expended: 2 }] };
+    expect(stateChangePhrases(state, spent)).toEqual(["Item charges set to 2 spent"]);
+    expect(stateChangePhrases(spent, state)).toEqual(["Item charges cleared"]);
+  });
+
   it("names the spell concentrated on and its level, starting and ending", () => {
     const hex: CharacterState = {
       ...state,

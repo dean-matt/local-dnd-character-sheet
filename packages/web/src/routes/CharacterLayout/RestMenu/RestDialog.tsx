@@ -15,10 +15,12 @@ import { ChangeList } from "./ChangeList.tsx";
 import { HitDicePicks } from "./HitDicePicks.tsx";
 import { RestFooter } from "./RestFooter.tsx";
 import {
+  type ChargedItem,
   type DialogSpend,
   type FeatureUse,
   LONG_REST_REFUSAL,
   type RestChange,
+  rechargeOf,
   restPreview,
   spentState,
 } from "./restChanges.ts";
@@ -32,9 +34,9 @@ function appliedSummary(length: RestLength, changes: RestChange[]) {
   return `${TITLE[length]} applied. ${moved ? `${moved}.` : "Nothing changed."}`;
 }
 
-function unloggedSummary(unlogged: number, logged: number) {
-  if (logged === 0) return "The hit die rolls were not logged.";
-  return `${unlogged} of ${unlogged + logged} hit die rolls were not logged.`;
+function unloggedSummary(unlogged: number, logged: number, noun: string) {
+  if (logged === 0) return `The ${noun} were not logged.`;
+  return `${unlogged} of ${unlogged + logged} ${noun} were not logged.`;
 }
 
 function discardedSummary(length: RestLength, spent: number) {
@@ -52,7 +54,9 @@ function discardedSummary(length: RestLength, spent: number) {
  * tentative, so closing the dialog discards them and hands `onClose` a sentence saying so,
  * and confirm writes them with the rest, then logs each roll. A roll that fails to log keeps
  * the dialog open on the applied rest to say how many. A spend the state no longer allows,
- * after a change from elsewhere, is neither shown, written nor logged. A long rest at 0 hit
+ * after a change from elsewhere, is neither shown, written nor logged. A long rest rolls each
+ * of `items` whose recharge prints a roll as the dialog opens, lists what each returns, and
+ * logs the roll with the rest. A long rest at 0 hit
  * points, reached by a change from elsewhere while the dialog is open, is refused and says why.
  */
 export function RestDialog({
@@ -60,6 +64,7 @@ export function RestDialog({
   derived,
   state,
   features,
+  items,
   length,
   onClose,
   onApplied,
@@ -69,6 +74,8 @@ export function RestDialog({
   state: CharacterState;
   /** The features whose uses a rest restores where it meets their reset. */
   features: readonly FeatureUse[];
+  /** The items with spent charges whose recharge a long rest applies. */
+  items: readonly ChargedItem[];
   length: RestLength;
   /** Called on a close that writes nothing, with a sentence to announce where spends were discarded. */
   onClose: (announcement?: string) => void;
@@ -78,6 +85,7 @@ export function RestDialog({
   const { definition } = character;
   const replace = useReplaceCharacterState(character.id);
   const record = useRecordRoll(character.id);
+  const [recharges] = useState(() => (length === "long" ? items.map(rechargeOf) : []));
   const [spends, setSpends] = useState<DialogSpend[]>([]);
   const [committing, setCommitting] = useState(false);
   const busy = replace.writing || committing;
@@ -89,7 +97,7 @@ export function RestDialog({
   const refused = length === "long" && !benefitsFromLongRest(state.hitPoints.current);
   const ready = !refused && (!pick || picked !== undefined);
   const { after, changes } = ready
-    ? restPreview(definition, derived, state, features, length, picked, spends)
+    ? restPreview(definition, derived, state, features, length, picked, spends, recharges)
     : { after: undefined, changes: undefined };
 
   function close() {
@@ -107,13 +115,16 @@ export function RestDialog({
       setCommitting(false);
       return;
     }
-    const logged = spent.applied;
+    const logged = [
+      ...spent.applied.map((spend) => spend.roll),
+      ...recharges.flatMap((item) => item.roll ?? []),
+    ];
     // The landed state already holds the spends; kept, they would be counted twice.
     setSpends([]);
     let unlogged = 0;
     for (const spend of logged) {
       try {
-        await record.mutateAsync(spend.roll);
+        await record.mutateAsync(spend);
       } catch {
         unlogged += 1;
       }
@@ -121,7 +132,14 @@ export function RestDialog({
     const summary = appliedSummary(length, changes);
     if (unlogged === 0) return onApplied(summary);
     setCommitting(false);
-    setTaken({ summary, unlogged: unloggedSummary(unlogged, logged.length - unlogged) });
+    setTaken({
+      summary,
+      unlogged: unloggedSummary(
+        unlogged,
+        logged.length - unlogged,
+        recharges.some((item) => item.roll) ? "rolls" : "hit die rolls",
+      ),
+    });
   }
 
   return (

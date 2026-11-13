@@ -7,7 +7,7 @@ import type { CharacterDefinition, ContentRef, EntryRef } from "@dnd/character";
 
 type InventoryEntry = CharacterDefinition["inventory"][number];
 
-/** `definition` with one of the item at the end of its inventory, carried and unequipped. */
+/** `definition` with one of the item at the end of its inventory, carried and unequipped, with an `id` for its play state. */
 export const withItem = (
   definition: CharacterDefinition,
   entry: Pick<InventoryEntry, "ref" | "variant" | "variantOverride">,
@@ -15,7 +15,14 @@ export const withItem = (
   ...definition,
   inventory: [
     ...definition.inventory,
-    { ...entry, quantity: 1, carried: true, equipped: false, attuned: false },
+    {
+      ...entry,
+      id: crypto.randomUUID(),
+      quantity: 1,
+      carried: true,
+      equipped: false,
+      attuned: false,
+    },
   ],
 });
 

@@ -24,6 +24,7 @@ const plain = {
   weapon: null,
   armor: null,
   offers: { abilities: null, proficiency: false, language: false },
+  charges: null,
   entries: [],
 };
 
@@ -291,6 +292,7 @@ describe("ItemList", () => {
     expect(definition.inventory).toHaveLength(4);
     expect(definition.inventory[3]).toEqual({
       ref: { name: "Rope", source: "XPHB" },
+      id: expect.any(String),
       ...flags,
     });
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(1);
@@ -347,6 +349,7 @@ describe("ItemList", () => {
 
     expect((await written(fetchMock)).inventory[3]).toEqual({
       ref: { homebrewId: "hb-1" },
+      id: expect.any(String),
       ...flags,
     });
   });
@@ -759,6 +762,77 @@ describe("ItemList", () => {
     const cloak = screen.getByLabelText("Equipped, Cloak of Protection");
     expect(cloak).toHaveAttribute("aria-pressed", "false");
     expect(cloak.querySelector("svg")).toHaveClass("lucide-backpack");
+  });
+
+  describe("an item's charges", () => {
+    const wand = (): SheetItem[] => [
+      {
+        ...ITEMS[0],
+        name: "Wand of Wonder",
+        weapon: null,
+        charges: {
+          max: 7,
+          printedMax: 7,
+          recharge: "dawn",
+          regains: { kind: "roll", notation: "1d6 + 1" },
+        },
+      } as SheetItem,
+    ];
+    const stateWrites = (fetchMock: ReturnType<typeof stubApi>) =>
+      fetchMock.mock.calls
+        .filter(([url, init]) => url === "/api/characters/1/state" && init?.method === "PUT")
+        .map(([, init]) => JSON.parse(String(init?.body)));
+    const definitionWrites = (fetchMock: ReturnType<typeof stubApi>) =>
+      fetchMock.mock.calls.filter(
+        ([url, init]) => url === "/api/characters/1" && init?.method === "PUT",
+      );
+
+    it("shows what is left against the maximum and when the item recharges", async () => {
+      renderList(derivedRecord(), wand());
+      expect(await screen.findByText(/7 \/ 7 charges/)).toHaveTextContent("recharges at dawn");
+    });
+
+    it("spends a charge in one state write and announces it, then restores it", async () => {
+      const fetchMock = renderList(derivedRecord(), wand(), { firstEntry: { id: "wand" } });
+      fireEvent.click(await screen.findByLabelText("Spend a charge of Wand of Wonder"));
+
+      expect(await screen.findByText("Wand of Wonder: 6 of 7 charges left.")).toBeInTheDocument();
+      expect(stateWrites(fetchMock)).toEqual([
+        expect.objectContaining({ itemCharges: [{ id: "wand", expended: 1 }] }),
+      ]);
+      expect(definitionWrites(fetchMock)).toHaveLength(0);
+
+      fireEvent.click(screen.getByLabelText("Restore a charge of Wand of Wonder"));
+      await waitFor(() => expect(stateWrites(fetchMock)).toHaveLength(2));
+      expect(stateWrites(fetchMock)[1]?.itemCharges).toEqual([]);
+    });
+
+    it("gives an entry with no id one before its first charge is spent", async () => {
+      const fetchMock = renderList(derivedRecord(), wand());
+      fireEvent.click(await screen.findByLabelText("Spend a charge of Wand of Wonder"));
+
+      await waitFor(() => expect(stateWrites(fetchMock)).toHaveLength(1));
+      const id = JSON.parse(String(definitionWrites(fetchMock)[0]?.[1]?.body)).inventory[0].id;
+      expect(id).toEqual(expect.any(String));
+      expect(stateWrites(fetchMock)[0]?.itemCharges).toEqual([{ id, expended: 1 }]);
+    });
+
+    it("keeps a restore unavailable while nothing is spent", async () => {
+      renderList(derivedRecord(), wand());
+      expect(await screen.findByLabelText("Restore a charge of Wand of Wonder")).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      );
+    });
+
+    it("saves the table's own maximum on the entry, and clears it at the printed one", async () => {
+      const fetchMock = renderList(derivedRecord(), wand());
+      const max = await screen.findByLabelText("Wand of Wonder maximum charges");
+      fireEvent.change(max, { target: { value: "10" } });
+      fireEvent.blur(max);
+
+      expect((await written(fetchMock)).inventory[0].chargesMax).toBe(10);
+    });
   });
 
   describe("heavy armor equipped during a rage", () => {

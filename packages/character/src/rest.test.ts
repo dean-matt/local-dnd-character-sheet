@@ -51,7 +51,7 @@ const tired = () => ({
   ],
 });
 
-const classic = { edition: "classic" as const, houseRules: {} };
+const classic = { edition: "classic" as const, houseRules: {}, inventory: [] };
 
 describe("sheetState", () => {
   it("reads each shown pool's total from the derived block and caps what remains at it", () => {
@@ -253,7 +253,7 @@ describe("a rest ends a rage", () => {
   };
 
   it.each(["short", "long"] as const)("on a %s rest, and leaves any other effect", (length) => {
-    const definition = { edition: "one" as const, houseRules: {} };
+    const definition = { edition: "one" as const, houseRules: {}, inventory: [] };
     expect(restedState(definition, sheet, raging, length).activeEffects).toEqual([
       { name: "Bless" },
     ]);
@@ -267,7 +267,7 @@ describe("a rest and concentration", () => {
   };
 
   it("ends on a long rest and holds through a short one", () => {
-    const definition = { edition: "one" as const, houseRules: {} };
+    const definition = { edition: "one" as const, houseRules: {}, inventory: [] };
     expect(restedState(definition, sheet, concentrating, "long").concentration).toBeNull();
     expect(restedState(definition, sheet, concentrating, "short").concentration).toEqual(
       concentrating.concentration,
@@ -276,7 +276,7 @@ describe("a rest and concentration", () => {
 });
 
 describe("a rest and a reduction to the hit point maximum", () => {
-  const definition = { edition: "one" as const, houseRules: {} };
+  const definition = { edition: "one" as const, houseRules: {}, inventory: [] };
   const reduced = (clearsOnLongRest: boolean) => ({
     ...defaultCharacterState(),
     hitPointMaximumReduction: { amount: 5, clearsOnLongRest },
@@ -312,5 +312,56 @@ describe("a rest and a feature's limited uses", () => {
 
   it("restores only a short-rest feature's uses on a short rest", () => {
     expect(spent("short")).toEqual([{ key: features[1]?.key, expended: 1 }]);
+  });
+});
+
+describe("a rest and an item's charges", () => {
+  const listing = {
+    ...classic,
+    inventory: ["wand", "rod", "staff"].map((id) => ({
+      id,
+      ref: { name: id, source: "DMG" },
+      quantity: 1,
+      carried: true,
+      equipped: false,
+      attuned: false,
+    })),
+  };
+  const used = {
+    ...defaultCharacterState(),
+    itemCharges: [
+      { id: "wand", expended: 5 },
+      { id: "rod", expended: 2 },
+      { id: "staff", expended: 4 },
+    ],
+  };
+  const recharges = [
+    { id: "wand", max: 7, regained: 3 },
+    { id: "rod", max: 3, regained: 6 },
+  ];
+
+  it("returns the regained charges to each recharging item on a long rest, never past what was spent", () => {
+    expect(restedState(listing, sheet, used, "long", undefined, [], recharges).itemCharges).toEqual(
+      [
+        { id: "wand", expended: 2 },
+        { id: "staff", expended: 4 },
+      ],
+    );
+  });
+
+  it("restores nothing on a short rest", () => {
+    expect(
+      restedState(listing, sheet, used, "short", undefined, [], recharges).itemCharges,
+    ).toEqual(used.itemCharges);
+  });
+
+  it("drops the charges of an entry the inventory no longer lists, on either rest", () => {
+    const gone = { ...listing, inventory: listing.inventory.filter((entry) => entry.id !== "rod") };
+    for (const length of ["short", "long"] as const) {
+      expect(restedState(gone, sheet, used, length).itemCharges.map(({ id }) => id)).toEqual([
+        "wand",
+        "staff",
+      ]);
+    }
   });
 });

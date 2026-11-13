@@ -1,4 +1,4 @@
-import type { CharacterFeatures } from "@dnd/catalog";
+import type { CharacterFeatures, CharacterInventory } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
@@ -61,16 +61,38 @@ function storeElsewhere(state: Partial<CharacterState>) {
 
 /**
  * Renders the menu beside what the sheet reads, over a stand-in API that keeps what each state
- * write sends, so a rest lands on the sheet as it would. `features` answers the features
- * endpoint, or `failFeatures` fails it. `fail` answers every write with a 500, `failRolls` the
+ * write sends, so a rest lands on the sheet as it would. `features` and `inventory` answer their
+ * endpoints, or `failFeatures` fails the features one. `fail` answers every write with a 500, `failRolls` the
  * first that many roll logs; `hold` keeps each write in flight until it settles.
  */
+/** `characterRecord`'s Vex carrying a Wand of Wonder entry whose id is `wand`. */
+function heldWand(): CharacterRecord {
+  const base = characterRecord("1", "Vex") as CharacterRecord;
+  return {
+    ...base,
+    definition: {
+      ...base.definition,
+      inventory: [
+        {
+          ref: { name: "Wand of Wonder", source: "DMG" },
+          id: "wand",
+          quantity: 1,
+          carried: true,
+          equipped: false,
+          attuned: false,
+        },
+      ],
+    },
+  };
+}
+
 function renderLive(
   state: Partial<CharacterState>,
   {
     character = characterRecord("1", "Vex") as CharacterRecord,
     derivedBlock = derived(),
     features = { groups: [] } as CharacterFeatures,
+    inventory = { items: [] } as CharacterInventory,
     failFeatures = false,
     fail = false,
     failRolls = 0,
@@ -85,15 +107,18 @@ function renderLive(
     failFeatures
       ? new Response(JSON.stringify({ error: "Features not found" }), { status: 404 })
       : new Response(JSON.stringify(features), { status: 200 });
+  const readReply = (endpoint: string) => {
+    if (endpoint === "features") return featuresResponse();
+    const reads = { derived: derivedBlock, inventory } as Record<string, unknown>;
+    return endpoint in reads
+      ? new Response(JSON.stringify(reads[endpoint]), { status: 200 })
+      : undefined;
+  };
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      if (String(input).endsWith("/derived")) {
-        return new Response(JSON.stringify(derivedBlock), { status: 200 });
-      }
-      if (String(input).endsWith("/features")) {
-        return featuresResponse();
-      }
+      const read = readReply(String(input).split("/").at(-1) ?? "");
+      if (read) return read;
       if (init?.method === "POST" && String(input).endsWith("/rolls")) {
         if (rollsToFail > 0) {
           rollsToFail -= 1;
@@ -451,6 +476,86 @@ describe("RestMenu", () => {
       fireEvent.click(dialog.getByRole("button", { name: "Take the short rest" }));
       await waitFor(() => expect(writes).toHaveLength(1));
       expect(writes[0]?.featureUses).toEqual([{ key: RELENTLESS, expended: 1 }]);
+    });
+  });
+
+  describe("an item's charges", () => {
+    const wand = (regains: object, recharge: string | null = "dawn") =>
+      ({
+        items: [
+          {
+            resolved: true,
+            id: "wand",
+            name: "Wand of Wonder",
+            source: "DMG",
+            quantity: 1,
+            carried: true,
+            equipped: false,
+            attuned: false,
+            type: null,
+            rarity: null,
+            requiresAttunement: false,
+            weight: null,
+            value: null,
+            estimate: null,
+            weapon: null,
+            armor: null,
+            offers: { abilities: null, proficiency: false, language: false },
+            charges: { max: 7, printedMax: 7, recharge, regains },
+            entries: [],
+          },
+        ],
+      }) as CharacterInventory;
+    const used = { itemCharges: [{ id: "wand", expended: 5 }] };
+    const holder = heldWand();
+
+    it("rolls the printed recharge on a long rest, returns that many charges and logs the roll", async () => {
+      const writes = renderLive(used, {
+        character: holder,
+        inventory: wand({ kind: "roll", notation: "1d1 + 1" }),
+      });
+      const dialog = await open("Long rest");
+      expect(listed(dialog)).toEqual(["Wand of Wonder charges: 2/7 → 4/7"]);
+      fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.itemCharges).toEqual([{ id: "wand", expended: 3 }]);
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      expect(rolls[0]).toMatchObject({
+        type: "dice",
+        label: "Wand of Wonder recharge",
+        notation: "1d1+1",
+        total: 2,
+      });
+    });
+
+    it("returns every charge where the item prints no amount, and rolls nothing", async () => {
+      const writes = renderLive(used, { character: holder, inventory: wand({ kind: "all" }) });
+      const dialog = await open("Long rest");
+      fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.itemCharges).toEqual([]);
+      expect(rolls).toEqual([]);
+    });
+
+    it("keeps the spent charges of a special recharge on a long rest", async () => {
+      const writes = renderLive(used, {
+        character: holder,
+        inventory: wand({ kind: "all" }, "special"),
+      });
+      const dialog = await open("Long rest");
+      fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.itemCharges).toEqual(used.itemCharges);
+    });
+
+    it("leaves a special recharge and a short rest alone", async () => {
+      renderLive(used, { character: holder, inventory: wand({ kind: "all" }, "special") });
+      expect(listed(await open("Long rest"))).not.toContain("Wand of Wonder charges: 2/7 → 7/7");
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      await openMenu();
+      expect(screen.getByRole("button", { name: "Short rest" })).not.toHaveAccessibleDescription(
+        /Wand/,
+      );
     });
   });
 

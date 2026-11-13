@@ -6,9 +6,11 @@ import {
   featureUsesKey,
   featureUsesSpent,
   hitDicePoolSchema,
+  itemChargesSpent,
   resourceSchema,
   spellSlotSchema,
   withFeatureUse,
+  withItemChargesSpent,
 } from "./index.ts";
 import { state } from "./test/vex.ts";
 
@@ -44,6 +46,7 @@ describe("default state", () => {
       resources: [],
       classResources: [],
       featureUses: [],
+      itemCharges: [],
       activeEffects: [],
       concentration: null,
       deathSaves: { successes: 0, failures: 0 },
@@ -302,5 +305,39 @@ describe("concentration", () => {
   it("parses a state stored before it with none held", () => {
     const { concentration: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).concentration).toBeNull();
+  });
+});
+
+describe("item charges", () => {
+  const ids = new Set(["wand", "staff"]);
+
+  it("replaces one entry's spent charges and drops the counter of an entry no longer listed", () => {
+    const held = {
+      ...state,
+      itemCharges: [
+        { id: "gone", expended: 2 },
+        { id: "staff", expended: 1 },
+      ],
+    };
+    expect(withItemChargesSpent(held, ids, "wand", 3).itemCharges).toEqual([
+      { id: "staff", expended: 1 },
+      { id: "wand", expended: 3 },
+    ]);
+  });
+
+  it("stores nothing for an entry with no charges spent", () => {
+    const held = withItemChargesSpent(state, ids, "wand", 2);
+    expect(withItemChargesSpent(held, ids, "wand", 0).itemCharges).toEqual([]);
+  });
+
+  it("reads spent charges capped at the maximum, and none where state holds none", () => {
+    const held = withItemChargesSpent(state, ids, "wand", 5);
+    expect(itemChargesSpent(held, "wand", 3)).toBe(3);
+    expect(itemChargesSpent(held, "staff", 3)).toBe(0);
+  });
+
+  it("parses a state stored before them with none spent", () => {
+    const { itemCharges: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).itemCharges).toEqual([]);
   });
 });

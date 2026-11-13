@@ -213,9 +213,11 @@ export {
   featureUsesSpent,
   type HitPointMaximumReduction,
   hitDicePoolSchema,
+  itemChargesSpent,
   resourceSchema,
   spellSlotSchema,
   withFeatureUse,
+  withItemChargesSpent,
 } from "./state.ts";
 export {
   classLevelLabel,
