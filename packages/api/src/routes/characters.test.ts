@@ -13,7 +13,7 @@ import {
 import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { characters, undoLog } from "../db/characters.ts";
+import { characters, rollLog, undoLog } from "../db/characters.ts";
 import { openDatabases } from "../db/client.ts";
 import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
@@ -942,6 +942,76 @@ describe("the undo log", () => {
       expect(await readDefinition()).toEqual(baseDefinition());
       expect(await readState()).toEqual(defaultCharacterState());
       expect(await entries()).toEqual([]);
+    });
+
+    describe("with a roll", () => {
+      const roll = {
+        type: "attack",
+        label: "Longbow",
+        notation: "1d20+5",
+        total: 17,
+        dice: [{ faces: 20, value: 12, kept: true, sign: 1 }],
+        modifier: 5,
+        critical: false,
+      };
+      const rolls = () => opened.charactersDb.select().from(rollLog).all();
+
+      it("logs the roll in the write and undoes it with the entry, leaving other rolls", async () => {
+        opened.charactersDb
+          .insert(rollLog)
+          .values({ characterId: id, label: "Other", notation: "1d20", result: 3, detail: {} })
+          .run();
+        expect((await putBoth({ definition: edited, state, roll })).status).toBe(200);
+        expect(rolls().map((r) => r.label)).toEqual(["Other", "Longbow"]);
+        expect((await undo()).status).toBe(200);
+        expect(rolls().map((r) => r.label)).toEqual(["Other"]);
+        expect(await readState()).toEqual(defaultCharacterState());
+      });
+
+      it("deletes the roll when undoing back past its entry", async () => {
+        await put(withCha(18), own);
+        await putBoth({ definition: edited, state, roll });
+        const log = await entries();
+        await routes.request(`/characters/${id}/undo`, {
+          ...json({ to: log.at(-1)?.id, newest: log[0]?.id }),
+        });
+        expect(rolls()).toEqual([]);
+      });
+
+      it("logs no roll where the write fails", async () => {
+        expect((await putBoth({ definition: edited, state: {}, roll })).status).toBe(400);
+        expect(rolls()).toEqual([]);
+        expect(await entries()).toEqual([]);
+      });
+
+      it("logs no roll where the character changed since it was read", async () => {
+        await put(withCha(18));
+        const res = await routes.request(`/characters/${id}/definition-and-state`, {
+          ...json({ definition: edited, state, roll }),
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "If-Unmodified-Since": new Date(0).toUTCString(),
+          },
+        });
+        expect(res.status).toBe(412);
+        expect(rolls()).toEqual([]);
+      });
+
+      it("logs no roll over a stored definition its schema now refuses, as no entry could undo it", async () => {
+        opened.charactersDb
+          .update(characters)
+          .set({ definition: { name: "" } })
+          .run();
+        expect((await putBoth({ definition: edited, state, roll })).status).toBe(200);
+        expect(rolls()).toEqual([]);
+        expect(await entries()).toEqual([]);
+      });
+
+      it("logs nothing for a write without a roll", async () => {
+        await putBoth({ definition: edited, state });
+        expect(rolls()).toEqual([]);
+      });
     });
 
     it("counts toward the bound of 50", async () => {

@@ -7,7 +7,8 @@ Every decision the app stores, where it is written, and the way back from it. Pa
 Each play-state change reaches it through `hooks/useReplaceCharacterState.ts`, and
 `updateCharacterState` records the state it replaced there too. A change to both at once,
 `PUT /characters/{id}/definition-and-state` (`updateCharacterAndState`), records one entry of
-kind `both` holding the definition and the state it replaced. Casting a spell that spends a consumed
+kind `both` holding the definition and the state it replaced. A roll sent with it, such as an attack that spends ammunition, is logged in the same
+write and covered by the entry: undoing it deletes the roll from the roll log. Casting a spell that spends a consumed
 component from the inventory writes it through `hooks/useReplaceDefinitionAndState.ts`.
 
 ## What Undo reaches

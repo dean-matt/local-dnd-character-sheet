@@ -13,6 +13,7 @@ import {
   characterStateSchema,
   defaultCharacterState,
   PRESET_PAGES,
+  type RollRecord,
   refKey,
   totalLevel,
 } from "@dnd/character";
@@ -22,6 +23,7 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import type * as charactersSchema from "../characters.ts";
 import { characterPages, characterState, characters } from "../characters.ts";
 import { writePages } from "./pages.ts";
+import { insertRoll } from "./rolls.ts";
 import {
   deleteUndoEntriesFrom,
   deleteUndoEntry,
@@ -413,7 +415,9 @@ function writeState(db: CharactersWriter, characterId: string, state: CharacterS
 
 /**
  * Replaces the definition and the state in one transaction and records one undo entry holding
- * both, so a failure of either writes neither. Results as `updateCharacterDefinition`.
+ * both, so a failure of either writes neither. A `roll` is logged in the same write, and
+ * undoing the entry deletes it; a stored pair its schemas now refuse records no entry, so the
+ * roll is not logged either. Results as `updateCharacterDefinition`.
  */
 export function updateCharacterAndState(
   db: CharactersDb,
@@ -421,6 +425,7 @@ export function updateCharacterAndState(
   definition: CharacterDefinition,
   state: CharacterState,
   unmodifiedSince?: Date,
+  roll?: RollRecord,
 ) {
   return db.transaction((tx) => {
     const current = tx
@@ -440,12 +445,14 @@ export function updateCharacterAndState(
     const beforeDefinition = characterDefinitionSchema.safeParse(current.definition);
     const beforeState = characterStateSchema.safeParse(currentState.state);
     if (beforeDefinition.success && beforeState.success) {
+      const rollId = roll && insertRoll(tx, id, roll, now).id;
       recordBothChange(
         tx,
         id,
         { definition: beforeDefinition.data, state: beforeState.data },
         { definition, state },
         now,
+        rollId,
       );
     }
     const row = writeDefinition(tx, id, definition, now);
