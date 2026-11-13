@@ -34,6 +34,7 @@ const spell = (name: string, level: number, more: Partial<Resolved> = {}): Resol
 });
 
 let posted: RollRecord[] = [];
+let refuseRolls = false;
 
 const HEX = { name: "Hex", source: "XPHB" };
 
@@ -53,6 +54,7 @@ function renderCast(
     "fetch",
     vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       if (init?.method === "POST") {
+        if (refuseRolls) return new Response("{}", { status: 500 });
         const roll = JSON.parse(String(init.body)) as RollRecord;
         posted.push(roll);
         return Response.json(
@@ -93,6 +95,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   posted = [];
+  refuseRolls = false;
 });
 
 describe("CastSpell", () => {
@@ -341,6 +344,60 @@ describe("CastSpell", () => {
           "Cast Fire Bolt; attack 26, critical hit, damage 20",
         ),
       );
+    });
+
+    const twoCasters: CharacterDerived = {
+      ...withCaster,
+      spellcasting: [
+        ...withCaster.spellcasting,
+        {
+          class: { name: "Cleric", source: "XPHB" },
+          ability: "wis",
+          saveDc: computed(8),
+          attackBonus: computed(-1),
+        },
+      ],
+    };
+
+    it("rolls with the bonus of the class the spell came from, signed where negative", async () => {
+      renderCast({ ...fireBolt, origin: { name: "Cleric", source: "XPHB" } }, {}, twoCasters);
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(2));
+      expect(posted[0]).toMatchObject({ type: "spell-attack", notation: "1d20-1" });
+    });
+
+    it("falls back to the first casting class where the spell names none", async () => {
+      renderCast(fireBolt, {}, twoCasters);
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(2));
+      expect(posted[0]).toMatchObject({ notation: "1d20+6" });
+    });
+
+    it("announces a roll that fails to log as not logged", async () => {
+      refuseRolls = true;
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      renderCast(fireBolt, {}, withCaster);
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          "attack 7, not logged, damage 2, not logged",
+        ),
+      );
+    });
+
+    it("rolls no attack for a character with no spellcasting, damage alone where printed", async () => {
+      renderCast(fireBolt, {}, { ...derived, spellcasting: [] });
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(1));
+      expect(posted[0]).toMatchObject({ type: "spell-damage" });
     });
 
     it("rolls nothing where the roll is switched off", async () => {
