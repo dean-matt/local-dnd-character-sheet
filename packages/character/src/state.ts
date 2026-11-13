@@ -1,7 +1,7 @@
 import { HIT_DICE, RESET_TRIGGERS } from "@dnd/rules";
 import { z } from "zod";
-import { classResourceKey, isUnique } from "./keys.ts";
-import { contentRefSchema, entryRefSchema } from "./refs.ts";
+import { classResourceKey, isUnique, itemKey } from "./keys.ts";
+import { type ContentRef, contentRefSchema, type EntryRef, entryRefSchema } from "./refs.ts";
 
 const hitPointsSchema = z.strictObject({
   /**
@@ -75,6 +75,18 @@ const itemChargeSchema = z.strictObject({
 });
 
 /**
+ * Pieces of one kind of ammunition fired and not yet recovered. `type` is the ammunition uid
+ * the weapon fires, and `ref` and `variant` name the item the piece came from, so a recovery
+ * can add it back where no stack of it remains.
+ */
+const spentAmmunitionSchema = z.strictObject({
+  type: z.string().min(1),
+  ref: entryRefSchema,
+  variant: contentRefSchema.optional(),
+  count: z.int().min(1),
+});
+
+/**
  * Something in force until the user ends it, such as a rage. Keyed by `name`, so a second
  * effect needs no change to this shape; what an effect does is the rule that reads the name.
  */
@@ -106,6 +118,12 @@ const deathSavesSchema = z.strictObject({
 
 /** The catalog's spelling in both rulesets. The list matches the name alone, so no source can smuggle in a second one. */
 const EXHAUSTION = "Exhaustion";
+
+const spentAmmunitionKey = (spent: {
+  type: string;
+  ref: EntryRef;
+  variant?: ContentRef | undefined;
+}) => `${spent.type}|${itemKey(spent)}`;
 
 export const characterStateSchema = z.strictObject({
   hitPoints: hitPointsSchema,
@@ -162,6 +180,12 @@ export const characterStateSchema = z.strictObject({
       error: "the same item is listed twice",
     })
     .default([]),
+  spentAmmunition: z
+    .array(spentAmmunitionSchema)
+    .refine((spent) => isUnique(spent, spentAmmunitionKey), {
+      error: "the same ammunition is listed twice",
+    })
+    .default([]),
   activeEffects: z
     .array(activeEffectSchema)
     .refine((effects) => isUnique(effects, (effect) => effect.name), {
@@ -208,6 +232,8 @@ export function defaultCharacterState(): CharacterState {
 
 export type CharacterState = z.infer<typeof characterStateSchema>;
 
+export type SpentAmmunition = z.infer<typeof spentAmmunitionSchema>;
+
 export type Concentration = z.infer<typeof concentrationSchema>;
 
 export type HitPointMaximumReduction = z.infer<typeof hitPointMaximumReductionSchema>;
@@ -250,4 +276,25 @@ export function withItemChargesSpent(
 ): CharacterState {
   const others = state.itemCharges.filter((spent) => spent.id !== id && ids.has(spent.id));
   return { ...state, itemCharges: expended > 0 ? [...others, { id, expended }] : others };
+}
+
+/** The first piece fired of ammunition `type` and not yet recovered, or undefined where none is. */
+export function spentAmmunitionOf(
+  state: CharacterState,
+  type: string,
+): SpentAmmunition | undefined {
+  return state.spentAmmunition.find((spent) => spent.type === type);
+}
+
+/** The state with one more piece of `piece` recorded as fired, or one fewer where `change` is -1; a count at zero is not stored. */
+export function withAmmunitionSpent(
+  state: CharacterState,
+  piece: Omit<SpentAmmunition, "count">,
+  change: 1 | -1,
+): CharacterState {
+  const key = spentAmmunitionKey(piece);
+  const held = state.spentAmmunition.find((spent) => spentAmmunitionKey(spent) === key);
+  const count = (held?.count ?? 0) + change;
+  const others = state.spentAmmunition.filter((spent) => spentAmmunitionKey(spent) !== key);
+  return { ...state, spentAmmunition: count > 0 ? [...others, { ...piece, count }] : others };
 }

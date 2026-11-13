@@ -7,7 +7,7 @@ import { ABILITY_LABEL } from "@dnd/rules";
 import { z } from "zod";
 import { resourceLabel } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
-import { classResourceKey } from "./keys.ts";
+import { classResourceKey, itemKey } from "./keys.ts";
 import type { Ability, EntryRef } from "./refs.ts";
 import type { CharacterState } from "./state.ts";
 
@@ -409,6 +409,15 @@ const STATE_CHANGES: {
       (spent) => spent.id,
       () => "Item charges",
       (spent) => `${spent.expended} spent`,
+    ),
+  spentAmmunition: (before, after) =>
+    keyed(
+      "spentAmmunition",
+      before.spentAmmunition,
+      after.spentAmmunition,
+      (spent) => `${spent.type}|${itemKey(spent)}`,
+      () => "Ammunition",
+      (spent) => `${spent.count} spent`,
     ),
   activeEffects: (before, after) =>
     keyed(

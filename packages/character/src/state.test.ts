@@ -9,6 +9,8 @@ import {
   itemChargesSpent,
   resourceSchema,
   spellSlotSchema,
+  spentAmmunitionOf,
+  withAmmunitionSpent,
   withFeatureUse,
   withItemChargesSpent,
 } from "./index.ts";
@@ -47,6 +49,7 @@ describe("default state", () => {
       classResources: [],
       featureUses: [],
       itemCharges: [],
+      spentAmmunition: [],
       activeEffects: [],
       concentration: null,
       deathSaves: { successes: 0, failures: 0 },
@@ -339,5 +342,22 @@ describe("item charges", () => {
   it("parses a state stored before them with none spent", () => {
     const { itemCharges: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).itemCharges).toEqual([]);
+  });
+});
+
+describe("spent ammunition", () => {
+  const arrow = { type: "arrow|phb", ref: { name: "Arrow", source: "PHB" } };
+
+  it("counts each piece fired and drops the record once all are recovered", () => {
+    const two = withAmmunitionSpent(withAmmunitionSpent(state, arrow, 1), arrow, 1);
+    expect(spentAmmunitionOf(two, "arrow|phb")?.count).toBe(2);
+    const none = withAmmunitionSpent(withAmmunitionSpent(two, arrow, -1), arrow, -1);
+    expect(none.spentAmmunition).toEqual([]);
+    expect(spentAmmunitionOf(none, "arrow|phb")).toBeUndefined();
+  });
+
+  it("parses a state stored before it with none spent", () => {
+    const { spentAmmunition: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).spentAmmunition).toEqual([]);
   });
 });

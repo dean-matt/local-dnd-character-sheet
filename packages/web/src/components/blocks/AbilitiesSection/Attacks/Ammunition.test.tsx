@@ -1,6 +1,7 @@
 import {
   type CharacterDefinition,
   type CharacterDerived,
+  type CharacterState,
   characterDefinitionSchema,
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -41,14 +42,23 @@ const bowAttack = (
 });
 
 let posts: unknown[] = [];
-let writes: { definition: CharacterDefinition }[] = [];
+let writes: { definition: CharacterDefinition; state: CharacterState }[] = [];
 let failWrites = false;
 
-function renderBow(quantities: number[]) {
+function renderBow(quantities: number[], spent = 0) {
   posts = [];
   writes = [];
   failWrites = false;
   const character = archer(quantities);
+  let play = {
+    ...stateRecord(),
+    state: {
+      ...stateRecord().state,
+      spentAmmunition: spent
+        ? [{ type: "arrow|phb", ref: { name: "Arrow", source: "PHB" }, count: spent }]
+        : [],
+    },
+  };
   const stacks = quantities.map((quantity, index) => ({ entry: index + 1, quantity }));
   vi.stubGlobal(
     "fetch",
@@ -77,19 +87,21 @@ function renderBow(quantities: number[]) {
           { status: 201 },
         );
       }
+      if (url.endsWith("/state")) return Response.json(play);
       if (init?.method !== "PUT") return Response.json({ refs: [] });
       if (failWrites) return Response.json({ error: "down" }, { status: 500 });
       const body = JSON.parse(String(init?.body));
       writes.push(body);
+      play = { ...play, state: body.state };
       return Response.json({
         character: { ...character, definition: body.definition },
-        state: stateRecord(),
+        state: play,
       });
     }),
   );
   const client = new QueryClient();
   client.setQueryData(characterKey("1"), character);
-  client.setQueryData(characterStateKey("1"), stateRecord());
+  client.setQueryData(characterStateKey("1"), play);
   const tree = (loose: typeof stacks) => (
     <QueryClientProvider client={client}>
       <RollingFor value="1">
@@ -168,8 +180,15 @@ describe("firing ammunition", () => {
     expect(posts).toHaveLength(0);
   });
 
-  it("returns one recovered piece to the stack in one write, and announces it", async () => {
+  it("offers no recovery where nothing was spent", async () => {
     renderBow([3]);
+
+    await screen.findByRole("rowheader", { name: /Shortbow/ });
+    expect(screen.queryByRole("button", { name: "Recover one piece" })).toBeNull();
+  });
+
+  it("returns one recovered piece to the stack in one write, and announces it", async () => {
+    renderBow([3], 1);
     fireEvent.click(await screen.findByRole("button", { name: "Recover one piece" }));
 
     await waitFor(() => expect(writes).toHaveLength(1));
@@ -190,6 +209,36 @@ describe("firing ammunition", () => {
     expect(await screen.findByText("Recovered one Arrow, 1 left")).toBeInTheDocument();
   });
 
+  it("offers the control after a reload with no stack left, and adds one loose piece in one write", async () => {
+    renderBow([], 1);
+    fireEvent.click(await screen.findByRole("button", { name: "Recover one piece" }));
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.definition.inventory).toHaveLength(2);
+    expect(writes[0]?.definition.inventory[1]).toMatchObject({
+      ref: { name: "Arrow", source: "PHB" },
+      quantity: 1,
+    });
+    expect(await screen.findByText("Recovered one Arrow, 1 left")).toBeInTheDocument();
+  });
+
+  it("records the spend in the state and clears it on recovery, so the control goes", async () => {
+    const show = renderBow([1]);
+    fire();
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.state.spentAmmunition).toEqual([
+      { type: "arrow|phb", ref: { name: "Arrow", source: "PHB" }, count: 1 },
+    ]);
+    show([]);
+    fireEvent.click(await screen.findByRole("button", { name: "Recover one piece" }));
+
+    await waitFor(() => expect(writes).toHaveLength(2));
+    expect(writes[1]?.state.spentAmmunition).toEqual([]);
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Recover one piece" })).toBeNull(),
+    );
+  });
+
   it("offers no recovery for a piece whose spend failed", async () => {
     const show = renderBow([1]);
     failWrites = true;
@@ -201,7 +250,7 @@ describe("firing ammunition", () => {
   });
 
   it("says nothing was recovered when the write fails", async () => {
-    renderBow([3]);
+    renderBow([3], 1);
     failWrites = true;
     fireEvent.click(await screen.findByRole("button", { name: "Recover one piece" }));
 
