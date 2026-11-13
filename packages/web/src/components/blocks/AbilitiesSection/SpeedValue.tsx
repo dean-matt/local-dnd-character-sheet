@@ -105,7 +105,7 @@ export function SpeedValue({
             {terms.length > 0 && <TermList terms={terms} />}
             {save !== null &&
               MODES.map((mode) => (
-                <div key={mode} className="flex items-baseline justify-between gap-4">
+                <div key={mode} className="flex items-center justify-between gap-4">
                   <span aria-hidden="true" className="text-muted">
                     {capitalize(mode)}
                   </span>
