@@ -9,10 +9,10 @@ import { Minus, Plus } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useUpdateCharacterDefinition } from "../../../../hooks/useUpdateCharacterDefinition.ts";
+import { editInventoryEntry } from "../../../../lib/editInventoryEntry.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Field } from "../../../Field/Field.tsx";
 import { PoolButton } from "../../../PoolButton.tsx";
-import { editInventoryEntry } from "./editInventoryEntry.ts";
 import { rechargeLabel } from "./rechargeLabel.ts";
 
 const maxSchema = characterDefinitionSchema.shape.inventory.element.shape.chargesMax.unwrap();

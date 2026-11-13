@@ -2,9 +2,9 @@ import { armsGroupKinds, itemRecordSchema, type SearchHit } from "@dnd/catalog";
 import type { CharacterRecord, ContentRef } from "@dnd/character";
 import { useState } from "react";
 import { ApiError, apiGet } from "../../../../lib/api.ts";
+import type { InventoryEntry } from "../../../../lib/editInventoryEntry.ts";
 import { shownName } from "../../../../lib/shownName.ts";
 import { CatalogPicker } from "../../../CatalogPicker/CatalogPicker.tsx";
-import type { InventoryEntry } from "./editInventoryEntry.ts";
 
 interface PendingVariant {
   ref: ContentRef;

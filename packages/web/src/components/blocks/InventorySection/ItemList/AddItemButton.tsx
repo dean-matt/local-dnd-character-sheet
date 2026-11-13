@@ -2,12 +2,12 @@ import type { CharacterRecord } from "@dnd/character";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useReturnFocus } from "../../../../hooks/useReturnFocus.ts";
+import type { InventoryEntry } from "../../../../lib/editInventoryEntry.ts";
 import { FormField } from "../../../FormField.tsx";
 import { Modal } from "../../../Modal.tsx";
 import { ModalEntry } from "../../../ModalEntry.tsx";
 import { Select } from "../../../Select.tsx";
 import { AddItemField } from "./AddItemField.tsx";
-import type { InventoryEntry } from "./editInventoryEntry.ts";
 import { GROUP_KINDS, GROUPS, type Group } from "./itemGroups.ts";
 
 const ALL = "All items";

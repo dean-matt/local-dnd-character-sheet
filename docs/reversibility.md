@@ -7,7 +7,8 @@ Every decision the app stores, where it is written, and the way back from it. Pa
 Each play-state change reaches it through `hooks/useReplaceCharacterState.ts`, and
 `updateCharacterState` records the state it replaced there too. A change to both at once,
 `PUT /characters/{id}/definition-and-state` (`updateCharacterAndState`), records one entry of
-kind `both` holding the definition and the state it replaced. No hook calls it yet.
+kind `both` holding the definition and the state it replaced. Casting a spell that spends a consumed
+component from the inventory writes it through `hooks/useReplaceDefinitionAndState.ts`.
 
 ## What Undo reaches
 
@@ -92,7 +93,7 @@ newer ones, would need a merge of whole-definition snapshots, and nothing offers
 
 | Decision | Written in | Reversed by |
 |---|---|---|
-| Adding, removing, quantity, placing in a container | `components/blocks/InventorySection/ItemList/ItemList.tsx`, `editInventoryEntry.ts` | Undo, a direct edit |
+| Adding, removing, quantity, placing in a container | `components/blocks/InventorySection/ItemList/ItemList.tsx`, `lib/editInventoryEntry.ts` | Undo, a direct edit |
 | Equipped, attuned, grip | `ItemList/ResolvedItemRow/EquipToggle.tsx`, `AttuneToggle.tsx`, `GripToggle.tsx` | Undo, toggling back |
 | Coins | `components/blocks/InventorySection/CoinField.tsx` | Undo, a direct edit |
 | An item's ability, proficiency or language pick | `ItemList/ItemPicks.tsx`, beside the entry | Undo, a direct edit |

@@ -1,6 +1,6 @@
 import { characterDefinitionSchema } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { characterRecord } from "../../../../test/records.ts";
+import { characterRecord } from "../test/records.ts";
 import { editInventoryEntry, placeInventoryEntry } from "./editInventoryEntry.ts";
 
 const definition = characterDefinitionSchema.parse({
