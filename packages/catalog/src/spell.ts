@@ -188,6 +188,11 @@ const sheetSpellSchema = z.discriminatedUnion("resolved", [
       .array(z.strictObject({ level: z.int().min(1), dice: z.string().min(1) }))
       .min(1)
       .optional(),
+    /** A cantrip's beam count from each character level up, lowest first. */
+    beamTiers: z
+      .array(z.strictObject({ level: z.int().min(1), count: z.int().min(2) }))
+      .min(1)
+      .optional(),
     /** What each slot level above the spell's adds to `damageDice`. */
     damageUpcast: z.string().min(1).optional(),
     entries: entriesSchema,

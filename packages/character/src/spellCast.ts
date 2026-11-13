@@ -112,3 +112,12 @@ export function spellDamageDice(
   }
   return dice + `+${step}`.repeat(extra);
 }
+
+/** How many beams a cantrip makes at `characterLevel`, or undefined where it makes one. */
+export function spellBeams(
+  spell: { level: number; beamTiers?: readonly { level: number; count: number }[] },
+  characterLevel: number,
+): number | undefined {
+  if (spell.level !== 0) return undefined;
+  return spell.beamTiers?.findLast((each) => each.level <= characterLevel)?.count;
+}

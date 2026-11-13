@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { defaultCharacterState, spellCast, spellCastOptions, spellDamageDice } from "./index.ts";
+import {
+  defaultCharacterState,
+  spellBeams,
+  spellCast,
+  spellCastOptions,
+  spellDamageDice,
+} from "./index.ts";
 
 const total = (computed: number, manual: number | null = null) => ({ computed, manual, terms: [] });
 
@@ -111,6 +117,22 @@ describe("spellCast", () => {
     const option = { via: "slot" as const, level: 2, left: 0 };
     const cast = spellCast(sheet, state, { spell: BLESS, option, spend: false, concentrate: true });
     expect(cast.state).toEqual({ ...state, concentration: { spell: BLESS, level: 2 } });
+  });
+});
+
+describe("spellBeams", () => {
+  const blast = {
+    level: 0,
+    beamTiers: [
+      { level: 5, count: 2 },
+      { level: 11, count: 3 },
+    ],
+  };
+
+  it("counts the beams at the character's level", () => {
+    expect(spellBeams(blast, 4)).toBeUndefined();
+    expect(spellBeams(blast, 5)).toBe(2);
+    expect(spellBeams(blast, 20)).toBe(3);
   });
 });
 
