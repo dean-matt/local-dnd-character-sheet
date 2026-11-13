@@ -99,6 +99,34 @@ afterEach(() => {
 });
 
 describe("CastSpell", () => {
+  it("names a consumed, costly component and its cost before the cast", async () => {
+    renderCast(
+      spell("Revivify", 3, {
+        components: {
+          v: true,
+          s: true,
+          m: {
+            text: "a diamond worth 300+ GP, which the spell consumes",
+            cost: 30000,
+            consume: true,
+          },
+        },
+      }),
+    );
+    const dialog = await openDialog("Revivify");
+
+    expect(
+      dialog.getByText("Consumes a diamond worth 300+ GP, which the spell consumes (300 gp)."),
+    ).toBeInTheDocument();
+  });
+
+  it("names no component for a spell that consumes none", async () => {
+    renderCast(spell("Shatter", 2, { components: { v: true, m: "a chip of mica" } }));
+    const dialog = await openDialog("Shatter");
+
+    expect(dialog.queryByText(/Consumes/)).toBeNull();
+  });
+
   it("offers each slot level from the spell's own up, refusing one with none left", async () => {
     renderCast(spell("Shatter", 2), { spellSlots: [{ level: 2, total: 2, expended: 2 }] });
     const dialog = await openDialog("Shatter");

@@ -90,7 +90,17 @@ const spellComponentsSchema = z.looseObject({
   v: z.boolean().optional(),
   s: z.boolean().optional(),
   r: z.boolean().optional(),
-  m: z.union([z.string(), z.boolean(), z.looseObject({ text: z.string() })]).optional(),
+  m: z
+    .union([
+      z.string(),
+      z.boolean(),
+      z.looseObject({
+        text: z.string(),
+        cost: z.number().optional(),
+        consume: z.union([z.boolean(), z.literal("optional")]).optional(),
+      }),
+    ])
+    .optional(),
 });
 
 const spellDurationSchema = z.looseObject({
