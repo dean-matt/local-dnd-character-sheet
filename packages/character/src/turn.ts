@@ -18,3 +18,7 @@ export const turnReset = (state: CharacterState): CharacterState => ({
   ...state,
   turn: TURN_AVAILABLE,
 });
+
+/** The state with `mark` spent, however it stood. */
+export const turnMarkSpent = (state: CharacterState, mark: TurnMark): CharacterState =>
+  state.turn[mark] ? state : { ...state, turn: { ...state.turn, [mark]: true } };

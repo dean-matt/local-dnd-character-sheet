@@ -3,6 +3,7 @@ import {
   characterStateSchema,
   describeStateChange,
   TURN_MARKS,
+  turnMarkSpent,
   turnMarkToggled,
   turnReset,
 } from "./index.ts";
@@ -18,6 +19,12 @@ describe("turn marks", () => {
       movement: false,
     });
     expect(turnMarkToggled(spent, "reaction").turn).toEqual(state.turn);
+  });
+
+  it("spends a mark and leaves a spent one as it was", () => {
+    const spent = turnMarkSpent(state, "bonusAction");
+    expect(spent.turn.bonusAction).toBe(true);
+    expect(turnMarkSpent(spent, "bonusAction")).toBe(spent);
   });
 
   it("resets every mark", () => {
