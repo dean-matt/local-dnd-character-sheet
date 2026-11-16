@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { type Weapon, weaponAttack } from "./index.ts";
+import { isLight, type Weapon, weaponAttack } from "./index.ts";
 
 const LONGSWORD: Weapon = {
   kind: "melee",
@@ -26,7 +26,40 @@ const NIMBLE = {
   grip: "one-handed",
 } as const;
 
+describe("isLight", () => {
+  it("reads the property from either spelling, in either case", () => {
+    expect(isLight({ properties: ["F", "L|XPHB"] })).toBe(true);
+    expect(isLight({ properties: [{ uid: "l" }] })).toBe(true);
+    expect(isLight(LONGSWORD)).toBe(false);
+    expect(isLight({})).toBe(false);
+  });
+});
+
 describe("weaponAttack", () => {
+  it("leaves a positive ability modifier out of off-hand damage and says so", () => {
+    const attack = weaponAttack({ weapon: RAPIER, ...STRONG, offHand: true });
+    expect(attack.attack.total).toBe(7);
+    expect(attack.damage?.modifier.total).toBe(0);
+    expect(attack.damage?.modifier.terms).toEqual([{ label: "Off-hand", value: 0 }]);
+  });
+
+  it("keeps a negative ability modifier in off-hand damage", () => {
+    const weak = { ...STRONG, strengthModifier: -1 };
+    expect(weaponAttack({ weapon: JAVELIN, ...weak, offHand: true }).damage?.modifier.total).toBe(
+      -1,
+    );
+  });
+
+  it("keeps a magic weapon's damage bonus in off-hand damage", () => {
+    const attack = weaponAttack({
+      weapon: RAPIER,
+      ...STRONG,
+      damageBonus: { value: 1 },
+      offHand: true,
+    });
+    expect(attack.damage?.modifier.total).toBe(1);
+  });
+
   it("sums the ability modifier and the proficiency bonus", () => {
     expect(weaponAttack({ weapon: LONGSWORD, ...STRONG })).toMatchObject({
       ability: "str",

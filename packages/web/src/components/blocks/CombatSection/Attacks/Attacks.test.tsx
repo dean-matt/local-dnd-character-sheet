@@ -87,6 +87,37 @@ describe("Attacks", () => {
     ]);
   });
 
+  describe("the off-hand attack", () => {
+    const offHand: CharacterDerived["offHandAttack"] = {
+      ...attack(1, 2),
+      damage: {
+        dice: "1d4",
+        type: "piercing",
+        modifier: { computed: 0, manual: null, terms: [{ label: "Off-hand", value: 0 }] },
+      },
+    };
+
+    it("shows a bonus-action row for the second light weapon, without the positive modifier", async () => {
+      renderAttacks({
+        ...derivedRecord(),
+        attacks: [attack(0, 5), attack(1, 2)],
+        offHandAttack: offHand,
+      });
+
+      const row = (await screen.findByRole("rowheader", { name: /^Dagger \(off-hand\)/ })).closest(
+        "tr",
+      ) as HTMLElement;
+      expect(row).toHaveTextContent("Bonus action");
+      expect(row).toHaveTextContent("+21d4 piercing");
+    });
+
+    it("shows no row without one", async () => {
+      renderAttacks({ ...derivedRecord(), attacks: [attack(0, 5), attack(1, 2)] });
+      await screen.findByRole("rowheader", { name: "Longsword" });
+      expect(screen.queryByText(/off-hand/)).toBeNull();
+    });
+  });
+
   it("shows the lowered critical threshold beside the damage, and nothing at 20", async () => {
     const crits = { computed: 19, manual: null, terms: [] };
     renderAttacks({
@@ -377,6 +408,30 @@ describe("Attacks", () => {
       expect(posts.map((post) => [post.label, post.notation, post.type, post.origin])).toEqual([
         ["Unarmed Strike attack", "1d20+5", "attack", "Unarmed Strike"],
         ["Unarmed Strike damage", "1d1", "damage", "Unarmed Strike"],
+      ]);
+    });
+
+    it("rolls the off-hand attack and damage, each labelled and from its origin", async () => {
+      const offHandAttack: CharacterDerived["offHandAttack"] = {
+        ...attack(1, 2),
+        damage: {
+          dice: "1d4",
+          type: "piercing",
+          modifier: { computed: 0, manual: null, terms: [] },
+        },
+      };
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [attack(0, 5), attack(1, 2)],
+        offHandAttack,
+      });
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Dagger (off-hand) attack" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Dagger (off-hand) damage" }));
+
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts.map((post) => [post.label, post.type, post.origin])).toEqual([
+        ["Dagger (off-hand) attack", "attack", "Dagger (off-hand)"],
+        ["Dagger (off-hand) damage", "damage", "Dagger (off-hand)"],
       ]);
     });
 

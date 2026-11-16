@@ -11,6 +11,7 @@ import {
   carryingCapacity,
   encumbranceAt,
   type HitDie,
+  isLight,
   maxHitPoints,
   multiclassCasterLevel,
   multiclassSlots,
@@ -474,55 +475,90 @@ function derivedAttacks(
   rage: RageBenefits,
   modifiers: readonly Term<TermReference>[],
 ): CharacterDerived["attacks"] {
-  const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
-  const level = totalLevel(definition);
   return definition.inventory.flatMap((entry, index) => {
     const weapon = catalog.weapons.get(itemKey(entry));
     if (!entry.carried || weapon === undefined) return [];
-    const twoHandedBlocked = entry.equipped && shield;
-    const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
-    const { reference } = weapon.bonus;
-    const proficiency = weaponProficient(definition, weapon) ? "proficient" : "none";
-    const result = weaponAttack<TermReference>({
-      weapon,
-      strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
-      dexterityModifier: abilityModifier(scoreOf(definition, catalog, "dex")),
-      proficiency: proficiencyContribution(level, proficiency),
-      attackBonus: { value: weapon.bonus.attack, reference },
-      damageBonus: { value: weapon.bonus.damage, reference },
-      grip: held,
-    });
     return [
-      {
-        entry: index,
-        ability: result.ability,
-        attackBonus: fromBreakdown(
-          breakdown([
-            ...result.attack.terms,
-            ...(proficiency === "none" ? [{ label: "Not proficient", value: 0 }] : []),
-            ...proficiencyItemTerms(level, proficiency, bonuses),
-            ...modifiers,
-          ]),
-        ),
-        critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index))),
-        damage: result.damage
-          ? {
-              dice: result.damage.dice,
-              type: weapon.damageType,
-              modifier: fromBreakdown(
-                breakdown([
-                  ...result.damage.modifier.terms,
-                  ...rageDamageTerms(rage, definition.edition, weapon.kind, result.ability),
-                ]),
-              ),
-            }
-          : null,
-        grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
-        mastery: weaponMastery(definition, weapon),
-        ...rangedFacts(definition, catalog, weapon),
-      },
+      weaponStrike(definition, catalog, bonuses, rage, modifiers, { entry, index, weapon }, false),
     ];
   });
+}
+
+function weaponStrike(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  bonuses: readonly ItemBonusTrait[],
+  rage: RageBenefits,
+  modifiers: readonly Term<TermReference>[],
+  {
+    entry,
+    index,
+    weapon,
+  }: { entry: CharacterDefinition["inventory"][number]; index: number; weapon: WeaponTrait },
+  offHand: boolean,
+): CharacterDerived["attacks"][number] {
+  const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
+  const level = totalLevel(definition);
+  const twoHandedBlocked = entry.equipped && shield;
+  const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
+  const { reference } = weapon.bonus;
+  const proficiency = weaponProficient(definition, weapon) ? "proficient" : "none";
+  const result = weaponAttack<TermReference>({
+    weapon,
+    strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
+    dexterityModifier: abilityModifier(scoreOf(definition, catalog, "dex")),
+    proficiency: proficiencyContribution(level, proficiency),
+    attackBonus: { value: weapon.bonus.attack, reference },
+    damageBonus: { value: weapon.bonus.damage, reference },
+    grip: held,
+    offHand,
+  });
+  return {
+    entry: index,
+    ability: result.ability,
+    attackBonus: fromBreakdown(
+      breakdown([
+        ...result.attack.terms,
+        ...(proficiency === "none" ? [{ label: "Not proficient", value: 0 }] : []),
+        ...proficiencyItemTerms(level, proficiency, bonuses),
+        ...modifiers,
+      ]),
+    ),
+    critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index))),
+    damage: result.damage
+      ? {
+          dice: result.damage.dice,
+          type: weapon.damageType,
+          modifier: fromBreakdown(
+            breakdown([
+              ...result.damage.modifier.terms,
+              ...rageDamageTerms(rage, definition.edition, weapon.kind, result.ability),
+            ]),
+          ),
+        }
+      : null,
+    grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
+    mastery: weaponMastery(definition, weapon),
+    ...rangedFacts(definition, catalog, weapon),
+  };
+}
+
+/** The second equipped light melee weapon's bonus-action attack, null while fewer than two are equipped. */
+function derivedOffHandAttack(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  bonuses: readonly ItemBonusTrait[],
+  rage: RageBenefits,
+  modifiers: readonly Term<TermReference>[],
+): CharacterDerived["offHandAttack"] {
+  const [, second] = definition.inventory.flatMap((entry, index) => {
+    const weapon = catalog.weapons.get(itemKey(entry));
+    return entry.carried && entry.equipped && weapon?.kind === "melee" && isLight(weapon)
+      ? [{ entry, index, weapon }]
+      : [];
+  });
+  if (second === undefined) return null;
+  return weaponStrike(definition, catalog, bonuses, rage, modifiers, second, true);
 }
 
 /** The flat 1 an unarmed strike deals, as the one-faced die the roller needs to start a roll with. */
@@ -1131,6 +1167,13 @@ export function deriveCharacter(
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
     attacks: derivedAttacks(
+      definition,
+      catalog,
+      bonuses,
+      rage,
+      modifierTerms(state, onKind("attackRolls")),
+    ),
+    offHandAttack: derivedOffHandAttack(
       definition,
       catalog,
       bonuses,
