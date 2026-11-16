@@ -885,14 +885,14 @@ describe("AbilitiesSection", () => {
       await waitFor(() => expect(changes.at(-1)).toMatch(/^Stealth check: \d+$/));
     });
 
-    it("puts a row's roll button in the last column and an ability's in its tile corner", () => {
+    it("puts a row's roll button in the last column and an ability's under its tile's modifier", () => {
       renderRolling();
       const row = screen.getByRole("button", { name: "Roll Stealth check" }).closest("li");
       expect(row?.lastElementChild).toContainElement(
         screen.getByRole("button", { name: "Roll Stealth check" }),
       );
       const charisma = screen.getByRole("button", { name: "Roll Charisma check" });
-      expect(charisma.closest("dd")?.parentElement).toHaveClass("relative");
+      expect(charisma.closest("dd")?.lastElementChild).toContainElement(charisma);
       expect(
         charisma.closest("dd")?.closest("dl")?.querySelectorAll(":scope > div > :not(dt, dd)"),
       ).toHaveLength(0);
