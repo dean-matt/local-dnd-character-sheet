@@ -186,6 +186,7 @@ export const state: CharacterState = {
   deathSaves: { successes: 0, failures: 0 },
   exhaustion: 1,
   inspiration: false,
+  bardicInspiration: null,
 };
 
 export const withSkills = (skills: unknown) => ({

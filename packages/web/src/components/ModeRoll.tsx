@@ -1,5 +1,7 @@
 import { netRollEffect, type RollEffectEntry } from "@dnd/character";
 import { type ComponentProps, type ReactNode, useContext, useId, useState } from "react";
+import { useCharacterState } from "../hooks/useCharacterState.ts";
+import { useReplaceCharacterState } from "../hooks/useReplaceCharacterState.ts";
 import { parseExtraDie } from "../lib/extraDie.ts";
 import { ExtraDieInput } from "./ExtraDieInput.tsx";
 import { RollBonusButton } from "./RollBonusButton.tsx";
@@ -22,7 +24,8 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
 /**
  * A roll button with the mode it rolls in: the net of the advantage and disadvantage on it to
  * start, changed by the player, and a die the player names to add or subtract, such as +1d4 for
- * Bless or -1d4 for Bane. The sources of every effect, a conditional one included, are
+ * Bless or -1d4 for Bane. A held Bardic Inspiration die is offered as a checkbox; a roll that
+ * adds it clears it in one state write. The sources of every effect, a conditional one included, are
  * spoken with the control. `children` sit between the mode and the button.
  */
 export function ModeRoll({
@@ -41,6 +44,10 @@ export function ModeRoll({
   const extraError = useId();
   const start = offered(effects);
   const [extra, setExtra] = useState("");
+  const held = useCharacterState(characterId ?? "").data?.state.bardicInspiration ?? null;
+  const replace = useReplaceCharacterState(characterId ?? "");
+  const [inspired, setInspired] = useState(false);
+  const inspiration = inspired && held !== null ? held : undefined;
   const [chosen, setChosen] = useState<{ start: Mode; mode: Mode }>({ start, mode: start });
   const mode = chosen.start === start ? chosen.mode : start;
   if (characterId === null) return null;
@@ -77,7 +84,28 @@ export function ModeRoll({
       <span id={extraError} className="sr-only">
         {parseExtraDie(extra).error}
       </span>
-      <RollBonusButton {...roll} mode={mode} extra={extra} />
+      {held !== null && (
+        <label className="flex items-center gap-1 text-label">
+          <input
+            type="checkbox"
+            checked={inspired}
+            onChange={(event) => setInspired(event.target.checked)}
+          />
+          Bardic Inspiration d{held}
+        </label>
+      )}
+      <RollBonusButton
+        {...roll}
+        mode={mode}
+        extra={extra}
+        inspiration={inspiration}
+        onRolled={(hit) => {
+          roll.onRolled?.(hit);
+          if (inspiration === undefined) return;
+          setInspired(false);
+          replace.mutate((latest) => ({ ...latest, bardicInspiration: null }));
+        }}
+      />
     </span>
   );
 }
