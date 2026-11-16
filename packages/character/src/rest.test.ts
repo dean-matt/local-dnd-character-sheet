@@ -142,6 +142,12 @@ describe("restedState", () => {
     ]);
   });
 
+  it("keeps current hit points on a long rest under slow natural healing", () => {
+    const slow = { ...classic, houseRules: { slowNaturalHealing: true } };
+    expect(restedState(slow, sheet, tired(), "long", [10, 6, 6]).hitPoints.current).toBe(5);
+    expect(restedState(classic, sheet, tired(), "long", [10, 6, 6]).hitPoints.current).toBeNull();
+  });
+
   it("asks nothing under the house rule or in the 2024 rules", () => {
     const house = { ...classic, houseRules: { everyHitDieOnLongRest: true } };
     expect(longRestHitDicePick(house, sheet, tired())).toBeNull();

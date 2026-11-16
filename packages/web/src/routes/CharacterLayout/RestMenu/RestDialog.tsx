@@ -19,9 +19,11 @@ import {
   type DialogSpend,
   type FeatureUse,
   LONG_REST_REFUSAL,
+  offersHitDice,
   type RestChange,
   rechargeOf,
   restPreview,
+  spendBase,
   spentState,
 } from "./restChanges.ts";
 import { largestFirst, pickedDice } from "./restPicks.ts";
@@ -50,7 +52,8 @@ function discardedSummary(length: RestLength, spent: number) {
  * one write and hands `onApplied` what it changed; Cancel, Escape and a failed write write
  * nothing. The dialog stays open while the write is in flight, so its outcome is shown. Hit
  * dice are picked only where more than one size was spent; with one size, the most that
- * return come back. A short rest spends hit dice before it is taken: the spends are
+ * return come back. A short rest spends hit dice before it is taken, and a long rest under
+ * slow natural healing after the dice it returns: the spends are
  * tentative, so closing the dialog discards them and hands `onClose` a sentence saying so,
  * and confirm writes them with the rest, then logs each roll. A roll that fails to log keeps
  * the dialog open on the applied rest to say how many. A spend the state no longer allows,
@@ -93,9 +96,12 @@ export function RestDialog({
   const [typed, setTyped] = useState(() => (pick ? largestFirst(pick) : []));
   const picked = pick ? pickedDice(pick, typed) : undefined;
   const [taken, setTaken] = useState<{ summary: string; unlogged: string }>();
-  const spent = spentState(definition, derived, state, spends);
   const refused = length === "long" && !benefitsFromLongRest(state.hitPoints.current);
   const ready = !refused && (!pick || picked !== undefined);
+  const base = ready
+    ? spendBase(definition, derived, state, features, length, picked, recharges)
+    : state;
+  const spent = spentState(definition, derived, base, spends);
   const { after, changes } = ready
     ? restPreview(definition, derived, state, features, length, picked, spends, recharges)
     : { after: undefined, changes: undefined };
@@ -165,7 +171,7 @@ export function RestDialog({
             </p>
           </>
         )}
-        {taken === undefined && length === "short" && (
+        {taken === undefined && offersHitDice(definition, length) && (
           <SpendHitDice
             character={character}
             derived={derived}

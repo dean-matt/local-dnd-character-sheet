@@ -96,6 +96,12 @@ const houseRulesObject = z
      * roll keep their own rules.
      */
     naturalExtremes: z.boolean().optional(),
+    /**
+     * A long rest restores no hit points, as the DMG's slow natural healing variant has it:
+     * the character spends hit dice to heal, as on a short rest. Absent, a long rest restores
+     * every hit point, as both rulesets print. `rest` takes it as `slowHealing`.
+     */
+    slowNaturalHealing: z.boolean().optional(),
   })
   .prefault({});
 
@@ -131,6 +137,7 @@ export const PRINTED_RULE: Required<HouseRules> = {
   criticalHit: "double",
   flanking: "none",
   naturalExtremes: false,
+  slowNaturalHealing: false,
 };
 
 /**

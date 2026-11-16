@@ -50,6 +50,8 @@ type RestOptions = {
   edition: Edition;
   /** True: a classic long rest returns every spent die, as a 2024 one does. */
   everyHitDie: boolean;
+  /** True: a long rest leaves current hit points as they are, so hit dice are the way back. */
+  slowHealing?: boolean;
   /**
    * The die sizes the player chose to recover, one entry per die. Read only where a classic
    * long rest returns fewer dice than were spent.
@@ -133,7 +135,7 @@ function recovered(pools: readonly Pool[], options: RestOptions): Pool[] {
  * The state after a rest. A short rest resets pact slots and short-rest resources and
  * returns no hit dice, since spending them is a choice made apart from the rest. A long
  * rest restores everything a short one does, writes hit points back as null so they read
- * as the maximum, clears temporary hit points and expended slots, lowers exhaustion by 1
+ * as the maximum, unless `slowHealing` keeps them, clears temporary hit points and expended slots, lowers exhaustion by 1
  * and returns hit dice by `hitDiceRecovered`.
  *
  * Throws a RangeError, returning nothing, on a long rest at 0 hit points, when `picked` is missing where it is needed, picks
@@ -155,7 +157,7 @@ export function rest<S extends RestState>(state: S, options: RestOptions): S {
   }
   return {
     ...state,
-    hitPoints: { current: null, temporary: 0 },
+    hitPoints: { current: options.slowHealing ? state.hitPoints.current : null, temporary: 0 },
     hitDice: recovered(state.hitDice, options),
     spellSlots: state.spellSlots.map((slot) => ({ ...slot, expended: 0 })),
     pactSlots,
