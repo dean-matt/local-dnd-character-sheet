@@ -24,9 +24,11 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
 /**
  * A roll button with the mode it rolls in: the net of the advantage and disadvantage on it to
  * start, changed by the player, and a die the player names to add or subtract, such as +1d4 for
- * Bless or -1d4 for Bane. A held Bardic Inspiration die is offered as a checkbox; a roll that
- * adds it clears it in one state write. The sources of every effect, a conditional one included, are
- * spoken with the control. `children` sit between the mode and the button.
+ * Bless or -1d4 for Bane.
+ * A held Bardic Inspiration die is offered as a checkbox, unticked again when the held die
+ * changes. A logged roll that adds it clears it in one state write.
+ * The sources of every effect, a conditional one included, are spoken with the control.
+ * `children` sit between the mode and the button.
  */
 export function ModeRoll({
   effects = [],
@@ -47,6 +49,11 @@ export function ModeRoll({
   const held = useCharacterState(characterId ?? "").data?.state.bardicInspiration ?? null;
   const replace = useReplaceCharacterState(characterId ?? "");
   const [inspired, setInspired] = useState(false);
+  const [seen, setSeen] = useState(held);
+  if (seen !== held) {
+    setSeen(held);
+    setInspired(false);
+  }
   const inspiration = inspired && held !== null ? held : undefined;
   const [chosen, setChosen] = useState<{ start: Mode; mode: Mode }>({ start, mode: start });
   const mode = chosen.start === start ? chosen.mode : start;
@@ -99,9 +106,9 @@ export function ModeRoll({
         mode={mode}
         extra={extra}
         inspiration={inspiration}
-        onRolled={(hit) => {
-          roll.onRolled?.(hit);
-          if (inspiration === undefined) return;
+        onRolled={(hit, logged) => {
+          roll.onRolled?.(hit, logged);
+          if (inspiration === undefined || !logged) return;
           setInspired(false);
           replace.mutate((latest) => ({ ...latest, bardicInspiration: null }));
         }}

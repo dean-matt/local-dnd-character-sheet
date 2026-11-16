@@ -878,6 +878,33 @@ describe("AbilitiesSection", () => {
       );
     });
 
+    it("unticks the offer on every row when the held die changes, so a die recorded later is not added unasked", async () => {
+      const { posts } = renderRolling(201, warlock(), undefined, 8);
+      const [first, second] = await screen.findAllByRole("checkbox", {
+        name: "Bardic Inspiration d8",
+      });
+      fireEvent.click(first as HTMLElement);
+      fireEvent.click(second as HTMLElement);
+      expect(first).toBeChecked();
+      fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[1] as HTMLElement);
+      await waitFor(() => expect(posts).toHaveLength(1));
+      await waitFor(() =>
+        expect(screen.queryByRole("checkbox", { name: "Bardic Inspiration d8" })).toBeNull(),
+      );
+      expect(posts[0]?.notation).toContain("1d8");
+    });
+
+    it("keeps the held die when the roll could not be logged", async () => {
+      const { posts, stateWrites } = renderRolling(500, warlock(), undefined, 8);
+      const [offer] = await screen.findAllByRole("checkbox", { name: "Bardic Inspiration d8" });
+      fireEvent.click(offer as HTMLElement);
+      fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[0] as HTMLElement);
+      await waitFor(() => expect(posts).toHaveLength(1));
+      await screen.findAllByText(/not logged/);
+      expect(stateWrites).toHaveLength(0);
+      expect(screen.getAllByRole("checkbox", { name: "Bardic Inspiration d8" })[0]).toBeChecked();
+    });
+
     it("rolls nothing for an extra die that is not one, and says so", async () => {
       const { posts } = renderRolling();
       const extra = screen.getByRole("textbox", { name: "Stealth check extra die" });
