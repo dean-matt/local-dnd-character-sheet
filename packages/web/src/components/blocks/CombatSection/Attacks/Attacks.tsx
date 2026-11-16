@@ -1,6 +1,6 @@
 /**
- * The Attacks & Spellcasting card: a row per equipped weapon, an unarmed strike for every
- * character, then a row per casting class's spell attack. Every number comes off the derived
+ * The Attacks & Spellcasting card: a row per equipped weapon, the off-hand attack of a
+ * second light weapon, an unarmed strike for every character, then a row per casting class's spell attack. Every number comes off the derived
  * block; a weapon's name comes off `/characters/{id}/inventory`, since the derived block keys a weapon by its entry.
  */
 import {
@@ -154,6 +154,7 @@ export function Attacks({
     ...heldEffects,
   ];
   const unarmed = derived.unarmedStrike;
+  const offHand = derived.offHandAttack;
   const weapons = derived.attacks.filter((attack) => definition.inventory[attack.entry]?.equipped);
   const nameOf = (entry: number): string => {
     const ref = definition.inventory[entry]?.ref;
@@ -382,6 +383,16 @@ export function Attacks({
               ),
             });
           })}
+          {offHand &&
+            strikeRow({
+              key: "off-hand",
+              name: `${nameOf(offHand.entry)} (off-hand)`,
+              rowKey: "offHandAttack",
+              ability: offHand.ability,
+              attack: offHand,
+              flanking: meleeFlanking(offHand, definition),
+              notes: <p className="font-semibold text-label">Bonus action</p>,
+            })}
           {strikeRow({
             key: "unarmed",
             name: "Unarmed Strike",

@@ -60,6 +60,7 @@ export const derivedInput = (traits: object = {}) => ({
   attunementSlots: { computed: 3 },
   weaponMasteryLimit: { computed: 0 },
   attacks: [],
+  offHandAttack: null,
   unarmedStrike: {
     attackBonus: { computed: 2 },
     critThreshold: { computed: 20 },

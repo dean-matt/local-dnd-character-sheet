@@ -835,6 +835,54 @@ describe("deriveCharacter", () => {
       });
     });
 
+    describe("the off-hand attack", () => {
+      const dagger = (equippedNow: boolean) => ({
+        ref: { name: "Dagger", source: "XPHB" },
+        quantity: 1,
+        carried: true,
+        equipped: equippedNow,
+        attuned: false,
+      });
+      const wielding = (...flags: boolean[]): CharacterDefinition => ({
+        ...definition,
+        inventory: flags.map(dagger),
+      });
+      const offHand = (...flags: boolean[]) =>
+        deriveCharacter(wielding(...flags), catalog).offHandAttack;
+
+      it("is the second equipped light melee weapon, its damage without the positive modifier", () => {
+        const attack = offHand(true, true);
+        expect(attack?.entry).toBe(1);
+        expect(attack?.attackBonus.computed).toBe(6);
+        expect(attack?.damage?.modifier).toEqual({
+          computed: 0,
+          manual: null,
+          terms: [{ label: "Off-hand", value: 0 }],
+        });
+      });
+
+      it("leaves the main hand's damage whole", () => {
+        const [main] = deriveCharacter(wielding(true, true), catalog).attacks;
+        expect(main?.damage?.modifier.computed).toBe(3);
+      });
+
+      it("is absent with fewer than two light weapons equipped", () => {
+        expect(offHand(true, false)).toBeNull();
+        expect(offHand(false, false)).toBeNull();
+        expect(
+          deriveCharacter(withSword({ equipped: true }, wielding(true)), catalog).offHandAttack,
+        ).toBeNull();
+      });
+
+      it("keeps a manual override beside the computed value", () => {
+        const edited = deriveCharacter(
+          { ...wielding(true, true), overrides: { "offHandAttack.attackBonus": 9 } },
+          catalog,
+        );
+        expect(edited.offHandAttack?.attackBonus).toMatchObject({ computed: 6, manual: 9 });
+      });
+    });
+
     it("gives every character an unarmed strike of Strength plus proficiency, 1 plus Strength damage", () => {
       expect(derived.unarmedStrike).toEqual({
         attackBonus: {

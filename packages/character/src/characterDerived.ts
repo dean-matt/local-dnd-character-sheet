@@ -102,6 +102,35 @@ const rollEffectSchema = z.strictObject({
   condition: z.string().min(1).optional(),
 });
 
+const attackSchema = z.strictObject({
+  entry: z.int().min(0),
+  ability: z.enum(["str", "dex"]),
+  attackBonus: derivedSchema(z.int()),
+  /** The lowest d20 result that scores a critical hit: 20, or lower while an item says so. */
+  critThreshold: derivedSchema(z.int().min(2).max(20)),
+  damage: z
+    .strictObject({
+      dice: z.string().min(1),
+      type: z.string().min(1).nullable(),
+      modifier: derivedSchema(z.int()),
+    })
+    .nullable(),
+  grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
+  /** The mastery properties the character may use with this weapon: empty unless its kind is among the chosen. */
+  mastery: z.array(contentRefSchema),
+  /** Feet, null for a weapon that states no range. */
+  range: z.strictObject({ normal: z.int().min(0), long: z.int().min(0) }).nullable(),
+  /** The ammunition a weapon fires, as the lowercase uid it names, and the carried loose one-piece stacks of it, each by inventory index with its quantity. Null for a weapon that fires none. */
+  ammunition: z
+    .strictObject({
+      type: z.string().min(1),
+      stacks: z.array(z.strictObject({ entry: z.int().min(0), quantity: z.int().min(1) })),
+    })
+    .nullable(),
+  /** A firearm's shots between reloads, null for any other weapon. */
+  reload: z.int().min(1).nullable(),
+});
+
 /**
  * What the sheet computes, each beside the value a user typed over it. Assembled on
  * read rather than stored: `computed` comes from the definition and the catalog rows it
@@ -225,36 +254,9 @@ export const characterDerivedSchema = z.strictObject({
    * a weapon with one die; `twoHandedBlocked` is a versatile weapon equipped beside a
    * shield, held one-handed whatever grip the entry stores.
    */
-  attacks: z.array(
-    z.strictObject({
-      entry: z.int().min(0),
-      ability: z.enum(["str", "dex"]),
-      attackBonus: derivedSchema(z.int()),
-      /** The lowest d20 result that scores a critical hit: 20, or lower while an item says so. */
-      critThreshold: derivedSchema(z.int().min(2).max(20)),
-      damage: z
-        .strictObject({
-          dice: z.string().min(1),
-          type: z.string().min(1).nullable(),
-          modifier: derivedSchema(z.int()),
-        })
-        .nullable(),
-      grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
-      /** The mastery properties the character may use with this weapon: empty unless its kind is among the chosen. */
-      mastery: z.array(contentRefSchema),
-      /** Feet, null for a weapon that states no range. */
-      range: z.strictObject({ normal: z.int().min(0), long: z.int().min(0) }).nullable(),
-      /** The ammunition a weapon fires, as the lowercase uid it names, and the carried loose one-piece stacks of it, each by inventory index with its quantity. Null for a weapon that fires none. */
-      ammunition: z
-        .strictObject({
-          type: z.string().min(1),
-          stacks: z.array(z.strictObject({ entry: z.int().min(0), quantity: z.int().min(1) })),
-        })
-        .nullable(),
-      /** A firearm's shots between reloads, null for any other weapon. */
-      reload: z.int().min(1).nullable(),
-    }),
-  ),
+  attacks: z.array(attackSchema),
+  /** The bonus-action attack with a second equipped light melee weapon, whose damage leaves out a positive ability modifier; null while fewer than two are equipped. */
+  offHandAttack: attackSchema.nullable(),
   /** The attack every character can make, with no weapon: Strength plus proficiency, and 1 plus Strength bludgeoning. */
   unarmedStrike: z.strictObject({
     attackBonus: derivedSchema(z.int()),

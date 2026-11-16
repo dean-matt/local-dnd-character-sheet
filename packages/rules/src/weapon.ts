@@ -70,6 +70,11 @@ type WeaponAttackParts<Ref = unknown> = {
    * smaller die and says nothing.
    */
   grip: Grip;
+  /**
+   * The bonus-action attack with a second light weapon, whose damage adds an ability
+   * modifier only when it is negative.
+   */
+  offHand?: boolean;
 };
 
 type WeaponAttack<Ref = unknown> = {
@@ -83,6 +88,7 @@ type WeaponAttack<Ref = unknown> = {
 };
 
 const FINESSE = "F";
+const LIGHT = "L";
 
 /**
  * The abbreviation alone, from either spelling. Case is folded because `homebrew.db`
@@ -92,6 +98,11 @@ const FINESSE = "F";
 function abbreviation(property: WeaponProperty): string {
   const uid = typeof property === "string" ? property : property.uid;
   return uid.replace(/\|.*$/, "").toUpperCase();
+}
+
+/** Whether the weapon carries the light property, the one a second weapon must have to attack as a bonus action. */
+export function isLight(weapon: Pick<Weapon, "properties">): boolean {
+  return weapon.properties?.some((property) => abbreviation(property) === LIGHT) ?? false;
 }
 
 /**
@@ -134,6 +145,7 @@ export function weaponAttack<Ref = unknown>({
   attackBonus,
   damageBonus,
   grip,
+  offHand = false,
 }: WeaponAttackParts<Ref>): WeaponAttack<Ref> {
   if (!WEAPON_KINDS.includes(weapon.kind)) {
     throw new RangeError(`Unknown weapon kind "${weapon.kind}"`);
@@ -157,8 +169,10 @@ export function weaponAttack<Ref = unknown>({
   if (dice === undefined) {
     return attack;
   }
+  const dropsAbility = offHand && abilityTerm.value > 0;
+  const damageTerms: Term<Ref>[] = dropsAbility ? [{ label: "Off-hand", value: 0 }] : [abilityTerm];
   return {
     ...attack,
-    damage: { dice, modifier: breakdown(withTerm([abilityTerm], "Magic", damageBonus)) },
+    damage: { dice, modifier: breakdown(withTerm(damageTerms, "Magic", damageBonus)) },
   };
 }
