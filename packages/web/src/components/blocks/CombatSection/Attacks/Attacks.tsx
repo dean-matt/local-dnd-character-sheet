@@ -19,7 +19,7 @@ import {
   spentAmmunitionOf,
   withAmmunitionSpent,
 } from "@dnd/character";
-import { useContext, useState } from "react";
+import { type ComponentProps, type ReactNode, useContext, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
@@ -236,6 +236,89 @@ export function Attacks({
     return () => recover(attack, piece, held?.entry);
   }
 
+  /** One weapon-shaped row: the bonus, the attack and damage rolls, and the critical-hit flag the two share. */
+  function strikeRow({
+    key,
+    name,
+    rowKey,
+    ability,
+    attack,
+    flanking,
+    beforeRoll,
+    notes,
+  }: {
+    key: string | number;
+    name: string;
+    rowKey: string;
+    ability: Ability;
+    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage">;
+    flanking: ComponentProps<typeof AttackRoll>["flanking"];
+    beforeRoll?: () => Promise<boolean>;
+    notes?: ReactNode;
+  }) {
+    const { damage } = attack;
+    return (
+      <AttackRow
+        key={key}
+        name={name}
+        effects={attackEffects(ability)}
+        notes={notes}
+        bonus={
+          <DerivedValue
+            named
+            name={`${name} attack bonus`}
+            value={attack.attackBonus}
+            overrideKey={`${rowKey}.attackBonus`}
+          />
+        }
+        rollAttack={
+          <AttackRoll
+            label={`${name} attack`}
+            type="attack"
+            origin={name}
+            bonus={derivedValue(attack.attackBonus)}
+            effects={attackEffects(ability)}
+            beforeRoll={beforeRoll}
+            critAt={derivedValue(attack.critThreshold)}
+            flanking={flanking}
+            onRolled={(hit) => setCritical(rowKey, hit)}
+          />
+        }
+        rollDamage={
+          damage && (
+            <RollBonusButton
+              label={`${name} damage`}
+              type="damage"
+              origin={name}
+              dice={damage.dice}
+              bonus={derivedValue(damage.modifier)}
+              critical={crit[rowKey] ?? false}
+              onRolled={() => setCritical(rowKey, false)}
+            />
+          )
+        }
+        damage={
+          <>
+            <AttackDamage name={name} attack={attack} overrideKey={rowKey}>
+              {damage ? `${damageText(damage)} ${damage.type ?? ""}`.trim() : NONE}
+              {critRange(attack)}
+            </AttackDamage>
+            {damage && rolling && (
+              <label className="flex items-center gap-1 text-label">
+                <input
+                  type="checkbox"
+                  checked={crit[rowKey] ?? false}
+                  onChange={(event) => setCritical(rowKey, event.target.checked)}
+                />
+                Critical hit
+              </label>
+            )}
+          </>
+        }
+      />
+    );
+  }
+
   return (
     <Card title="Attacks & Spellcasting">
       <table className="w-full table-fixed text-body">
@@ -268,146 +351,45 @@ export function Attacks({
         <tbody>
           {weapons.map((attack) => {
             const name = nameOf(attack.entry);
-            const key = overrideKey("attacks", attack, definition);
-            return (
-              <AttackRow
-                key={attack.entry}
-                name={name}
-                effects={attackEffects(attack.ability)}
-                notes={
-                  <>
-                    {attack.mastery.map((ref) => (
-                      <p key={`${ref.name}|${ref.source}`} className="text-label text-muted">
-                        Mastery: <RulesText text={`{@itemMastery ${ref.name}|${ref.source}}`} />
-                      </p>
-                    ))}
-                    {weaponNotes(
-                      attack,
-                      {
-                        name: nameOf,
-                        picked: picked[attack.entry],
-                        pick: (entry) => setPicked((now) => ({ ...now, [attack.entry]: entry })),
-                        recover: recoverer(attack),
-                      },
-                      refused[attack.entry]?.left === leftIn(attack)
-                        ? refused[attack.entry]?.message
-                        : undefined,
-                    )}
-                  </>
-                }
-                bonus={
-                  <DerivedValue
-                    named
-                    name={`${name} attack bonus`}
-                    value={attack.attackBonus}
-                    overrideKey={`${key}.attackBonus`}
-                  />
-                }
-                rollAttack={
-                  <AttackRoll
-                    label={`${name} attack`}
-                    type="attack"
-                    origin={name}
-                    bonus={derivedValue(attack.attackBonus)}
-                    effects={attackEffects(attack.ability)}
-                    beforeRoll={attack.ammunition ? () => spend(attack, name) : undefined}
-                    critAt={derivedValue(attack.critThreshold)}
-                    flanking={meleeFlanking(attack, definition)}
-                    onRolled={(hit) => setCritical(key, hit)}
-                  />
-                }
-                rollDamage={
-                  attack.damage && (
-                    <RollBonusButton
-                      label={`${name} damage`}
-                      type="damage"
-                      origin={name}
-                      dice={attack.damage.dice}
-                      bonus={derivedValue(attack.damage.modifier)}
-                      critical={crit[key] ?? false}
-                      onRolled={() => setCritical(key, false)}
-                    />
-                  )
-                }
-                damage={
-                  <>
-                    <AttackDamage name={name} attack={attack} overrideKey={key}>
-                      {attack.damage
-                        ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
-                        : NONE}
-                      {critRange(attack)}
-                    </AttackDamage>
-                    {attack.damage && rolling && (
-                      <label className="flex items-center gap-1 text-label">
-                        <input
-                          type="checkbox"
-                          checked={crit[key] ?? false}
-                          onChange={(event) => setCritical(key, event.target.checked)}
-                        />
-                        Critical hit
-                      </label>
-                    )}
-                  </>
-                }
-              />
-            );
+            return strikeRow({
+              key: attack.entry,
+              name,
+              rowKey: overrideKey("attacks", attack, definition),
+              ability: attack.ability,
+              attack,
+              flanking: meleeFlanking(attack, definition),
+              beforeRoll: attack.ammunition ? () => spend(attack, name) : undefined,
+              notes: (
+                <>
+                  {attack.mastery.map((ref) => (
+                    <p key={`${ref.name}|${ref.source}`} className="text-label text-muted">
+                      Mastery: <RulesText text={`{@itemMastery ${ref.name}|${ref.source}}`} />
+                    </p>
+                  ))}
+                  {weaponNotes(
+                    attack,
+                    {
+                      name: nameOf,
+                      picked: picked[attack.entry],
+                      pick: (entry) => setPicked((now) => ({ ...now, [attack.entry]: entry })),
+                      recover: recoverer(attack),
+                    },
+                    refused[attack.entry]?.left === leftIn(attack)
+                      ? refused[attack.entry]?.message
+                      : undefined,
+                  )}
+                </>
+              ),
+            });
           })}
-          <AttackRow
-            name="Unarmed Strike"
-            effects={attackEffects("str")}
-            notes={
-              crit.unarmed ? <p className="font-semibold text-label">Critical hit</p> : undefined
-            }
-            bonus={
-              <DerivedValue
-                named
-                name="Unarmed Strike attack bonus"
-                value={unarmed.attackBonus}
-                overrideKey="unarmedStrike.attackBonus"
-              />
-            }
-            rollAttack={
-              <AttackRoll
-                label="Unarmed Strike attack"
-                type="attack"
-                origin="Unarmed Strike"
-                bonus={derivedValue(unarmed.attackBonus)}
-                effects={attackEffects("str")}
-                critAt={derivedValue(unarmed.critThreshold)}
-                flanking={houseRule(definition, "flanking")}
-                onRolled={(hit) => setCritical("unarmed", hit)}
-              />
-            }
-            rollDamage={
-              <RollBonusButton
-                label="Unarmed Strike damage"
-                type="damage"
-                origin="Unarmed Strike"
-                dice={unarmed.damage.dice}
-                bonus={derivedValue(unarmed.damage.modifier)}
-                critical={crit.unarmed ?? false}
-                onRolled={() => setCritical("unarmed", false)}
-              />
-            }
-            damage={
-              <>
-                <AttackDamage name="Unarmed Strike" attack={unarmed} overrideKey="unarmedStrike">
-                  {`${damageText(unarmed.damage)} ${unarmed.damage.type}`}
-                  {critRange(unarmed)}
-                </AttackDamage>
-                {rolling && (
-                  <label className="flex items-center gap-1 text-label">
-                    <input
-                      type="checkbox"
-                      checked={crit.unarmed ?? false}
-                      onChange={(event) => setCritical("unarmed", event.target.checked)}
-                    />
-                    Critical hit
-                  </label>
-                )}
-              </>
-            }
-          />
+          {strikeRow({
+            key: "unarmed",
+            name: "Unarmed Strike",
+            rowKey: "unarmedStrike",
+            ability: "str",
+            attack: unarmed,
+            flanking: houseRule(definition, "flanking"),
+          })}
           {derived.spellcasting.map((caster) => {
             const origin = displayName(caster.class, names);
             const name = `${origin} spell attack`;

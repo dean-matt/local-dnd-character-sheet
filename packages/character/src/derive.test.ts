@@ -372,6 +372,12 @@ describe("deriveCharacter", () => {
       }
     });
 
+    it("adds to the unarmed strike's attack roll", () => {
+      const strike = derivedWith(curse({ kind: "attackRolls" }, 1)).unarmedStrike.attackBonus;
+      expect(strike.computed).toBe(derived.unarmedStrike.attackBonus.computed + 1);
+      expect(strike.terms.at(-1)).toEqual(named(1));
+    });
+
     it("adds to each speed the character has, never below 0", () => {
       expect(derivedWith(curse({ kind: "speed" }, 10)).speed.computed).toEqual({ walk: 40 });
       const slowed = derivedWith(curse({ kind: "speed" }, -50)).speed;
@@ -1810,6 +1816,11 @@ describe("deriveCharacter", () => {
       }
     });
 
+    it("lowers the unarmed strike's threshold for an item that is not a weapon, not for a weapon item", () => {
+      expect(withItems([worn(BIB)]).unarmedStrike.critThreshold.computed).toBe(19);
+      expect(withItems([worn(KAS)]).unarmedStrike.critThreshold.computed).toBe(20);
+    });
+
     it("lowers a weapon item's threshold for its own attack alone", () => {
       const block = withItems([worn(KAS)]);
       const sword = block.attacks.find((attack) => attack.entry === equipped.inventory.length);
@@ -2953,6 +2964,21 @@ describe("deriveCharacter", () => {
       expect(damageOf(deriveCharacter(barbarian(5, "one"), rageCatalog, calm), 0)?.computed).toBe(
         3,
       );
+    });
+
+    it("adds Rage to the unarmed strike's damage while raging, and takes a positive Strength", () => {
+      const strike = (state: typeof raging) =>
+        deriveCharacter(barbarian(5, "one"), rageCatalog, state).unarmedStrike;
+      expect(strike(raging).damage.modifier.terms).toEqual([
+        { label: "Strength", value: 3 },
+        { label: "Rage", value: 3 },
+      ]);
+      expect(strike(raging).damage.modifier.computed).toBe(6);
+      expect(strike(calm).damage.modifier.computed).toBe(3);
+      expect(strike(calm).attackBonus.terms.map((term) => [term.label, term.value])).toEqual([
+        ["Strength", 3],
+        ["Proficiency", 3],
+      ]);
     });
 
     it("applies in 2014 to a melee Strength attack, and never to a Dexterity one", () => {

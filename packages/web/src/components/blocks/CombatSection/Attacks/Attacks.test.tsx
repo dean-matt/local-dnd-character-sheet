@@ -6,6 +6,7 @@ import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { stubFetchByUrl } from "../../../../test/stubFetch.ts";
+import { SaveOverride } from "../../../overrideContext.ts";
 import { OnRolled, RollingFor } from "../../../rollerContext.ts";
 import { Attacks } from "./Attacks.tsx";
 
@@ -262,13 +263,44 @@ describe("Attacks", () => {
     ]);
   });
 
-  it("opens the unarmed strike's bonus terms and takes an override", async () => {
+  it("opens the unarmed strike's bonus terms", async () => {
     renderAttacks({ ...derivedRecord(), attacks: [], unarmedStrike });
 
     fireEvent.click(await screen.findByRole("button", { name: "Unarmed Strike attack bonus +5" }));
     expect(
       screen.getByRole("group", { name: "Unarmed Strike attack bonus breakdown" }),
     ).toHaveTextContent("Strength3Proficiency2");
+  });
+
+  it("saves an unarmed strike's bonus, damage modifier and critical threshold under its own key", async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    stubFetchByUrl({ "/api/characters/1/inventory": { items: [] } });
+    renderWithClient(
+      <SaveOverride.Provider value={save}>
+        <Attacks character={vex()} derived={{ ...derivedRecord(), attacks: [], unarmedStrike }} />
+      </SaveOverride.Provider>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Unarmed Strike attack bonus +5" }));
+    const bonus = screen.getByRole("textbox", { name: "Unarmed Strike attack bonus override" });
+    fireEvent.change(bonus, { target: { value: "7" } });
+    fireEvent.blur(bonus);
+    await waitFor(() => expect(save).toHaveBeenCalledWith("unarmedStrike.attackBonus", 7));
+
+    fireEvent.click(screen.getByRole("button", { name: "1d1 bludgeoning" }));
+    for (const [name, value] of [
+      ["Unarmed Strike damage modifier override", "2"],
+      ["Unarmed Strike critical hit threshold override", "19"],
+    ] as const) {
+      fireEvent.change(screen.getByRole("textbox", { name }), { target: { value } });
+    }
+    fireEvent.keyDown(screen.getByRole("group", { name: "Unarmed Strike damage breakdown" }), {
+      key: "Escape",
+    });
+    await waitFor(() => {
+      expect(save).toHaveBeenCalledWith("unarmedStrike.damage.modifier", 2);
+      expect(save).toHaveBeenCalledWith("unarmedStrike.critThreshold", 19);
+    });
   });
 
   describe("roll buttons", () => {
@@ -511,6 +543,15 @@ describe("Attacks", () => {
         await waitFor(() => expect(mode).toHaveValue("disadvantage"));
         fireEvent.click(longsword().getByRole("checkbox", { name: "Flanking" }));
         expect(mode).toHaveValue("normal");
+      });
+
+      it("offers flanking on the unarmed strike's attack roll", async () => {
+        renderRolling({ ...derivedRecord(), attacks: [], unarmedStrike }, 201, [], {
+          flanking: "advantage",
+        });
+        const mode = await screen.findByRole("combobox", { name: "Unarmed Strike attack mode" });
+        fireEvent.click(screen.getByRole("checkbox", { name: "Flanking" }));
+        expect(mode).toHaveValue("advantage");
       });
 
       it("adds 2 and names it in the logged roll", async () => {
