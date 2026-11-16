@@ -11,11 +11,13 @@ import {
   ShoppingBag,
   Sparkle,
   Star,
+  Swords,
 } from "lucide-react";
 import { Sidebar } from "../Sidebar/Sidebar.tsx";
 
 const PAGE_ICONS: Record<string, LucideIcon> = {
   stats: ChartNoAxesColumn,
+  combat: Swords,
   spells: Sparkle,
   inventory: ShoppingBag,
   features: Star,
