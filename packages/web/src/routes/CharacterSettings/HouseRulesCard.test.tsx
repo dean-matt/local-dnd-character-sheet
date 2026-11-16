@@ -49,6 +49,7 @@ describe("HouseRulesCard", () => {
       "Material components",
       "Critical hits",
       "Flanking",
+      "Inspiration",
     ]);
   });
 

@@ -202,6 +202,20 @@ const OPTIONS: Record<HouseRule, Option> = {
       },
     ],
   },
+  otherEditionInspiration: {
+    name: "Inspiration",
+    printed: {
+      label: "As your edition prints",
+      description:
+        "Spending inspiration on a check, save or skill roll gives a classic character advantage and lets a 2024 character reroll it and use the new roll.",
+    },
+    house: {
+      label: "The other edition's rule",
+      description:
+        "Spending inspiration on a check, save or skill roll gives a 2024 character advantage and lets a classic character reroll it and use the new roll.",
+    },
+    editions: ["classic", "one"],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];

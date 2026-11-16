@@ -1,7 +1,9 @@
 import { netRollEffect, type RollEffectEntry } from "@dnd/character";
 import { type ComponentProps, type ReactNode, useContext, useId, useState } from "react";
+import { useInspiration } from "../hooks/useInspiration.ts";
 import { parseExtraDie } from "../lib/extraDie.ts";
 import { ExtraDieInput } from "./ExtraDieInput.tsx";
+import { InspirationToggle } from "./InspirationToggle.tsx";
 import { RollBonusButton } from "./RollBonusButton.tsx";
 import { RollingFor } from "./rollerContext.ts";
 
@@ -24,16 +26,22 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
  * start, changed by the player, and a die the player names to add or subtract, such as +1d4 for
  * Bless or -1d4 for Bane. The sources of every effect, a conditional one included, are
  * spoken with the control. `children` sit between the mode and the button.
+ * With `inspiration`, a character holding it may spend it on the roll: advantage, or a reroll
+ * that counts, by its edition and house rules. The roll clears it in one state write. A reroll
+ * is of a single d20 in the normal mode, so one with a mode or a die the player named offers
+ * no spending.
  */
 export function ModeRoll({
   effects = [],
   modeLabel,
+  inspiration = false,
   children,
   ...roll
 }: Omit<ComponentProps<typeof RollBonusButton>, "mode"> & {
   effects?: readonly RollEffectEntry[];
   /** What the mode control names, where the roll's label changes under it. */
   modeLabel?: string;
+  inspiration?: boolean;
   children?: ReactNode;
 }) {
   const characterId = useContext(RollingFor);
@@ -43,6 +51,7 @@ export function ModeRoll({
   const [extra, setExtra] = useState("");
   const [chosen, setChosen] = useState<{ start: Mode; mode: Mode }>({ start, mode: start });
   const mode = chosen.start === start ? chosen.mode : start;
+  const spend = useInspiration(characterId ?? "", inspiration, mode, extra);
   if (characterId === null) return null;
   const names = effects.map(
     ({ source, mode: effect, condition }) =>
@@ -77,7 +86,14 @@ export function ModeRoll({
       <span id={extraError} className="sr-only">
         {parseExtraDie(extra).error}
       </span>
-      <RollBonusButton {...roll} mode={mode} extra={extra} />
+      {spend.offered && <InspirationToggle {...spend} />}
+      <RollBonusButton
+        {...roll}
+        mode={spend.mode}
+        extra={extra}
+        d20={spend.d20}
+        beforeRoll={spend.spending ? spend.spend : roll.beforeRoll}
+      />
     </span>
   );
 }

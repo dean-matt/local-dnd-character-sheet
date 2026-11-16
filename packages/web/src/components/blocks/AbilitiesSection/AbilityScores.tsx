@@ -177,6 +177,7 @@ export function AbilityScores({
                   type="check"
                   origin={ABILITY_LABEL[ability]}
                   bonus={derivedValue(derived.abilityModifiers[ability])}
+                  inspiration
                 />
               </span>
             </StatTile>

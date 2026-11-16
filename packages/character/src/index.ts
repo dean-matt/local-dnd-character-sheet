@@ -125,7 +125,7 @@ export {
   healedState,
   hitDieSpentState,
 } from "./hitPointChange.ts";
-export { type HouseRule, withTableHouseRules } from "./houseRules.ts";
+export { type HouseRule, inspirationEffect, withTableHouseRules } from "./houseRules.ts";
 export {
   IMPROVEMENT_FEAT,
   type Improvement,

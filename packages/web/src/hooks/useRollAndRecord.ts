@@ -6,6 +6,7 @@ import { useCharacter } from "./useCharacter.ts";
 import { useRecordRoll } from "./useRecordRoll.ts";
 
 type Roll = ReturnType<typeof rollDice>;
+type D20 = NonNullable<Parameters<typeof rollDice>[1]>["d20"];
 
 /**
  * Rolls `notation`, records it under `named` in the character's roll log and hands the
@@ -19,7 +20,10 @@ export function useRollAndRecord(characterId: string) {
 
   function roll(
     notation: string,
-    named: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & { critical?: boolean },
+    named: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & {
+      critical?: boolean;
+      d20?: D20;
+    },
     settled?: (rolled: Roll, logged: boolean) => void,
   ): Error | undefined {
     let rolled: Roll;
@@ -28,21 +32,24 @@ export function useRollAndRecord(characterId: string) {
       rolled = rollDice(notation, {
         mode: named.mode,
         critical: named.critical,
+        d20: named.d20,
         maximumCritical:
           definition !== undefined && houseRule(definition, "criticalHit") === "maximum",
       });
     } catch (error) {
       return error as Error;
     }
+    const { d20: _d20, ...recorded } = named;
     record.mutate(
       {
-        ...named,
+        ...recorded,
         notation: rolled.notation,
         total: rolled.total,
         dice: rolled.dice,
         modifier: rolled.modifier,
         critical: rolled.critical,
         ...(named.mode && { mode: rolled.mode }),
+        ...(rolled.reason && { reason: rolled.reason }),
       },
       {
         onSuccess: (entry) => {

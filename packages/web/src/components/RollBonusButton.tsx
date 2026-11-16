@@ -12,11 +12,16 @@ function included(
   return count === 0 ? "" : `, including ${extraTotal(dice, count)} from ${notation}`;
 }
 
+function withMode(mode: RollRecord["mode"], d20: unknown) {
+  if (d20) return " rerolled";
+  return mode && mode !== "normal" ? ` with ${mode}` : "";
+}
+
 /**
  * Rolls `dice` (a d20 unless told otherwise) plus `bonus` and records it under `label`, `type` and `origin`; nothing where no character's
  * sheet is open to record to. Its status region speaks what was rolled and the total
  * without moving focus, and says so when the roll could not be logged. `beforeRoll` runs
- * first and rolls nothing when it resolves false. A `mode` rolls with advantage or disadvantage and says so.
+ * first and rolls nothing when it resolves false. A `mode` rolls with advantage or disadvantage and says so; a `d20` option rolls a second die that counts, and says it rerolled.
  * An `extra` die the player typed, such as `+1d4`, rolls with the d20 as its own term, and a
  * result that is not a die is spoken and rolls nothing.
  * `critAt` makes it an attack that scores a critical hit on a kept die of that number or more, and says so;
@@ -29,6 +34,7 @@ export function RollBonusButton({
   bonus,
   dice = "1d20",
   mode,
+  d20,
   extra = "",
   beforeRoll,
   critAt,
@@ -37,6 +43,7 @@ export function RollBonusButton({
 }: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & {
   bonus: number;
   dice?: string;
+  d20?: { reason: "lucky"; kept: 1 };
   extra?: string;
   critAt?: number;
   critical?: boolean;
@@ -61,12 +68,12 @@ export function RollBonusButton({
             return;
           }
           if (beforeRoll && !(await beforeRoll())) return;
-          roll(notation, { label, type, origin, mode, critical }, (rolled, logged) => {
+          roll(notation, { label, type, origin, mode, critical, d20 }, (rolled, logged) => {
             const kept = rolled.dice.find((die) => die.kept)?.value ?? 0;
             const hit = critAt !== undefined && kept >= critAt;
             onRolled?.(hit);
             setHeard(
-              `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}${critical ? " as a critical hit" : ""}: ${rolled.total}${included(rolled.dice, die)}${hit ? ", critical hit" : ""}${logged ? "" : ", not logged"}`,
+              `${label}${withMode(mode, d20)}${critical ? " as a critical hit" : ""}: ${rolled.total}${included(rolled.dice, die)}${hit ? ", critical hit" : ""}${logged ? "" : ", not logged"}`,
             );
           });
         }}

@@ -90,6 +90,12 @@ const houseRulesObject = z
      * offers no flanking.
      */
     flanking: z.enum(["none", "advantage", "bonus"]).optional(),
+    /**
+     * Spending inspiration works by the other edition's rule: a 2024 character gets advantage
+     * and a classic one rerolls. Absent, a classic character gets advantage and a 2024 one
+     * rerolls, as each ruleset prints.
+     */
+    otherEditionInspiration: z.boolean().optional(),
   })
   .prefault({});
 
@@ -124,7 +130,16 @@ export const PRINTED_RULE: Required<HouseRules> = {
   waiveMaterialComponents: false,
   criticalHit: "double",
   flanking: "none",
+  otherEditionInspiration: false,
 };
+
+/** What spending inspiration on a d20 test does for a character: the edition's rule, or the other's where the table plays it. */
+export function inspirationEffect(
+  edition: Edition,
+  { otherEditionInspiration = false }: HouseRules,
+): "advantage" | "reroll" {
+  return (edition === "classic") !== otherEditionInspiration ? "advantage" : "reroll";
+}
 
 /**
  * A new character with the options this table plays by default written in, so an absent

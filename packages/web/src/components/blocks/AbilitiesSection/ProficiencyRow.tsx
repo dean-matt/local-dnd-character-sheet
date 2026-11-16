@@ -132,6 +132,7 @@ export function ProficiencyRow({
           type={ability ? "check" : "save"}
           origin={name}
           bonus={derivedValue(modifier)}
+          inspiration
         />
       </span>
     </li>
