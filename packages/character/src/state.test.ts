@@ -286,8 +286,13 @@ describe("temporary modifiers", () => {
     expect(characterStateSchema.parse(structuredClone(held))).toEqual(held);
   });
 
-  it("refuses an amount of 0, a blank name and a target it does not name", () => {
-    for (const bad of [{ amount: 0 }, { name: " " }, { target: { kind: "luck" } }]) {
+  it("refuses an amount of 0, a blank name, the reduction's label and a target it does not name", () => {
+    for (const bad of [
+      { amount: 0 },
+      { name: " " },
+      { name: " maximum reduction" },
+      { target: { kind: "luck" } },
+    ]) {
       expect(characterStateSchema.safeParse(stored({ ...curse, ...bad })).success).toBe(false);
     }
   });

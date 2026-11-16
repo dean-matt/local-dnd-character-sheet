@@ -167,8 +167,17 @@ const modifierTargetSchema = z.discriminatedUnion("kind", [
  * class. It lasts until removed or, where `endsOn` names a rest, until a rest that meets it:
  * `short` ends on any rest, `long` on a long rest only.
  */
+/** The label of the term a reduction adds to the hit point maximum's breakdown, which no modifier may take. */
+export const REDUCTION_LABEL = "Maximum reduction";
+
 export const temporaryModifierSchema = z.strictObject({
-  name: z.string().trim().min(1),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((name) => name.toLowerCase() !== REDUCTION_LABEL.toLowerCase(), {
+      error: "that name is the hit point maximum reduction's",
+    }),
   target: modifierTargetSchema,
   amount: z.int().refine((amount) => amount !== 0, { error: "a modifier of 0 changes nothing" }),
   endsOn: z.enum(["short", "long"]).nullable(),

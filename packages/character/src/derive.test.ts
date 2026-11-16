@@ -13,12 +13,14 @@ import {
   carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
+  defaultCharacterState,
   deriveCharacter,
   derivedValue,
   type EntryRef,
   entryKey,
   type FeatGrantTrait,
   hitPointMaximum,
+  hitPointsWithin,
   type ItemAbilityTrait,
   type ItemAdvantageTrait,
   type ItemBonusTrait,
@@ -330,7 +332,7 @@ describe("deriveCharacter", () => {
       expect(field.terms.at(-1)).toEqual(named(-1));
     });
 
-    it("adds to the one saving throw it names, and to the concentration save that reads it", () => {
+    it("adds to the one saving throw it names", () => {
       const block = derivedWith(curse({ kind: "save", ability: "dex" }, 2));
       expect(block.savingThrows.dex.computed).toBe(derived.savingThrows.dex.computed + 2);
       expect(block.savingThrows.dex.terms.at(-1)).toEqual(named(2));
@@ -380,7 +382,10 @@ describe("deriveCharacter", () => {
     it("adds to the hit point maximum, leaving at least 1, before a reduction", () => {
       const raised = derivedWith(curse({ kind: "hitPointMaximum" }, 5)).hitPointMaximum;
       expect(raised.computed).toBe(derived.hitPointMaximum.computed + 5);
-      expect(raised.terms.at(-1)).toEqual(named(5));
+      expect(raised.terms.at(-1)).toEqual({
+        ...named(5),
+        reference: { derivedField: "temporaryModifier" },
+      });
       const floored = derivedWith(curse({ kind: "hitPointMaximum" }, -500)).hitPointMaximum;
       expect(floored.computed).toBe(1);
       const both = deriveCharacter(equipped, catalog, {
@@ -388,6 +393,21 @@ describe("deriveCharacter", () => {
         hitPointMaximumReduction: { amount: 2, clearsOnLongRest: true },
       }).hitPointMaximum;
       expect(both.computed).toBe(derived.hitPointMaximum.computed + 3);
+    });
+
+    it("lowers current hit points above the maximum a change of modifiers leaves", () => {
+      const max = derived.hitPointMaximum.computed;
+      const within = (current: number | null, ...modifiers: TemporaryModifier[]) =>
+        hitPointsWithin(equipped, derivedWith(curse({ kind: "hitPointMaximum" }, 5)), {
+          ...defaultCharacterState(),
+          hitPoints: { current, temporary: 0 },
+          temporaryModifiers: modifiers,
+        }).hitPoints.current;
+      expect(within(max + 5)).toBe(max);
+      expect(within(max + 5, curse({ kind: "hitPointMaximum" }, 5))).toBe(max + 5);
+      expect(within(max + 5, curse({ kind: "hitPointMaximum" }, 2))).toBe(max + 2);
+      expect(within(max - 1)).toBe(max - 1);
+      expect(within(null)).toBeNull();
     });
 
     it("sits below a manual override, which still replaces the value", () => {

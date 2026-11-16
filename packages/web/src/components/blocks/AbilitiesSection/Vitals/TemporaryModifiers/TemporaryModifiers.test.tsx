@@ -74,6 +74,17 @@ describe("Temporary Modifiers", () => {
     expect(writes).toHaveLength(0);
   });
 
+  it("refuses the name a maximum reduction carries", async () => {
+    const { writes } = renderVitals({});
+    await fill("Maximum reduction", "-2");
+    fireEvent.click(card().getByRole("button", { name: "Add modifier" }));
+
+    expect(
+      await screen.findByText("Maximum reduction is reserved. Choose another name."),
+    ).toBeInTheDocument();
+    expect(writes).toHaveLength(0);
+  });
+
   it("refuses a modifier of the same name on the same value", async () => {
     const { writes } = renderVitals({ temporaryModifiers: [curse] });
     await fill("curse", "-2");

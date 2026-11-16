@@ -1,7 +1,9 @@
 import { type Breakdown, breakdown, resets, type Term } from "@dnd/rules";
-import type { Speed } from "./characterDerived.ts";
+import type { CharacterDerived, Speed } from "./characterDerived.ts";
+import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { refKey } from "./keys.ts";
+import { maximumBeforeReduction, reducedMaximum } from "./maximumReduction.ts";
 import type { CharacterState, TemporaryModifier } from "./state.ts";
 
 type Target = TemporaryModifier["target"];
@@ -76,4 +78,37 @@ export function modifiersEnded(state: CharacterState, length: "short" | "long"):
       ({ endsOn }) => endsOn === null || !resets(endsOn, length),
     ),
   };
+}
+
+/** What marks a term of the hit point maximum as a modifier's, so a change of modifiers can leave it out. */
+export const MODIFIER_REFERENCE: TermReference = { derivedField: "temporaryModifier" };
+
+const isModifierTerm = ({ reference }: Term<TermReference>) =>
+  reference !== undefined &&
+  "derivedField" in reference &&
+  reference.derivedField === "temporaryModifier";
+
+/**
+ * The state with current hit points above the maximum its modifiers and reduction leave
+ * lowered to it, `derived` being read for what the maximum is before either. An override
+ * replaces the maximum before them, so it leaves current hit points alone.
+ */
+export function hitPointsWithin(
+  definition: Pick<CharacterDefinition, "overrides">,
+  derived: Pick<CharacterDerived, "hitPointMaximum">,
+  state: CharacterState,
+): CharacterState {
+  const { current } = state.hitPoints;
+  const before = maximumBeforeReduction(definition, derived);
+  if (current === null || before.manual !== null) return state;
+  const applied = (before.terms ?? []).filter(isModifierTerm);
+  const base = before.computed - applied.reduce((sum, { value }) => sum + value, 0);
+  const { total } = reducedMaximum(
+    withModifiers(
+      breakdown([{ label: "Hit point maximum", value: base }]),
+      modifierTerms(state, onKind("hitPointMaximum")),
+    ),
+    state.hitPointMaximumReduction,
+  );
+  return current > total ? { ...state, hitPoints: { ...state.hitPoints, current: total } } : state;
 }

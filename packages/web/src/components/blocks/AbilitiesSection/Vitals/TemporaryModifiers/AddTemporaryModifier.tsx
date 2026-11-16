@@ -16,7 +16,7 @@ const ENDS = [
   { value: "long", label: "Ends on a long rest" },
 ];
 
-type Errors = { name?: string; amount?: string };
+type Errors = { name?: string; amount?: string; target?: string };
 
 /** The modifier the fields hold, or why each refused field is. */
 function read(
@@ -24,6 +24,7 @@ function read(
   target: TemporaryModifier["target"] | undefined,
   held: readonly TemporaryModifier[],
 ): { modifier: TemporaryModifier } | { errors: Errors } {
+  if (target === undefined) return { errors: { target: "Choose what it applies to." } };
   const typed = fields.amount.trim();
   const parsed = temporaryModifierSchema.safeParse({
     name: fields.name,
@@ -35,6 +36,10 @@ function read(
     return {
       errors: {
         ...(fields.name.trim() === "" && { name: "Enter a name." }),
+        ...(fields.name.trim() !== "" &&
+          parsed.error.issues.some(({ path }) => path[0] === "name") && {
+            name: `${fields.name.trim()} is reserved. Choose another name.`,
+          }),
         ...(!WHOLE.test(typed) || Number(typed) === 0
           ? { amount: "The amount is a whole number other than 0." }
           : {}),
@@ -110,7 +115,7 @@ export function AddTemporaryModifier({
         onChange={(event) => set({ amount: event.target.value })}
         className="w-24"
       />
-      <FormField label="Applies to">
+      <FormField label="Applies to" error={errors.target}>
         {(control) => (
           <Select
             {...control}

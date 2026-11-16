@@ -246,4 +246,5 @@ export {
   totalLevel,
   withExperienceFloor,
 } from "./summaries.ts";
+export { hitPointsWithin } from "./temporaryModifiers.ts";
 export { TURN_LABELS, turnMarkSpent, turnMarkToggled, turnReset } from "./turn.ts";

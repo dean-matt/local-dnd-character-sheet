@@ -68,6 +68,7 @@ import type { CharacterState } from "./state.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, type HomebrewNames, raceSummary, totalLevel } from "./summaries.ts";
 import {
+  MODIFIER_REFERENCE,
   modifierTerms,
   onKind,
   onSave,
@@ -1045,7 +1046,10 @@ export function deriveCharacter(
       reducedMaximum(
         withModifiers(
           hitPointMaximum(definition, catalog.hitDice, grants),
-          modifierTerms(state, onKind("hitPointMaximum")),
+          modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
+            ...term,
+            reference: MODIFIER_REFERENCE,
+          })),
         ),
         state.hitPointMaximumReduction,
       ),

@@ -2,6 +2,7 @@ import {
   type CharacterDerived,
   type CharacterRecord,
   type CharacterState,
+  hitPointsWithin,
   modifierKey,
 } from "@dnd/character";
 import { X } from "lucide-react";
@@ -28,7 +29,7 @@ export function TemporaryModifiers({
   state,
 }: {
   character: CharacterRecord;
-  derived: Pick<CharacterDerived, "skills">;
+  derived: Pick<CharacterDerived, "skills" | "hitPointMaximum">;
   state: CharacterState;
 }) {
   const replace = useAnnouncedStateWrite(character.id);
@@ -53,10 +54,10 @@ export function TemporaryModifiers({
                   aria-disabled={replace.writing}
                   onClick={() =>
                     replace.write(
-                      {
+                      hitPointsWithin(character.definition, derived, {
                         ...state,
                         temporaryModifiers: held.filter((other) => other !== modifier),
-                      },
+                      }),
                       `${text} removed`,
                     )
                   }
@@ -75,7 +76,10 @@ export function TemporaryModifiers({
         busy={replace.writing}
         onAdd={(modifier) =>
           replace.write(
-            { ...state, temporaryModifiers: [...held, modifier] },
+            hitPointsWithin(character.definition, derived, {
+              ...state,
+              temporaryModifiers: [...held, modifier],
+            }),
             `${modifier.name} ${signed(modifier.amount)} ${targetLabel(modifier.target)} added`,
           )
         }

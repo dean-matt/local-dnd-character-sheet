@@ -3,10 +3,7 @@ import { type CharacterDerived, characterDerivedSchema } from "./characterDerive
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived, TermReference } from "./derivedField.ts";
 import { derivedValue } from "./resolve.ts";
-import type { CharacterState, HitPointMaximumReduction } from "./state.ts";
-
-/** The label of the term a reduction adds to the hit point maximum's breakdown. */
-const REDUCTION_LABEL = "Maximum reduction";
+import { type CharacterState, type HitPointMaximumReduction, REDUCTION_LABEL } from "./state.ts";
 
 const overrideSchema = characterDerivedSchema.shape.hitPointMaximum.shape.computed;
 
