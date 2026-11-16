@@ -199,7 +199,10 @@ export function RollLog({
                 </span>
                 <strong className="text-title">{roll.total}</strong>
               </span>
-              {(roll.type === "attack" || roll.type === "spell-attack" || roll.critical) && (
+              {(roll.type === "attack" ||
+                roll.type === "spell-attack" ||
+                roll.critical ||
+                (roll.mode && roll.mode !== "normal")) && (
                 <span className="flex flex-wrap items-baseline gap-1 text-muted text-row">
                   {roll.critical && <span className="font-semibold">Critical hit</span>}
                   {roll.mode && roll.mode !== "normal" && <span>{roll.mode}</span>}

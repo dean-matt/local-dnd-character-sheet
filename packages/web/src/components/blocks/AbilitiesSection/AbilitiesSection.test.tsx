@@ -788,6 +788,53 @@ describe("AbilitiesSection", () => {
       expect(posts.map((post) => post.notation)).toEqual(["1d20+3", "1d20+3", "1d20+7"]);
     });
 
+    it("offers a check, save or skill normal, advantage or disadvantage, and rolls the choice", async () => {
+      const { posts } = renderRolling();
+      for (const [name, roll] of [
+        ["Charisma check", "Roll Charisma check"],
+        ["Wisdom saving throw", "Roll Wisdom saving throw"],
+        ["Stealth check", "Roll Stealth check"],
+      ] as const) {
+        const mode = screen.getByRole("combobox", { name: `${name} mode` });
+        expect(mode).toHaveValue("normal");
+        fireEvent.change(mode, { target: { value: "disadvantage" } });
+        fireEvent.click(screen.getByRole("button", { name: roll }));
+      }
+      await waitFor(() => expect(posts).toHaveLength(3));
+      for (const post of posts as { mode: string; dice: unknown[] }[]) {
+        expect(post.mode).toBe("disadvantage");
+        expect(post.dice).toHaveLength(2);
+      }
+    });
+
+    it("starts a skill on what its chip shows, lets the player change it, and cancels a pair", async () => {
+      const record = warlock();
+      const derived = derivedFor(record);
+      const { posts } = renderRolling(201, record, {
+        ...derived,
+        rollEffects: {
+          computed: [
+            { source: "Boots of Elvenkind", mode: "advantage", roll: "skill", target: "Stealth" },
+            { source: "Armor", mode: "advantage", roll: "skill", target: "Arcana" },
+            { source: "Spell", mode: "disadvantage", roll: "skill", target: "Arcana" },
+          ],
+          manual: null,
+          terms: [],
+        },
+      });
+      const stealth = screen.getByRole("combobox", { name: "Stealth check mode" });
+      expect(stealth).toHaveValue("advantage");
+      expect(screen.getByRole("combobox", { name: "Arcana check mode" })).toHaveValue("normal");
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      await waitFor(() => expect(posts[0]?.mode).toBe("advantage"));
+      expect(
+        (await screen.findAllByText(/^Stealth check with advantage: \d+$/))[0],
+      ).toHaveAttribute("role", "status");
+      fireEvent.change(stealth, { target: { value: "normal" } });
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      await waitFor(() => expect(posts[1]?.mode).toBe("normal"));
+    });
+
     it("rolls with an override in place of the computed bonus", async () => {
       const record = warlock();
       const derived = derivedFor(record);
@@ -838,14 +885,14 @@ describe("AbilitiesSection", () => {
       await waitFor(() => expect(changes.at(-1)).toMatch(/^Stealth check: \d+$/));
     });
 
-    it("puts a row's roll button in the last column and an ability's in its tile corner", () => {
+    it("puts a row's roll button in the last column and an ability's under its tile's modifier", () => {
       renderRolling();
       const row = screen.getByRole("button", { name: "Roll Stealth check" }).closest("li");
       expect(row?.lastElementChild).toContainElement(
         screen.getByRole("button", { name: "Roll Stealth check" }),
       );
       const charisma = screen.getByRole("button", { name: "Roll Charisma check" });
-      expect(charisma.closest("dd")?.parentElement).toHaveClass("relative");
+      expect(charisma.closest("dd")?.lastElementChild).toContainElement(charisma);
       expect(
         charisma.closest("dd")?.closest("dl")?.querySelectorAll(":scope > div > :not(dt, dd)"),
       ).toHaveLength(0);
