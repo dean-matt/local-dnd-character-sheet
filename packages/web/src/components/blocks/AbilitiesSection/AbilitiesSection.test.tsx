@@ -7,8 +7,10 @@ import {
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
+import { useReplaceCharacterState } from "../../../hooks/useReplaceCharacterState.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { saveToasts } from "../../../test/saveToasts.ts";
@@ -755,6 +757,7 @@ describe("AbilitiesSection", () => {
       record = warlock(),
       derived = derivedFor(record),
       bardicInspiration: 6 | 8 | 10 | 12 | null = null,
+      aside: ReactNode = null,
     ) {
       const onRolled = vi.fn();
       stubRules([]);
@@ -788,6 +791,7 @@ describe("AbilitiesSection", () => {
         <RollingFor value="1">
           <OnRolled value={onRolled}>
             <AbilitiesSection character={record} derived={derived} />
+            {aside}
           </OnRolled>
         </RollingFor>,
       );
@@ -879,19 +883,35 @@ describe("AbilitiesSection", () => {
     });
 
     it("unticks the offer on every row when the held die changes, so a die recorded later is not added unasked", async () => {
-      const { posts } = renderRolling(201, warlock(), undefined, 8);
+      function Hold() {
+        const replace = useReplaceCharacterState("1");
+        return (
+          <button
+            type="button"
+            onClick={() => replace.mutate((latest) => ({ ...latest, bardicInspiration: 12 }))}
+          >
+            Hold d12
+          </button>
+        );
+      }
+      const { posts } = renderRolling(201, warlock(), undefined, 8, <Hold />);
       const [first, second] = await screen.findAllByRole("checkbox", {
         name: "Bardic Inspiration d8",
       });
       fireEvent.click(first as HTMLElement);
       fireEvent.click(second as HTMLElement);
-      expect(first).toBeChecked();
       fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[1] as HTMLElement);
       await waitFor(() => expect(posts).toHaveLength(1));
       await waitFor(() =>
         expect(screen.queryByRole("checkbox", { name: "Bardic Inspiration d8" })).toBeNull(),
       );
-      expect(posts[0]?.notation).toContain("1d8");
+
+      fireEvent.click(screen.getByRole("button", { name: "Hold d12" }));
+      const offers = await screen.findAllByRole("checkbox", { name: "Bardic Inspiration d12" });
+      for (const offer of offers) expect(offer).not.toBeChecked();
+      fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[0] as HTMLElement);
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]?.notation).not.toContain("1d12");
     });
 
     it("keeps the held die when the roll could not be logged", async () => {
