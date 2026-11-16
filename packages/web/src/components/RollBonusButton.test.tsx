@@ -7,7 +7,10 @@ import { characterRecord } from "../test/records.ts";
 import { RollBonusButton } from "./RollBonusButton.tsx";
 import { RollingFor } from "./rollerContext.ts";
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 function stub(logs: boolean) {
   const base = characterRecord("1", "Vex");

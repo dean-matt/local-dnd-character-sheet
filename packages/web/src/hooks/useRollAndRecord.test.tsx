@@ -44,7 +44,10 @@ async function rollUnderRule(
   return posts;
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("useRollAndRecord", () => {
   it("reads the critical-hit house rule from a character that was not yet cached", async () => {
