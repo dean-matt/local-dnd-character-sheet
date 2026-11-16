@@ -58,6 +58,7 @@ describe("default state", () => {
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
       inspiration: false,
+      bardicInspiration: null,
     });
   });
 
@@ -322,6 +323,19 @@ describe("inspiration", () => {
   it("parses a state stored before it as none", () => {
     const { inspiration: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).inspiration).toBe(false);
+  });
+});
+
+describe("bardic inspiration", () => {
+  it("stores a die size and reads back, and a state stored before it holds none", () => {
+    const held = { ...state, bardicInspiration: 8 as const };
+    expect(characterStateSchema.parse(structuredClone(held))).toEqual(held);
+    const { bardicInspiration: _, ...stored } = state;
+    expect(characterStateSchema.parse(structuredClone(stored)).bardicInspiration).toBeNull();
+  });
+
+  it("rejects a size a bard cannot grant", () => {
+    expect(characterStateSchema.safeParse({ ...state, bardicInspiration: 4 }).success).toBe(false);
   });
 });
 

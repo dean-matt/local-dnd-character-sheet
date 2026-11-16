@@ -213,6 +213,7 @@ export {
   spellDamageDice,
 } from "./spellCast.ts";
 export {
+  BARDIC_INSPIRATION_DICE,
   type CharacterState,
   type CharacterStateRecord,
   type Concentration,

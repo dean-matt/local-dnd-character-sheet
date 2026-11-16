@@ -494,6 +494,14 @@ const STATE_CHANGES: {
     one("inspiration", "Inspiration", before.inspiration, after.inspiration, (held) =>
       held ? "held" : undefined,
     ),
+  bardicInspiration: (before, after) =>
+    one(
+      "bardicInspiration",
+      "Bardic Inspiration",
+      before.bardicInspiration,
+      after.bardicInspiration,
+      (die) => (die === null ? undefined : `d${die}`),
+    ),
 };
 
 const stateChanges = (before: CharacterState, after: CharacterState) =>

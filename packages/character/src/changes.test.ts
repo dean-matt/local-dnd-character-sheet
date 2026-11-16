@@ -304,6 +304,12 @@ describe("describeStateChange", () => {
     expect(stateChangePhrases(inspired, state)).toEqual(["Inspiration cleared"]);
   });
 
+  it("records a Bardic Inspiration die held and cleared", () => {
+    const held: CharacterState = { ...state, bardicInspiration: 8 };
+    expect(stateChangePhrases(state, held)).toEqual(["Bardic Inspiration set to d8"]);
+    expect(stateChangePhrases(held, state)).toEqual(["Bardic Inspiration cleared"]);
+  });
+
   it("records a custom condition added and removed", () => {
     const marked: CharacterState = { ...state, customConditions: ["Marked"] };
     expect(describeStateChange(state, marked)).not.toBeNull();

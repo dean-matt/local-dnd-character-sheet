@@ -7,8 +7,10 @@ import {
 } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey } from "../../../hooks/characterKeys.ts";
+import { useReplaceCharacterState } from "../../../hooks/useReplaceCharacterState.ts";
 import { characterRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { saveToasts } from "../../../test/saveToasts.ts";
@@ -750,24 +752,50 @@ describe("AbilitiesSection", () => {
     };
 
     /** Records each POST to the roll log, answering it with `status`. */
-    function renderRolling(status = 201, record = warlock(), derived = derivedFor(record)) {
+    function renderRolling(
+      status = 201,
+      record = warlock(),
+      derived = derivedFor(record),
+      bardicInspiration: 6 | 8 | 10 | 12 | null = null,
+      aside: ReactNode = null,
+    ) {
       const onRolled = vi.fn();
       stubRules([]);
       const base = globalThis.fetch;
       const posts: Record<string, unknown>[] = [];
-      vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
-        if (String(url) !== "/api/characters/1/rolls") return base(url, init);
+      const stateWrites: Record<string, unknown>[] = [];
+      let play = stateRecord();
+      play = { ...play, state: { ...play.state, bardicInspiration } };
+      const answerState = (init?: RequestInit) => {
+        if (init?.method === "PUT") {
+          const sent = JSON.parse(String(init.body));
+          stateWrites.push(sent);
+          play = { ...play, state: sent };
+        }
+        return Response.json(play);
+      };
+      const answerRolls = (init?: RequestInit) => {
         if (init?.method === "POST") posts.push(JSON.parse(String(init.body)));
         return new Response(JSON.stringify(init?.method === "POST" ? logged : []), { status });
-      });
+      };
+      const answers: Record<string, (init?: RequestInit) => Response> = {
+        "/api/characters/1/state": answerState,
+        "/api/characters/1/rolls": answerRolls,
+      };
+      vi.stubGlobal(
+        "fetch",
+        async (url: RequestInfo | URL, init?: RequestInit) =>
+          answers[String(url)]?.(init) ?? base(url, init),
+      );
       renderWithClient(
         <RollingFor value="1">
           <OnRolled value={onRolled}>
             <AbilitiesSection character={record} derived={derived} />
+            {aside}
           </OnRolled>
         </RollingFor>,
       );
-      return { posts, onRolled };
+      return { posts, onRolled, stateWrites };
     }
 
     it("rolls an ability check, a save and a skill with their derived bonus, labelling, typing and naming the origin of each roll", async () => {
@@ -829,6 +857,72 @@ describe("AbilitiesSection", () => {
       expect(
         (await screen.findAllByText(/^Stealth check: \d+, including -?\d+ from -1d4$/))[0],
       ).toHaveAttribute("role", "status");
+    });
+
+    it("offers a held Bardic Inspiration die, rolls it with the d20 and clears it in one write", async () => {
+      const { posts, stateWrites } = renderRolling(201, warlock(), undefined, 8);
+      const offer = await screen.findAllByRole("checkbox", { name: "Bardic Inspiration d8" });
+      expect(offer.length).toBeGreaterThan(1);
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]?.notation).toMatch(/^1d20\+\d+$/);
+      expect(stateWrites).toHaveLength(0);
+
+      fireEvent.click(
+        screen.getAllByRole("checkbox", { name: "Bardic Inspiration d8" })[0] as HTMLElement,
+      );
+      fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[0] as HTMLElement);
+
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]?.notation).toMatch(/^1d20\+1d8[+-]\d+$/);
+      await waitFor(() => expect(stateWrites).toHaveLength(1));
+      expect(stateWrites[0]?.bardicInspiration).toBeNull();
+      await waitFor(() =>
+        expect(screen.queryByRole("checkbox", { name: "Bardic Inspiration d8" })).toBeNull(),
+      );
+    });
+
+    it("unticks the offer on every row when the held die changes, so a die recorded later is not added unasked", async () => {
+      function Hold() {
+        const replace = useReplaceCharacterState("1");
+        return (
+          <button
+            type="button"
+            onClick={() => replace.mutate((latest) => ({ ...latest, bardicInspiration: 12 }))}
+          >
+            Hold d12
+          </button>
+        );
+      }
+      const { posts } = renderRolling(201, warlock(), undefined, 8, <Hold />);
+      const [first, second] = await screen.findAllByRole("checkbox", {
+        name: "Bardic Inspiration d8",
+      });
+      fireEvent.click(first as HTMLElement);
+      fireEvent.click(second as HTMLElement);
+      fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[1] as HTMLElement);
+      await waitFor(() => expect(posts).toHaveLength(1));
+      await waitFor(() =>
+        expect(screen.queryByRole("checkbox", { name: "Bardic Inspiration d8" })).toBeNull(),
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Hold d12" }));
+      const offers = await screen.findAllByRole("checkbox", { name: "Bardic Inspiration d12" });
+      for (const offer of offers) expect(offer).not.toBeChecked();
+      fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[0] as HTMLElement);
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]?.notation).not.toContain("1d12");
+    });
+
+    it("keeps the held die when the roll could not be logged", async () => {
+      const { posts, stateWrites } = renderRolling(500, warlock(), undefined, 8);
+      const [offer] = await screen.findAllByRole("checkbox", { name: "Bardic Inspiration d8" });
+      fireEvent.click(offer as HTMLElement);
+      fireEvent.click(screen.getAllByRole("button", { name: /^Roll .* check$/ })[0] as HTMLElement);
+      await waitFor(() => expect(posts).toHaveLength(1));
+      await screen.findAllByText(/not logged/);
+      expect(stateWrites).toHaveLength(0);
+      expect(screen.getAllByRole("checkbox", { name: "Bardic Inspiration d8" })[0]).toBeChecked();
     });
 
     it("rolls nothing for an extra die that is not one, and says so", async () => {

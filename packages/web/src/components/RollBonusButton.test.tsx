@@ -77,4 +77,34 @@ describe("RollBonusButton announcement", () => {
       ),
     );
   });
+
+  it("adds a held die as its own term, so a high one is no critical hit under advantage", async () => {
+    const random = vi.spyOn(Math, "random").mockReturnValue(0.99);
+    random.mockReturnValueOnce(0).mockReturnValueOnce(0);
+    stub(true);
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <RollingFor.Provider value="1">
+          <Loaded />
+          <RollBonusButton
+            label="Stealth"
+            type="attack"
+            origin="x"
+            bonus={5}
+            critAt={20}
+            mode="advantage"
+            inspiration={6}
+          />
+        </RollingFor.Provider>
+      </QueryClientProvider>,
+    );
+    await screen.findByText("loaded");
+    fireEvent.click(screen.getByRole("button", { name: "Roll Stealth" }));
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Stealth with advantage: 12, including 6 from +1d6",
+      ),
+    );
+    expect(screen.getByRole("status")).not.toHaveTextContent("critical hit");
+  });
 });

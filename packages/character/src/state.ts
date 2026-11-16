@@ -205,6 +205,9 @@ const spentAmmunitionKey = (spent: {
   variant?: ContentRef | undefined;
 }) => `${spent.type}|${itemKey(spent)}`;
 
+/** The die sizes a bard's Bardic Inspiration grants, from a d6 to a d12. */
+export const BARDIC_INSPIRATION_DICE = [6, 8, 10, 12] as const;
+
 export const characterStateSchema = z.strictObject({
   hitPoints: hitPointsSchema,
   /** One reduction at most; a second one changes its amount. */
@@ -287,6 +290,11 @@ export const characterStateSchema = z.strictObject({
   exhaustion: z.int().min(0).max(6).default(0),
   /** One inspiration held or not; a count above one is a different rule. */
   inspiration: z.boolean().default(false),
+  /** The size of the one Bardic Inspiration die held until used; null where none is held. */
+  bardicInspiration: z
+    .union([z.literal(6), z.literal(8), z.literal(10), z.literal(12)])
+    .nullable()
+    .default(null),
 });
 
 /**
