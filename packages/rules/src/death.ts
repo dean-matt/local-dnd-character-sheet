@@ -85,6 +85,9 @@ export function deathSave(saves: DeathSaves, roll: number, modifier = 0): DeathS
   if (!Number.isInteger(roll) || roll < 1 || roll > D20_FACES) {
     throw new RangeError(`A d20 rolls 1-${D20_FACES}, got ${roll}`);
   }
+  if (!Number.isInteger(modifier)) {
+    throw new RangeError(`A death save modifier is a whole number, got ${modifier}`);
+  }
   const settled = alreadySettled(saves);
   if (settled) {
     return settled;

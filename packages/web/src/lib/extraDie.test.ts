@@ -15,7 +15,7 @@ describe("parseExtraDie", () => {
     expect(parseExtraDie("  ")).toEqual({ notation: "", count: 0 });
   });
 
-  it.each(["4", "+1d", "1d4+2", "bless"])("names %o as not a die", (text) => {
+  it.each(["4", "+1d", "1d4+2", "bless", "+1001d4", "+1d1001"])("names %o as not a die", (text) => {
     expect(parseExtraDie(text).error).toContain(text.trim());
   });
 });

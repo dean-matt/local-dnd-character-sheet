@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderVitals } from "./renderVitals.tsx";
 
 const d20 = vi.hoisted(() => ({ total: 10, extra: 0, notations: [] as string[] }));
-vi.mock("@dnd/dice", () => ({
+vi.mock("@dnd/dice", async (importOriginal) => ({
+  isRollable: (await importOriginal<typeof import("@dnd/dice")>()).isRollable,
   rollDice: (notation: string) => {
     d20.notations.push(notation);
     return { total: d20.total + d20.extra, dice: [{ value: d20.total }] };

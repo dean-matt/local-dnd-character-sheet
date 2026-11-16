@@ -72,6 +72,10 @@ describe("deathSave", () => {
     expect(() => deathSave({ successes: 0, failures: 0 }, roll)).toThrow(RangeError);
   });
 
+  it.each([1.5, Number.NaN, Number.POSITIVE_INFINITY])("rejects a modifier of %s", (modifier) => {
+    expect(() => deathSave({ successes: 0, failures: 0 }, 10, modifier)).toThrow(RangeError);
+  });
+
   it.each([-1, 4, 1.5, Number.NaN])("rejects a count of %s in either column", (count) => {
     expect(() => deathSave({ successes: count, failures: 0 }, 10)).toThrow(RangeError);
     expect(() => deathSave({ successes: 0, failures: count }, 10)).toThrow(RangeError);
