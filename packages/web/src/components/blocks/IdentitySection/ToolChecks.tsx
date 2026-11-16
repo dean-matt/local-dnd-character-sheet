@@ -53,12 +53,12 @@ function ToolCheck({
   const label = `${tool.name} check`;
   return (
     <li className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body">
-      <span className="min-w-0 flex-1">{tool.name}</span>
+      <span className="min-w-0 flex-1 basis-24 break-words">{tool.name}</span>
       <select
         aria-label={`${tool.name} ability`}
         value={ability}
         onChange={(event) => setPicked(event.target.value as Ability)}
-        className="min-h-6 rounded-control border border-border bg-surface text-label"
+        className="min-h-6 shrink-0 rounded-control border border-border bg-surface text-label"
       >
         {ABILITIES.map((each) => (
           <option key={each} value={each}>
