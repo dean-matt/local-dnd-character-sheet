@@ -468,6 +468,47 @@ describe("Attacks", () => {
       await waitFor(() => expect(mark).not.toBeChecked());
     });
 
+    it("adds an item's extra damage to the damage roll for the target alignment chosen", async () => {
+      const holy = {
+        ...attack(0, 5),
+        extraDamage: [
+          { source: "Holy Avenger", dice: "1d6", type: "radiant", targetAlignment: "CE" },
+        ],
+      };
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [holy] });
+      const roll = await screen.findByRole("button", { name: "Roll Longsword damage" });
+      fireEvent.click(roll);
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ notation: "1d8-1" });
+
+      fireEvent.change(longsword().getByRole("combobox", { name: "Target alignment" }), {
+        target: { value: "CE" },
+      });
+      expect(
+        longsword().getByRole("option", { name: "Chaotic Evil (+1d6 radiant)" }),
+      ).toBeVisible();
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Roll Longsword damage and 1d6 radiant" }),
+      );
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]).toMatchObject({ notation: "1d8+1d6-1" });
+      expect(posts[1]?.dice).toHaveLength(2);
+
+      fireEvent.click(longsword().getByRole("checkbox", { name: "Critical hit" }));
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Roll Longsword damage and 1d6 radiant" }),
+      );
+      await waitFor(() => expect(posts).toHaveLength(3));
+      expect(posts[2]).toMatchObject({ critical: true, notation: "1d8+1d6-1" });
+      expect(posts[2]?.dice).toHaveLength(4);
+    });
+
+    it("offers no target alignment where no item deals extra damage", async () => {
+      renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      await longsword().findByRole("checkbox", { name: "Critical hit" });
+      expect(longsword().queryByRole("combobox", { name: "Target alignment" })).toBeNull();
+    });
+
     it("calls out a roll at a lowered threshold", async () => {
       const lowered = {
         ...attack(0, 5),

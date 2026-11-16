@@ -811,6 +811,7 @@ describe("deriveCharacter", () => {
 
     it("attacks with a finesse dagger's better Dexterity, terms and all", () => {
       expect(attackOf(derived, 0)).toEqual({
+        extraDamage: [],
         entry: 0,
         ability: "dex",
         attackBonus: {
@@ -885,6 +886,7 @@ describe("deriveCharacter", () => {
 
     it("gives every character an unarmed strike of Strength plus proficiency, 1 plus Strength damage", () => {
       expect(derived.unarmedStrike).toEqual({
+        extraDamage: [],
         attackBonus: {
           computed: 2,
           manual: null,
@@ -1688,7 +1690,10 @@ describe("deriveCharacter", () => {
         trait(MASTERY, { proficiencyBonus: 1 }),
         trait(LUCK, { abilityCheck: 1, save: 1 }),
         trait(BIB, { critThreshold: 19 }),
-        trait(KAS, { critThreshold: 19 }),
+        trait(KAS, {
+          critThreshold: 19,
+          extraDamage: { dice: "1d6", type: "radiant", targetAlignment: "CE" },
+        }),
         trait(BELT, { grantsLanguage: true }),
         trait(BRACERS, { grantsProficiency: true }),
         trait(RING_A, { save: 2, concentration: 2, stack: { group: "ward", cap: 3 } }),
@@ -1876,6 +1881,19 @@ describe("deriveCharacter", () => {
       const others = block.attacks.filter((attack) => attack !== sword);
       expect(others.length).toBeGreaterThan(0);
       expect(others.every((attack) => attack.critThreshold.computed === 20)).toBe(true);
+    });
+
+    it("lists a weapon item's extra damage on its own attack alone, named for the item", () => {
+      const block = withItems([worn(KAS)]);
+      const sword = block.attacks.find((attack) => attack.entry === equipped.inventory.length);
+      expect(sword?.extraDamage).toEqual([
+        { source: KAS.name, dice: "1d6", type: "radiant", targetAlignment: "CE" },
+      ]);
+      expect(
+        block.attacks.filter((attack) => attack !== sword).flatMap((a) => a.extraDamage ?? []),
+      ).toEqual([]);
+      expect(block.unarmedStrike.extraDamage).toEqual([]);
+      expect(bare.attacks.flatMap((attack) => attack.extraDamage ?? [])).toEqual([]);
     });
 
     it("lists an item's vulnerability", () => {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { alignmentCode } from "./alignment.ts";
 
 /** `+1`, as upstream writes a magic item's bonus. Anything else adds nothing rather than refusing the row. */
 const signed = z
@@ -37,6 +38,24 @@ const resourceBonusSchema = z
   .optional()
   .catch(undefined);
 
+/** A malformed extra damage adds nothing, so the item's other bonuses still count. */
+const extraDamageSchema = z
+  .object({
+    dice: z.string().regex(/^\d+d\d+$/),
+    type: z.string().min(1),
+    when: z.object({ targetAlignment: z.string() }),
+  })
+  .optional()
+  .catch(undefined);
+
+/** The extra damage keyed by its alignment's code, `undefined` where the field names no alignment. */
+function byAlignmentCode(extra: z.infer<typeof extraDamageSchema>) {
+  const targetAlignment = alignmentCode(extra?.when.targetAlignment ?? "");
+  return extra && targetAlignment
+    ? { dice: extra.dice, type: extra.type, targetAlignment }
+    : undefined;
+}
+
 /** `fields` without the keys the row did not state. */
 const present = <T extends Record<string, unknown>>(fields: T) =>
   Object.fromEntries(
@@ -52,7 +71,9 @@ const ARMOR_CODES = new Set(["LA", "MA", "HA", "S"]);
  * every save, and `concentration` is `bonusSavingThrowConcentration`, added to concentration
  * saves alone. `stack` groups the item's bonuses with other equipped items naming the same
  * `group`: together they add at most `cap`. `resourceBonus` adds `amount` to the named
- * class resource's maximum, for a character with that class. `spellAttack`, `spellSaveDc`
+ * class resource's maximum, for a character with that class. `extraDamage` is dice of a
+ * damage type a weapon deals besides its own against a target of one alignment, stored by
+ * that alignment's code; one naming no alignment adds nothing. `spellAttack`, `spellSaveDc`
  * and `spellDamage` are the three `bonusSpell*` fields.
  * `abilityCheck` is `bonusAbilityCheck`, `proficiencyBonus` is `bonusProficiencyBonus`, and
  * `critThreshold` is the lowest d20 result that scores a critical hit, absent for a row
@@ -76,6 +97,7 @@ export const itemBonusSchema = z
     modifySpeed: speedModifierSchema,
     stack: stackSchema,
     resourceBonus: resourceBonusSchema,
+    extraDamage: extraDamageSchema,
     grantsProficiency: z.literal(true).optional().catch(undefined),
     grantsLanguage: z.literal(true).optional().catch(undefined),
   })
@@ -95,6 +117,7 @@ export const itemBonusSchema = z
       ...(row.critThreshold && { critThreshold: row.critThreshold }),
       ...(row.modifySpeed && { speed: row.modifySpeed }),
       ...present({ resourceBonus: row.resourceBonus }),
+      ...present({ extraDamage: byAlignmentCode(row.extraDamage) }),
     };
     const none = Object.values(bonus).every((value) => value === 0 || value === false);
     return none || code === "P" ? undefined : { ...bonus, ...(row.stack && { stack: row.stack }) };

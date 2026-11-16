@@ -52,6 +52,25 @@ describe("itemBonusSchema", () => {
     ).toBeUndefined();
   });
 
+  it("reads extra damage by target alignment as a code and ignores a malformed one", () => {
+    const extraDamage = {
+      dice: "1d6",
+      type: "radiant",
+      when: { targetAlignment: "Chaotic Evil" },
+    };
+    expect(itemBonusSchema.parse({ extraDamage })).toMatchObject({
+      extraDamage: { dice: "1d6", type: "radiant", targetAlignment: "CE" },
+    });
+    expect(
+      itemBonusSchema.parse({
+        extraDamage: { ...extraDamage, when: { targetAlignment: "Chaos" } },
+      }),
+    ).toBeUndefined();
+    expect(
+      itemBonusSchema.parse({ extraDamage: { ...extraDamage, dice: "lots" } }),
+    ).toBeUndefined();
+  });
+
   it("reads spell attack, save DC and damage bonuses", () => {
     expect(
       itemBonusSchema.parse({

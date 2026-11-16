@@ -162,6 +162,8 @@ export type ItemBonusTrait = {
   stack?: { group: string; cap: number };
   /** Added to the named class resource's maximum, for a character with that class. */
   resourceBonus?: { resource: string; amount: number; class: string };
+  /** Dice a weapon deals besides its own against a target of this alignment code. */
+  extraDamage?: { dice: string; type: string; targetAlignment: string };
 };
 
 /**
