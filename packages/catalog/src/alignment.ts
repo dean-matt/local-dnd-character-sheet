@@ -29,3 +29,15 @@ export function deityAlignmentCode(json: unknown): string | undefined {
     ? alignmentCode(letters.join(""))
     : undefined;
 }
+
+const NAMES: Readonly<Record<string, string>> = {
+  L: "Lawful",
+  N: "Neutral",
+  C: "Chaotic",
+  G: "Good",
+  E: "Evil",
+};
+
+/** The words for an alignment code: `LG` is `Lawful Good` and `N` is `True Neutral`. */
+export const alignmentName = (code: string): string =>
+  code === "N" ? "True Neutral" : [...code].map((letter) => NAMES[letter] ?? letter).join(" ");

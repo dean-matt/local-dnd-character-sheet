@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alignmentCode, deityAlignmentCode } from "./alignment";
+import { alignmentCode, alignmentName, deityAlignmentCode } from "./alignment";
 
 describe("alignmentCode", () => {
   it.each([
@@ -35,5 +35,16 @@ describe("deityAlignmentCode", () => {
     expect(deityAlignmentCode(null)).toBeUndefined();
     expect(deityAlignmentCode({ alignment: "LG" })).toBeUndefined();
     expect(deityAlignmentCode({ alignment: [1, 2] })).toBeUndefined();
+  });
+});
+
+describe("alignmentName", () => {
+  it.each([
+    ["LG", "Lawful Good"],
+    ["CE", "Chaotic Evil"],
+    ["N", "True Neutral"],
+    ["NG", "Neutral Good"],
+  ])("names %s %s", (code, name) => {
+    expect(alignmentName(code)).toBe(name);
   });
 });

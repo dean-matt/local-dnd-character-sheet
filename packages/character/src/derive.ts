@@ -514,6 +514,7 @@ function weaponStrike(
     offHand,
   });
   return {
+    extraDamage: extraDamage(definition, catalog, index),
     entry: index,
     ability: result.ability,
     attackBonus: fromBreakdown(
@@ -582,6 +583,7 @@ function derivedUnarmedStrike(
     grip: "one-handed",
   });
   return {
+    extraDamage: extraDamage(definition, catalog, -1),
     attackBonus: fromBreakdown(
       breakdown([
         ...result.attack.terms,
@@ -617,6 +619,17 @@ function critItems(
     const worn = item && entry.equipped && (entry.attuned || !item.requiresAttunement);
     return worn && (at === index || !catalog.weapons.has(itemKey(entry))) ? [item] : [];
   });
+}
+
+/** The extra damage of the items `critItems` names for the attack at `index`, each named for its item. */
+function extraDamage(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  index: number,
+): CharacterDerived["attacks"][number]["extraDamage"] {
+  return critItems(definition, catalog, index).flatMap(({ name, extraDamage: extra }) =>
+    extra ? [{ source: name, ...extra }] : [],
+  );
 }
 
 /** 20, less what the best item lowers it by: the lowest result stands rather than adding up. */

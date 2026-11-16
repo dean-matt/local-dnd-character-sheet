@@ -2,7 +2,9 @@
  * The Attacks & Spellcasting card: a row per equipped weapon, the off-hand attack of a
  * second light weapon, an unarmed strike for every character, then a row per casting class's spell attack. Every number comes off the derived
  * block; a weapon's name comes off `/characters/{id}/inventory`, since the derived block keys a weapon by its entry.
+ * Where an item deals extra damage by a target's alignment, the damage cell asks for the target's alignment, since an attack carries no target.
  */
+import { alignmentName } from "@dnd/catalog";
 import {
   type Ability,
   type CharacterDerived,
@@ -145,6 +147,7 @@ export function Attacks({
   const both = useReplaceDefinitionAndState(character.id);
   const [picked, setPicked] = useState<Record<number, number>>({});
   const play = useCharacterState(character.id);
+  const [target, setTarget] = useState<Record<string, string>>({});
   const [crit, setCrit] = useState<Record<string, boolean>>({});
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
@@ -252,12 +255,15 @@ export function Attacks({
     name: string;
     rowKey: string;
     ability: Ability;
-    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage">;
+    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage" | "extraDamage">;
     flanking: ComponentProps<typeof AttackRoll>["flanking"];
     beforeRoll?: () => Promise<boolean>;
     notes?: ReactNode;
   }) {
     const { damage } = attack;
+    const extras = attack.extraDamage ?? [];
+    const struck = extras.filter(({ targetAlignment }) => targetAlignment === target[rowKey]);
+    const alignments = [...new Set(extras.map(({ targetAlignment }) => targetAlignment))];
     return (
       <AttackRow
         key={key}
@@ -288,10 +294,10 @@ export function Attacks({
         rollDamage={
           damage && (
             <RollBonusButton
-              label={`${name} damage`}
+              label={`${name} damage${struck.map(({ dice, type }) => ` and ${dice} ${type}`).join("")}`}
               type="damage"
               origin={name}
-              dice={damage.dice}
+              dice={`${damage.dice}${struck.map(({ dice }) => `+${dice}`).join("")}`}
               bonus={derivedValue(damage.modifier)}
               critical={crit[rowKey] ?? false}
               onRolled={() => setCritical(rowKey, false)}
@@ -312,6 +318,30 @@ export function Attacks({
                   onChange={(event) => setCritical(rowKey, event.target.checked)}
                 />
                 Critical hit
+              </label>
+            )}
+            {damage && rolling && alignments.length > 0 && (
+              <label className="flex items-center gap-1 text-label">
+                Target alignment
+                <select
+                  value={target[rowKey] ?? ""}
+                  onChange={(event) =>
+                    setTarget((now) => ({ ...now, [rowKey]: event.target.value }))
+                  }
+                  className="min-h-6 min-w-0 rounded-control border border-border bg-surface"
+                >
+                  <option value="">Other</option>
+                  {alignments.map((code) => (
+                    <option key={code} value={code}>
+                      {alignmentName(code)} (
+                      {extras
+                        .filter(({ targetAlignment }) => targetAlignment === code)
+                        .map(({ dice, type }) => `+${dice} ${type}`)
+                        .join(", ")}
+                      )
+                    </option>
+                  ))}
+                </select>
               </label>
             )}
           </>

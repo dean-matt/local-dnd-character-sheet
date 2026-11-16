@@ -102,7 +102,20 @@ const rollEffectSchema = z.strictObject({
   condition: z.string().min(1).optional(),
 });
 
+/** Dice an equipped item adds to a damage roll against a target of one alignment, by that alignment's code. */
+const extraDamageSchema = z
+  .array(
+    z.strictObject({
+      source: z.string().min(1),
+      dice: z.string().min(1),
+      type: z.string().min(1),
+      targetAlignment: z.string().min(1),
+    }),
+  )
+  .optional();
+
 const attackSchema = z.strictObject({
+  extraDamage: extraDamageSchema,
   entry: z.int().min(0),
   ability: z.enum(["str", "dex"]),
   attackBonus: derivedSchema(z.int()),
@@ -259,6 +272,7 @@ export const characterDerivedSchema = z.strictObject({
   offHandAttack: attackSchema.nullable(),
   /** The attack every character can make, with no weapon: Strength plus proficiency, and 1 plus Strength bludgeoning. */
   unarmedStrike: z.strictObject({
+    extraDamage: extraDamageSchema,
     attackBonus: derivedSchema(z.int()),
     critThreshold: derivedSchema(z.int().min(2).max(20)),
     damage: z.strictObject({

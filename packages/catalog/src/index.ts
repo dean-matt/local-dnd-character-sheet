@@ -1,7 +1,7 @@
 export { abilityGrantSchema } from "./ability.ts";
 export type { IncreaseAlternative } from "./ability-increases.ts";
 export { abilityIncreasesSchema, customOrigin } from "./ability-increases.ts";
-export { deityAlignmentCode } from "./alignment.ts";
+export { alignmentName, deityAlignmentCode } from "./alignment.ts";
 export { appliedBackgroundFieldsSchema } from "./applied-background-fields.ts";
 export { appliedClassFieldsSchema } from "./applied-class-fields.ts";
 export { appliedFeatFieldsSchema } from "./applied-feat-fields.ts";
