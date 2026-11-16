@@ -8,8 +8,8 @@ import {
 import { FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
+import { ModeRoll } from "../../ModeRoll.tsx";
 import { Popover } from "../../Popover.tsx";
-import { RollBonusButton } from "../../RollBonusButton.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { RollEffectChip } from "../RollEffectChip.tsx";
 import type { Rules } from "./abilityRules.ts";
@@ -125,8 +125,9 @@ export function ProficiencyRow({
           <DerivedValue named name={roll} value={modifier} overrideKey={overrideKey} />
         </span>
       </span>
-      <span className="flex w-5 shrink-0 justify-center empty:hidden">
-        <RollBonusButton
+      <span className="flex shrink-0 justify-center empty:hidden">
+        <ModeRoll
+          effects={effects}
           label={ability ? roll : title}
           type={ability ? "check" : "save"}
           origin={name}

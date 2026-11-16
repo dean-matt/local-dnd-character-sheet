@@ -65,6 +65,24 @@ describe("RollLog's row", () => {
     expect(row?.querySelector('[title="d20, discarded"]')).toHaveClass("line-through");
   });
 
+  it("lists a check's two dice and which one counted", async () => {
+    const [row] = await listed([
+      {
+        ...roll(1, "1", "Vex"),
+        type: "check",
+        notation: "1d20+3",
+        total: 11,
+        mode: "disadvantage",
+        modifier: 3,
+        dice: [
+          { faces: 20, value: 8, kept: true, sign: 1 },
+          { faces: 20, value: 17, kept: false, sign: 1 },
+        ],
+      },
+    ]);
+    expect(row).toHaveTextContent("disadvantage817 discarded+ 3");
+  });
+
   it("tags a roll with its type, and an untyped one with nothing", async () => {
     const [typed, hitDie, untyped] = await listed([
       { ...roll(3, "1", "Vex"), type: "spell-attack" },

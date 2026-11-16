@@ -16,8 +16,8 @@ import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterD
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
 import { InputField } from "../../InputField.tsx";
+import { ModeRoll } from "../../ModeRoll.tsx";
 import { Popover } from "../../Popover.tsx";
-import { RollBonusButton } from "../../RollBonusButton.tsx";
 import { DerivedBreakdown } from "../DerivedBreakdown.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { signed } from "../signed.ts";
@@ -89,7 +89,7 @@ export function AbilityScores({
               name={ABILITY_LABEL[ability]}
               labelClassName={ABILITY_LABEL_CLASS}
               corner={
-                <RollBonusButton
+                <ModeRoll
                   label={`${ABILITY_LABEL[ability]} check`}
                   type="check"
                   origin={ABILITY_LABEL[ability]}
