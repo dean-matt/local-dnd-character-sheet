@@ -829,6 +829,33 @@ describe("deriveCharacter", () => {
       });
     });
 
+    it("gives every character an unarmed strike of Strength plus proficiency, 1 plus Strength damage", () => {
+      expect(derived.unarmedStrike).toEqual({
+        attackBonus: {
+          computed: 2,
+          manual: null,
+          terms: [
+            { label: "Strength", value: -1 },
+            { label: "Proficiency", value: 3, reference: undefined },
+          ],
+        },
+        critThreshold: { computed: 20, manual: null, terms: [{ label: "Base", value: 20 }] },
+        damage: {
+          dice: "1d1",
+          type: "bludgeoning",
+          modifier: { computed: -1, manual: null, terms: [{ label: "Strength", value: -1 }] },
+        },
+      });
+    });
+
+    it("keeps a manual override of the unarmed strike beside its computed value", () => {
+      const edited = deriveCharacter(
+        { ...definition, overrides: { "unarmedStrike.attackBonus": 9 } },
+        catalog,
+      );
+      expect(edited.unarmedStrike.attackBonus).toMatchObject({ computed: 2, manual: 9 });
+    });
+
     it("lists only weapons, skipping the armor and the homebrew trinket", () => {
       expect(derived.attacks.map((attack) => attack.entry)).toEqual([0]);
     });

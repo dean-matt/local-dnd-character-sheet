@@ -525,6 +525,48 @@ function derivedAttacks(
   });
 }
 
+/** The flat 1 an unarmed strike deals, as the one-faced die the roller needs to start a roll with. */
+const UNARMED_DICE = "1d1";
+
+/** Every character's unarmed strike: proficient, Strength-based, 1 bludgeoning plus Strength, in either edition. */
+function derivedUnarmedStrike(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  bonuses: readonly ItemBonusTrait[],
+  rage: RageBenefits,
+  modifiers: readonly Term<TermReference>[],
+): CharacterDerived["unarmedStrike"] {
+  const level = totalLevel(definition);
+  const strength = abilityModifier(scoreOf(definition, catalog, "str"));
+  const result = weaponAttack<TermReference>({
+    weapon: { kind: "melee", damage: UNARMED_DICE },
+    strengthModifier: strength,
+    dexterityModifier: strength,
+    proficiency: proficiencyContribution(level, "proficient"),
+    grip: "one-handed",
+  });
+  return {
+    attackBonus: fromBreakdown(
+      breakdown([
+        ...result.attack.terms,
+        ...proficiencyItemTerms(level, "proficient", bonuses),
+        ...modifiers,
+      ]),
+    ),
+    critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, -1))),
+    damage: {
+      dice: UNARMED_DICE,
+      type: "bludgeoning",
+      modifier: fromBreakdown(
+        breakdown([
+          ...(result.damage?.modifier.terms ?? []),
+          ...rageDamageTerms(rage, definition.edition, "melee", "str"),
+        ]),
+      ),
+    },
+  };
+}
+
 /**
  * The items whose critical threshold applies to the attack at inventory `index`: a weapon
  * item lowers the threshold of its own attack only, and any other item lowers every attack's.
@@ -1089,6 +1131,13 @@ export function deriveCharacter(
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
     attacks: derivedAttacks(
+      definition,
+      catalog,
+      bonuses,
+      rage,
+      modifierTerms(state, onKind("attackRolls")),
+    ),
+    unarmedStrike: derivedUnarmedStrike(
       definition,
       catalog,
       bonuses,

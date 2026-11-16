@@ -20,7 +20,7 @@ export function AttackDamage({
   children,
 }: {
   name: string;
-  attack: Attack;
+  attack: Pick<Attack, "damage" | "critThreshold">;
   overrideKey: string;
   children: ReactNode;
 }) {

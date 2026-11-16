@@ -39,6 +39,23 @@ const attack = (entry: number, bonus: number): CharacterDerived["attacks"][numbe
   reload: null,
 });
 
+const unarmedStrike: CharacterDerived["unarmedStrike"] = {
+  attackBonus: {
+    computed: 5,
+    manual: null,
+    terms: [
+      { label: "Strength", value: 3 },
+      { label: "Proficiency", value: 2 },
+    ],
+  },
+  critThreshold: { computed: 20, manual: null, terms: [] },
+  damage: {
+    dice: "1d1",
+    type: "bludgeoning",
+    modifier: { computed: 0, manual: null, terms: [] },
+  },
+};
+
 function renderAttacks(derived: CharacterDerived) {
   stubFetchByUrl({
     "/api/characters/1/inventory": {
@@ -47,6 +64,9 @@ function renderAttacks(derived: CharacterDerived) {
   });
   renderWithClient(<Attacks character={vex()} derived={derived} />);
 }
+
+const longsword = () =>
+  within(screen.getByRole("rowheader", { name: /^Longsword/ }).closest("tr") as HTMLElement);
 
 const rows = () =>
   within(screen.getByRole("region", { name: "Attacks & Spellcasting" })).getAllByRole("row");
@@ -61,6 +81,7 @@ describe("Attacks", () => {
     expect(rows().map((row) => row.textContent)).toEqual([
       "NameBonusDamage / TypeRoll attackRoll damage",
       "Longsword+51d8-1 slashing",
+      "Unarmed Strike+11d1-1 bludgeoning",
       "Warlock spell attack+5—None",
     ]);
   });
@@ -231,10 +252,23 @@ describe("Attacks", () => {
     ).toHaveTextContent("Charisma3Proficiency2");
   });
 
-  it("says so when nothing is equipped and nothing casts", () => {
-    renderAttacks({ ...derivedRecord(), spellcasting: [], attacks: [attack(1, 2)] });
+  it("lists an unarmed strike when nothing is equipped and nothing casts", async () => {
+    renderAttacks({ ...derivedRecord(), spellcasting: [], attacks: [attack(1, 2)], unarmedStrike });
 
-    expect(screen.getByText("No weapon equipped.")).toBeInTheDocument();
+    expect(await screen.findByRole("rowheader", { name: "Unarmed Strike" })).toBeInTheDocument();
+    expect(rows().map((row) => row.textContent)).toEqual([
+      "NameBonusDamage / TypeRoll attackRoll damage",
+      "Unarmed Strike+51d1 bludgeoning",
+    ]);
+  });
+
+  it("opens the unarmed strike's bonus terms and takes an override", async () => {
+    renderAttacks({ ...derivedRecord(), attacks: [], unarmedStrike });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Unarmed Strike attack bonus +5" }));
+    expect(
+      screen.getByRole("group", { name: "Unarmed Strike attack bonus breakdown" }),
+    ).toHaveTextContent("Strength3Proficiency2");
   });
 
   describe("roll buttons", () => {
@@ -302,6 +336,18 @@ describe("Attacks", () => {
       ]);
     });
 
+    it("rolls the unarmed strike's attack and damage, each labelled and from its origin", async () => {
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [], unarmedStrike });
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Unarmed Strike attack" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Unarmed Strike damage" }));
+
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts.map((post) => [post.label, post.notation, post.type, post.origin])).toEqual([
+        ["Unarmed Strike attack", "1d20+5", "attack", "Unarmed Strike"],
+        ["Unarmed Strike damage", "1d1", "damage", "Unarmed Strike"],
+      ]);
+    });
+
     it("rolls a die the player names with the attack, as its own signed term", async () => {
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
       fireEvent.change(await screen.findByRole("textbox", { name: "Longsword attack extra die" }), {
@@ -321,7 +367,7 @@ describe("Attacks", () => {
     it("calls out a natural 20 and doubles the damage dice, not the modifier, once", async () => {
       vi.spyOn(Math, "random").mockReturnValue(0.99);
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
-      const mark = await screen.findByRole("checkbox", { name: "Critical hit" });
+      const mark = await longsword().findByRole("checkbox", { name: "Critical hit" });
       expect(mark).not.toBeChecked();
       fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
 
@@ -344,7 +390,7 @@ describe("Attacks", () => {
       renderRolling({ ...derivedRecord(), attacks: [lowered] });
       fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
       await waitFor(() =>
-        expect(screen.getByRole("checkbox", { name: "Critical hit" })).toBeChecked(),
+        expect(longsword().getByRole("checkbox", { name: "Critical hit" })).toBeChecked(),
       );
     });
 
@@ -357,7 +403,7 @@ describe("Attacks", () => {
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [lowered] });
       fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
       await waitFor(() => expect(posts).toHaveLength(1));
-      expect(screen.getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
+      expect(longsword().getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
     });
 
     it("calls out a spell attack's natural 20 and clears it on the next roll", async () => {
@@ -365,12 +411,12 @@ describe("Attacks", () => {
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [] });
       const roll = await screen.findByRole("button", { name: "Roll Warlock spell attack" });
       fireEvent.click(roll);
-      expect(await screen.findByText("Critical hit")).toBeVisible();
+      expect(await screen.findByText("Critical hit", { selector: "p" })).toBeVisible();
 
       random.mockReturnValue(0.5);
       fireEvent.click(roll);
       await waitFor(() => expect(posts).toHaveLength(2));
-      await waitFor(() => expect(screen.queryByText("Critical hit")).toBeNull());
+      await waitFor(() => expect(screen.queryByText("Critical hit", { selector: "p" })).toBeNull());
     });
 
     it("does not call out a roll below the threshold", async () => {
@@ -378,12 +424,12 @@ describe("Attacks", () => {
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
       fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
       await waitFor(() => expect(posts).toHaveLength(1));
-      expect(screen.getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
+      expect(longsword().getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
     });
 
     it("doubles the damage dice of a roll marked critical by hand", async () => {
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
-      fireEvent.click(await screen.findByRole("checkbox", { name: "Critical hit" }));
+      fireEvent.click(await longsword().findByRole("checkbox", { name: "Critical hit" }));
       fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
 
       await waitFor(() => expect(posts).toHaveLength(1));
@@ -396,7 +442,7 @@ describe("Attacks", () => {
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] }, 201, [], {
         criticalHit: "maximum",
       });
-      fireEvent.click(await screen.findByRole("checkbox", { name: "Critical hit" }));
+      fireEvent.click(await longsword().findByRole("checkbox", { name: "Critical hit" }));
       fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
 
       await waitFor(() => expect(posts).toHaveLength(1));
@@ -408,7 +454,7 @@ describe("Attacks", () => {
       it("offers none as printed", async () => {
         renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
         await screen.findByRole("button", { name: "Roll Longsword attack" });
-        expect(screen.queryByRole("checkbox", { name: "Flanking" })).toBeNull();
+        expect(longsword().queryByRole("checkbox", { name: "Flanking" })).toBeNull();
       });
 
       it("offers none on a weapon that states a range", async () => {
@@ -422,7 +468,7 @@ describe("Attacks", () => {
           { flanking: "advantage" },
         );
         await screen.findByRole("button", { name: "Roll Longsword attack" });
-        expect(screen.queryByRole("checkbox", { name: "Flanking" })).toBeNull();
+        expect(longsword().queryByRole("checkbox", { name: "Flanking" })).toBeNull();
       });
 
       it("offers none on a weapon that fires ammunition", async () => {
@@ -441,7 +487,7 @@ describe("Attacks", () => {
           { flanking: "advantage" },
         );
         await screen.findByRole("button", { name: "Roll Longsword attack" });
-        expect(screen.queryByRole("checkbox", { name: "Flanking" })).toBeNull();
+        expect(longsword().queryByRole("checkbox", { name: "Flanking" })).toBeNull();
       });
 
       it("gives advantage that nets against a condition's disadvantage", async () => {
@@ -449,7 +495,7 @@ describe("Attacks", () => {
           flanking: "advantage",
         });
         const mode = await screen.findByRole("combobox", { name: "Longsword attack mode" });
-        fireEvent.click(screen.getByRole("checkbox", { name: "Flanking" }));
+        fireEvent.click(longsword().getByRole("checkbox", { name: "Flanking" }));
         expect(mode).toHaveValue("advantage");
         expect(mode).toHaveAccessibleDescription("Flanking: advantage");
       });
@@ -463,7 +509,7 @@ describe("Attacks", () => {
         );
         const mode = await screen.findByRole("combobox", { name: "Longsword attack mode" });
         await waitFor(() => expect(mode).toHaveValue("disadvantage"));
-        fireEvent.click(screen.getByRole("checkbox", { name: "Flanking" }));
+        fireEvent.click(longsword().getByRole("checkbox", { name: "Flanking" }));
         expect(mode).toHaveValue("normal");
       });
 
@@ -472,7 +518,7 @@ describe("Attacks", () => {
         const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] }, 201, [], {
           flanking: "bonus",
         });
-        fireEvent.click(await screen.findByRole("checkbox", { name: "Flanking" }));
+        fireEvent.click(await longsword().findByRole("checkbox", { name: "Flanking" }));
         fireEvent.click(
           screen.getByRole("button", { name: "Roll Longsword attack while flanking +2" }),
         );
@@ -558,7 +604,7 @@ describe("Attacks", () => {
     it("has no damage button on a weapon with no damage", async () => {
       renderRolling({ ...derivedRecord(), attacks: [{ ...attack(0, 5), damage: null }] });
       await screen.findByRole("button", { name: "Roll Longsword attack" });
-      expect(screen.queryByRole("button", { name: /damage$/ })).toBeNull();
+      expect(longsword().queryByRole("button", { name: /damage$/ })).toBeNull();
     });
 
     it("hands the recorded entry to the layout and announces the total without moving focus", async () => {

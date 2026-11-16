@@ -255,6 +255,16 @@ export const characterDerivedSchema = z.strictObject({
       reload: z.int().min(1).nullable(),
     }),
   ),
+  /** The attack every character can make, with no weapon: Strength plus proficiency, and 1 plus Strength bludgeoning. */
+  unarmedStrike: z.strictObject({
+    attackBonus: derivedSchema(z.int()),
+    critThreshold: derivedSchema(z.int().min(2).max(20)),
+    damage: z.strictObject({
+      dice: z.string().min(1),
+      type: z.string().min(1),
+      modifier: derivedSchema(z.int()),
+    }),
+  }),
   /**
    * Resistances, immunities and vulnerabilities from the race, then from each feat, then from each equipped item, attuned where it must be, then a rage's while the play state holds one.
    *
