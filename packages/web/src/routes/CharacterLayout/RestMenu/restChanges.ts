@@ -240,7 +240,7 @@ export function spendBase(
 /**
  * The state a rest leaves and what it changes on the sheet, so the menu's summary and the
  * dialog's list describe the one rest the dialog writes. The hit dice in `spends` are spent
- * before the rest, or after it where `spendsAfterRest`, so the list and the write carry them with its own recovery. Each of
+ * before the rest, or after it where `spendsAfterRest`; the list and the write agree on which. Each of
  * `features` whose reset the rest meets has its uses restored, and a long rest returns each of
  * `recharges` its charges.
  */

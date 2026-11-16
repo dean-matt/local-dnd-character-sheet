@@ -6,7 +6,7 @@ import {
   derivedValue,
 } from "@dnd/character";
 import { focusManager } from "@tanstack/react-query";
-import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
@@ -209,6 +209,27 @@ describe("RestMenu", () => {
     await openMenu();
     expect(screen.getByRole("button", { name: "Short rest" })).toHaveAccessibleDescription(
       "Recover pact slots and Ki",
+    );
+  });
+
+  it("names the long rest's recovery, leaving hit points out under slow natural healing", async () => {
+    renderLive(spent());
+    await openMenu();
+    expect(screen.getByRole("button", { name: "Long rest" })).toHaveAccessibleDescription(
+      "Restore HP, Hit Dice and spent resources",
+    );
+    cleanup();
+
+    const character = characterRecord("1", "Vex") as CharacterRecord;
+    renderLive(spent(), {
+      character: {
+        ...character,
+        definition: { ...character.definition, houseRules: { slowNaturalHealing: true } },
+      },
+    });
+    await openMenu();
+    expect(screen.getByRole("button", { name: "Long rest" })).toHaveAccessibleDescription(
+      "Restore Hit Dice and spent resources",
     );
   });
 

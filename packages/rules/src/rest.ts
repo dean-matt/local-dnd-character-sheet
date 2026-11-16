@@ -135,8 +135,8 @@ function recovered(pools: readonly Pool[], options: RestOptions): Pool[] {
  * The state after a rest. A short rest resets pact slots and short-rest resources and
  * returns no hit dice, since spending them is a choice made apart from the rest. A long
  * rest restores everything a short one does, writes hit points back as null so they read
- * as the maximum, unless `slowHealing` keeps them, clears temporary hit points and expended slots, lowers exhaustion by 1
- * and returns hit dice by `hitDiceRecovered`.
+ * as the maximum, clears temporary hit points and expended slots, lowers exhaustion by 1
+ * and returns hit dice by `hitDiceRecovered`. `slowHealing` keeps the hit points instead.
  *
  * Throws a RangeError, returning nothing, on a long rest at 0 hit points, when `picked` is missing where it is needed, picks
  * more dice than return, or names a size more times than dice of it were spent, and when a
