@@ -47,6 +47,8 @@ describe("HouseRulesCard", () => {
       "Equipping without proficiency",
       "Massive damage",
       "Material components",
+      "Critical hits",
+      "Flanking",
     ]);
   });
 

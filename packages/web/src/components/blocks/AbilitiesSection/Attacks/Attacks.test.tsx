@@ -1,6 +1,8 @@
 import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { characterKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { renderWithClient } from "../../../../test/renderWithClient.tsx";
 import { stubFetchByUrl } from "../../../../test/stubFetch.ts";
@@ -253,6 +255,7 @@ describe("Attacks", () => {
       derived: CharacterDerived,
       status = 201,
       conditions: { name: string; source: string }[] = [],
+      houseRules: Record<string, string> = {},
     ) {
       const onRolled = vi.fn();
       const posts: Record<string, unknown>[] = [];
@@ -267,12 +270,20 @@ describe("Attacks", () => {
         if (init?.method === "POST") posts.push(JSON.parse(String(init.body)));
         return new Response(JSON.stringify(logged), { status });
       });
-      renderWithClient(
-        <RollingFor value="1">
-          <OnRolled value={onRolled}>
-            <Attacks character={vex()} derived={derived} />
-          </OnRolled>
-        </RollingFor>,
+      const character = {
+        ...vex(),
+        definition: characterDefinitionSchema.parse({ ...vex().definition, houseRules }),
+      };
+      const client = new QueryClient();
+      client.setQueryData(characterKey("1"), character);
+      render(
+        <QueryClientProvider client={client}>
+          <RollingFor value="1">
+            <OnRolled value={onRolled}>
+              <Attacks character={character} derived={derived} />
+            </OnRolled>
+          </RollingFor>
+        </QueryClientProvider>,
       );
       return { posts, onRolled };
     }
@@ -362,6 +373,92 @@ describe("Attacks", () => {
       await waitFor(() => expect(posts).toHaveLength(1));
       expect(posts[0]).toMatchObject({ critical: true, modifier: -1 });
       expect(posts[0]?.dice).toHaveLength(2);
+    });
+
+    it("counts one set of the damage dice at its maximum on a critical where the table plays it", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] }, 201, [], {
+        criticalHit: "maximum",
+      });
+      fireEvent.click(await screen.findByRole("checkbox", { name: "Critical hit" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ critical: true, total: 8, modifier: -1 });
+      expect(posts[0]).toMatchObject({ dice: [{ value: 8 }, { value: 1 }] });
+    });
+
+    describe("flanking", () => {
+      it("offers none as printed", async () => {
+        renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+        await screen.findByRole("button", { name: "Roll Longsword attack" });
+        expect(screen.queryByRole("checkbox", { name: "Flanking" })).toBeNull();
+      });
+
+      it("offers none on a spell attack or a weapon that fires ammunition", async () => {
+        renderRolling(
+          {
+            ...derivedRecord(),
+            attacks: [
+              {
+                ...attack(0, 5),
+                ammunition: { type: "arrow|phb", stacks: [{ entry: 1, quantity: 5 }] },
+              },
+            ],
+          },
+          201,
+          [],
+          { flanking: "advantage" },
+        );
+        await screen.findByRole("button", { name: "Roll Longsword attack" });
+        expect(screen.queryByRole("checkbox", { name: "Flanking" })).toBeNull();
+      });
+
+      it("gives advantage that nets against a condition's disadvantage", async () => {
+        renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] }, 201, [], {
+          flanking: "advantage",
+        });
+        const mode = await screen.findByRole("combobox", { name: "Longsword attack mode" });
+        fireEvent.click(screen.getByRole("checkbox", { name: "Flanking" }));
+        expect(mode).toHaveValue("advantage");
+        expect(mode).toHaveAccessibleDescription("Flanking: advantage");
+      });
+
+      it("cancels against a poisoned character's disadvantage", async () => {
+        renderRolling(
+          { ...derivedRecord(), attacks: [attack(0, 5)] },
+          201,
+          [{ name: "Poisoned", source: "x" }],
+          { flanking: "advantage" },
+        );
+        const mode = await screen.findByRole("combobox", { name: "Longsword attack mode" });
+        await waitFor(() => expect(mode).toHaveValue("disadvantage"));
+        fireEvent.click(screen.getByRole("checkbox", { name: "Flanking" }));
+        expect(mode).toHaveValue("normal");
+      });
+
+      it("adds 2 and names it in the logged roll", async () => {
+        vi.spyOn(Math, "random").mockReturnValue(0);
+        const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] }, 201, [], {
+          flanking: "bonus",
+        });
+        fireEvent.click(await screen.findByRole("checkbox", { name: "Flanking" }));
+        fireEvent.click(
+          screen.getByRole("button", { name: "Roll Longsword attack while flanking +2" }),
+        );
+
+        await waitFor(() => expect(posts).toHaveLength(1));
+        expect(posts[0]).toMatchObject({
+          label: "Longsword attack while flanking +2",
+          notation: "1d20+7",
+          modifier: 7,
+          total: 8,
+        });
+        expect(await screen.findByText("Longsword attack while flanking +2: 8")).toHaveAttribute(
+          "role",
+          "status",
+        );
+      });
     });
 
     const effects = (...list: CharacterDerived["rollEffects"]["computed"]) => ({

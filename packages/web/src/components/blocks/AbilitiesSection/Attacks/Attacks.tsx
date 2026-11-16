@@ -12,6 +12,7 @@ import {
   displayName,
   effectsOnRoll,
   entryKey,
+  houseRule,
   itemKey,
   overrideKey,
   type SpentAmmunition,
@@ -53,6 +54,11 @@ function critRange({ critThreshold }: CharacterDerived["attacks"][number]) {
 }
 
 type Attack = CharacterDerived["attacks"][number];
+
+/** The table's flanking rule for a weapon that fires no ammunition, which the sheet takes for melee. */
+function meleeFlanking(attack: Attack, definition: CharacterRecord["definition"]) {
+  return attack.ammunition ? undefined : houseRule(definition, "flanking");
+}
 
 /** The stack an attack spends from: the one picked while it is still a stack, else the first. */
 function spendFrom(attack: Attack, picked: number | undefined) {
@@ -308,6 +314,7 @@ export function Attacks({
                       effects={attackEffects(attack.ability)}
                       beforeRoll={attack.ammunition ? () => spend(attack, name) : undefined}
                       critAt={derivedValue(attack.critThreshold)}
+                      flanking={meleeFlanking(attack, definition)}
                       onRolled={(hit) => setCritical(key, hit)}
                     />
                   }

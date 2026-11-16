@@ -217,6 +217,21 @@ describe("rollDice", () => {
     expect(roll.notation).toBe("1d8+3");
   });
 
+  it("counts the first set at its maximum and rolls the second on a maximum critical", () => {
+    const roll = rollDice("2d8+3", {
+      critical: true,
+      maximumCritical: true,
+      random: loaded(8, 1, 1, 5, 7),
+    });
+    expect(values(roll)).toEqual([8, 8, 5, 7]);
+    expect(roll.total).toBe(31);
+    expect(roll.critical).toBe(true);
+  });
+
+  it("rolls normally when a maximum critical is asked for without a critical", () => {
+    expect(values(rollDice("1d8", { maximumCritical: true, random: loaded(8, 3) }))).toEqual([3]);
+  });
+
   it("doubles every pool of a critical and keeps each pool's dice together", () => {
     const roll = rollDice("1d8+1d6+3", {
       critical: true,
