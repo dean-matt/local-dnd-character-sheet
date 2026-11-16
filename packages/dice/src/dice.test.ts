@@ -217,6 +217,53 @@ describe("rollDice", () => {
     expect(roll.notation).toBe("1d8+3");
   });
 
+  it("counts the first set at its maximum and rolls the second on a maximum critical", () => {
+    const roll = rollDice("2d8+3", {
+      critical: true,
+      maximumCritical: true,
+      random: loaded(8, 1, 1, 5, 7),
+    });
+    expect(values(roll)).toEqual([8, 8, 5, 7]);
+    expect(roll.total).toBe(31);
+    expect(roll.critical).toBe(true);
+  });
+
+  it("maximizes the first copy of every pool on a maximum critical", () => {
+    const roll = rollDice("1d8+1d6+3", {
+      critical: true,
+      maximumCritical: true,
+      random: loadedMixed([8, 2], [8, 5], [6, 3], [6, 4]),
+    });
+    expect(values(roll)).toEqual([8, 5, 6, 4]);
+    expect(roll.total).toBe(26);
+  });
+
+  it("maximizes only the kept dice of a keep clause and leaves a dropped one as rolled", () => {
+    const roll = rollDice("4d6kh3", {
+      critical: true,
+      maximumCritical: true,
+      random: loaded(6, 1, 2, 3, 4, 6, 6, 6, 1),
+    });
+    expect(roll.dice.slice(0, 4).filter((die) => die.kept)).toHaveLength(3);
+    expect(roll.dice.slice(0, 4).filter((die) => die.kept && die.value === 6)).toHaveLength(3);
+    expect(roll.dice.find((die) => !die.kept)?.value).toBe(1);
+    expect(roll.total).toBe(18 + 18);
+  });
+
+  it("counts a subtracted pool at its maximum too, with its sign", () => {
+    const roll = rollDice("2d6-1d4", {
+      critical: true,
+      maximumCritical: true,
+      random: loadedMixed([6, 1], [6, 1], [6, 2], [6, 3], [4, 1], [4, 2]),
+    });
+    expect(roll.dice.map((die) => die.sign)).toEqual([1, 1, 1, 1, -1, -1]);
+    expect(roll.total).toBe(12 + 5 - 4 - 2);
+  });
+
+  it("rolls normally when a maximum critical is asked for without a critical", () => {
+    expect(values(rollDice("1d8", { maximumCritical: true, random: loaded(8, 3) }))).toEqual([3]);
+  });
+
   it("doubles every pool of a critical and keeps each pool's dice together", () => {
     const roll = rollDice("1d8+1d6+3", {
       critical: true,

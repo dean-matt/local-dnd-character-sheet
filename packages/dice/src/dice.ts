@@ -66,6 +66,11 @@ type RollOptions = {
    * `1d8+3` gives `2d8+6`, wrong by the modifier.
    */
   critical?: boolean;
+  /**
+   * With `critical`, the first copy of every pool counts at its maximum and only the second
+   * is rolled, as a table that maxes the dice and adds a roll plays a critical hit.
+   */
+  maximumCritical?: boolean;
   /** Returns a float in [0, 1), like `Math.random`. Injected so tests are deterministic. */
   random?: () => number;
 };
@@ -315,6 +320,17 @@ function rollPool(
   return rolled;
 }
 
+function rollCopy(
+  term: DiceTerm,
+  maximum: boolean,
+  mode: RollMode,
+  d20: D20Option | undefined,
+  random: () => number,
+): RolledDie[] {
+  const pool = rollPool(term, mode, d20, random);
+  return maximum ? pool.map((die) => (die.kept ? { ...die, value: die.faces } : die)) : pool;
+}
+
 /**
  * Rolls `notation`. Malformed notation throws a `SyntaxError`, a quantity out of bounds
  * a `RangeError`, and every message names the offending input.
@@ -334,7 +350,13 @@ function rollPool(
  * the roll the notation describes.
  */
 export function rollDice(notation: string, options: RollOptions = {}): Roll {
-  const { mode = "normal", critical = false, d20, random = Math.random } = options;
+  const {
+    mode = "normal",
+    critical = false,
+    maximumCritical = false,
+    d20,
+    random = Math.random,
+  } = options;
   const parsed = parseDice(notation);
   const { terms, modifier, pooled } = parsed;
 
@@ -353,12 +375,11 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const repeats = critical ? 2 : 1;
   checkPooled(pooled * repeats, notation);
 
-  const dice: RolledDie[] = [];
-  for (const term of terms) {
-    for (let repeat = 0; repeat < repeats; repeat += 1) {
-      dice.push(...rollPool(term, mode, d20, random));
-    }
-  }
+  const dice = terms.flatMap((term) =>
+    Array.from({ length: repeats }, (_, repeat) =>
+      rollCopy(term, repeat === 0 && critical && maximumCritical, mode, d20, random),
+    ).flat(),
+  );
 
   const total =
     dice.reduce((sum, die) => sum + (die.kept ? die.sign * die.value : 0), 0) + modifier;

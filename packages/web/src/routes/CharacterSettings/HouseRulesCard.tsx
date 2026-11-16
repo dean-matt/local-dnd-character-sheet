@@ -6,6 +6,21 @@ import { useHeldSave } from "../../hooks/useHeldSave.ts";
 type Edition = CharacterRecord["edition"];
 
 type Outcome = { label: string; description: string };
+type Choice = Outcome & { value: string | boolean };
+type Option = { name: string; editions: Edition[] } & (
+  | { printed: Outcome; house: Outcome }
+  | { modes: [Choice, ...Choice[]] }
+);
+
+/** A boolean option's two outcomes, or a mode option's list with the rule as printed first. */
+function choicesOf(option: Option): Choice[] {
+  return "modes" in option
+    ? option.modes
+    : [
+        { value: false, ...option.printed },
+        { value: true, ...option.house },
+      ];
+}
 
 /**
  * Every option the vocabulary holds, so one added there fails to compile until it is named
@@ -13,10 +28,7 @@ type Outcome = { label: string; description: string };
  * what the sheet does instead. `editions` leaves out an edition where the option changes
  * nothing.
  */
-const OPTIONS: Record<
-  HouseRule,
-  { name: string; printed: Outcome; house: Outcome; editions: Edition[] }
-> = {
+const OPTIONS: Record<HouseRule, Option> = {
   encumbrance: {
     name: "Encumbrance",
     printed: {
@@ -149,6 +161,47 @@ const OPTIONS: Record<
     },
     editions: ["classic", "one"],
   },
+  criticalHit: {
+    name: "Critical hits",
+    editions: ["classic", "one"],
+    modes: [
+      {
+        value: "double",
+        label: "Roll the dice twice",
+        description:
+          "A critical hit rolls the damage dice twice and adds the modifier once, for weapon and spell damage alike.",
+      },
+      {
+        value: "maximum",
+        label: "Maximum plus a roll",
+        description:
+          "A critical hit counts one set of the damage dice at its highest faces, rolls the other and adds the modifier once.",
+      },
+    ],
+  },
+  flanking: {
+    name: "Flanking",
+    editions: ["classic", "one"],
+    modes: [
+      {
+        value: "none",
+        label: "No flanking",
+        description: "Position gives no bonus on a melee attack roll.",
+      },
+      {
+        value: "advantage",
+        label: "Advantage",
+        description:
+          "A melee attack roll offers a Flanking checkbox that gives advantage, netted with the advantage and disadvantage your conditions and effects impose.",
+      },
+      {
+        value: "bonus",
+        label: "+2 bonus",
+        description:
+          "A melee attack roll offers a Flanking checkbox that adds 2 to the roll and names it in the roll log.",
+      },
+    ],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];
@@ -163,14 +216,14 @@ const RULES = Object.keys(OPTIONS) as HouseRule[];
 export function HouseRulesCard({ character }: { character: CharacterRecord }) {
   const write = useHeldSave(character.id, "House rules");
   const ids = useId();
-  const [pending, setPending] = useState<Partial<Record<HouseRule, boolean>>>({});
+  const [pending, setPending] = useState<Partial<Record<HouseRule, string | boolean>>>({});
   const { definition } = character;
 
-  const choose = (rule: HouseRule, on: boolean) => {
+  const choose = (rule: HouseRule, on: string | boolean) => {
     setPending((current) => ({ ...current, [rule]: on }));
     write(rule, (latest) => ({
       ...latest,
-      houseRules: { ...latest.houseRules, [rule]: on },
+      houseRules: { ...latest.houseRules, [rule]: on } as typeof latest.houseRules,
     })).then(() =>
       // A later click still in flight keeps its own state.
       setPending(({ [rule]: shown, ...rest }) =>
@@ -184,13 +237,15 @@ export function HouseRulesCard({ character }: { character: CharacterRecord }) {
       <div className="flex flex-col gap-4">
         {RULES.filter((rule) => OPTIONS[rule].editions.includes(definition.edition)).map((rule) => {
           const option = OPTIONS[rule];
+          const choices = choicesOf(option);
           const on = pending[rule] ?? houseRule(definition, rule);
+          const shown = choices.find(({ value }) => value === on) ?? choices[0];
           const hint = `${ids}-${rule}`;
           return (
             <fieldset key={rule} aria-describedby={hint} className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-1.5 p-0 font-semibold text-ink text-row">{option.name}</legend>
               <div className="flex gap-1.5 rounded-card bg-subtle p-1">
-                {[false, true].map((value) => (
+                {choices.map(({ value, label }, index) => (
                   <label
                     key={String(value)}
                     className="flex flex-1 cursor-pointer flex-col items-center rounded-control px-2 py-1.5 text-center text-muted has-checked:bg-surface has-checked:text-ink has-focus-visible:outline-2 has-focus-visible:outline-accent"
@@ -202,10 +257,8 @@ export function HouseRulesCard({ character }: { character: CharacterRecord }) {
                       onChange={() => choose(rule, value)}
                       className="sr-only"
                     />
-                    <span className="font-semibold text-row">
-                      {(value ? option.house : option.printed).label}
-                    </span>
-                    {!value && (
+                    <span className="font-semibold text-row">{label}</span>
+                    {index === 0 && (
                       <>
                         {/* Separates the tag from the label in the radio's accessible name. */}{" "}
                         <span className="text-label">As printed</span>
@@ -215,7 +268,7 @@ export function HouseRulesCard({ character }: { character: CharacterRecord }) {
                 ))}
               </div>
               <p id={hint} className="mt-1.5 text-muted text-row">
-                {(on ? option.house : option.printed).description}
+                {shown?.description}
               </p>
             </fieldset>
           );

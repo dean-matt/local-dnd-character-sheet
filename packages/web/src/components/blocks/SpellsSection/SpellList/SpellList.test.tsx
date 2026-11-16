@@ -115,7 +115,9 @@ function stubServer(record: CharacterRecord, sheet: CharacterSpells, homebrew?: 
 }
 
 const written = (fetchMock: ReturnType<typeof stubServer>): CharacterDefinition["spells"] => {
-  const put = fetchMock.mock.calls.find(([url]) => url === "/api/characters/1");
+  const put = fetchMock.mock.calls.find(
+    ([url, init]) => url === "/api/characters/1" && init?.method === "PUT",
+  );
   return put && JSON.parse(String(put[1]?.body)).spells;
 };
 

@@ -81,6 +81,7 @@ function renderCast(
   refuse?: () => Promise<Response>,
   waiveComponents = false,
   held: { name: string; quantity: number }[] = [],
+  houseRules: Record<string, string> = {},
 ) {
   const inventory = held.map(({ name, quantity }) => ({
     ref: { name, source: "XPHB" },
@@ -90,7 +91,10 @@ function renderCast(
     attuned: false,
   }));
   const base = characterRecord("1", "Ada");
-  const character = { ...base, definition: { ...base.definition, inventory } };
+  const character = {
+    ...base,
+    definition: { ...base.definition, inventory, houseRules },
+  };
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
   vi.stubGlobal(
@@ -558,6 +562,18 @@ describe("CastSpell", () => {
       expect(posted.map((post) => post.type)).toEqual(["spell-attack", "spell-damage"]);
       expect(posted[1]).toMatchObject({ critical: true });
       expect(posted[1]?.dice).toHaveLength(4);
+    });
+
+    it("counts one set of the damage dice at its maximum on a critical where the table plays it", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.99);
+      renderCast(fireBolt, {}, withCaster, undefined, false, [], { criticalHit: "maximum" });
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(2));
+      expect(posted[1]).toMatchObject({ critical: true });
+      expect(posted[1]?.dice).toHaveLength(4);
+      expect(posted[1]?.dice.map((die) => die.value)).toEqual([10, 10, 10, 10]);
     });
 
     it("leaves the damage dice undoubled when the attack is not a natural 20", async () => {

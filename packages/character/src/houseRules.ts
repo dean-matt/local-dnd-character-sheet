@@ -4,8 +4,8 @@ import { z } from "zod";
 /**
  * The rules this table plays differently. Every option names a rule the sheet computes,
  * so what the sheet implements bounds the vocabulary rather than what 5e prints:
- * flanking earns an option the day something computes it, and until then a table that
- * plays it writes a note.
+ * flanking earns an option the day something computes it, and a rule nothing computes is
+ * a note the table writes.
  *
  * An option carries whatever type its rule needs rather than a flag. Encumbrance is on
  * or off, but a fixed hit point maximum per level is a number, and a critical that
@@ -78,6 +78,18 @@ const houseRulesObject = z
      * one. Absent, it does, as both rulesets print.
      */
     waiveMaterialComponents: z.boolean().optional(),
+    /**
+     * What a critical hit does to the damage dice: `double` rolls them twice, as both rulesets
+     * print, and `maximum` counts one set at its highest face and rolls the other. The
+     * modifier is added once either way. Absent, `double`.
+     */
+    criticalHit: z.enum(["double", "maximum"]).optional(),
+    /**
+     * Flanking on a melee attack roll, which neither ruleset's core rules print: `advantage`
+     * gives the roll advantage and `bonus` adds 2 to it. Absent, `none`, and the sheet
+     * offers no flanking.
+     */
+    flanking: z.enum(["none", "advantage", "bonus"]).optional(),
   })
   .prefault({});
 
@@ -110,6 +122,8 @@ export const PRINTED_RULE: Required<HouseRules> = {
   noInstantDeath: false,
   everyHitDieOnLongRest: false,
   waiveMaterialComponents: false,
+  criticalHit: "double",
+  flanking: "none",
 };
 
 /**
