@@ -11,6 +11,14 @@ const sheet = {
   spellSlots: [{ level: 1, total: total(4) }],
   pactSlots: { level: 2, total: total(2) },
   classResources: [],
+  hitPointMaximum: {
+    computed: 30,
+    manual: null,
+    terms: [
+      { label: "Hit dice", value: 25 },
+      { label: "Aid", value: 5, reference: { derivedField: "temporaryModifier" } },
+    ],
+  },
 };
 
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
@@ -51,7 +59,7 @@ const tired = () => ({
   ],
 });
 
-const classic = { edition: "classic" as const, houseRules: {}, inventory: [] };
+const classic = { edition: "classic" as const, houseRules: {}, inventory: [], overrides: {} };
 
 describe("sheetState", () => {
   it("reads each shown pool's total from the derived block and caps what remains at it", () => {
@@ -253,7 +261,7 @@ describe("a rest ends a rage", () => {
   };
 
   it.each(["short", "long"] as const)("on a %s rest, and leaves any other effect", (length) => {
-    const definition = { edition: "one" as const, houseRules: {}, inventory: [] };
+    const definition = { edition: "one" as const, houseRules: {}, inventory: [], overrides: {} };
     expect(restedState(definition, sheet, raging, length).activeEffects).toEqual([
       { name: "Bless" },
     ]);
@@ -267,7 +275,7 @@ describe("a rest and concentration", () => {
   };
 
   it("ends on a long rest and holds through a short one", () => {
-    const definition = { edition: "one" as const, houseRules: {}, inventory: [] };
+    const definition = { edition: "one" as const, houseRules: {}, inventory: [], overrides: {} };
     expect(restedState(definition, sheet, concentrating, "long").concentration).toBeNull();
     expect(restedState(definition, sheet, concentrating, "short").concentration).toEqual(
       concentrating.concentration,
@@ -276,7 +284,7 @@ describe("a rest and concentration", () => {
 });
 
 describe("a rest and a reduction to the hit point maximum", () => {
-  const definition = { edition: "one" as const, houseRules: {}, inventory: [] };
+  const definition = { edition: "one" as const, houseRules: {}, inventory: [], overrides: {} };
   const reduced = (clearsOnLongRest: boolean) => ({
     ...defaultCharacterState(),
     hitPointMaximumReduction: { amount: 5, clearsOnLongRest },
@@ -291,6 +299,49 @@ describe("a rest and a reduction to the hit point maximum", () => {
 
   it("holds through a long rest where marked to", () => {
     expect(after(false, "long")).toEqual({ amount: 5, clearsOnLongRest: false });
+  });
+});
+
+describe("a rest and temporary modifiers", () => {
+  const definition = { edition: "one" as const, houseRules: {}, inventory: [], overrides: {} };
+  const modifier = (name: string, endsOn: "short" | "long" | null) => ({
+    name,
+    target: { kind: "armorClass" as const },
+    amount: -1,
+    endsOn,
+  });
+  const held = {
+    ...defaultCharacterState(),
+    temporaryModifiers: [
+      modifier("Until removed", null),
+      modifier("Rest", "short"),
+      modifier("Long", "long"),
+    ],
+  };
+  const left = (length: "short" | "long") =>
+    restedState(definition, sheet, held, length).temporaryModifiers.map(({ name }) => name);
+
+  it("ends the one that ends on any rest at a short rest, keeping the others", () => {
+    expect(left("short")).toEqual(["Until removed", "Long"]);
+  });
+
+  it("lowers current hit points to the maximum left once a modifier to it ends", () => {
+    const aid = {
+      name: "Aid",
+      target: { kind: "hitPointMaximum" as const },
+      amount: 5,
+      endsOn: "short" as const,
+    };
+    const full = {
+      ...defaultCharacterState(),
+      hitPoints: { current: 30, temporary: 0 },
+      temporaryModifiers: [aid],
+    };
+    expect(restedState(definition, sheet, full, "short").hitPoints.current).toBe(25);
+  });
+
+  it("ends both rest-bound modifiers at a long rest, keeping the one that stays until removed", () => {
+    expect(left("long")).toEqual(["Until removed"]);
   });
 });
 

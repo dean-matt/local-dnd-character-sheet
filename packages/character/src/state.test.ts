@@ -51,6 +51,7 @@ describe("default state", () => {
       itemCharges: [],
       spentAmmunition: [],
       activeEffects: [],
+      temporaryModifiers: [],
       concentration: null,
       encounter: null,
       turn: { action: false, bonusAction: false, reaction: false, movement: false },
@@ -265,6 +266,50 @@ describe("a reduction to the hit point maximum", () => {
   it("parses a state stored before it as none", () => {
     const { hitPointMaximumReduction: _, ...stored } = state;
     expect(characterStateSchema.parse(structuredClone(stored)).hitPointMaximumReduction).toBeNull();
+  });
+});
+
+describe("temporary modifiers", () => {
+  const curse = { name: "Curse", target: { kind: "armorClass" }, amount: -1, endsOn: null };
+  const stored = (...temporaryModifiers: unknown[]) => ({ ...state, temporaryModifiers });
+
+  it("stores each target, and reads back as stored", () => {
+    const targets = [
+      { kind: "save", ability: "wis" },
+      { kind: "skill", ref: { name: "Stealth", source: "PHB" } },
+      { kind: "check" },
+      { kind: "attackRolls" },
+      { kind: "speed" },
+      { kind: "hitPointMaximum" },
+    ];
+    const held = stored(curse, ...targets.map((target) => ({ ...curse, target, endsOn: "long" })));
+    expect(characterStateSchema.parse(structuredClone(held))).toEqual(held);
+  });
+
+  it("refuses an amount of 0, a blank name, the reduction's label and a target it does not name", () => {
+    for (const bad of [
+      { amount: 0 },
+      { name: " " },
+      { name: " maximum reduction" },
+      { target: { kind: "luck" } },
+    ]) {
+      expect(characterStateSchema.safeParse(stored({ ...curse, ...bad })).success).toBe(false);
+    }
+  });
+
+  it("refuses the same name on the same target twice, but not on another", () => {
+    expect(characterStateSchema.safeParse(stored(curse, { ...curse, amount: 2 })).success).toBe(
+      false,
+    );
+    expect(
+      characterStateSchema.safeParse(stored(curse, { ...curse, target: { kind: "speed" } }))
+        .success,
+    ).toBe(true);
+  });
+
+  it("parses a state stored before it as none", () => {
+    const { temporaryModifiers: _, ...before } = state;
+    expect(characterStateSchema.parse(structuredClone(before)).temporaryModifiers).toEqual([]);
   });
 });
 

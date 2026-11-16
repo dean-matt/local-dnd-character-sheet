@@ -223,12 +223,15 @@ export {
   type HitPointMaximumReduction,
   hitDicePoolSchema,
   itemChargesSpent,
+  modifierKey,
   resourceSchema,
   type SpentAmmunition,
   spellSlotSchema,
   spentAmmunitionOf,
+  type TemporaryModifier,
   TURN_MARKS,
   type TurnMark,
+  temporaryModifierSchema,
   withAmmunitionSpent,
   withFeatureUse,
   withItemChargesSpent,
@@ -243,4 +246,5 @@ export {
   totalLevel,
   withExperienceFloor,
 } from "./summaries.ts";
+export { hitPointsWithin } from "./temporaryModifiers.ts";
 export { TURN_LABELS, turnMarkSpent, turnMarkToggled, turnReset } from "./turn.ts";

@@ -67,6 +67,15 @@ import { houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, type HomebrewNames, raceSummary, totalLevel } from "./summaries.ts";
+import {
+  MODIFIER_REFERENCE,
+  modifierTerms,
+  onKind,
+  onSave,
+  onSkill,
+  speedWithModifiers,
+  withModifiers,
+} from "./temporaryModifiers.ts";
 import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
 import { speedWithUnarmoredMovement } from "./unarmoredMovement.ts";
 
@@ -272,6 +281,7 @@ function equippedArmor(
 function derivedArmorClass(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
+  modifiers: readonly Term<TermReference>[],
 ): ComputedField<number> {
   const { worn, shield } = equippedArmor(definition, catalog.armor);
   const unarmored = worn
@@ -291,6 +301,7 @@ function derivedArmorClass(
       ? [{ label: "Shield (not proficient)", value: 0, reference: catalogRef(shield.ref) }]
       : []),
     ...itemTerms(equippedBonuses(definition, catalog), (item) => item.ac),
+    ...modifiers,
   ];
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogRef(worn.ref) } : { value: 10 },
@@ -461,6 +472,7 @@ function derivedAttacks(
   catalog: CharacterCatalog,
   bonuses: readonly ItemBonusTrait[],
   rage: RageBenefits,
+  modifiers: readonly Term<TermReference>[],
 ): CharacterDerived["attacks"] {
   const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
   const level = totalLevel(definition);
@@ -489,6 +501,7 @@ function derivedAttacks(
             ...result.attack.terms,
             ...(proficiency === "none" ? [{ label: "Not proficient", value: 0 }] : []),
             ...proficiencyItemTerms(level, proficiency, bonuses),
+            ...modifiers,
           ]),
         ),
         critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index))),
@@ -837,6 +850,7 @@ function spellcastingEntries(
   catalog: CharacterCatalog,
   characterLevel: number,
   bonuses: readonly ItemBonusTrait[],
+  attackModifiers: readonly Term<TermReference>[],
 ): CharacterDerived["spellcasting"] {
   return classLevels(definition).flatMap((group) => {
     const key = entryKey(group.class);
@@ -860,6 +874,7 @@ function spellcastingEntries(
           spellAttackBonus(ability, modifier, characterLevel, [
             ...itemTerms(bonuses, (item) => item.proficiencyBonus, attackTaken),
             ...itemTerms(bonuses, (item) => item.spellAttack, attackTaken),
+            ...attackModifiers,
           ]),
         ),
         ...(preparation && { preparedSpells: preparedCount(preparation, modifier, group.level) }),
@@ -917,9 +932,13 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
 export function deriveCharacter(
   stored: CharacterDefinition,
   catalog: CharacterCatalog,
-  state: Pick<CharacterState, "activeEffects" | "hitPointMaximumReduction"> = {
+  state: Pick<
+    CharacterState,
+    "activeEffects" | "hitPointMaximumReduction" | "temporaryModifiers"
+  > = {
     activeEffects: [],
     hitPointMaximumReduction: null,
+    temporaryModifiers: [],
   },
   names?: HomebrewNames,
 ): CharacterDerived {
@@ -942,9 +961,16 @@ export function deriveCharacter(
   );
   const itemSpeed = speedWithItems(movement.speed, bonuses);
   const armorSpeed = speedUnderArmor(itemSpeed.speed, worn, scoreOf(definition, catalog, "str"));
+  const modifiedSpeed = speedWithModifiers(armorSpeed.speed, state);
   const speed = {
-    speed: armorSpeed.speed,
-    terms: [...featSpeed.terms, ...movement.terms, ...itemSpeed.terms, ...armorSpeed.terms],
+    speed: modifiedSpeed.speed,
+    terms: [
+      ...featSpeed.terms,
+      ...movement.terms,
+      ...itemSpeed.terms,
+      ...armorSpeed.terms,
+      ...modifiedSpeed.terms,
+    ],
   };
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
@@ -952,7 +978,7 @@ export function deriveCharacter(
         definition,
         ability,
         grants,
-        itemTerms(bonuses, (item) => item.save),
+        [...itemTerms(bonuses, (item) => item.save), ...modifierTerms(state, onSave(ability))],
         bonuses,
       );
       return [ability, { computed: total, manual: null, terms }];
@@ -971,14 +997,18 @@ export function deriveCharacter(
   const spellDamage = itemTerms(bonuses, (item) => item.spellDamage);
   const spellDamageBonus = spellDamage.length === 0 ? null : fromBreakdown(breakdown(spellDamage));
 
-  const checkBonus = itemTerms(bonuses, (item) => item.abilityCheck);
+  const checkBonus = [
+    ...itemTerms(bonuses, (item) => item.abilityCheck),
+    ...modifierTerms(state, onKind("check")),
+  ];
   const skills = catalog.skills.map((skill) => {
+    const skillBonus = [...checkBonus, ...modifierTerms(state, onSkill(skill.ref))];
     const { total, terms } = skillModifier(
       definition,
       skill.ref,
       skill.ability,
       grants,
-      checkBonus,
+      skillBonus,
       bonuses,
     );
     return {
@@ -986,7 +1016,7 @@ export function deriveCharacter(
       ability: skill.ability === "flat" ? null : skill.ability,
       modifier: { computed: total, manual: null, terms },
       passive: {
-        computed: passiveSkill(definition, skill.ref, skill.ability, grants, checkBonus, bonuses),
+        computed: passiveSkill(definition, skill.ref, skill.ability, grants, skillBonus, bonuses),
         manual: null,
         terms: [],
       },
@@ -1014,7 +1044,13 @@ export function deriveCharacter(
     ),
     hitPointMaximum: fromBreakdown(
       reducedMaximum(
-        hitPointMaximum(definition, catalog.hitDice, grants),
+        withModifiers(
+          hitPointMaximum(definition, catalog.hitDice, grants),
+          modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
+            ...term,
+            reference: MODIFIER_REFERENCE,
+          })),
+        ),
         state.hitPointMaximumReduction,
       ),
     ),
@@ -1025,7 +1061,7 @@ export function deriveCharacter(
     savingThrows,
     concentrationSave,
     skills,
-    armorClass: derivedArmorClass(definition, catalog),
+    armorClass: derivedArmorClass(definition, catalog, modifierTerms(state, onKind("armorClass"))),
     initiative: fromBreakdown(
       breakdown([
         ...abilityModifierBreakdown<TermReference>(scores.dex.total).terms,
@@ -1038,7 +1074,13 @@ export function deriveCharacter(
         ),
       ]),
     ),
-    spellcasting: spellcastingEntries(definition, catalog, level, bonuses),
+    spellcasting: spellcastingEntries(
+      definition,
+      catalog,
+      level,
+      bonuses,
+      modifierTerms(state, onKind("attackRolls")),
+    ),
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
@@ -1046,7 +1088,13 @@ export function deriveCharacter(
     ...carrying,
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
-    attacks: derivedAttacks(definition, catalog, bonuses, rage),
+    attacks: derivedAttacks(
+      definition,
+      catalog,
+      bonuses,
+      rage,
+      modifierTerms(state, onKind("attackRolls")),
+    ),
     defenses: derivedDefenses(definition, catalog, feats.defenses, rage, names),
     senses: derivedSenses(definition, catalog, feats.senses, names),
     itemGrants: derivedItemGrants(definition, catalog, feats.itemSkills),

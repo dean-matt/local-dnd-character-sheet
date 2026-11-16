@@ -1,7 +1,13 @@
 import { HIT_DICE, RESET_TRIGGERS } from "@dnd/rules";
 import { z } from "zod";
-import { classResourceKey, isUnique, itemKey } from "./keys.ts";
-import { type ContentRef, contentRefSchema, type EntryRef, entryRefSchema } from "./refs.ts";
+import { classResourceKey, isUnique, itemKey, refKey } from "./keys.ts";
+import {
+  abilitySchema,
+  type ContentRef,
+  contentRefSchema,
+  type EntryRef,
+  entryRefSchema,
+} from "./refs.ts";
 
 const hitPointsSchema = z.strictObject({
   /**
@@ -142,6 +148,49 @@ const hitPointMaximumReductionSchema = z.strictObject({
   clearsOnLongRest: z.boolean(),
 });
 
+/**
+ * The sheet value a temporary modifier moves: one saving throw, one skill, every ability
+ * check (the skills and initiative), every attack roll, or one of the three scalars.
+ */
+const modifierTargetSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("armorClass") }),
+  z.strictObject({ kind: z.literal("save"), ability: abilitySchema }),
+  z.strictObject({ kind: z.literal("check") }),
+  z.strictObject({ kind: z.literal("skill"), ref: contentRefSchema }),
+  z.strictObject({ kind: z.literal("attackRolls") }),
+  z.strictObject({ kind: z.literal("speed") }),
+  z.strictObject({ kind: z.literal("hitPointMaximum") }),
+]);
+
+/**
+ * A named, signed amount the player adds to one sheet value, such as a curse's -1 to armor
+ * class. It lasts until removed or, where `endsOn` names a rest, until a rest that meets it:
+ * `short` ends on any rest, `long` on a long rest only.
+ */
+/** The label of the term a reduction adds to the hit point maximum's breakdown, which no modifier may take. */
+export const REDUCTION_LABEL = "Maximum reduction";
+
+export const temporaryModifierSchema = z.strictObject({
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((name) => name.toLowerCase() !== REDUCTION_LABEL.toLowerCase(), {
+      error: "that name is the hit point maximum reduction's",
+    }),
+  target: modifierTargetSchema,
+  amount: z.int().refine((amount) => amount !== 0, { error: "a modifier of 0 changes nothing" }),
+  endsOn: z.enum(["short", "long"]).nullable(),
+});
+
+export type TemporaryModifier = z.infer<typeof temporaryModifierSchema>;
+
+/** What a modifier is told apart by: its name and the value it moves. */
+export const modifierKey = ({ name, target }: Pick<TemporaryModifier, "name" | "target">) =>
+  `${name.toLowerCase()}|${target.kind}|${
+    target.kind === "save" ? target.ability : target.kind === "skill" ? refKey(target.ref) : ""
+  }`;
+
 const deathSavesSchema = z.strictObject({
   successes: z.int().min(0).max(3).default(0),
   failures: z.int().min(0).max(3).default(0),
@@ -221,6 +270,12 @@ export const characterStateSchema = z.strictObject({
     .array(activeEffectSchema)
     .refine((effects) => isUnique(effects, (effect) => effect.name), {
       error: "the same effect is listed twice",
+    })
+    .default([]),
+  temporaryModifiers: z
+    .array(temporaryModifierSchema)
+    .refine((modifiers) => isUnique(modifiers, modifierKey), {
+      error: "the same modifier is listed twice",
     })
     .default([]),
   /** One spell at most; a state stored before concentration holds none. */

@@ -8,16 +8,19 @@ import {
   type CasterTable,
   type CharacterDefinition,
   type CharacterDerived,
+  type CharacterState,
   type ContainerTrait,
   carriedWeight,
   characterDefinitionSchema,
   characterDerivedSchema,
+  defaultCharacterState,
   deriveCharacter,
   derivedValue,
   type EntryRef,
   entryKey,
   type FeatGrantTrait,
   hitPointMaximum,
+  hitPointsWithin,
   type ItemAbilityTrait,
   type ItemAdvantageTrait,
   type ItemBonusTrait,
@@ -28,6 +31,7 @@ import {
   overrideKey,
   passiveSkill,
   type SenseGrant,
+  type TemporaryModifier,
   type WeaponTrait,
 } from "./index.ts";
 import type { Ability } from "./refs.ts";
@@ -268,6 +272,7 @@ describe("deriveCharacter", () => {
     const reduced = (amount: number) => ({
       activeEffects: [],
       hitPointMaximumReduction: { amount, clearsOnLongRest: true },
+      temporaryModifiers: [],
     });
     const term = (value: number) => ({ label: "Maximum reduction", value });
 
@@ -302,6 +307,125 @@ describe("deriveCharacter", () => {
       expect(deriveCharacter(leveled, catalog, reduced(5)).hitPointMaximum.computed).toBe(
         unreduced - 5,
       );
+    });
+  });
+
+  describe("temporary modifiers", () => {
+    const held = (...modifiers: CharacterState["temporaryModifiers"]) => ({
+      activeEffects: [],
+      hitPointMaximumReduction: null,
+      temporaryModifiers: modifiers,
+    });
+    const curse = (target: TemporaryModifier["target"], amount = -1): TemporaryModifier => ({
+      name: "Curse",
+      target,
+      amount,
+      endsOn: null,
+    });
+    const named = (value: number) => ({ label: "Curse", value });
+    const derivedWith = (...modifiers: CharacterState["temporaryModifiers"]) =>
+      deriveCharacter(equipped, catalog, held(...modifiers));
+
+    it("adds to armor class as its own term", () => {
+      const field = derivedWith(curse({ kind: "armorClass" })).armorClass;
+      expect(field.computed).toBe(derived.armorClass.computed - 1);
+      expect(field.terms.at(-1)).toEqual(named(-1));
+    });
+
+    it("adds to the one saving throw it names", () => {
+      const block = derivedWith(curse({ kind: "save", ability: "dex" }, 2));
+      expect(block.savingThrows.dex.computed).toBe(derived.savingThrows.dex.computed + 2);
+      expect(block.savingThrows.dex.terms.at(-1)).toEqual(named(2));
+      expect(block.savingThrows.str.computed).toBe(derived.savingThrows.str.computed);
+    });
+
+    it("adds to every skill and initiative as a check, and to the one skill it names alone", () => {
+      const checks = derivedWith(curse({ kind: "check" }, 2));
+      expect(checks.initiative.computed).toBe(derived.initiative.computed + 2);
+      for (const [index, skill] of checks.skills.entries()) {
+        expect(skill.modifier.computed).toBe((derived.skills[index]?.modifier.computed ?? 0) + 2);
+        expect(skill.passive.computed).toBe((derived.skills[index]?.passive.computed ?? 0) + 2);
+      }
+      const one = derivedWith(curse({ kind: "skill", ref: STEALTH }, -2));
+      const changed = one.skills.filter(
+        (skill, index) => skill.modifier.computed !== derived.skills[index]?.modifier.computed,
+      );
+      expect(changed.map((skill) => skill.ref)).toEqual([STEALTH]);
+      expect(changed[0]?.modifier.terms.at(-1)).toEqual(named(-2));
+      expect(one.initiative.computed).toBe(derived.initiative.computed);
+    });
+
+    it("adds to every attack roll, weapon and spell", () => {
+      const block = derivedWith(curse({ kind: "attackRolls" }, 1));
+      expect(derived.attacks.length).toBeGreaterThan(0);
+      expect(derived.spellcasting.length).toBeGreaterThan(0);
+      for (const [index, attack] of block.attacks.entries()) {
+        expect(attack.attackBonus.computed).toBe(
+          (derived.attacks[index]?.attackBonus.computed ?? 0) + 1,
+        );
+        expect(attack.attackBonus.terms.at(-1)).toEqual(named(1));
+      }
+      for (const [index, caster] of block.spellcasting.entries()) {
+        expect(caster.attackBonus.computed).toBe(
+          (derived.spellcasting[index]?.attackBonus.computed ?? 0) + 1,
+        );
+      }
+    });
+
+    it("adds to each speed the character has, never below 0", () => {
+      expect(derivedWith(curse({ kind: "speed" }, 10)).speed.computed).toEqual({ walk: 40 });
+      const slowed = derivedWith(curse({ kind: "speed" }, -50)).speed;
+      expect(slowed.computed).toEqual({ walk: 0 });
+      expect(slowed.terms.at(-1)).toEqual({ label: "Curse: walk 30 to 0", value: -30 });
+    });
+
+    it("adds to the hit point maximum, leaving at least 1, before a reduction", () => {
+      const raised = derivedWith(curse({ kind: "hitPointMaximum" }, 5)).hitPointMaximum;
+      expect(raised.computed).toBe(derived.hitPointMaximum.computed + 5);
+      expect(raised.terms.at(-1)).toEqual({
+        ...named(5),
+        reference: { derivedField: "temporaryModifier" },
+      });
+      const floored = derivedWith(curse({ kind: "hitPointMaximum" }, -500)).hitPointMaximum;
+      expect(floored.computed).toBe(1);
+      const both = deriveCharacter(equipped, catalog, {
+        ...held(curse({ kind: "hitPointMaximum" }, 5)),
+        hitPointMaximumReduction: { amount: 2, clearsOnLongRest: true },
+      }).hitPointMaximum;
+      expect(both.computed).toBe(derived.hitPointMaximum.computed + 3);
+    });
+
+    it("lowers current hit points above the maximum a change of modifiers leaves", () => {
+      const max = derived.hitPointMaximum.computed;
+      const within = (current: number | null, ...modifiers: TemporaryModifier[]) =>
+        hitPointsWithin(equipped, derivedWith(curse({ kind: "hitPointMaximum" }, 5)), {
+          ...defaultCharacterState(),
+          hitPoints: { current, temporary: 0 },
+          temporaryModifiers: modifiers,
+        }).hitPoints.current;
+      expect(within(max + 5)).toBe(max);
+      expect(within(max + 5, curse({ kind: "hitPointMaximum" }, 5))).toBe(max + 5);
+      expect(within(max + 5, curse({ kind: "hitPointMaximum" }, 2))).toBe(max + 2);
+      expect(within(max - 1)).toBe(max - 1);
+      expect(within(null)).toBeNull();
+    });
+
+    it("sits below a manual override, which still replaces the value", () => {
+      const field = deriveCharacter(
+        { ...equipped, overrides: { armorClass: 20 } },
+        catalog,
+        held(curse({ kind: "armorClass" })),
+      ).armorClass;
+      expect(field.manual).toBe(20);
+      expect(field.computed).toBe(derived.armorClass.computed - 1);
+    });
+
+    it("holds across a level-up, which changes the definition alone", () => {
+      const leveled = { ...equipped, levels: [...equipped.levels, { class: WARLOCK }] };
+      const unmodified = deriveCharacter(leveled, catalog).armorClass.computed;
+      expect(
+        deriveCharacter(leveled, catalog, held(curse({ kind: "armorClass" }))).armorClass.computed,
+      ).toBe(unmodified - 1);
     });
   });
 
@@ -2759,8 +2883,12 @@ describe("deriveCharacter", () => {
       inventory: [carried(GREATAXE), carried(SHORTBOW), carried(RAPIER)],
       ...extra,
     });
-    const raging = { activeEffects: [{ name: "Rage" }], hitPointMaximumReduction: null };
-    const calm = { activeEffects: [], hitPointMaximumReduction: null };
+    const raging = {
+      activeEffects: [{ name: "Rage" }],
+      hitPointMaximumReduction: null,
+      temporaryModifiers: [],
+    };
+    const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
     const damageOf = (block: CharacterDerived, entry: number) =>
       block.attacks.find((attack) => attack.entry === entry)?.damage?.modifier;
 

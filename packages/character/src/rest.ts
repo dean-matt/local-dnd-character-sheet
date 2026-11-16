@@ -8,10 +8,11 @@ import { classResourceKey } from "./keys.ts";
 import { rageEnded } from "./rage.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import { type CharacterState, itemChargesSpent } from "./state.ts";
+import { hitPointsWithin, modifiersEnded } from "./temporaryModifiers.ts";
 
 export type RestLength = "short" | "long";
 
-type Resting = Pick<CharacterDefinition, "edition" | "houseRules" | "inventory">;
+type Resting = Pick<CharacterDefinition, "edition" | "houseRules" | "inventory" | "overrides">;
 
 type Sheet = Pick<CharacterDerived, "hitDice" | "spellSlots" | "pactSlots" | "classResources">;
 
@@ -106,12 +107,13 @@ function longRestEnded(state: CharacterState): CharacterState {
  * others keep what was spent. Each feature in `features` whose reset the rest meets has no
  * use spent. A long rest returns `regained` charges to each of `itemRecharges`, never past
  * what was spent. A rest drops the charges of an entry the inventory no longer lists. Any rest
- * ends a rage; a long rest also ends concentration and clears a reduction to the hit point
- * maximum that a long rest clears.
+ * ends a rage and each temporary modifier that ends on it, lowering current hit points to the
+ * maximum that leaves; a long rest also ends concentration and clears a reduction to the hit
+ * point maximum that a long rest clears.
  */
 export function restedState(
   definition: Resting,
-  derived: Sheet,
+  derived: Sheet & Pick<CharacterDerived, "hitPointMaximum">,
   state: CharacterState,
   length: RestLength,
   picked?: readonly HitDie[],
@@ -123,9 +125,14 @@ export function restedState(
     ...options(definition),
     picked,
   });
-  const ended = rageEnded(rested);
+  const ended = modifiersEnded(rageEnded(rested), length);
+  const settled = hitPointsWithin(
+    definition,
+    derived,
+    length === "long" ? longRestEnded(ended) : ended,
+  );
   return {
-    ...(length === "long" ? longRestEnded(ended) : ended),
+    ...settled,
     classResources: rested.classResources.map((pool) => {
       const homebrew = derived.classResources.find(
         (candidate) => classResourceKey(candidate) === classResourceKey(pool),
