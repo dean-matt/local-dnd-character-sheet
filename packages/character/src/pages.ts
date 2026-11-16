@@ -3,6 +3,7 @@ import { isUnique } from "./keys.ts";
 
 export const SHEET_SECTIONS = [
   "abilities",
+  "combat",
   "spells",
   "inventory",
   "features",
@@ -199,6 +200,12 @@ export const PRESET_PAGES: readonly CharacterPage[] = [
     title: "Stats",
     hidden: false,
     blocks: [{ kind: "section", section: "abilities" }],
+  },
+  {
+    slug: "combat",
+    title: "Combat",
+    hidden: false,
+    blocks: [{ kind: "section", section: "combat" }],
   },
   {
     slug: "spells",

@@ -3,7 +3,7 @@ import { characterFileSchema, defaultCharacterState, PRESET_PAGES } from "./inde
 
 const file = {
   format: "local-dnd-character-sheet/character",
-  version: 2,
+  version: 3,
   definition: {
     name: "Mira",
     edition: "one",
@@ -26,12 +26,15 @@ const file = {
   pages: PRESET_PAGES,
 };
 
-/** A file exported before the Backstory preset, which lists every other one. */
+/** A file exported before the Backstory and Combat presets, which lists every other one. */
 const v1 = {
   ...file,
   version: 1,
-  pages: PRESET_PAGES.filter((page) => page.slug !== "backstory"),
+  pages: PRESET_PAGES.filter((page) => page.slug !== "backstory" && page.slug !== "combat"),
 };
+
+/** A file exported before the Combat preset, which lists every other one. */
+const v2 = { ...file, version: 2, pages: PRESET_PAGES.filter((page) => page.slug !== "combat") };
 
 describe("characterFileSchema", () => {
   it("reads back what it wrote", () => {
@@ -47,7 +50,7 @@ describe("characterFileSchema", () => {
   });
 
   it("refuses a version it does not know, naming the field", () => {
-    const result = characterFileSchema.safeParse({ ...file, version: 3 });
+    const result = characterFileSchema.safeParse({ ...file, version: 4 });
     expect(result.error?.issues.map((issue) => issue.path)).toEqual([["version"]]);
   });
 
@@ -72,7 +75,7 @@ describe("characterFileSchema", () => {
 
   it("gives a version 1 file the stock Backstory page, just before Notes", () => {
     const parsed = characterFileSchema.parse(v1);
-    expect(parsed.version).toBe(2);
+    expect(parsed.version).toBe(3);
     expect(parsed.pages).toEqual(PRESET_PAGES);
   });
 
@@ -87,7 +90,31 @@ describe("characterFileSchema", () => {
     });
   });
 
-  it("keeps a version 2 file's Backstory preset as written, edited or not", () => {
+  it("gives a version 2 file the stock Combat page, just after Stats", () => {
+    const parsed = characterFileSchema.parse(v2);
+    expect(parsed.version).toBe(3);
+    expect(parsed.pages).toEqual(PRESET_PAGES);
+  });
+
+  it("puts Combat first in a version 2 file that has no Stats page", () => {
+    const pages = v2.pages.slice(1);
+    expect(characterFileSchema.parse({ ...v2, pages }).pages).toEqual([PRESET_PAGES[1], ...pages]);
+  });
+
+  it("moves a page a version 2 file holds under combat aside, keeping its blocks", () => {
+    const own = { slug: "combat", title: "Fight log", hidden: false, blocks: [] };
+    const pages = characterFileSchema.parse({ ...v2, pages: [...v2.pages, own] }).pages;
+
+    expect(pages.slice(0, -1)).toEqual(PRESET_PAGES);
+    expect(pages.at(-1)).toEqual({ ...own, slug: expect.stringMatching(/^combat-[0-9a-f]{8}$/) });
+  });
+
+  it("keeps a version 3 file's Combat preset as written", () => {
+    const pages = PRESET_PAGES.filter((page) => page.slug !== "combat");
+    expect(characterFileSchema.parse({ ...file, pages }).pages).toEqual(pages);
+  });
+
+  it("keeps a version 3 file's Backstory preset as written, edited or not", () => {
     const edited = PRESET_PAGES.map((page) =>
       page.slug === "backstory"
         ? { ...page, blocks: [{ kind: "text", text: "Raised by wolves" }] }

@@ -69,12 +69,34 @@ function fromVersionOne(file: unknown): unknown {
   return { ...file, version: 2, pages: withBackstoryPage(withoutAlignmentPage(pages)) };
 }
 
+/**
+ * A version 2 file predates the Combat preset, so a page it holds under `combat` is the
+ * user's own. That page moves to the slug plus a random suffix, as the migration that added
+ * the preset moves one. The stock page goes just after Stats, or first where the file has
+ * none, where the migration puts it.
+ */
+function fromVersionTwo(file: unknown): unknown {
+  if (typeof file !== "object" || file === null || !("version" in file) || file.version !== 2) {
+    return file;
+  }
+  const { pages } = file as { pages?: unknown };
+  if (!Array.isArray(pages)) return { ...file, version: 3 };
+  const isSlug = (slug: string) => (page: unknown) =>
+    typeof page === "object" && page !== null && "slug" in page && page.slug === slug;
+  const renamed = pages.map((page) =>
+    isSlug("combat")(page) ? { ...page, slug: `combat-${crypto.randomUUID().slice(0, 8)}` } : page,
+  );
+  const stock = PRESET_PAGES.find((page) => page.slug === "combat");
+  const at = renamed.findIndex(isSlug("stats")) + 1;
+  return { ...file, version: 3, pages: [...renamed.slice(0, at), stock, ...renamed.slice(at)] };
+}
+
 const fileSchema = <Definition extends z.ZodType>(definition: Definition) =>
   z.preprocess(
-    fromVersionOne,
+    (file) => fromVersionTwo(fromVersionOne(file)),
     z.strictObject({
       format: z.literal("local-dnd-character-sheet/character"),
-      version: z.literal(2),
+      version: z.literal(3),
       definition,
       state: characterStateSchema,
       pages: characterPagesSchema,

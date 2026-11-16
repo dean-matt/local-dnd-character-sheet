@@ -1,6 +1,6 @@
 import { netRollEffect, type RollEffectEntry } from "@dnd/character";
-import { CHIP } from "../../../lib/chipStyles.ts";
-import { Popover } from "../../Popover.tsx";
+import { CHIP } from "../../lib/chipStyles.ts";
+import { Popover } from "../Popover.tsx";
 
 const MODE = {
   advantage: { chip: "ADV", label: "Advantage" },

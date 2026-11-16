@@ -34,7 +34,7 @@ describe("CharacterRedirect", () => {
     const router = renderRedirect();
 
     await screen.findByText("landed");
-    expect(router.state.location.pathname).toBe("/characters/abc/p/spells");
+    expect(router.state.location.pathname).toBe("/characters/abc/p/combat");
   });
 
   it.each([
