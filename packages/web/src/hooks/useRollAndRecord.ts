@@ -1,9 +1,8 @@
-import { type CharacterRecord, houseRule, type RollRecord } from "@dnd/character";
+import { houseRule, type RollRecord } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
-import { useQueryClient } from "@tanstack/react-query";
 import { useContext } from "react";
 import { OnRolled } from "../components/rollerContext.ts";
-import { characterKey } from "./characterKeys.ts";
+import { useCharacter } from "./useCharacter.ts";
 import { useRecordRoll } from "./useRecordRoll.ts";
 
 type Roll = ReturnType<typeof rollDice>;
@@ -16,7 +15,7 @@ type Roll = ReturnType<typeof rollDice>;
 export function useRollAndRecord(characterId: string) {
   const record = useRecordRoll(characterId);
   const onRolled = useContext(OnRolled);
-  const queryClient = useQueryClient();
+  const character = useCharacter(characterId);
 
   function roll(
     notation: string,
@@ -25,9 +24,7 @@ export function useRollAndRecord(characterId: string) {
   ): Error | undefined {
     let rolled: Roll;
     try {
-      const definition = queryClient.getQueryData<CharacterRecord>(
-        characterKey(characterId),
-      )?.definition;
+      const definition = character.data?.definition;
       rolled = rollDice(notation, {
         mode: named.mode,
         critical: named.critical,

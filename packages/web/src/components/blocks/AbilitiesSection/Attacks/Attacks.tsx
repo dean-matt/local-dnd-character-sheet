@@ -55,9 +55,9 @@ function critRange({ critThreshold }: CharacterDerived["attacks"][number]) {
 
 type Attack = CharacterDerived["attacks"][number];
 
-/** The table's flanking rule for a weapon that fires no ammunition, which the sheet takes for melee. */
+/** The table's flanking rule for a weapon that states no range, which the sheet takes for melee; a thrown weapon states one and is offered none. */
 function meleeFlanking(attack: Attack, definition: CharacterRecord["definition"]) {
-  return attack.ammunition ? undefined : houseRule(definition, "flanking");
+  return attack.ammunition || attack.range ? undefined : houseRule(definition, "flanking");
 }
 
 /** The stack an attack spends from: the one picked while it is still a stack, else the first. */

@@ -328,7 +328,7 @@ function rollCopy(
   random: () => number,
 ): RolledDie[] {
   const pool = rollPool(term, mode, d20, random);
-  return maximum ? pool.map((die) => ({ ...die, value: die.faces })) : pool;
+  return maximum ? pool.map((die) => (die.kept ? { ...die, value: die.faces } : die)) : pool;
 }
 
 /**

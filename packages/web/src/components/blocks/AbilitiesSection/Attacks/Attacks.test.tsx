@@ -395,7 +395,21 @@ describe("Attacks", () => {
         expect(screen.queryByRole("checkbox", { name: "Flanking" })).toBeNull();
       });
 
-      it("offers none on a spell attack or a weapon that fires ammunition", async () => {
+      it("offers none on a weapon that states a range", async () => {
+        renderRolling(
+          {
+            ...derivedRecord(),
+            attacks: [{ ...attack(0, 5), range: { normal: 20, long: 60 } }],
+          },
+          201,
+          [],
+          { flanking: "advantage" },
+        );
+        await screen.findByRole("button", { name: "Roll Longsword attack" });
+        expect(screen.queryByRole("checkbox", { name: "Flanking" })).toBeNull();
+      });
+
+      it("offers none on a weapon that fires ammunition", async () => {
         renderRolling(
           {
             ...derivedRecord(),
