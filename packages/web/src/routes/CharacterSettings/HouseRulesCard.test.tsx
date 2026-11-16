@@ -50,6 +50,7 @@ describe("HouseRulesCard", () => {
       "Critical hits",
       "Flanking",
       "Natural 20 and 1 on checks and saves",
+      "Natural healing on a long rest",
     ]);
   });
 

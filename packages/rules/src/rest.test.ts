@@ -62,6 +62,14 @@ describe("rest", () => {
     expect(rest({ ...state(), exhaustion: 0 }, long).exhaustion).toBe(0);
   });
 
+  it("keeps current hit points on a long rest under slow healing, and still clears temporary ones", () => {
+    const hurt = { ...state(), hitPoints: { current: 5, temporary: 3 } };
+    const after = rest(hurt, { ...long, slowHealing: true });
+    expect(after.hitPoints).toEqual({ current: 5, temporary: 0 });
+    expect(after.exhaustion).toBe(1);
+    expect(rest(hurt, long).hitPoints).toEqual({ current: null, temporary: 0 });
+  });
+
   it("refuses a long rest at 0 hit points, and allows a short one", () => {
     const down = { ...state(), hitPoints: { current: 0, temporary: 0 } };
     expect(() => rest(down, long)).toThrow(/needs at least 1 hit point/);

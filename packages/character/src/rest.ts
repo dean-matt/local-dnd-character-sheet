@@ -84,6 +84,7 @@ export function sheetState(derived: Sheet, state: CharacterState): CharacterStat
 const options = (definition: Resting) => ({
   edition: definition.edition,
   everyHitDie: houseRule(definition, "everyHitDieOnLongRest"),
+  slowHealing: houseRule(definition, "slowNaturalHealing"),
 });
 
 /** What a long rest asks the player to pick, by `hitDicePick`, or null where it asks nothing. */

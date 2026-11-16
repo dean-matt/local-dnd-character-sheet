@@ -1,6 +1,7 @@
 import {
   benefitsFromLongRest,
   type CharacterRecord,
+  houseRule,
   itemChargesSpent,
   type RestLength,
 } from "@dnd/character";
@@ -63,7 +64,11 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
     {
       length: "long",
       title: "Long rest",
-      description: refused ? LONG_REST_REFUSAL : "Restore HP, Hit Dice and spent resources",
+      description: refused
+        ? LONG_REST_REFUSAL
+        : houseRule(character.definition, "slowNaturalHealing")
+          ? "Restore Hit Dice and spent resources"
+          : "Restore HP, Hit Dice and spent resources",
       blocked: refused,
     },
   ];

@@ -6,7 +6,7 @@ import {
   derivedValue,
 } from "@dnd/character";
 import { focusManager } from "@tanstack/react-query";
-import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
@@ -209,6 +209,27 @@ describe("RestMenu", () => {
     await openMenu();
     expect(screen.getByRole("button", { name: "Short rest" })).toHaveAccessibleDescription(
       "Recover pact slots and Ki",
+    );
+  });
+
+  it("names the long rest's recovery, leaving hit points out under slow natural healing", async () => {
+    renderLive(spent());
+    await openMenu();
+    expect(screen.getByRole("button", { name: "Long rest" })).toHaveAccessibleDescription(
+      "Restore HP, Hit Dice and spent resources",
+    );
+    cleanup();
+
+    const character = characterRecord("1", "Vex") as CharacterRecord;
+    renderLive(spent(), {
+      character: {
+        ...character,
+        definition: { ...character.definition, houseRules: { slowNaturalHealing: true } },
+      },
+    });
+    await openMenu();
+    expect(screen.getByRole("button", { name: "Long rest" })).toHaveAccessibleDescription(
+      "Restore Hit Dice and spent resources",
     );
   });
 
@@ -978,6 +999,66 @@ describe("RestMenu", () => {
       expect(button).toHaveAttribute("aria-disabled", "true");
       fireEvent.click(button);
       expect(dialog.queryByRole("img", { name: /^d8: rolled/ })).not.toBeInTheDocument();
+    });
+
+    describe("a long rest under slow natural healing", () => {
+      const slow = (): CharacterRecord => {
+        const character = classic();
+        return {
+          ...character,
+          definition: { ...character.definition, houseRules: { slowNaturalHealing: true } },
+        };
+      };
+      const tired = () => ({
+        ...spent(),
+        hitDice: [{ die: 8 as const, total: 3, remaining: 0 }],
+      });
+
+      it("restores no hit points and offers the hit dice the rest returns", async () => {
+        rollsA(5, 8);
+        renderLive(tired(), { character: slow() });
+        const dialog = await open("Long rest");
+        dialog.getByRole("heading", { name: "Spend hit dice" });
+        expect(listed(dialog)).not.toContain("Hit points: 12/20 → 20/20");
+        expect(listed(dialog)).toContain("d8 Hit Dice: 0/3 → 2/3");
+
+        fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 2 of 3 left" }));
+        expect(listed(dialog)).toEqual([
+          `Hit points: 12/20 → ${12 + regained}/20`,
+          "Temporary hit points: 3 → 0",
+          "d8 Hit Dice: 0/3 → 1/3",
+          "Pact Magic 1st Level slots: 0/1 → 1/1",
+          "Ki: 0/2 → 2/2",
+          "Exhaustion: 1 → 0",
+        ]);
+      });
+
+      it("writes the rest with its spends once, then logs each roll", async () => {
+        rollsA(5, 8);
+        const writes = renderLive(tired(), { character: slow() });
+        const dialog = await open("Long rest");
+        fireEvent.click(dialog.getByRole("button", { name: "Roll d8, 2 of 3 left" }));
+        fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+
+        await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+        expect(writes).toHaveLength(1);
+        expect(writes[0]).toMatchObject({
+          hitPoints: { current: 12 + regained, temporary: 0 },
+          hitDice: [
+            { die: 8, total: 3, remaining: 1 },
+            { die: 10, total: 2, remaining: 2 },
+          ],
+        });
+        expect(rolls).toHaveLength(1);
+      });
+
+      it("restores no hit points with no dice spent", async () => {
+        const writes = renderLive(tired(), { character: slow() });
+        const dialog = await open("Long rest");
+        fireEvent.click(dialog.getByRole("button", { name: "Take the long rest" }));
+        await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+        expect(writes[0]?.hitPoints).toEqual({ current: 12, temporary: 0 });
+      });
     });
 
     it("offers no hit dice in a long rest", async () => {

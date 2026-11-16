@@ -216,6 +216,19 @@ const OPTIONS: Record<HouseRule, Option> = {
     },
     editions: ["classic", "one"],
   },
+  slowNaturalHealing: {
+    name: "Natural healing on a long rest",
+    printed: {
+      label: "Full hit points",
+      description: "A long rest restores all your hit points.",
+    },
+    house: {
+      label: "Slow healing",
+      description:
+        "A long rest restores no hit points. Spend hit dice at the end of it to heal, as on a short rest.",
+    },
+    editions: ["classic", "one"],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];

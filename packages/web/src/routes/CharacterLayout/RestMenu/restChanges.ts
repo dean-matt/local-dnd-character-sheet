@@ -14,6 +14,7 @@ import {
   type HitDie,
   hitDieSpentState,
   hitPointMaximumUnder,
+  houseRule,
   itemChargesSpent,
   type RestLength,
   type RollRecord,
@@ -208,10 +209,38 @@ export function spentState<Spend extends HitDieSpend>(
   return { state: held, applied };
 }
 
+/** Whether the dialog's hit dice are spent after the rest, as a long rest under slow natural healing has them. */
+function spendsAfterRest(definition: CharacterDefinition, length: RestLength): boolean {
+  return length === "long" && houseRule(definition, "slowNaturalHealing");
+}
+
+/** Whether the rest's dialog offers hit dice to spend. */
+export function offersHitDice(definition: CharacterDefinition, length: RestLength): boolean {
+  return length === "short" || spendsAfterRest(definition, length);
+}
+
+/**
+ * The state the dialog's hit dice are spent from: the state itself before a short rest, and
+ * the rested state where `spendsAfterRest`, so a die the rest returns can be spent in it.
+ */
+export function spendBase(
+  definition: CharacterDefinition,
+  derived: CharacterDerived,
+  state: CharacterState,
+  features: readonly FeatureUse[],
+  length: RestLength,
+  picked?: HitDie[],
+  recharges: readonly RolledRecharge[] = [],
+): CharacterState {
+  return spendsAfterRest(definition, length)
+    ? restedState(definition, derived, state, length, picked, features, recharges)
+    : state;
+}
+
 /**
  * The state a rest leaves and what it changes on the sheet, so the menu's summary and the
  * dialog's list describe the one rest the dialog writes. The hit dice in `spends` are spent
- * before the rest, so the list and the write carry them with its own recovery. Each of
+ * before the rest, or after it where `spendsAfterRest`; the list and the write agree on which. Each of
  * `features` whose reset the rest meets has its uses restored, and a long rest returns each of
  * `recharges` its charges.
  */
@@ -225,8 +254,11 @@ export function restPreview(
   spends: readonly HitDieSpend[] = [],
   recharges: readonly RolledRecharge[] = [],
 ): { after: CharacterState; changes: RestChange[] } {
-  const during = spentState(definition, derived, state, spends).state;
-  const after = restedState(definition, derived, during, length, picked, features, recharges);
+  const rested = (from: CharacterState) =>
+    restedState(definition, derived, from, length, picked, features, recharges);
+  const after = spendsAfterRest(definition, length)
+    ? spentState(definition, derived, rested(state), spends).state
+    : rested(spentState(definition, derived, state, spends).state);
   const changes = restChanges(
     definition,
     derived,
