@@ -8,7 +8,7 @@ type Roll = ReturnType<typeof rollDice>;
 
 /**
  * Rolls `notation`, records it under `named` in the character's roll log and hands the
- * recorded entry to the layout. A `mode` in `named` rolls in it and is recorded with the dice, the discarded one included. `settled` hears the roll and whether it was recorded; a
+ * recorded entry to the layout. A `mode` in `named` rolls in it and is recorded with the dice, the discarded one included. A `critical` one doubles the dice and not the modifier, as a critical hit does. `settled` hears the roll and whether it was recorded; a
  * notation that does not parse rolls nothing and returns the parser's error.
  */
 export function useRollAndRecord(characterId: string) {
@@ -17,12 +17,12 @@ export function useRollAndRecord(characterId: string) {
 
   function roll(
     notation: string,
-    named: Pick<RollRecord, "label" | "type" | "origin" | "mode">,
+    named: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & { critical?: boolean },
     settled?: (rolled: Roll, logged: boolean) => void,
   ): Error | undefined {
     let rolled: Roll;
     try {
-      rolled = rollDice(notation, { mode: named.mode });
+      rolled = rollDice(notation, { mode: named.mode, critical: named.critical });
     } catch (error) {
       return error as Error;
     }

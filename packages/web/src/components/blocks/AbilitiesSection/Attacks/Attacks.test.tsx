@@ -291,6 +291,54 @@ describe("Attacks", () => {
       ]);
     });
 
+    it("calls out a natural 20 and doubles the damage dice, not the modifier, once", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.99);
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      const mark = await screen.findByRole("checkbox", { name: "Critical hit" });
+      expect(mark).not.toBeChecked();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+
+      await waitFor(() => expect(mark).toBeChecked());
+      expect(await screen.findByText(/: 25, critical hit$/)).toHaveAttribute("role", "status");
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
+
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]).toMatchObject({ critical: true, modifier: -1, total: 15 });
+      expect(posts[1]?.dice).toHaveLength(2);
+      await waitFor(() => expect(mark).not.toBeChecked());
+    });
+
+    it("calls out a roll at a lowered threshold and not below it", async () => {
+      const lowered = {
+        ...attack(0, 5),
+        critThreshold: { computed: 19, manual: null, terms: [] },
+      };
+      vi.spyOn(Math, "random").mockReturnValue(0.9);
+      renderRolling({ ...derivedRecord(), attacks: [lowered] });
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() =>
+        expect(screen.getByRole("checkbox", { name: "Critical hit" })).toBeChecked(),
+      );
+    });
+
+    it("does not call out a roll below the threshold", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.9);
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(screen.getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
+    });
+
+    it("doubles the damage dice of a roll marked critical by hand", async () => {
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      fireEvent.click(await screen.findByRole("checkbox", { name: "Critical hit" }));
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ critical: true, modifier: -1 });
+      expect(posts[0]?.dice).toHaveLength(2);
+    });
+
     const effects = (...list: CharacterDerived["rollEffects"]["computed"]) => ({
       computed: list,
       manual: null,

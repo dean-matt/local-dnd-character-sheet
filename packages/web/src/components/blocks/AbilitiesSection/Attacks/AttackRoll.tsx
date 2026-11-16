@@ -29,7 +29,12 @@ export function AttackRoll({
   bonus,
   effects,
   beforeRoll,
-}: Pick<ComponentProps<typeof RollBonusButton>, "label" | "type" | "origin" | "bonus"> & {
+  critAt,
+  onRolled,
+}: Pick<
+  ComponentProps<typeof RollBonusButton>,
+  "label" | "type" | "origin" | "bonus" | "critAt" | "onRolled"
+> & {
   effects: readonly RollEffectEntry[];
   beforeRoll?: () => Promise<boolean>;
 }) {
@@ -68,6 +73,8 @@ export function AttackRoll({
         bonus={bonus}
         mode={mode}
         beforeRoll={beforeRoll}
+        critAt={critAt}
+        onRolled={onRolled}
       />
     </span>
   );

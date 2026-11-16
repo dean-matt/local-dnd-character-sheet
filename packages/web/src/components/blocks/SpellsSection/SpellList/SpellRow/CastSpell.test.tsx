@@ -552,7 +552,7 @@ describe("CastSpell", () => {
 
       await waitFor(() =>
         expect(screen.getByRole("status")).toHaveTextContent(
-          "Cast Fire Bolt; attack 26, critical hit, damage 20",
+          "Cast Fire Bolt; attack 26, critical hit, damage 40",
         ),
       );
     });
