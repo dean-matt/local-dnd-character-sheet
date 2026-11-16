@@ -55,7 +55,7 @@ export function ProficiencyRow({
 }) {
   const roll = ability ? `${name} check` : `${name} save`;
   return (
-    <li className="flex items-center gap-2 py-0.5 text-body">
+    <li className="flex min-w-0 flex-wrap items-center gap-x-2 py-0.5 text-body">
       {onCycleLevel ? (
         <button
           type="button"

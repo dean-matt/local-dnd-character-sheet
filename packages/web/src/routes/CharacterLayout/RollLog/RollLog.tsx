@@ -49,6 +49,11 @@ const TYPE_FACET: Facet<Roll> = {
 
 const ALL_CHARACTERS = "";
 
+/** A die other than the roll's first kind, or one subtracted, is listed as its own signed term. */
+function isExtraTerm(die: { faces: number; sign: number }, dice: readonly { faces: number }[]) {
+  return die.faces !== dice[0]?.faces || die.sign < 0;
+}
+
 /**
  * Every character's recent rolls, newest first, each tagged with who rolled it. `latest` is the roll that just landed.
  * The heading takes focus only when the header opened the panel, so a roll keeps focus on the rolled tag.
@@ -202,7 +207,7 @@ export function RollLog({
               {(roll.type === "attack" ||
                 roll.type === "spell-attack" ||
                 roll.critical ||
-                roll.dice.some((die) => die.faces !== roll.dice[0]?.faces || die.sign < 0) ||
+                roll.dice.some((die) => isExtraTerm(die, roll.dice)) ||
                 (roll.mode && roll.mode !== "normal")) && (
                 <span className="flex flex-wrap items-baseline gap-1 text-muted text-row">
                   {roll.critical && <span className="font-semibold">Critical hit</span>}
@@ -214,7 +219,7 @@ export function RollLog({
                       className={die.kept ? "" : "line-through"}
                       title={`d${die.faces}${die.kept ? "" : ", discarded"}`}
                     >
-                      {die.faces !== roll.dice[0]?.faces || die.sign < 0
+                      {isExtraTerm(die, roll.dice)
                         ? `${die.sign < 0 ? "−" : "+"} d${die.faces} ${die.value}`
                         : die.value}
                       {!die.kept && <span className="sr-only"> discarded</span>}

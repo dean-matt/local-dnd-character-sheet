@@ -112,7 +112,10 @@ export function DeathSaves({
 
   async function roll() {
     if (replace.writing) return;
-    if (extraDie.error) return;
+    if (extraDie.error) {
+      replace.announce(extraDie.error);
+      return;
+    }
     const added = extraDie.notation;
     const dice = rollDice(`1d20${added}`);
     const d20 = dice.dice[0]?.value ?? 0;

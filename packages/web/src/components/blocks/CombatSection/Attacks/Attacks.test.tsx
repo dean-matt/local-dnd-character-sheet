@@ -302,6 +302,22 @@ describe("Attacks", () => {
       ]);
     });
 
+    it("rolls a die the player names with the attack, as its own signed term", async () => {
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
+      fireEvent.change(await screen.findByRole("textbox", { name: "Longsword attack extra die" }), {
+        target: { value: "+1d4" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      const [post] = posts as { notation: string; dice: { faces: number; sign: number }[] }[];
+      expect(post?.notation).toBe("1d20+1d4+5");
+      expect(post?.dice.map(({ faces, sign }) => [faces, sign])).toEqual([
+        [20, 1],
+        [4, 1],
+      ]);
+    });
+
     it("calls out a natural 20 and doubles the damage dice, not the modifier, once", async () => {
       vi.spyOn(Math, "random").mockReturnValue(0.99);
       const { posts } = renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });

@@ -38,6 +38,7 @@ export function ModeRoll({
 }) {
   const characterId = useContext(RollingFor);
   const sources = useId();
+  const extraError = useId();
   const start = offered(effects);
   const [extra, setExtra] = useState("");
   const [chosen, setChosen] = useState<{ start: Mode; mode: Mode }>({ start, mode: start });
@@ -71,7 +72,11 @@ export function ModeRoll({
         value={extra}
         onChange={setExtra}
         error={parseExtraDie(extra).error}
+        describedBy={extraError}
       />
+      <span id={extraError} className="sr-only">
+        {parseExtraDie(extra).error}
+      </span>
       <RollBonusButton {...roll} mode={mode} extra={extra} />
     </span>
   );

@@ -105,7 +105,7 @@ describe("DeathSaves", () => {
     });
     await roll(8);
 
-    expect(await card().findByText(/"bless" is not a die/)).toBeVisible();
+    await waitFor(() => expect(announced()).toHaveTextContent(/"bless" is not a die/));
     expect(d20.notations).toEqual([]);
     expect(writes).toHaveLength(0);
   });

@@ -100,6 +100,22 @@ describe("RollLog's row", () => {
     expect(row).toHaveTextContent("17− d4 5+ 3");
   });
 
+  it("lists a die of another size in a damage roll as its own term", async () => {
+    const [row] = await listed([
+      {
+        ...roll(1, "1", "Vex"),
+        type: "damage",
+        notation: "1d8+1d6",
+        total: 9,
+        dice: [
+          { faces: 8, value: 5, kept: true, sign: 1 },
+          { faces: 6, value: 4, kept: true, sign: 1 },
+        ],
+      },
+    ]);
+    expect(row).toHaveTextContent("5+ d6 4");
+  });
+
   it("tags a roll with its type, and an untyped one with nothing", async () => {
     const [typed, hitDie, untyped] = await listed([
       { ...roll(3, "1", "Vex"), type: "spell-attack" },

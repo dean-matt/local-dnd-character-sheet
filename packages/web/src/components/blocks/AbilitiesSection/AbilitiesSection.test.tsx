@@ -837,7 +837,9 @@ describe("AbilitiesSection", () => {
       fireEvent.change(extra, { target: { value: "bless" } });
       expect(extra).toHaveAttribute("aria-invalid", "true");
       fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
-      expect(await screen.findByText(/"bless" is not a die/)).toHaveAttribute("role", "status");
+      const messages = await screen.findAllByText(/"bless" is not a die/);
+      expect(messages.some((message) => message.closest("[role=status]") !== null)).toBe(true);
+      expect(extra).toHaveAccessibleDescription(/"bless" is not a die/);
       expect(posts).toHaveLength(0);
     });
 
