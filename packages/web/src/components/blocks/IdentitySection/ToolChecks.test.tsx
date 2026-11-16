@@ -39,7 +39,12 @@ const thievesTools = {
 };
 
 /** Serves the derived block, the printed tool row and the roll log, and records each roll posted. */
-function renderChecks(record: CharacterRecord) {
+type ItemReply = (path: string) => Response;
+
+function renderChecks(
+  record: CharacterRecord,
+  itemReply: ItemReply = () => Response.json(thievesTools),
+) {
   const posts: Record<string, unknown>[] = [];
   const itemReads: string[] = [];
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -47,7 +52,7 @@ function renderChecks(record: CharacterRecord) {
     if (path.endsWith("/derived")) return Response.json(derivedRecord(record.definition));
     if (path.startsWith("/api/items/")) {
       itemReads.push(path);
-      return Response.json(thievesTools);
+      return itemReply(path);
     }
     if (init?.method === "POST") {
       posts.push(JSON.parse(String(init.body)));
@@ -67,7 +72,9 @@ function renderChecks(record: CharacterRecord) {
     return Response.json([]);
   });
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
       <RollingFor value="1">
         <ToolChecks character={record} />
       </RollingFor>
@@ -137,11 +144,52 @@ describe("ToolChecks", () => {
     expect(itemReads).toEqual([]);
   });
 
-  it("lists no check for a tool held at none", async () => {
+  it("lists no check for a tool held at none, and one for a tool held beside it", async () => {
     const record = holding("proficient");
-    record.definition.proficiencies.tools = [{ name: "Dice Set", level: "none" }];
+    record.definition.proficiencies.tools = [
+      { name: "Dice Set", level: "none" },
+      { name: "Thieves' Tools", level: "proficient" },
+    ];
     renderChecks(record);
 
-    await waitFor(() => expect(screen.queryByRole("list", { name: "Tool checks" })).toBeNull());
+    await screen.findByRole("button", { name: "Roll Thieves' Tools check" });
+    expect(screen.getByRole("list", { name: "Tool checks" }).querySelectorAll("li")).toHaveLength(
+      1,
+    );
+    expect(screen.queryByRole("combobox", { name: "Dice Set ability" })).toBeNull();
+  });
+
+  it("reads the printed ability from the next source where the first holds no row", async () => {
+    const { itemReads } = renderChecks(holding("proficient"), (path) =>
+      path.endsWith("/XPHB")
+        ? Response.json({ error: "No item with that name and source" }, { status: 404 })
+        : Response.json({ ...thievesTools, source: "XDMG" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Thieves' Tools ability" })).toHaveValue("dex"),
+    );
+    expect(itemReads.map((path) => path.split("/").pop())).toEqual(["XPHB", "XDMG"]);
+  });
+
+  it("falls back to Intelligence where no source holds the tool", async () => {
+    const { posts } = renderChecks(holding("proficient"), () =>
+      Response.json({ error: "No item with that name and source" }, { status: 404 }),
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Roll Thieves' Tools check" }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]?.notation).toBe("1d20+2");
+  });
+
+  it("keeps Intelligence, and stops at the first source, where a read fails other than as a missing row", async () => {
+    const { itemReads } = renderChecks(holding("proficient"), () =>
+      Response.json({ error: "Bad request" }, { status: 400 }),
+    );
+
+    await screen.findByRole("button", { name: "Roll Thieves' Tools check" });
+    expect(itemReads).toEqual(["/api/items/Thieves'%20Tools/XPHB"]);
+    expect(screen.getByRole("combobox", { name: "Thieves' Tools ability" })).toHaveValue("int");
   });
 });
