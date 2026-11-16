@@ -281,6 +281,17 @@ describe("describeStateChange", () => {
     ]);
   });
 
+  it("names a temporary modifier added and removed", () => {
+    const cursed: CharacterState = {
+      ...state,
+      temporaryModifiers: [
+        { name: "Curse", target: { kind: "armorClass" }, amount: -1, endsOn: null },
+      ],
+    };
+    expect(stateChangePhrases(state, cursed)).toEqual(["Temporary modifier set to Curse -1"]);
+    expect(stateChangePhrases(cursed, state)).toEqual(["Temporary modifier cleared"]);
+  });
+
   it("names an effect starting and ending", () => {
     const raging: CharacterState = { ...state, activeEffects: [{ name: "Rage" }] };
     expect(stateChangePhrases(state, raging)).toEqual(["Rage set to active"]);

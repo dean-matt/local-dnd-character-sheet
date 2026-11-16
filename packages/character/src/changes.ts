@@ -9,7 +9,7 @@ import { resourceLabel } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { classResourceKey, itemKey } from "./keys.ts";
 import type { Ability, EntryRef } from "./refs.ts";
-import { type CharacterState, TURN_MARKS } from "./state.ts";
+import { type CharacterState, modifierKey, TURN_MARKS } from "./state.ts";
 import { TURN_LABELS } from "./turn.ts";
 
 /** Newest kept per character; the insert that passes it prunes the oldest. */
@@ -428,6 +428,15 @@ const STATE_CHANGES: {
       (effect) => effect.name,
       (name) => name,
       () => "active",
+    ),
+  temporaryModifiers: (before, after) =>
+    keyed(
+      "temporaryModifiers",
+      before.temporaryModifiers,
+      after.temporaryModifiers,
+      modifierKey,
+      () => "Temporary modifier",
+      ({ name, amount }) => `${name} ${amount > 0 ? "+" : ""}${amount}`,
     ),
   concentration: (before, after) =>
     one(

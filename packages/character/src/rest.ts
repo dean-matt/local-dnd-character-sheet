@@ -8,6 +8,7 @@ import { classResourceKey } from "./keys.ts";
 import { rageEnded } from "./rage.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import { type CharacterState, itemChargesSpent } from "./state.ts";
+import { modifiersEnded } from "./temporaryModifiers.ts";
 
 export type RestLength = "short" | "long";
 
@@ -123,7 +124,7 @@ export function restedState(
     ...options(definition),
     picked,
   });
-  const ended = rageEnded(rested);
+  const ended = modifiersEnded(rageEnded(rested), length);
   return {
     ...(length === "long" ? longRestEnded(ended) : ended),
     classResources: rested.classResources.map((pool) => {

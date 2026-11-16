@@ -294,6 +294,34 @@ describe("a rest and a reduction to the hit point maximum", () => {
   });
 });
 
+describe("a rest and temporary modifiers", () => {
+  const definition = { edition: "one" as const, houseRules: {}, inventory: [] };
+  const modifier = (name: string, endsOn: "short" | "long" | null) => ({
+    name,
+    target: { kind: "armorClass" as const },
+    amount: -1,
+    endsOn,
+  });
+  const held = {
+    ...defaultCharacterState(),
+    temporaryModifiers: [
+      modifier("Until removed", null),
+      modifier("Rest", "short"),
+      modifier("Long", "long"),
+    ],
+  };
+  const left = (length: "short" | "long") =>
+    restedState(definition, sheet, held, length).temporaryModifiers.map(({ name }) => name);
+
+  it("ends the one that ends on any rest at a short rest, keeping the others", () => {
+    expect(left("short")).toEqual(["Until removed", "Long"]);
+  });
+
+  it("ends both rest-bound modifiers at a long rest, keeping the one that stays until removed", () => {
+    expect(left("long")).toEqual(["Until removed"]);
+  });
+});
+
 describe("a rest and a feature's limited uses", () => {
   const features = [
     { key: "Race|Dwarf|PHB|Stone's Endurance", reset: "short" as const },
