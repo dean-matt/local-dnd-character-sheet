@@ -4,6 +4,7 @@ import {
   abilityModifierBreakdown,
   experienceThreshold,
   passiveScore,
+  proficiencyAt,
   proficiencyBonus,
   proficiencyBonusBreakdown,
   proficiencyContribution,
@@ -122,5 +123,16 @@ describe("breakdowns", () => {
 
   it("adds no step term below level 5", () => {
     expect(proficiencyBonusBreakdown(4).terms).toHaveLength(1);
+  });
+});
+
+describe("proficiencyAt", () => {
+  it.each([
+    ["none", 0],
+    ["half", 1],
+    ["proficient", 3],
+    ["expertise", 6],
+  ] as const)("a bonus of 3 at %s adds %d", (level, expected) => {
+    expect(proficiencyAt(3, level)).toBe(expected);
   });
 });

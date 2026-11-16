@@ -6,6 +6,7 @@ import { Card } from "../../Card.tsx";
 import { CatalogPicker } from "../../CatalogPicker/CatalogPicker.tsx";
 import { RemovableChipList } from "../../RemovableChipList.tsx";
 import { ProficiencyGroup } from "./ProficiencyGroup.tsx";
+import { ToolChecks } from "./ToolChecks.tsx";
 
 type Proficiencies = CharacterDefinition["proficiencies"];
 
@@ -113,6 +114,7 @@ export function ProficienciesCard({ character }: { character: CharacterRecord })
               }
               empty="No tools."
             />
+            <ToolChecks character={character} />
             <CatalogPicker
               label="Add a tool"
               edition={edition}
