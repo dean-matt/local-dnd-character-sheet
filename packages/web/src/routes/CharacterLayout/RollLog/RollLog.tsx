@@ -185,7 +185,7 @@ export function RollLog({
               className="flex flex-col gap-0.5 rounded-control border border-border px-3 py-2"
             >
               <span className="flex items-baseline justify-between gap-2">
-                <span className="min-w-0 truncate font-bold">{roll.label}</span>
+                <span className="min-w-0 break-words font-bold">{roll.label}</span>
                 <time dateTime={roll.rolledAt} className="shrink-0 text-label text-muted">
                   {when.format(new Date(roll.rolledAt))}
                 </time>

@@ -90,6 +90,12 @@ const houseRulesObject = z
      * offers no flanking.
      */
     flanking: z.enum(["none", "advantage", "bonus"]).optional(),
+    /**
+     * A natural 20 on an ability check or saving throw succeeds and a natural 1 fails, whatever
+     * the total. Absent, the total decides, as both rulesets print. A death save and an attack
+     * roll keep their own rules.
+     */
+    naturalExtremes: z.boolean().optional(),
   })
   .prefault({});
 
@@ -124,6 +130,7 @@ export const PRINTED_RULE: Required<HouseRules> = {
   waiveMaterialComponents: false,
   criticalHit: "double",
   flanking: "none",
+  naturalExtremes: false,
 };
 
 /**

@@ -202,6 +202,20 @@ const OPTIONS: Record<HouseRule, Option> = {
       },
     ],
   },
+  naturalExtremes: {
+    name: "Natural 20 and 1 on checks and saves",
+    printed: {
+      label: "The total decides",
+      description:
+        "An ability check or saving throw succeeds or fails by its total, whatever the d20 shows.",
+    },
+    house: {
+      label: "Natural 20 and 1 decide",
+      description:
+        "A natural 20 on an ability check or saving throw succeeds and a natural 1 fails, whatever the total. The roll says so.",
+    },
+    editions: ["classic", "one"],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];
