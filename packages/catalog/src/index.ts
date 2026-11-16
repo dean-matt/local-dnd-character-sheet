@@ -281,5 +281,6 @@ export {
   classStartingEquipmentSchema,
 } from "./starting-equipment.ts";
 export { mergeHomebrewSubrace, mergeSubrace } from "./subrace-merge.ts";
+export { toolAbility } from "./tool-ability.ts";
 export type { ToolChoice } from "./tool-choice.ts";
 export { backgroundToolChoicesSchema, classToolChoicesSchema } from "./tool-choice.ts";

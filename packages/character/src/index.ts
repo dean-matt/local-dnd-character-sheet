@@ -29,6 +29,7 @@ export {
   IMPROVEMENT_CAP,
   maxHitPoints,
   preparedSpellCount,
+  proficiencyAt,
   SENSES,
 } from "@dnd/rules";
 export { abilityScore, abilityScoreBreakdown } from "./abilityScore.ts";

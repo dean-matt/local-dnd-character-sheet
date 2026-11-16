@@ -23,6 +23,7 @@ export {
   IMPROVEMENT_CAP,
   PROFICIENCY_LEVELS,
   passiveScore,
+  proficiencyAt,
   proficiencyBonus,
   proficiencyBonusBreakdown,
   proficiencyContribution,

@@ -108,5 +108,10 @@ export function proficiencyContribution(
   level: ProficiencyLevel,
   bonus = 0,
 ): number {
-  return Math.floor((proficiencyBonus(totalLevel) + bonus) * PROFICIENCY_MULTIPLIER[level]);
+  return proficiencyAt(proficiencyBonus(totalLevel) + bonus, level);
+}
+
+/** A level's worth of an already-totalled proficiency bonus, for a caller holding the derived bonus. */
+export function proficiencyAt(bonus: number, level: ProficiencyLevel): number {
+  return Math.floor(bonus * PROFICIENCY_MULTIPLIER[level]);
 }
