@@ -8,8 +8,10 @@ import {
 import { rollDice } from "@dnd/dice";
 import { useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
+import { parseExtraDie } from "../../../../lib/extraDie.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
+import { ExtraDieInput } from "../../../ExtraDieInput.tsx";
 
 type Column = keyof CharacterState["deathSaves"];
 
@@ -78,7 +80,9 @@ export function DeathSaves({
   state: CharacterState;
 }) {
   const replace = useAnnouncedStateWrite(character.id);
-  const [lastRoll, setLastRoll] = useState<number>();
+  const [lastRoll, setLastRoll] = useState<string>();
+  const [extra, setExtra] = useState("");
+  const extraDie = parseExtraDie(extra);
   const status = deathSaveStatus(derived, state);
   // A roll speaks for the dying it was rolled in; leaving that ends it.
   if (status !== "dying" && lastRoll !== undefined) setLastRoll(undefined);
@@ -108,12 +112,22 @@ export function DeathSaves({
 
   async function roll() {
     if (replace.writing) return;
-    const d20 = rollDice("1d20").total;
-    const rolled = deathSaveRolledState(derived, state, d20);
+    if (extraDie.error) {
+      replace.announce(extraDie.error);
+      return;
+    }
+    const added = extraDie.notation;
+    const dice = rollDice(`1d20${added}`);
+    const d20 = dice.dice[0]?.value ?? 0;
+    const granted = dice.total - d20;
+    const rolled = deathSaveRolledState(derived, state, d20, granted);
     const after = rolled.state;
     const result = rolled.outcome === "conscious" ? "Conscious at 1 hit point" : summary(after);
-    if (await write(after, `Rolled ${d20}: ${verdict(d20, state, rolled)}. ${result}.`)) {
-      setLastRoll(d20);
+    const said = added
+      ? `${d20} ${granted < 0 ? "−" : "+"} ${Math.abs(granted)} (${added})`
+      : `${d20}`;
+    if (await write(after, `Rolled ${said}: ${verdict(d20, state, rolled)}. ${result}.`)) {
+      setLastRoll(said);
     }
   }
 
@@ -165,8 +179,20 @@ export function DeathSaves({
           <button type="button" aria-disabled={replace.writing} onClick={roll} className={BUTTON}>
             Roll death save
           </button>
+          <ExtraDieInput
+            label="Death save"
+            value={extra}
+            onChange={setExtra}
+            error={extraDie.error}
+            describedBy="death-save-extra-error"
+          />
           {lastRoll !== undefined && <span className="text-muted text-row">Rolled {lastRoll}</span>}
         </div>
+      )}
+      {extraDie.error && (
+        <p id="death-save-extra-error" className="mt-1 text-error text-row">
+          {extraDie.error}
+        </p>
       )}
       {replace.error && (
         <p role="alert" className="mt-1 text-error text-row">

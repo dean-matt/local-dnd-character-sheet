@@ -119,7 +119,7 @@ export function deathSaveStatus(
 }
 
 /**
- * The state after a death save of `roll` on the d20, by `deathSave`. A 20 heals 1 hit point,
+ * The state after a death save of `roll` on the d20 and `modifier` from a granted die, by `deathSave`. A 20 heals 1 hit point,
  * through `heal`, so a maximum of 1 writes null as any heal to the maximum does. A third
  * success stores three successes for `deathSaveStatus` to read.
  */
@@ -127,8 +127,9 @@ export function deathSaveRolledState(
   derived: Sheet,
   state: CharacterState,
   roll: number,
+  modifier = 0,
 ): { state: CharacterState; outcome: ReturnType<typeof deathSave>["outcome"] } {
-  const { outcome, ...counts } = deathSave(state.deathSaves, roll);
+  const { outcome, ...counts } = deathSave(state.deathSaves, roll, modifier);
   if (outcome === "conscious") return healedState(derived, state, 1);
   const deathSaves =
     outcome === "stable" ? { successes: REQUIRED_DEATH_SAVES, failures: 0 } : counts;

@@ -75,11 +75,18 @@ function settle(successes: number, failures: number): DeathSaveResult {
   return { successes, failures, outcome: "dying" };
 }
 
-/** The d20 result, unmodified — nothing adds to a death saving throw. */
-export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
+/**
+ * The result of a death save whose d20 shows `roll`. Nothing the character has adds to it, but
+ * a die an ally grants does: `modifier` joins the total the DC reads, while a 20 and a 1 stay
+ * the d20's own.
+ */
+export function deathSave(saves: DeathSaves, roll: number, modifier = 0): DeathSaveResult {
   assertSaves(saves);
   if (!Number.isInteger(roll) || roll < 1 || roll > D20_FACES) {
     throw new RangeError(`A d20 rolls 1-${D20_FACES}, got ${roll}`);
+  }
+  if (!Number.isInteger(modifier)) {
+    throw new RangeError(`A death save modifier is a whole number, got ${modifier}`);
   }
   const settled = alreadySettled(saves);
   if (settled) {
@@ -88,7 +95,7 @@ export function deathSave(saves: DeathSaves, roll: number): DeathSaveResult {
   if (roll === D20_FACES) {
     return { successes: 0, failures: 0, outcome: "conscious" };
   }
-  if (roll >= SUCCESS_DC) {
+  if (roll !== 1 && roll + modifier >= SUCCESS_DC) {
     return settle(saves.successes + 1, saves.failures);
   }
   return settle(saves.successes, saves.failures + (roll === 1 ? DOUBLE_FAILURE : 1));

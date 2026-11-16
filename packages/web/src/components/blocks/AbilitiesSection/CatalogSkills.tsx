@@ -94,7 +94,7 @@ export function CatalogSkills({
   }
 
   return (
-    <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-2">
+    <ul className="grid gap-x-5 gap-y-0.5 sm:grid-cols-[repeat(2,minmax(0,1fr))]">
       {skills.map((skill) => {
         const key = refKey(skill.ref);
         const homebrew = skill.ref.source === HOMEBREW_SOURCE;

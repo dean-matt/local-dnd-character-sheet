@@ -72,6 +72,10 @@ describe("deathSave", () => {
     expect(() => deathSave({ successes: 0, failures: 0 }, roll)).toThrow(RangeError);
   });
 
+  it.each([1.5, Number.NaN, Number.POSITIVE_INFINITY])("rejects a modifier of %s", (modifier) => {
+    expect(() => deathSave({ successes: 0, failures: 0 }, 10, modifier)).toThrow(RangeError);
+  });
+
   it.each([-1, 4, 1.5, Number.NaN])("rejects a count of %s in either column", (count) => {
     expect(() => deathSave({ successes: count, failures: 0 }, 10)).toThrow(RangeError);
     expect(() => deathSave({ successes: 0, failures: count }, 10)).toThrow(RangeError);
@@ -189,5 +193,19 @@ describe("damageAtZeroHitPoints", () => {
       failures,
       outcome: "dying",
     });
+  });
+});
+
+describe("deathSave with a granted die", () => {
+  const fresh = { successes: 0, failures: 0 };
+
+  it("reads the DC against the d20 and the die together", () => {
+    expect(deathSave(fresh, 7, 3).successes).toBe(1);
+    expect(deathSave(fresh, 7, -3).failures).toBe(1);
+  });
+
+  it("leaves a natural 1 at two failures and a 20 conscious", () => {
+    expect(deathSave(fresh, 1, 4).failures).toBe(2);
+    expect(deathSave(fresh, 20, -4).outcome).toBe("conscious");
   });
 });
