@@ -9,6 +9,8 @@ import { RollingFor } from "./rollerContext.ts";
  * sheet is open to record to. Its status region speaks what was rolled and the total
  * without moving focus, and says so when the roll could not be logged. `beforeRoll` runs
  * first and rolls nothing when it resolves false. A `mode` rolls with advantage or disadvantage and says so.
+ * `critAt` makes it an attack that scores a critical hit on a kept die of that number or more, and says so;
+ * `critical` rolls the damage of one, doubling the dice. `onRolled` hears whether the roll was a critical hit.
  */
 export function RollBonusButton({
   label,
@@ -18,9 +20,15 @@ export function RollBonusButton({
   dice = "1d20",
   mode,
   beforeRoll,
+  critAt,
+  critical,
+  onRolled,
 }: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & {
   bonus: number;
   dice?: string;
+  critAt?: number;
+  critical?: boolean;
+  onRolled?: (hit: boolean) => void;
   beforeRoll?: () => Promise<boolean>;
 }) {
   const characterId = useContext(RollingFor);
@@ -36,11 +44,14 @@ export function RollBonusButton({
         onClick={async () => {
           setHeard("");
           if (beforeRoll && !(await beforeRoll())) return;
-          roll(notation, { label, type, origin, mode }, (rolled, logged) =>
+          roll(notation, { label, type, origin, mode, critical }, (rolled, logged) => {
+            const kept = rolled.dice.find((die) => die.kept)?.value ?? 0;
+            const hit = critAt !== undefined && kept >= critAt;
+            onRolled?.(hit);
             setHeard(
-              `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}: ${rolled.total}${logged ? "" : ", not logged"}`,
-            ),
-          );
+              `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}${critical ? " as a critical hit" : ""}: ${rolled.total}${hit ? ", critical hit" : ""}${logged ? "" : ", not logged"}`,
+            );
+          });
         }}
         aria-label={`Roll ${label}`}
         title={`Roll ${label}`}

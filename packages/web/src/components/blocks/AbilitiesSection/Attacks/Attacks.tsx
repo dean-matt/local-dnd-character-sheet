@@ -18,7 +18,7 @@ import {
   spentAmmunitionOf,
   withAmmunitionSpent,
 } from "@dnd/character";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterInventory } from "../../../../hooks/useCharacterInventory.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
@@ -29,6 +29,7 @@ import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
+import { RollingFor } from "../../../rollerContext.ts";
 import { damageText } from "../../attack.ts";
 import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
@@ -130,6 +131,7 @@ export function Attacks({
   derived: CharacterDerived;
 }) {
   const names = useHomebrewNames();
+  const rolling = useContext(RollingFor) !== null;
   const inventory = useCharacterInventory(character.id);
   const { definition } = character;
   const rollEffects = derivedValue(derived.rollEffects);
@@ -137,6 +139,8 @@ export function Attacks({
   const both = useReplaceDefinitionAndState(character.id);
   const [picked, setPicked] = useState<Record<number, number>>({});
   const play = useCharacterState(character.id);
+  const [crit, setCrit] = useState<Record<string, boolean>>({});
+  const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const heldEffects = play.data ? conditionAttackEffects(play.data.state, definition.edition) : [];
   const attackEffects = (ability: Ability) => [
@@ -303,6 +307,8 @@ export function Attacks({
                       bonus={derivedValue(attack.attackBonus)}
                       effects={attackEffects(attack.ability)}
                       beforeRoll={attack.ammunition ? () => spend(attack, name) : undefined}
+                      critAt={derivedValue(attack.critThreshold)}
+                      onRolled={(hit) => setCritical(key, hit)}
                     />
                   }
                   rollDamage={
@@ -313,16 +319,30 @@ export function Attacks({
                         origin={name}
                         dice={attack.damage.dice}
                         bonus={derivedValue(attack.damage.modifier)}
+                        critical={crit[key] ?? false}
+                        onRolled={() => setCritical(key, false)}
                       />
                     )
                   }
                   damage={
-                    <AttackDamage name={name} attack={attack} overrideKey={key}>
-                      {attack.damage
-                        ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
-                        : NONE}
-                      {critRange(attack)}
-                    </AttackDamage>
+                    <>
+                      <AttackDamage name={name} attack={attack} overrideKey={key}>
+                        {attack.damage
+                          ? `${damageText(attack.damage)} ${attack.damage.type ?? ""}`.trim()
+                          : NONE}
+                        {critRange(attack)}
+                      </AttackDamage>
+                      {attack.damage && rolling && (
+                        <label className="flex items-center gap-1 text-label">
+                          <input
+                            type="checkbox"
+                            checked={crit[key] ?? false}
+                            onChange={(event) => setCritical(key, event.target.checked)}
+                          />
+                          Critical hit
+                        </label>
+                      )}
+                    </>
                   }
                 />
               );
@@ -330,6 +350,7 @@ export function Attacks({
             {derived.spellcasting.map((caster) => {
               const origin = displayName(caster.class, names);
               const name = `${origin} spell attack`;
+              const spellKey = `spell:${entryKey(caster.class)}`;
               return (
                 <AttackRow
                   key={entryKey(caster.class)}
@@ -350,10 +371,17 @@ export function Attacks({
                       origin={origin}
                       bonus={derivedValue(caster.attackBonus)}
                       effects={attackEffects(caster.ability)}
+                      critAt={20}
+                      onRolled={(hit) => setCritical(spellKey, hit)}
                     />
                   }
                   effects={attackEffects(caster.ability)}
-                  notes={<CastingBlockedNote armor={derived.castingBlockedBy} />}
+                  notes={
+                    <>
+                      {crit[spellKey] && <p className="font-semibold text-label">Critical hit</p>}
+                      <CastingBlockedNote armor={derived.castingBlockedBy} />
+                    </>
+                  }
                 />
               );
             })}

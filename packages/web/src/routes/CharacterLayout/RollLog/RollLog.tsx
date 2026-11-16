@@ -199,8 +199,9 @@ export function RollLog({
                 </span>
                 <strong className="text-title">{roll.total}</strong>
               </span>
-              {(roll.type === "attack" || roll.type === "spell-attack") && (
+              {(roll.type === "attack" || roll.type === "spell-attack" || roll.critical) && (
                 <span className="flex flex-wrap items-baseline gap-1 text-muted text-row">
+                  {roll.critical && <span className="font-semibold">Critical hit</span>}
                   {roll.mode && roll.mode !== "normal" && <span>{roll.mode}</span>}
                   {roll.dice.map((die, index) => (
                     <span

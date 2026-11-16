@@ -64,7 +64,7 @@ const signed = (bonus: number) => (bonus < 0 ? `${bonus}` : `+${bonus}`);
  * lands. A cast that changes nothing writes nothing and is announced alone.
  * The dialog can add the spell's attack and damage rolls, made at the level it is cast at, or
  * at the character's level for a cantrip, and logged once the cast lands; a natural 20 on the
- * attack is announced as a critical hit.
+ * attack is announced as a critical hit and doubles the damage dice.
  */
 export function CastSpell({
   characterId,
@@ -113,14 +113,18 @@ export function CastSpell({
     notation: string,
     label: string,
     type: "spell-attack" | "spell-damage",
+    critical = false,
   ) {
     return new Promise<Rolled | undefined>((resolve) => {
-      const failed = hook.roll(notation, { label, type, origin: spell.name }, (made, logged) =>
-        resolve({
-          total: made.total,
-          natural20: made.dice[0]?.value === 20 && type === "spell-attack",
-          logged,
-        }),
+      const failed = hook.roll(
+        notation,
+        { label, type, origin: spell.name, critical },
+        (made, logged) =>
+          resolve({
+            total: made.total,
+            natural20: made.dice.find((die) => die.kept)?.value === 20 && type === "spell-attack",
+            logged,
+          }),
       );
       if (failed) resolve(undefined);
     });
@@ -129,14 +133,20 @@ export function CastSpell({
   async function rollParts(choice: Choice) {
     const level = choice.option.level;
     const notation = spellDamageDice(spell, level, characterLevel);
-    const [hit, damage] = await Promise.all([
+    const hit =
       bonus === undefined
         ? undefined
-        : rolled(attackRoll, `1d20${signed(bonus)}`, `${spell.name} attack`, "spell-attack"),
+        : await rolled(attackRoll, `1d20${signed(bonus)}`, `${spell.name} attack`, "spell-attack");
+    const damage =
       notation === undefined
         ? undefined
-        : rolled(damageRoll, notation, `${spell.name} damage`, "spell-damage"),
-    ]);
+        : await rolled(
+            damageRoll,
+            notation,
+            `${spell.name} damage`,
+            "spell-damage",
+            hit?.natural20,
+          );
     const words = (name: string, roll: Rolled | undefined) =>
       roll && `${name} ${roll.total}${roll.logged ? "" : ", not logged"}`;
     return [
