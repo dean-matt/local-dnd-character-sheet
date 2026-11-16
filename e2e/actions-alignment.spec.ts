@@ -49,7 +49,7 @@ test("the Actions card's items in a row share a vertical centre, with or without
         },
       }),
     );
-    await page.goto(`/characters/${id}`);
+    await page.goto(`/characters/${id}/p/combat`);
     const card = page.getByRole("region", { name: "Actions" });
     await expect(card.getByRole("button", { name: /^Use / }).first()).toBeVisible();
     const items = card.getByRole("listitem");

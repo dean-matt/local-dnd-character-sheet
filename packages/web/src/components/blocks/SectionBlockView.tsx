@@ -1,5 +1,6 @@
 import { AbilitiesSection } from "./AbilitiesSection/AbilitiesSection.tsx";
 import { BackstorySection } from "./BackstorySection.tsx";
+import { CombatSection } from "./CombatSection/CombatSection.tsx";
 import { FeaturesSection } from "./FeaturesSection/FeaturesSection.tsx";
 import { IdentitySection } from "./IdentitySection/IdentitySection.tsx";
 import { InventorySection } from "./InventorySection/InventorySection.tsx";
@@ -13,6 +14,8 @@ export function SectionBlockView({ block, character, derived }: BlockViewProps) 
   switch (block.section) {
     case "abilities":
       return <AbilitiesSection character={character} derived={derived} />;
+    case "combat":
+      return <CombatSection character={character} derived={derived} />;
     case "spells":
       return <SpellsSection character={character} derived={derived} />;
     case "inventory":

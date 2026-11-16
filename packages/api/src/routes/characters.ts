@@ -444,7 +444,7 @@ export function charactersRoutes(
     if (!row || !state || !pages) return c.json({ error: NOT_FOUND }, 404);
     const file: CharacterFile = {
       format: "local-dnd-character-sheet/character",
-      version: 2,
+      version: 3,
       definition: record(row).definition,
       state: toStateRecord(state).state,
       pages: toPageRecords(pages).map(({ preset: _, ...page }) => page),

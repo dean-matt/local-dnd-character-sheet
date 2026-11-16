@@ -18,21 +18,17 @@ import { useRef, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
-import { Actions } from "./Actions/Actions.tsx";
 import { AddHomebrewSkill } from "./AddHomebrewSkill.tsx";
-import { Attacks } from "./Attacks/Attacks.tsx";
 import { editionRules, SAVE_RULES } from "./abilityRules.ts";
 import { CatalogSkills } from "./CatalogSkills.tsx";
 import { CombatStats } from "./CombatStats.tsx";
 import { Defenses } from "./Defenses/Defenses.tsx";
-import { Encounter } from "./Encounter/Encounter.tsx";
 import { FeatGrants } from "./FeatGrants.tsx";
 import { ItemGrants } from "./ItemGrants.tsx";
 import { PassiveScores } from "./PassiveScores/PassiveScores.tsx";
 import { ProficiencyLegend } from "./ProficiencyLegend.tsx";
 import { ProficiencyRow } from "./ProficiencyRow.tsx";
 import { Senses } from "./Senses.tsx";
-import { TurnEconomy } from "./TurnEconomy/TurnEconomy.tsx";
 import { Vitals } from "./Vitals/Vitals.tsx";
 
 export function AbilitiesSection({
@@ -57,11 +53,7 @@ export function AbilitiesSection({
     <div className="flex flex-col gap-3">
       <AbilityScores character={character} derived={derived} />
       <CombatStats definition={definition} derived={derived} />
-      <Encounter character={character} derived={derived} />
-      <TurnEconomy characterId={character.id} />
-      <Actions character={character} derived={derived} />
       <Vitals character={character} derived={derived} />
-      <Attacks character={character} derived={derived} />
       <Defenses character={character} derived={derived} />
       <Senses derived={derived} />
       <ItemGrants derived={derived} />

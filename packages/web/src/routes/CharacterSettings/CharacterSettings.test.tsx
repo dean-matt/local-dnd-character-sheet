@@ -55,7 +55,7 @@ function stubRestore(status: number) {
 
 const characterFile = () => ({
   format: "local-dnd-character-sheet/character",
-  version: 2,
+  version: 3,
   definition: characterRecord("1", "Vex").definition,
   state: defaultCharacterState(),
   pages: PRESET_PAGES,

@@ -42,6 +42,17 @@ describe("SectionBlockView", () => {
     expect(screen.getByRole("region", { name: "Ability Scores" })).toBeInTheDocument();
   });
 
+  it("renders the combat section, which waits on the character", () => {
+    render(
+      <SectionBlockView
+        block={{ kind: "section", section: "combat" }}
+        character={undefined}
+        derived={undefined}
+      />,
+    );
+    expect(screen.getByText("Combat isn't available yet.")).toBeInTheDocument();
+  });
+
   it("renders the features section, which waits on the character", () => {
     render(
       <QueryClientProvider client={new QueryClient()}>

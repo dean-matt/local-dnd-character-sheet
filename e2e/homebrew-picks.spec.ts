@@ -109,6 +109,6 @@ test("a sheet names its homebrew race, class, background and feat wherever a cat
   ).toBeVisible();
   await expect(page.getByText(`${rows.class.name}: 0 of 2 prepared`).first()).toBeVisible();
 
-  await page.goto(`/characters/${id}/p/stats`);
+  await page.goto(`/characters/${id}/p/combat`);
   await expect(page.getByText(`${rows.class.name} spell attack`).first()).toBeVisible();
 });

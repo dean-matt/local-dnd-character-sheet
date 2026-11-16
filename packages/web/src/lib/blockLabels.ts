@@ -9,6 +9,7 @@ import { levelLabel } from "./spellLevel.ts";
 
 export const SECTION_LABELS: Record<SheetSection, string> = {
   abilities: "Abilities",
+  combat: "Combat",
   spells: "Spells",
   inventory: "Inventory",
   features: "Features",

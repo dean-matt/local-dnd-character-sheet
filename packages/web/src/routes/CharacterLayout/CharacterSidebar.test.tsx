@@ -42,4 +42,11 @@ describe("CharacterSidebar", () => {
     expect(screen.getByRole("button", { name: "Expand sidebar" })).toBeInTheDocument();
     expect(screen.queryByText("Stats")).not.toBeInTheDocument();
   });
+
+  it("gives the Combat page its own icon rather than the add-page fallback", () => {
+    renderSidebar();
+
+    const icon = screen.getByRole("link", { name: "Combat" }).querySelector("svg");
+    expect(icon).toHaveClass("lucide-swords");
+  });
 });

@@ -260,11 +260,17 @@ describe("pagesRoutes", () => {
 
   it("recreates a deleted preset after a written page that sits between presets", async () => {
     const id = await create();
-    const [stats, , ...rest] = PRESET_PAGES as CharacterPage[];
-    await replace(id, [stats, GRAPPLE, ...rest] as CharacterPage[]);
+    const [stats, combat, , ...rest] = PRESET_PAGES as CharacterPage[];
+    await replace(id, [stats, combat, GRAPPLE, ...rest] as CharacterPage[]);
 
     const slugs = (await (await restore(id)).json()).map((page: CharacterPage) => page.slug);
-    expect(slugs).toEqual(["stats", "spells", "grapple", ...rest.map((page) => page.slug)]);
+    expect(slugs).toEqual([
+      "stats",
+      "combat",
+      "spells",
+      "grapple",
+      ...rest.map((page) => page.slug),
+    ]);
   });
 
   it("recreates every preset ahead of the written pages where the user deleted them all", async () => {

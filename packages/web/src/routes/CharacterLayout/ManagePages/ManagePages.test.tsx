@@ -14,8 +14,8 @@ const GRAPPLE: CharacterPageRecord = {
   blocks: [],
 };
 
-/** The presets after the first four, which every reorder here leaves in place. */
-const LATER = presetPageRecords().slice(4);
+/** The presets after the first five, which every reorder here leaves in place. */
+const LATER = presetPageRecords().slice(5);
 const LATER_SLUGS = LATER.map((page) => page.slug);
 const LATER_TITLES = LATER.map((page) => page.title);
 
@@ -114,13 +114,21 @@ describe("ManagePages", () => {
     fireEvent.click(dialog().getByRole("button", { name: "Move Stats down" }));
 
     await waitFor(() =>
-      expect(navTitles()).toEqual(["Spells", "Stats", "Inventory", "Features", ...LATER_TITLES]),
+      expect(navTitles()).toEqual([
+        "Combat",
+        "Stats",
+        "Spells",
+        "Inventory",
+        "Features",
+        ...LATER_TITLES,
+      ]),
     );
-    expect(status()).toHaveTextContent("Stats moved to position 2 of 8.");
+    expect(status()).toHaveTextContent("Stats moved to position 2 of 9.");
     await waitFor(() =>
       expect(server.stored().map((page) => page.slug)).toEqual([
-        "spells",
+        "combat",
         "stats",
+        "spells",
         "inventory",
         "features",
         ...LATER_SLUGS,
@@ -141,13 +149,21 @@ describe("ManagePages", () => {
 
     await waitFor(() => expect(server.puts).toHaveLength(2));
     expect(server.stored().map((page) => page.slug)).toEqual([
+      "combat",
       "spells",
-      "inventory",
       "stats",
+      "inventory",
       "features",
       ...LATER_SLUGS,
     ]);
-    expect(navTitles()).toEqual(["Spells", "Inventory", "Stats", "Features", ...LATER_TITLES]);
+    expect(navTitles()).toEqual([
+      "Combat",
+      "Spells",
+      "Stats",
+      "Inventory",
+      "Features",
+      ...LATER_TITLES,
+    ]);
   });
 
   it("refuses a move past either end, keeping the button focusable", async () => {
@@ -170,7 +186,7 @@ describe("ManagePages", () => {
     fireEvent.click(dialog().getByRole("button", { name: "Hide Spells" }));
 
     await waitFor(() =>
-      expect(navTitles()).toEqual(["Stats", "Inventory", "Features", ...LATER_TITLES]),
+      expect(navTitles()).toEqual(["Stats", "Combat", "Inventory", "Features", ...LATER_TITLES]),
     );
     expect(status()).toHaveTextContent("Spells hidden.");
     // `act` flushes the render the navigation starts. The page is a `section` labelled with its
@@ -183,9 +199,10 @@ describe("ManagePages", () => {
   });
 
   it("shows a hidden page again", async () => {
-    const [stats, spells, ...rest] = presetPageRecords();
+    const [stats, combat, spells, ...rest] = presetPageRecords();
     stubServer([
       stats as CharacterPageRecord,
+      combat as CharacterPageRecord,
       { ...(spells as CharacterPageRecord), hidden: true },
       ...rest,
     ]);
@@ -194,7 +211,14 @@ describe("ManagePages", () => {
     fireEvent.click(dialog().getByRole("button", { name: "Show Spells" }));
 
     await waitFor(() =>
-      expect(navTitles()).toEqual(["Stats", "Spells", "Inventory", "Features", ...LATER_TITLES]),
+      expect(navTitles()).toEqual([
+        "Stats",
+        "Combat",
+        "Spells",
+        "Inventory",
+        "Features",
+        ...LATER_TITLES,
+      ]),
     );
     expect(status()).toHaveTextContent("Spells shown.");
   });
@@ -205,7 +229,7 @@ describe("ManagePages", () => {
 
     fireEvent.click(dialog().getByRole("button", { name: "Hide Stats" }));
 
-    await waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/spells"));
+    await waitFor(() => expect(router.state.location.pathname).toBe("/characters/abc/p/combat"));
   });
 
   it("refuses to hide the last visible page", async () => {
@@ -313,7 +337,7 @@ describe("ManagePages", () => {
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.stored().map((page) => page.slug)).not.toContain("stats");
     expect(status()).toHaveTextContent("Stats deleted.");
-    expect(router.state.location.pathname).toBe("/characters/abc/p/spells");
+    expect(router.state.location.pathname).toBe("/characters/abc/p/combat");
     await waitFor(() => expect(navTitles()).not.toContain("Stats"));
 
     fireEvent.click(dialog().getByRole("button", { name: "Undo page change" }));
@@ -356,11 +380,13 @@ describe("ManagePages", () => {
   });
 
   it("restores the presets' seeded order and visibility, leaving a written page alone", async () => {
-    const [stats, spells, inventory, features] = presetPageRecords() as CharacterPageRecord[];
+    const [stats, combat, spells, inventory, features] =
+      presetPageRecords() as CharacterPageRecord[];
     const server = stubServer([
       GRAPPLE,
       { ...(features as CharacterPageRecord), hidden: true },
       stats as CharacterPageRecord,
+      combat as CharacterPageRecord,
       spells as CharacterPageRecord,
       inventory as CharacterPageRecord,
     ]);
@@ -369,7 +395,14 @@ describe("ManagePages", () => {
     fireEvent.click(dialog().getByRole("button", { name: "Restore defaults" }));
 
     await waitFor(() =>
-      expect(navTitles()).toEqual(["Grapple", "Stats", "Spells", "Inventory", "Features"]),
+      expect(navTitles()).toEqual([
+        "Grapple",
+        "Stats",
+        "Combat",
+        "Spells",
+        "Inventory",
+        "Features",
+      ]),
     );
     expect(server.stored()[0]).toEqual(GRAPPLE);
     expect(status()).toHaveTextContent("Default pages restored.");

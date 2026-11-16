@@ -1,6 +1,6 @@
 import type { RollEffectEntry } from "@dnd/character";
 import type { ReactNode } from "react";
-import { RollEffectChip } from "../RollEffectChip.tsx";
+import { RollEffectChip } from "../../RollEffectChip.tsx";
 
 const CELL = "px-0.5 py-1.5 text-left align-top";
 

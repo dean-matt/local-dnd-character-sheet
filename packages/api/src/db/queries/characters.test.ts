@@ -145,7 +145,7 @@ describe("characters queries", () => {
         .where(eq(characterPages.slug, "notes"))
         .run();
       db.insert(characterPages)
-        .values({ characterId: "1", slug: "grapple", title: "Grapple", position: 8, blocks: [] })
+        .values({ characterId: "1", slug: "grapple", title: "Grapple", position: 9, blocks: [] })
         .run();
       updateCharacterState(db, "1", {
         ...defaultCharacterState(),

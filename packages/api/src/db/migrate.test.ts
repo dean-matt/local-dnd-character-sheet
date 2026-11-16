@@ -219,8 +219,8 @@ describe("migrations", () => {
         preset: number;
         blocks: string;
       }[];
-    // Later migrations remove Alignment, leaving its position empty, and put Backstory where
-    // Notes was, moving Notes down one.
+    // Later migrations remove Alignment, leaving its position empty, put Backstory where
+    // Notes was, moving Notes down one, and put Combat after Stats, moving every other page down one.
     const presets = [
       ["identity", 0],
       ["level", 1],
@@ -241,13 +241,14 @@ describe("migrations", () => {
       blocks: JSON.parse(blocks),
     });
 
-    const [stats, moved, ...added] = pages("1");
+    const [stats, combat, moved, ...added] = pages("1");
     expect(stats?.slug).toBe("stats");
-    expect(moved).toMatchObject({ title: "My notes", position: 1, preset: 0 });
+    expect(combat?.slug).toBe("combat");
+    expect(moved).toMatchObject({ title: "My notes", position: 2, preset: 0 });
     expect(moved?.slug).toMatch(/^notes-[0-9a-f]{8}$/);
     expect(JSON.parse(moved?.blocks ?? "")).toEqual([{ kind: "text", text: "Owes Sarth 10 gp" }]);
-    expect(added.map(shape)).toEqual(seeded(2));
-    expect(pages("2").slice(1).map(shape)).toEqual(seeded(1));
+    expect(added.map(shape)).toEqual(seeded(3));
+    expect(pages("2").slice(2).map(shape)).toEqual(seeded(2));
   });
 
   it("names the race beside its subrace in a race summary saved before", () => {
@@ -407,7 +408,7 @@ describe("migrations", () => {
 
     const pages = sqlite
       .prepare(
-        "SELECT character_id AS id, slug, title, position, preset, blocks FROM character_pages WHERE slug NOT IN ('stats', 'backstory') ORDER BY character_id",
+        "SELECT character_id AS id, slug, title, position, preset, blocks FROM character_pages WHERE slug NOT IN ('stats', 'backstory', 'combat') ORDER BY character_id",
       )
       .all() as {
       id: string;
@@ -420,8 +421,8 @@ describe("migrations", () => {
     expect(
       pages.map(({ id, title, position, preset }) => ({ id, title, position, preset })),
     ).toEqual([
-      { id: "2", title: "Alignment", position: 1, preset: 0 },
-      { id: "3", title: "Creed", position: 1, preset: 0 },
+      { id: "2", title: "Alignment", position: 2, preset: 0 },
+      { id: "3", title: "Creed", position: 2, preset: 0 },
     ]);
     for (const page of pages) expect(page.slug).toMatch(/^alignment-[0-9a-f]{8}$/);
     expect(pages.map((page) => page.blocks)).toEqual([edited, stock]);
@@ -459,19 +460,77 @@ describe("migrations", () => {
       preset: 1,
       blocks: '[{"kind":"section","section":"backstory"}]',
     };
-    const [stats, added, notes, moved, loot] = pages("1");
-    expect([stats, added, notes, moved, loot].map((page) => page?.position)).toEqual([
-      0, 1, 2, 3, 4,
+    const [stats, combat, added, notes, moved, loot] = pages("1");
+    expect([stats, combat, added, notes, moved, loot].map((page) => page?.position)).toEqual([
+      0, 1, 2, 3, 4, 5,
     ]);
+    expect(combat?.slug).toBe("combat");
     expect(added).toMatchObject(backstory);
     expect(notes).toMatchObject({ slug: "notes", preset: 1 });
     expect(moved).toMatchObject({ title: "My story", preset: 0, blocks: text });
     expect(moved?.slug).toMatch(/^backstory-[0-9a-f]{8}$/);
     expect(loot?.slug).toBe("loot");
-    expect(pages("2")).toEqual([{ ...backstory, position: 0 }]);
+    expect(pages("2").map(({ slug, position }) => ({ slug, position }))).toEqual([
+      { slug: "combat", position: 0 },
+      { slug: "backstory", position: 1 },
+    ]);
     expect(pages("3").map(({ slug, position }) => ({ slug, position }))).toEqual([
-      { slug: "loot", position: 4 },
-      { slug: "backstory", position: 5 },
+      { slug: "combat", position: 0 },
+      { slug: "loot", position: 5 },
+      { slug: "backstory", position: 6 },
+    ]);
+  });
+
+  it("backfills the Combat preset just after Stats, moving a page the user wrote under its slug", () => {
+    sqlite = new Database(join(workspace, "characters.db"));
+    const db = drizzle(sqlite);
+    const staged = stageMigrationsThrough("0016_undo_play_state");
+    migrate(db, { migrationsFolder: staged });
+    rmSync(staged, { recursive: true, force: true });
+
+    const insertPage = sqlite.prepare(
+      "INSERT INTO character_pages (character_id, slug, title, position, hidden, preset, blocks) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    );
+    const text = '[{"kind":"text","text":"Initiative order"}]';
+    const abilities = '[{"kind":"section","section":"abilities"}]';
+    for (const id of ["1", "2", "3"]) insertBareCharacter(sqlite, id);
+    insertPage.run("1", "stats", "Stats", 0, 1, 1, abilities);
+    insertPage.run("1", "combat", "Fight log", 1, 0, 0, text);
+    insertPage.run("1", "loot", "Loot", 2, 0, 0, "[]");
+    insertPage.run("2", "loot", "Loot", 0, 0, 0, "[]");
+    insertPage.run("3", "stats", "Stats", 0, 1, 1, abilities);
+    insertPage.run("3", "spells", "Spells", 1, 0, 1, '[{"kind":"section","section":"spells"}]');
+
+    migrateCharacters(db);
+
+    const pages = (id: string) =>
+      sqlite
+        .prepare(
+          "SELECT slug, title, position, hidden, preset, blocks FROM character_pages WHERE character_id = ? ORDER BY position",
+        )
+        .all(id) as { slug: string; title: string; position: number; hidden: number }[];
+    const combat = {
+      slug: "combat",
+      title: "Combat",
+      hidden: 0,
+      preset: 1,
+      blocks: '[{"kind":"section","section":"combat"}]',
+    };
+    const [stats, added, moved, loot] = pages("1");
+    expect([stats, added, moved, loot].map((page) => page?.position)).toEqual([0, 1, 2, 3]);
+    expect(stats?.slug).toBe("stats");
+    expect(added).toMatchObject(combat);
+    expect(moved).toMatchObject({ title: "Fight log", preset: 0, blocks: text });
+    expect(moved?.slug).toMatch(/^combat-[0-9a-f]{8}$/);
+    expect(loot?.slug).toBe("loot");
+    expect(pages("2").map(({ slug, position }) => ({ slug, position }))).toEqual([
+      { slug: "combat", position: 0 },
+      { slug: "loot", position: 1 },
+    ]);
+    expect(pages("3").map(({ slug, position }) => ({ slug, position }))).toEqual([
+      { slug: "stats", position: 0 },
+      { slug: "combat", position: 1 },
+      { slug: "spells", position: 2 },
     ]);
   });
 
@@ -544,7 +603,6 @@ describe("migrations", () => {
     insertUndo.run("new", definition("classic"));
     const untouched = [
       "character_state",
-      "character_pages",
       "character_portraits",
       "character_portraits_previous",
       "roll_log",

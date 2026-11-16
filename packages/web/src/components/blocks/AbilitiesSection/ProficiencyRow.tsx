@@ -11,11 +11,11 @@ import { Link } from "react-router";
 import { Popover } from "../../Popover.tsx";
 import { RollBonusButton } from "../../RollBonusButton.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
+import { RollEffectChip } from "../RollEffectChip.tsx";
 import type { Rules } from "./abilityRules.ts";
 import { DetailName } from "./DetailName/DetailName.tsx";
 import { ProficiencyRing } from "./ProficiencyRing.tsx";
 import { PROFICIENCY_MARK, type ProficiencyLevel } from "./proficiencyMark.ts";
-import { RollEffectChip } from "./RollEffectChip.tsx";
 
 /**
  * One row of a proficiency list: the ring a reader checks as often as the total, the name
