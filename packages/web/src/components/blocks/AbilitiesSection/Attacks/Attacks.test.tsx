@@ -308,7 +308,7 @@ describe("Attacks", () => {
       await waitFor(() => expect(mark).not.toBeChecked());
     });
 
-    it("calls out a roll at a lowered threshold and not below it", async () => {
+    it("calls out a roll at a lowered threshold", async () => {
       const lowered = {
         ...attack(0, 5),
         critThreshold: { computed: 19, manual: null, terms: [] },
@@ -319,6 +319,31 @@ describe("Attacks", () => {
       await waitFor(() =>
         expect(screen.getByRole("checkbox", { name: "Critical hit" })).toBeChecked(),
       );
+    });
+
+    it("does not call out a roll one below a lowered threshold", async () => {
+      const lowered = {
+        ...attack(0, 5),
+        critThreshold: { computed: 19, manual: null, terms: [] },
+      };
+      vi.spyOn(Math, "random").mockReturnValue(0.85);
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [lowered] });
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(screen.getByRole("checkbox", { name: "Critical hit" })).not.toBeChecked();
+    });
+
+    it("calls out a spell attack's natural 20 and clears it on the next roll", async () => {
+      const random = vi.spyOn(Math, "random").mockReturnValue(0.99);
+      const { posts } = renderRolling({ ...derivedRecord(), attacks: [] });
+      const roll = await screen.findByRole("button", { name: "Roll Warlock spell attack" });
+      fireEvent.click(roll);
+      expect(await screen.findByText("Critical hit")).toBeVisible();
+
+      random.mockReturnValue(0.5);
+      fireEvent.click(roll);
+      await waitFor(() => expect(posts).toHaveLength(2));
+      await waitFor(() => expect(screen.queryByText("Critical hit")).toBeNull());
     });
 
     it("does not call out a roll below the threshold", async () => {

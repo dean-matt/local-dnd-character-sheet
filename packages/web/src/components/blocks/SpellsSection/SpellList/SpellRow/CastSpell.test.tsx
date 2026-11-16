@@ -555,6 +555,20 @@ describe("CastSpell", () => {
           "Cast Fire Bolt; attack 26, critical hit, damage 40",
         ),
       );
+      expect(posted.map((post) => post.type)).toEqual(["spell-attack", "spell-damage"]);
+      expect(posted[1]).toMatchObject({ critical: true });
+      expect(posted[1]?.dice).toHaveLength(4);
+    });
+
+    it("leaves the damage dice undoubled when the attack is not a natural 20", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0.5);
+      renderCast(fireBolt, {}, withCaster);
+      const dialog = await openDialog("Fire Bolt");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(2));
+      expect(posted[1]).toMatchObject({ type: "spell-damage", critical: false });
+      expect(posted[1]?.dice).toHaveLength(2);
     });
 
     const twoCasters: CharacterDerived = {
