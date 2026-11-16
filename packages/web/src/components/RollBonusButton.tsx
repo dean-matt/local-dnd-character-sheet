@@ -61,12 +61,13 @@ export function RollBonusButton({
             return;
           }
           if (beforeRoll && !(await beforeRoll())) return;
-          roll(notation, { label, type, origin, mode, critical }, (rolled, logged) => {
+          roll(notation, { label, type, origin, mode, critical }, (rolled, logged, outcome) => {
             const kept = rolled.dice.find((die) => die.kept)?.value ?? 0;
             const hit = critAt !== undefined && kept >= critAt;
             onRolled?.(hit);
+            const said = [hit && "critical hit", outcome, !logged && "not logged"].filter(Boolean);
             setHeard(
-              `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}${critical ? " as a critical hit" : ""}: ${rolled.total}${included(rolled.dice, die)}${hit ? ", critical hit" : ""}${logged ? "" : ", not logged"}`,
+              `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}${critical ? " as a critical hit" : ""}: ${rolled.total}${included(rolled.dice, die)}${said.map((part) => `, ${part}`).join("")}`,
             );
           });
         }}

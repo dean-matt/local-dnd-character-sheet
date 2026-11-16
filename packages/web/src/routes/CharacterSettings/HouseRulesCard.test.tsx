@@ -49,6 +49,7 @@ describe("HouseRulesCard", () => {
       "Material components",
       "Critical hits",
       "Flanking",
+      "Natural 20 and 1 on checks and saves",
     ]);
   });
 
@@ -62,6 +63,18 @@ describe("HouseRulesCard", () => {
     fireEvent.click(group.getByRole("radio", { name: "Waive components" }));
 
     await waitFor(() => expect(written(fetchMock)).toEqual({ waiveMaterialComponents: true }));
+  });
+
+  it("saves the natural 20 and 1 rule", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(classic({}))));
+    const group = within(
+      renderCard(classic({})).getByRole("group", { name: "Natural 20 and 1 on checks and saves" }),
+    );
+    expect(group.getByRole("radio", { name: /The total decides/ })).toBeChecked();
+
+    fireEvent.click(group.getByRole("radio", { name: "Natural 20 and 1 decide" }));
+
+    await waitFor(() => expect(written(fetchMock)).toEqual({ naturalExtremes: true }));
   });
 
   it("offers the hit dice option to a classic character", () => {

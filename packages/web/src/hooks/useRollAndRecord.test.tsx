@@ -45,4 +45,69 @@ describe("useRollAndRecord", () => {
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toMatchObject({ dice: [{ value: 8 }, { value: 1 }] });
   });
+
+  it.each([
+    [0.99, "Stealth check (automatic success)"],
+    [0, "Stealth check (automatic failure)"],
+  ])(
+    "names a natural 20 or 1 on a check under the natural-extremes rule (%s)",
+    async (random, label) => {
+      vi.spyOn(Math, "random").mockReturnValue(random);
+      const base = characterRecord("1", "Vex");
+      const character = {
+        ...base,
+        definition: characterDefinitionSchema.parse({
+          ...base.definition,
+          houseRules: { naturalExtremes: true },
+        }),
+      };
+      const posts: Record<string, unknown>[] = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+          if (init?.method === "POST") {
+            posts.push(JSON.parse(String(init.body)));
+            return Response.json({ ...posts[0], id: 1 }, { status: 201 });
+          }
+          return Response.json(character);
+        }),
+      );
+      const { result } = renderHook(
+        () => ({ roll: useRollAndRecord("1").roll, loaded: useCharacter("1").isSuccess }),
+        { wrapper },
+      );
+      await waitFor(() => expect(result.current.loaded).toBe(true));
+      result.current.roll("1d20+5", { label: "Stealth check", type: "check" });
+      result.current.roll("1d20+5", { label: "Hit", type: "attack" });
+
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[0]).toMatchObject({ label });
+      expect(posts[1]).toMatchObject({ label: "Hit" });
+    },
+  );
+
+  it("leaves the label alone without the rule", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.99);
+    const character = characterRecord("1", "Vex");
+    const posts: Record<string, unknown>[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          posts.push(JSON.parse(String(init.body)));
+          return Response.json({ ...posts[0], id: 1 }, { status: 201 });
+        }
+        return Response.json(character);
+      }),
+    );
+    const { result } = renderHook(
+      () => ({ roll: useRollAndRecord("1").roll, loaded: useCharacter("1").isSuccess }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+    result.current.roll("1d20+5", { label: "Stealth check", type: "check" });
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]).toMatchObject({ label: "Stealth check" });
+  });
 });
