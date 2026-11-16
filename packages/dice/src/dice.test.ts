@@ -111,9 +111,21 @@ describe("rollDice", () => {
     expect(roll.total).toBe(8);
   });
 
-  it.each(["4d6kh3", "2d6", "2d20kh1", "1d20+1d4"])("rejects advantage on %s", (notation) => {
+  it.each(["4d6kh3", "2d6", "2d20kh1", "2d6+1d20"])("rejects advantage on %s", (notation) => {
     expect(() => rollDice(notation, { mode: "advantage" })).toThrow(TypeError);
     expect(() => rollDice(notation, { mode: "advantage" })).toThrow(`"${notation}"`);
+  });
+
+  it("rolls the pools after a moded die once, signed", () => {
+    const roll = rollDice("1d20+5-1d4", {
+      mode: "advantage",
+      random: loadedMixed([20, 8], [20, 19], [4, 4]),
+    });
+    expect(values(roll)).toEqual([8, 19, 4]);
+    expect(roll.dice.map((die) => die.kept)).toEqual([false, true, true]);
+    expect(roll.dice[2]?.sign).toBe(-1);
+    expect(roll.total).toBe(19 + 5 - 4);
+    expect(roll.notation).toBe("1d20-1d4+5");
   });
 
   it.each(["", "d", "20", "1d", "1d20kh", "1d20k2", "2d6+", "1d20 or bust", "-1d6", "3+1d6"])(

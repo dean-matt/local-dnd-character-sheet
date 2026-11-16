@@ -191,3 +191,17 @@ describe("damageAtZeroHitPoints", () => {
     });
   });
 });
+
+describe("deathSave with a granted die", () => {
+  const fresh = { successes: 0, failures: 0 };
+
+  it("reads the DC against the d20 and the die together", () => {
+    expect(deathSave(fresh, 7, 3).successes).toBe(1);
+    expect(deathSave(fresh, 7, -3).failures).toBe(1);
+  });
+
+  it("leaves a natural 1 at two failures and a 20 conscious", () => {
+    expect(deathSave(fresh, 1, 4).failures).toBe(2);
+    expect(deathSave(fresh, 20, -4).outcome).toBe("conscious");
+  });
+});

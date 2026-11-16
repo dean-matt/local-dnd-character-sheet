@@ -1,5 +1,7 @@
 import { netRollEffect, type RollEffectEntry } from "@dnd/character";
 import { type ComponentProps, type ReactNode, useContext, useId, useState } from "react";
+import { parseExtraDie } from "../lib/extraDie.ts";
+import { ExtraDieInput } from "./ExtraDieInput.tsx";
 import { RollBonusButton } from "./RollBonusButton.tsx";
 import { RollingFor } from "./rollerContext.ts";
 
@@ -19,7 +21,8 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
 
 /**
  * A roll button with the mode it rolls in: the net of the advantage and disadvantage on it to
- * start, changed by the player. The sources of every effect, a conditional one included, are
+ * start, changed by the player, and a die the player names to add or subtract, such as +1d4 for
+ * Bless or -1d4 for Bane. The sources of every effect, a conditional one included, are
  * spoken with the control. `children` sit between the mode and the button.
  */
 export function ModeRoll({
@@ -36,6 +39,7 @@ export function ModeRoll({
   const characterId = useContext(RollingFor);
   const sources = useId();
   const start = offered(effects);
+  const [extra, setExtra] = useState("");
   const [chosen, setChosen] = useState<{ start: Mode; mode: Mode }>({ start, mode: start });
   const mode = chosen.start === start ? chosen.mode : start;
   if (characterId === null) return null;
@@ -62,7 +66,13 @@ export function ModeRoll({
         {names.join("; ")}
       </span>
       {children}
-      <RollBonusButton {...roll} mode={mode} />
+      <ExtraDieInput
+        label={modeLabel ?? roll.label}
+        value={extra}
+        onChange={setExtra}
+        error={parseExtraDie(extra).error}
+      />
+      <RollBonusButton {...roll} mode={mode} extra={extra} />
     </span>
   );
 }

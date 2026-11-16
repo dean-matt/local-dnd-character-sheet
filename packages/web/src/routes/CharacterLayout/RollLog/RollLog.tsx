@@ -202,6 +202,7 @@ export function RollLog({
               {(roll.type === "attack" ||
                 roll.type === "spell-attack" ||
                 roll.critical ||
+                roll.dice.some((die) => die.faces !== roll.dice[0]?.faces || die.sign < 0) ||
                 (roll.mode && roll.mode !== "normal")) && (
                 <span className="flex flex-wrap items-baseline gap-1 text-muted text-row">
                   {roll.critical && <span className="font-semibold">Critical hit</span>}
@@ -213,7 +214,9 @@ export function RollLog({
                       className={die.kept ? "" : "line-through"}
                       title={`d${die.faces}${die.kept ? "" : ", discarded"}`}
                     >
-                      {die.value}
+                      {die.faces !== roll.dice[0]?.faces || die.sign < 0
+                        ? `${die.sign < 0 ? "−" : "+"} d${die.faces} ${die.value}`
+                        : die.value}
                       {!die.kept && <span className="sr-only"> discarded</span>}
                     </span>
                   ))}

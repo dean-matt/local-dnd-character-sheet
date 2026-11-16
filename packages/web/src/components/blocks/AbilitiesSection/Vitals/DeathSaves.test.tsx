@@ -3,8 +3,13 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderVitals } from "./renderVitals.tsx";
 
-const d20 = vi.hoisted(() => ({ total: 10 }));
-vi.mock("@dnd/dice", () => ({ rollDice: () => d20 }));
+const d20 = vi.hoisted(() => ({ total: 10, extra: 0, notations: [] as string[] }));
+vi.mock("@dnd/dice", () => ({
+  rollDice: (notation: string) => {
+    d20.notations.push(notation);
+    return { total: d20.total + d20.extra, dice: [{ value: d20.total }] };
+  },
+}));
 
 const atZero = (successes: number, failures: number): Partial<CharacterState> => ({
   hitPoints: { current: 0, temporary: 0 },
@@ -27,6 +32,8 @@ async function roll(value: number) {
 
 beforeEach(() => {
   d20.total = 10;
+  d20.extra = 0;
+  d20.notations = [];
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -72,6 +79,35 @@ describe("DeathSaves", () => {
     await waitFor(() => expect(announced()).toHaveTextContent(text));
     expect(writes).toHaveLength(1);
     expect(await card().findByText(`Rolled ${value}`)).toBeVisible();
+  });
+
+  it("adds a die the player names to the total the DC reads, and says so", async () => {
+    const { writes } = renderVitals(atZero(0, 0));
+    fireEvent.change(await screen.findByRole("textbox", { name: "Death save extra die" }), {
+      target: { value: "+1d4" },
+    });
+    d20.extra = 3;
+    await roll(8);
+
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent(
+        "Rolled 8 + 3 (+1d4): a success. 1 success, 0 failures, dying.",
+      ),
+    );
+    expect(d20.notations).toEqual(["1d20+1d4"]);
+    expect(writes[0]?.deathSaves).toEqual({ successes: 1, failures: 0 });
+  });
+
+  it("rolls nothing for text that is not a die, and names it", async () => {
+    const { writes } = renderVitals(atZero(0, 0));
+    fireEvent.change(await screen.findByRole("textbox", { name: "Death save extra die" }), {
+      target: { value: "bless" },
+    });
+    await roll(8);
+
+    expect(await card().findByText(/"bless" is not a die/)).toBeVisible();
+    expect(d20.notations).toEqual([]);
+    expect(writes).toHaveLength(0);
   });
 
   it("names a natural 1 at two failures, where the count can rise only by one", async () => {

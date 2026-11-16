@@ -83,6 +83,23 @@ describe("RollLog's row", () => {
     expect(row).toHaveTextContent("disadvantage817 discarded+ 3");
   });
 
+  it("lists a granted die as its own signed term", async () => {
+    const [row] = await listed([
+      {
+        ...roll(1, "1", "Vex"),
+        type: "save",
+        notation: "1d20-1d4+3",
+        total: 15,
+        modifier: 3,
+        dice: [
+          { faces: 20, value: 17, kept: true, sign: 1 },
+          { faces: 4, value: 5, kept: true, sign: -1 },
+        ],
+      },
+    ]);
+    expect(row).toHaveTextContent("17− d4 5+ 3");
+  });
+
   it("tags a roll with its type, and an untyped one with nothing", async () => {
     const [typed, hitDie, untyped] = await listed([
       { ...roll(3, "1", "Vex"), type: "spell-attack" },

@@ -3,8 +3,9 @@
  *
  * `rollDice` is the only entry point. It returns every die from every pool, discarded
  * ones included, so the roll log shows the dice and not a bare total. Advantage and
- * disadvantage are legal only on notation that rolls a single die, keeps it, and sums no
- * second pool; a critical rolls every pool a second time and leaves the modifier alone.
+ * disadvantage are legal only on notation whose first pool is a single die kept whole; the
+ * pools after it, such as the `1d4` of `1d20+1d4`, roll once as written.
+ * A critical rolls every pool a second time and leaves the modifier alone.
  */
 
 type RolledDie = {
@@ -337,7 +338,7 @@ function rollCopy(
  *
  * Advantage and disadvantage roll a second die and keep the higher or the lower, so both
  * appear in `dice`. The rules apply them only to a single die, so a mode paired with a
- * pool, a keep clause, or a second pool is rejected rather than reinterpreted — a
+ * first pool of several dice or a keep clause is rejected rather than reinterpreted — a
  * `TypeError`, because the notation is valid and only the pairing is wrong.
  *
  * `d20` covers the tests a mode cannot say: a third die, a chosen die, a supplied die. It
@@ -360,8 +361,9 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const parsed = parseDice(notation);
   const { terms, modifier, pooled } = parsed;
 
-  const single = terms.length === 1 ? terms[0] : undefined;
-  if (mode !== "normal" && (single === undefined || single.count !== 1 || single.keep !== null)) {
+  const [first] = terms;
+  const single = terms.length === 1 ? first : undefined;
+  if (mode !== "normal" && (first === undefined || first.count !== 1 || first.keep !== null)) {
     throw new TypeError(`${mode} applies to a single die, not to "${notation}"`);
   }
   if (critical && mode !== "normal") {
@@ -375,9 +377,15 @@ export function rollDice(notation: string, options: RollOptions = {}): Roll {
   const repeats = critical ? 2 : 1;
   checkPooled(pooled * repeats, notation);
 
-  const dice = terms.flatMap((term) =>
+  const dice = terms.flatMap((term, position) =>
     Array.from({ length: repeats }, (_, repeat) =>
-      rollCopy(term, repeat === 0 && critical && maximumCritical, mode, d20, random),
+      rollCopy(
+        term,
+        repeat === 0 && critical && maximumCritical,
+        position === 0 ? mode : "normal",
+        d20,
+        random,
+      ),
     ).flat(),
   );
 

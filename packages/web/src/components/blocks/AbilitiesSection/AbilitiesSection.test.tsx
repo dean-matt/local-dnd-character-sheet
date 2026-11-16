@@ -807,6 +807,40 @@ describe("AbilitiesSection", () => {
       }
     });
 
+    it("adds or subtracts a die the player names, rolled with the d20 and announced", async () => {
+      const { posts } = renderRolling();
+      const extra = screen.getByRole("textbox", { name: "Stealth check extra die" });
+      fireEvent.change(extra, { target: { value: "+1d4" } });
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      fireEvent.change(extra, { target: { value: "-1d4" } });
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      await waitFor(() => expect(posts).toHaveLength(2));
+      const [added, taken] = posts as {
+        notation: string;
+        dice: { sign: number; faces: number }[];
+      }[];
+      expect(added?.notation).toMatch(/^1d20\+1d4\+\d+$/);
+      expect(added?.dice.map((die) => [die.faces, die.sign])).toEqual([
+        [20, 1],
+        [4, 1],
+      ]);
+      expect(taken?.notation).toMatch(/^1d20-1d4\+\d+$/);
+      expect(taken?.dice.map((die) => die.sign)).toEqual([1, -1]);
+      expect(
+        (await screen.findAllByText(/^Stealth check: \d+, including -?\d+ from -1d4$/))[0],
+      ).toHaveAttribute("role", "status");
+    });
+
+    it("rolls nothing for an extra die that is not one, and says so", async () => {
+      const { posts } = renderRolling();
+      const extra = screen.getByRole("textbox", { name: "Stealth check extra die" });
+      fireEvent.change(extra, { target: { value: "bless" } });
+      expect(extra).toHaveAttribute("aria-invalid", "true");
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      expect(await screen.findByText(/"bless" is not a die/)).toHaveAttribute("role", "status");
+      expect(posts).toHaveLength(0);
+    });
+
     it("starts a skill on what its chip shows, lets the player change it, and cancels a pair", async () => {
       const record = warlock();
       const derived = derivedFor(record);
