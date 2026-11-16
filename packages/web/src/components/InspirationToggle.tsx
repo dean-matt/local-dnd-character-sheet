@@ -1,3 +1,4 @@
+import { Zap } from "lucide-react";
 import type { useInspiration } from "../hooks/useInspiration.ts";
 
 /** The control that marks a roll to spend inspiration on; see `useInspiration`. */
@@ -14,6 +15,7 @@ export function InspirationToggle({
   return (
     <button
       type="button"
+      aria-label="Inspiration"
       aria-pressed={spending}
       aria-disabled={!toggleable || undefined}
       title={
@@ -22,9 +24,9 @@ export function InspirationToggle({
           : `Spend inspiration for ${effect === "advantage" ? "advantage" : "a reroll"}`
       }
       onClick={toggle}
-      className="min-h-6 rounded-control border border-border px-1 text-label aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-pressed:border-accent aria-pressed:bg-accent-tint aria-pressed:text-accent-text"
+      className="flex size-6 shrink-0 items-center justify-center rounded-control border border-border text-muted hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-pressed:border-accent aria-pressed:bg-accent-tint aria-pressed:text-accent-text"
     >
-      Inspiration
+      <Zap size={14} aria-hidden="true" fill={spending ? "currentColor" : "none"} />
     </button>
   );
 }
