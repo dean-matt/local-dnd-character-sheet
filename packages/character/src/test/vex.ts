@@ -60,6 +60,11 @@ export const derivedInput = (traits: object = {}) => ({
   attunementSlots: { computed: 3 },
   weaponMasteryLimit: { computed: 0 },
   attacks: [],
+  unarmedStrike: {
+    attackBonus: { computed: 2 },
+    critThreshold: { computed: 20 },
+    damage: { dice: "1d1", type: "bludgeoning", modifier: { computed: 0 } },
+  },
   defenses: {
     computed: {
       resistances: [],

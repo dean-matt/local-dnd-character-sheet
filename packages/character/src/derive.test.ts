@@ -372,6 +372,12 @@ describe("deriveCharacter", () => {
       }
     });
 
+    it("adds to the unarmed strike's attack roll", () => {
+      const strike = derivedWith(curse({ kind: "attackRolls" }, 1)).unarmedStrike.attackBonus;
+      expect(strike.computed).toBe(derived.unarmedStrike.attackBonus.computed + 1);
+      expect(strike.terms.at(-1)).toEqual(named(1));
+    });
+
     it("adds to each speed the character has, never below 0", () => {
       expect(derivedWith(curse({ kind: "speed" }, 10)).speed.computed).toEqual({ walk: 40 });
       const slowed = derivedWith(curse({ kind: "speed" }, -50)).speed;
@@ -827,6 +833,33 @@ describe("deriveCharacter", () => {
         ammunition: null,
         reload: null,
       });
+    });
+
+    it("gives every character an unarmed strike of Strength plus proficiency, 1 plus Strength damage", () => {
+      expect(derived.unarmedStrike).toEqual({
+        attackBonus: {
+          computed: 2,
+          manual: null,
+          terms: [
+            { label: "Strength", value: -1 },
+            { label: "Proficiency", value: 3, reference: undefined },
+          ],
+        },
+        critThreshold: { computed: 20, manual: null, terms: [{ label: "Base", value: 20 }] },
+        damage: {
+          dice: "1d1",
+          type: "bludgeoning",
+          modifier: { computed: -1, manual: null, terms: [{ label: "Strength", value: -1 }] },
+        },
+      });
+    });
+
+    it("keeps a manual override of the unarmed strike beside its computed value", () => {
+      const edited = deriveCharacter(
+        { ...definition, overrides: { "unarmedStrike.attackBonus": 9 } },
+        catalog,
+      );
+      expect(edited.unarmedStrike.attackBonus).toMatchObject({ computed: 2, manual: 9 });
     });
 
     it("lists only weapons, skipping the armor and the homebrew trinket", () => {
@@ -1781,6 +1814,11 @@ describe("deriveCharacter", () => {
           { label: BIB.name, value: -1 },
         ]);
       }
+    });
+
+    it("lowers the unarmed strike's threshold for an item that is not a weapon, not for a weapon item", () => {
+      expect(withItems([worn(BIB)]).unarmedStrike.critThreshold.computed).toBe(19);
+      expect(withItems([worn(KAS)]).unarmedStrike.critThreshold.computed).toBe(20);
     });
 
     it("lowers a weapon item's threshold for its own attack alone", () => {
@@ -2926,6 +2964,21 @@ describe("deriveCharacter", () => {
       expect(damageOf(deriveCharacter(barbarian(5, "one"), rageCatalog, calm), 0)?.computed).toBe(
         3,
       );
+    });
+
+    it("adds Rage to the unarmed strike's damage while raging, and takes a positive Strength", () => {
+      const strike = (state: typeof raging) =>
+        deriveCharacter(barbarian(5, "one"), rageCatalog, state).unarmedStrike;
+      expect(strike(raging).damage.modifier.terms).toEqual([
+        { label: "Strength", value: 3 },
+        { label: "Rage", value: 3 },
+      ]);
+      expect(strike(raging).damage.modifier.computed).toBe(6);
+      expect(strike(calm).damage.modifier.computed).toBe(3);
+      expect(strike(calm).attackBonus.terms.map((term) => [term.label, term.value])).toEqual([
+        ["Strength", 3],
+        ["Proficiency", 3],
+      ]);
     });
 
     it("applies in 2014 to a melee Strength attack, and never to a Dexterity one", () => {
