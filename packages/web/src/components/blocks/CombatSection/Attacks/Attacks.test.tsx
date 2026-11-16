@@ -493,6 +493,14 @@ describe("Attacks", () => {
       await waitFor(() => expect(posts).toHaveLength(2));
       expect(posts[1]).toMatchObject({ notation: "1d8+1d6-1" });
       expect(posts[1]?.dice).toHaveLength(2);
+
+      fireEvent.click(longsword().getByRole("checkbox", { name: "Critical hit" }));
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Roll Longsword damage and 1d6 radiant" }),
+      );
+      await waitFor(() => expect(posts).toHaveLength(3));
+      expect(posts[2]).toMatchObject({ critical: true, notation: "1d8+1d6-1" });
+      expect(posts[2]?.dice).toHaveLength(4);
     });
 
     it("offers no target alignment where no item deals extra damage", async () => {

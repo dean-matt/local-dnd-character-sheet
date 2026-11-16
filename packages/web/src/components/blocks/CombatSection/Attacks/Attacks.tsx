@@ -264,6 +264,7 @@ export function Attacks({
     const extras = attack.extraDamage ?? [];
     const struck = extras.filter(({ targetAlignment }) => targetAlignment === target[rowKey]);
     const alignments = [...new Set(extras.map(({ targetAlignment }) => targetAlignment))];
+    const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
     return (
       <AttackRow
         key={key}
@@ -324,7 +325,7 @@ export function Attacks({
               <label className="flex items-center gap-1 text-label">
                 Target alignment
                 <select
-                  value={target[rowKey] ?? ""}
+                  value={chosen}
                   onChange={(event) =>
                     setTarget((now) => ({ ...now, [rowKey]: event.target.value }))
                   }
