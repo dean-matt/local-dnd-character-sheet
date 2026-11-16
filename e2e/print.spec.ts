@@ -34,6 +34,7 @@ test("a character prints its visible pages in light ink, with the screen chrome 
     const sheet = page.locator("[data-print-sheet]");
     await expect(sheet.getByRole("heading", { level: 1 })).toHaveText([
       "Stats",
+      "Combat",
       "Spells",
       "Features",
       "Identity",
