@@ -117,4 +117,16 @@ describe("ModeRoll inspiration", () => {
     });
     expect(toggle).toHaveAttribute("aria-disabled", "true");
   });
+
+  it("does not offer advantage on a roll that already has it, and drops a choice made before", async () => {
+    render("classic");
+    const toggle = await screen.findByRole("button", { name: "Inspiration" });
+    const mode = screen.getByRole("combobox", { name: "Stealth check mode" });
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+    fireEvent.change(mode, { target: { value: "advantage" } });
+    expect(toggle).toHaveAttribute("aria-disabled", "true");
+    fireEvent.change(mode, { target: { value: "normal" } });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+  });
 });

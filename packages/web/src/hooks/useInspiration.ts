@@ -10,7 +10,7 @@ type Mode = "normal" | "advantage" | "disadvantage";
  * The spending of inspiration on one d20 test, for a roll made in `mode` with `extraDie` typed.
  * Nothing is offered unless `enabled` and the character holds inspiration. Advantage nets
  * against a disadvantage to normal; a reroll is of a single d20 in the normal mode, so it is
- * `blocked` by a mode or a named die. `spend` clears the inspiration in one state write and
+ * `blocked` by a mode or a named die, and advantage is `blocked` when the roll already has it. `spend` clears the inspiration in one state write and
  * resolves whether it landed.
  */
 export function useInspiration(
@@ -27,7 +27,11 @@ export function useInspiration(
 
   const effect = definition && inspirationEffect(definition.edition, definition.houseRules);
   const offered = held?.inspiration === true && effect !== undefined;
-  const blocked = effect === "reroll" && (mode !== "normal" || extraDie.trim() !== "");
+  const blocked =
+    effect === "reroll"
+      ? mode !== "normal" || extraDie.trim() !== ""
+      : effect === "advantage" && mode === "advantage";
+  if (blocked && chosen) setChosen(false);
   const spending = offered && chosen && !blocked;
   const toggleable = !blocked && !replace.writing;
 
