@@ -1139,6 +1139,15 @@ export function deriveCharacter(
     abilityModifiers: perAbility((ability) =>
       fromBreakdown(abilityModifierBreakdown(scores[ability].total)),
     ),
+    abilityChecks: perAbility((ability) => {
+      const typed = stored.overrides[`abilityModifiers.${ability}`];
+      const modifier = Number.isInteger(typed)
+        ? (typed as number)
+        : abilityModifier(scores[ability].total);
+      return fromBreakdown(
+        breakdown<TermReference>([{ label: "Ability modifier", value: modifier }, ...exhaustion]),
+      );
+    }),
     hitPointMaximum: fromBreakdown(
       reducedMaximum(
         withModifiers(

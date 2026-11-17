@@ -14,6 +14,7 @@ import { useId } from "react";
 import { z } from "zod";
 import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
+import { rollTerms } from "../../../lib/rollTerms.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
 import { InputField } from "../../InputField.tsx";
@@ -178,7 +179,8 @@ export function AbilityScores({
                   label={`${ABILITY_LABEL[ability]} check`}
                   type="check"
                   origin={ABILITY_LABEL[ability]}
-                  bonus={derivedValue(derived.abilityModifiers[ability])}
+                  bonus={derivedValue(derived.abilityChecks[ability])}
+                  terms={rollTerms(derived.abilityChecks[ability])}
                   effects={checkExhaustion}
                 />
               </span>

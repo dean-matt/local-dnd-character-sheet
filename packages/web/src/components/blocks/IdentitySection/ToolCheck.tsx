@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
 import { useToolPrintedAbility } from "../../../hooks/useToolPrintedAbility.ts";
+import { rollTerms } from "../../../lib/rollTerms.ts";
 import { ModeRoll } from "../../ModeRoll.tsx";
 import { signed } from "../signed.ts";
 
@@ -34,9 +35,13 @@ export function ToolCheck({
   const checkExhaustion = useExhaustionEffects(character.id, character.definition.edition, "check");
   const [picked, setPicked] = useState<Ability>();
   const ability = picked ?? printed ?? UNPRINTED;
-  const bonus =
-    derivedValue(derived.abilityModifiers[ability]) +
-    proficiencyAt(derivedValue(derived.proficiencyBonus), tool.level);
+  const check = derived.abilityChecks[ability];
+  const proficiency = proficiencyAt(derivedValue(derived.proficiencyBonus), tool.level);
+  const bonus = derivedValue(check) + proficiency;
+  const terms = [
+    ...(rollTerms(check) ?? [{ source: "Ability check", value: derivedValue(check) }]),
+    ...(proficiency === 0 ? [] : [{ source: "Proficiency", value: proficiency }]),
+  ];
   const label = `${tool.name} check`;
   return (
     <li className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body">
@@ -60,6 +65,7 @@ export function ToolCheck({
           type="check"
           origin={tool.name}
           bonus={bonus}
+          terms={terms}
           effects={checkExhaustion}
         />
       )}

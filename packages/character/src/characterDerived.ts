@@ -156,6 +156,11 @@ export const characterDerivedSchema = z.strictObject({
    */
   abilityScores: z.record(abilitySchema, derivedSchema(z.int())),
   abilityModifiers: z.record(abilitySchema, derivedSchema(z.int())),
+  /**
+   * What a raw ability check or a tool check adds: the modifier, read after its override, and
+   * 2024 exhaustion's penalty. The modifier itself stays unpenalised for hit dice and the card.
+   */
+  abilityChecks: z.record(abilitySchema, derivedSchema(z.int())),
   hitPointMaximum: derivedSchema(z.int().min(1)),
   /**
    * Grouped by die size the way `hitDicePoolSchema` groups the pool a rest spends, in the
