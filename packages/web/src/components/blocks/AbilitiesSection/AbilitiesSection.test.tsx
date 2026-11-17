@@ -82,8 +82,13 @@ function derivedFor(
   });
 }
 
-function renderSection(record = warlock(), derived = derivedFor(record), exhaustion = 0) {
-  stubRules([], exhaustion);
+function renderSection(
+  record = warlock(),
+  derived = derivedFor(record),
+  exhaustion = 0,
+  conditions: string[] = [],
+) {
+  stubRules([], exhaustion, conditions);
   renderWithClient(
     <>
       <AbilitiesSection character={record} derived={derived} />
@@ -119,7 +124,7 @@ const nameButton = (region: string, name: string) =>
  * makes, the inventory read `Attacks` makes, the homebrew skills read the Skills card makes
  * and the homebrew name reads.
  */
-function stubRules(entries: unknown[], exhaustion = 0) {
+function stubRules(entries: unknown[], exhaustion = 0, conditions: string[] = []) {
   const fetchMock = vi.fn(
     async (_url: RequestInfo | URL, _init?: RequestInit) =>
       new Response(JSON.stringify({ refs: [{ name: "x", source: "XPHB", entries }] })),
@@ -127,7 +132,11 @@ function stubRules(entries: unknown[], exhaustion = 0) {
   const reads: Record<string, unknown> = {
     "/api/characters/1/state": {
       ...stateRecord(),
-      state: { ...stateRecord().state, exhaustion },
+      state: {
+        ...stateRecord().state,
+        exhaustion,
+        conditions: conditions.map((name) => ({ name, source: "XPHB" })),
+      },
     },
     "/api/characters/1/inventory": { items: [] },
     "/api/characters/1/features": { groups: [] },
@@ -518,6 +527,36 @@ describe("AbilitiesSection", () => {
     expect(skills.queryByRole("button", { name: /^Arcana check: / })).not.toBeInTheDocument();
     const stealth = skills.getByRole("button", { name: "Stealth check: Advantage" }).closest("li");
     expect(stealth).toHaveTextContent("Stealth, expertisedexDexterityADV+7");
+  });
+
+  describe("conditions", () => {
+    it("marks every skill check while Poisoned, and no save", async () => {
+      renderSection(warlock(), undefined, 0, ["Poisoned"]);
+
+      expect(
+        await card("Skills").findByRole("button", { name: "Deception check: Disadvantage" }),
+      ).toHaveTextContent(/^DIS$/);
+      expect(
+        card("Saving Throws").queryByRole("button", { name: /save: Disadvantage/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("marks the Dexterity save alone while Restrained, and nothing once it is removed", async () => {
+      renderSection(warlock(), undefined, 0, ["Restrained"]);
+
+      expect(
+        await card("Saving Throws").findAllByRole("button", { name: /save: Disadvantage$/ }),
+      ).toHaveLength(1);
+      expect(
+        card("Saving Throws").getByRole("button", { name: "Dexterity save: Disadvantage" }),
+      ).toBeVisible();
+      cleanup();
+
+      renderSection(warlock());
+      expect(
+        card("Saving Throws").queryByRole("button", { name: /save: Disadvantage/ }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   describe("exhaustion", () => {

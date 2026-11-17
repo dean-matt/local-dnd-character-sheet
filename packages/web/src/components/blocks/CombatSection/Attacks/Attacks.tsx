@@ -9,7 +9,7 @@ import {
   type Ability,
   type CharacterDerived,
   type CharacterRecord,
-  conditionAttackEffects,
+  conditionRollEffects,
   derivedValue,
   displayName,
   effectsOnRoll,
@@ -152,7 +152,9 @@ export function Attacks({
   const [crit, setCrit] = useState<Record<string, boolean>>({});
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
-  const heldEffects = play.data ? conditionAttackEffects(play.data.state, definition.edition) : [];
+  const heldEffects = play.data
+    ? conditionRollEffects(play.data.state, definition.edition, "attack")
+    : [];
   const attackEffects = (ability: Ability) => [
     ...effectsOnRoll(rollEffects, { roll: "attack", ability }),
     ...heldEffects,

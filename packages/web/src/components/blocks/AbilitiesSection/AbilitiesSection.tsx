@@ -16,7 +16,7 @@ import {
 } from "@dnd/character";
 import { useRef, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
-import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
+import { useConditionEffects } from "../../../hooks/useConditionEffects.ts";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
 import { AddHomebrewSkill } from "./AddHomebrewSkill.tsx";
@@ -42,8 +42,8 @@ export function AbilitiesSection({
   const addButton = useRef<HTMLButtonElement>(null);
   const [announcement, setAnnouncement] = useState("");
   const edition = character?.definition.edition ?? "classic";
-  const saveExhaustion = useExhaustionEffects(character?.id ?? "", edition, "save");
-  const checkExhaustion = useExhaustionEffects(character?.id ?? "", edition, "check");
+  const saveConditions = useConditionEffects(character?.id ?? "", edition, "save");
+  const checkConditions = useConditionEffects(character?.id ?? "", edition, "check");
   if (!character || !derived) return <EmptyState>Abilities isn't available yet.</EmptyState>;
   const { definition } = character;
 
@@ -75,10 +75,10 @@ export function AbilitiesSection({
                 overrideKey={`savingThrows.${ability}`}
                 title={`${ABILITY_LABEL[ability]} saving throw`}
                 rules={editionRules(definition, SAVE_RULES)}
-                effects={[
-                  ...effectsOnRoll(rollEffects, { roll: "save", ability }),
-                  ...saveExhaustion,
-                ]}
+                effects={effectsOnRoll([...rollEffects, ...saveConditions], {
+                  roll: "save",
+                  ability,
+                })}
               />
             ))}
             {derived.concentrationSave && (
@@ -89,7 +89,7 @@ export function AbilitiesSection({
                 overrideKey="concentrationSave"
                 title="Concentration saving throw"
                 rules={undefined}
-                effects={saveExhaustion}
+                effects={effectsOnRoll(saveConditions, { roll: "save", ability: "con" })}
               />
             )}
           </ul>
@@ -107,7 +107,7 @@ export function AbilitiesSection({
           <CatalogSkills
             character={character}
             derived={derived}
-            checkEffects={checkExhaustion}
+            checkEffects={checkConditions}
             onRemoved={(name) => {
               setAnnouncement(`Removed ${name}.`);
               addButton.current?.focus();

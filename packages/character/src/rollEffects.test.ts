@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RollEffectEntry } from "./characterDerived.ts";
 import {
-  conditionAttackEffects,
+  conditionRollEffects,
   effectsOnRoll,
   exhaustionRollEffects,
   netRollEffect,
@@ -80,21 +80,23 @@ describe("netRollEffect", () => {
   });
 });
 
-describe("conditionAttackEffects", () => {
+describe("conditionRollEffects", () => {
   const held = (...names: string[]) => ({
     conditions: names.map((name) => ({ name })),
     exhaustion: 0,
   });
 
   it("names each condition that bears on an attack roll, and none that does not", () => {
-    expect(conditionAttackEffects(held("Poisoned", "Invisible", "Charmed"), "one")).toEqual([
-      { source: "Invisible", mode: "advantage", roll: "attack" },
-      { source: "Poisoned", mode: "disadvantage", roll: "attack" },
-    ]);
+    expect(conditionRollEffects(held("Poisoned", "Invisible", "Charmed"), "one", "attack")).toEqual(
+      [
+        { source: "Invisible", mode: "advantage", roll: "attack" },
+        { source: "Poisoned", mode: "disadvantage", roll: "attack" },
+      ],
+    );
   });
 
   it("keeps Frightened conditional on the source being in sight", () => {
-    expect(conditionAttackEffects(held("Frightened"), "one")).toEqual([
+    expect(conditionRollEffects(held("Frightened"), "one", "attack")).toEqual([
       {
         source: "Frightened",
         mode: "disadvantage",
@@ -104,11 +106,40 @@ describe("conditionAttackEffects", () => {
     ]);
   });
 
+  it("puts Poisoned and Frightened on ability checks, Frightened conditionally", () => {
+    expect(
+      conditionRollEffects(held("Poisoned", "Frightened", "Prone"), "classic", "check"),
+    ).toEqual([
+      { source: "Poisoned", mode: "disadvantage", roll: "check" },
+      {
+        source: "Frightened",
+        mode: "disadvantage",
+        roll: "check",
+        condition: "while the source of fear is in line of sight",
+      },
+    ]);
+  });
+
+  it("puts Restrained's disadvantage on Dexterity saves only", () => {
+    expect(conditionRollEffects(held("Restrained"), "one", "save")).toEqual([
+      { source: "Restrained", mode: "disadvantage", roll: "save", target: "dex" },
+    ]);
+  });
+
+  it("gives an Invisible 2024 character advantage on initiative, a classic one none", () => {
+    expect(conditionRollEffects(held("Invisible", "Poisoned"), "one", "initiative")).toEqual([
+      { source: "Invisible", mode: "advantage", roll: "check" },
+      { source: "Poisoned", mode: "disadvantage", roll: "check" },
+    ]);
+    expect(conditionRollEffects(held("Invisible"), "classic", "initiative")).toEqual([]);
+    expect(conditionRollEffects(held("Invisible"), "one", "check")).toEqual([]);
+  });
+
   it("counts exhaustion from level 3, in the classic ruleset only", () => {
     const tired = { conditions: [], exhaustion: 3 };
-    expect(conditionAttackEffects(tired, "classic")).toHaveLength(1);
-    expect(conditionAttackEffects(tired, "one")).toEqual([]);
-    expect(conditionAttackEffects({ ...tired, exhaustion: 2 }, "classic")).toEqual([]);
+    expect(conditionRollEffects(tired, "classic", "attack")).toHaveLength(1);
+    expect(conditionRollEffects(tired, "one", "attack")).toEqual([]);
+    expect(conditionRollEffects({ ...tired, exhaustion: 2 }, "classic", "attack")).toEqual([]);
   });
 });
 

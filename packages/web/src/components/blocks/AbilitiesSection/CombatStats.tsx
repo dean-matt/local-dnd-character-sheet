@@ -3,7 +3,7 @@ import {
   type CharacterDerived,
   characterDerivedSchema,
 } from "@dnd/character";
-import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
+import { useConditionEffects } from "../../../hooks/useConditionEffects.ts";
 import { Card } from "../../Card.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
 import { RollEffectChip } from "../RollEffectChip.tsx";
@@ -21,7 +21,7 @@ export function CombatStats({
   definition: CharacterDefinition;
   derived: CharacterDerived;
 }) {
-  const checkExhaustion = useExhaustionEffects(characterId, definition.edition, "check");
+  const checkExhaustion = useConditionEffects(characterId, definition.edition, "initiative");
   return (
     <Card title="Combat">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
