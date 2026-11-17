@@ -98,6 +98,7 @@ export function LevelEditDialog({
           />
         ) : (
           <LevelEditForm
+            characterId={character.id}
             before={withoutLevelChoices(definition, level)}
             definition={definition}
             level={level}

@@ -389,17 +389,25 @@ const optionalFeatureEntrySchema = z.strictObject({
 });
 
 /**
- * The options taken from a class or subclass feature that offers a choice of the features
- * beside it — `Bear` (PHB) from `Totem Spirit` (PHB). A choice whose feature the character
- * no longer has stays stored and applies nothing, so taking the feature back restores it.
+ * What the player chose where a class or subclass feature offers a choice: the options taken
+ * from a feature that offers a choice of the features beside it — `Bear` (PHB) from `Totem
+ * Spirit` (PHB) — and the picks of one that grants a proficiency of the player's choosing, as
+ * a feat's `picks` hold them — two skills for `Expertise` (PHB). A choice whose feature the
+ * character no longer has stays stored and applies nothing, so taking the feature back
+ * restores it.
  */
-const featureChoiceSchema = z.strictObject({
-  feature: featureKeySchema,
-  options: z
-    .array(contentRefSchema)
-    .min(1)
-    .refine((options) => isUnique(options, refKey), { error: "the same option is taken twice" }),
-});
+const featureChoiceSchema = z
+  .strictObject({
+    feature: featureKeySchema,
+    options: z
+      .array(contentRefSchema)
+      .refine((options) => isUnique(options, refKey), { error: "the same option is taken twice" })
+      .default([]),
+    picks: featPicksSchema.optional(),
+  })
+  .refine((choice) => choice.options.length > 0 || choice.picks !== undefined, {
+    error: "a feature's choice takes an option or a pick",
+  });
 
 /**
  * Coins, counted per denomination. A single converted total would lose which coins the

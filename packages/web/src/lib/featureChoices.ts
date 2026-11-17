@@ -11,6 +11,7 @@ import {
 } from "@dnd/character";
 
 type Choices = CharacterDefinition["featureChoices"];
+export type FeaturePicks = NonNullable<Choices[number]["picks"]> | undefined;
 
 /** The option of `options` stored for `feature`, `undefined` where none of them is. */
 export function takenOption(
@@ -46,3 +47,26 @@ export function withFeatureChoice(
     ? held.map((choice) => (featureKey(choice.feature) === key ? next : choice))
     : [...held, next];
 }
+
+/**
+ * `choices` with `feature`'s picks replaced by what `change` makes of them, or none where it
+ * leaves them empty. The feature's options stay as they were.
+ */
+export function withFeaturePicks(
+  choices: Choices | undefined,
+  feature: FeatureKey,
+  change: (picks: FeaturePicks) => FeaturePicks,
+): Choices {
+  const key = featureKey(feature);
+  const held = choices ?? [];
+  const current = held.find((choice) => featureKey(choice.feature) === key);
+  const picks = change(current?.picks);
+  const next = { feature, options: current?.options ?? [], ...(isEmpty(picks) ? {} : { picks }) };
+  const rest = held.filter((choice) => featureKey(choice.feature) !== key);
+  if (next.options.length === 0 && next.picks === undefined) return rest;
+  return current
+    ? held.map((choice) => (featureKey(choice.feature) === key ? next : choice))
+    : [...held, next];
+}
+
+const isEmpty = (picks: FeaturePicks) => !picks || Object.keys(picks).length === 0;

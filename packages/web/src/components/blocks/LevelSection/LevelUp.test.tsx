@@ -332,6 +332,7 @@ const ROWS: Record<string, unknown> = {
   "/api/classes/Fighter/PHB/subclasses?edition=classic&limit=200": page([
     fighterSubclass("Eldritch Knight", "Eldritch Knight"),
     fighterSubclass("Champion", "Champion"),
+    { ...fighterSubclass("Cavalier", "Cavalier"), source: "XGE" },
     fighterSubclass("Battle Master", "Battle Master"),
     fighterSubclass("Lorekeeper", "Lorekeeper", {
       additionalSpells: [
@@ -383,6 +384,17 @@ const ROWS: Record<string, unknown> = {
     [2],
   ),
   "/api/classes/Fighter/PHB/subclasses/Champion/PHB/at/3": casterGrants(3, {}, []),
+  "/api/classes/Fighter/PHB/subclasses/Cavalier/XGE/at/3": {
+    ...casterGrants(3, {}, []),
+    features: [
+      {
+        name: "Bonus Proficiency",
+        source: "XGE",
+        level: 3,
+        json: { name: "Bonus Proficiency", source: "XGE" },
+      },
+    ],
+  },
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/3": casterGrants(3, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Lorekeeper/PHB/at/4": casterGrants(4, {}, []),
   "/api/classes/Fighter/PHB/subclasses/Loresinger/PHB/at/3": casterGrants(3, {}, []),
@@ -1323,6 +1335,53 @@ describe("LevelUp", () => {
       fireEvent.click(within(spells).getByRole("button", { name: "Remove Light" }));
       await pickSpell("Add a spell", "Magic Missile");
       await waitFor(() => expect(applyButton()).toHaveAttribute("aria-disabled", "false"));
+    });
+
+    it("asks for the skill a subclass feature grants, stores it under the feature, and takes it back with the subclass", async () => {
+      const base = sorcerer(2);
+      renderSeeded({
+        ...base,
+        definition: {
+          ...base.definition,
+          levels: [{ class: KNIGHT_FIGHTER }, { class: KNIGHT_FIGHTER }],
+        },
+      });
+      await open();
+      choose("Fighter subclass", "Cavalier");
+      await within(dialog()).findByRole("combobox", { name: "Bonus Proficiency skill" });
+      choose("Bonus Proficiency skill", "Insight");
+      expect(
+        within(dialog()).getByRole("combobox", { name: "Bonus Proficiency skill" }),
+      ).toHaveTextContent("Insight");
+
+      choose("Fighter subclass", "Champion");
+      await waitFor(() =>
+        expect(
+          within(dialog()).queryByRole("combobox", { name: "Bonus Proficiency skill" }),
+        ).toBeNull(),
+      );
+      choose("Fighter subclass", "Cavalier");
+      expect(
+        await within(dialog()).findByRole("combobox", { name: "Bonus Proficiency skill" }),
+      ).toHaveTextContent("Choose one");
+      choose("Bonus Proficiency skill", "Insight");
+      fireEvent.click(within(dialog()).getByRole("button", { name: "Average (6)" }));
+      fireEvent.click(applyButton());
+      await waitFor(() => expect(writes).toHaveBeenCalledTimes(1));
+      expect(sent().featureChoices).toEqual([
+        {
+          feature: {
+            name: "Bonus Proficiency",
+            source: "XGE",
+            className: "Fighter",
+            classSource: "PHB",
+            subclass: { shortName: "Cavalier", source: "XGE" },
+            level: 3,
+          },
+          options: [],
+          picks: { skills: ["insight"] },
+        },
+      ]);
     });
 
     it("takes back the spells picked when the subclass changes", async () => {

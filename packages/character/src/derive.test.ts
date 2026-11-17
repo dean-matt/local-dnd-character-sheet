@@ -922,6 +922,146 @@ describe("deriveCharacter", () => {
       ]);
     });
 
+    describe("picks a feature offers", () => {
+      const pick = (
+        className: string,
+        level: number,
+        feature: { name: string; source: string; level: number; subclass?: string },
+        picks: NonNullable<CharacterDefinition["featureChoices"][number]["picks"]>,
+        subclass?: string,
+        subclassSource = "PHB",
+      ) =>
+        as(
+          className,
+          level,
+          subclass,
+          {
+            featureChoices: [
+              {
+                feature: {
+                  name: feature.name,
+                  source: feature.source,
+                  className,
+                  classSource: "PHB",
+                  level: feature.level,
+                  ...(feature.subclass && {
+                    subclass: { shortName: feature.subclass, source: subclassSource },
+                  }),
+                },
+                options: [],
+                picks,
+              },
+            ],
+          },
+          subclassSource,
+        );
+      const skills = (picked: CharacterDerived) =>
+        Object.fromEntries(picked.featGrants.computed.skills.map((row) => [row.ref.name, row]));
+
+      it("doubles the proficiency of a skill a rogue's Expertise names, from its level on", () => {
+        const rogue = featureCatalog("Rogue");
+        const expertise = { name: "Expertise", source: "PHB", level: 1 };
+        const plain = deriveCharacter(as("Rogue", 1), rogue);
+        const named = deriveCharacter(
+          pick("Rogue", 1, expertise, { expertise: ["deception"] }),
+          rogue,
+        );
+        expect(skill(named, "Deception")?.modifier.computed).toBe(
+          (skill(plain, "Deception")?.modifier.computed ?? 0) + 2,
+        );
+        expect(skills(named).Deception).toMatchObject({ level: "expertise", from: ["Expertise"] });
+        const early = deriveCharacter(
+          pick("Rogue", 5, { ...expertise, level: 6 }, { expertise: ["deception"] }),
+          rogue,
+        );
+        expect(skills(early).Deception).toBeUndefined();
+      });
+
+      it("grants expertise only in a skill the character is proficient in", () => {
+        const rogue = featureCatalog("Rogue");
+        const expertise = { name: "Expertise", source: "PHB", level: 1 };
+        const lacking = deriveCharacter(
+          pick("Rogue", 1, expertise, { expertise: ["athletics"] }),
+          rogue,
+        );
+        expect(skills(lacking).Athletics).toBeUndefined();
+      });
+
+      it("grants a Lore bard three skills as proficiencies and ignores a fourth", () => {
+        const bard = featureCatalog("Bard");
+        const lore = { name: "Bonus Proficiencies", source: "PHB", level: 3, subclass: "Lore" };
+        const block = deriveCharacter(
+          pick(
+            "Bard",
+            3,
+            lore,
+            { skills: ["athletics", "performance", "perception", "stealth"] },
+            "College of Lore",
+          ),
+          bard,
+        );
+        expect(Object.keys(skills(block)).sort()).toEqual([
+          "Athletics",
+          "Perception",
+          "Performance",
+        ]);
+        expect(skills(block).Athletics).toMatchObject({
+          level: "proficient",
+          from: ["Bonus Proficiencies"],
+        });
+      });
+
+      it("grants the Knowledge domain two languages and expertise in each skill it picks", () => {
+        const ARCANA = { name: "Arcana", source: "XPHB" };
+        const cleric = featureCatalog("Cleric");
+        const withArcana = {
+          ...cleric,
+          skills: [...cleric.skills, { ref: ARCANA, ability: "int" as const }],
+        };
+        const blessings = {
+          name: "Blessings of Knowledge",
+          source: "PHB",
+          level: 1,
+          subclass: "Knowledge",
+        };
+        const picks = { languages: ["elvish", "dwarvish"], skills: ["arcana", "athletics"] };
+        const block = deriveCharacter(
+          pick("Cleric", 1, blessings, picks, "Knowledge Domain"),
+          withArcana,
+        );
+        expect(block.featGrants.computed.languages.map(({ name }) => name)).toEqual([
+          "elvish",
+          "dwarvish",
+        ]);
+        expect(skills(block).Arcana).toMatchObject({ level: "expertise" });
+        expect(skills(block).Athletics).toBeUndefined();
+      });
+
+      it("takes a pick back when the feature goes, and keeps it stored", () => {
+        const base = featureCatalog("Cleric");
+        const cleric = {
+          ...base,
+          skills: [
+            ...base.skills,
+            { ref: { name: "Persuasion", source: "XPHB" }, ability: "cha" as const },
+          ],
+        };
+        const order = { name: "Bonus Proficiencies", source: "TCE", level: 1, subclass: "Order" };
+        const held = pick(
+          "Cleric",
+          1,
+          order,
+          { skills: ["persuasion", "athletics"] },
+          "Order Domain",
+          "TCE",
+        );
+        expect(Object.keys(skills(deriveCharacter(held, cleric)))).toEqual(["Persuasion"]);
+        const without = { ...held, levels: [{ class: { name: "Cleric", source: "PHB" } }] };
+        expect(Object.keys(skills(deriveCharacter(without, cleric)))).toEqual([]);
+        expect(without.featureChoices[0]?.picks).toEqual({ skills: ["persuasion", "athletics"] });
+      });
+    });
+
     it("adds half the proficiency bonus, rounded down, to a check the bard lacks proficiency in", () => {
       const bard = featureCatalog("Bard");
       const jack = deriveCharacter(as("Bard", 5), bard);

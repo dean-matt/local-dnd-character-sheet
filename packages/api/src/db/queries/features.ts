@@ -27,6 +27,7 @@ import {
   entryKey,
   type FeatureKey,
   featureKey,
+  featurePickOffers,
   featureUsesKey,
   houseRule,
 } from "@dnd/character";
@@ -184,8 +185,14 @@ function withChoices(
       ],
       row.name,
     );
-  const asFeature = (row: ClassFeatureRow) =>
-    rowFeature(row.json, row, { level: row.level }, usesOf(row, usesKey(row)));
+  const asFeature = (row: ClassFeatureRow): SheetFeature => {
+    const feature = rowFeature(row.json, row, { level: row.level }, usesOf(row, usesKey(row)));
+    const key = offerOf(row);
+    const offers = featurePickOffers(key);
+    return offers.length > 0 && feature.resolved
+      ? { ...feature, picks: { feature: key, offers } }
+      : feature;
+  };
   return rows.flatMap((row): SheetFeature[] => {
     if (row.offered_by_name !== null) return [];
     const placement = { level: row.level };

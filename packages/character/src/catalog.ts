@@ -72,12 +72,14 @@ export type FeatPickField =
 
 /**
  * One pick a feat offers: `count` names, each landing in one of `fields`. `from` holds the
- * names lowercased, or is `null` where any of the field's own pool will do.
+ * names lowercased, or is `null` where any of the field's own pool will do. A pick of tools
+ * may name the `types` of tool it takes.
  */
 export type FeatOffer = {
   fields: readonly FeatPickField[];
   count: number;
   from: readonly string[] | null;
+  types?: readonly string[];
 };
 
 /**

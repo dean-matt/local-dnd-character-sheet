@@ -15,9 +15,9 @@ import type {
 } from "./catalog.ts";
 import type { CharacterDerived, FeatGrants } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
-import { mechanicsOfKind } from "./featureMechanics.ts";
+import { type FeatureMechanics, featureOffers, mechanicsOfKind } from "./featureMechanics.ts";
 import { heldFeatures } from "./heldFeatures.ts";
-import { entryKey, itemKey, refKey } from "./keys.ts";
+import { entryKey, featureKey, itemKey, refKey } from "./keys.ts";
 import type { Ability, ContentRef } from "./refs.ts";
 import { derivedValue } from "./resolve.ts";
 
@@ -74,28 +74,61 @@ type Held = { trait: FeatGrantTrait; picked: Picked };
 
 const NO_PICKS = Object.fromEntries(FIELDS.map((field) => [field, []])) as unknown as Picked;
 
+const grantTrait = (name: string, grant: Partial<FeatGrantTrait> = {}): FeatGrantTrait => ({
+  name,
+  savingThrows: [],
+  skills: [],
+  expertise: [],
+  tools: [],
+  languages: [],
+  armor: [],
+  weapons: [],
+  resist: [],
+  immune: [],
+  conditionImmune: [],
+  senses: [],
+  offers: [],
+  ...grant,
+});
+
+/**
+ * The picks a held feature offers, taken from what the definition stores for it. A pick of
+ * skills that carries expertise lands in `expertise` as well, which lands only on a skill the
+ * character is proficient in, and the pick just made is.
+ */
+function pickedBy(definition: CharacterDefinition, entry: FeatureMechanics): Held[] {
+  const offers = featureOffers(entry);
+  if (offers.length === 0 || !("className" in entry.ref)) return [];
+  const key = featureKey(entry.ref);
+  const stored = definition.featureChoices.find(({ feature }) => featureKey(feature) === key);
+  const taken = allocatePicks(offers, stored?.picks);
+  const picked = Object.fromEntries(FIELDS.map((field) => [field, []])) as unknown as Picked;
+  offers.forEach((offer, at) => {
+    for (const { field, name } of taken[at] ?? []) {
+      if (field === "savingThrows" || field === "resist") continue;
+      picked[field].push(name);
+      if (offer.expertise) picked.expertise.push(name);
+    }
+  });
+  return [{ trait: grantTrait(entry.ref.name), picked }];
+}
+
 /** The proficiencies each class, subclass or race feature records, read like a feat's traits and cited by the feature's name. */
 function featureTraits(definition: CharacterDefinition): Held[] {
-  return heldFeatures(definition).flatMap(({ ref, entry }) =>
-    mechanicsOfKind(entry, "proficiency").map((grant) => ({
+  return heldFeatures(definition).flatMap(({ ref, entry }) => [
+    ...mechanicsOfKind(entry, "proficiency").map((grant) => ({
       picked: NO_PICKS,
-      trait: {
-        name: ref.name,
+      trait: grantTrait(ref.name, {
         savingThrows: grant.savingThrows ?? [],
         skills: grant.skills ?? [],
         expertise: grant.expertise ?? [],
         tools: grant.tools ?? [],
-        languages: [],
         armor: grant.armor ?? [],
         weapons: grant.weapons ?? [],
-        resist: [],
-        immune: [],
-        conditionImmune: [],
-        senses: [],
-        offers: [],
-      },
+      }),
     })),
-  );
+    ...pickedBy(definition, entry),
+  ]);
 }
 
 /** Each name once, in the order first granted, with every feat that grants it. */

@@ -24,6 +24,7 @@ import { useLaterPrerequisites } from "./useLaterPrerequisites.ts";
 import { useLevelUpPlan } from "./useLevelUpPlan.ts";
 
 export interface LevelEditFormProps {
+  characterId: string;
   /** The definition before `level` chose anything, which the pickers read. */
   before: CharacterDefinition;
   /** The definition as the dialog opened on it. */
@@ -53,6 +54,7 @@ function asksNothing(plan: ReturnType<typeof useLevelUpPlan>) {
     !plan.target.asksSubclass &&
     plan.grant === undefined &&
     plan.offerings.length === 0 &&
+    plan.pickings.length === 0 &&
     plan.optionPicks.gains.length === 0 &&
     owed.cantrips + owed.spells + owed.subclassCantrips + owed.subclassSpells === 0
   );
@@ -81,6 +83,7 @@ function savedChoices(definition: CharacterDefinition, level: number) {
  * and what the new one grants. A later level's gain starts over on the new class's die.
  */
 export function LevelEditForm({
+  characterId,
   before,
   definition,
   level,
@@ -175,7 +178,7 @@ export function LevelEditForm({
           }
         />
         {asksNothing(plan) && <p className="text-muted">Level {level} asked for no choices.</p>}
-        <LevelUpPicks edition={definition.edition} plan={plan} />
+        <LevelUpPicks characterId={characterId} edition={definition.edition} plan={plan} />
         <UnmetPrerequisites notes={notes} />
         {starting.picks && drafted && (
           <ClassPicksFields name={displayName(drafted, names)} picks={starting.picks} />

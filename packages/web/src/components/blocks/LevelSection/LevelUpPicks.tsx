@@ -8,6 +8,7 @@ import { subclassLabel, subclassRef } from "../../../lib/subclassItems.ts";
 import { FormField } from "../../FormField.tsx";
 import { ImprovementField } from "../../ImprovementField.tsx";
 import { Select } from "../../Select.tsx";
+import { LevelUpFeaturePicks } from "./LevelUpFeaturePicks.tsx";
 import { LevelUpOptions } from "./LevelUpOptions.tsx";
 import { LevelUpSpells } from "./LevelUpSpells.tsx";
 import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
@@ -15,16 +16,18 @@ import type { useLevelUpPlan } from "./useLevelUpPlan.ts";
 const UNCHOSEN = "Choose one";
 
 export interface LevelUpPicksProps {
+  characterId: string;
   edition: CharacterDefinition["edition"];
   plan: ReturnType<typeof useLevelUpPlan>;
 }
 
 /**
  * The picks a level asks for once its class is set: a subclass at the class's subclass
- * level, an improvement, each option a feature offers, the optional features, cantrips and
+ * level, an improvement, each option a feature offers, each proficiency or language a
+ * feature lets the player choose, the optional features, cantrips and
  * spells the level adds.
  */
-export function LevelUpPicks({ edition, plan }: LevelUpPicksProps) {
+export function LevelUpPicks({ characterId, edition, plan }: LevelUpPicksProps) {
   const names = useHomebrewNames();
   const improvementId = useId();
   const disabled = useDisabledSources();
@@ -86,6 +89,15 @@ export function LevelUpPicks({ edition, plan }: LevelUpPicksProps) {
           </FormField>
         );
       })}
+      {plan.pickings.map((picking) => (
+        <LevelUpFeaturePicks
+          key={featureKey(picking.feature)}
+          characterId={characterId}
+          edition={edition}
+          picking={picking}
+          plan={plan}
+        />
+      ))}
       <LevelUpOptions plan={plan} />
       <LevelUpSpells
         key={`spells:${entryKey(level.class)}`}

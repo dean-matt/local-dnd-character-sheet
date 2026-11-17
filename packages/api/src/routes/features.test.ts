@@ -28,6 +28,7 @@ import { featuresRoutes } from "./features.ts";
 
 const FIGHTER = { name: "Fighter", source: "PHB" };
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
+const BARD = { name: "Bard", source: "PHB" };
 const CHAMPION = { name: "Champion", source: "PHB" };
 const TOTEM_WARRIOR = { name: "Path of the Totem Warrior", source: "PHB" };
 const STORM_HERALD = { name: "Path of the Storm Herald", source: "XGE" };
@@ -130,6 +131,7 @@ describe("featuresRoutes", () => {
       classes: [
         { ...FIGHTER, edition: "classic", hit_die: 10, json: json(FIGHTER) },
         { ...BARBARIAN, edition: "classic", hit_die: 12, json: json(BARBARIAN) },
+        { ...BARD, edition: "classic", hit_die: 8, json: json(BARD) },
       ],
       subclasses: [
         {
@@ -162,6 +164,7 @@ describe("featuresRoutes", () => {
         classFeature("Ability Score Improvement", FIGHTER, 4),
         classFeature("Extra Attack", FIGHTER, 5),
         classFeature("Ability Score Improvement", BARBARIAN, 4),
+        classFeature("Expertise", BARD, 3),
         {
           ...classFeature("Martial Versatility", FIGHTER, 4),
           source: "TCE",
@@ -398,6 +401,25 @@ describe("featuresRoutes", () => {
     expect(champion?.features.map(({ name, level }) => [name, level])).toEqual([
       ["Improved Critical", 3],
     ]);
+  });
+
+  it("carries the picks a class feature asks the player for, keyed by the feature", async () => {
+    store(definitionWith({ levels: [{ class: BARD }, { class: BARD }, { class: BARD }] }));
+    const [bard] = (await features()).groups;
+    const expertise = bard?.features.find(({ name }) => name === "Expertise");
+
+    expect(expertise).toMatchObject({
+      picks: {
+        feature: {
+          name: "Expertise",
+          source: "PHB",
+          className: "Bard",
+          classSource: "PHB",
+          level: 3,
+        },
+        offers: [{ fields: ["expertise"], count: 2, from: null }],
+      },
+    });
   });
 
   it("stops each class of a multiclass character at that class's own level", async () => {
