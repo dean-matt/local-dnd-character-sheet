@@ -141,6 +141,18 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     },
     narrative: true,
   },
+  classFeature(["Barbarian", "PHB"], ["Fast Movement", "PHB"], 5, [
+    { kind: "speed", bonus: 10, unlessHeavyArmor: true },
+  ]),
+  subclassFeature(rogue, ["Scout", "XGE"], ["Superior Mobility", "XGE"], 9, [
+    { kind: "speed", bonus: 10, alsoOn: ["climb", "swim"] },
+  ]),
+  {
+    ...classFeature(["Ranger", "PHB"], ["Deft Explorer Improvement", "TCE"], 6, [
+      { kind: "speed", bonus: 5, equalToWalk: ["climb", "swim"], label: "Roving" },
+    ]),
+    houseRule: "optionalClassFeatures",
+  },
   subclassFeature(["Paladin", "PHB"], ["Glory", "TCE"], ["Aura of Alacrity", "TCE"], 7, [
     { kind: "bonus", target: "walk", value: 10 },
   ]),

@@ -1086,7 +1086,7 @@ export function deriveCharacter(
   const bonuses = equippedBonuses(definition, catalog);
 
   const worn = wornBurdens(definition, catalog);
-  const featSpeed = speedWithFeats(catalog.speed, definition);
+  const featSpeed = speedWithFeats(catalog.speed, definition, heavyArmorWorn);
   const { worn: bodyArmor, shield: heldShield } = equippedArmor(definition, catalog.armor);
   const movement = speedWithUnarmoredMovement(
     featSpeed.speed,

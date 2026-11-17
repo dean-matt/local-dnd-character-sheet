@@ -120,7 +120,28 @@ const defenseMechanicSchema = z
     error: "a defense mechanic grants something",
   });
 
+const SPEED_MODES = z
+  .array(z.enum(["climb", "swim"]))
+  .min(1)
+  .optional();
+
+/**
+ * The walking speed raised by `bonus` feet, named `label` where the feature's own name is not
+ * what the table calls it. `unlessHeavyArmor` withholds it while heavy armor is worn. `alsoOn`
+ * gives the same increase to those speeds where the character already has them; `equalToWalk`
+ * gives the character those speeds at the raised walking speed, where it has less.
+ */
+const speedMechanicSchema = z.strictObject({
+  kind: z.literal("speed"),
+  bonus: z.int().min(1),
+  unlessHeavyArmor: z.literal(true).optional(),
+  alsoOn: SPEED_MODES,
+  equalToWalk: SPEED_MODES,
+  label: z.string().min(1).optional(),
+});
+
 const mechanicSchema = z.union([
+  speedMechanicSchema,
   defenseMechanicSchema,
   senseMechanicSchema,
   proficiencyMechanicSchema,
@@ -161,6 +182,8 @@ export const featureMechanicsSchema = z
     ref: featureRefSchema,
     /** The feature whose choice of options this is one of; held only where the character took it. */
     offeredBy: featureKeySchema.optional(),
+    /** The house rule a table turns on for the feature to apply; absent, the rule as printed. */
+    houseRule: z.literal("optionalClassFeatures").optional(),
     mechanics: z
       .array(mechanicSchema)
       .min(1)
