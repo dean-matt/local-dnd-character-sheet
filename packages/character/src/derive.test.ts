@@ -704,6 +704,14 @@ describe("deriveCharacter", () => {
       const plain = classic({}, hold(HIDE));
       expect(deriveCharacter(plain, medium).armorClass.computed).toBe(14);
       expect(deriveCharacter(withFeat, medium).armorClass.computed).toBe(15);
+      const weak = {
+        abilityScores: { ...definition.abilityScores, dex: 15 },
+      };
+      expect(deriveCharacter({ ...withFeat, ...weak }, medium).armorClass.computed).toBe(14);
+      const light = (def: CharacterDefinition) => ac(def).computed;
+      expect(light(classic(feat("Medium Armor Master"), hold(STUDDED_LEATHER)))).toBe(
+        light(classic({}, hold(STUDDED_LEATHER))),
+      );
     });
 
     it("gives Dragon Hide an unarmored 13 that a shield keeps and armor ends", () => {
@@ -713,6 +721,21 @@ describe("deriveCharacter", () => {
         expect.objectContaining({ label: "Dragon Hide", value: 3 }),
       );
       expect(ac(classic(dragon, hold(STUDDED_LEATHER))).computed).toBe(15);
+      expect(ac(classic(dragon, hold(STUDDED_LEATHER))).terms).not.toContainEqual(
+        expect.objectContaining({ label: "Dragon Hide" }),
+      );
+      const shielded = deriveCharacter(classic(dragon, hold(SHIELD)), {
+        ...catalog,
+        armor: new Map([
+          [entryKey(SHIELD), { name: SHIELD.name, category: "shield" as const, armorClass: 2 }],
+        ]),
+      });
+      expect(shielded.armorClass.terms).toContainEqual(
+        expect.objectContaining({ label: "Dragon Hide", value: 3 }),
+      );
+      expect(shielded.armorClass.terms).toContainEqual(
+        expect.objectContaining({ reference: SHIELD }),
+      );
     });
 
     it("adds Soul of the Forge from Cleric level 6 in heavy armor, keyed by the full subclass name", () => {
