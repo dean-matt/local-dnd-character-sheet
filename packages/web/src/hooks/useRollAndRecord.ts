@@ -27,7 +27,9 @@ export function useRollAndRecord(characterId: string) {
 
   function roll(
     notation: string,
-    named: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & { critical?: boolean },
+    named: Pick<RollRecord, "label" | "type" | "origin" | "mode" | "terms"> & {
+      critical?: boolean;
+    },
     settled?: (rolled: Roll, logged: boolean, outcome?: string) => void,
   ): Error | undefined {
     let rolled: Roll;

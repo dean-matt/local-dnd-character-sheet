@@ -12,7 +12,7 @@ const entry = (row: typeof rollLog.$inferSelect, characterName: string) => {
     total: result,
     ...(detail as Pick<
       RollRecord,
-      "dice" | "modifier" | "critical" | "mode" | "reason" | "origin"
+      "dice" | "modifier" | "terms" | "critical" | "mode" | "reason" | "origin"
     > &
       Partial<Pick<RollRecord, "type">>),
     rolledAt: rolledAt.toISOString(),
@@ -37,7 +37,8 @@ export function clearRolls(db: CharactersDb) {
 
 /** Stores `roll` as the character's newest, pruning the oldest past the bound; the character must exist. */
 export function insertRoll(tx: CharactersWriter, characterId: string, roll: RollRecord, now: Date) {
-  const { type, origin, dice, modifier, critical, mode, reason, total, label, notation } = roll;
+  const { type, origin, dice, modifier, terms, critical, mode, reason, total, label, notation } =
+    roll;
   const row = tx
     .insert(rollLog)
     .values({
@@ -45,7 +46,7 @@ export function insertRoll(tx: CharactersWriter, characterId: string, roll: Roll
       label,
       notation,
       result: total,
-      detail: { type, origin, dice, modifier, critical, mode, reason },
+      detail: { type, origin, dice, modifier, terms, critical, mode, reason },
       rolledAt: now,
     })
     .returning()

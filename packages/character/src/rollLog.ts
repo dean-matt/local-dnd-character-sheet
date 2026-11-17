@@ -29,6 +29,8 @@ const rollTypeSchema = z.enum([
 
 export type RollType = z.infer<typeof rollTypeSchema>;
 
+const rollTermSchema = z.strictObject({ source: z.string().min(1), value: z.int() });
+
 export const rollRecordSchema = z.strictObject({
   type: rollTypeSchema,
   label: z.string().min(1),
@@ -38,6 +40,8 @@ export const rollRecordSchema = z.strictObject({
   total: z.int(),
   dice: z.array(rolledDieSchema),
   modifier: z.int(),
+  /** What `modifier` is made of, such as an attack bonus and flanking; absent where the roll names none, as in a row stored before rolls did. */
+  terms: z.array(rollTermSchema).optional(),
   critical: z.boolean(),
   mode: z.enum(["normal", "advantage", "disadvantage"]).optional(),
   reason: z.enum(["elven-accuracy", "lucky", "portent"]).optional(),

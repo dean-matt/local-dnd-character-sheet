@@ -109,6 +109,23 @@ describe("rollsRoutes", () => {
     expect(await list()).toEqual([stored]);
   });
 
+  it("round-trips the terms of a roll's modifier", async () => {
+    const id = await create();
+    const terms = [
+      { source: "Attack bonus", value: 5 },
+      { source: "Flanking", value: 2 },
+    ];
+
+    const stored = await (await record(id, { ...roll(15), terms })).json();
+    expect(stored.terms).toEqual(terms);
+    expect(await list()).toEqual([stored]);
+  });
+
+  it("rejects a term with no source", async () => {
+    const id = await create();
+    expect((await record(id, { ...roll(15), terms: [{ source: "", value: 2 }] })).status).toBe(400);
+  });
+
   it("loads a row written before a roll carried a type, an origin, a mode or a reason", async () => {
     const id = await create();
     const { type: _none, ...untyped } = roll(11);
@@ -131,6 +148,7 @@ describe("rollsRoutes", () => {
     expect(legacy).not.toHaveProperty("origin");
     expect(legacy).not.toHaveProperty("reason");
     expect(legacy).not.toHaveProperty("mode");
+    expect(legacy).not.toHaveProperty("terms");
   });
 
   it("rejects a type outside the vocabulary", async () => {
