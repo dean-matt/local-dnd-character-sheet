@@ -89,6 +89,7 @@ export function AbilitiesSection({
                 overrideKey="concentrationSave"
                 title="Concentration saving throw"
                 rules={undefined}
+                effects={saveExhaustion}
               />
             )}
           </ul>

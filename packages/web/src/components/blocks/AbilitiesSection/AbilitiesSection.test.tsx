@@ -550,6 +550,27 @@ describe("AbilitiesSection", () => {
       ).toHaveLength(6);
     });
 
+    it("marks the concentration save from level 3 and initiative from level 1", async () => {
+      const record = classic();
+      const derived = derivedFor(record);
+      const withConcentration = {
+        ...derived,
+        concentrationSave: { computed: 4, manual: null, terms: [] },
+      };
+      renderSection(record, withConcentration, 3);
+      expect(
+        await card("Saving Throws").findByRole("button", {
+          name: "Concentration save: Disadvantage",
+        }),
+      ).toBeVisible();
+      cleanup();
+
+      renderSection(record, withConcentration, 1);
+      expect(
+        await card("Combat").findByRole("button", { name: "Initiative: Disadvantage" }),
+      ).toBeVisible();
+    });
+
     it("changes nothing at level 0 or for a 2024 character", async () => {
       renderSection(classic(), undefined, 0);
       await card("Skills").findByText("Deception");

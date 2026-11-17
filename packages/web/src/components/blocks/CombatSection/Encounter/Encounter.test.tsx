@@ -1,15 +1,19 @@
 import type { CharacterState } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterKey, characterStateKey } from "../../../../hooks/characterKeys.ts";
 import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { Encounter } from "./Encounter.tsx";
 
-type Body = { state: CharacterState; roll?: { label: string; notation: string; total: number } };
+type Body = {
+  state: CharacterState;
+  roll?: { label: string; notation: string; total: number; mode?: string };
+};
 
-function renderEncounter(state: Partial<CharacterState> = {}) {
-  const character = characterRecord("1", "Vex");
+function renderEncounter(state: Partial<CharacterState> = {}, edition: "classic" | "one" = "one") {
+  const base = characterRecord("1", "Vex");
+  const character = { ...base, edition, definition: { ...base.definition, edition } };
   let play = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: { url: string; body: Body }[] = [];
   vi.stubGlobal(
@@ -62,6 +66,20 @@ describe("Encounter", () => {
     expect(write?.body.roll?.notation).toMatch(/^1d20/);
     expect(write?.body.state.encounter).toEqual({ round: 1, initiative: write?.body.roll?.total });
     expect(await screen.findByRole("button", { name: "Reroll initiative" })).toBeInTheDocument();
+  });
+
+  it("rolls initiative with disadvantage at classic exhaustion 1, and normally in 2024", async () => {
+    const writes = renderEncounter({ exhaustion: 1 }, "classic");
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.body.roll).toMatchObject({ mode: "disadvantage" });
+    expect(screen.getByRole("button", { name: "Initiative: Disadvantage" })).toBeInTheDocument();
+    cleanup();
+
+    const normal = renderEncounter({ exhaustion: 1 }, "one");
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+    await waitFor(() => expect(normal).toHaveLength(1));
+    expect(normal[0]?.body.roll?.mode).toBeUndefined();
   });
 
   it("advances the round and ends the encounter, each one write", async () => {
