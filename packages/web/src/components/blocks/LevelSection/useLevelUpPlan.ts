@@ -11,8 +11,18 @@ import {
 import { useFormContext, useWatch } from "react-hook-form";
 import { useFeatRows } from "../../../hooks/useFeatRows.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
-import { takenOption, withFeatureChoice } from "../../../lib/featureChoices.ts";
-import { type FeatureOffering, featureOfferings } from "../../../lib/featureOfferings.ts";
+import {
+  type FeaturePicks,
+  takenOption,
+  withFeatureChoice,
+  withFeaturePicks,
+} from "../../../lib/featureChoices.ts";
+import {
+  type FeatureOffering,
+  type FeaturePicking,
+  featureOfferings,
+  featurePickings,
+} from "../../../lib/featureOfferings.ts";
 import { isMade } from "../../../lib/improvementChoice.ts";
 import { candidateAt } from "../../../lib/improvementFeats.ts";
 import { withPrerequisiteDepartures } from "../../../lib/multiclassPrerequisites.ts";
@@ -95,6 +105,7 @@ export function useLevelUpPlan(
   const improvement = grant && improvementAt(draft, grant.level);
   const featRows = featList.rows;
   const offerings = offeringsAt(target);
+  const pickings = pickingsAt(target);
   const chosen = (offering: FeatureOffering) =>
     takenOption(featureChoices, offering.feature, offering.options);
 
@@ -137,6 +148,9 @@ export function useLevelUpPlan(
     featRows,
     offerings,
     chosen,
+    pickings,
+    proficiencies,
+    featureChoices,
     entry,
     pickedSkills,
     pickedTools,
@@ -219,6 +233,8 @@ export function useLevelUpPlan(
         dirty,
       );
     },
+    pick: (picking: FeaturePicking, change: (picks: FeaturePicks) => FeaturePicks) =>
+      setValue("featureChoices", withFeaturePicks(featureChoices, picking.feature, change), dirty),
     choose: (offering: FeatureOffering, option: ContentRef) =>
       setValue(
         "featureChoices",
@@ -226,6 +242,23 @@ export function useLevelUpPlan(
         dirty,
       ),
   };
+}
+
+/** The features at the level being taken, class and subclass as `offeringsAt` reads them, that ask for picks. */
+function pickingsAt(target: ReturnType<typeof useLevelUpClass>) {
+  const cls = target.catalog;
+  if (!cls) return [];
+  const owner = { className: cls.name, classSource: cls.source };
+  const row = target.subclassRow;
+  const own = featurePickings(target.after?.features ?? [], owner).filter(
+    ({ feature }) => feature.level === target.next,
+  );
+  if (!row) return own;
+  const subclass = featurePickings(target.subclassAfter?.features ?? [], {
+    ...owner,
+    subclass: { shortName: row.shortName, source: row.source },
+  }).filter(({ feature }) => feature.level >= target.subclassFrom && feature.level <= target.next);
+  return [...own, ...subclass];
 }
 
 /**

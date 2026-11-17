@@ -981,6 +981,14 @@ describe("featureChoices", () => {
     expect(characterDefinitionSchema.safeParse(choosing(at(3), at(3))).success).toBe(false);
   });
 
+  it("keeps the picks of a feature that grants a proficiency of the player's choosing", () => {
+    const expertise = { ...totemSpirit, name: "Expertise", level: 1 };
+    const choice = { feature: expertise, picks: { expertise: ["stealth", "deception"] } };
+    expect(characterDefinitionSchema.parse(choosing(choice)).featureChoices).toEqual([
+      { ...choice, options: [] },
+    ]);
+  });
+
   it("rejects a choice taking nothing, or taking one option twice", () => {
     const bear = { name: "Bear", source: "PHB" };
     expect(

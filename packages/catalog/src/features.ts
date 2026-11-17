@@ -33,6 +33,27 @@ const featureChoiceSchema = z.strictObject({
 });
 
 /**
+ * What a feature such as `Expertise` (PHB) asks the player to pick: the key a definition
+ * stores the picks under, and each offer's `count` names, each landing in one of `fields`,
+ * from `from` or, where it is `null`, the field's own pool. `types` restricts a pick of tools
+ * to those kinds, and `expertise` marks skills whose proficiency the pick doubles.
+ */
+const featurePicksSchema = z.strictObject({
+  feature: featureChoiceSchema.shape.feature,
+  offers: z
+    .array(
+      z.strictObject({
+        fields: z.array(z.enum(["skills", "expertise", "tools", "languages"])).min(1),
+        count: z.int().min(1),
+        from: z.array(z.string()).nullable(),
+        types: z.array(z.enum(["artisan", "instrument", "gaming", "other"])).optional(),
+        expertise: z.literal(true).optional(),
+      }),
+    )
+    .min(1),
+});
+
+/**
  * `level` is the class level a class or subclass feature arrives at, or the character
  * level a feat was taken at. `featureType` is the code an optional feature was picked
  * under — `FS:F`, `MV:B` — since one option can be offered under several.
@@ -47,6 +68,7 @@ const featureFields = {
   level: z.int().min(1).max(20).optional(),
   featureType: z.string().min(1).optional(),
   choice: featureChoiceSchema.optional(),
+  picks: featurePicksSchema.optional(),
 };
 
 /**

@@ -100,7 +100,7 @@ export function LevelUpChoices({
           }}
         />
       )}
-      <LevelUpPicks edition={definition.edition} plan={plan} />
+      <LevelUpPicks characterId={characterId} edition={definition.edition} plan={plan} />
       <LevelUpSummary changes={plan.table()} features={plan.features} />
       <p className="text-muted text-row">
         Hit points, proficiency bonus and spell slots are worked out once you apply, and the summary

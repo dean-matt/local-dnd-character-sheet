@@ -118,6 +118,7 @@ export {
   featureActionType,
   featurePoolKey,
 } from "./featureActions.ts";
+export { featurePickOffers } from "./heldFeatures.ts";
 export {
   atHitPointMaximum,
   damagedState,

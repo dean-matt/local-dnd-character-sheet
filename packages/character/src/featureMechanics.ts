@@ -64,6 +64,31 @@ const proficiencyMechanicSchema = z
     },
   );
 
+/**
+ * A pick the player makes: `count` names, each landing in one of `fields`, from `from` where it
+ * names them and from the field's own pool where it does not. A tool pick restricted to
+ * `types` takes only those kinds. `expertise` doubles the proficiency of each skill picked, as
+ * the Knowledge domain does. The picks live on the character's `featureChoices`.
+ */
+const pickMechanicSchema = z
+  .strictObject({
+    kind: z.literal("pick"),
+    fields: z.array(z.enum(["skills", "expertise", "tools", "languages"])).min(1),
+    count: z.int().min(1),
+    from: names,
+    types: z
+      .array(z.enum(["artisan", "instrument", "gaming", "other"]))
+      .min(1)
+      .optional(),
+    expertise: z.literal(true).optional(),
+  })
+  .refine((pick) => !pick.expertise || (pick.fields.length === 1 && pick.fields[0] === "skills"), {
+    error: "only a pick of skills can carry expertise",
+  })
+  .refine((pick) => !pick.types || pick.fields.includes("tools"), {
+    error: "only a pick of tools names tool types",
+  });
+
 /** Half the proficiency bonus on `abilities` checks that do not already use proficiency, rounded as the feature says. */
 const halfProficiencyMechanicSchema = z.strictObject({
   kind: z.literal("halfProficiency"),
@@ -99,6 +124,7 @@ const mechanicSchema = z.union([
   defenseMechanicSchema,
   senseMechanicSchema,
   proficiencyMechanicSchema,
+  pickMechanicSchema,
   halfProficiencyMechanicSchema,
   bonusKindSchema,
   armorClassMechanicSchema,
@@ -114,6 +140,18 @@ export const mechanicsOfKind = <K extends Mechanic["kind"]>(
   kind: K,
 ): Extract<Mechanic, { kind: K }>[] =>
   (entry.mechanics ?? []).filter((m): m is Extract<Mechanic, { kind: K }> => m.kind === kind);
+
+/** The picks a feature's mechanics ask the player for, in the shape `allocatePicks` reads. */
+export const featureOffers = (
+  entry: FeatureMechanics,
+): (Omit<Extract<Mechanic, { kind: "pick" }>, "kind" | "from"> & { from: string[] | null })[] =>
+  mechanicsOfKind(entry, "pick").map(({ fields, count, from, types, expertise }) => ({
+    fields,
+    count,
+    from: from ?? null,
+    ...(types && { types }),
+    ...(expertise && { expertise }),
+  }));
 
 /** A class or subclass feature carries its whole key; a feat, race trait or the like, its `(name, source)`. */
 const featureRefSchema = z.union([featureKeySchema, contentRefSchema]);

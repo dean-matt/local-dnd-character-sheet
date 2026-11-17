@@ -6,9 +6,9 @@
  */
 import type { CharacterDefinition } from "./definition.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
-import { type FeatureMechanics, featureMechanicsKey } from "./featureMechanics.ts";
+import { type FeatureMechanics, featureMechanicsKey, featureOffers } from "./featureMechanics.ts";
 import { featureKey, refKey } from "./keys.ts";
-import { type ContentRef, catalogRef } from "./refs.ts";
+import { type ContentRef, catalogRef, type FeatureKey } from "./refs.ts";
 import { classLevels, totalLevel } from "./summaries.ts";
 
 export const SUBCLASS_NAMES = new Map([
@@ -42,6 +42,10 @@ export const SUBCLASS_NAMES = new Map([
   ["Totem Warrior|PHB", "Path of the Totem Warrior|PHB"],
   ["Necromancy|PHB", "School of Necromancy|PHB"],
   ["Storm|XGE", "Storm Sorcery|XGE"],
+  ["Lore|PHB", "College of Lore|PHB"],
+  ["Knowledge|PHB", "Knowledge Domain|PHB"],
+  ["Cavalier|XGE", "Cavalier|XGE"],
+  ["Arcane Archer|XGE", "Arcane Archer|XGE"],
 ]);
 
 /** A subrace trait, keyed `race|subrace` by the `(name, source)` of each. */
@@ -55,6 +59,12 @@ export type Held = {
 };
 
 const BY_KEY = new Map(FEATURE_MECHANICS.map((entry) => [featureMechanicsKey(entry), entry]));
+
+/** The picks a class or subclass feature asks the player for, none where it records none. */
+export const featurePickOffers = (feature: FeatureKey) => {
+  const entry = BY_KEY.get(featureKey(feature));
+  return entry ? featureOffers(entry) : [];
+};
 
 const SUBCLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
   const { ref } = entry;

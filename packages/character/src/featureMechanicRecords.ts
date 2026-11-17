@@ -19,6 +19,19 @@ const subclassFeature = (
   mechanics,
 });
 
+const classFeature = (
+  [className, classSource]: [string, string],
+  [name, source]: [string, string],
+  level: number,
+  mechanics: Mechanic[],
+): FeatureMechanics => ({
+  ref: { name, source, className, classSource, level } satisfies FeatureKey,
+  mechanics,
+});
+
+const bard: [string, string] = ["Bard", "PHB"];
+const rogue: [string, string] = ["Rogue", "PHB"];
+const fighter: [string, string] = ["Fighter", "PHB"];
 const cleric: [string, string] = ["Cleric", "PHB"];
 const artificer: [string, string] = ["Artificer", "TCE"];
 const DAMAGE_TYPES_BUT_PSYCHIC = [
@@ -35,6 +48,14 @@ const DAMAGE_TYPES_BUT_PSYCHIC = [
   "slashing",
   "thunder",
 ];
+const expertiseIn = (count: number): Mechanic[] => [{ kind: "pick", fields: ["expertise"], count }];
+const skillsOf = (count: number, from?: string[], expertise?: true): Mechanic => ({
+  kind: "pick",
+  fields: ["skills"],
+  count,
+  ...(from && { from }),
+  ...(expertise && { expertise }),
+});
 const grants = (grant: Omit<Extract<Mechanic, { kind: "proficiency" }>, "kind">): Mechanic[] => [
   { kind: "proficiency", ...grant },
 ];
@@ -236,13 +257,10 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     1,
     grants({ armor: ["heavy"], weapons: ["martial"] }),
   ),
-  subclassFeature(
-    cleric,
-    ["Order", "TCE"],
-    ["Bonus Proficiencies", "TCE"],
-    1,
-    grants({ armor: ["heavy"] }),
-  ),
+  subclassFeature(cleric, ["Order", "TCE"], ["Bonus Proficiencies", "TCE"], 1, [
+    ...grants({ armor: ["heavy"] }),
+    skillsOf(1, ["intimidation", "persuasion"]),
+  ]),
   subclassFeature(
     cleric,
     ["Twilight", "TCE"],
@@ -306,13 +324,11 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     3,
     grants({ tools: ["disguise kit", "poisoner's kit"] }),
   ),
-  subclassFeature(
-    ["Rogue", "PHB"],
-    ["Mastermind", "XGE"],
-    ["Master of Intrigue", "XGE"],
-    3,
-    grants({ tools: ["disguise kit", "forgery kit"] }),
-  ),
+  subclassFeature(["Rogue", "PHB"], ["Mastermind", "XGE"], ["Master of Intrigue", "XGE"], 3, [
+    ...grants({ tools: ["disguise kit", "forgery kit"] }),
+    { kind: "pick", fields: ["tools"], count: 1, types: ["gaming"] },
+    { kind: "pick", fields: ["languages"], count: 2 },
+  ]),
   subclassFeature(
     ["Rogue", "PHB"],
     ["Scout", "XGE"],
@@ -376,4 +392,22 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     3,
     grants({ armor: ["heavy"], tools: ["smith's tools"] }),
   ),
+  classFeature(bard, ["Expertise", "PHB"], 3, expertiseIn(2)),
+  classFeature(bard, ["Expertise", "PHB"], 10, expertiseIn(2)),
+  classFeature(rogue, ["Expertise", "PHB"], 1, expertiseIn(2)),
+  classFeature(rogue, ["Expertise", "PHB"], 6, expertiseIn(2)),
+  subclassFeature(bard, ["Lore", "PHB"], ["Bonus Proficiencies", "PHB"], 3, [skillsOf(3)]),
+  subclassFeature(cleric, ["Knowledge", "PHB"], ["Blessings of Knowledge", "PHB"], 1, [
+    { kind: "pick", fields: ["languages"], count: 2 },
+    skillsOf(2, ["arcana", "history", "nature", "religion"], true),
+  ]),
+  subclassFeature(fighter, ["Cavalier", "XGE"], ["Bonus Proficiency", "XGE"], 3, [
+    skillsOf(1, ["animal handling", "history", "insight", "performance", "persuasion"]),
+  ]),
+  subclassFeature(fighter, ["Samurai", "XGE"], ["Bonus Proficiency", "XGE"], 3, [
+    skillsOf(1, ["history", "insight", "performance", "persuasion"]),
+  ]),
+  subclassFeature(fighter, ["Arcane Archer", "XGE"], ["Arcane Archer Lore", "XGE"], 3, [
+    skillsOf(1, ["arcana", "nature"]),
+  ]),
 ];

@@ -1,5 +1,5 @@
-import type { ClassGrants } from "@dnd/catalog";
-import type { ContentRef, FeatureKey } from "@dnd/character";
+import type { ClassGrants, SheetFeature } from "@dnd/catalog";
+import { type ContentRef, type FeatureKey, featurePickOffers } from "@dnd/character";
 
 /** A feature that offers a choice of the features beside it, and every option it offers. */
 export type FeatureOffering = { feature: FeatureKey; options: ContentRef[] };
@@ -23,4 +23,22 @@ export function featureOfferings(
         .filter(({ offeredBy }) => offeredBy?.source === offer.source)
         .map(({ name, source }) => ({ name, source })),
     }));
+}
+
+/** A feature that asks the player for a proficiency, a language or a tool, and what it asks. */
+export type FeaturePicking = {
+  feature: FeatureKey;
+  offers: NonNullable<SheetFeature["picks"]>["offers"];
+};
+
+/** Each of `features` that records picks, keyed under `owner`, the class or subclass that grants them. */
+export function featurePickings(
+  features: readonly ClassGrants["features"][number][],
+  owner: Owner,
+): FeaturePicking[] {
+  return features.flatMap(({ name, source, level }) => {
+    const feature = { ...owner, name, source, level };
+    const offers = featurePickOffers(feature);
+    return offers.length > 0 ? [{ feature, offers }] : [];
+  });
 }

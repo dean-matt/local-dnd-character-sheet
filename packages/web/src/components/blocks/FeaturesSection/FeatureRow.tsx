@@ -9,6 +9,7 @@ import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../Tag.tsx";
 import { FeatPicks } from "./FeatPicks.tsx";
 import { FeatureChoiceField } from "./FeatureChoiceField.tsx";
+import { FeaturePicks } from "./FeaturePicks.tsx";
 import { FeatureUses } from "./FeatureUses.tsx";
 
 /** Names a grantor in the modal where the group carries no name of its own. */
@@ -32,6 +33,19 @@ const ORIGIN_KINDS: Record<FeatureOrigin, readonly CatalogKind[]> = {
   feat: ["feat"],
   optionalFeature: ["optionalFeature"],
 };
+
+/** The control that changes a feature's choice, picks, or a feat's own picks, where it has one. */
+function featureControls(
+  feature: Extract<SheetFeature, { resolved: true }>,
+  character: CharacterRecord,
+  featIndex: number | undefined,
+) {
+  if (feature.choice) return <FeatureChoiceField character={character} choice={feature.choice} />;
+  if (feature.picks) {
+    return <FeaturePicks character={character} name={feature.name} picks={feature.picks} />;
+  }
+  return featIndex !== undefined && <FeatPicks character={character} index={featIndex} />;
+}
 
 /**
  * An unresolved feature with no source is a homebrew reference, which names no source. A
@@ -73,11 +87,7 @@ export function FeatureRow({
   if (!feature.resolved) {
     return <ListRow name={feature.name} source={feature.source} chips={chips} />;
   }
-  const controls = feature.choice ? (
-    <FeatureChoiceField character={character} choice={feature.choice} />
-  ) : (
-    featIndex !== undefined && <FeatPicks character={character} index={featIndex} />
-  );
+  const controls = featureControls(feature, character, featIndex);
   return (
     <ListRow
       name={feature.name}

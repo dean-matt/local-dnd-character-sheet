@@ -43,6 +43,19 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ kind: "halfProficiency", abilities: [], rounding: "up" })).toBe(false);
   });
 
+  it("refuses a pick that cannot carry what it states", () => {
+    const ref = { name: "Expertise", source: "PHB" };
+    const parse = (pick: object) =>
+      featureMechanicsSchema.safeParse({ ref, mechanics: [{ kind: "pick", count: 1, ...pick }] })
+        .success;
+    expect(parse({ fields: ["expertise"] })).toBe(true);
+    expect(parse({ fields: ["skills"], expertise: true })).toBe(true);
+    expect(parse({ fields: ["languages"], expertise: true })).toBe(false);
+    expect(parse({ fields: ["skills"], types: ["gaming"] })).toBe(false);
+    expect(parse({ fields: ["tools"], types: ["gaming"] })).toBe(true);
+    expect(parse({ fields: [] })).toBe(false);
+  });
+
   it("refuses a defense mechanic that grants nothing, and an offeredBy that is not a feature key", () => {
     const ref = { name: "Bear", source: "PHB" };
     const parse = (record: object) => featureMechanicsSchema.safeParse({ ref, ...record }).success;
