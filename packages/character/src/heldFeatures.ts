@@ -37,6 +37,8 @@ export const SUBCLASS_NAMES = new Map([
   ["Battle Smith|TCE", "Battle Smith|TCE"],
   ["Armorer|TCE", "Armorer|TCE"],
   ["Gloom Stalker|XGE", "Gloom Stalker|XGE"],
+  ["Glory|TCE", "Oath of Glory|TCE"],
+  ["Shadow|XGE", "Shadow Magic|XGE"],
 ]);
 
 /** A subrace trait, keyed `race|subrace` by the `(name, source)` of each. */
