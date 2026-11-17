@@ -12,6 +12,7 @@ import {
   encumbranceAt,
   type HitDie,
   isLight,
+  isTwoHanded,
   maxHitPoints,
   multiclassCasterLevel,
   multiclassSlots,
@@ -272,6 +273,23 @@ function equippedArmor(
 }
 
 /**
+ * Melee weapons in hand: an equipped stack counts every weapon in it, so two equipped
+ * daggers are two weapons, and a two-handed weapon, or a versatile one gripped in two
+ * hands, fills both hands and cannot be paired, so it adds none.
+ */
+function heldMeleeWeapons(definition: CharacterDefinition, catalog: CharacterCatalog): number {
+  let held = 0;
+  for (const entry of definition.inventory) {
+    const weapon = catalog.weapons.get(itemKey(entry));
+    if (!entry.carried || !entry.equipped || weapon?.kind !== "melee") continue;
+    const bothHands =
+      isTwoHanded(weapon) || (weapon.versatileDamage !== undefined && entry.grip === "two-handed");
+    if (!bothHands) held += entry.quantity;
+  }
+  return held;
+}
+
+/**
  * Armor class from whatever the character has equipped. An item `armor` does not name —
  * the reference no longer resolves, or nothing is equipped — degrades to the unarmored
  * base of 10 rather than throwing, since one missing suit of armor is not a reason to
@@ -291,10 +309,7 @@ function derivedArmorClass(
   const { worn, shield } = equippedArmor(definition, catalog.armor);
   const effects = armorClassEffects(definition, {
     armor: worn?.category ?? "none",
-    meleeWeapons: definition.inventory.filter(
-      (entry) =>
-        entry.carried && entry.equipped && catalog.weapons.get(itemKey(entry))?.kind === "melee",
-    ).length,
+    meleeWeapons: heldMeleeWeapons(definition, catalog),
     dexterityScore: scoreOf(definition, catalog, "dex"),
   });
   const formula = worn

@@ -89,6 +89,7 @@ type WeaponAttack<Ref = unknown> = {
 
 const FINESSE = "F";
 const LIGHT = "L";
+const TWO_HANDED = "2H";
 
 /**
  * The abbreviation alone, from either spelling. Case is folded because `homebrew.db`
@@ -103,6 +104,11 @@ function abbreviation(property: WeaponProperty): string {
 /** Whether the weapon carries the light property, the one a second weapon must have to attack as a bonus action. */
 export function isLight(weapon: Pick<Weapon, "properties">): boolean {
   return weapon.properties?.some((property) => abbreviation(property) === LIGHT) ?? false;
+}
+
+/** Whether the weapon carries the two-handed property, which fills both hands. */
+export function isTwoHanded(weapon: Pick<Weapon, "properties">): boolean {
+  return weapon.properties?.some((property) => abbreviation(property) === TWO_HANDED) ?? false;
 }
 
 /**

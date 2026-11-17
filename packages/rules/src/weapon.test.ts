@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLight, type Weapon, weaponAttack } from "./index.ts";
+import { isLight, isTwoHanded, type Weapon, weaponAttack } from "./index.ts";
 
 const LONGSWORD: Weapon = {
   kind: "melee",
@@ -270,5 +270,14 @@ describe("weaponAttack", () => {
     ["damageBonus", { damageBonus: { value: 0.5 } }],
   ])("rejects a fractional %s rather than reaching the sheet as one", (_label, part) => {
     expect(() => weaponAttack({ weapon: LONGSWORD, ...STRONG, ...part })).toThrow(RangeError);
+  });
+});
+
+describe("isTwoHanded", () => {
+  it("reads the property from either spelling and ignores a versatile weapon", () => {
+    expect(isTwoHanded({ properties: ["H|XPHB", "2H|XPHB"] })).toBe(true);
+    expect(isTwoHanded({ properties: [{ uid: "2h" }] })).toBe(true);
+    expect(isTwoHanded(LONGSWORD)).toBe(false);
+    expect(isTwoHanded({})).toBe(false);
   });
 });

@@ -691,6 +691,33 @@ describe("deriveCharacter", () => {
       expect(ac(classic(dual, hold(DAGGER), hold(LONGSWORD, false))).computed).toBe(13);
     });
 
+    it("counts a stack's weapons and never a two-handed weapon toward Dual Wielder", () => {
+      const dual = feat("Dual Wielder");
+      const GREATSWORD = { name: "Greatsword", source: "XPHB" };
+      const two = {
+        ...catalog,
+        weights: new Map([...catalog.weights, [entryKey(GREATSWORD), 6]]),
+        weapons: new Map([
+          ...catalog.weapons,
+          [
+            entryKey(GREATSWORD),
+            {
+              ...LONGSWORD_TRAIT,
+              name: "Greatsword",
+              versatileDamage: undefined,
+              properties: ["H|XPHB", "2H|XPHB"],
+            },
+          ],
+        ]),
+      };
+      const acOf = (def: CharacterDefinition) => deriveCharacter(def, two).armorClass.computed;
+      expect(acOf(classic(dual, { ...hold(DAGGER), quantity: 2 }))).toBe(14);
+      expect(acOf(classic(dual, { ...hold(DAGGER), quantity: 1 }))).toBe(13);
+      expect(acOf(classic(dual, hold(DAGGER), hold(GREATSWORD)))).toBe(13);
+      const gripped = Object.assign(hold(LONGSWORD), { grip: "two-handed" as const });
+      expect(acOf(classic(dual, hold(DAGGER), gripped))).toBe(13);
+    });
+
     it("lets Medium Armor Master admit 3 Dexterity at a score of 16", () => {
       const HIDE = { name: "Hide Armor", source: "XPHB" };
       const medium = {
