@@ -239,4 +239,23 @@ describe("SaveToasts", () => {
     expect(announced(modal)).toBe("Gold: disk goneRetry");
     expect(within(modal).getByRole("button", { name: "Retry Gold" })).toHaveFocus();
   });
+
+  it("leaves focus where the user moved it when a toast's text changes", () => {
+    const other = () => <button type="button">Elsewhere</button>;
+    const tree = (message: string) => (
+      <>
+        <Problem message={message} retry={() => {}} />
+        <SaveToasts />
+        <SaveToasts />
+        {other()}
+      </>
+    );
+    const { rerender } = render(tree("disk full"));
+    const modal = regions()[1] as HTMLElement;
+    within(modal).getByRole("button", { name: "Retry Gold" }).focus();
+    screen.getByRole("button", { name: "Elsewhere" }).focus();
+
+    rerender(tree("disk gone"));
+    expect(screen.getByRole("button", { name: "Elsewhere" })).toHaveFocus();
+  });
 });

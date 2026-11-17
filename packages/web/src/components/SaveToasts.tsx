@@ -39,6 +39,7 @@ export function SaveToasts() {
     const was = held.current;
     if (!was || was.isConnected || restoring.current) return;
     held.current = null;
+    if (document.activeElement && document.activeElement !== document.body) return;
     const label = was.getAttribute("aria-label");
     const same = [...(region.current?.querySelectorAll("button") ?? [])].find(
       (button) => button.getAttribute("aria-label") === label,
