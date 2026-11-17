@@ -12,6 +12,7 @@ import {
   encumbranceAt,
   type HitDie,
   isLight,
+  isTwoHanded,
   maxHitPoints,
   multiclassCasterLevel,
   multiclassSlots,
@@ -36,6 +37,7 @@ import {
   pickedGrant,
   validPicks,
 } from "./abilityScore.ts";
+import { armorClassEffects } from "./armorClassEffects.ts";
 import type {
   ArmorBurdenTrait,
   ArmorTrait,
@@ -271,6 +273,23 @@ function equippedArmor(
 }
 
 /**
+ * Melee weapons in hand: an equipped stack counts every weapon in it, so two equipped
+ * daggers are two weapons, and a two-handed weapon, or a versatile one gripped in two
+ * hands, fills both hands and cannot be paired, so it adds none.
+ */
+function heldMeleeWeapons(definition: CharacterDefinition, catalog: CharacterCatalog): number {
+  let held = 0;
+  for (const entry of definition.inventory) {
+    const weapon = catalog.weapons.get(itemKey(entry));
+    if (!entry.carried || !entry.equipped || weapon?.kind !== "melee") continue;
+    const bothHands =
+      isTwoHanded(weapon) || (weapon.versatileDamage !== undefined && entry.grip === "two-handed");
+    if (!bothHands) held += entry.quantity;
+  }
+  return held;
+}
+
+/**
  * Armor class from whatever the character has equipped. An item `armor` does not name —
  * the reference no longer resolves, or nothing is equipped — degrades to the unarmored
  * base of 10 rather than throwing, since one missing suit of armor is not a reason to
@@ -288,13 +307,22 @@ function derivedArmorClass(
   modifiers: readonly Term<TermReference>[],
 ): ComputedField<number> {
   const { worn, shield } = equippedArmor(definition, catalog.armor);
-  const unarmored = worn
+  const effects = armorClassEffects(definition, {
+    armor: worn?.category ?? "none",
+    meleeWeapons: heldMeleeWeapons(definition, catalog),
+    dexterityScore: scoreOf(definition, catalog, "dex"),
+  });
+  const formula = worn
     ? undefined
     : unarmoredDefenseTerm(
         definition,
         (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
         shield !== undefined,
       );
+  const unarmored =
+    effects.unarmoredBase && effects.unarmoredBase.value > (formula?.value ?? 0) && !worn
+      ? effects.unarmoredBase
+      : formula;
   const untrainedShield =
     shield !== undefined &&
     definition.edition === "one" &&
@@ -304,13 +332,19 @@ function derivedArmorClass(
     ...(untrainedShield
       ? [{ label: "Shield (not proficient)", value: 0, reference: catalogRef(shield.ref) }]
       : []),
+    ...effects.bonus,
     ...itemTerms(equippedBonuses(definition, catalog), (item) => item.ac),
     ...modifiers,
   ];
+  const mediumCap = effects.mediumDexterityCap ?? DEXTERITY_CAP.medium;
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogRef(worn.ref) } : { value: 10 },
     dexterityModifier: { value: abilityModifier(scoreOf(definition, catalog, "dex")) },
-    dexterityCap: worn ? DEXTERITY_CAP[worn.category] : "all",
+    dexterityCap: worn
+      ? worn.category === "medium"
+        ? mediumCap
+        : DEXTERITY_CAP[worn.category]
+      : "all",
     shield:
       shield && !untrainedShield
         ? { value: shield.armorClass, reference: catalogRef(shield.ref) }

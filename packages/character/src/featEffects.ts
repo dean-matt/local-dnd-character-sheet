@@ -8,7 +8,7 @@ import type { Speed } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
-import { featureMechanicsKey } from "./featureMechanics.ts";
+import { featureMechanicsKey, mechanicsOfKind } from "./featureMechanics.ts";
 import { refKey } from "./keys.ts";
 import type { ContentRef } from "./refs.ts";
 
@@ -22,7 +22,7 @@ const FEAT_BONUSES = new Map<string, FeatBonus>(
   FEATURE_MECHANICS.filter(({ ref }) => !("className" in ref)).map((entry) => [
     featureMechanicsKey(entry),
     Object.fromEntries(
-      (entry.mechanics ?? []).map(({ target, value }) => [target, value]),
+      mechanicsOfKind(entry, "bonus").map(({ target, value }) => [target, value]),
     ) as FeatBonus,
   ]),
 );

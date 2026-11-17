@@ -654,6 +654,146 @@ describe("deriveCharacter", () => {
     expect(unarmored.armorClass.computed).toBe(13);
   });
 
+  describe("armor class from feats and options", () => {
+    const DAGGER = { name: "Dagger", source: "XPHB" };
+    const hold = (ref: EntryRef, equippedItem = true) => ({
+      ref,
+      quantity: 1,
+      carried: true,
+      equipped: equippedItem,
+      attuned: false,
+    });
+    const classic = (
+      extra: Partial<CharacterDefinition>,
+      ...items: ReturnType<typeof hold>[]
+    ): CharacterDefinition => ({ ...definition, inventory: items, ...extra });
+    const feat = (name: string, source = "PHB") => ({ feats: [{ ref: { name, source } }] });
+    const ac = (def: CharacterDefinition) => deriveCharacter(def, catalog).armorClass;
+
+    it("adds Defense only while armor is worn, and names it", () => {
+      const defense = {
+        optionalFeatures: [
+          { featureType: "FS:F", ref: { name: "Defense", source: "PHB" } },
+        ] as CharacterDefinition["optionalFeatures"],
+      };
+      expect(ac(classic(defense, hold(STUDDED_LEATHER)))).toMatchObject({
+        computed: 16,
+        terms: expect.arrayContaining([
+          { label: "Defense", value: 1, reference: { name: "Defense", source: "PHB" } },
+        ]),
+      });
+      expect(ac(classic(defense)).computed).toBe(13);
+    });
+
+    it("adds Dual Wielder only with a melee weapon in each hand", () => {
+      const dual = feat("Dual Wielder");
+      expect(ac(classic(dual, hold(DAGGER), hold(LONGSWORD))).computed).toBe(14);
+      expect(ac(classic(dual, hold(DAGGER), hold(LONGSWORD, false))).computed).toBe(13);
+    });
+
+    it("counts a stack's weapons and never a two-handed weapon toward Dual Wielder", () => {
+      const dual = feat("Dual Wielder");
+      const GREATSWORD = { name: "Greatsword", source: "XPHB" };
+      const two = {
+        ...catalog,
+        weights: new Map([...catalog.weights, [entryKey(GREATSWORD), 6]]),
+        weapons: new Map([
+          ...catalog.weapons,
+          [
+            entryKey(GREATSWORD),
+            {
+              ...LONGSWORD_TRAIT,
+              name: "Greatsword",
+              versatileDamage: undefined,
+              properties: ["H|XPHB", "2H|XPHB"],
+            },
+          ],
+        ]),
+      };
+      const acOf = (def: CharacterDefinition) => deriveCharacter(def, two).armorClass.computed;
+      expect(acOf(classic(dual, { ...hold(DAGGER), quantity: 2 }))).toBe(14);
+      expect(acOf(classic(dual, { ...hold(DAGGER), quantity: 1 }))).toBe(13);
+      expect(acOf(classic(dual, hold(DAGGER), hold(GREATSWORD)))).toBe(13);
+      const gripped = Object.assign(hold(LONGSWORD), { grip: "two-handed" as const });
+      expect(acOf(classic(dual, hold(DAGGER), gripped))).toBe(13);
+    });
+
+    it("lets Medium Armor Master admit 3 Dexterity at a score of 16", () => {
+      const HIDE = { name: "Hide Armor", source: "XPHB" };
+      const medium = {
+        ...catalog,
+        weights: new Map([...catalog.weights, [entryKey(HIDE), 12]]),
+        armor: new Map([
+          [entryKey(HIDE), { name: HIDE.name, category: "medium" as const, armorClass: 12 }],
+        ]),
+      };
+      const withFeat = classic(feat("Medium Armor Master"), hold(HIDE));
+      const plain = classic({}, hold(HIDE));
+      expect(deriveCharacter(plain, medium).armorClass.computed).toBe(14);
+      expect(deriveCharacter(withFeat, medium).armorClass.computed).toBe(15);
+      const weak = {
+        abilityScores: { ...definition.abilityScores, dex: 15 },
+      };
+      expect(deriveCharacter({ ...withFeat, ...weak }, medium).armorClass.computed).toBe(14);
+      const light = (def: CharacterDefinition) => ac(def).computed;
+      expect(light(classic(feat("Medium Armor Master"), hold(STUDDED_LEATHER)))).toBe(
+        light(classic({}, hold(STUDDED_LEATHER))),
+      );
+    });
+
+    it("gives Dragon Hide an unarmored 13 that a shield keeps and armor ends", () => {
+      const dragon = feat("Dragon Hide", "XGE");
+      const bare = deriveCharacter(classic(dragon), { ...catalog, armor: new Map() });
+      expect(bare.armorClass.terms).toContainEqual(
+        expect.objectContaining({ label: "Dragon Hide", value: 3 }),
+      );
+      expect(ac(classic(dragon, hold(STUDDED_LEATHER))).computed).toBe(15);
+      expect(ac(classic(dragon, hold(STUDDED_LEATHER))).terms).not.toContainEqual(
+        expect.objectContaining({ label: "Dragon Hide" }),
+      );
+      const shielded = deriveCharacter(classic(dragon, hold(SHIELD)), {
+        ...catalog,
+        armor: new Map([
+          [entryKey(SHIELD), { name: SHIELD.name, category: "shield" as const, armorClass: 2 }],
+        ]),
+      });
+      expect(shielded.armorClass.terms).toContainEqual(
+        expect.objectContaining({ label: "Dragon Hide", value: 3 }),
+      );
+      expect(shielded.armorClass.terms).toContainEqual(
+        expect.objectContaining({ reference: SHIELD }),
+      );
+    });
+
+    it("adds Soul of the Forge from Cleric level 6 in heavy armor, keyed by the full subclass name", () => {
+      const CLERIC = { name: "Cleric", source: "PHB" };
+      const PLATE = { name: "Plate Armor", source: "XPHB" };
+      const forge = (levels: number) =>
+        classic(
+          {
+            levels: Array.from({ length: levels }, (_, index) => ({
+              class: CLERIC,
+              ...(index === 0 ? { subclass: { name: "Forge Domain", source: "XGE" } } : {}),
+            })),
+          },
+          hold(PLATE),
+        );
+      const withPlate = {
+        ...catalog,
+        weights: new Map([...catalog.weights, [entryKey(PLATE), 65]]),
+        hitDice: new Map([...hitDice, [entryKey(CLERIC), 8 as const]]),
+        armor: new Map([
+          [entryKey(PLATE), { name: PLATE.name, category: "heavy" as const, armorClass: 18 }],
+        ]),
+      };
+      expect(deriveCharacter(forge(5), withPlate).armorClass.computed).toBe(18);
+      expect(deriveCharacter(forge(6), withPlate).armorClass).toMatchObject({
+        computed: 19,
+        terms: expect.arrayContaining([expect.objectContaining({ label: "Soul of the Forge" })]),
+      });
+    });
+  });
+
   it("adds a Monk's Wisdom to the unarmored base, and a manual armor class still wins", () => {
     const MONK = { name: "Monk", source: "XPHB" };
     const monk: CharacterDefinition = {
