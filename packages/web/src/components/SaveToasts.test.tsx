@@ -211,4 +211,32 @@ describe("SaveToasts", () => {
     expect(modal).toHaveTextContent("Gold: disk full");
     expect(announced(modal)).toBe("");
   });
+
+  it("keeps focus on a toast's button when new text carries it into a modal's live region", () => {
+    const { rerender } = render(
+      <>
+        <Problem message="disk full" retry={() => {}} />
+        <SaveToasts />
+      </>,
+    );
+    rerender(
+      <>
+        <Problem message="disk full" retry={() => {}} />
+        <SaveToasts />
+        <SaveToasts />
+      </>,
+    );
+    const modal = regions()[1] as HTMLElement;
+    within(modal).getByRole("button", { name: "Retry Gold" }).focus();
+
+    rerender(
+      <>
+        <Problem message="disk gone" retry={() => {}} />
+        <SaveToasts />
+        <SaveToasts />
+      </>,
+    );
+    expect(announced(modal)).toBe("Gold: disk goneRetry");
+    expect(within(modal).getByRole("button", { name: "Retry Gold" })).toHaveFocus();
+  });
 });
