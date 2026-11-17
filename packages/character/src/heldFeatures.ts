@@ -1,6 +1,6 @@
 /**
  * The features with recorded mechanics that a character holds: each catalog feat and option,
- * the trait its subrace gives, and each subclass feature its level has reached. A subclass
+ * the trait its subrace gives, and each class or subclass feature its level has reached. A subclass
  * feature is recorded under its subclass's short name, so `SUBCLASS_NAMES` maps it to the
  * full name a level stores, as `unarmoredDefense.ts` keys its formulas.
  */
@@ -14,6 +14,29 @@ import { classLevels, totalLevel } from "./summaries.ts";
 export const SUBCLASS_NAMES = new Map([
   ["Forge|XGE", "Forge Domain|XGE"],
   ["Draconic|PHB", "Draconic Bloodline|PHB"],
+  ["Life|PHB", "Life Domain|PHB"],
+  ["Nature|PHB", "Nature Domain|PHB"],
+  ["Tempest|PHB", "Tempest Domain|PHB"],
+  ["War|PHB", "War Domain|PHB"],
+  ["Order|TCE", "Order Domain|TCE"],
+  ["Twilight|TCE", "Twilight Domain|TCE"],
+  ["Valor|PHB", "College of Valor|PHB"],
+  ["Swords|XGE", "College of Swords|XGE"],
+  ["Champion|PHB", "Champion|PHB"],
+  ["Samurai|XGE", "Samurai|XGE"],
+  ["Rune Knight|TCE", "Rune Knight|TCE"],
+  ["Mercy|TCE", "Way of Mercy|TCE"],
+  ["Drunken Master|XGE", "Way of the Drunken Master|XGE"],
+  ["Assassin|PHB", "Assassin|PHB"],
+  ["Mastermind|XGE", "Mastermind|XGE"],
+  ["Scout|XGE", "Scout|XGE"],
+  ["Hexblade|XGE", "The Hexblade|XGE"],
+  ["Bladesinging|TCE", "Bladesinging|TCE"],
+  ["Alchemist|TCE", "Alchemist|TCE"],
+  ["Artillerist|TCE", "Artillerist|TCE"],
+  ["Battle Smith|TCE", "Battle Smith|TCE"],
+  ["Armorer|TCE", "Armorer|TCE"],
+  ["Gloom Stalker|XGE", "Gloom Stalker|XGE"],
 ]);
 
 /** A subrace trait, keyed `race|subrace` by the `(name, source)` of each. */
@@ -38,6 +61,20 @@ const SUBCLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
           entry,
           ref: { name: ref.name, source: ref.source },
           key: `${ref.className}|${ref.classSource}|${subclass}`,
+          level: ref.level,
+        },
+      ]
+    : [];
+});
+
+const CLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
+  const { ref } = entry;
+  return "className" in ref && !ref.subclass
+    ? [
+        {
+          entry,
+          ref: { name: ref.name, source: ref.source },
+          key: `${ref.className}|${ref.classSource}`,
           level: ref.level,
         },
       ]
@@ -74,14 +111,18 @@ function subraceTraits(definition: HoldsFeatures, levels: number): Held[] {
   }));
 }
 
-function subclassFeatures(definition: HoldsFeatures): Held[] {
+function classFeatures(definition: HoldsFeatures): Held[] {
   return classLevels(definition).flatMap((group) => {
+    if ("homebrewId" in group.class) return [];
+    const classKey = refKey(group.class);
     const subclass = catalogRef(group.subclass);
-    if ("homebrewId" in group.class || !subclass) return [];
-    const key = `${refKey(group.class)}|${refKey(subclass)}`;
-    return SUBCLASS_FEATURES.filter(
-      (feature) => feature.key === key && group.level >= feature.level,
-    ).map(({ ref, entry }) => ({ ref, entry, levels: group.level }));
+    const subclassKey = subclass && `${classKey}|${refKey(subclass)}`;
+    return [
+      ...CLASS_FEATURES.filter((feature) => feature.key === classKey),
+      ...SUBCLASS_FEATURES.filter((feature) => feature.key === subclassKey),
+    ]
+      .filter((feature) => group.level >= feature.level)
+      .map(({ ref, entry }) => ({ ref, entry, levels: group.level }));
   });
 }
 
@@ -92,7 +133,7 @@ export function heldFeatures(definition: HoldsFeatures): Held[] {
   for (const feature of [
     ...pickedFeatures(definition, levels),
     ...subraceTraits(definition, levels),
-    ...subclassFeatures(definition),
+    ...classFeatures(definition),
   ])
     held.set(featureMechanicsKey(feature.entry), feature);
   return [...held.values()];

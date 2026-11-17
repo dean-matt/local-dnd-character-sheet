@@ -115,3 +115,8 @@ export function proficiencyContribution(
 export function proficiencyAt(bonus: number, level: ProficiencyLevel): number {
   return Math.floor(bonus * PROFICIENCY_MULTIPLIER[level]);
 }
+
+/** Half a proficiency bonus as a feature words it: Jack of All Trades rounds down, Remarkable Athlete up. */
+export function halfProficiency(bonus: number, rounding: "down" | "up"): number {
+  return rounding === "up" ? Math.ceil(bonus / 2) : proficiencyAt(bonus, "half");
+}

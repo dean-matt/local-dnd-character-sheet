@@ -46,6 +46,10 @@ export function featInitiativeTerms(
   );
 }
 
+/** Whether a held feature already adds the proficiency bonus to initiative, which half proficiency does not stack on. */
+export const initiativeUsesProficiency = (definition: HoldsFeatures): boolean =>
+  bonusFeats(definition).some(({ bonus }) => bonus.initiative === "proficiency");
+
 export function featHitPointTerms(definition: HoldsFeatures): Term<TermReference>[] {
   return bonusFeats(definition).flatMap(({ ref, levels, bonus: { hitPointsPerLevel } }) =>
     hitPointsPerLevel === undefined

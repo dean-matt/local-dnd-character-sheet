@@ -3,6 +3,7 @@ import {
   abilityModifier,
   abilityModifierBreakdown,
   experienceThreshold,
+  halfProficiency,
   passiveScore,
   proficiencyAt,
   proficiencyBonus,
@@ -90,6 +91,12 @@ describe("proficiencyContribution", () => {
     expect(proficiencyContribution(5, "half")).toBe(1);
     expect(passiveScore(2, proficiencyContribution(5, "half"))).toBe(13);
     expect(passiveScore(2, proficiencyBonus(5) / 2)).toBe(13);
+  });
+
+  it("rounds half an odd bonus down or up as the feature words it", () => {
+    expect(halfProficiency(5, "down")).toBe(2);
+    expect(halfProficiency(5, "up")).toBe(3);
+    expect(halfProficiency(4, "up")).toBe(2);
   });
 
   it("adds an item's bonus to the proficiency bonus before the level scales it", () => {
