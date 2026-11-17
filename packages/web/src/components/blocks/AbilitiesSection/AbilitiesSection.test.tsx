@@ -610,6 +610,22 @@ describe("AbilitiesSection", () => {
       ).toBeVisible();
     });
 
+    it("keeps the concentration save's exhaustion disadvantage beside a condition that names another ability", async () => {
+      const record = classic();
+      renderSection(
+        record,
+        { ...derivedFor(record), concentrationSave: { computed: 4, manual: null, terms: [] } },
+        3,
+        ["Restrained"],
+      );
+
+      expect(
+        await card("Saving Throws").findByRole("button", {
+          name: "Concentration save: Disadvantage",
+        }),
+      ).toBeVisible();
+    });
+
     it("changes nothing at level 0 or for a 2024 character", async () => {
       renderSection(classic(), undefined, 0);
       await card("Skills").findByText("Deception");
