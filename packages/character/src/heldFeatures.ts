@@ -9,6 +9,7 @@ import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import { type FeatureMechanics, featureMechanicsKey, featureOffers } from "./featureMechanics.ts";
 import { featureKey, refKey } from "./keys.ts";
 import { type ContentRef, catalogRef, type FeatureKey } from "./refs.ts";
+import { houseRule as houseRuleOf } from "./resolve.ts";
 import { classLevels, totalLevel } from "./summaries.ts";
 
 export const SUBCLASS_NAMES = new Map([
@@ -125,7 +126,7 @@ function subraceTraits(definition: HoldsFeatures, levels: number): Held[] {
 }
 
 const optionTaken = (definition: HoldsFeatures, { ref, offeredBy, houseRule }: FeatureMechanics) =>
-  (!houseRule || definition.houseRules?.[houseRule] === true) &&
+  (!houseRule || houseRuleOf({ houseRules: definition.houseRules ?? {} }, houseRule)) &&
   (!offeredBy ||
     (definition.featureChoices ?? []).some(
       (choice) =>
