@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useEffect, useId, useRef, useSyncExternalStore } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import {
   dropSaveToast,
   openSaveToastViewport,
@@ -15,6 +15,9 @@ import {
  * announces only the toasts raised while it was drawing; one it took over from another sits
  * outside its live region, already announced.
  *
+ * A toast raised again with new text while a modal is open moves from the quiet list into the
+ * live region, which remounts it; focus on its button follows it to the new one.
+ *
  * Retry and Dismiss can take their toast away with the focus on it. Focus then moves to the
  * next toast, or back to where it was before it entered the region, rather than to the
  * page's top.
@@ -29,6 +32,20 @@ export function SaveToasts() {
   const region = useRef<HTMLElement>(null);
   const cameFrom = useRef<HTMLElement | null>(null);
   const restoring = useRef(false);
+  const held = useRef<HTMLElement | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the toasts change, which is when a toast may remount
+  useLayoutEffect(() => {
+    const was = held.current;
+    if (!was || was.isConnected || restoring.current) return;
+    held.current = null;
+    if (document.activeElement && document.activeElement !== document.body) return;
+    const label = was.getAttribute("aria-label");
+    const same = [...(region.current?.querySelectorAll("button") ?? [])].find(
+      (button) => button.getAttribute("aria-label") === label,
+    );
+    same?.focus();
+  }, [shown]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the toasts change, which is when a pressed button's toast goes
   useEffect(() => {
@@ -80,6 +97,7 @@ export function SaveToasts() {
     <section
       ref={region}
       onFocus={(event) => {
+        held.current = event.target instanceof HTMLElement ? event.target : null;
         const from = event.relatedTarget;
         if (from instanceof HTMLElement && !event.currentTarget.contains(from)) {
           cameFrom.current = from;
