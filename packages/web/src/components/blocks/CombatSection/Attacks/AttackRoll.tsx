@@ -46,6 +46,14 @@ export function AttackRoll({
       }
       type={type}
       origin={origin}
+      terms={
+        flankingBonus
+          ? [
+              { source: "Attack bonus", value: bonus },
+              { source: "Flanking", value: 2 },
+            ]
+          : undefined
+      }
       bonus={flankingBonus ? bonus + 2 : bonus}
       beforeRoll={beforeRoll}
       critAt={critAt}

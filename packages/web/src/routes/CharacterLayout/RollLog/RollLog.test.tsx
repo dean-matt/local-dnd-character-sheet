@@ -65,6 +65,24 @@ describe("RollLog's row", () => {
     expect(row?.querySelector('[title="d20, discarded"]')).toHaveClass("line-through");
   });
 
+  it("lists a modifier's terms, so a total with a flanking bonus can be checked", async () => {
+    const [row] = await listed([
+      {
+        ...roll(1, "1", "Vex"),
+        type: "attack",
+        notation: "1d20+7",
+        total: 18,
+        modifier: 7,
+        terms: [
+          { source: "Attack bonus", value: 5 },
+          { source: "Flanking", value: 2 },
+        ],
+        dice: [{ faces: 20, value: 11, kept: true, sign: 1 }],
+      },
+    ]);
+    expect(row).toHaveTextContent("11Attack bonus + 5Flanking + 2");
+  });
+
   it("lists a check's two dice and which one counted", async () => {
     const [row] = await listed([
       {

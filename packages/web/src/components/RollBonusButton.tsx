@@ -29,6 +29,7 @@ export function RollBonusButton({
   label,
   type,
   origin,
+  terms,
   bonus,
   dice = "1d20",
   mode,
@@ -38,7 +39,7 @@ export function RollBonusButton({
   critAt,
   critical,
   onRolled,
-}: Pick<RollRecord, "label" | "type" | "origin" | "mode"> & {
+}: Pick<RollRecord, "label" | "type" | "origin" | "mode" | "terms"> & {
   bonus: number;
   dice?: string;
   extra?: string;
@@ -69,15 +70,21 @@ export function RollBonusButton({
             return;
           }
           if (beforeRoll && !(await beforeRoll())) return;
-          roll(notation, { label, type, origin, mode, critical }, (rolled, logged, outcome) => {
-            const kept = rolled.dice.find((die) => die.kept)?.value ?? 0;
-            const hit = critAt !== undefined && kept >= critAt;
-            onRolled?.(hit, logged);
-            const said = [hit && "critical hit", outcome, !logged && "not logged"].filter(Boolean);
-            setHeard(
-              `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}${critical ? " as a critical hit" : ""}: ${rolled.total}${included(rolled.dice, added)}${said.map((part) => `, ${part}`).join("")}`,
-            );
-          });
+          roll(
+            notation,
+            { label, type, origin, mode, terms, critical },
+            (rolled, logged, outcome) => {
+              const kept = rolled.dice.find((die) => die.kept)?.value ?? 0;
+              const hit = critAt !== undefined && kept >= critAt;
+              onRolled?.(hit, logged);
+              const said = [hit && "critical hit", outcome, !logged && "not logged"].filter(
+                Boolean,
+              );
+              setHeard(
+                `${label}${mode && mode !== "normal" ? ` with ${mode}` : ""}${critical ? " as a critical hit" : ""}: ${rolled.total}${included(rolled.dice, added)}${said.map((part) => `, ${part}`).join("")}`,
+              );
+            },
+          );
         }}
         aria-label={`Roll ${label}`}
         title={`Roll ${label}`}

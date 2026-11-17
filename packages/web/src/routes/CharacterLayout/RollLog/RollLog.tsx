@@ -207,6 +207,7 @@ export function RollLog({
               {(roll.type === "attack" ||
                 roll.type === "spell-attack" ||
                 roll.critical ||
+                roll.terms ||
                 roll.dice.some((die) => isExtraTerm(die, roll.dice)) ||
                 (roll.mode && roll.mode !== "normal")) && (
                 <span className="flex flex-wrap items-baseline gap-1 text-muted text-row">
@@ -225,9 +226,17 @@ export function RollLog({
                       {!die.kept && <span className="sr-only"> discarded</span>}
                     </span>
                   ))}
-                  {roll.modifier !== 0 && (
-                    <span>{roll.modifier < 0 ? `− ${-roll.modifier}` : `+ ${roll.modifier}`}</span>
-                  )}
+                  {roll.terms
+                    ? roll.terms.map((term) => (
+                        <span key={term.source}>
+                          {term.source} {term.value < 0 ? `− ${-term.value}` : `+ ${term.value}`}
+                        </span>
+                      ))
+                    : roll.modifier !== 0 && (
+                        <span>
+                          {roll.modifier < 0 ? `− ${-roll.modifier}` : `+ ${roll.modifier}`}
+                        </span>
+                      )}
                 </span>
               )}
             </li>
