@@ -21,6 +21,20 @@ const subclassFeature = (
 
 const cleric: [string, string] = ["Cleric", "PHB"];
 const artificer: [string, string] = ["Artificer", "TCE"];
+const DAMAGE_TYPES_BUT_PSYCHIC = [
+  "acid",
+  "bludgeoning",
+  "cold",
+  "fire",
+  "force",
+  "lightning",
+  "necrotic",
+  "piercing",
+  "poison",
+  "radiant",
+  "slashing",
+  "thunder",
+];
 const grants = (grant: Omit<Extract<Mechanic, { kind: "proficiency" }>, "kind">): Mechanic[] => [
   { kind: "proficiency", ...grant },
 ];
@@ -108,6 +122,56 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   },
   subclassFeature(["Paladin", "PHB"], ["Glory", "TCE"], ["Aura of Alacrity", "TCE"], 7, [
     { kind: "bonus", target: "walk", value: 10 },
+  ]),
+  {
+    ref: {
+      name: "Purity of Body",
+      source: "PHB",
+      className: "Monk",
+      classSource: "PHB",
+      level: 10,
+    },
+    mechanics: [{ kind: "defense", immune: ["poison"], conditionImmune: ["disease", "poisoned"] }],
+  },
+  {
+    ref: {
+      name: "Bear",
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Totem Warrior", source: "PHB" },
+      level: 3,
+    },
+    offeredBy: {
+      name: "Totem Spirit",
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Totem Warrior", source: "PHB" },
+      level: 3,
+    },
+    mechanics: [{ kind: "defense", resist: DAMAGE_TYPES_BUT_PSYCHIC, while: "raging" }],
+  },
+  {
+    ref: {
+      name: "Totem Spirit",
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Totem Warrior", source: "PHB" },
+      level: 3,
+    },
+    narrative: true,
+  },
+  {
+    ref: { name: "Dungeon Delver", source: "PHB" },
+    narrative: true,
+  },
+  subclassFeature(["Sorcerer", "PHB"], ["Storm", "XGE"], ["Heart of the Storm", "XGE"], 6, [
+    { kind: "defense", resist: ["lightning", "thunder"] },
+  ]),
+  subclassFeature(["Wizard", "PHB"], ["Necromancy", "PHB"], ["Inured to Undeath", "PHB"], 10, [
+    { kind: "defense", resist: ["necrotic"] },
   ]),
   {
     ref: { name: "Dwarven Toughness", source: "PHB" },

@@ -221,7 +221,7 @@ export function featGrants(
   catalog: CharacterCatalog,
 ): {
   granted: FeatGrants;
-  defenses: (DefenseTrait & { from: string })[];
+  defenses: (DefenseTrait & { from: string; whileRaging?: true })[];
   senses: (SenseGrant & { from: string; raceBonus?: number })[];
   itemSkills: FeatGrants["skills"];
 } {
@@ -248,13 +248,25 @@ export function featGrants(
       armor: gathered(held, ({ trait }) => trait.armor),
       weapons: gathered(held, ({ trait }) => trait.weapons),
     },
-    defenses: held.map(({ trait, picked }) => ({
-      resist: [...trait.resist, ...picked.resist],
-      immune: trait.immune,
-      conditionImmune: trait.conditionImmune,
-      vulnerable: [],
-      from: trait.name,
-    })),
+    defenses: [
+      ...held.map(({ trait, picked }) => ({
+        resist: [...trait.resist, ...picked.resist],
+        immune: trait.immune,
+        conditionImmune: trait.conditionImmune,
+        vulnerable: [],
+        from: trait.name,
+      })),
+      ...heldFeatures(definition).flatMap(({ ref, entry }) =>
+        mechanicsOfKind(entry, "defense").map((grant) => ({
+          resist: grant.resist ?? [],
+          immune: grant.immune ?? [],
+          conditionImmune: grant.conditionImmune ?? [],
+          vulnerable: [],
+          from: ref.name,
+          ...(grant.while && { whileRaging: true as const }),
+        })),
+      ),
+    ],
     senses: [
       ...held.flatMap(({ trait }) => trait.senses.map((sense) => ({ ...sense, from: trait.name }))),
       ...heldFeatures(definition).flatMap(({ ref, entry }) =>
