@@ -36,6 +36,7 @@ import {
   pickedGrant,
   validPicks,
 } from "./abilityScore.ts";
+import { armorClassEffects } from "./armorClassEffects.ts";
 import type {
   ArmorBurdenTrait,
   ArmorTrait,
@@ -288,13 +289,25 @@ function derivedArmorClass(
   modifiers: readonly Term<TermReference>[],
 ): ComputedField<number> {
   const { worn, shield } = equippedArmor(definition, catalog.armor);
-  const unarmored = worn
+  const effects = armorClassEffects(definition, {
+    armor: worn?.category ?? "none",
+    meleeWeapons: definition.inventory.filter(
+      (entry) =>
+        entry.carried && entry.equipped && catalog.weapons.get(itemKey(entry))?.kind === "melee",
+    ).length,
+    dexterityScore: scoreOf(definition, catalog, "dex"),
+  });
+  const formula = worn
     ? undefined
     : unarmoredDefenseTerm(
         definition,
         (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
         shield !== undefined,
       );
+  const unarmored =
+    effects.unarmoredBase && effects.unarmoredBase.value > (formula?.value ?? 0) && !worn
+      ? effects.unarmoredBase
+      : formula;
   const untrainedShield =
     shield !== undefined &&
     definition.edition === "one" &&
@@ -304,13 +317,19 @@ function derivedArmorClass(
     ...(untrainedShield
       ? [{ label: "Shield (not proficient)", value: 0, reference: catalogRef(shield.ref) }]
       : []),
+    ...effects.bonus,
     ...itemTerms(equippedBonuses(definition, catalog), (item) => item.ac),
     ...modifiers,
   ];
+  const mediumCap = effects.mediumDexterityCap ?? DEXTERITY_CAP.medium;
   const result = armorClass<TermReference>({
     base: worn ? { value: worn.armorClass, reference: catalogRef(worn.ref) } : { value: 10 },
     dexterityModifier: { value: abilityModifier(scoreOf(definition, catalog, "dex")) },
-    dexterityCap: worn ? DEXTERITY_CAP[worn.category] : "all",
+    dexterityCap: worn
+      ? worn.category === "medium"
+        ? mediumCap
+        : DEXTERITY_CAP[worn.category]
+      : "all",
     shield:
       shield && !untrainedShield
         ? { value: shield.armorClass, reference: catalogRef(shield.ref) }

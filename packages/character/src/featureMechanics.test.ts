@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SUBCLASS_NAMES } from "./armorClassEffects.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import { featureMechanicsKey, featureMechanicsSchema } from "./featureMechanics.ts";
 
@@ -36,5 +37,11 @@ describe("featureMechanicsSchema", () => {
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);
     const keys = FEATURE_MECHANICS.map(featureMechanicsKey);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it("resolves every subclass feature's short name to the full subclass name", () => {
+    for (const { ref } of FEATURE_MECHANICS)
+      if ("subclass" in ref && ref.subclass)
+        expect(SUBCLASS_NAMES.has(`${ref.subclass.shortName}|${ref.subclass.source}`)).toBe(true);
   });
 });

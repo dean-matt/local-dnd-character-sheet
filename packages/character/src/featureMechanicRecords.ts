@@ -26,4 +26,31 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     ref: { name: "Speedy", source: "XPHB" },
     mechanics: [{ kind: "bonus", target: "walk", value: 10 }],
   },
+  {
+    ref: { name: "Defense", source: "PHB" },
+    mechanics: [{ kind: "armorClass", value: 1, when: "armor" }],
+  },
+  {
+    ref: { name: "Dual Wielder", source: "PHB" },
+    mechanics: [{ kind: "armorClass", value: 1, when: "dualWield" }],
+  },
+  {
+    ref: { name: "Medium Armor Master", source: "PHB" },
+    mechanics: [{ kind: "mediumArmorDexterity", cap: 3, minimum: 16 }],
+  },
+  {
+    ref: { name: "Dragon Hide", source: "XGE" },
+    mechanics: [{ kind: "unarmoredBase", value: 3 }],
+  },
+  {
+    ref: {
+      name: "Soul of the Forge",
+      source: "XGE",
+      className: "Cleric",
+      classSource: "PHB",
+      subclass: { shortName: "Forge", source: "XGE" },
+      level: 6,
+    },
+    mechanics: [{ kind: "armorClass", value: 1, when: "heavyArmor" }],
+  },
 ];
