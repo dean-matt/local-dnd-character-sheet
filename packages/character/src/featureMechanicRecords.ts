@@ -79,6 +79,37 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     mechanics: [{ kind: "armorClass", value: 1, when: "heavyArmor" }],
   },
   {
+    ref: { name: "Blind Fighting", source: "TCE" },
+    mechanics: [{ kind: "sense", name: "blindsight", range: 10 }],
+  },
+  {
+    ref: { name: "Devil's Sight", source: "PHB" },
+    mechanics: [{ kind: "sense", name: "darkvision", range: 120 }],
+  },
+  subclassFeature(cleric, ["Twilight", "TCE"], ["Eyes of Night", "TCE"], 1, [
+    { kind: "sense", name: "darkvision", range: 300 },
+  ]),
+  subclassFeature(["Sorcerer", "PHB"], ["Shadow", "XGE"], ["Eyes of the Dark", "XGE"], 1, [
+    { kind: "sense", name: "darkvision", range: 120 },
+  ]),
+  subclassFeature(["Ranger", "PHB"], ["Gloom Stalker", "XGE"], ["Umbral Sight", "XGE"], 3, [
+    { kind: "sense", name: "darkvision", range: 60, raceBonus: 30 },
+  ]),
+  {
+    ref: {
+      name: "Dread Ambusher",
+      source: "XGE",
+      className: "Ranger",
+      classSource: "PHB",
+      subclass: { shortName: "Gloom Stalker", source: "XGE" },
+      level: 3,
+    },
+    narrative: true,
+  },
+  subclassFeature(["Paladin", "PHB"], ["Glory", "TCE"], ["Aura of Alacrity", "TCE"], 7, [
+    { kind: "bonus", target: "walk", value: 10 },
+  ]),
+  {
     ref: { name: "Dwarven Toughness", source: "PHB" },
     mechanics: [{ kind: "bonus", target: "hitPointsPerLevel", value: 1 }],
   },

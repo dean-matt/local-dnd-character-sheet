@@ -2843,6 +2843,16 @@ describe("deriveCharacter", () => {
   });
 
   describe("senses", () => {
+    const withDice = (extra: SenseGrant[] = []) => ({
+      ...catalog,
+      raceSenses: extra,
+      hitDice: new Map<string, 6 | 8 | 10 | 12>([
+        ...catalog.hitDice,
+        ["catalog|Ranger|PHB", 10],
+        ["catalog|Cleric|PHB", 8],
+        ["catalog|Sorcerer|PHB", 6],
+      ]),
+    });
     const GOGGLES = { name: "Goggles of Night", source: "DMG" };
     const HELM = { name: "Helm of Devil's Sight", source: "HB" };
     const FIGHTING = { name: "Blind Fighting", source: "XPHB" };
@@ -2940,6 +2950,95 @@ describe("deriveCharacter", () => {
       expect(sensesOf([{ ...worn(GOGGLES), equipped: false }]).map(({ from }) => from)).toEqual([
         [raceSummary(equipped)],
       ]);
+    });
+
+    const gloomStalker = (count: number): CharacterDefinition => ({
+      ...equipped,
+      levels: Array.from({ length: count }, (_, index) => ({
+        class: { name: "Ranger", source: "PHB" },
+        ...(index >= 2 && { subclass: { name: "Gloom Stalker", source: "XGE" } }),
+      })),
+    });
+
+    it("gives Umbral Sight 60 feet, or 30 more than the race's, and names both", () => {
+      const sight = (raceSenses: SenseGrant[]) =>
+        deriveCharacter(gloomStalker(3), { ...senseCatalog, ...withDice(raceSenses) }).senses
+          .computed;
+      expect(sight([])).toEqual([{ name: "darkvision", range: 60, from: ["Umbral Sight"] }]);
+      expect(sight([{ name: "darkvision", range: 60 }])).toEqual([
+        { name: "darkvision", range: 90, from: [raceSummary(gloomStalker(3)), "Umbral Sight"] },
+      ]);
+      const early = deriveCharacter(gloomStalker(2), { ...senseCatalog, ...withDice() });
+      expect(early.senses.computed).toEqual([]);
+    });
+
+    it("gives a Twilight Cleric 300 feet and a Shadow Sorcerer 120 from first level", () => {
+      const first = (className: string, subclass: string, source = "XGE"): CharacterDefinition => ({
+        ...equipped,
+        levels: [
+          {
+            class: { name: className, source: "PHB" },
+            subclass: { name: subclass, source },
+          },
+        ],
+      });
+      const range = (definition: CharacterDefinition) =>
+        deriveCharacter(definition, { ...senseCatalog, ...withDice() }).senses.computed;
+      expect(range(first("Cleric", "Twilight Domain", "TCE"))).toEqual([
+        { name: "darkvision", range: 300, from: ["Eyes of Night"] },
+      ]);
+      expect(range(first("Sorcerer", "Shadow Magic"))).toEqual([
+        { name: "darkvision", range: 120, from: ["Eyes of the Dark"] },
+      ]);
+    });
+
+    it("gives Devil's Sight and Blind Fighting from the options a character took", () => {
+      const options = [
+        { ref: { name: "Devil's Sight", source: "PHB" } },
+        { ref: { name: "Blind Fighting", source: "TCE" } },
+      ] as CharacterDefinition["optionalFeatures"];
+      expect(
+        deriveCharacter(
+          { ...equipped, optionalFeatures: options },
+          {
+            ...senseCatalog,
+            raceSenses: [],
+          },
+        ).senses.computed,
+      ).toEqual([
+        { name: "blindsight", range: 10, from: ["Blind Fighting"] },
+        { name: "darkvision", range: 120, from: ["Devil's Sight"] },
+      ]);
+    });
+  });
+
+  describe("speed from class features", () => {
+    it("raises the walk for Aura of Alacrity at 7th level, naming it", () => {
+      const levelled = (className: string, classSource: string, subclass: string, count: number) =>
+        deriveCharacter(
+          {
+            ...equipped,
+            levels: Array.from({ length: count }, () => ({
+              class: { name: className, source: classSource },
+              subclass: { name: subclass, source: "TCE" },
+            })),
+          },
+          {
+            ...catalog,
+            hitDice: new Map<string, 6 | 8 | 10 | 12>([
+              ...catalog.hitDice,
+              ["catalog|Paladin|PHB", 10],
+            ]),
+          },
+        ).speed;
+      const aura = levelled("Paladin", "PHB", "Oath of Glory", 7);
+      expect(aura.computed).toEqual({ walk: 40 });
+      expect(aura.terms).toContainEqual({
+        label: "Aura of Alacrity: walk 30 to 40",
+        value: 10,
+        reference: { name: "Aura of Alacrity", source: "TCE" },
+      });
+      expect(levelled("Paladin", "PHB", "Oath of Glory", 6).computed).toEqual({ walk: 30 });
     });
   });
 

@@ -822,12 +822,15 @@ function derivedDefenses(
 function derivedSenses(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
-  feats: readonly (SenseGrant & { from: string })[],
+  feats: readonly (SenseGrant & { from: string; raceBonus?: number })[],
   names?: HomebrewNames,
 ): ComputedField<CharacterDerived["senses"]["computed"]> {
   const grants = [
     ...catalog.raceSenses.map((sense) => ({ ...sense, from: raceSummary(definition, names) })),
-    ...feats,
+    ...feats.map(({ raceBonus, ...sense }) => {
+      const race = catalog.raceSenses.find(({ name }) => name === sense.name);
+      return race && raceBonus ? { ...sense, range: race.range + raceBonus } : sense;
+    }),
   ];
   for (const entry of definition.inventory) {
     const item = catalog.itemSenses.get(itemKey(entry));

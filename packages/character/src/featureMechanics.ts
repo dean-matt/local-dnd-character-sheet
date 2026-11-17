@@ -3,6 +3,7 @@
  * it applies, or that it has none. A feature absent from the records is a gap, not a
  * narrative one. A kind joins the vocabulary the day something applies it.
  */
+import { SENSES } from "@dnd/rules";
 import { z } from "zod";
 import { featureKey, refKey } from "./keys.ts";
 import { abilitySchema, contentRefSchema, featureKeySchema } from "./refs.ts";
@@ -70,7 +71,16 @@ const halfProficiencyMechanicSchema = z.strictObject({
   rounding: z.enum(["down", "up"]),
 });
 
+/** A sense out to `range` feet; `raceBonus` instead lengthens the same sense the race gives, where it gives one. */
+const senseMechanicSchema = z.strictObject({
+  kind: z.literal("sense"),
+  name: z.enum(SENSES),
+  range: z.int().min(1),
+  raceBonus: z.int().min(1).optional(),
+});
+
 const mechanicSchema = z.union([
+  senseMechanicSchema,
   proficiencyMechanicSchema,
   halfProficiencyMechanicSchema,
   bonusKindSchema,

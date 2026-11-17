@@ -222,7 +222,7 @@ export function featGrants(
 ): {
   granted: FeatGrants;
   defenses: (DefenseTrait & { from: string })[];
-  senses: (SenseGrant & { from: string })[];
+  senses: (SenseGrant & { from: string; raceBonus?: number })[];
   itemSkills: FeatGrants["skills"];
 } {
   const held = [
@@ -255,9 +255,17 @@ export function featGrants(
       vulnerable: [],
       from: trait.name,
     })),
-    senses: held.flatMap(({ trait }) =>
-      trait.senses.map((sense) => ({ ...sense, from: trait.name })),
-    ),
+    senses: [
+      ...held.flatMap(({ trait }) => trait.senses.map((sense) => ({ ...sense, from: trait.name }))),
+      ...heldFeatures(definition).flatMap(({ ref, entry }) =>
+        mechanicsOfKind(entry, "sense").map(({ name, range, raceBonus }) => ({
+          name,
+          range,
+          from: ref.name,
+          ...(raceBonus !== undefined && { raceBonus }),
+        })),
+      ),
+    ],
     itemSkills: grantedSkills(definition, catalog, items, feats),
   };
 }
