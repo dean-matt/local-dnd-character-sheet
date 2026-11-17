@@ -9,6 +9,7 @@ import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import { type FeatureMechanics, featureMechanicsKey, featureOffers } from "./featureMechanics.ts";
 import { featureKey, refKey } from "./keys.ts";
 import { type ContentRef, catalogRef, type FeatureKey } from "./refs.ts";
+import { houseRule as houseRuleOf } from "./resolve.ts";
 import { classLevels, totalLevel } from "./summaries.ts";
 
 export const SUBCLASS_NAMES = new Map([
@@ -101,7 +102,7 @@ const SUBRACE_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
   return owner ? [{ entry, ref: entry.ref as ContentRef, owner }] : [];
 });
 
-export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices">> &
+export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" | "houseRules">> &
   Pick<CharacterDefinition, "feats" | "optionalFeatures" | "race" | "subrace" | "levels">;
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
@@ -124,13 +125,14 @@ function subraceTraits(definition: HoldsFeatures, levels: number): Held[] {
   }));
 }
 
-const optionTaken = (definition: HoldsFeatures, { ref, offeredBy }: FeatureMechanics) =>
-  !offeredBy ||
-  (definition.featureChoices ?? []).some(
-    (choice) =>
-      featureKey(choice.feature) === featureKey(offeredBy) &&
-      choice.options.some((option) => option.name === ref.name && option.source === ref.source),
-  );
+const optionTaken = (definition: HoldsFeatures, { ref, offeredBy, houseRule }: FeatureMechanics) =>
+  (!houseRule || houseRuleOf({ houseRules: definition.houseRules ?? {} }, houseRule)) &&
+  (!offeredBy ||
+    (definition.featureChoices ?? []).some(
+      (choice) =>
+        featureKey(choice.feature) === featureKey(offeredBy) &&
+        choice.options.some((option) => option.name === ref.name && option.source === ref.source),
+    ));
 
 function classFeatures(definition: HoldsFeatures): Held[] {
   return classLevels(definition).flatMap((group) => {

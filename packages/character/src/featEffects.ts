@@ -6,7 +6,7 @@
 import type { Term } from "@dnd/rules";
 import type { Speed } from "./characterDerived.ts";
 import type { TermReference } from "./derivedField.ts";
-import { mechanicsOfKind } from "./featureMechanics.ts";
+import { type Mechanic, mechanicsOfKind } from "./featureMechanics.ts";
 import { type HoldsFeatures, heldFeatures } from "./heldFeatures.ts";
 import type { ContentRef } from "./refs.ts";
 
@@ -58,22 +58,54 @@ export function featHitPointTerms(definition: HoldsFeatures): Term<TermReference
   );
 }
 
-/** Applied to the race's speed, so an item that sets or scales a speed reads the raised walk. */
+type SpeedMode = "walk" | "climb" | "swim";
+type SpeedMechanic = Extract<Mechanic, { kind: "speed" }>;
+
+function applySpeedMechanic(
+  speed: Speed & { walk: number },
+  mechanic: SpeedMechanic,
+  ref: ContentRef,
+): Term<TermReference>[] {
+  const name = mechanic.label ?? ref.name;
+  const terms: Term<TermReference>[] = [];
+  const raise = (mode: SpeedMode, to: number) => {
+    const from = speed[mode] ?? 0;
+    terms.push({ label: `${name}: ${mode} ${from} to ${to}`, value: to - from, reference: ref });
+    speed[mode] = to;
+  };
+  raise("walk", speed.walk + mechanic.bonus);
+  for (const mode of mechanic.alsoOn ?? [])
+    if (speed[mode]) raise(mode, speed[mode] + mechanic.bonus);
+  for (const mode of mechanic.equalToWalk ?? [])
+    if ((speed[mode] ?? 0) < speed.walk) raise(mode, speed.walk);
+  return terms;
+}
+
+/**
+ * Applied to the race's speed, so an item that sets or scales a speed reads the raised walk.
+ * Roving sets a climbing or swimming speed to the walk it just raised, and nothing later
+ * keeps them level.
+ */
 export function speedWithFeats(
   base: Speed,
   definition: HoldsFeatures,
+  heavyArmorWorn: boolean,
 ): { speed: Speed; terms: Term<TermReference>[] } {
-  let walk = base.walk;
+  if (base.walk === undefined) return { speed: base, terms: [] };
+  const speed = { ...base, walk: base.walk };
   const terms: Term<TermReference>[] = [];
-  if (walk === undefined) return { speed: base, terms };
   for (const { ref, bonus } of bonusFeats(definition)) {
     if (bonus.walk === undefined) continue;
     terms.push({
-      label: `${ref.name}: walk ${walk} to ${walk + bonus.walk}`,
+      label: `${ref.name}: walk ${speed.walk} to ${speed.walk + bonus.walk}`,
       value: bonus.walk,
       reference: ref,
     });
-    walk += bonus.walk;
+    speed.walk += bonus.walk;
   }
-  return { speed: { ...base, walk }, terms };
+  for (const { ref, entry } of heldFeatures(definition))
+    for (const mechanic of mechanicsOfKind(entry, "speed"))
+      if (!(mechanic.unlessHeavyArmor && heavyArmorWorn))
+        terms.push(...applySpeedMechanic(speed, mechanic, ref));
+  return { speed, terms };
 }
