@@ -335,6 +335,26 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("the Restrained condition's speed", () => {
+    const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
+    const held = (...names: string[]) =>
+      deriveCharacter(equipped, catalog, {
+        ...calm,
+        conditions: names.map((name) => ({ name, source: "XPHB" })),
+      }).speed;
+
+    it("sets every speed to 0 and names the condition", () => {
+      const field = held("Restrained");
+      expect(field.computed).toEqual({ walk: 0 });
+      expect(field.terms.at(-1)).toEqual({ label: "Restrained: walk 30 to 0", value: -30 });
+    });
+
+    it("leaves the speed alone under any other condition, or once it is removed", () => {
+      expect(held("Poisoned").computed).toEqual({ walk: 30 });
+      expect(held().terms).toEqual(deriveCharacter(equipped, catalog).speed.terms);
+    });
+  });
+
   describe("2024 exhaustion's penalty to d20 Tests", () => {
     const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
     const tired = (edition: "classic" | "one", exhaustion: number) =>

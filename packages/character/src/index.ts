@@ -200,9 +200,8 @@ export {
 export { derivedValue, houseRule } from "./resolve.ts";
 export { longRestHitDicePick, type RestLength, restedState, sheetState } from "./rest.ts";
 export {
-  conditionAttackEffects,
+  conditionRollEffects,
   effectsOnRoll,
-  exhaustionRollEffects,
   netRollEffect,
 } from "./rollEffects.ts";
 export {

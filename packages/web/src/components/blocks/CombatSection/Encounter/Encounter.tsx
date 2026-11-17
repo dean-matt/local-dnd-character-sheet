@@ -13,7 +13,7 @@ import { rollDice } from "@dnd/dice";
 import { useEffect, useRef, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
-import { useExhaustionEffects } from "../../../../hooks/useExhaustionEffects.ts";
+import { useConditionEffects } from "../../../../hooks/useConditionEffects.ts";
 import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
@@ -39,7 +39,7 @@ export function Encounter({
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
-  const exhaustion = useExhaustionEffects(character.id, character.definition.edition, "check");
+  const exhaustion = useConditionEffects(character.id, character.definition.edition, "initiative");
   const start = useRef<HTMLButtonElement>(null);
   const next = useRef<HTMLButtonElement>(null);
   // The control that took focus unmounts on press, so focus moves to the one that replaces it.
@@ -63,7 +63,8 @@ export function Encounter({
     if (busy) return;
     const bonus = derivedValue(derived.initiative);
     const notation = bonus === 0 ? "1d20" : `1d20${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}`;
-    const mode = netRollEffect(exhaustion)?.mode === "disadvantage" ? "disadvantage" : undefined;
+    const net = netRollEffect(exhaustion.filter(({ condition }) => condition === undefined));
+    const mode = net && net.mode !== "cancel" ? net.mode : undefined;
     const rolled = rollDice(notation, { mode });
     try {
       await both.mutateAsync({

@@ -50,18 +50,29 @@ export function netRollEffect(
   };
 }
 
-const ATTACK_CONDITIONS = [
-  { name: "Blinded", mode: "disadvantage" },
-  { name: "Invisible", mode: "advantage" },
-  { name: "Poisoned", mode: "disadvantage" },
-  { name: "Prone", mode: "disadvantage" },
-  { name: "Restrained", mode: "disadvantage" },
-  {
-    name: "Frightened",
-    mode: "disadvantage",
-    condition: "while the source of fear is in line of sight",
-  },
-] as const;
+const FEAR_IN_SIGHT = "while the source of fear is in line of sight";
+
+type ConditionRule = {
+  name: string;
+  mode: AdvantageMode;
+  roll: "check" | "save" | "attack" | "initiative";
+  target?: Ability;
+  condition?: string;
+  edition?: "classic" | "one";
+};
+
+const CONDITION_RULES: readonly ConditionRule[] = [
+  { name: "Blinded", mode: "disadvantage", roll: "attack" },
+  { name: "Invisible", mode: "advantage", roll: "attack" },
+  { name: "Invisible", mode: "advantage", roll: "initiative", edition: "one" },
+  { name: "Poisoned", mode: "disadvantage", roll: "attack" },
+  { name: "Poisoned", mode: "disadvantage", roll: "check" },
+  { name: "Prone", mode: "disadvantage", roll: "attack" },
+  { name: "Restrained", mode: "disadvantage", roll: "attack" },
+  { name: "Restrained", mode: "disadvantage", roll: "save", target: "dex" },
+  { name: "Frightened", mode: "disadvantage", roll: "attack", condition: FEAR_IN_SIGHT },
+  { name: "Frightened", mode: "disadvantage", roll: "check", condition: FEAR_IN_SIGHT },
+];
 
 /**
  * Classic exhaustion's disadvantage on one kind of roll, named with its level: ability checks
@@ -82,21 +93,31 @@ export function exhaustionRollEffects(
 }
 
 /**
- * The advantage and disadvantage the sheet's own conditions put on its attack rolls, in the
- * shape a held item's effect takes, with exhaustion's from `exhaustionRollEffects`.
+ * The advantage and disadvantage the sheet's own conditions put on one kind of roll, in the
+ * shape a held item's effect takes, with exhaustion's from `exhaustionRollEffects`. An
+ * initiative roll is an ability check, so it takes the checks' effects too.
  */
-export function conditionAttackEffects(
+export function conditionRollEffects(
   state: { conditions: readonly { name: string }[]; exhaustion: number },
   edition: "classic" | "one",
+  roll: "check" | "save" | "attack" | "initiative",
 ): RollEffectEntry[] {
   const held = new Set(state.conditions.map(({ name }) => name));
-  const effects: RollEffectEntry[] = ATTACK_CONDITIONS.filter(({ name }) => held.has(name)).map(
-    (entry) => ({
-      source: entry.name,
-      mode: entry.mode,
-      roll: "attack",
-      ...("condition" in entry && { condition: entry.condition }),
-    }),
-  );
-  return [...effects, ...exhaustionRollEffects(state.exhaustion, edition, "attack")];
+  const kinds = roll === "initiative" ? ["check", "initiative"] : [roll];
+  const effects = CONDITION_RULES.filter(
+    (rule) =>
+      held.has(rule.name) &&
+      kinds.includes(rule.roll) &&
+      (rule.edition === undefined || rule.edition === edition),
+  ).map(({ name, mode, roll: kind, target, condition }) => ({
+    source: name,
+    mode,
+    roll: kind === "initiative" ? ("check" as const) : kind,
+    ...(target && { target }),
+    ...(condition && { condition }),
+  }));
+  return [
+    ...effects,
+    ...exhaustionRollEffects(state.exhaustion, edition, roll === "initiative" ? "check" : roll),
+  ];
 }

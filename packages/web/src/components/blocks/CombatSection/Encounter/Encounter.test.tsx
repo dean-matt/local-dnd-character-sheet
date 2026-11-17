@@ -82,6 +82,32 @@ describe("Encounter", () => {
     expect(normal[0]?.body.roll?.mode).toBeUndefined();
   });
 
+  it("rolls initiative with advantage while Invisible in 2024, and with none in the classic ruleset", async () => {
+    const conditions = [{ name: "Invisible", source: "XPHB" }];
+    const writes = renderEncounter({ conditions }, "one");
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.body.roll).toMatchObject({ mode: "advantage" });
+    cleanup();
+
+    const classic = renderEncounter({ conditions }, "classic");
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+    await waitFor(() => expect(classic).toHaveLength(1));
+    expect(classic[0]?.body.roll?.mode).toBeUndefined();
+  });
+
+  it.each([
+    [["Poisoned"], "disadvantage"],
+    [["Poisoned", "Invisible"], undefined],
+    [["Frightened"], undefined],
+  ])("rolls initiative while %j with mode %s", async (names, mode) => {
+    const conditions = names.map((name) => ({ name, source: "XPHB" }));
+    const writes = renderEncounter({ conditions }, "one");
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.body.roll?.mode).toBe(mode);
+  });
+
   it("advances the round and ends the encounter, each one write", async () => {
     const writes = renderEncounter({ encounter: { round: 2, initiative: 15 } });
 

@@ -48,6 +48,7 @@ import type {
 } from "./catalog.ts";
 import type { CharacterDerived, Defenses } from "./characterDerived.ts";
 import { classResourcePools } from "./classResources.ts";
+import { speedWithConditions } from "./conditionSpeed.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { exhaustedMaximum } from "./exhaustedMaximum.ts";
@@ -1026,7 +1027,7 @@ export function deriveCharacter(
   stored: CharacterDefinition,
   catalog: CharacterCatalog,
   state: Pick<CharacterState, "activeEffects" | "hitPointMaximumReduction" | "temporaryModifiers"> &
-    Partial<Pick<CharacterState, "exhaustion">> = {
+    Partial<Pick<CharacterState, "conditions" | "exhaustion">> = {
     activeEffects: [],
     hitPointMaximumReduction: null,
     temporaryModifiers: [],
@@ -1053,14 +1054,16 @@ export function deriveCharacter(
   const itemSpeed = speedWithItems(movement.speed, bonuses);
   const armorSpeed = speedUnderArmor(itemSpeed.speed, worn, scoreOf(definition, catalog, "str"));
   const modifiedSpeed = speedWithModifiers(armorSpeed.speed, state);
+  const restrained = speedWithConditions(modifiedSpeed.speed, state.conditions ?? []);
   const speed = {
-    speed: modifiedSpeed.speed,
+    speed: restrained.speed,
     terms: [
       ...featSpeed.terms,
       ...movement.terms,
       ...itemSpeed.terms,
       ...armorSpeed.terms,
       ...modifiedSpeed.terms,
+      ...restrained.terms,
     ],
   };
   const exhaustion = exhaustionPenaltyTerms(state.exhaustion ?? 0, definition.edition);

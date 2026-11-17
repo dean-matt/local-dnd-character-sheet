@@ -8,7 +8,7 @@ import {
   proficiencyAt,
 } from "@dnd/character";
 import { useState } from "react";
-import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
+import { useConditionEffects } from "../../../hooks/useConditionEffects.ts";
 import { useToolPrintedAbility } from "../../../hooks/useToolPrintedAbility.ts";
 import { rollTerms } from "../../../lib/rollTerms.ts";
 import { ModeRoll } from "../../ModeRoll.tsx";
@@ -32,7 +32,7 @@ export function ToolCheck({
     tool.name,
     character.definition.edition,
   );
-  const checkExhaustion = useExhaustionEffects(character.id, character.definition.edition, "check");
+  const checkExhaustion = useConditionEffects(character.id, character.definition.edition, "check");
   const [picked, setPicked] = useState<Ability>();
   const ability = picked ?? printed ?? UNPRINTED;
   const check = derived.abilityChecks[ability];
