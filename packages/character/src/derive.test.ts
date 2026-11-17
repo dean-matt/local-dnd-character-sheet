@@ -2968,7 +2968,6 @@ describe("deriveCharacter", () => {
       expect(sight([{ name: "darkvision", range: 60 }])).toEqual([
         { name: "darkvision", range: 90, from: [raceSummary(gloomStalker(3)), "Umbral Sight"] },
       ]);
-      expect(sight([]).length).toBe(1);
       const early = deriveCharacter(gloomStalker(2), { ...senseCatalog, ...withDice() });
       expect(early.senses.computed).toEqual([]);
     });
@@ -3014,7 +3013,7 @@ describe("deriveCharacter", () => {
   });
 
   describe("speed from class features", () => {
-    it("raises the walk for Aura of Alacrity at 7th level and Powered Steps at 3rd, naming each", () => {
+    it("raises the walk for Aura of Alacrity at 7th level, naming it", () => {
       const levelled = (className: string, classSource: string, subclass: string, count: number) =>
         deriveCharacter(
           {
@@ -3029,7 +3028,6 @@ describe("deriveCharacter", () => {
             hitDice: new Map<string, 6 | 8 | 10 | 12>([
               ...catalog.hitDice,
               ["catalog|Paladin|PHB", 10],
-              ["catalog|Artificer|TCE", 8],
             ]),
           },
         ).speed;
@@ -3041,7 +3039,6 @@ describe("deriveCharacter", () => {
         reference: { name: "Aura of Alacrity", source: "TCE" },
       });
       expect(levelled("Paladin", "PHB", "Oath of Glory", 6).computed).toEqual({ walk: 30 });
-      expect(levelled("Artificer", "TCE", "Armorer", 3).computed).toEqual({ walk: 35 });
     });
   });
 

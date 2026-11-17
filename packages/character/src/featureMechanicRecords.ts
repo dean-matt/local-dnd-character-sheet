@@ -109,9 +109,6 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   subclassFeature(["Paladin", "PHB"], ["Glory", "TCE"], ["Aura of Alacrity", "TCE"], 7, [
     { kind: "bonus", target: "walk", value: 10 },
   ]),
-  subclassFeature(artificer, ["Armorer", "TCE"], ["Powered Steps", "TCE"], 3, [
-    { kind: "bonus", target: "walk", value: 5 },
-  ]),
   {
     ref: { name: "Dwarven Toughness", source: "PHB" },
     mechanics: [{ kind: "bonus", target: "hitPointsPerLevel", value: 1 }],
