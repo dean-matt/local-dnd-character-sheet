@@ -244,7 +244,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     ["Bladesinging", "TCE"],
     ["Training in War and Song (Bladesinging)", "TCE"],
     2,
-    grants({ armor: ["light"], skills: ["performance"] }),
+    grants({ armor: ["light"] }),
   ),
   subclassFeature(
     artificer,
