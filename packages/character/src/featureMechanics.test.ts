@@ -18,6 +18,19 @@ describe("featureMechanicsSchema", () => {
     expect(featureMechanicsSchema.safeParse({ ref, mechanics }).success).toBe(false);
   });
 
+  it("refuses a repeated target and a proficiency bonus off initiative", () => {
+    const ref = { name: "Alert", source: "PHB" };
+    const bonus = (target: string, value: number | string) => ({
+      kind: "bonus",
+      target,
+      value,
+    });
+    const parse = (mechanics: unknown[]) => featureMechanicsSchema.safeParse({ ref, mechanics });
+    expect(parse([bonus("walk", 10), bonus("walk", 5)]).success).toBe(false);
+    expect(parse([bonus("walk", "proficiency")]).success).toBe(false);
+    expect(parse([bonus("initiative", "proficiency"), bonus("walk", 10)]).success).toBe(true);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);
