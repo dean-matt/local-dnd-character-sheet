@@ -1134,20 +1134,16 @@ export function deriveCharacter(
     ...itemTerms(bonuses, (item) => item.proficiencyBonus),
   ]);
   const { burdened, ...carrying } = load(definition, catalog);
+  const abilityCheck = (modifier: number) =>
+    fromBreakdown(
+      breakdown<TermReference>([{ label: "Ability modifier", value: modifier }, ...exhaustion]),
+    );
   const block: CharacterDerived = {
     abilityScores: perAbility((ability) => fromBreakdown(scores[ability])),
     abilityModifiers: perAbility((ability) =>
       fromBreakdown(abilityModifierBreakdown(scores[ability].total)),
     ),
-    abilityChecks: perAbility((ability) => {
-      const typed = stored.overrides[`abilityModifiers.${ability}`];
-      const modifier = Number.isInteger(typed)
-        ? (typed as number)
-        : abilityModifier(scores[ability].total);
-      return fromBreakdown(
-        breakdown<TermReference>([{ label: "Ability modifier", value: modifier }, ...exhaustion]),
-      );
-    }),
+    abilityChecks: perAbility((ability) => abilityCheck(abilityModifier(scores[ability].total))),
     hitPointMaximum: fromBreakdown(
       reducedMaximum(
         withModifiers(
@@ -1206,7 +1202,16 @@ export function deriveCharacter(
     castingBlockedBy: unproficientArmorWorn(definition, catalog),
     heavyArmorWorn,
   };
-  const folded = applyOverrides(block, stored);
+  const modifiers = applyOverrides(block, stored).abilityModifiers;
+  const folded = applyOverrides(
+    {
+      ...block,
+      abilityChecks: perAbility((ability) =>
+        abilityCheck(modifiers[ability].manual ?? modifiers[ability].computed),
+      ),
+    },
+    stored,
+  );
   return {
     ...folded,
     hitPointMaximum: reducedOverride(folded.hitPointMaximum, state.hitPointMaximumReduction),

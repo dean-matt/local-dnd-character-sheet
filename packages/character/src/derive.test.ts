@@ -3268,6 +3268,13 @@ describe("deriveCharacter", () => {
       expect(block.speed).toEqual(derived.speed);
     });
 
+    it("never rewrites the stored override it refuses", () => {
+      const overrides = { speed: { walk: -5 } };
+      deriveCharacter({ ...equipped, overrides }, catalog);
+
+      expect(overrides).toEqual({ speed: { walk: -5 } });
+    });
+
     it("names a hit die pool, a caster and a weapon by what they are", () => {
       const block = withOverrides({
         "hitDice.8.total": 7,
