@@ -40,6 +40,7 @@ export const derivedInput = (traits: object = {}) => ({
     ]),
   ),
   abilityModifiers: noSavingThrows,
+  abilityChecks: noSavingThrows,
   hitPointMaximum: { computed: 37 },
   hitDice: [],
   proficiencyBonus: { computed: 2 },

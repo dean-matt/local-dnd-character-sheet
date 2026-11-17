@@ -17,6 +17,7 @@ export function AttackRoll({
   type,
   origin,
   bonus,
+  terms,
   effects,
   beforeRoll,
   critAt,
@@ -24,7 +25,7 @@ export function AttackRoll({
   onRolled,
 }: Pick<
   ComponentProps<typeof RollBonusButton>,
-  "label" | "type" | "origin" | "bonus" | "critAt" | "onRolled"
+  "label" | "type" | "origin" | "bonus" | "terms" | "critAt" | "onRolled"
 > & {
   effects: readonly RollEffectEntry[];
   beforeRoll?: () => Promise<boolean>;
@@ -49,10 +50,10 @@ export function AttackRoll({
       terms={
         flankingBonus
           ? [
-              { source: "Attack bonus", value: bonus },
+              ...(terms ?? [{ source: "Attack bonus", value: bonus }]),
               { source: "Flanking", value: 2 },
             ]
-          : undefined
+          : terms
       }
       bonus={flankingBonus ? bonus + 2 : bonus}
       beforeRoll={beforeRoll}

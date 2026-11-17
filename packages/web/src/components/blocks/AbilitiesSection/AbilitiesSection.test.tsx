@@ -655,6 +655,48 @@ describe("AbilitiesSection", () => {
     expect(screen.queryByRole("button", { name: /Initiative/ })).not.toBeInTheDocument();
   });
 
+  it("records a skill's and a save's terms, exhaustion included, on the logged roll", async () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    const terms = [
+      { label: "Charisma", value: 3 },
+      { label: "Exhaustion 1: -2", value: -2 },
+    ];
+    const fetchMock = stubRules([]);
+    renderWithClient(
+      <RollingFor value="1">
+        <AbilitiesSection
+          character={record}
+          derived={{
+            ...derived,
+            skills: derived.skills.map((skill) =>
+              skill.ref.name === "Deception"
+                ? { ...skill, modifier: { computed: 1, manual: null, terms } }
+                : skill,
+            ),
+            savingThrows: { ...derived.savingThrows, cha: { computed: 1, manual: null, terms } },
+          }}
+        />
+      </RollingFor>,
+    );
+
+    const logged = () =>
+      fetchMock.mock.calls
+        .filter(([, init]) => init?.method === "POST")
+        .map(([, init]) => JSON.parse(String(init?.body)));
+    const expected = [
+      { source: "Charisma", value: 3 },
+      { source: "Exhaustion 1: -2", value: -2 },
+    ];
+    fireEvent.click(await screen.findByRole("button", { name: "Roll Deception check" }));
+    await waitFor(() => expect(logged()).toHaveLength(1));
+    expect(logged()[0]).toMatchObject({ type: "check", terms: expected });
+
+    fireEvent.click(screen.getByRole("button", { name: "Roll Charisma saving throw" }));
+    await waitFor(() => expect(logged()).toHaveLength(2));
+    expect(logged()[1]).toMatchObject({ type: "save", terms: expected });
+  });
+
   it("opens initiative's and the proficiency bonus's terms on focus", async () => {
     renderSection();
 

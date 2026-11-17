@@ -1,4 +1,4 @@
-import type { CharacterRecord } from "@dnd/character";
+import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -44,12 +44,13 @@ type ItemReply = (path: string) => Response;
 function renderChecks(
   record: CharacterRecord,
   itemReply: ItemReply = () => Response.json(thievesTools),
+  adjust: (derived: CharacterDerived) => CharacterDerived = (derived) => derived,
 ) {
   const posts: Record<string, unknown>[] = [];
   const itemReads: string[] = [];
   vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
     const path = String(url);
-    if (path.endsWith("/derived")) return Response.json(derivedRecord(record.definition));
+    if (path.endsWith("/derived")) return Response.json(adjust(derivedRecord(record.definition)));
     if (path.startsWith("/api/items/")) {
       itemReads.push(path);
       return itemReply(path);
@@ -107,6 +108,42 @@ describe("ToolChecks", () => {
     expect((await screen.findAllByRole("status"))[0]).toHaveTextContent(
       /Thieves' Tools check: \d+/,
     );
+  });
+
+  it("rolls the penalised ability check and lists the exhaustion term and proficiency", async () => {
+    const { posts } = renderChecks(
+      holding("proficient"),
+      () => Response.json(thievesTools),
+      (derived) => ({
+        ...derived,
+        abilityChecks: {
+          ...derived.abilityChecks,
+          dex: {
+            computed: 1,
+            manual: null,
+            terms: [
+              { label: "Ability modifier", value: 3 },
+              { label: "Exhaustion 1: -2", value: -2 },
+            ],
+          },
+        },
+      }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "Thieves' Tools ability" })).toHaveValue("dex"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Roll Thieves' Tools check" }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]).toMatchObject({
+      notation: "1d20+3",
+      terms: [
+        { source: "Ability modifier", value: 3 },
+        { source: "Exhaustion 1: -2", value: -2 },
+        { source: "Proficiency", value: 2 },
+      ],
+    });
   });
 
   it("doubles the proficiency bonus at expertise", async () => {

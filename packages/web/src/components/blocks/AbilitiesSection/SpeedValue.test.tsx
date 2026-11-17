@@ -1,5 +1,5 @@
 import type { CharacterDerived } from "@dnd/character";
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
@@ -161,11 +161,22 @@ describe("SpeedValue", () => {
     );
   });
 
-  it("leaves the speed alone at level 1, and for a 2024 character", () => {
+  it("leaves a classic character's speed alone at level 1", () => {
     onPage(computed, { edition: "classic" }, 1);
     expect(screen.getByText(/swim 30 ft\./)).toBeInTheDocument();
-    cleanup();
-    onPage(computed, { edition: "one" }, 5);
+  });
+
+  it("takes 5 feet per level off a 2024 character's speed and names the level", async () => {
+    onPage(computed, { edition: "one" }, 2);
+    expect(await screen.findByText(/swim 20 ft\./)).toBeInTheDocument();
+    open("Speed 20");
+    expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent(
+      "Exhaustion 2: speed -10 ft",
+    );
+  });
+
+  it("leaves a 2024 character's speed alone at level 0", () => {
+    onPage(computed, { edition: "one" }, 0);
     expect(screen.getByText(/swim 30 ft\./)).toBeInTheDocument();
   });
 });

@@ -335,6 +335,81 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("2024 exhaustion's penalty to d20 Tests", () => {
+    const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
+    const tired = (edition: "classic" | "one", exhaustion: number) =>
+      deriveCharacter({ ...equipped, edition }, catalog, { ...calm, exhaustion });
+    const base = tired("one", 0);
+    const term = { label: "Exhaustion 2: -4", value: -4 };
+
+    it("takes 2 per level off checks, saves, initiative and attack rolls, naming the level", () => {
+      const block = tired("one", 2);
+      expect(block.initiative.computed).toBe(base.initiative.computed - 4);
+      expect(block.initiative.terms).toContainEqual(term);
+      for (const [index, skill] of block.skills.entries()) {
+        expect(skill.modifier.computed).toBe((base.skills[index]?.modifier.computed ?? 0) - 4);
+        expect(skill.modifier.terms).toContainEqual(term);
+        expect(skill.passive.computed).toBe(base.skills[index]?.passive.computed);
+      }
+      for (const ability of ABILITIES) {
+        expect(block.savingThrows[ability].computed).toBe(base.savingThrows[ability].computed - 4);
+        expect(block.savingThrows[ability].terms).toContainEqual(term);
+      }
+      expect(base.attacks.length).toBeGreaterThan(0);
+      for (const [index, attack] of block.attacks.entries()) {
+        expect(attack.attackBonus.computed).toBe(
+          (base.attacks[index]?.attackBonus.computed ?? 0) - 4,
+        );
+        expect(attack.attackBonus.terms).toContainEqual(term);
+      }
+      expect(base.spellcasting.length).toBeGreaterThan(0);
+      for (const [index, caster] of block.spellcasting.entries()) {
+        expect(caster.attackBonus.computed).toBe(
+          (base.spellcasting[index]?.attackBonus.computed ?? 0) - 4,
+        );
+        expect(caster.saveDc.computed).toBe(base.spellcasting[index]?.saveDc.computed);
+      }
+      expect(block.unarmedStrike.attackBonus.computed).toBe(
+        base.unarmedStrike.attackBonus.computed - 4,
+      );
+    });
+
+    it("adds the penalty to each ability check and leaves the modifier unpenalised", () => {
+      const block = tired("one", 2);
+      for (const ability of ABILITIES) {
+        expect(block.abilityModifiers[ability]).toEqual(base.abilityModifiers[ability]);
+        expect(base.abilityChecks[ability].computed).toBe(base.abilityModifiers[ability].computed);
+        expect(block.abilityChecks[ability].computed).toBe(
+          base.abilityModifiers[ability].computed - 4,
+        );
+        expect(block.abilityChecks[ability].terms).toContainEqual(term);
+      }
+    });
+
+    it("builds the check from an overridden modifier", () => {
+      const block = deriveCharacter(
+        { ...equipped, edition: "one", overrides: { "abilityModifiers.dex": 7 } },
+        catalog,
+        { ...calm, exhaustion: 2 },
+      );
+      expect(block.abilityModifiers.dex.manual).toBe(7);
+      expect(block.abilityChecks.dex.computed).toBe(3);
+      expect(block.abilityChecks.dex.terms).toEqual([
+        { label: "Ability modifier", value: 7 },
+        term,
+      ]);
+    });
+
+    it("takes nothing at level 0 or from a classic character", () => {
+      expect(tired("one", 0).initiative.terms).not.toContainEqual(
+        expect.objectContaining({ label: expect.stringContaining("Exhaustion") }),
+      );
+      expect(tired("classic", 2).initiative).toEqual(tired("classic", 0).initiative);
+      expect(tired("classic", 2).savingThrows).toEqual(tired("classic", 0).savingThrows);
+      expect(tired("classic", 2).abilityChecks).toEqual(tired("classic", 0).abilityChecks);
+    });
+  });
+
   describe("temporary modifiers", () => {
     const held = (...modifiers: CharacterState["temporaryModifiers"]) => ({
       activeEffects: [],
@@ -3191,6 +3266,13 @@ describe("deriveCharacter", () => {
         ),
       );
       expect(block.speed).toEqual(derived.speed);
+    });
+
+    it("never rewrites the stored override it refuses", () => {
+      const overrides = { speed: { walk: -5 } };
+      deriveCharacter({ ...equipped, overrides }, catalog);
+
+      expect(overrides).toEqual({ speed: { walk: -5 } });
     });
 
     it("names a hit die pool, a caster and a weapon by what they are", () => {

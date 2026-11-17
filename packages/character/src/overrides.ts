@@ -68,7 +68,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 function visit(node: unknown, path: string, overrides: Record<string, unknown>): void {
   if (typeof node !== "object" || node === null) return;
   if (isDerived(node)) {
-    if (Object.hasOwn(overrides, path)) node.manual = overrides[path];
+    if (Object.hasOwn(overrides, path)) node.manual = structuredClone(overrides[path]);
     if (!isRecord(node.computed)) return;
     const prefix = `${path}.`;
     const members = Object.entries(overrides).filter(([key]) => key.startsWith(prefix));

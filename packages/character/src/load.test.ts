@@ -1,10 +1,4 @@
-import {
-  carryingCapacity,
-  type Edition,
-  encumbranceThresholds,
-  exhaustionEffects,
-  reducedSpeed,
-} from "@dnd/rules";
+import { carryingCapacity, encumbranceThresholds } from "@dnd/rules";
 import { describe, expect, it } from "vitest";
 import {
   type ContainerTrait,
@@ -337,35 +331,6 @@ describe("encumbered speed", () => {
     });
   });
 
-  /** What exhaustion costs a speed, in the terms `reducedSpeed` takes. */
-  const exhaustionSpeedCost = (level: number, edition: Edition) => {
-    const effects = exhaustionEffects(level, edition);
-    return {
-      reduction: effects.edition === "one" ? effects.speedReduction : 0,
-      halved: effects.edition === "classic" && effects.speedHalved,
-      zeroed: effects.edition === "classic" && effects.speedZero,
-    };
-  };
-
-  it.each(["one", "classic"] as const)(
-    "hands the reduction back unapplied, so %s exhaustion composes against the derived speed",
-    (edition) => {
-      const exhaustion = exhaustionSpeedCost(2, edition);
-      const base = derivedValue(characterDerivedSchema.parse(derivedInput(winged)).speed).walk;
-      const laden = speeds(ENCUMBERED_AT + 1);
-
-      expect(laden.speedReduction).toBe(10);
-      expect(laden.speed.walk).toBe(20);
-      expect(
-        reducedSpeed({
-          ...exhaustion,
-          base,
-          reduction: laden.speedReduction + exhaustion.reduction,
-        }),
-      ).toBe(10);
-    },
-  );
-
   it.each([{ encumbrance: true }, {}])(
     "drops a mode written as undefined, which the parse keeps, under house rules %j",
     (houseRules) => {
@@ -412,7 +377,25 @@ describe("exhaustion on speed", () => {
     expect(at(6).exhaustion).toBe("Exhaustion 6: speed 0");
   });
 
-  it("leaves a 2024 character's speed to its own rule", () => {
-    expect(at(5, "one").speed).toEqual({ walk: 30, fly: 30, swim: 10 });
+  it("takes 5 feet per level off every mode of a 2024 character and says so", () => {
+    expect(at(0, "one").exhaustion).toBeUndefined();
+    expect(at(2, "one").speed).toEqual({ walk: 20, fly: 20, swim: 0 });
+    expect(at(2, "one").exhaustion).toBe("Exhaustion 2: speed -10 ft");
+  });
+
+  it("takes a load's feet off first and floors at zero", () => {
+    const laden = encumberedSpeed(
+      characterDefinitionSchema.parse({
+        ...structuredClone(definition),
+        edition: "one",
+        houseRules: { encumbrance: true },
+      }),
+      characterDerivedSchema.parse(derivedInput(winged)),
+      41,
+      2,
+    );
+    expect(laden.speedReduction).toBe(10);
+    expect(laden.speed.walk).toBe(10);
+    expect(at(5, "one").speed.swim).toBe(0);
   });
 });

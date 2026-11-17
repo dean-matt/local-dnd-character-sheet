@@ -666,7 +666,7 @@ describe("Attacks", () => {
           notation: "1d20+7",
           modifier: 7,
           terms: [
-            { source: "Attack bonus", value: 5 },
+            { source: "Strength", value: 5 },
             { source: "Flanking", value: 2 },
           ],
           total: 8,

@@ -8,6 +8,7 @@ import {
 import { FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
+import { rollTerms } from "../../../lib/rollTerms.ts";
 import { ModeRoll } from "../../ModeRoll.tsx";
 import { Popover } from "../../Popover.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
@@ -132,6 +133,7 @@ export function ProficiencyRow({
           type={ability ? "check" : "save"}
           origin={name}
           bonus={derivedValue(modifier)}
+          terms={rollTerms(modifier)}
         />
       </span>
     </li>
