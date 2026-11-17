@@ -1,3 +1,4 @@
+import type { Edition } from "@dnd/rules";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived } from "./derivedField.ts";
 import { type HouseRule, type HouseRules, PRINTED_RULE } from "./houseRules.ts";
@@ -23,4 +24,16 @@ export function houseRule<K extends HouseRule>(
   // the day one is not, reporting the return rather than the read.
   const set: Partial<Required<HouseRules>> = definition.houseRules;
   return set[rule] ?? PRINTED_RULE[rule];
+}
+
+/**
+ * The edition whose exhaustion table the character plays: a classic character takes the 2024
+ * one when the table says so.
+ */
+export function exhaustionRuleset(
+  definition: Pick<CharacterDefinition, "edition" | "houseRules">,
+): Edition {
+  return definition.edition === "classic" && houseRule(definition, "exhaustionAs2024")
+    ? "one"
+    : definition.edition;
 }

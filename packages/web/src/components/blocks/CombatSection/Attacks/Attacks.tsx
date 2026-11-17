@@ -152,9 +152,7 @@ export function Attacks({
   const [crit, setCrit] = useState<Record<string, boolean>>({});
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
-  const heldEffects = play.data
-    ? conditionRollEffects(play.data.state, definition.edition, "attack")
-    : [];
+  const heldEffects = play.data ? conditionRollEffects(play.data.state, definition, "attack") : [];
   const attackEffects = (ability: Ability) => [
     ...effectsOnRoll(rollEffects, { roll: "attack", ability }),
     ...heldEffects,

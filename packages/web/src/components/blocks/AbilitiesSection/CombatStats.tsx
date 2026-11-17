@@ -21,7 +21,7 @@ export function CombatStats({
   definition: CharacterDefinition;
   derived: CharacterDerived;
 }) {
-  const checkExhaustion = useConditionEffects(characterId, definition.edition, "initiative");
+  const checkExhaustion = useConditionEffects(characterId, definition, "initiative");
   return (
     <Card title="Combat">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">

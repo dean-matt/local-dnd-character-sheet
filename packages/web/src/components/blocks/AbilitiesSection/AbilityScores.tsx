@@ -73,7 +73,7 @@ export function AbilityScores({
   const { definition } = character;
   const update = useUpdateCharacterDefinition(character.id);
   const reasonId = useId();
-  const checkExhaustion = useConditionEffects(character.id, definition.edition, "check");
+  const checkExhaustion = useConditionEffects(character.id, definition, "check");
   return (
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">

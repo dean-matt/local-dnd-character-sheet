@@ -39,7 +39,7 @@ export function Encounter({
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
-  const exhaustion = useConditionEffects(character.id, character.definition.edition, "initiative");
+  const exhaustion = useConditionEffects(character.id, character.definition, "initiative");
   const start = useRef<HTMLButtonElement>(null);
   const next = useRef<HTMLButtonElement>(null);
   // The control that took focus unmounts on press, so focus moves to the one that replaces it.
