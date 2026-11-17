@@ -16,6 +16,7 @@ import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useExhaustionEffects } from "../../../../hooks/useExhaustionEffects.ts";
 import { useExhaustionPenalty } from "../../../../hooks/useExhaustionPenalty.ts";
 import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
+import { penalised } from "../../../../lib/penalisedRoll.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
@@ -64,7 +65,11 @@ export function Encounter({
 
   async function rollInitiative() {
     if (busy) return;
-    const bonus = derivedValue(derived.initiative) + (penalty?.value ?? 0);
+    const { bonus, terms } = penalised(
+      { bonus: derivedValue(derived.initiative) },
+      penalty,
+      "Initiative",
+    );
     const notation = bonus === 0 ? "1d20" : `1d20${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}`;
     const mode = netRollEffect(exhaustion)?.mode === "disadvantage" ? "disadvantage" : undefined;
     const rolled = rollDice(notation, { mode });
@@ -81,9 +86,7 @@ export function Encounter({
           total: rolled.total,
           dice: rolled.dice,
           modifier: rolled.modifier,
-          ...(penalty && {
-            terms: [{ source: "Initiative", value: derivedValue(derived.initiative) }, penalty],
-          }),
+          ...(terms && { terms }),
           critical: rolled.critical,
         },
       });

@@ -1,4 +1,5 @@
 import { CHIP } from "../../lib/chipStyles.ts";
+import type { RollPenalty } from "../../lib/penalisedRoll.ts";
 import { Popover } from "../Popover.tsx";
 
 /** The points a rule takes off one roll, as a chip that opens to its source. */
@@ -8,7 +9,7 @@ export function RollPenaltyChip({
 }: {
   /** The roll the chip marks, such as "Stealth check", for its accessible name. */
   roll: string;
-  penalty: { source: string; value: number } | undefined;
+  penalty: RollPenalty | undefined;
 }) {
   if (!penalty) return null;
   const points = `−${Math.abs(penalty.value)}`;

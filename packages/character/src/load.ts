@@ -138,7 +138,8 @@ function presentModes(speed: Speed): [string, number][] {
  *
  * The variant reads "your speed drops by 10 feet" and names no movement mode, so the
  * reduction comes off every mode the character has rather than walking alone. Exhaustion
- * takes feet off every mode too, or halves or zeroes it in the classic ruleset, after the load's feet come off.
+ * takes feet off every mode too, or halves or zeroes it in the classic ruleset, after the
+ * load's feet come off.
  *
  * `weight` is the caller's, from `carriedWeight`. `speedReduction` is the load's feet alone.
  */

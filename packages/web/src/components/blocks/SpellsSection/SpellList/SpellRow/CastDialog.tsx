@@ -1,8 +1,10 @@
 import type { SpellCastOption } from "@dnd/character";
 import { useId, useState } from "react";
+import type { RollPenalty } from "../../../../../lib/penalisedRoll.ts";
 import { levelLabel } from "../../../../../lib/spellLevel.ts";
 import { Modal } from "../../../../Modal.tsx";
 import { ModalEntry } from "../../../../ModalEntry.tsx";
+import { RollPenaltyChip } from "../../../RollPenaltyChip.tsx";
 
 const PRIMARY =
   "min-h-11 rounded-control bg-accent px-3.5 font-semibold text-row text-white hover:bg-accent-hover aria-disabled:cursor-not-allowed aria-disabled:bg-subtle aria-disabled:text-muted";
@@ -46,6 +48,7 @@ export function CastDialog({
   level,
   concentration,
   rolls,
+  penalty,
   options,
   held,
   consumed,
@@ -60,6 +63,8 @@ export function CastDialog({
   concentration: boolean;
   /** Whether the spell has an attack or damage to roll. */
   rolls: boolean;
+  /** What exhaustion takes off the spell attack, where the spell makes one. */
+  penalty: RollPenalty | undefined;
   options: readonly SpellCastOption[];
   /** The spell concentration is held on, or undefined where none is. */
   held: string | undefined;
@@ -163,6 +168,7 @@ export function CastDialog({
           <label className="flex items-center gap-2 text-row">
             <input type="checkbox" checked={roll} onChange={() => setRoll(!roll)} />
             Roll attack and damage
+            <RollPenaltyChip roll={`${name} attack`} penalty={penalty} />
           </label>
         )}
         {concentration && concentrate && held && (

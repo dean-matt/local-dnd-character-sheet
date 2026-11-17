@@ -82,6 +82,7 @@ function renderCast(
   waiveComponents = false,
   held: { name: string; quantity: number }[] = [],
   houseRules: Record<string, string> = {},
+  edition: "classic" | "one" = "classic",
 ) {
   const inventory = held.map(({ name, quantity }) => ({
     ref: { name, source: "XPHB" },
@@ -93,7 +94,7 @@ function renderCast(
   const base = characterRecord("1", "Ada");
   const character = {
     ...base,
-    definition: { ...base.definition, inventory, houseRules },
+    definition: { ...base.definition, inventory, houseRules, edition },
   };
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
@@ -516,6 +517,26 @@ describe("CastSpell", () => {
       await waitFor(() =>
         expect(screen.getByRole("status")).toHaveTextContent("Cast Fire Bolt; attack 7, damage 2"),
       );
+    });
+
+    it("takes a 2024 character's exhaustion off the spell attack, naming it in the terms and the dialog", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      renderCast(fireBolt, { exhaustion: 2 }, withCaster, undefined, false, [], {}, "one");
+      const dialog = await openDialog("Fire Bolt");
+      expect(
+        await dialog.findByRole("button", { name: "Fire Bolt attack: −4 (Exhaustion 2)" }),
+      ).toBeVisible();
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(posted).toHaveLength(2));
+      expect(posted[0]).toMatchObject({
+        type: "spell-attack",
+        notation: "1d20+2",
+        terms: [
+          { source: "Spell attack", value: 6 },
+          { source: "Exhaustion 2", value: -4 },
+        ],
+      });
     });
 
     it("rolls a spell's damage at the slot level it is cast at, and no attack where it makes none", async () => {

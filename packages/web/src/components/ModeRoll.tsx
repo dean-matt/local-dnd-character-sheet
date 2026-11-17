@@ -1,9 +1,10 @@
-import { netRollEffect, type RollEffectEntry, type RollRecord } from "@dnd/character";
+import { netRollEffect, type RollEffectEntry } from "@dnd/character";
 import { type ComponentProps, type ReactNode, useContext, useId, useState } from "react";
 import { useCharacterState } from "../hooks/useCharacterState.ts";
 import { useExhaustionPenalty } from "../hooks/useExhaustionPenalty.ts";
 import { useReplaceCharacterState } from "../hooks/useReplaceCharacterState.ts";
 import { parseExtraDie } from "../lib/extraDie.ts";
+import { penalised } from "../lib/penalisedRoll.ts";
 import { RollPenaltyChip } from "./blocks/RollPenaltyChip.tsx";
 import { ExtraDieInput } from "./ExtraDieInput.tsx";
 import { RollBonusButton } from "./RollBonusButton.tsx";
@@ -21,15 +22,6 @@ const MODES: readonly { value: Mode; text: string; label: string }[] = [
 function offered(effects: readonly RollEffectEntry[]): Mode {
   const net = netRollEffect(effects.filter(({ condition }) => condition === undefined));
   return net && net.mode !== "cancel" ? net.mode : "normal";
-}
-
-function penalised<R extends { bonus: number; terms?: RollRecord["terms"] }>(
-  roll: R,
-  penalty: { source: string; value: number } | undefined,
-): R {
-  if (!penalty) return roll;
-  const terms = roll.terms ?? [{ source: "Bonus", value: roll.bonus }];
-  return { ...roll, bonus: roll.bonus + penalty.value, terms: [...terms, penalty] };
 }
 
 /**
