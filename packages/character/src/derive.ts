@@ -108,8 +108,7 @@ export function hitPointMaximum(
     levels,
     abilityModifier(abilityScore(definition, "con", grants)),
   );
-  const level = totalLevel(definition);
-  return breakdown([...terms, ...featHitPointTerms(definition, level)]);
+  return breakdown([...terms, ...featHitPointTerms(definition)]);
 }
 
 /**

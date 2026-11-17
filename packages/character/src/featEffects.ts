@@ -1,15 +1,13 @@
 /**
- * The initiative, hit point and speed bonuses a feat states only in its prose. 5etools
+ * The initiative, hit point and speed bonuses a feature states only in its prose. 5etools
  * carries no field for them, so the sheet reads them from the recorded feature mechanics,
- * and a feat they do not name adds nothing.
+ * and a feature they do not name adds nothing.
  */
 import type { Term } from "@dnd/rules";
 import type { Speed } from "./characterDerived.ts";
-import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
-import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
-import { featureMechanicsKey, mechanicsOfKind } from "./featureMechanics.ts";
-import { refKey } from "./keys.ts";
+import { mechanicsOfKind } from "./featureMechanics.ts";
+import { type HoldsFeatures, heldFeatures } from "./heldFeatures.ts";
 import type { ContentRef } from "./refs.ts";
 
 type FeatBonus = {
@@ -18,31 +16,21 @@ type FeatBonus = {
   walk?: number;
 };
 
-const FEAT_BONUSES = new Map<string, FeatBonus>(
-  FEATURE_MECHANICS.filter(({ ref }) => !("className" in ref)).map((entry) => [
-    featureMechanicsKey(entry),
-    Object.fromEntries(
+/** What a held feature bonuses; `levels` scales a per-level bonus. */
+function bonusFeats(
+  definition: HoldsFeatures,
+): { ref: ContentRef; bonus: FeatBonus; levels: number }[] {
+  return heldFeatures(definition).map(({ ref, entry, levels }) => ({
+    ref,
+    levels,
+    bonus: Object.fromEntries(
       mechanicsOfKind(entry, "bonus").map(({ target, value }) => [target, value]),
     ) as FeatBonus,
-  ]),
-);
-
-type Feats = Pick<CharacterDefinition, "feats">;
-
-/** Each catalog feat the table names, once: none of them can be taken twice. */
-function bonusFeats(definition: Feats): { ref: ContentRef; bonus: FeatBonus }[] {
-  const seen = new Map<string, { ref: ContentRef; bonus: FeatBonus }>();
-  for (const { ref } of definition.feats) {
-    if ("homebrewId" in ref) continue;
-    const key = refKey(ref);
-    const bonus = FEAT_BONUSES.get(key);
-    if (bonus && !seen.has(key)) seen.set(key, { ref, bonus });
-  }
-  return [...seen.values()];
+  }));
 }
 
 export function featInitiativeTerms(
-  definition: Feats,
+  definition: HoldsFeatures,
   proficiencyBonus: number,
 ): Term<TermReference>[] {
   return bonusFeats(definition).flatMap(({ ref, bonus: { initiative } }) =>
@@ -58,18 +46,18 @@ export function featInitiativeTerms(
   );
 }
 
-export function featHitPointTerms(definition: Feats, level: number): Term<TermReference>[] {
-  return bonusFeats(definition).flatMap(({ ref, bonus: { hitPointsPerLevel } }) =>
+export function featHitPointTerms(definition: HoldsFeatures): Term<TermReference>[] {
+  return bonusFeats(definition).flatMap(({ ref, levels, bonus: { hitPointsPerLevel } }) =>
     hitPointsPerLevel === undefined
       ? []
-      : [{ label: ref.name, value: hitPointsPerLevel * level, reference: ref }],
+      : [{ label: ref.name, value: hitPointsPerLevel * levels, reference: ref }],
   );
 }
 
 /** Applied to the race's speed, so an item that sets or scales a speed reads the raised walk. */
 export function speedWithFeats(
   base: Speed,
-  definition: Feats,
+  definition: HoldsFeatures,
 ): { speed: Speed; terms: Term<TermReference>[] } {
   let walk = base.walk;
   const terms: Term<TermReference>[] = [];

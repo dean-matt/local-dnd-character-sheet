@@ -35,7 +35,7 @@ import {
   type WeaponTrait,
 } from "./index.ts";
 import type { Ability } from "./refs.ts";
-import { raceSummary } from "./summaries.ts";
+import { raceSummary, totalLevel } from "./summaries.ts";
 import {
   DECEPTION,
   definition,
@@ -260,6 +260,21 @@ describe("deriveCharacter", () => {
 
   it("parses as a derived block", () => {
     expect(characterDerivedSchema.safeParse(derived).success).toBe(true);
+  });
+
+  it("raises the maximum by a Hill Dwarf's level count and names the trait", () => {
+    const dwarf = {
+      ...equipped,
+      race: { name: "Dwarf", source: "PHB" },
+      subrace: { name: "Hill", source: "PHB" },
+    };
+    const field = deriveCharacter(dwarf, catalog).hitPointMaximum;
+    expect(field.computed).toBe(derived.hitPointMaximum.computed + totalLevel(dwarf));
+    expect(field.terms).toContainEqual({
+      label: "Dwarven Toughness",
+      value: totalLevel(dwarf),
+      reference: { name: "Dwarven Toughness", source: "PHB" },
+    });
   });
 
   it("assembles hit points, size and speed the way the existing fields already do", () => {
