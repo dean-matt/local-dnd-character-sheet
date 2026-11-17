@@ -277,6 +277,29 @@ describe("deriveCharacter", () => {
     });
   });
 
+  it("raises the maximum by a Draconic Sorcerer's level count when the subclass sits on a later level row", () => {
+    const sorcerer = {
+      ...equipped,
+      levels: [
+        { class: { name: "Sorcerer", source: "PHB" } },
+        { class: { name: "Sorcerer", source: "PHB" } },
+        {
+          class: { name: "Sorcerer", source: "PHB" },
+          subclass: { name: "Draconic Bloodline", source: "PHB" },
+        },
+      ],
+    };
+    const field = deriveCharacter(sorcerer, {
+      ...catalog,
+      hitDice: new Map([["catalog|Sorcerer|PHB", 6 as const]]),
+    }).hitPointMaximum;
+    expect(field.terms).toContainEqual({
+      label: "Draconic Resilience",
+      value: 3,
+      reference: expect.objectContaining({ name: "Draconic Resilience", source: "PHB" }),
+    });
+  });
+
   it("assembles hit points, size and speed the way the existing fields already do", () => {
     expect(derived.hitPointMaximum.computed).toBe(hitPointMaximum(equipped, hitDice).total);
     expect(derived.size.computed).toBe("medium");
