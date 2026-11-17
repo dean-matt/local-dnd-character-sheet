@@ -832,6 +832,160 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("features that grant proficiency or half of it", () => {
+    const PERFORMANCE = { name: "Performance", source: "XPHB" };
+    const ATHLETICS = { name: "Athletics", source: "XPHB" };
+    const featureCatalog = (...classes: string[]) => ({
+      ...catalog,
+      skills: [
+        ...catalog.skills,
+        { ref: PERFORMANCE, ability: "cha" as const },
+        { ref: ATHLETICS, ability: "str" as const },
+      ],
+      hitDice: new Map([
+        ...hitDice,
+        ...classes.map((name) => [entryKey({ name, source: "PHB" }), 8 as const] as const),
+      ]),
+    });
+    const as = (
+      className: string,
+      level: number,
+      subclass?: string,
+      extra: Partial<CharacterDefinition> = {},
+      subclassSource = "PHB",
+    ): CharacterDefinition => ({
+      ...definition,
+      levels: Array.from({ length: level }, (_, index) => ({
+        class: { name: className, source: "PHB" },
+        ...(index === 0 && subclass
+          ? { subclass: { name: subclass, source: subclassSource } }
+          : {}),
+      })),
+      ...extra,
+    });
+    const skill = (block: CharacterDerived, name: string) =>
+      block.skills.find((row) => row.ref.name === name);
+
+    it("adds heavy armor for a Life domain cleric and takes it back when the subclass goes", () => {
+      const cleric = featureCatalog("Cleric");
+      const life = deriveCharacter(as("Cleric", 1, "Life Domain"), cleric);
+      expect(life.featGrants.computed.armor).toEqual([
+        { name: "heavy", from: ["Bonus Proficiency"] },
+      ]);
+      const plain = deriveCharacter(as("Cleric", 1), cleric);
+      expect(plain.featGrants.computed.armor).toEqual([]);
+    });
+
+    it("grants a subclass feature's proficiency only from the level it arrives at", () => {
+      const rogue = featureCatalog("Rogue");
+      const tools = (level: number) =>
+        deriveCharacter(as("Rogue", level, "Assassin"), rogue).featGrants.computed.tools;
+      expect(tools(2)).toEqual([]);
+      expect(tools(3)).toEqual([
+        { name: "disguise kit", from: ["Bonus Proficiencies"] },
+        { name: "poisoner's kit", from: ["Bonus Proficiencies"] },
+      ]);
+    });
+
+    it("grants a skill, and keeps a hand-set level that is higher", () => {
+      const monk = featureCatalog("Monk");
+      const granted = deriveCharacter(as("Monk", 3, "Way of the Drunken Master", {}, "XGE"), monk);
+      expect(skill(granted, "Performance")?.modifier.computed).toBe(3 + 2);
+      const set = (level: "expertise" | "proficient") =>
+        deriveCharacter(
+          as(
+            "Monk",
+            3,
+            "Way of the Drunken Master",
+            {
+              proficiencies: { ...definition.proficiencies, skills: [{ ref: PERFORMANCE, level }] },
+            },
+            "XGE",
+          ),
+          monk,
+        );
+      expect(skill(set("expertise"), "Performance")?.modifier.computed).toBe(3 + 2 * 2);
+      expect(skill(set("proficient"), "Performance")?.modifier.computed).toBe(3 + 2);
+    });
+
+    it("keeps an armor proficiency the player set once, not twice", () => {
+      const cleric = featureCatalog("Cleric");
+      const block = deriveCharacter(
+        as("Cleric", 1, "Life Domain", {
+          proficiencies: { ...definition.proficiencies, armor: ["heavy"] },
+        }),
+        cleric,
+      );
+      expect(block.unproficientItems).toEqual([]);
+      expect(block.featGrants.computed.armor).toEqual([
+        { name: "heavy", from: ["Bonus Proficiency"] },
+      ]);
+    });
+
+    it("adds half the proficiency bonus, rounded down, to a check the bard lacks proficiency in", () => {
+      const bard = featureCatalog("Bard");
+      const jack = deriveCharacter(as("Bard", 5), bard);
+      const plain = deriveCharacter(as("Bard", 1), bard);
+      expect(skill(jack, "Perception")?.modifier.computed).toBe(
+        (skill(plain, "Perception")?.modifier.computed ?? 0) + 1,
+      );
+      expect(skill(jack, "Perception")?.modifier.terms).toContainEqual(
+        expect.objectContaining({ label: "Jack of All Trades", value: 1 }),
+      );
+      expect(skill(jack, "Perception")?.passive.computed).toBe(
+        (skill(plain, "Perception")?.passive.computed ?? 0) + 1,
+      );
+      expect(jack.abilityChecks.cha.terms).toContainEqual(
+        expect.objectContaining({ label: "Jack of All Trades", value: 1 }),
+      );
+      expect(jack.initiative.terms).toContainEqual(
+        expect.objectContaining({ label: "Jack of All Trades", value: 1 }),
+      );
+    });
+
+    it("adds nothing to a skill the character is proficient in", () => {
+      const bard = featureCatalog("Bard");
+      const trained = deriveCharacter(
+        as("Bard", 5, undefined, {
+          proficiencies: {
+            ...definition.proficiencies,
+            skills: [{ ref: PERCEPTION, level: "proficient" }],
+          },
+        }),
+        bard,
+      );
+      expect(skill(trained, "Perception")?.modifier.terms).not.toContainEqual(
+        expect.objectContaining({ label: "Jack of All Trades" }),
+      );
+    });
+
+    it("rounds a Champion's Remarkable Athlete up and limits it to Strength, Dexterity and Constitution", () => {
+      const fighter = featureCatalog("Fighter");
+      const champion = (level: number) =>
+        deriveCharacter(as("Fighter", level, "Champion"), fighter);
+      const terms = (block: CharacterDerived, ability: Ability) =>
+        block.abilityChecks[ability].terms.filter((term) => term.label === "Remarkable Athlete");
+      expect(terms(champion(7), "str")).toEqual([expect.objectContaining({ value: 2 })]);
+      expect(terms(champion(7), "wis")).toEqual([]);
+      expect(terms(champion(6), "str")).toEqual([]);
+    });
+
+    it("does not stack two half proficiencies on one check", () => {
+      const bard = featureCatalog("Bard", "Fighter");
+      const both = deriveCharacter(
+        {
+          ...definition,
+          levels: [...as("Bard", 2).levels, ...as("Fighter", 11, "Champion").levels],
+        },
+        bard,
+      );
+      const half = both.abilityChecks.str.terms.filter(
+        (term) => term.label === "Jack of All Trades" || term.label === "Remarkable Athlete",
+      );
+      expect(half).toEqual([expect.objectContaining({ label: "Remarkable Athlete", value: 3 })]);
+    });
+  });
+
   it("adds a Monk's Wisdom to the unarmored base, and a manual armor class still wins", () => {
     const MONK = { name: "Monk", source: "XPHB" };
     const monk: CharacterDefinition = {

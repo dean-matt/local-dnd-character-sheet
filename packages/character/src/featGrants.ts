@@ -1,7 +1,8 @@
 /**
  * What the character's feats grant through the fields races and items carry, read from each
- * `feats` entry's row and its picks. The definition stores none of it, so removing a feat
- * takes back exactly what it granted and nothing the race or the player gave as well.
+ * `feats` entry's row and its picks, and what the features it holds record. The definition
+ * stores none of it, so removing a feat or feature takes back exactly what it granted and
+ * nothing the race or the player gave as well.
  */
 import { ABILITIES, PROFICIENCY_LEVELS, type ProficiencyLevel } from "@dnd/rules";
 import type {
@@ -14,6 +15,8 @@ import type {
 } from "./catalog.ts";
 import type { CharacterDerived, FeatGrants } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
+import { mechanicsOfKind } from "./featureMechanics.ts";
+import { heldFeatures } from "./heldFeatures.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import type { Ability, ContentRef } from "./refs.ts";
 import { derivedValue } from "./resolve.ts";
@@ -68,6 +71,32 @@ function acceptedPicks(offers: readonly FeatOffer[], picks: Picks): Picked {
 }
 
 type Held = { trait: FeatGrantTrait; picked: Picked };
+
+const NO_PICKS = Object.fromEntries(FIELDS.map((field) => [field, []])) as unknown as Picked;
+
+/** The proficiencies each class, subclass or race feature records, read like a feat's traits and cited by the feature's name. */
+function featureTraits(definition: CharacterDefinition): Held[] {
+  return heldFeatures(definition).flatMap(({ ref, entry }) =>
+    mechanicsOfKind(entry, "proficiency").map((grant) => ({
+      picked: NO_PICKS,
+      trait: {
+        name: ref.name,
+        savingThrows: grant.savingThrows ?? [],
+        skills: grant.skills ?? [],
+        expertise: grant.expertise ?? [],
+        tools: grant.tools ?? [],
+        languages: [],
+        armor: grant.armor ?? [],
+        weapons: grant.weapons ?? [],
+        resist: [],
+        immune: [],
+        conditionImmune: [],
+        senses: [],
+        offers: [],
+      },
+    })),
+  );
+}
 
 /** Each name once, in the order first granted, with every feat that grants it. */
 function gathered(held: readonly Held[], names: (feat: Held) => readonly string[]) {
@@ -196,10 +225,13 @@ export function featGrants(
   senses: (SenseGrant & { from: string })[];
   itemSkills: FeatGrants["skills"];
 } {
-  const held = definition.feats.flatMap(({ ref, picks }): Held[] => {
-    const trait = catalog.featGrants.get(entryKey(ref));
-    return trait ? [{ trait, picked: acceptedPicks(trait.offers, picks) }] : [];
-  });
+  const held = [
+    ...definition.feats.flatMap(({ ref, picks }): Held[] => {
+      const trait = catalog.featGrants.get(entryKey(ref));
+      return trait ? [{ trait, picked: acceptedPicks(trait.offers, picks) }] : [];
+    }),
+    ...featureTraits(definition),
+  ];
   const feats = held.map(featSource);
   const items = wornSkillSources(definition, catalog);
   const named = (field: "tools" | "languages") =>
@@ -295,8 +327,8 @@ export function withFeatGrants(
         ]),
       ],
       skills: [...skills.values()],
-      armor: names(proficiencies.armor, granted.armor),
-      weapons: names(proficiencies.weapons, granted.weapons),
+      armor: [...new Set(names(proficiencies.armor, granted.armor))],
+      weapons: [...new Set(names(proficiencies.weapons, granted.weapons))],
     },
   };
 }

@@ -55,8 +55,14 @@ import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { exhaustedMaximum } from "./exhaustedMaximum.ts";
 import { exhaustionPenaltyTerms } from "./exhaustionPenalty.ts";
-import { featHitPointTerms, featInitiativeTerms, speedWithFeats } from "./featEffects.ts";
+import {
+  featHitPointTerms,
+  featInitiativeTerms,
+  initiativeUsesProficiency,
+  speedWithFeats,
+} from "./featEffects.ts";
 import { featGrants, withFeatGrants } from "./featGrants.ts";
+import { halfProficiencyTerm } from "./halfProficiency.ts";
 import {
   type ProficiencyItem,
   proficiencyItemTerms,
@@ -1134,8 +1140,23 @@ export function deriveCharacter(
     ...itemTerms(bonuses, (item) => item.abilityCheck),
     ...modifierTerms(state, onKind("check")),
   ];
+  const proficiencyBonus = breakdown<TermReference>([
+    ...proficiencyBonusBreakdown<TermReference>(level).terms,
+    ...itemTerms(bonuses, (item) => item.proficiencyBonus),
+  ]);
+  const halfProficient = (ability: Ability) => {
+    const term = halfProficiencyTerm(definition, ability, proficiencyBonus.total);
+    return term ? [term] : [];
+  };
   const skills = catalog.skills.map((skill) => {
-    const skillBonus = [...checkBonus, ...modifierTerms(state, onSkill(skill.ref))];
+    const unproficient = !definition.proficiencies.skills.some(
+      (held) => refKey(held.ref) === refKey(skill.ref) && held.level !== "none",
+    );
+    const skillBonus = [
+      ...checkBonus,
+      ...modifierTerms(state, onSkill(skill.ref)),
+      ...(unproficient && skill.ability !== "flat" ? halfProficient(skill.ability) : []),
+    ];
     const { total, terms } = skillModifier(
       definition,
       skill.ref,
@@ -1165,21 +1186,23 @@ export function deriveCharacter(
       ComputedField<number>
     >;
 
-  const proficiencyBonus = breakdown<TermReference>([
-    ...proficiencyBonusBreakdown<TermReference>(level).terms,
-    ...itemTerms(bonuses, (item) => item.proficiencyBonus),
-  ]);
   const { burdened, ...carrying } = load(definition, catalog);
-  const abilityCheck = (modifier: number) =>
+  const abilityCheck = (ability: Ability, modifier: number) =>
     fromBreakdown(
-      breakdown<TermReference>([{ label: "Ability modifier", value: modifier }, ...exhaustion]),
+      breakdown<TermReference>([
+        { label: "Ability modifier", value: modifier },
+        ...halfProficient(ability),
+        ...exhaustion,
+      ]),
     );
   const block: CharacterDerived = {
     abilityScores: perAbility((ability) => fromBreakdown(scores[ability])),
     abilityModifiers: perAbility((ability) =>
       fromBreakdown(abilityModifierBreakdown(scores[ability].total)),
     ),
-    abilityChecks: perAbility((ability) => abilityCheck(abilityModifier(scores[ability].total))),
+    abilityChecks: perAbility((ability) =>
+      abilityCheck(ability, abilityModifier(scores[ability].total)),
+    ),
     hitPointMaximum: fromBreakdown(
       reducedMaximum(
         withModifiers(
@@ -1210,6 +1233,7 @@ export function deriveCharacter(
         ...checkBonus,
         ...exhaustion,
         ...featInitiativeTerms(definition, proficiencyBonus.total),
+        ...(initiativeUsesProficiency(definition) ? [] : halfProficient("dex")),
         ...subclassInitiativeTerms(
           definition,
           (ability) => abilityModifier(scores[ability].total),
@@ -1243,7 +1267,7 @@ export function deriveCharacter(
     {
       ...block,
       abilityChecks: perAbility((ability) =>
-        abilityCheck(modifiers[ability].manual ?? modifiers[ability].computed),
+        abilityCheck(ability, modifiers[ability].manual ?? modifiers[ability].computed),
       ),
     },
     stored,

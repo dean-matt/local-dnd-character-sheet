@@ -5,7 +5,7 @@
  */
 import { z } from "zod";
 import { featureKey, refKey } from "./keys.ts";
-import { contentRefSchema, featureKeySchema } from "./refs.ts";
+import { abilitySchema, contentRefSchema, featureKeySchema } from "./refs.ts";
 
 const bonusMechanicSchema = z.strictObject({
   kind: z.literal("bonus"),
@@ -38,7 +38,41 @@ const mediumArmorDexterityMechanicSchema = z.strictObject({
   minimum: z.int().min(1),
 });
 
+const names = z.array(z.string().min(1)).min(1).optional();
+
+/**
+ * Proficiencies a feature grants outright, each name lowercased as upstream writes it: a
+ * saving throw by ability, a skill, expertise in a skill the feature also grants or the
+ * character holds, a tool, an armor or weapon category or kind. A choice the player makes is
+ * not recorded here.
+ */
+const proficiencyMechanicSchema = z
+  .strictObject({
+    kind: z.literal("proficiency"),
+    savingThrows: z.array(abilitySchema).min(1).optional(),
+    skills: names,
+    expertise: names,
+    tools: names,
+    armor: names,
+    weapons: names,
+  })
+  .refine(
+    (grant) => Object.entries(grant).some(([key, list]) => key !== "kind" && list !== undefined),
+    {
+      error: "a proficiency mechanic grants something",
+    },
+  );
+
+/** Half the proficiency bonus on `abilities` checks that do not already use proficiency, rounded as the feature says. */
+const halfProficiencyMechanicSchema = z.strictObject({
+  kind: z.literal("halfProficiency"),
+  abilities: z.array(abilitySchema).min(1),
+  rounding: z.enum(["down", "up"]),
+});
+
 const mechanicSchema = z.union([
+  proficiencyMechanicSchema,
+  halfProficiencyMechanicSchema,
   bonusKindSchema,
   armorClassMechanicSchema,
   unarmoredBaseMechanicSchema,

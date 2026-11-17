@@ -20,6 +20,7 @@ export {
   abilityModifier,
   abilityModifierBreakdown,
   experienceThreshold,
+  halfProficiency,
   IMPROVEMENT_CAP,
   PROFICIENCY_LEVELS,
   passiveScore,

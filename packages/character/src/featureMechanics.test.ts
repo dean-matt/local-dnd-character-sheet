@@ -32,6 +32,17 @@ describe("featureMechanicsSchema", () => {
     expect(parse([bonus("initiative", "proficiency"), bonus("walk", 10)]).success).toBe(true);
   });
 
+  it("refuses a proficiency mechanic that grants nothing, and one naming an unknown ability", () => {
+    const ref = { name: "Bonus Proficiency", source: "PHB" };
+    const parse = (mechanic: object) =>
+      featureMechanicsSchema.safeParse({ ref, mechanics: [mechanic] }).success;
+    expect(parse({ kind: "proficiency" })).toBe(false);
+    expect(parse({ kind: "proficiency", armor: ["heavy"] })).toBe(true);
+    expect(parse({ kind: "proficiency", savingThrows: ["luck"] })).toBe(false);
+    expect(parse({ kind: "halfProficiency", abilities: ["str"], rounding: "up" })).toBe(true);
+    expect(parse({ kind: "halfProficiency", abilities: [], rounding: "up" })).toBe(false);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);
