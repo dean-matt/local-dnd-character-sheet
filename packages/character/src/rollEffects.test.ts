@@ -4,6 +4,7 @@ import {
   conditionAttackEffects,
   effectsOnRoll,
   exhaustionRollEffects,
+  exhaustionRollPenalty,
   netRollEffect,
 } from "./rollEffects.ts";
 
@@ -130,5 +131,16 @@ describe("exhaustionRollEffects", () => {
 
   it("leaves a 2024 character alone", () => {
     expect(exhaustionRollEffects(5, "one", "check")).toEqual([]);
+  });
+});
+
+describe("exhaustionRollPenalty", () => {
+  it("takes 2 off every D20 Test per level of a 2024 character, naming the level", () => {
+    expect(exhaustionRollPenalty(0, "one")).toBeUndefined();
+    expect(exhaustionRollPenalty(3, "one")).toEqual({ source: "Exhaustion 3", value: -6 });
+  });
+
+  it("leaves a classic character to disadvantage", () => {
+    expect(exhaustionRollPenalty(3, "classic")).toBeUndefined();
   });
 });

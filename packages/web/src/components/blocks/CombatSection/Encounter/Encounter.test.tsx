@@ -82,6 +82,20 @@ describe("Encounter", () => {
     expect(normal[0]?.body.roll?.mode).toBeUndefined();
   });
 
+  it("takes 2 per exhaustion level off a 2024 initiative roll, naming the level", async () => {
+    const writes = renderEncounter({ exhaustion: 2 }, "one");
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.body.roll?.notation).toMatch(/^1d20/);
+    expect(writes[0]?.body.roll).toMatchObject({
+      terms: [
+        expect.objectContaining({ source: "Initiative" }),
+        { source: "Exhaustion 2", value: -4 },
+      ],
+    });
+    expect(screen.getByRole("button", { name: "Initiative: −4 (Exhaustion 2)" })).toBeVisible();
+  });
+
   it("advances the round and ends the encounter, each one write", async () => {
     const writes = renderEncounter({ encounter: { round: 2, initiative: 15 } });
 

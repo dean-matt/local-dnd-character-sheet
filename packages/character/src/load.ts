@@ -130,7 +130,7 @@ function presentModes(speed: Speed): [string, number][] {
 }
 
 /**
- * What a load and classic exhaustion cost a character's speeds. Heavy encumbrance's
+ * What a load and exhaustion cost a character's speeds. Heavy encumbrance's
  * disadvantage reaches the derived block's `rollEffects`.
  *
  * Nothing is stored, so turning the option on mid-campaign changes the answer and leaves
@@ -138,7 +138,7 @@ function presentModes(speed: Speed): [string, number][] {
  *
  * The variant reads "your speed drops by 10 feet" and names no movement mode, so the
  * reduction comes off every mode the character has rather than walking alone. Exhaustion
- * halves or zeroes every mode too, after the load's feet come off.
+ * takes feet off every mode too, or halves or zeroes it in the classic ruleset, after the load's feet come off.
  *
  * `weight` is the caller's, from `carriedWeight`. `speedReduction` is the load's feet alone.
  */
@@ -157,10 +157,11 @@ export function encumberedSpeed(
   const classic = tired.edition === "classic";
   const halved = classic && tired.speedHalved;
   const zeroed = classic && tired.speedZero;
+  const feetLost = tired.edition === "one" ? tired.speedReduction : 0;
   const reduced = Object.fromEntries(
     modes.map(([mode, base]) => [
       mode,
-      reducedSpeed({ base, reduction: speedReduction, halved, zeroed }),
+      reducedSpeed({ base, reduction: speedReduction + feetLost, halved, zeroed }),
     ]),
   ) as Speed;
   const reductionTerms: Term<TermReference>[] =
@@ -177,7 +178,9 @@ export function encumberedSpeed(
     ? `Exhaustion ${exhaustion}: speed 0`
     : halved
       ? `Exhaustion ${exhaustion}: speed halved`
-      : undefined;
+      : feetLost > 0
+        ? `Exhaustion ${exhaustion}: speed -${feetLost} ft`
+        : undefined;
   return {
     speed: reduced,
     speedReduction,
@@ -192,6 +195,6 @@ export type EncumberedSpeed = {
   speedReduction: number;
   /** Why `speedReduction` is what it is — the encumbrance house rule, or no term at all. */
   reductionBreakdown: Breakdown<TermReference>;
-  /** What classic exhaustion did to every mode, naming its level; absent where it did nothing. */
+  /** What exhaustion did to every mode, naming its level; absent where it did nothing. */
   exhaustion?: string;
 };
