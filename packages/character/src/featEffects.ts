@@ -1,12 +1,14 @@
 /**
  * The initiative, hit point and speed bonuses a feat states only in its prose. 5etools
- * carries no field for them, so the sheet knows each feat by `(name, source)`, and a feat
- * this table does not name adds nothing.
+ * carries no field for them, so the sheet reads them from the recorded feature mechanics,
+ * and a feat they do not name adds nothing.
  */
 import type { Term } from "@dnd/rules";
 import type { Speed } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
+import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
+import { featureMechanicsKey } from "./featureMechanics.ts";
 import { refKey } from "./keys.ts";
 import type { ContentRef } from "./refs.ts";
 
@@ -16,14 +18,14 @@ type FeatBonus = {
   walk?: number;
 };
 
-const FEAT_BONUSES = new Map<string, FeatBonus>([
-  ["Alert|PHB", { initiative: 5 }],
-  ["Alert|XPHB", { initiative: "proficiency" }],
-  ["Tough|PHB", { hitPointsPerLevel: 2 }],
-  ["Tough|XPHB", { hitPointsPerLevel: 2 }],
-  ["Mobile|PHB", { walk: 10 }],
-  ["Speedy|XPHB", { walk: 10 }],
-]);
+const FEAT_BONUSES = new Map<string, FeatBonus>(
+  FEATURE_MECHANICS.filter(({ ref }) => !("className" in ref)).map((entry) => [
+    featureMechanicsKey(entry),
+    Object.fromEntries(
+      (entry.mechanics ?? []).map(({ target, value }) => [target, value]),
+    ) as FeatBonus,
+  ]),
+);
 
 type Feats = Pick<CharacterDefinition, "feats">;
 

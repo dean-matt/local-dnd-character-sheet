@@ -33,6 +33,9 @@ wants the whole character is a projection and belongs with the schemas.
 
 Characters reference catalog rows by `(name, source)` — they never copy them.
 
+Rules text is fetched and never committed. The feature mechanics the project records
+(`packages/character/src/featureMechanicRecords.ts`) are committed, and carry no prose.
+
 ## Commands
 
 ```bash
