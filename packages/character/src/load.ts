@@ -2,6 +2,7 @@ import {
   type Breakdown,
   breakdown,
   encumbranceAt,
+  exhaustionEffects,
   POUNDS_PER_COIN,
   reducedSpeed,
   type Term,
@@ -129,38 +130,38 @@ function presentModes(speed: Speed): [string, number][] {
 }
 
 /**
- * What a load costs a character's speeds. Heavy encumbrance's disadvantage reaches the
- * derived block's `rollEffects`.
+ * What a load and classic exhaustion cost a character's speeds. Heavy encumbrance's
+ * disadvantage reaches the derived block's `rollEffects`.
  *
  * Nothing is stored, so turning the option on mid-campaign changes the answer and leaves
  * no stale derived value behind.
  *
  * The variant reads "your speed drops by 10 feet" and names no movement mode, so the
- * reduction comes off every mode the character has rather than walking alone.
+ * reduction comes off every mode the character has rather than walking alone. Exhaustion
+ * halves or zeroes every mode too, after the load's feet come off.
  *
- * `weight` is the caller's, from `carriedWeight`. This applies encumbrance alone, and
- * `speedReduction` is how a caller composes another reduction with it.
+ * `weight` is the caller's, from `carriedWeight`. `speedReduction` is the load's feet alone.
  */
 export function encumberedSpeed(
   definition: CharacterDefinition,
   derived: CharacterDerived,
   weight: number,
+  exhaustion = 0,
 ): EncumberedSpeed {
   const modes = presentModes(derivedValue(derived.speed));
-  if (!houseRule(definition, "encumbrance")) {
-    return {
-      speed: Object.fromEntries(modes) as Speed,
-      speedReduction: 0,
-      reductionBreakdown: breakdown([]),
-    };
-  }
-  const { speedReduction } = encumbranceAt(
-    derived.abilityScores.str.computed,
-    derivedValue(derived.size),
-    weight,
-  );
+  const loaded = houseRule(definition, "encumbrance");
+  const { speedReduction } = loaded
+    ? encumbranceAt(derived.abilityScores.str.computed, derivedValue(derived.size), weight)
+    : { speedReduction: 0 };
+  const tired = exhaustionEffects(exhaustion, definition.edition);
+  const classic = tired.edition === "classic";
+  const halved = classic && tired.speedHalved;
+  const zeroed = classic && tired.speedZero;
   const reduced = Object.fromEntries(
-    modes.map(([mode, base]) => [mode, reducedSpeed({ base, reduction: speedReduction })]),
+    modes.map(([mode, base]) => [
+      mode,
+      reducedSpeed({ base, reduction: speedReduction, halved, zeroed }),
+    ]),
   ) as Speed;
   const reductionTerms: Term<TermReference>[] =
     speedReduction === 0
@@ -172,23 +173,25 @@ export function encumberedSpeed(
             reference: { houseRuleOption: "encumbrance" },
           },
         ];
+  const exhausted = zeroed
+    ? `Exhaustion ${exhaustion}: speed 0`
+    : halved
+      ? `Exhaustion ${exhaustion}: speed halved`
+      : undefined;
   return {
     speed: reduced,
     speedReduction,
     reductionBreakdown: breakdown(reductionTerms),
+    ...(exhausted && { exhaustion: exhausted }),
   };
 }
 
 export type EncumberedSpeed = {
   speed: Speed;
-  /**
-   * The feet `speed` already lost, handed back unapplied so a caller composes another
-   * reduction against the derived speeds rather than reducing `speed` twice: sum this
-   * into `reducedSpeed`'s `reduction`. 2014 exhaustion states `halved` and `zeroed`
-   * instead of feet, so those go to `reducedSpeed` in the same call. Zero where the
-   * table never opted in.
-   */
+  /** The feet the load took off every mode; zero where the table never opted in. */
   speedReduction: number;
   /** Why `speedReduction` is what it is — the encumbrance house rule, or no term at all. */
   reductionBreakdown: Breakdown<TermReference>;
+  /** What classic exhaustion did to every mode, naming its level; absent where it did nothing. */
+  exhaustion?: string;
 };

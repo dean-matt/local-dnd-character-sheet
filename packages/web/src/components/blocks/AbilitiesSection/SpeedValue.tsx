@@ -7,6 +7,7 @@ import {
   encumberedSpeed,
 } from "@dnd/character";
 import { useContext } from "react";
+import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { capitalize } from "../../../lib/capitalize.ts";
 import { Field } from "../../Field/Field.tsx";
 import { OverrideMark } from "../../OverrideMark.tsx";
@@ -47,24 +48,28 @@ function modeOf(speed: Derived<Speed>, mode: Mode): Derived<number | undefined> 
  * overrides each mode under its own key, such as `speed.fly`. A mode no race grants, such
  * as burrowing, takes an override too.
  *
- * Each speed shown has the encumbrance reduction applied on top of any override, and the
- * breakdown names the rule. An override is marked against the computed speed under the same
+ * Each speed shown has the encumbrance reduction and classic exhaustion applied on top of any
+ * override, and the breakdown names the rule. An override is marked against the computed speed under the same
  * load. Each override field edits the speed before the load, the value the definition stores.
  */
 export function SpeedValue({
+  characterId,
   definition,
   derived,
 }: {
+  characterId: string;
   definition: CharacterDefinition;
   derived: CharacterDerived;
 }) {
   const save = useContext(SaveOverride);
   const speed = derived.speed;
-  const loaded = encumberedSpeed(definition, derived, derived.carriedWeight);
+  const exhaustion = useCharacterState(characterId).data?.state.exhaustion ?? 0;
+  const loaded = encumberedSpeed(definition, derived, derived.carriedWeight, exhaustion);
   const loadedComputed = encumberedSpeed(
     definition,
     { ...derived, speed: { ...speed, manual: null } },
     derived.carriedWeight,
+    exhaustion,
   ).speed;
   const shown = (mode: Mode): Derived<number | undefined> => ({
     computed: loadedComputed[mode],
@@ -85,7 +90,7 @@ export function SpeedValue({
   );
   return (
     <>
-      {terms.length === 0 && !overridden && save === null ? (
+      {terms.length === 0 && !overridden && save === null && !loaded.exhaustion ? (
         trigger
       ) : (
         <Popover
@@ -103,6 +108,7 @@ export function SpeedValue({
               </p>
             )}
             {terms.length > 0 && <TermList terms={terms} />}
+            {loaded.exhaustion && <p>{loaded.exhaustion}</p>}
             {save !== null &&
               MODES.map((mode) => (
                 <div key={mode} className="flex items-center justify-between gap-4">

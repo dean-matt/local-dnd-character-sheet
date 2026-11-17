@@ -11,9 +11,11 @@ import { StatTile } from "./StatTile.tsx";
 const COMBAT_LABEL_CLASS = "text-chip tracking-[0.06em]";
 
 export function CombatStats({
+  characterId,
   definition,
   derived,
 }: {
+  characterId: string;
   definition: CharacterDefinition;
   derived: CharacterDerived;
 }) {
@@ -47,7 +49,7 @@ export function CombatStats({
           />
         </StatTile>
         <StatTile label="Speed" name="Speed" labelClassName={COMBAT_LABEL_CLASS}>
-          <SpeedValue definition={definition} derived={derived} />
+          <SpeedValue characterId={characterId} definition={definition} derived={derived} />
         </StatTile>
       </dl>
     </Card>

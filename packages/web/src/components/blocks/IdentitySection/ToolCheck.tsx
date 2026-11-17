@@ -8,6 +8,7 @@ import {
   proficiencyAt,
 } from "@dnd/character";
 import { useState } from "react";
+import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
 import { useToolPrintedAbility } from "../../../hooks/useToolPrintedAbility.ts";
 import { ModeRoll } from "../../ModeRoll.tsx";
 import { signed } from "../signed.ts";
@@ -30,6 +31,7 @@ export function ToolCheck({
     tool.name,
     character.definition.edition,
   );
+  const checkExhaustion = useExhaustionEffects(character.id, character.definition.edition, "check");
   const [picked, setPicked] = useState<Ability>();
   const ability = picked ?? printed ?? UNPRINTED;
   const bonus =
@@ -52,7 +54,15 @@ export function ToolCheck({
         ))}
       </select>
       <span className="font-semibold">{signed(bonus)}</span>
-      {!isLoading && <ModeRoll label={label} type="check" origin={tool.name} bonus={bonus} />}
+      {!isLoading && (
+        <ModeRoll
+          label={label}
+          type="check"
+          origin={tool.name}
+          bonus={bonus}
+          effects={checkExhaustion}
+        />
+      )}
     </li>
   );
 }

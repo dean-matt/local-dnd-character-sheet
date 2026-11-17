@@ -384,3 +384,35 @@ describe("encumbered speed", () => {
     expect(speeds(HEAVILY_ENCUMBERED_AT + 1, {}).speed).toEqual({ walk: 30, fly: 30, swim: 10 });
   });
 });
+
+describe("exhaustion on speed", () => {
+  const winged = { speed: { computed: { walk: 30, fly: 30, swim: 10 }, manual: null } };
+  const at = (level: number, edition: "classic" | "one" = "classic", weight = 0) =>
+    encumberedSpeed(
+      characterDefinitionSchema.parse({ ...structuredClone(definition), edition }),
+      characterDerivedSchema.parse(derivedInput(winged)),
+      weight,
+      level,
+    );
+
+  it("changes nothing at level 0 or 1", () => {
+    for (const level of [0, 1]) {
+      expect(at(level).speed).toEqual({ walk: 30, fly: 30, swim: 10 });
+      expect(at(level).exhaustion).toBeUndefined();
+    }
+  });
+
+  it("halves every mode from level 2 and says so", () => {
+    expect(at(2).speed).toEqual({ walk: 15, fly: 15, swim: 5 });
+    expect(at(4).exhaustion).toBe("Exhaustion 4: speed halved");
+  });
+
+  it("is 0 from level 5", () => {
+    expect(at(5).speed).toEqual({ walk: 0, fly: 0, swim: 0 });
+    expect(at(6).exhaustion).toBe("Exhaustion 6: speed 0");
+  });
+
+  it("leaves a 2024 character's speed to its own rule", () => {
+    expect(at(5, "one").speed).toEqual({ walk: 30, fly: 30, swim: 10 });
+  });
+});
