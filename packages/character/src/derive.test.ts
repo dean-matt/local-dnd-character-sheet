@@ -3042,6 +3042,94 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("defenses from class features", () => {
+    const rageState = {
+      activeEffects: [{ name: "Rage" }],
+      hitPointMaximumReduction: null,
+      temporaryModifiers: [],
+    };
+    const levelled = (
+      className: string,
+      subclass: { name: string; source: string } | undefined,
+      count: number,
+      extra: Partial<CharacterDefinition> = {},
+      state?: Parameters<typeof deriveCharacter>[2],
+    ) =>
+      deriveCharacter(
+        {
+          ...equipped,
+          levels: Array.from({ length: count }, () => ({
+            class: { name: className, source: "PHB" },
+            ...(subclass && { subclass }),
+          })),
+          ...extra,
+        },
+        {
+          ...catalog,
+          hitDice: new Map<string, 6 | 8 | 10 | 12>([
+            ...catalog.hitDice,
+            [`catalog|${className}|PHB`, 8],
+          ]),
+        },
+        state,
+      ).defenses.computed;
+
+    it("grants Purity of Body's poison and disease immunity at Monk level 10, naming it", () => {
+      const at10 = levelled("Monk", undefined, 10);
+      expect(at10.damageImmunities).toEqual([{ name: "poison", from: ["Purity of Body"] }]);
+      expect(at10.conditionImmunities).toEqual([
+        { name: "disease", from: ["Purity of Body"] },
+        { name: "poisoned", from: ["Purity of Body"] },
+      ]);
+      expect(levelled("Monk", undefined, 9).damageImmunities).toEqual([]);
+    });
+
+    it("grants Heart of the Storm and Inured to Undeath their resistances at their levels", () => {
+      const storm = { name: "Storm Sorcery", source: "XGE" };
+      expect(levelled("Sorcerer", storm, 6).resistances).toEqual([
+        { name: "lightning", from: ["Heart of the Storm"] },
+        { name: "thunder", from: ["Heart of the Storm"] },
+      ]);
+      expect(levelled("Sorcerer", storm, 5).resistances).toEqual([]);
+      const necromancy = { name: "School of Necromancy", source: "PHB" };
+      expect(levelled("Wizard", necromancy, 10).resistances).toEqual([
+        { name: "necrotic", from: ["Inured to Undeath"] },
+      ]);
+      expect(levelled("Wizard", necromancy, 9).resistances).toEqual([]);
+    });
+
+    it("resists all but psychic damage for the Bear totem, only while raging", () => {
+      const totem = { name: "Path of the Totem Warrior", source: "PHB" };
+      const spirit = {
+        name: "Totem Spirit",
+        source: "PHB",
+        className: "Barbarian",
+        classSource: "PHB",
+        subclass: { shortName: "Totem Warrior", source: "PHB" },
+        level: 3,
+      };
+      const bear = {
+        featureChoices: [{ feature: spirit, options: [{ name: "Bear", source: "PHB" }] }],
+      };
+      const eagle = {
+        featureChoices: [{ feature: spirit, options: [{ name: "Eagle", source: "PHB" }] }],
+      };
+      const names = (defenses: ReturnType<typeof levelled>) =>
+        defenses.resistances.map(({ name }) => name);
+      const raging = names(levelled("Barbarian", totem, 3, bear, rageState));
+      expect(raging).toHaveLength(12);
+      expect(raging).not.toContain("psychic");
+      expect(
+        levelled("Barbarian", totem, 3, bear, rageState).resistances.find(
+          ({ name }) => name === "slashing",
+        )?.from,
+      ).toEqual(["Bear", "Rage"]);
+      expect(levelled("Barbarian", totem, 3, bear).resistances).toEqual([]);
+      expect(names(levelled("Barbarian", totem, 3, eagle, rageState))).toHaveLength(3);
+      expect(names(levelled("Barbarian", totem, 2, bear, rageState))).toHaveLength(3);
+    });
+  });
+
   describe("class resources", () => {
     const BARBARIAN = { name: "Barbarian", source: "PHB" };
     const barbarian: CharacterDefinition = { ...definition, levels: [{ class: BARBARIAN }] };

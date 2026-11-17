@@ -7,7 +7,7 @@
 import type { CharacterDefinition } from "./definition.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import { type FeatureMechanics, featureMechanicsKey } from "./featureMechanics.ts";
-import { refKey } from "./keys.ts";
+import { featureKey, refKey } from "./keys.ts";
 import { type ContentRef, catalogRef } from "./refs.ts";
 import { classLevels, totalLevel } from "./summaries.ts";
 
@@ -39,6 +39,9 @@ export const SUBCLASS_NAMES = new Map([
   ["Gloom Stalker|XGE", "Gloom Stalker|XGE"],
   ["Glory|TCE", "Oath of Glory|TCE"],
   ["Shadow|XGE", "Shadow Magic|XGE"],
+  ["Totem Warrior|PHB", "Path of the Totem Warrior|PHB"],
+  ["Necromancy|PHB", "School of Necromancy|PHB"],
+  ["Storm|XGE", "Storm Sorcery|XGE"],
 ]);
 
 /** A subrace trait, keyed `race|subrace` by the `(name, source)` of each. */
@@ -88,10 +91,8 @@ const SUBRACE_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
   return owner ? [{ entry, ref: entry.ref as ContentRef, owner }] : [];
 });
 
-export type HoldsFeatures = Pick<
-  CharacterDefinition,
-  "feats" | "optionalFeatures" | "race" | "subrace" | "levels"
->;
+export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices">> &
+  Pick<CharacterDefinition, "feats" | "optionalFeatures" | "race" | "subrace" | "levels">;
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
   return [...definition.feats, ...definition.optionalFeatures].flatMap(({ ref }) => {
@@ -113,6 +114,14 @@ function subraceTraits(definition: HoldsFeatures, levels: number): Held[] {
   }));
 }
 
+const optionTaken = (definition: HoldsFeatures, { ref, offeredBy }: FeatureMechanics) =>
+  !offeredBy ||
+  (definition.featureChoices ?? []).some(
+    (choice) =>
+      featureKey(choice.feature) === featureKey(offeredBy) &&
+      choice.options.some((option) => option.name === ref.name && option.source === ref.source),
+  );
+
 function classFeatures(definition: HoldsFeatures): Held[] {
   return classLevels(definition).flatMap((group) => {
     if ("homebrewId" in group.class) return [];
@@ -123,7 +132,7 @@ function classFeatures(definition: HoldsFeatures): Held[] {
       ...CLASS_FEATURES.filter((feature) => feature.key === classKey),
       ...SUBCLASS_FEATURES.filter((feature) => feature.key === subclassKey),
     ]
-      .filter((feature) => group.level >= feature.level)
+      .filter((feature) => group.level >= feature.level && optionTaken(definition, feature.entry))
       .map(({ ref, entry }) => ({ ref, entry, levels: group.level }));
   });
 }

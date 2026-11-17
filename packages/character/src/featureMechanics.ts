@@ -79,7 +79,24 @@ const senseMechanicSchema = z.strictObject({
   raceBonus: z.int().min(1).optional(),
 });
 
+/**
+ * Resistances, damage immunities and condition immunities a feature grants, each lowercased as
+ * upstream writes it. `while: "raging"` holds them only during a rage.
+ */
+const defenseMechanicSchema = z
+  .strictObject({
+    kind: z.literal("defense"),
+    resist: names,
+    immune: names,
+    conditionImmune: names,
+    while: z.literal("raging").optional(),
+  })
+  .refine((grant) => [grant.resist, grant.immune, grant.conditionImmune].some(Boolean), {
+    error: "a defense mechanic grants something",
+  });
+
 const mechanicSchema = z.union([
+  defenseMechanicSchema,
   senseMechanicSchema,
   proficiencyMechanicSchema,
   halfProficiencyMechanicSchema,
@@ -104,6 +121,8 @@ const featureRefSchema = z.union([featureKeySchema, contentRefSchema]);
 export const featureMechanicsSchema = z
   .strictObject({
     ref: featureRefSchema,
+    /** The feature whose choice of options this is one of; held only where the character took it. */
+    offeredBy: featureKeySchema.optional(),
     mechanics: z
       .array(mechanicSchema)
       .min(1)
