@@ -7,7 +7,8 @@
  * inert, so a toast drawn there could not be reached or retried while the modal is open.
  * Each toast remembers the viewport that was drawing when it was raised, and only that
  * viewport announces it, so a modal opening or closing moves a toast without reading it out
- * again.
+ * again. A viewport mounting in the commit that raises a toast announces it, as the first
+ * viewport does for a toast raised before any existed.
  */
 export interface SaveToast {
   /** One per field, so a field's next problem replaces its last. */
@@ -33,6 +34,8 @@ interface State {
 }
 
 let state: State = { toasts: [], viewports: [] };
+// Raised since the last microtask, so within the commit still running its effects.
+const fresh = new Set<string>();
 const listeners = new Set<() => void>();
 
 function set(next: State) {
@@ -57,6 +60,10 @@ export function raiseSaveToast(toast: SaveToast) {
     was && was.field === toast.field && was.message === toast.message
       ? was.raisedIn
       : state.viewports.at(-1);
+  if (!was || raisedIn !== was.raisedIn) {
+    if (fresh.size === 0) queueMicrotask(() => fresh.clear());
+    fresh.add(toast.id);
+  }
   const shown = { ...toast, raisedIn };
   const toasts =
     at < 0 ? [...state.toasts, shown] : state.toasts.map((each, i) => (i === at ? shown : each));
@@ -74,16 +81,19 @@ export function clearSaveToasts() {
 }
 
 export function openSaveToastViewport(id: string) {
-  // A toast raised before any viewport opened has not been announced yet.
+  // A toast raised before any viewport opened, or in this commit, has not been announced yet.
   const toasts = state.toasts.map((each) =>
-    each.raisedIn === undefined ? { ...each, raisedIn: id } : each,
+    each.raisedIn === undefined || fresh.has(each.id) ? { ...each, raisedIn: id } : each,
   );
   set({ toasts, viewports: [...state.viewports, id] });
   // Every toast showing has been announced by now, so the exposed viewport draws them all in
-  // its quiet list. Not the closing id: StrictMode reopens a viewport under the same one.
+  // its quiet list. The closing viewport's own stay its own, which a StrictMode reopening
+  // under the same id needs to announce them.
   return () =>
     set({
-      toasts: state.toasts.map((each) => ({ ...each, raisedIn: null })),
+      toasts: state.toasts.map((each) =>
+        each.raisedIn === id ? each : { ...each, raisedIn: null },
+      ),
       viewports: state.viewports.filter((each) => each !== id),
     });
 }
