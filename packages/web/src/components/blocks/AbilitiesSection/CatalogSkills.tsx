@@ -9,6 +9,7 @@ import {
   grantedSkillLevels,
   heldSkillLevel,
   overrideKey,
+  type RollEffectEntry,
   refKey,
 } from "@dnd/character";
 import { useEffect, useState } from "react";
@@ -39,10 +40,13 @@ export function CatalogSkills({
   character,
   derived,
   onRemoved,
+  checkEffects = [],
 }: {
   character: CharacterRecord;
   derived: CharacterDerived;
   onRemoved: (name: string) => void;
+  /** Effects on every ability check, such as exhaustion's. */
+  checkEffects?: readonly RollEffectEntry[];
 }) {
   const write = useHeldSave(character.id, "Skill proficiency");
   // A flat number saves through its own field, which reports its own failure.
@@ -112,11 +116,14 @@ export function CatalogSkills({
                 ? undefined
                 : { tag: "skill", name: skill.ref.name, source: skill.ref.source }
             }
-            effects={effectsOnRoll(rollEffects, {
-              roll: "skill",
-              skill: skill.ref.name,
-              ability: skill.ability,
-            })}
+            effects={[
+              ...effectsOnRoll(rollEffects, {
+                roll: "skill",
+                skill: skill.ref.name,
+                ability: skill.ability,
+              }),
+              ...checkEffects,
+            ]}
             onCycleLevel={() => cycle(skill.ref)}
             homebrew={homebrew}
             detailFooter={

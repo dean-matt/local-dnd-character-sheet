@@ -1,7 +1,9 @@
 import type { CharacterDerived } from "@dnd/character";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { characterRecord, derivedRecord } from "../../../test/records.ts";
+import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
+import { renderWithClient } from "../../../test/renderWithClient.tsx";
+import { stubFetchByUrl } from "../../../test/stubFetch.ts";
 import { SaveOverride } from "../../overrideContext.ts";
 import { SpeedValue } from "./SpeedValue.tsx";
 
@@ -14,20 +16,32 @@ const computed: Speed = {
 };
 
 /** The Strength 8 Warlock carrying `carried` pounds, with the encumbrance option set or not. */
-function tile(speed: Speed, { encumbrance = false, carried = 0 } = {}) {
+function tile(
+  speed: Speed,
+  { encumbrance = false, carried = 0, edition = "one" as "classic" | "one" } = {},
+) {
   const { definition } = characterRecord("1", "Vex");
-  const withRules = { ...definition, houseRules: { encumbrance } };
+  const withRules = { ...definition, edition, houseRules: { encumbrance } };
   return (
     <SpeedValue
+      characterId="1"
       definition={withRules}
       derived={{ ...derivedRecord(withRules), speed, carriedWeight: carried }}
     />
   );
 }
 
-function onPage(speed: Speed, load?: { encumbrance?: boolean; carried?: number }) {
+function onPage(
+  speed: Speed,
+  load?: { encumbrance?: boolean; carried?: number; edition?: "classic" | "one" },
+  exhaustion = 0,
+) {
+  const record = stateRecord();
+  stubFetchByUrl({
+    "/api/characters/1/state": { ...record, state: { ...record.state, exhaustion } },
+  });
   const save = vi.fn().mockResolvedValue(undefined);
-  render(<SaveOverride.Provider value={save}>{tile(speed, load)}</SaveOverride.Provider>);
+  renderWithClient(<SaveOverride.Provider value={save}>{tile(speed, load)}</SaveOverride.Provider>);
   return save;
 }
 
@@ -97,7 +111,7 @@ describe("SpeedValue", () => {
   });
 
   it("shows the terms and no override field off the character page", () => {
-    render(tile(computed));
+    renderWithClient(tile(computed));
     open("Speed 30");
     expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent("Elf30");
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
@@ -127,5 +141,31 @@ describe("SpeedValue", () => {
       /^Overridden from 10 ft\., swim 10 ft\..*Encumbrance-20/,
     );
     expect(screen.getByRole("textbox", { name: "Walk speed override" })).toHaveValue("40");
+  });
+
+  it("halves the speed at classic exhaustion level 2 and names the level", async () => {
+    onPage(computed, { edition: "classic" }, 2);
+    expect(await screen.findByText("15")).toBeInTheDocument();
+    open("Speed 15");
+    expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent(
+      "Exhaustion 2: speed halved",
+    );
+  });
+
+  it("makes the speed 0 at classic exhaustion level 5", async () => {
+    onPage(computed, { edition: "classic" }, 5);
+    expect(await screen.findByText(/swim 0 ft\./)).toBeInTheDocument();
+    open("Speed 0");
+    expect(screen.getByRole("group", { name: "Speed breakdown" })).toHaveTextContent(
+      "Exhaustion 5: speed 0",
+    );
+  });
+
+  it("leaves the speed alone at level 1, and for a 2024 character", () => {
+    onPage(computed, { edition: "classic" }, 1);
+    expect(screen.getByText(/swim 30 ft\./)).toBeInTheDocument();
+    cleanup();
+    onPage(computed, { edition: "one" }, 5);
+    expect(screen.getByText(/swim 30 ft\./)).toBeInTheDocument();
   });
 });

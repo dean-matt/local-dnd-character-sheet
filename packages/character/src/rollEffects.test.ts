@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { RollEffectEntry } from "./characterDerived.ts";
-import { conditionAttackEffects, effectsOnRoll, netRollEffect } from "./rollEffects.ts";
+import {
+  conditionAttackEffects,
+  effectsOnRoll,
+  exhaustionRollEffects,
+  netRollEffect,
+} from "./rollEffects.ts";
 
 const effect = (rest: Omit<RollEffectEntry, "source">): RollEffectEntry => ({
   source: "Item",
@@ -104,5 +109,26 @@ describe("conditionAttackEffects", () => {
     expect(conditionAttackEffects(tired, "classic")).toHaveLength(1);
     expect(conditionAttackEffects(tired, "one")).toEqual([]);
     expect(conditionAttackEffects({ ...tired, exhaustion: 2 }, "classic")).toEqual([]);
+  });
+});
+
+describe("exhaustionRollEffects", () => {
+  const dis = (level: number, roll: "check" | "save" | "attack") => [
+    { source: `Exhaustion ${level}`, mode: "disadvantage", roll },
+  ];
+
+  it("gives disadvantage on checks from level 1 and on saves from level 3", () => {
+    expect(exhaustionRollEffects(0, "classic", "check")).toEqual([]);
+    expect(exhaustionRollEffects(1, "classic", "check")).toEqual(dis(1, "check"));
+    expect(exhaustionRollEffects(2, "classic", "save")).toEqual([]);
+    expect(exhaustionRollEffects(3, "classic", "save")).toEqual(dis(3, "save"));
+  });
+
+  it("names the level on an attack roll too", () => {
+    expect(exhaustionRollEffects(4, "classic", "attack")).toEqual(dis(4, "attack"));
+  });
+
+  it("leaves a 2024 character alone", () => {
+    expect(exhaustionRollEffects(5, "one", "check")).toEqual([]);
   });
 });

@@ -3,20 +3,25 @@ import {
   type CharacterDerived,
   characterDerivedSchema,
 } from "@dnd/character";
+import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
 import { Card } from "../../Card.tsx";
 import { DerivedValue } from "../DerivedValue.tsx";
+import { RollEffectChip } from "../RollEffectChip.tsx";
 import { SpeedValue } from "./SpeedValue.tsx";
 import { StatTile } from "./StatTile.tsx";
 
 const COMBAT_LABEL_CLASS = "text-chip tracking-[0.06em]";
 
 export function CombatStats({
+  characterId,
   definition,
   derived,
 }: {
+  characterId: string;
   definition: CharacterDefinition;
   derived: CharacterDerived;
 }) {
+  const checkExhaustion = useExhaustionEffects(characterId, definition.edition, "check");
   return (
     <Card title="Combat">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -45,9 +50,10 @@ export function CombatStats({
             value={derived.initiative}
             overrideKey="initiative"
           />
+          <RollEffectChip roll="Initiative" effects={checkExhaustion} />
         </StatTile>
         <StatTile label="Speed" name="Speed" labelClassName={COMBAT_LABEL_CLASS}>
-          <SpeedValue definition={definition} derived={derived} />
+          <SpeedValue characterId={characterId} definition={definition} derived={derived} />
         </StatTile>
       </dl>
     </Card>

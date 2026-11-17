@@ -1,4 +1,4 @@
-import type { AdvantageMode } from "@dnd/rules";
+import { type AdvantageMode, exhaustionEffects } from "@dnd/rules";
 import type { RollEffectEntry } from "./characterDerived.ts";
 import type { Ability } from "./refs.ts";
 
@@ -64,9 +64,26 @@ const ATTACK_CONDITIONS = [
 ] as const;
 
 /**
+ * Classic exhaustion's disadvantage on one kind of roll, named with its level: ability checks
+ * from level 1, attack rolls and saving throws from level 3. The one ruleset's penalty is a
+ * flat number, so it has none.
+ */
+export function exhaustionRollEffects(
+  level: number,
+  edition: "classic" | "one",
+  roll: "check" | "save" | "attack",
+): RollEffectEntry[] {
+  if (edition !== "classic" || level === 0) return [];
+  const effects = exhaustionEffects(level, edition);
+  if (effects.edition !== "classic") return [];
+  const holds =
+    roll === "check" ? effects.abilityCheckDisadvantage : effects.attackAndSaveDisadvantage;
+  return holds ? [{ source: `Exhaustion ${level}`, mode: "disadvantage", roll }] : [];
+}
+
+/**
  * The advantage and disadvantage the sheet's own conditions put on its attack rolls, in the
- * shape a held item's effect takes. Exhaustion counts only in the classic ruleset, from level 3; the one ruleset's
- * penalty is a flat number.
+ * shape a held item's effect takes, with exhaustion's from `exhaustionRollEffects`.
  */
 export function conditionAttackEffects(
   state: { conditions: readonly { name: string }[]; exhaustion: number },
@@ -81,8 +98,5 @@ export function conditionAttackEffects(
       ...("condition" in entry && { condition: entry.condition }),
     }),
   );
-  if (edition === "classic" && state.exhaustion >= 3) {
-    effects.push({ source: "Exhaustion", mode: "disadvantage", roll: "attack" });
-  }
-  return effects;
+  return [...effects, ...exhaustionRollEffects(state.exhaustion, edition, "attack")];
 }

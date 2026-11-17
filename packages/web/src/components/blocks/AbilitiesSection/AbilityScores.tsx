@@ -12,6 +12,7 @@ import {
 import { Info } from "lucide-react";
 import { useId } from "react";
 import { z } from "zod";
+import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { Card } from "../../Card.tsx";
 import { Field } from "../../Field/Field.tsx";
@@ -71,6 +72,7 @@ export function AbilityScores({
   const { definition } = character;
   const update = useUpdateCharacterDefinition(character.id);
   const reasonId = useId();
+  const checkExhaustion = useExhaustionEffects(character.id, definition.edition, "check");
   return (
     <Card title="Ability Scores">
       <dl className="grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -177,6 +179,7 @@ export function AbilityScores({
                   type="check"
                   origin={ABILITY_LABEL[ability]}
                   bonus={derivedValue(derived.abilityModifiers[ability])}
+                  effects={checkExhaustion}
                 />
               </span>
             </StatTile>

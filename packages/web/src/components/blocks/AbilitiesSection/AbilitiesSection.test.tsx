@@ -82,8 +82,8 @@ function derivedFor(
   });
 }
 
-function renderSection(record = warlock(), derived = derivedFor(record)) {
-  stubRules([]);
+function renderSection(record = warlock(), derived = derivedFor(record), exhaustion = 0) {
+  stubRules([], exhaustion);
   renderWithClient(
     <>
       <AbilitiesSection character={record} derived={derived} />
@@ -119,13 +119,16 @@ const nameButton = (region: string, name: string) =>
  * makes, the inventory read `Attacks` makes, the homebrew skills read the Skills card makes
  * and the homebrew name reads.
  */
-function stubRules(entries: unknown[]) {
+function stubRules(entries: unknown[], exhaustion = 0) {
   const fetchMock = vi.fn(
     async (_url: RequestInfo | URL, _init?: RequestInit) =>
       new Response(JSON.stringify({ refs: [{ name: "x", source: "XPHB", entries }] })),
   );
   const reads: Record<string, unknown> = {
-    "/api/characters/1/state": stateRecord(),
+    "/api/characters/1/state": {
+      ...stateRecord(),
+      state: { ...stateRecord().state, exhaustion },
+    },
     "/api/characters/1/inventory": { items: [] },
     "/api/characters/1/features": { groups: [] },
     "/api/homebrew/skills": [],
@@ -151,7 +154,7 @@ afterEach(() => {
 
 describe("AbilitiesSection", () => {
   it("degrades until both the character and its derived block have loaded", () => {
-    render(<AbilitiesSection character={warlock()} derived={undefined} />);
+    renderWithClient(<AbilitiesSection character={warlock()} derived={undefined} />);
     expect(screen.getByText("Abilities isn't available yet.")).toBeInTheDocument();
   });
 
@@ -515,6 +518,68 @@ describe("AbilitiesSection", () => {
     expect(skills.queryByRole("button", { name: /^Arcana check: / })).not.toBeInTheDocument();
     const stealth = skills.getByRole("button", { name: "Stealth check: Advantage" }).closest("li");
     expect(stealth).toHaveTextContent("Stealth, expertisedexDexterityADV+7");
+  });
+
+  describe("exhaustion", () => {
+    const classic = () => {
+      const record = warlock();
+      return {
+        ...record,
+        edition: "classic" as const,
+        definition: { ...record.definition, edition: "classic" as const },
+      };
+    };
+
+    it("marks every check at level 1 and names the level, leaving saves alone until level 3", async () => {
+      renderSection(classic(), undefined, 1);
+
+      const skills = card("Skills");
+      expect(
+        await skills.findByRole("button", { name: "Deception check: Disadvantage" }),
+      ).toHaveTextContent(/^DIS$/);
+      expect(
+        card("Saving Throws").queryByRole("button", { name: /save: Disadvantage/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("marks every saving throw from level 3", async () => {
+      renderSection(classic(), undefined, 3);
+
+      expect(
+        await card("Saving Throws").findAllByRole("button", { name: /save: Disadvantage$/ }),
+      ).toHaveLength(6);
+    });
+
+    it("marks the concentration save from level 3 and initiative from level 1", async () => {
+      const record = classic();
+      const derived = derivedFor(record);
+      const withConcentration = {
+        ...derived,
+        concentrationSave: { computed: 4, manual: null, terms: [] },
+      };
+      renderSection(record, withConcentration, 3);
+      expect(
+        await card("Saving Throws").findByRole("button", {
+          name: "Concentration save: Disadvantage",
+        }),
+      ).toBeVisible();
+      cleanup();
+
+      renderSection(record, withConcentration, 1);
+      expect(
+        await card("Combat").findByRole("button", { name: "Initiative: Disadvantage" }),
+      ).toBeVisible();
+    });
+
+    it("changes nothing at level 0 or for a 2024 character", async () => {
+      renderSection(classic(), undefined, 0);
+      await card("Skills").findByText("Deception");
+      expect(card("Skills").queryByRole("button", { name: /check: Disadvantage/ })).toBeNull();
+      cleanup();
+      renderSection(warlock(), undefined, 6);
+      await card("Skills").findByText("Deception");
+      expect(card("Skills").queryByRole("button", { name: /check: Disadvantage/ })).toBeNull();
+    });
   });
 
   it("lists each sense with its range and every source behind it, and leaves the card out while none is granted", () => {

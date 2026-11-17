@@ -16,6 +16,7 @@ import {
 } from "@dnd/character";
 import { useRef, useState } from "react";
 import { EmptyState } from "../../../EmptyState.tsx";
+import { useExhaustionEffects } from "../../../hooks/useExhaustionEffects.ts";
 import { Card } from "../../Card.tsx";
 import { AbilityScores } from "./AbilityScores.tsx";
 import { AddHomebrewSkill } from "./AddHomebrewSkill.tsx";
@@ -40,6 +41,9 @@ export function AbilitiesSection({
 }) {
   const addButton = useRef<HTMLButtonElement>(null);
   const [announcement, setAnnouncement] = useState("");
+  const edition = character?.definition.edition ?? "classic";
+  const saveExhaustion = useExhaustionEffects(character?.id ?? "", edition, "save");
+  const checkExhaustion = useExhaustionEffects(character?.id ?? "", edition, "check");
   if (!character || !derived) return <EmptyState>Abilities isn't available yet.</EmptyState>;
   const { definition } = character;
 
@@ -52,7 +56,7 @@ export function AbilitiesSection({
   return (
     <div className="flex flex-col gap-3">
       <AbilityScores character={character} derived={derived} />
-      <CombatStats definition={definition} derived={derived} />
+      <CombatStats characterId={character.id} definition={definition} derived={derived} />
       <Vitals character={character} derived={derived} />
       <Defenses character={character} derived={derived} />
       <Senses derived={derived} />
@@ -71,7 +75,10 @@ export function AbilitiesSection({
                 overrideKey={`savingThrows.${ability}`}
                 title={`${ABILITY_LABEL[ability]} saving throw`}
                 rules={editionRules(definition, SAVE_RULES)}
-                effects={effectsOnRoll(rollEffects, { roll: "save", ability })}
+                effects={[
+                  ...effectsOnRoll(rollEffects, { roll: "save", ability }),
+                  ...saveExhaustion,
+                ]}
               />
             ))}
             {derived.concentrationSave && (
@@ -82,6 +89,7 @@ export function AbilitiesSection({
                 overrideKey="concentrationSave"
                 title="Concentration saving throw"
                 rules={undefined}
+                effects={saveExhaustion}
               />
             )}
           </ul>
@@ -99,6 +107,7 @@ export function AbilitiesSection({
           <CatalogSkills
             character={character}
             derived={derived}
+            checkEffects={checkExhaustion}
             onRemoved={(name) => {
               setAnnouncement(`Removed ${name}.`);
               addButton.current?.focus();
