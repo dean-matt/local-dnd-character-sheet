@@ -22,3 +22,11 @@ a personal tool for local use only, and is not intended for public hosting or
 redistribution of game content.
 
 To use this project you must fetch the data yourself with `pnpm content:sync`.
+
+## Feature mechanics
+
+The feature mechanics recorded in `packages/character/src/featureMechanicRecords.ts` are
+hand-drafted with the SRD 5.1 Foundry packs as a reference. They carry no rules text. The
+System Reference Document 5.1 is by Wizards of the Coast LLC and licensed under the
+Creative Commons Attribution 4.0 International License
+(https://creativecommons.org/licenses/by/4.0/legalcode).
