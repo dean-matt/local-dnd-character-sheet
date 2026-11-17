@@ -143,6 +143,22 @@ describe("conditionRollEffects", () => {
   });
 });
 
+describe("conditionRollEffects under the 2024 exhaustion rule", () => {
+  const tired = { conditions: [], exhaustion: 3 };
+
+  it("drops a classic character's disadvantage, keeping its other conditions", () => {
+    expect(conditionRollEffects(tired, "classic", "attack", "one")).toEqual([]);
+    expect(
+      conditionRollEffects(
+        { ...tired, conditions: [{ name: "Poisoned" }] },
+        "classic",
+        "check",
+        "one",
+      ),
+    ).toEqual([{ source: "Poisoned", mode: "disadvantage", roll: "check" }]);
+  });
+});
+
 describe("exhaustionRollEffects", () => {
   const dis = (level: number, roll: "check" | "save" | "attack") => [
     { source: `Exhaustion ${level}`, mode: "disadvantage", roll },

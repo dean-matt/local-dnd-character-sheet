@@ -12,7 +12,7 @@ import type { CharacterDerived, Speed } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { itemKey, refKey } from "./keys.ts";
-import { derivedValue, houseRule } from "./resolve.ts";
+import { derivedValue, exhaustionRuleset, houseRule } from "./resolve.ts";
 
 /**
  * Ten-thousandths of a pound, the grid the sum counts on. Upstream prints nothing finer
@@ -154,7 +154,7 @@ export function encumberedSpeed(
   const { speedReduction } = loaded
     ? encumbranceAt(derived.abilityScores.str.computed, derivedValue(derived.size), weight)
     : { speedReduction: 0 };
-  const tired = exhaustionEffects(exhaustion, definition.edition);
+  const tired = exhaustionEffects(exhaustion, exhaustionRuleset(definition));
   const classic = tired.edition === "classic";
   const halved = classic && tired.speedHalved;
   const zeroed = classic && tired.speedZero;

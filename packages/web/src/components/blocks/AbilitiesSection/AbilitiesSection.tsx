@@ -41,9 +41,9 @@ export function AbilitiesSection({
 }) {
   const addButton = useRef<HTMLButtonElement>(null);
   const [announcement, setAnnouncement] = useState("");
-  const edition = character?.definition.edition ?? "classic";
-  const saveConditions = useConditionEffects(character?.id ?? "", edition, "save");
-  const checkConditions = useConditionEffects(character?.id ?? "", edition, "check");
+  const ruled = character?.definition ?? { edition: "classic" as const, houseRules: {} };
+  const saveConditions = useConditionEffects(character?.id ?? "", ruled, "save");
+  const checkConditions = useConditionEffects(character?.id ?? "", ruled, "check");
   if (!character || !derived) return <EmptyState>Abilities isn't available yet.</EmptyState>;
   const { definition } = character;
 

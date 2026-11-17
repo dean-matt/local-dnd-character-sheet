@@ -67,7 +67,7 @@ import { reducedMaximum, reducedOverride } from "./maximumReduction.ts";
 import { applyOverrides } from "./overrides.ts";
 import { RAGE, RAGE_RESISTANCES, rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
-import { houseRule } from "./resolve.ts";
+import { exhaustionRuleset, houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, type HomebrewNames, raceSummary, totalLevel } from "./summaries.ts";
@@ -1066,7 +1066,7 @@ export function deriveCharacter(
       ...restrained.terms,
     ],
   };
-  const exhaustion = exhaustionPenaltyTerms(state.exhaustion ?? 0, definition.edition);
+  const exhaustion = exhaustionPenaltyTerms(state.exhaustion ?? 0, exhaustionRuleset(definition));
   const attackModifiers = [...modifierTerms(state, onKind("attackRolls")), ...exhaustion];
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
@@ -1153,7 +1153,7 @@ export function deriveCharacter(
           exhaustedMaximum(
             hitPointMaximum(definition, catalog.hitDice, grants),
             state.exhaustion ?? 0,
-            definition.edition,
+            exhaustionRuleset(definition),
           ),
           modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
             ...term,

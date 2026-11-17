@@ -32,7 +32,7 @@ export function ToolCheck({
     tool.name,
     character.definition.edition,
   );
-  const checkExhaustion = useConditionEffects(character.id, character.definition.edition, "check");
+  const checkExhaustion = useConditionEffects(character.id, character.definition, "check");
   const [picked, setPicked] = useState<Ability>();
   const ability = picked ?? printed ?? UNPRINTED;
   const check = derived.abilityChecks[ability];

@@ -14,6 +14,7 @@ import {
   displayName,
   effectsOnRoll,
   entryKey,
+  exhaustionRuleset,
   houseRule,
   itemKey,
   overrideKey,
@@ -153,7 +154,12 @@ export function Attacks({
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const heldEffects = play.data
-    ? conditionRollEffects(play.data.state, definition.edition, "attack")
+    ? conditionRollEffects(
+        play.data.state,
+        definition.edition,
+        "attack",
+        exhaustionRuleset(definition),
+      )
     : [];
   const attackEffects = (ability: Ability) => [
     ...effectsOnRoll(rollEffects, { roll: "attack", ability }),

@@ -161,6 +161,20 @@ const OPTIONS: Record<HouseRule, Option> = {
     },
     editions: ["classic", "one"],
   },
+  exhaustionAs2024: {
+    name: "Exhaustion",
+    printed: {
+      label: "The 2014 table",
+      description:
+        "Each level adds a penalty: disadvantage on ability checks, halved speed, disadvantage on attack rolls and saves, a halved hit point maximum, then speed 0. Level 6 kills.",
+    },
+    house: {
+      label: "The 2024 rule",
+      description:
+        "Each level takes 2 from every d20 Test and 5 feet from every speed. Level 6 kills.",
+    },
+    editions: ["classic"],
+  },
   criticalHit: {
     name: "Critical hits",
     editions: ["classic", "one"],

@@ -79,6 +79,13 @@ const houseRulesObject = z
      */
     waiveMaterialComponents: z.boolean().optional(),
     /**
+     * A classic character's exhaustion costs what the 2024 rules print: 2 off every d20 Test
+     * and 5 feet of speed per level, with no disadvantage, halving or zeroed speed and no
+     * halved hit point maximum. Absent, the 2014 table, as printed. A 2024 character takes its
+     * own table either way.
+     */
+    exhaustionAs2024: z.boolean().optional(),
+    /**
      * What a critical hit does to the damage dice: `double` rolls them twice, as both rulesets
      * print, and `maximum` counts one set at its highest face and rolls the other. The
      * modifier is added once either way. Absent, `double`.
@@ -134,6 +141,7 @@ export const PRINTED_RULE: Required<HouseRules> = {
   noInstantDeath: false,
   everyHitDieOnLongRest: false,
   waiveMaterialComponents: false,
+  exhaustionAs2024: false,
   criticalHit: "double",
   flanking: "none",
   naturalExtremes: false,

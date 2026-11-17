@@ -355,6 +355,29 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("exhaustionAs2024 on a classic character", () => {
+    const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
+    const tired = (houseRules: object) =>
+      deriveCharacter({ ...equipped, edition: "classic", houseRules }, catalog, {
+        ...calm,
+        exhaustion: 4,
+      });
+    const printed = tired({});
+    const house = tired({ exhaustionAs2024: true });
+
+    it("takes the penalty as a named term on checks, saves and attacks, and no halving", () => {
+      const term = { label: "Exhaustion 4: -8", value: -8 };
+      expect(printed.initiative.terms).not.toContainEqual(term);
+      expect(house.initiative.terms).toContainEqual(term);
+      expect(house.savingThrows.str.terms).toContainEqual(term);
+      expect(house.skills[0]?.modifier.terms).toContainEqual(term);
+      expect(printed.hitPointMaximum.terms.at(-1)?.label).toBe("Exhaustion 4: maximum halved");
+      expect(house.hitPointMaximum.terms.map(({ label }) => label)).not.toContain(
+        "Exhaustion 4: maximum halved",
+      );
+    });
+  });
+
   describe("2024 exhaustion's penalty to d20 Tests", () => {
     const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
     const tired = (edition: "classic" | "one", exhaustion: number) =>

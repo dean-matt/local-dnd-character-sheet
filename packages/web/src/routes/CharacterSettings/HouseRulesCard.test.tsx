@@ -66,6 +66,16 @@ describe("HouseRulesCard", () => {
     await waitFor(() => expect(written(fetchMock)).toEqual({ waiveMaterialComponents: true }));
   });
 
+  it("saves the 2024 exhaustion rule for a classic character", async () => {
+    const fetchMock = stubFetch(new Response(JSON.stringify(classic({}))));
+    const group = within(renderCard(classic({})).getByRole("group", { name: "Exhaustion" }));
+    expect(group.getByRole("radio", { name: /The 2014 table/ })).toBeChecked();
+
+    fireEvent.click(group.getByRole("radio", { name: "The 2024 rule" }));
+
+    await waitFor(() => expect(written(fetchMock)).toEqual({ exhaustionAs2024: true }));
+  });
+
   it("saves the natural 20 and 1 rule", async () => {
     const fetchMock = stubFetch(new Response(JSON.stringify(classic({}))));
     const group = within(

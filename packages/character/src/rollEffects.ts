@@ -95,12 +95,14 @@ export function exhaustionRollEffects(
 /**
  * The advantage and disadvantage the sheet's own conditions put on one kind of roll, in the
  * shape a held item's effect takes, with exhaustion's from `exhaustionRollEffects`. An
- * initiative roll is an ability check, so it takes the checks' effects too.
+ * initiative roll is an ability check, so it takes the checks' effects too. Exhaustion
+ * follows `exhaustionEdition`, the table the character plays it by.
  */
 export function conditionRollEffects(
   state: { conditions: readonly { name: string }[]; exhaustion: number },
   edition: "classic" | "one",
   roll: "check" | "save" | "attack" | "initiative",
+  exhaustionEdition: "classic" | "one" = edition,
 ): RollEffectEntry[] {
   const held = new Set(state.conditions.map(({ name }) => name));
   const kinds = roll === "initiative" ? ["check", "initiative"] : [roll];
@@ -118,6 +120,10 @@ export function conditionRollEffects(
   }));
   return [
     ...effects,
-    ...exhaustionRollEffects(state.exhaustion, edition, roll === "initiative" ? "check" : roll),
+    ...exhaustionRollEffects(
+      state.exhaustion,
+      exhaustionEdition,
+      roll === "initiative" ? "check" : roll,
+    ),
   ];
 }

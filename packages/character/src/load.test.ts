@@ -383,6 +383,23 @@ describe("exhaustion on speed", () => {
     expect(at(2, "one").exhaustion).toBe("Exhaustion 2: speed -10 ft");
   });
 
+  it("takes the 2024 table for a classic character whose table says so", () => {
+    const rule = (houseRules: object) =>
+      encumberedSpeed(
+        characterDefinitionSchema.parse({
+          ...structuredClone(definition),
+          edition: "classic",
+          houseRules,
+        }),
+        characterDerivedSchema.parse(derivedInput(winged)),
+        0,
+        4,
+      );
+    expect(rule({}).speed).toEqual({ walk: 15, fly: 15, swim: 5 });
+    expect(rule({ exhaustionAs2024: true }).speed).toEqual({ walk: 10, fly: 10, swim: 0 });
+    expect(rule({ exhaustionAs2024: true }).exhaustion).toBe("Exhaustion 4: speed -20 ft");
+  });
+
   it("takes a load's feet off first and floors at zero", () => {
     const laden = encumberedSpeed(
       characterDefinitionSchema.parse({
