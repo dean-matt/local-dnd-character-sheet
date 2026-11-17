@@ -310,6 +310,31 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("classic exhaustion's halving of the hit point maximum", () => {
+    const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
+    const tired = (edition: "classic" | "one", exhaustion: number) =>
+      deriveCharacter({ ...equipped, edition }, catalog, { ...calm, exhaustion }).hitPointMaximum;
+    const whole = tired("classic", 0).computed;
+
+    it("halves the maximum at level 4, naming exhaustion and its level", () => {
+      const field = tired("classic", 4);
+      expect(field.computed).toBe(Math.floor(whole / 2));
+      expect(field.terms.at(-1)).toEqual({
+        label: "Exhaustion 4: maximum halved",
+        value: Math.floor(whole / 2) - whole,
+      });
+    });
+
+    it("leaves the maximum whole below level 4, in 2024 and where no level is held", () => {
+      expect(tired("classic", 3)).toEqual(tired("classic", 0));
+      expect(tired("one", 5).computed).toBe(tired("one", 0).computed);
+      expect(
+        deriveCharacter({ ...equipped, edition: "classic" }, catalog, calm).hitPointMaximum
+          .computed,
+      ).toBe(whole);
+    });
+  });
+
   describe("temporary modifiers", () => {
     const held = (...modifiers: CharacterState["temporaryModifiers"]) => ({
       activeEffects: [],

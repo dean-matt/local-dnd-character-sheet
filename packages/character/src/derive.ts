@@ -50,6 +50,7 @@ import type { CharacterDerived, Defenses } from "./characterDerived.ts";
 import { classResourcePools } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
+import { exhaustedMaximum } from "./exhaustedMaximum.ts";
 import { featHitPointTerms, featInitiativeTerms, speedWithFeats } from "./featEffects.ts";
 import { featGrants, withFeatGrants } from "./featGrants.ts";
 import {
@@ -1023,10 +1024,8 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
 export function deriveCharacter(
   stored: CharacterDefinition,
   catalog: CharacterCatalog,
-  state: Pick<
-    CharacterState,
-    "activeEffects" | "hitPointMaximumReduction" | "temporaryModifiers"
-  > = {
+  state: Pick<CharacterState, "activeEffects" | "hitPointMaximumReduction" | "temporaryModifiers"> &
+    Partial<Pick<CharacterState, "exhaustion">> = {
     activeEffects: [],
     hitPointMaximumReduction: null,
     temporaryModifiers: [],
@@ -1136,7 +1135,11 @@ export function deriveCharacter(
     hitPointMaximum: fromBreakdown(
       reducedMaximum(
         withModifiers(
-          hitPointMaximum(definition, catalog.hitDice, grants),
+          exhaustedMaximum(
+            hitPointMaximum(definition, catalog.hitDice, grants),
+            state.exhaustion ?? 0,
+            definition.edition,
+          ),
           modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
             ...term,
             reference: MODIFIER_REFERENCE,
