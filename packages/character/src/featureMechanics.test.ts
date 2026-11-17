@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { SUBCLASS_NAMES } from "./armorClassEffects.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import { featureMechanicsKey, featureMechanicsSchema } from "./featureMechanics.ts";
+import { SUBCLASS_NAMES } from "./heldFeatures.ts";
 
 describe("featureMechanicsSchema", () => {
   it("accepts a feature's mechanics and a narrative mark, and no other shape", () => {

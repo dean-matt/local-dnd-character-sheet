@@ -53,4 +53,19 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     },
     mechanics: [{ kind: "armorClass", value: 1, when: "heavyArmor" }],
   },
+  {
+    ref: { name: "Dwarven Toughness", source: "PHB" },
+    mechanics: [{ kind: "bonus", target: "hitPointsPerLevel", value: 1 }],
+  },
+  {
+    ref: {
+      name: "Draconic Resilience",
+      source: "PHB",
+      className: "Sorcerer",
+      classSource: "PHB",
+      subclass: { shortName: "Draconic", source: "PHB" },
+      level: 1,
+    },
+    mechanics: [{ kind: "bonus", target: "hitPointsPerLevel", value: 1 }],
+  },
 ];
