@@ -197,7 +197,7 @@ export {
   entryRefSchema,
   type FeatureKey,
 } from "./refs.ts";
-export { derivedValue, exhaustionRuleset, houseRule } from "./resolve.ts";
+export { derivedValue, houseRule } from "./resolve.ts";
 export { longRestHitDicePick, type RestLength, restedState, sheetState } from "./rest.ts";
 export {
   conditionRollEffects,

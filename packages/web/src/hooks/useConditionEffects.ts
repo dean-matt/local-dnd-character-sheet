@@ -1,7 +1,6 @@
 import {
   type CharacterDefinition,
   conditionRollEffects,
-  exhaustionRuleset,
   type RollEffectEntry,
 } from "@dnd/character";
 import { useCharacterState } from "./useCharacterState.ts";
@@ -13,7 +12,5 @@ export function useConditionEffects(
   roll: "check" | "save" | "attack" | "initiative",
 ): RollEffectEntry[] {
   const state = useCharacterState(characterId).data?.state;
-  return state
-    ? conditionRollEffects(state, definition.edition, roll, exhaustionRuleset(definition))
-    : [];
+  return state ? conditionRollEffects(state, definition, roll) : [];
 }

@@ -1,6 +1,8 @@
 import { type AdvantageMode, exhaustionEffects } from "@dnd/rules";
 import type { RollEffectEntry } from "./characterDerived.ts";
+import type { CharacterDefinition } from "./definition.ts";
 import type { Ability } from "./refs.ts";
+import { exhaustionRuleset } from "./resolve.ts";
 
 /**
  * The roll a sheet row stands for: a saving throw, a skill (checked with its ability, or
@@ -96,13 +98,12 @@ export function exhaustionRollEffects(
  * The advantage and disadvantage the sheet's own conditions put on one kind of roll, in the
  * shape a held item's effect takes, with exhaustion's from `exhaustionRollEffects`. An
  * initiative roll is an ability check, so it takes the checks' effects too. Exhaustion
- * follows `exhaustionEdition`, the table the character plays it by.
+ * follows `exhaustionRuleset`, the table the character plays it by.
  */
 export function conditionRollEffects(
   state: { conditions: readonly { name: string }[]; exhaustion: number },
-  edition: "classic" | "one",
+  definition: Pick<CharacterDefinition, "edition" | "houseRules">,
   roll: "check" | "save" | "attack" | "initiative",
-  exhaustionEdition: "classic" | "one" = edition,
 ): RollEffectEntry[] {
   const held = new Set(state.conditions.map(({ name }) => name));
   const kinds = roll === "initiative" ? ["check", "initiative"] : [roll];
@@ -110,7 +111,7 @@ export function conditionRollEffects(
     (rule) =>
       held.has(rule.name) &&
       kinds.includes(rule.roll) &&
-      (rule.edition === undefined || rule.edition === edition),
+      (rule.edition === undefined || rule.edition === definition.edition),
   ).map(({ name, mode, roll: kind, target, condition }) => ({
     source: name,
     mode,
@@ -122,7 +123,7 @@ export function conditionRollEffects(
     ...effects,
     ...exhaustionRollEffects(
       state.exhaustion,
-      exhaustionEdition,
+      exhaustionRuleset(definition),
       roll === "initiative" ? "check" : roll,
     ),
   ];
