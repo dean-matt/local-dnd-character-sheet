@@ -43,6 +43,15 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ kind: "halfProficiency", abilities: [], rounding: "up" })).toBe(false);
   });
 
+  it("refuses a defense mechanic that grants nothing, and an offeredBy that is not a feature key", () => {
+    const ref = { name: "Bear", source: "PHB" };
+    const parse = (record: object) => featureMechanicsSchema.safeParse({ ref, ...record }).success;
+    const mechanics = (defense: object) => ({ mechanics: [{ kind: "defense", ...defense }] });
+    expect(parse(mechanics({}))).toBe(false);
+    expect(parse(mechanics({ immune: ["poison"] }))).toBe(true);
+    expect(parse({ ...mechanics({ resist: ["fire"] }), offeredBy: ref })).toBe(false);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);
