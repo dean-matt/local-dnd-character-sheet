@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { useSaveToast } from "../hooks/useSaveToast.ts";
@@ -17,6 +17,8 @@ function Problem({
   return null;
 }
 
+// A toast raised in one commit stops counting as raised in the next once microtasks run.
+const settle = () => act(async () => {});
 const regions = () => screen.getAllByRole("region", { name: "Save problems" });
 const announced = (region: HTMLElement) => region.querySelector("[aria-live]")?.textContent;
 const expectEmpty = (region: HTMLElement) => {
@@ -150,7 +152,7 @@ describe("SaveToasts", () => {
     expect(within(regions()[0] as HTMLElement).getByText("Gold: disk full")).toBeInTheDocument();
   });
 
-  it("announces a toast once, however often a modal opens and closes over it", () => {
+  it("announces a toast once, however often a modal opens and closes over it", async () => {
     const { rerender } = render(
       <>
         <Problem message="disk full" />
@@ -158,6 +160,7 @@ describe("SaveToasts", () => {
       </>,
     );
     expect(announced(regions()[0] as HTMLElement)).toBe("Gold: disk full");
+    await settle();
 
     rerender(
       <>
@@ -193,13 +196,14 @@ describe("SaveToasts", () => {
     expect(announced(regions()[0] as HTMLElement)).toBe("Copper: disk full");
   });
 
-  it("announces nothing already showing when a modal opens under StrictMode", () => {
+  it("announces nothing already showing when a modal opens under StrictMode", async () => {
     const { rerender } = render(
       <StrictMode>
         <Problem message="disk full" />
         <SaveToasts />
       </StrictMode>,
     );
+    await settle();
     rerender(
       <StrictMode>
         <Problem message="disk full" />
@@ -210,6 +214,34 @@ describe("SaveToasts", () => {
     const modal = regions()[1] as HTMLElement;
     expect(modal).toHaveTextContent("Gold: disk full");
     expect(announced(modal)).toBe("");
+  });
+
+  it("announces a toast raised in the commit that mounts its viewport", () => {
+    const { rerender } = render(<SaveToasts />);
+    rerender(
+      <>
+        <SaveToasts />
+        <Problem message="disk full" />
+        <SaveToasts />
+      </>,
+    );
+    expect(announced(regions()[1] as HTMLElement)).toBe("Gold: disk full");
+    expect(announced(regions()[0] as HTMLElement)).toBe("");
+  });
+
+  it("announces a toast raised before any viewport once one mounts, under StrictMode", () => {
+    const { rerender } = render(
+      <StrictMode>
+        <Problem message="disk full" />
+      </StrictMode>,
+    );
+    rerender(
+      <StrictMode>
+        <Problem message="disk full" />
+        <SaveToasts />
+      </StrictMode>,
+    );
+    expect(announced(regions()[0] as HTMLElement)).toBe("Gold: disk full");
   });
 
   it("keeps focus on a toast's button when new text carries it into a modal's live region", () => {
