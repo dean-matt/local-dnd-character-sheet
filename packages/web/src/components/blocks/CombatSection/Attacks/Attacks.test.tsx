@@ -353,14 +353,13 @@ describe("Attacks", () => {
       status = 201,
       conditions: { name: string; source: string }[] = [],
       houseRules: Record<string, string> = {},
-      exhaustion = 0,
     ) {
       const onRolled = vi.fn();
       const posts: Record<string, unknown>[] = [];
       const play = stateRecord();
       stubFetchByUrl({
         "/api/characters/1/inventory": { items: [{ name: "Longsword" }] },
-        "/api/characters/1/state": { ...play, state: { ...play.state, conditions, exhaustion } },
+        "/api/characters/1/state": { ...play, state: { ...play.state, conditions } },
       });
       const base = globalThis.fetch;
       vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
@@ -370,11 +369,7 @@ describe("Attacks", () => {
       });
       const character = {
         ...vex(),
-        definition: characterDefinitionSchema.parse({
-          ...vex().definition,
-          houseRules,
-          edition: "one",
-        }),
+        definition: characterDefinitionSchema.parse({ ...vex().definition, houseRules }),
       };
       const client = new QueryClient();
       client.setQueryData(characterKey("1"), character);
@@ -402,32 +397,6 @@ describe("Attacks", () => {
         ["Longsword damage", "1d8-1", "damage", "Longsword"],
         ["Warlock spell attack", "1d20+5", "spell-attack", "Warlock"],
       ]);
-    });
-
-    it("takes a 2024 character's exhaustion off a weapon attack and a spell attack, naming it in the terms", async () => {
-      vi.spyOn(Math, "random").mockReturnValue(0);
-      const { posts } = renderRolling(
-        { ...derivedRecord(), attacks: [attack(0, 5)] },
-        201,
-        [],
-        {},
-        3,
-      );
-      expect(
-        await screen.findByRole("button", { name: "Longsword attack: −6 (Exhaustion 3)" }),
-      ).toBeVisible();
-      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
-      fireEvent.click(screen.getByRole("button", { name: "Roll Warlock spell attack" }));
-
-      await waitFor(() => expect(posts).toHaveLength(2));
-      expect(posts[0]).toMatchObject({
-        notation: "1d20-1",
-        terms: [
-          { source: "Bonus", value: 5 },
-          { source: "Exhaustion 3", value: -6 },
-        ],
-      });
-      expect(posts[1]).toMatchObject({ type: "spell-attack", notation: "1d20-1" });
     });
 
     it("rolls the unarmed strike's attack and damage, each labelled and from its origin", async () => {
@@ -610,31 +579,6 @@ describe("Attacks", () => {
     });
 
     describe("flanking", () => {
-      it("adds the exhaustion penalty after the flanking terms", async () => {
-        vi.spyOn(Math, "random").mockReturnValue(0);
-        const { posts } = renderRolling(
-          { ...derivedRecord(), attacks: [attack(0, 5)] },
-          201,
-          [],
-          { flanking: "bonus" },
-          1,
-        );
-        fireEvent.click(await longsword().findByRole("checkbox", { name: "Flanking" }));
-        fireEvent.click(
-          screen.getByRole("button", { name: "Roll Longsword attack while flanking +2" }),
-        );
-
-        await waitFor(() => expect(posts).toHaveLength(1));
-        expect(posts[0]).toMatchObject({
-          notation: "1d20+5",
-          terms: [
-            { source: "Attack bonus", value: 5 },
-            { source: "Flanking", value: 2 },
-            { source: "Exhaustion 1", value: -2 },
-          ],
-        });
-      });
-
       it("offers none as printed", async () => {
         renderRolling({ ...derivedRecord(), attacks: [attack(0, 5)] });
         await screen.findByRole("button", { name: "Roll Longsword attack" });

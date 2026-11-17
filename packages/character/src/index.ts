@@ -203,7 +203,6 @@ export {
   conditionAttackEffects,
   effectsOnRoll,
   exhaustionRollEffects,
-  exhaustionRollPenalty,
   netRollEffect,
 } from "./rollEffects.ts";
 export {

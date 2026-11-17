@@ -14,14 +14,11 @@ import { useEffect, useRef, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useExhaustionEffects } from "../../../../hooks/useExhaustionEffects.ts";
-import { useExhaustionPenalty } from "../../../../hooks/useExhaustionPenalty.ts";
 import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
-import { penalised } from "../../../../lib/penalisedRoll.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { EmptyNote } from "../../../EmptyNote.tsx";
 import { RollEffectChip } from "../../RollEffectChip.tsx";
-import { RollPenaltyChip } from "../../RollPenaltyChip.tsx";
 
 const BUTTON =
   "h-8 rounded-control border border-border bg-surface px-3 font-semibold text-row hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
@@ -42,7 +39,6 @@ export function Encounter({
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
-  const penalty = useExhaustionPenalty(character.id);
   const exhaustion = useExhaustionEffects(character.id, character.definition.edition, "check");
   const start = useRef<HTMLButtonElement>(null);
   const next = useRef<HTMLButtonElement>(null);
@@ -65,11 +61,7 @@ export function Encounter({
 
   async function rollInitiative() {
     if (busy) return;
-    const { bonus, terms } = penalised(
-      { bonus: derivedValue(derived.initiative) },
-      penalty,
-      "Initiative",
-    );
+    const bonus = derivedValue(derived.initiative);
     const notation = bonus === 0 ? "1d20" : `1d20${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}`;
     const mode = netRollEffect(exhaustion)?.mode === "disadvantage" ? "disadvantage" : undefined;
     const rolled = rollDice(notation, { mode });
@@ -86,7 +78,6 @@ export function Encounter({
           total: rolled.total,
           dice: rolled.dice,
           modifier: rolled.modifier,
-          ...(terms && { terms }),
           critical: rolled.critical,
         },
       });
@@ -127,7 +118,6 @@ export function Encounter({
         <button type="button" aria-disabled={busy} onClick={rollInitiative} className={BUTTON}>
           {encounter?.initiative == null ? "Roll initiative" : "Reroll initiative"}
         </button>
-        <RollPenaltyChip roll="Initiative" penalty={penalty} />
         <RollEffectChip roll="Initiative" effects={exhaustion} />
         {encounter && (
           <>

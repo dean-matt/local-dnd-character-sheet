@@ -335,6 +335,54 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("2024 exhaustion's penalty to d20 Tests", () => {
+    const calm = { activeEffects: [], hitPointMaximumReduction: null, temporaryModifiers: [] };
+    const tired = (edition: "classic" | "one", exhaustion: number) =>
+      deriveCharacter({ ...equipped, edition }, catalog, { ...calm, exhaustion });
+    const base = tired("one", 0);
+    const term = { label: "Exhaustion 2: -4", value: -4 };
+
+    it("takes 2 per level off checks, saves, initiative and attack rolls, naming the level", () => {
+      const block = tired("one", 2);
+      expect(block.initiative.computed).toBe(base.initiative.computed - 4);
+      expect(block.initiative.terms).toContainEqual(term);
+      for (const [index, skill] of block.skills.entries()) {
+        expect(skill.modifier.computed).toBe((base.skills[index]?.modifier.computed ?? 0) - 4);
+        expect(skill.modifier.terms).toContainEqual(term);
+        expect(skill.passive.computed).toBe(base.skills[index]?.passive.computed);
+      }
+      for (const ability of ABILITIES) {
+        expect(block.savingThrows[ability].computed).toBe(base.savingThrows[ability].computed - 4);
+        expect(block.savingThrows[ability].terms).toContainEqual(term);
+      }
+      expect(base.attacks.length).toBeGreaterThan(0);
+      for (const [index, attack] of block.attacks.entries()) {
+        expect(attack.attackBonus.computed).toBe(
+          (base.attacks[index]?.attackBonus.computed ?? 0) - 4,
+        );
+        expect(attack.attackBonus.terms).toContainEqual(term);
+      }
+      expect(base.spellcasting.length).toBeGreaterThan(0);
+      for (const [index, caster] of block.spellcasting.entries()) {
+        expect(caster.attackBonus.computed).toBe(
+          (base.spellcasting[index]?.attackBonus.computed ?? 0) - 4,
+        );
+        expect(caster.saveDc.computed).toBe(base.spellcasting[index]?.saveDc.computed);
+      }
+      expect(block.unarmedStrike.attackBonus.computed).toBe(
+        base.unarmedStrike.attackBonus.computed - 4,
+      );
+    });
+
+    it("takes nothing at level 0 or from a classic character", () => {
+      expect(tired("one", 0).initiative.terms).not.toContainEqual(
+        expect.objectContaining({ label: expect.stringContaining("Exhaustion") }),
+      );
+      expect(tired("classic", 2).initiative).toEqual(tired("classic", 0).initiative);
+      expect(tired("classic", 2).savingThrows).toEqual(tired("classic", 0).savingThrows);
+    });
+  });
+
   describe("temporary modifiers", () => {
     const held = (...modifiers: CharacterState["temporaryModifiers"]) => ({
       activeEffects: [],

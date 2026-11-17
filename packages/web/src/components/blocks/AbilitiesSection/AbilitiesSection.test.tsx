@@ -823,7 +823,6 @@ describe("AbilitiesSection", () => {
       derived = derivedFor(record),
       bardicInspiration: 6 | 8 | 10 | 12 | null = null,
       aside: ReactNode = null,
-      exhaustion = 0,
     ) {
       const onRolled = vi.fn();
       stubRules([]);
@@ -831,7 +830,7 @@ describe("AbilitiesSection", () => {
       const posts: Record<string, unknown>[] = [];
       const stateWrites: Record<string, unknown>[] = [];
       let play = stateRecord();
-      play = { ...play, state: { ...play.state, bardicInspiration, exhaustion } };
+      play = { ...play, state: { ...play.state, bardicInspiration } };
       const answerState = (init?: RequestInit) => {
         if (init?.method === "PUT") {
           const sent = JSON.parse(String(init.body));
@@ -845,7 +844,6 @@ describe("AbilitiesSection", () => {
         return new Response(JSON.stringify(init?.method === "POST" ? logged : []), { status });
       };
       const answers: Record<string, (init?: RequestInit) => Response> = {
-        "/api/characters/1": () => Response.json(record),
         "/api/characters/1/state": answerState,
         "/api/characters/1/rolls": answerRolls,
       };
@@ -881,31 +879,6 @@ describe("AbilitiesSection", () => {
       expect(posts.map((post) => post.origin)).toEqual(["Charisma", "Wisdom", "Stealth"]);
       expect(posts.map((post) => post.modifier)).toEqual([3, 3, 7]);
       expect(posts.map((post) => post.notation)).toEqual(["1d20+3", "1d20+3", "1d20+7"]);
-    });
-
-    it("takes 2 per exhaustion level off a 2024 character's checks and saves, naming the level in the log", async () => {
-      const { posts } = renderRolling(201, warlock(), undefined, null, null, 2);
-      expect(
-        await screen.findByRole("button", { name: "Charisma check: −4 (Exhaustion 2)" }),
-      ).toBeVisible();
-      fireEvent.click(screen.getByRole("button", { name: "Roll Charisma check" }));
-      fireEvent.click(screen.getByRole("button", { name: "Roll Wisdom saving throw" }));
-
-      await waitFor(() => expect(posts).toHaveLength(2));
-      expect(posts.map((post) => post.modifier)).toEqual([-1, -1]);
-      expect(posts[0]?.terms).toEqual([
-        { source: "Bonus", value: 3 },
-        { source: "Exhaustion 2", value: -4 },
-      ]);
-    });
-
-    it("takes nothing off a roll at exhaustion level 0", async () => {
-      const { posts } = renderRolling();
-      await screen.findByRole("button", { name: "Roll Charisma check" });
-      expect(screen.queryByRole("button", { name: /Exhaustion/ })).toBeNull();
-      fireEvent.click(screen.getByRole("button", { name: "Roll Charisma check" }));
-      await waitFor(() => expect(posts).toHaveLength(1));
-      expect(posts[0]?.terms).toBeUndefined();
     });
 
     it("offers a check, save or skill normal, advantage or disadvantage, and rolls the choice", async () => {

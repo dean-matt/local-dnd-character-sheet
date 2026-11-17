@@ -6,7 +6,6 @@ import {
   derivedValue,
   type EntryRef,
   entryKey,
-  type RollRecord,
   type SpellCastOption,
   spellCast,
   spellCastOptions,
@@ -19,12 +18,10 @@ import { useAnnouncedStateWrite } from "../../../../../hooks/useAnnouncedStateWr
 import { useCharacterInventory } from "../../../../../hooks/useCharacterInventory.ts";
 import { useCharacterState } from "../../../../../hooks/useCharacterState.ts";
 import { useConcentrationName } from "../../../../../hooks/useConcentrationName.ts";
-import { useExhaustionPenalty } from "../../../../../hooks/useExhaustionPenalty.ts";
 import { useReplaceDefinitionAndState } from "../../../../../hooks/useReplaceDefinitionAndState.ts";
 import { useRollAndRecord } from "../../../../../hooks/useRollAndRecord.ts";
 import { TOGGLE_PILL } from "../../../../../lib/chipStyles.ts";
 import { editInventoryEntry, type InventoryEntry } from "../../../../../lib/editInventoryEntry.ts";
-import { penalised } from "../../../../../lib/penalisedRoll.ts";
 import { consumedComponent } from "../../../../../lib/spellFacts.ts";
 import { Announcer } from "../../../../Announcer.tsx";
 import { CastDialog } from "./CastDialog.tsx";
@@ -94,7 +91,6 @@ export function CastSpell({
   const inventory = useCharacterInventory(characterId, open && consumed !== undefined);
   const stored = state.data?.state;
   const held = useConcentrationName(stored?.concentration ?? null);
-  const penalty = useExhaustionPenalty(characterId);
   const attackRoll = useRollAndRecord(characterId);
   const damageRoll = useRollAndRecord(characterId);
   const bonus = spell.attack ? attackBonus(derived, spell) : undefined;
@@ -118,12 +114,11 @@ export function CastSpell({
     label: string,
     type: "spell-attack" | "spell-damage",
     critical = false,
-    terms?: RollRecord["terms"],
   ) {
     return new Promise<Rolled | undefined>((resolve) => {
       const failed = hook.roll(
         notation,
-        { label, type, origin: spell.name, critical, terms },
+        { label, type, origin: spell.name, critical },
         (made, logged) =>
           resolve({
             total: made.total,
@@ -138,18 +133,10 @@ export function CastSpell({
   async function rollParts(choice: Choice) {
     const level = choice.option.level;
     const notation = spellDamageDice(spell, level, characterLevel);
-    const attack = bonus === undefined ? undefined : penalised({ bonus }, penalty, "Spell attack");
     const hit =
-      attack === undefined
+      bonus === undefined
         ? undefined
-        : await rolled(
-            attackRoll,
-            `1d20${signed(attack.bonus)}`,
-            `${spell.name} attack`,
-            "spell-attack",
-            false,
-            attack.terms,
-          );
+        : await rolled(attackRoll, `1d20${signed(bonus)}`, `${spell.name} attack`, "spell-attack");
     const damage =
       notation === undefined
         ? undefined
@@ -257,7 +244,6 @@ export function CastSpell({
           level={spell.level}
           concentration={spell.concentration}
           rolls={rolls}
-          penalty={bonus === undefined ? undefined : penalty}
           options={options}
           held={held}
           consumed={consumed}

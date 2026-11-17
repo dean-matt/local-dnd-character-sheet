@@ -51,6 +51,7 @@ import { classResourcePools } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { TermReference } from "./derivedField.ts";
 import { exhaustedMaximum } from "./exhaustedMaximum.ts";
+import { exhaustionPenaltyTerms } from "./exhaustionPenalty.ts";
 import { featHitPointTerms, featInitiativeTerms, speedWithFeats } from "./featEffects.ts";
 import { featGrants, withFeatGrants } from "./featGrants.ts";
 import {
@@ -1062,13 +1063,19 @@ export function deriveCharacter(
       ...modifiedSpeed.terms,
     ],
   };
+  const exhaustion = exhaustionPenaltyTerms(state.exhaustion ?? 0, definition.edition);
+  const attackModifiers = [...modifierTerms(state, onKind("attackRolls")), ...exhaustion];
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
       const { total, terms } = savingThrowModifier(
         definition,
         ability,
         grants,
-        [...itemTerms(bonuses, (item) => item.save), ...modifierTerms(state, onSave(ability))],
+        [
+          ...itemTerms(bonuses, (item) => item.save),
+          ...modifierTerms(state, onSave(ability)),
+          ...exhaustion,
+        ],
         bonuses,
       );
       return [ability, { computed: total, manual: null, terms }];
@@ -1098,7 +1105,7 @@ export function deriveCharacter(
       skill.ref,
       skill.ability,
       grants,
-      skillBonus,
+      [...skillBonus, ...exhaustion],
       bonuses,
     );
     return {
@@ -1160,6 +1167,7 @@ export function deriveCharacter(
       breakdown([
         ...abilityModifierBreakdown<TermReference>(scores.dex.total).terms,
         ...checkBonus,
+        ...exhaustion,
         ...featInitiativeTerms(definition, proficiencyBonus.total),
         ...subclassInitiativeTerms(
           definition,
@@ -1168,13 +1176,7 @@ export function deriveCharacter(
         ),
       ]),
     ),
-    spellcasting: spellcastingEntries(
-      definition,
-      catalog,
-      level,
-      bonuses,
-      modifierTerms(state, onKind("attackRolls")),
-    ),
+    spellcasting: spellcastingEntries(definition, catalog, level, bonuses, attackModifiers),
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
@@ -1182,27 +1184,9 @@ export function deriveCharacter(
     ...carrying,
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
-    attacks: derivedAttacks(
-      definition,
-      catalog,
-      bonuses,
-      rage,
-      modifierTerms(state, onKind("attackRolls")),
-    ),
-    offHandAttack: derivedOffHandAttack(
-      definition,
-      catalog,
-      bonuses,
-      rage,
-      modifierTerms(state, onKind("attackRolls")),
-    ),
-    unarmedStrike: derivedUnarmedStrike(
-      definition,
-      catalog,
-      bonuses,
-      rage,
-      modifierTerms(state, onKind("attackRolls")),
-    ),
+    attacks: derivedAttacks(definition, catalog, bonuses, rage, attackModifiers),
+    offHandAttack: derivedOffHandAttack(definition, catalog, bonuses, rage, attackModifiers),
+    unarmedStrike: derivedUnarmedStrike(definition, catalog, bonuses, rage, attackModifiers),
     defenses: derivedDefenses(definition, catalog, feats.defenses, rage, names),
     senses: derivedSenses(definition, catalog, feats.senses, names),
     itemGrants: derivedItemGrants(definition, catalog, feats.itemSkills),

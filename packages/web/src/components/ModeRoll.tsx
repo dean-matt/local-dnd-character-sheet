@@ -1,11 +1,8 @@
 import { netRollEffect, type RollEffectEntry } from "@dnd/character";
 import { type ComponentProps, type ReactNode, useContext, useId, useState } from "react";
 import { useCharacterState } from "../hooks/useCharacterState.ts";
-import { useExhaustionPenalty } from "../hooks/useExhaustionPenalty.ts";
 import { useReplaceCharacterState } from "../hooks/useReplaceCharacterState.ts";
 import { parseExtraDie } from "../lib/extraDie.ts";
-import { penalised } from "../lib/penalisedRoll.ts";
-import { RollPenaltyChip } from "./blocks/RollPenaltyChip.tsx";
 import { ExtraDieInput } from "./ExtraDieInput.tsx";
 import { RollBonusButton } from "./RollBonusButton.tsx";
 import { RollingFor } from "./rollerContext.ts";
@@ -31,7 +28,6 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
  * A held Bardic Inspiration die is offered as a checkbox, unticked again when the held die
  * changes. A logged roll that adds it clears it in one state write.
  * The sources of every effect, a conditional one included, are spoken with the control.
- * A 2024 character's exhaustion takes its penalty off the bonus and shows as a chip.
  * `children` sit between the mode and the button.
  */
 export function ModeRoll({
@@ -46,7 +42,6 @@ export function ModeRoll({
   children?: ReactNode;
 }) {
   const characterId = useContext(RollingFor);
-  const penalty = useExhaustionPenalty(characterId ?? "");
   const sources = useId();
   const extraError = useId();
   const start = offered(effects);
@@ -69,7 +64,6 @@ export function ModeRoll({
   );
   return (
     <span className="flex items-center gap-0.5">
-      <RollPenaltyChip roll={roll.label} penalty={penalty} />
       <select
         aria-label={`${modeLabel ?? roll.label} mode`}
         aria-describedby={names.length > 0 ? sources : undefined}
@@ -108,7 +102,7 @@ export function ModeRoll({
         </label>
       )}
       <RollBonusButton
-        {...penalised(roll, penalty)}
+        {...roll}
         mode={mode}
         extra={extra}
         inspiration={inspiration}

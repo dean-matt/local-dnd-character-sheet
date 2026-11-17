@@ -82,20 +82,6 @@ export function exhaustionRollEffects(
 }
 
 /**
- * The 2024 exhaustion penalty on every D20 Test, named with its level as a roll term; absent
- * below level 1 and in the classic ruleset, whose exhaustion is disadvantage instead.
- */
-export function exhaustionRollPenalty(
-  level: number,
-  edition: "classic" | "one",
-): { source: string; value: number } | undefined {
-  if (level === 0) return undefined;
-  const effects = exhaustionEffects(level, edition);
-  if (effects.edition !== "one") return undefined;
-  return { source: `Exhaustion ${level}`, value: -effects.d20TestPenalty };
-}
-
-/**
  * The advantage and disadvantage the sheet's own conditions put on its attack rolls, in the
  * shape a held item's effect takes, with exhaustion's from `exhaustionRollEffects`.
  */
