@@ -28,6 +28,7 @@ import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { useReplaceDefinitionAndState } from "../../../../hooks/useReplaceDefinitionAndState.ts";
 import { editInventoryEntry } from "../../../../lib/editInventoryEntry.ts";
+import { rollTerms } from "../../../../lib/rollTerms.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
@@ -285,6 +286,7 @@ export function Attacks({
             type="attack"
             origin={name}
             bonus={derivedValue(attack.attackBonus)}
+            terms={rollTerms(attack.attackBonus)}
             effects={attackEffects(ability)}
             beforeRoll={beforeRoll}
             critAt={derivedValue(attack.critThreshold)}
@@ -455,6 +457,7 @@ export function Attacks({
                     type="spell-attack"
                     origin={origin}
                     bonus={derivedValue(caster.attackBonus)}
+                    terms={rollTerms(caster.attackBonus)}
                     effects={attackEffects(caster.ability)}
                     critAt={20}
                     onRolled={(hit) => setCritical(spellKey, hit)}
