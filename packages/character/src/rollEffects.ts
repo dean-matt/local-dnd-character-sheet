@@ -50,7 +50,7 @@ export function netRollEffect(
   };
 }
 
-const SIGHT = "while the source of fear is in line of sight";
+const FEAR_IN_SIGHT = "while the source of fear is in line of sight";
 
 type ConditionRule = {
   name: string;
@@ -70,8 +70,8 @@ const CONDITION_RULES: readonly ConditionRule[] = [
   { name: "Prone", mode: "disadvantage", roll: "attack" },
   { name: "Restrained", mode: "disadvantage", roll: "attack" },
   { name: "Restrained", mode: "disadvantage", roll: "save", target: "dex" },
-  { name: "Frightened", mode: "disadvantage", roll: "attack", condition: SIGHT },
-  { name: "Frightened", mode: "disadvantage", roll: "check", condition: SIGHT },
+  { name: "Frightened", mode: "disadvantage", roll: "attack", condition: FEAR_IN_SIGHT },
+  { name: "Frightened", mode: "disadvantage", roll: "check", condition: FEAR_IN_SIGHT },
 ];
 
 /**
