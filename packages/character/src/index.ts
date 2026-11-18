@@ -119,6 +119,7 @@ export {
   featureActionType,
   featurePoolKey,
 } from "./featureActions.ts";
+export { featureDamageDice } from "./featureAttacks.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 export type { Mechanic } from "./featureMechanics.ts";
 export { featurePickOffers } from "./heldFeatures.ts";
@@ -216,6 +217,7 @@ export {
 } from "./rollLog.ts";
 export {
   type SpellCastOption,
+  slotSpent,
   spellBeams,
   spellCast,
   spellCastOptions,
@@ -257,4 +259,11 @@ export {
   withExperienceFloor,
 } from "./summaries.ts";
 export { hitPointsWithin } from "./temporaryModifiers.ts";
-export { TURN_LABELS, turnMarkSpent, turnMarkToggled, turnReset } from "./turn.ts";
+export {
+  featuresUsed,
+  TURN_LABELS,
+  turnMarkSpent,
+  turnMarkToggled,
+  turnReset,
+  usedThisTurn,
+} from "./turn.ts";

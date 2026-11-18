@@ -69,6 +69,7 @@ const attack = {
   critThreshold: { computed: 20, manual: null, terms: [] },
   damage: { dice: "1d8", type: "slashing", modifier: { computed: 4, manual: null, terms: [] } },
   options: [],
+  featureDamage: [],
   grip: { held: "one-handed", twoHandedBlocked: false },
   mastery: [],
   range: null,

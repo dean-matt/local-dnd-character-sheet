@@ -22,3 +22,18 @@ export const turnReset = (state: CharacterState): CharacterState => ({
 /** The state with `mark` spent, however it stood. */
 export const turnMarkSpent = (state: CharacterState, mark: TurnMark): CharacterState =>
   state.turn[mark] ? state : { ...state, turn: { ...state.turn, [mark]: true } };
+
+/** Whether a once-a-turn feature is used this turn; outside an encounter no turn is tracked, so never. */
+export const usedThisTurn = (state: CharacterState, feature: string): boolean =>
+  state.encounter !== null && state.turn.features.includes(feature);
+
+/** The state with each once-a-turn feature of `features` used, recorded only while an encounter tracks turns. */
+export const featuresUsed = (
+  state: CharacterState,
+  features: readonly string[],
+): CharacterState => {
+  const fresh = features.filter((feature) => !state.turn.features.includes(feature));
+  return state.encounter === null || fresh.length === 0
+    ? state
+    : { ...state, turn: { ...state.turn, features: [...state.turn.features, ...fresh] } };
+};

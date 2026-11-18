@@ -1,4 +1,8 @@
-import { type CharacterDerived, characterDefinitionSchema } from "@dnd/character";
+import {
+  type CharacterDerived,
+  type CharacterState,
+  characterDefinitionSchema,
+} from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -39,9 +43,11 @@ const attack = (entry: number, bonus: number): CharacterDerived["attacks"][numbe
   ammunition: null,
   reload: null,
   options: [],
+  featureDamage: [],
 });
 
 const unarmedStrike: CharacterDerived["unarmedStrike"] = {
+  featureDamage: [],
   attackBonus: {
     computed: 5,
     manual: null,
@@ -354,16 +360,19 @@ describe("Attacks", () => {
       status = 201,
       conditions: { name: string; source: string }[] = [],
       houseRules: Record<string, string> = {},
+      held: Partial<CharacterState> = {},
     ) {
       const onRolled = vi.fn();
       const posts: Record<string, unknown>[] = [];
+      const puts: CharacterState[] = [];
       const play = stateRecord();
       stubFetchByUrl({
         "/api/characters/1/inventory": { items: [{ name: "Longsword" }] },
-        "/api/characters/1/state": { ...play, state: { ...play.state, conditions } },
+        "/api/characters/1/state": { ...play, state: { ...play.state, conditions, ...held } },
       });
       const base = globalThis.fetch;
       vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "PUT") puts.push(JSON.parse(String(init.body)));
         if (String(url) !== "/api/characters/1/rolls") return base(url, init);
         if (init?.method === "POST") posts.push(JSON.parse(String(init.body)));
         return new Response(JSON.stringify(logged), { status });
@@ -383,7 +392,7 @@ describe("Attacks", () => {
           </RollingFor>
         </QueryClientProvider>,
       );
-      return { posts, onRolled };
+      return { posts, puts, onRolled };
     }
 
     it("rolls a weapon's attack and damage and a spell attack, each labelled, typed and from its origin", async () => {
@@ -712,6 +721,160 @@ describe("Attacks", () => {
       await waitFor(() => expect(posts).toHaveLength(2));
       expect(posts[1]).toMatchObject({ notation: "1d8+9", modifier: 9 });
       await waitFor(() => expect(trade).not.toBeChecked());
+    });
+
+    const sneakAttack = {
+      source: "Sneak Attack",
+      dice: "3d6",
+      bonus: 0,
+      type: null,
+      offer: { condition: "with advantage", oncePerTurn: true, slot: null },
+    };
+
+    it("adds a feature's damage the player takes to the damage roll, until it is logged", async () => {
+      const { posts, puts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [{ ...attack(0, 5), featureDamage: [sneakAttack] }],
+      });
+      const offer = await longsword().findByRole("checkbox", {
+        name: "Sneak Attack +3d6, with advantage",
+      });
+      fireEvent.click(offer);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Sneak Attack" }),
+      );
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ notation: "1d8+3d6-1" });
+      expect(puts).toEqual([]);
+      await waitFor(() => expect(offer).not.toBeChecked());
+    });
+
+    it("offers a once-a-turn feature once a turn while an encounter runs", async () => {
+      const { posts, puts } = renderRolling(
+        { ...derivedRecord(), attacks: [{ ...attack(0, 5), featureDamage: [sneakAttack] }] },
+        201,
+        [],
+        {},
+        { encounter: { round: 1, initiative: null } },
+      );
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Sneak Attack/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Sneak Attack" }),
+      );
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(puts[0]?.turn.features).toEqual(["Sneak Attack"]);
+    });
+
+    it("notes a once-a-turn feature used this turn in place of offering it", async () => {
+      renderRolling(
+        { ...derivedRecord(), attacks: [{ ...attack(0, 5), featureDamage: [sneakAttack] }] },
+        201,
+        [],
+        {},
+        {
+          encounter: { round: 1, initiative: null },
+          turn: { ...stateRecord().state.turn, features: ["Sneak Attack"] },
+        },
+      );
+      expect(await longsword().findByText("Sneak Attack used this turn")).toBeInTheDocument();
+      expect(longsword().queryByRole("checkbox", { name: /^Sneak Attack/ })).toBeNull();
+    });
+
+    it("adds damage that always lands to the roll and the cell", async () => {
+      const smite = {
+        source: "Improved Divine Smite",
+        dice: "1d8",
+        bonus: 0,
+        type: "radiant",
+        offer: null,
+      };
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
+      });
+      expect(await longsword().findByText("+1d8 radiant Improved Divine Smite")).toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword damage" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ notation: "1d8+1d8-1" });
+    });
+
+    it("spends the slot Divine Smite takes and scales its dice by the slot's level", async () => {
+      const smite = {
+        source: "Divine Smite",
+        dice: "2d8",
+        bonus: 0,
+        type: "radiant",
+        offer: {
+          condition: "on a melee weapon hit",
+          oncePerTurn: false,
+          slot: { max: 5, versus: "an undead or a fiend" },
+        },
+      };
+      const { posts, puts } = renderRolling({
+        ...derivedRecord(),
+        spellSlots: [
+          { level: 1, total: { computed: 4, manual: null, terms: [] } },
+          { level: 3, total: { computed: 2, manual: null, terms: [] } },
+        ],
+        attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
+      });
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Divine Smite/ }));
+      fireEvent.change(longsword().getByRole("combobox", { name: "Slot" }), {
+        target: { value: "slot:3" },
+      });
+      fireEvent.click(longsword().getByRole("checkbox", { name: "Against an undead or a fiend" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Divine Smite" }),
+      );
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ notation: "1d8+5d8-1" });
+      expect(puts[0]?.spellSlots).toContainEqual({ level: 3, total: 2, expended: 1 });
+    });
+
+    it("drops a smite taken on a row once no slot is left, and still rolls the row's damage", async () => {
+      const smite = {
+        source: "Divine Smite",
+        dice: "2d8",
+        bonus: 0,
+        type: "radiant",
+        offer: {
+          condition: "on a melee weapon hit",
+          oncePerTurn: false,
+          slot: { max: 5, versus: "an undead or a fiend" },
+        },
+      };
+      const { posts, puts } = renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 1, manual: null, terms: [] } }],
+        pactSlots: null,
+        attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
+        unarmedStrike: { ...unarmedStrike, featureDamage: [smite] },
+      });
+      const served = globalThis.fetch;
+      vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+        const response = await served(url, init);
+        return init?.method === "PUT"
+          ? Response.json({ ...stateRecord(), state: puts.at(-1) })
+          : response;
+      });
+      const unarmed = () =>
+        within(
+          screen.getByRole("rowheader", { name: /^Unarmed Strike/ }).closest("tr") as HTMLElement,
+        );
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Divine Smite/ }));
+      fireEvent.click(unarmed().getByRole("checkbox", { name: /^Divine Smite/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Divine Smite" }),
+      );
+      await waitFor(() => expect(puts).toHaveLength(1));
+
+      expect(await unarmed().findByText("No spell slot left")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Unarmed Strike damage" }));
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]).toMatchObject({ label: "Unarmed Strike damage", notation: "1d1" });
+      expect(puts).toHaveLength(1);
     });
 
     it("offers no trade on a row with no damage to roll", async () => {

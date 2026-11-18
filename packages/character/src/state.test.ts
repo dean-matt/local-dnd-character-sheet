@@ -54,7 +54,7 @@ describe("default state", () => {
       temporaryModifiers: [],
       concentration: null,
       encounter: null,
-      turn: { action: false, bonusAction: false, reaction: false, movement: false },
+      turn: { action: false, bonusAction: false, reaction: false, movement: false, features: [] },
       deathSaves: { successes: 0, failures: 0 },
       exhaustion: 0,
       inspiration: false,

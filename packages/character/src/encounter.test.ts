@@ -4,6 +4,7 @@ import {
   describeStateChange,
   encounterEnded,
   encounterStarted,
+  featuresUsed,
   initiativeRolled,
   roundAdvanced,
   turnMarkToggled,
@@ -49,6 +50,13 @@ describe("encounter", () => {
       concentration: { spell: { name: "Hex", source: "PHB" }, level: 2 },
       encounter: null,
     });
+  });
+
+  it("forgets the once-a-turn features used when an encounter ends or starts", () => {
+    const fighting = { ...state, encounter: { round: 2, initiative: 11 } };
+    const used = featuresUsed(fighting, ["Sneak Attack"]);
+    expect(encounterEnded(used).turn.features).toEqual([]);
+    expect(encounterStarted({ ...used, encounter: null }).turn.features).toEqual([]);
   });
 
   it("refuses a round past the bound", () => {

@@ -111,8 +111,8 @@ const encounterSchema = z.strictObject({
 });
 
 /**
- * What the character has used this turn, each mark spent or not. Session state for the current
- * turn only, never a history.
+ * What the character has used this turn, each mark spent or not, and by name the once-a-turn
+ * features already used. Session state for the current turn only, never a history.
  */
 export const TURN_MARKS = ["action", "bonusAction", "reaction", "movement"] as const;
 export type TurnMark = (typeof TURN_MARKS)[number];
@@ -122,6 +122,7 @@ const turnSchema = z.strictObject({
   bonusAction: z.boolean().default(false),
   reaction: z.boolean().default(false),
   movement: z.boolean().default(false),
+  features: z.array(z.string().min(1)).default([]),
 });
 
 /** Every mark available, the turn a character starts with. */

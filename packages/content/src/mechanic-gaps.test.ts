@@ -32,6 +32,8 @@ const zero: Counts = {
   speed: 0,
   roll: 0,
   attack: 0,
+  extraDamage: 0,
+  martialArts: 0,
   unclassified: 0,
 };
 
@@ -88,6 +90,18 @@ describe("mechanicGaps", () => {
     "classic",
     json({ srd: true }, "while you aren't wearing armor, you gain training with Medium armor"),
   );
+  feat.run(
+    "Smiting",
+    "PHB",
+    "classic",
+    json({ srd: true }, "an extra {@damage 1d8} radiant damage"),
+  );
+  feat.run(
+    "Fists",
+    "PHB",
+    "classic",
+    json({ srd: true }, "roll a d4 in place of the normal damage of your unarmed strike"),
+  );
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
@@ -98,6 +112,8 @@ describe("mechanicGaps", () => {
     expect(gaps.armorClass).toEqual(["Monk (PHB)"]);
     expect(gaps.roll).toEqual(["Steady (PHB)"]);
     expect(gaps.attack).toEqual(["Aimed (PHB)"]);
+    expect(gaps.extraDamage).toEqual(["Smiting (PHB)"]);
+    expect(gaps.martialArts).toEqual(["Fists (PHB)"]);
     expect(gaps.unclassified).toEqual(["Lucky (PHB)", "Strider (PHB)", "Venom (PHB)"]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
@@ -108,6 +124,8 @@ describe("mechanicGaps", () => {
       unarmoredBase: 1,
       roll: 1,
       attack: 1,
+      extraDamage: 1,
+      martialArts: 1,
       unclassified: 3,
     });
   });

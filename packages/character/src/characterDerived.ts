@@ -131,8 +131,31 @@ const attackOptionSchema = z.strictObject({
   condition: z.string().min(1),
 });
 
+/**
+ * Damage a held feature adds to one attack on a hit: `dice`, or a flat `bonus` where `dice`
+ * is null, of `type`, or of the weapon's type where that is null. With no `offer` it always
+ * lands. An offer lands where the player takes it, as `condition` says: once a turn while an
+ * encounter runs where `oncePerTurn` is set, and spending a spell slot where `slot` is, with a
+ * die more for each slot level past the first up to `max` dice, and one more `versus` the
+ * creatures it names.
+ */
+const featureDamageSchema = z.strictObject({
+  source: z.string().min(1),
+  dice: z.string().min(1).nullable(),
+  bonus: z.int(),
+  type: z.string().min(1).nullable(),
+  offer: z
+    .strictObject({
+      condition: z.string().min(1),
+      oncePerTurn: z.boolean(),
+      slot: z.strictObject({ max: z.int().min(2), versus: z.string().min(1) }).nullable(),
+    })
+    .nullable(),
+});
+
 const attackSchema = z.strictObject({
   extraDamage: extraDamageSchema,
+  featureDamage: z.array(featureDamageSchema),
   entry: z.int().min(0),
   ability: z.enum(["str", "dex"]),
   attackBonus: derivedSchema(z.int()),
@@ -297,6 +320,7 @@ export const characterDerivedSchema = z.strictObject({
   /** The attack every character can make, with no weapon: Strength plus proficiency, and 1 plus Strength bludgeoning. */
   unarmedStrike: z.strictObject({
     extraDamage: extraDamageSchema,
+    featureDamage: z.array(featureDamageSchema),
     attackBonus: derivedSchema(z.int()),
     critThreshold: derivedSchema(z.int().min(2).max(20)),
     damage: z.strictObject({

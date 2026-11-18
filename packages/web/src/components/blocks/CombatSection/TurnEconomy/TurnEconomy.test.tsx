@@ -48,6 +48,7 @@ describe("TurnEconomy", () => {
       bonusAction: false,
       reaction: true,
       movement: false,
+      features: [],
     });
     expect(screen.getByRole("button", { name: /Reaction/ })).toHaveTextContent("spent");
   });
@@ -64,7 +65,14 @@ describe("TurnEconomy", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("reset"));
     expect(writes).toHaveLength(1);
-    expect(Object.values(writes[0]?.turn ?? {})).toEqual([false, false, false, false]);
+    expect(Object.values(writes[0]?.turn ?? {})).toEqual([false, false, false, false, []]);
+  });
+
+  it("resets a once-a-turn feature used with no mark spent", async () => {
+    const writes = renderCard({ features: ["Sneak Attack"] });
+    fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.turn.features).toEqual([]);
   });
 
   it("does not write a reset where nothing is spent", async () => {

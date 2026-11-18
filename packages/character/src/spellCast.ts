@@ -62,7 +62,8 @@ export function spellCast(
   return concentrationStarted(spent, { spell: cast.spell, level: option.level });
 }
 
-function slotSpent(derived: Sheet, state: CharacterState, option: SpellCastOption) {
+/** The state with one slot of `option` spent; a ritual or cantrip spends none. Throws a RangeError where none is left. */
+export function slotSpent(derived: Sheet, state: CharacterState, option: SpellCastOption) {
   if (option.via === "ritual" || option.via === "cantrip") return state;
   const sheet = sheetState(derived, state);
   const slot =

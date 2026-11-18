@@ -212,7 +212,66 @@ const attackMechanicSchema = z
     error: "a critical range always holds",
   });
 
+const diceSchema = z.string().regex(/^\d+d\d+$/);
+
+/**
+ * Damage a feature adds to the character's own weapon attacks on a hit: `dice` as notation, a
+ * class table column's cell, or as many `die`-sided dice as that cell's number; or an
+ * ability's modifier, at least 1. `scales` replaces the dice from a level in the feature's
+ * class. `type` is the damage's, the weapon's own where absent. `weapons` narrows it to melee
+ * weapons or finesse and ranged ones, and `unarmed` adds the unarmed strike. `option` says
+ * when it holds, and the attack offers it rather than adding it: once a turn where
+ * `oncePerTurn` says so, and for a spell slot where `slot` does, a die more for each slot
+ * level past the first up to `max` dice, and one more `versus` the creatures it names.
+ * `while: "raging"` holds it only during a rage.
+ */
+const extraDamageMechanicSchema = z
+  .strictObject({
+    kind: z.literal("extraDamage"),
+    dice: z.union([
+      diceSchema,
+      z.strictObject({ column: z.string().min(1), die: z.int().min(2).optional() }),
+      abilitySchema,
+    ]),
+    scales: z
+      .array(z.strictObject({ level: z.int().min(2).max(20), dice: diceSchema }))
+      .min(1)
+      .optional(),
+    type: z.string().min(1).optional(),
+    weapons: z.enum(["melee", "finesseOrRanged"]).optional(),
+    unarmed: z.literal(true).optional(),
+    option: z.string().min(1).optional(),
+    oncePerTurn: z.literal(true).optional(),
+    slot: z.strictObject({ max: z.int().min(2), versus: z.string().min(1) }).optional(),
+    while: z.literal("raging").optional(),
+  })
+  .refine(({ option, oncePerTurn, slot }) => option || (!oncePerTurn && !slot), {
+    error: "extra damage the attack offers says when it holds",
+  })
+  .refine(({ slot, dice }) => !slot || typeof dice === "string", {
+    error: "a slot adds dice to notation",
+  });
+
+/**
+ * A Monk's Martial Arts, on the unarmed strike and on the `classic` or `one` edition's monk
+ * weapons, while no armor or shield is worn and every equipped weapon is a monk weapon: `die`
+ * names the class table column whose die replaces a smaller one, and `dexterity` lets the
+ * attack use Dexterity.
+ */
+const martialArtsMechanicSchema = z
+  .strictObject({
+    kind: z.literal("martialArts"),
+    monkWeapons: z.enum(["classic", "one"]),
+    die: z.string().min(1).optional(),
+    dexterity: z.literal(true).optional(),
+  })
+  .refine(({ die, dexterity }) => die !== undefined || dexterity !== undefined, {
+    error: "a martial arts mechanic gives a die or Dexterity",
+  });
+
 const mechanicSchema = z.union([
+  extraDamageMechanicSchema,
+  martialArtsMechanicSchema,
   attackMechanicSchema,
   rollMechanicSchema,
   speedMechanicSchema,

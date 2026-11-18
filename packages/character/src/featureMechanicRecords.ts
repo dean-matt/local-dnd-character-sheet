@@ -81,6 +81,22 @@ const saveAdvantage = (against?: string): Mechanic => ({
 const CHARMED_OR_FRIGHTENED = "against being charmed or frightened";
 const critical = (value: number): Mechanic[] => [{ kind: "attack", critical: value }];
 const POWER_ATTACK = "chosen before the attack; the damage lands on a hit";
+const ON_A_HIT = "on a weapon hit";
+const rogue24: [string, string] = ["Rogue", "XPHB"];
+const cleric24: [string, string] = ["Cleric", "XPHB"];
+const druid24: [string, string] = ["Druid", "XPHB"];
+const monk: [string, string] = ["Monk", "PHB"];
+const monk24: [string, string] = ["Monk", "XPHB"];
+const ranger24: [string, string] = ["Ranger", "XPHB"];
+const sneakAttack = (option: string): Mechanic[] => [
+  {
+    kind: "extraDamage",
+    dice: { column: "sneak_attack" },
+    weapons: "finesseOrRanged",
+    oncePerTurn: true,
+    option,
+  },
+];
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
@@ -798,4 +814,193 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     classSource: "XPHB",
     level: 17,
   }),
+  classFeature(
+    rogue,
+    ["Sneak Attack", "PHB"],
+    1,
+    sneakAttack(
+      "with advantage, or with another enemy of the target within 5 feet of it and no disadvantage",
+    ),
+  ),
+  classFeature(
+    rogue24,
+    ["Sneak Attack", "XPHB"],
+    1,
+    sneakAttack("with advantage, or with an ally within 5 feet of the target and no disadvantage"),
+  ),
+  classFeature(paladin, ["Divine Smite", "PHB"], 2, [
+    {
+      kind: "extraDamage",
+      dice: "2d8",
+      type: "radiant",
+      weapons: "melee",
+      unarmed: true,
+      option: "on a melee weapon hit",
+      slot: { max: 5, versus: "an undead or a fiend" },
+    },
+  ]),
+  classFeature(paladin, ["Improved Divine Smite", "PHB"], 11, [
+    { kind: "extraDamage", dice: "1d8", type: "radiant", weapons: "melee" },
+  ]),
+  classFeature(paladin24, ["Radiant Strikes", "XPHB"], 11, [
+    { kind: "extraDamage", dice: "1d8", type: "radiant", weapons: "melee", unarmed: true },
+  ]),
+  subclassFeature(cleric, ["Life", "PHB"], ["Divine Strike", "PHB"], 8, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      scales: [{ level: 14, dice: "2d8" }],
+      type: "radiant",
+      unarmed: true,
+      oncePerTurn: true,
+      option: ON_A_HIT,
+    },
+  ]),
+  {
+    ...classFeature(cleric24, ["Divine Strike", "XPHB"], 7, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        scales: [{ level: 14, dice: "2d8" }],
+        type: "necrotic or radiant",
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+    offeredBy: {
+      name: "Blessed Strikes",
+      source: "XPHB",
+      className: "Cleric",
+      classSource: "XPHB",
+      level: 7,
+    },
+  },
+  {
+    ...classFeature(druid24, ["Primal Strike", "XPHB"], 7, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        scales: [{ level: 15, dice: "2d8" }],
+        type: "cold, fire, lightning or thunder",
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+    offeredBy: {
+      name: "Elemental Fury",
+      source: "XPHB",
+      className: "Druid",
+      classSource: "XPHB",
+      level: 7,
+    },
+  },
+  // The dice each improves are the scale its option records.
+  narrative({
+    name: "Improved Blessed Strikes",
+    source: "XPHB",
+    className: "Cleric",
+    classSource: "XPHB",
+    level: 14,
+  }),
+  narrative({
+    name: "Improved Elemental Fury",
+    source: "XPHB",
+    className: "Druid",
+    classSource: "XPHB",
+    level: 15,
+  }),
+  {
+    ...subclassFeature(ranger, ["Hunter", "PHB"], ["Colossus Slayer", "PHB"], 3, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        unarmed: true,
+        oncePerTurn: true,
+        option: "against a creature below its hit point maximum",
+      },
+    ]),
+    offeredBy: {
+      name: "Hunter's Prey",
+      source: "PHB",
+      className: "Ranger",
+      classSource: "PHB",
+      subclass: { shortName: "Hunter", source: "PHB" },
+      level: 3,
+    },
+  },
+  subclassFeature(ranger24, ["Hunter", "XPHB"], ["Hunter's Prey", "XPHB"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      oncePerTurn: true,
+      option: "with Colossus Slayer chosen, against a creature missing any of its hit points",
+    },
+  ]),
+  classFeature(barbarian24, ["Brutal Strike", "XPHB"], 9, [
+    {
+      kind: "extraDamage",
+      dice: "1d10",
+      scales: [{ level: 17, dice: "2d10" }],
+      unarmed: true,
+      oncePerTurn: true,
+      option: "forgoing Reckless Attack's advantage on a Strength attack",
+    },
+  ]),
+  subclassFeature(barbarian24, ["Berserker", "XPHB"], ["Frenzy", "XPHB"], 3, [
+    {
+      kind: "extraDamage",
+      dice: { column: "rage_damage", die: 6 },
+      unarmed: true,
+      oncePerTurn: true,
+      while: "raging",
+      option: "attacking recklessly, on the first target hit with a Strength attack",
+    },
+  ]),
+  {
+    ref: { name: "Lifedrinker", source: "PHB" },
+    mechanics: [
+      { kind: "extraDamage", dice: "cha", type: "necrotic", option: "with your pact weapon" },
+    ],
+  },
+  {
+    ref: { name: "Lifedrinker", source: "XPHB" },
+    mechanics: [
+      {
+        kind: "extraDamage",
+        dice: "1d6",
+        type: "necrotic, psychic or radiant",
+        oncePerTurn: true,
+        option: "with your pact weapon",
+      },
+    ],
+  },
+  classFeature(monk, ["Martial Arts", "PHB"], 1, [
+    { kind: "martialArts", monkWeapons: "classic", die: "martial_arts", dexterity: true },
+  ]),
+  classFeature(monk24, ["Martial Arts Die", "XPHB"], 1, [
+    { kind: "martialArts", monkWeapons: "one", die: "martial_arts" },
+  ]),
+  classFeature(monk24, ["Dexterous Attacks", "XPHB"], 1, [
+    { kind: "martialArts", monkWeapons: "one", dexterity: true },
+  ]),
+  // A critical hit doubles every die the roll holds, so it cannot add dice it does not double.
+  ...(
+    [
+      ["Brutal Critical (1 die)", 9],
+      ["Brutal Critical (2 dice)", 13],
+      ["Brutal Critical (3 dice)", 17],
+    ] as const
+  ).map(([name, level]) =>
+    narrative({ name, source: "PHB", className: "Barbarian", classSource: "PHB", level }),
+  ),
+  // Each lands on another creature, or on a roll of 20 for an amount the boon's pick sets.
+  narrative({
+    name: "Superior Hunter's Prey",
+    source: "XPHB",
+    className: "Ranger",
+    classSource: "XPHB",
+    subclass: { shortName: "Hunter", source: "XPHB" },
+    level: 11,
+  }),
+  narrative({ name: "Boon of Irresistible Offense", source: "XPHB" }),
 ];
