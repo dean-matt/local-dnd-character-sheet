@@ -50,5 +50,152 @@
       ],
       "classFeatures": ["Magical Tinkering|Artificer|TCE|1"]
     }
+  ],
+  "subclass": [
+    {
+      "name": "Armorer",
+      "shortName": "Armorer",
+      "source": "TCE",
+      "className": "Artificer",
+      "classSource": "TCE",
+      "page": 15,
+      "edition": "classic",
+      "subclassFeatures": [
+        "Armorer|Artificer|TCE|Armorer|TCE|3",
+        "Extra Attack|Artificer|TCE|Armorer|TCE|5",
+        "Armor Modifications|Artificer|TCE|Armorer|TCE|9",
+        "Perfected Armor|Artificer|TCE|Armorer|TCE|15"
+      ]
+    }
+  ],
+  "subclassFeature": [
+    {
+      "name": "Armor Model",
+      "source": "TCE",
+      "page": 15,
+      "className": "Artificer",
+      "classSource": "TCE",
+      "subclassShortName": "Armorer",
+      "subclassSource": "TCE",
+      "level": 3,
+      "header": 1,
+      "entries": [
+        "{@i Elided.}",
+        "Elided.",
+        "Elided.",
+        "Elided. {@item smith's tools|PHB} Elided.",
+        {
+          "type": "entries",
+          "entries": [
+            {
+              "type": "entries",
+              "name": "Guardian",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "style": "list-hang-notitle",
+                  "items": [
+                    {
+                      "type": "refSubclassFeature",
+                      "subclassFeature": "Thunder Gauntlets|Artificer|TCE|Armorer|TCE|3"
+                    },
+                    {
+                      "type": "refSubclassFeature",
+                      "subclassFeature": "Defensive Field|Artificer|TCE|Armorer|TCE|3"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "entries",
+              "name": "Infiltrator",
+              "entries": [
+                "Elided.",
+                {
+                  "type": "list",
+                  "style": "list-hang-notitle",
+                  "items": [
+                    {
+                      "type": "refSubclassFeature",
+                      "subclassFeature": "Lightning Launcher|Artificer|TCE|Armorer|TCE|3"
+                    },
+                    {
+                      "type": "refSubclassFeature",
+                      "subclassFeature": "Powered Steps|Artificer|TCE|Armorer|TCE|3"
+                    },
+                    {
+                      "type": "refSubclassFeature",
+                      "subclassFeature": "Dampening Field|Artificer|TCE|Armorer|TCE|3"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Thunder Gauntlets",
+      "source": "TCE",
+      "page": 15,
+      "className": "Artificer",
+      "classSource": "TCE",
+      "subclassShortName": "Armorer",
+      "subclassSource": "TCE",
+      "level": 3,
+      "type": "item",
+      "entries": ["Elided. {@damage 1d8} Elided."]
+    },
+    {
+      "name": "Defensive Field",
+      "source": "TCE",
+      "page": 15,
+      "className": "Artificer",
+      "classSource": "TCE",
+      "subclassShortName": "Armorer",
+      "subclassSource": "TCE",
+      "level": 3,
+      "type": "item",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Lightning Launcher",
+      "source": "TCE",
+      "page": 15,
+      "className": "Artificer",
+      "classSource": "TCE",
+      "subclassShortName": "Armorer",
+      "subclassSource": "TCE",
+      "level": 3,
+      "type": "item",
+      "entries": ["Elided. {@damage 1d6} Elided. {@damage 1d6} Elided."]
+    },
+    {
+      "name": "Powered Steps",
+      "source": "TCE",
+      "page": 15,
+      "className": "Artificer",
+      "classSource": "TCE",
+      "subclassShortName": "Armorer",
+      "subclassSource": "TCE",
+      "level": 3,
+      "type": "item",
+      "entries": ["Elided."]
+    },
+    {
+      "name": "Dampening Field",
+      "source": "TCE",
+      "page": 15,
+      "className": "Artificer",
+      "classSource": "TCE",
+      "subclassShortName": "Armorer",
+      "subclassSource": "TCE",
+      "level": 3,
+      "type": "item",
+      "entries": ["Elided. {@skill Stealth} Elided."]
+    }
   ]
 }

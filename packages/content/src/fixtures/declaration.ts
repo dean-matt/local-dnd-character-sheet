@@ -483,7 +483,7 @@ export const FIXTURES: Fixture[] = [
   {
     file: "data/class/class-artificer.json",
     keep: {
-      fields: ["class"],
+      fields: ["class", "subclass", "subclassFeature"],
       within: {
         class: {
           items: [
@@ -505,6 +505,33 @@ export const FIXTURES: Fixture[] = [
                 classFeatures: { items: ["Magical Tinkering|Artificer|TCE|1"] },
               },
             },
+          ],
+        },
+        subclass: {
+          items: [
+            {
+              id: "Armorer|TCE|Artificer|TCE",
+              fields: [
+                "name",
+                "shortName",
+                "source",
+                "className",
+                "classSource",
+                "page",
+                "edition",
+                "subclassFeatures",
+              ],
+            },
+          ],
+        },
+        subclassFeature: {
+          items: [
+            "Armor Model|TCE|Artificer|TCE|Armorer|TCE|3",
+            "Thunder Gauntlets|TCE|Artificer|TCE|Armorer|TCE|3",
+            "Defensive Field|TCE|Artificer|TCE|Armorer|TCE|3",
+            "Lightning Launcher|TCE|Artificer|TCE|Armorer|TCE|3",
+            "Powered Steps|TCE|Artificer|TCE|Armorer|TCE|3",
+            "Dampening Field|TCE|Artificer|TCE|Armorer|TCE|3",
           ],
         },
       },

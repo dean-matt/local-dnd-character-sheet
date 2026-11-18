@@ -151,7 +151,9 @@ CREATE TABLE subclass_optional_features (
 -- same class, subclass and level. follows marks a feature that asks no choice of its
 -- own: it takes the option whose name matches the one chosen for the feature it
 -- names, at another level of the same class and subclass, so Storm Soul takes the
--- environment chosen for Storm Aura. load/feature-choices.ts writes all three.
+-- environment chosen for Storm Aura. An option may itself offer features, which arrive
+-- with it: the Infiltrator option row of Armor Model offers Powered Steps. Upstream has
+-- no row for such an option; load/feature-choices.ts writes it, and all three columns.
 --
 -- uses and uses_reset are the limited uses load/limited-uses.ts reads from a
 -- feature's text, here and on feats and optional_features. 'short' is a short or

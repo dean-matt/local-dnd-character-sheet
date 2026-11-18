@@ -77,6 +77,80 @@ describe("the features that offer a choice of features", () => {
     ]);
   });
 
+  it("offers Armor Model's two models as option rows, each offering the features it lists", () => {
+    build(FIXTURE_VENDOR);
+
+    const db = open();
+    const rows = db
+      .prepare(
+        "SELECT name, choose, offered_by_name, json FROM subclass_features " +
+          "WHERE subclass_short_name = 'Armorer' AND level = 3 ORDER BY offered_by_name, name",
+      )
+      .all() as {
+      name: string;
+      choose: number | null;
+      offered_by_name: string | null;
+      json: string;
+    }[];
+    db.close();
+
+    expect(rows.map(({ json, ...row }) => row)).toEqual([
+      { name: "Armor Model", choose: 1, offered_by_name: null },
+      { name: "Guardian", choose: null, offered_by_name: "Armor Model" },
+      { name: "Infiltrator", choose: null, offered_by_name: "Armor Model" },
+      { name: "Defensive Field", choose: null, offered_by_name: "Guardian" },
+      { name: "Thunder Gauntlets", choose: null, offered_by_name: "Guardian" },
+      { name: "Dampening Field", choose: null, offered_by_name: "Infiltrator" },
+      { name: "Lightning Launcher", choose: null, offered_by_name: "Infiltrator" },
+      { name: "Powered Steps", choose: null, offered_by_name: "Infiltrator" },
+    ]);
+    const infiltrator = JSON.parse(rows.find(({ name }) => name === "Infiltrator")?.json ?? "{}");
+    expect(infiltrator).toMatchObject({ name: "Infiltrator", source: "TCE", level: 3 });
+    expect(infiltrator.header).toBeUndefined();
+  });
+
+  it("refuses Armor Model once it names fewer than two models", () => {
+    const subclassFeature = (name: string, entries: unknown[] = ["Elided."]) => ({
+      name,
+      source: "TCE",
+      className: "Artificer",
+      classSource: "TCE",
+      subclassShortName: "Armorer",
+      subclassSource: "TCE",
+      level: 3,
+      entries,
+    });
+    const model = {
+      type: "entries",
+      name: "Guardian",
+      entries: [
+        {
+          type: "refSubclassFeature",
+          subclassFeature: "Thunder Gauntlets|Artificer|TCE|Armorer|TCE|3",
+        },
+      ],
+    };
+    const vendor = {
+      class: [{ name: "Artificer", source: "TCE", hd: { number: 1, faces: 8 } }],
+      subclass: [
+        {
+          name: "Armorer",
+          shortName: "Armorer",
+          source: "TCE",
+          className: "Artificer",
+          classSource: "TCE",
+        },
+      ],
+      subclassFeature: [
+        subclassFeature("Armor Model", [model]),
+        subclassFeature("Thunder Gauntlets"),
+      ],
+    };
+    expect(refusal(vendorHolding("class-artificer.json", vendor))).toMatch(
+      /Armor Model: names 1 feature groups, not a choice of them/,
+    );
+  });
+
   it("reads a class feature's choice nested below its prose", () => {
     build(FIXTURE_VENDOR);
 

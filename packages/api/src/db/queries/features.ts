@@ -145,7 +145,8 @@ const sameRef = (a: ContentRef) => (b: ContentRef) => a.name === b.name && a.sou
  * feature that offers a choice carries its key, count and every option, so the sheet can
  * change it, and the option taken follows it in place of its own sorted position; the
  * options not taken drop out. A stored option no row answers is listed unresolved after
- * its feature rather than dropped. A feature that follows another's choice, such as
+ * its feature rather than dropped. An option taken lists the features it offers after it, as
+ * Infiltrator (TCE) lists Powered Steps. A feature that follows another's choice, such as
  * Storm Soul (XGE), carries no choice of its own and lists the option whose name
  * matches the one taken there.
  */
@@ -193,14 +194,16 @@ function withChoices(
       ? { ...feature, picks: { feature: key, offers } }
       : feature;
   };
+  const offeredBy = (offering: ClassFeatureRow) =>
+    rows
+      .filter((each) => each.level === offering.level && each.offered_by_name === offering.name)
+      .filter((each) => each.offered_by_source === offering.source);
   return rows.flatMap((row): SheetFeature[] => {
     if (row.offered_by_name !== null) return [];
     const placement = { level: row.level };
     const feature = asFeature(row);
     if (row.choose === null && row.follows_name === null) return [feature];
-    const optionRows = rows
-      .filter((each) => each.level === row.level && each.offered_by_name === row.name)
-      .filter((each) => each.offered_by_source === row.source);
+    const optionRows = offeredBy(row);
     if (row.choose === null) {
       const names = followed(row);
       return [feature, ...optionRows.filter(({ name }) => names.includes(name)).map(asFeature)];
@@ -210,7 +213,10 @@ function withChoices(
     const chosen = taken(offering);
     return [
       { ...feature, choice: { feature: offering, count: row.choose, options } },
-      ...optionRows.filter((each) => chosen.some(sameRef(each))).map(asFeature),
+      ...optionRows
+        .filter((each) => chosen.some(sameRef(each)))
+        .flatMap((option) => [option, ...offeredBy(option)])
+        .map(asFeature),
       ...chosen
         .filter((ref) => !options.some(sameRef(ref)))
         .map((ref) => unresolved(ref, placement)),
