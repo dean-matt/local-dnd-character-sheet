@@ -13,10 +13,10 @@ type InitiativeBonus = {
 
 /**
  * Initiative bonuses a subclass feature states only in prose. Keys are the class row and
- * the `subclasses` row a level stores, as `unarmoredDefense.ts` keys its formulas; the
- * 2014 and 2024 rows of a class share a subclass printed once. Left out: Avatar of Battle
- * (UA Mystic, allies only), Tandem Footwork (XPHB Bard, a Bardic Inspiration die that
- * helps allies) and Adventurer's Atlas (EFA Artificer, a target's bonus).
+ * the `subclasses` row a level stores, as `SUBCLASS_NAMES` maps them; the 2014 and 2024
+ * rows of a class share a subclass printed once. Left out: Avatar of Battle (UA Mystic,
+ * allies only), Tandem Footwork (XPHB Bard, a Bardic Inspiration die that helps allies)
+ * and Adventurer's Atlas (EFA Artificer, a target's bonus).
  */
 const SUBCLASS_INITIATIVE = new Map<string, InitiativeBonus>();
 

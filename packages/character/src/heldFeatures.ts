@@ -2,7 +2,7 @@
  * The features with recorded mechanics that a character holds: each catalog feat and option,
  * the trait its subrace gives, and each class or subclass feature its level has reached. A subclass
  * feature is recorded under its subclass's short name, so `SUBCLASS_NAMES` maps it to the
- * full name a level stores, as `unarmoredDefense.ts` keys its formulas.
+ * full name a level stores.
  */
 import type { CharacterDefinition } from "./definition.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
@@ -15,6 +15,9 @@ import { classLevels, totalLevel } from "./summaries.ts";
 export const SUBCLASS_NAMES = new Map([
   ["Forge|XGE", "Forge Domain|XGE"],
   ["Draconic|PHB", "Draconic Bloodline|PHB"],
+  ["Draconic|XPHB", "Draconic Sorcery|XPHB"],
+  ["Dance|XPHB", "College of Dance|XPHB"],
+  ["Hunter|PHB", "Hunter|PHB"],
   ["Life|PHB", "Life Domain|PHB"],
   ["Nature|PHB", "Nature Domain|PHB"],
   ["Tempest|PHB", "Tempest Domain|PHB"],

@@ -121,4 +121,18 @@ describe("featEffects", () => {
       ["Draconic Resilience", 3],
     ]);
   });
+
+  it("adds 1 hit point per Sorcerer level for a 2024 Draconic Sorcerer, from level 3", () => {
+    const sorcerer = (levels: number) => ({
+      ...feats(),
+      levels: Array.from({ length: levels }, (_, i) => ({
+        class: { name: "Sorcerer", source: "XPHB" },
+        ...(i === 0 ? { subclass: { name: "Draconic Sorcery", source: "XPHB" } } : {}),
+      })),
+    });
+    expect(featHitPointTerms(sorcerer(2))).toEqual([]);
+    expect(featHitPointTerms(sorcerer(4)).map((t) => [t.label, t.value])).toEqual([
+      ["Draconic Resilience", 4],
+    ]);
+  });
 });

@@ -26,10 +26,14 @@ const armorClassMechanicSchema = z.strictObject({
   when: z.enum(["armor", "heavyArmor", "dualWield"]),
 });
 
-/** An unarmored base of 10 plus `value`, which a shield does not end. */
+/**
+ * An unarmored base of 10 plus `value`, a flat number or an ability's modifier, which a shield
+ * ends only where `unlessShield` says so.
+ */
 const unarmoredBaseMechanicSchema = z.strictObject({
   kind: z.literal("unarmoredBase"),
-  value: z.int().min(1),
+  value: z.union([z.int().min(1), abilitySchema]),
+  unlessShield: z.literal(true).optional(),
 });
 
 /** Medium armor admits `cap` of Dexterity, at a Dexterity score of `minimum` or more. */

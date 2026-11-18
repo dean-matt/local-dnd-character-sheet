@@ -88,7 +88,6 @@ import {
   speedWithModifiers,
   withModifiers,
 } from "./temporaryModifiers.ts";
-import { unarmoredDefenseTerm } from "./unarmoredDefense.ts";
 import { speedWithUnarmoredMovement } from "./unarmoredMovement.ts";
 
 /**
@@ -300,11 +299,11 @@ function heldMeleeWeapons(definition: CharacterDefinition, catalog: CharacterCat
  * base of 10 rather than throwing, since one missing suit of armor is not a reason to
  * refuse the rest of the sheet.
  *
- * Wearing no armor, the best unarmored formula a class or subclass has reached adds its
- * term to the base of 10; `unarmoredDefenseTerm` holds the formulas.
+ * Wearing no armor, the best unarmored base a held feature records adds its term to the
+ * base of 10.
  *
  * A 2024 shield used without training adds no bonus (Armor Training), yet still counts as
- * held for an unarmored formula, which a shield also ends.
+ * held for an unarmored base, which a shield can also end.
  */
 function derivedArmorClass(
   definition: CharacterDefinition,
@@ -314,20 +313,12 @@ function derivedArmorClass(
   const { worn, shield } = equippedArmor(definition, catalog.armor);
   const effects = armorClassEffects(definition, {
     armor: worn?.category ?? "none",
+    shield: shield !== undefined,
     meleeWeapons: heldMeleeWeapons(definition, catalog),
     dexterityScore: scoreOf(definition, catalog, "dex"),
+    modifierOf: (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
   });
-  const formula = worn
-    ? undefined
-    : unarmoredDefenseTerm(
-        definition,
-        (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
-        shield !== undefined,
-      );
-  const unarmored =
-    effects.unarmoredBase && effects.unarmoredBase.value > (formula?.value ?? 0) && !worn
-      ? effects.unarmoredBase
-      : formula;
+  const unarmored = worn ? undefined : effects.unarmoredBase;
   const untrainedShield =
     shield !== undefined &&
     definition.edition === "one" &&
