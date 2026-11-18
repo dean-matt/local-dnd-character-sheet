@@ -36,12 +36,14 @@ function lookedUp(body: string) {
 function derived(
   defenses?: CharacterDerived["defenses"],
   hitPointMaximum: CharacterDerived["hitPointMaximum"] = { computed: 20, manual: null, terms: [] },
+  rollEffects?: CharacterDerived["rollEffects"],
 ): CharacterDerived {
   const record = derivedRecord();
   return {
     ...record,
     hitPointMaximum,
     defenses: defenses ?? record.defenses,
+    rollEffects: rollEffects ?? record.rollEffects,
   };
 }
 
@@ -59,7 +61,8 @@ export function vex(noInstantDeath?: boolean): CharacterRecord {
  * each state write sends and answers later reads with it, as a reload would. `fail` answers
  * every write with a 500 whose error names the attempt, "Disk full, write 2". `hold` keeps
  * each write unanswered until `release`. A spell search answers Bless, Hold Person and the
- * homebrew Hexing Ward. `defenses` and `hitPointMaximum` stand in for the derived block's.
+ * homebrew Hexing Ward. `defenses`, `hitPointMaximum` and `rollEffects` stand in for the
+ * derived block's.
  * Returns the writes, in order, the spell search URLs, `release`, and `reload`, which renders
  * the cards again over a fresh cache.
  */
@@ -71,12 +74,14 @@ export function renderVitals(
     hold = false,
     defenses,
     hitPointMaximum,
+    rollEffects,
   }: {
     character?: CharacterRecord;
     fail?: boolean;
     hold?: boolean;
     defenses?: CharacterDerived["defenses"];
     hitPointMaximum?: CharacterDerived["hitPointMaximum"];
+    rollEffects?: CharacterDerived["rollEffects"];
   } = {},
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
@@ -115,7 +120,9 @@ export function renderVitals(
     }),
   );
   const render = () =>
-    renderWithClient(<Vitals character={character} derived={derived(defenses, hitPointMaximum)} />);
+    renderWithClient(
+      <Vitals character={character} derived={derived(defenses, hitPointMaximum, rollEffects)} />,
+    );
   const view = render();
   return {
     writes,

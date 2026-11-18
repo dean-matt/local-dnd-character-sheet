@@ -4,6 +4,9 @@ import {
   type CharacterState,
   deathSaveRolledState,
   deathSaveStatus,
+  derivedValue,
+  effectsOnRoll,
+  netRollEffect,
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 import { useState } from "react";
@@ -12,6 +15,7 @@ import { parseExtraDie } from "../../../../lib/extraDie.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { Card } from "../../../Card.tsx";
 import { ExtraDieInput } from "../../../ExtraDieInput.tsx";
+import { RollEffectChip } from "../../RollEffectChip.tsx";
 
 type Column = keyof CharacterState["deathSaves"];
 
@@ -63,6 +67,9 @@ function verdict(roll: number, before: CharacterState, { state: after, outcome }
   return roll === 1 ? "a natural 1, two failures" : "a failure";
 }
 
+const spokenRoll = (d20: number, granted: number, added: string) =>
+  added ? `${d20} ${granted < 0 ? "−" : "+"} ${Math.abs(granted)} (${added})` : `${d20}`;
+
 /**
  * The Death Saves card: three success and three failure marks filled to the stored counts,
  * each set or cleared by hand at any hit points, and a Roll button while dying. At 0 hit
@@ -84,6 +91,9 @@ export function DeathSaves({
   const [extra, setExtra] = useState("");
   const extraDie = parseExtraDie(extra);
   const status = deathSaveStatus(derived, state);
+  const effects = effectsOnRoll(derivedValue(derived.rollEffects), { roll: "deathSave" });
+  const net = netRollEffect(effects.filter(({ condition }) => condition === undefined));
+  const mode = net && net.mode !== "cancel" ? net.mode : undefined;
   // A roll speaks for the dying it was rolled in; leaving that ends it.
   if (status !== "dying" && lastRoll !== undefined) setLastRoll(undefined);
 
@@ -117,15 +127,13 @@ export function DeathSaves({
       return;
     }
     const added = extraDie.notation;
-    const dice = rollDice(`1d20${added}`);
-    const d20 = dice.dice[0]?.value ?? 0;
+    const dice = rollDice(`1d20${added}`, { mode });
+    const d20 = dice.dice.find((die) => die.kept)?.value ?? 0;
     const granted = dice.total - d20;
     const rolled = deathSaveRolledState(derived, state, d20, granted);
     const after = rolled.state;
     const result = rolled.outcome === "conscious" ? "Conscious at 1 hit point" : summary(after);
-    const said = added
-      ? `${d20} ${granted < 0 ? "−" : "+"} ${Math.abs(granted)} (${added})`
-      : `${d20}`;
+    const said = `${spokenRoll(d20, granted, added)}${mode ? ` with ${mode}` : ""}`;
     if (await write(after, `Rolled ${said}: ${verdict(d20, state, rolled)}. ${result}.`)) {
       setLastRoll(said);
     }
@@ -179,6 +187,7 @@ export function DeathSaves({
           <button type="button" aria-disabled={replace.writing} onClick={roll} className={BUTTON}>
             Roll death save
           </button>
+          <RollEffectChip roll="Death save" effects={effects} />
           <ExtraDieInput
             label="Death save"
             value={extra}

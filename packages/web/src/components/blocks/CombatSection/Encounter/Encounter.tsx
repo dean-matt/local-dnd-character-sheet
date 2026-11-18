@@ -3,6 +3,7 @@ import {
   type CharacterRecord,
   type CharacterState,
   derivedValue,
+  effectsOnRoll,
   encounterEnded,
   encounterStarted,
   initiativeRolled,
@@ -34,12 +35,15 @@ export function Encounter({
   derived,
 }: {
   character: CharacterRecord;
-  derived: Pick<CharacterDerived, "initiative">;
+  derived: Pick<CharacterDerived, "initiative" | "rollEffects">;
 }) {
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
   const both = useReplaceDefinitionAndState(character.id);
-  const exhaustion = useConditionEffects(character.id, character.definition, "initiative");
+  const conditions = useConditionEffects(character.id, character.definition, "initiative");
+  const effects = effectsOnRoll([...derivedValue(derived.rollEffects), ...conditions], {
+    roll: "initiative",
+  });
   const start = useRef<HTMLButtonElement>(null);
   const next = useRef<HTMLButtonElement>(null);
   // The control that took focus unmounts on press, so focus moves to the one that replaces it.
@@ -63,7 +67,7 @@ export function Encounter({
     if (busy) return;
     const bonus = derivedValue(derived.initiative);
     const notation = bonus === 0 ? "1d20" : `1d20${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}`;
-    const net = netRollEffect(exhaustion.filter(({ condition }) => condition === undefined));
+    const net = netRollEffect(effects.filter(({ condition }) => condition === undefined));
     const mode = net && net.mode !== "cancel" ? net.mode : undefined;
     const rolled = rollDice(notation, { mode });
     try {
@@ -119,7 +123,7 @@ export function Encounter({
         <button type="button" aria-disabled={busy} onClick={rollInitiative} className={BUTTON}>
           {encounter?.initiative == null ? "Roll initiative" : "Reroll initiative"}
         </button>
-        <RollEffectChip roll="Initiative" effects={exhaustion} />
+        <RollEffectChip roll="Initiative" effects={effects} />
         {encounter && (
           <>
             <button

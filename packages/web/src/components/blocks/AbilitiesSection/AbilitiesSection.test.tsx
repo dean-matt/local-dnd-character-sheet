@@ -529,6 +529,19 @@ describe("AbilitiesSection", () => {
     expect(stealth).toHaveTextContent("Stealth, expertisedexDexterityADV+7");
   });
 
+  it("marks initiative with a feature's advantage on it, and with a Dexterity check's", () => {
+    const record = warlock();
+    const derived = derivedFor(record);
+    const effects = (computed: CharacterDerived["rollEffects"]["computed"]) =>
+      renderSection(record, { ...derived, rollEffects: { computed, manual: null, terms: [] } });
+    effects([{ source: "Remarkable Athlete", mode: "advantage", roll: "initiative" }]);
+    expect(card("Combat").getByRole("button", { name: "Initiative: Advantage" })).toBeVisible();
+    cleanup();
+
+    effects([{ source: "Chain Mail", mode: "disadvantage", roll: "check", target: "dex" }]);
+    expect(card("Combat").getByRole("button", { name: "Initiative: Disadvantage" })).toBeVisible();
+  });
+
   describe("conditions", () => {
     it("marks every skill check while Poisoned, and no save", async () => {
       renderSection(warlock(), undefined, 0, ["Poisoned"]);
@@ -1125,6 +1138,73 @@ describe("AbilitiesSection", () => {
       fireEvent.change(stealth, { target: { value: "normal" } });
       fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
       await waitFor(() => expect(posts[1]?.mode).toBe("normal"));
+    });
+
+    it("offers a conditional advantage as a checkbox, rolls with it only when ticked, then unticks it", async () => {
+      const record = warlock();
+      const derived = derivedFor(record);
+      const { posts } = renderRolling(201, record, {
+        ...derived,
+        rollEffects: {
+          computed: [
+            {
+              source: "Brave",
+              mode: "advantage",
+              roll: "save",
+              condition: "against being frightened",
+            },
+          ],
+          manual: null,
+          terms: [],
+        },
+      });
+      const row = within(
+        screen
+          .getByRole("button", { name: "Roll Wisdom saving throw" })
+          .closest("li") as HTMLElement,
+      );
+      const mode = row.getByRole("combobox", { name: "Wisdom saving throw mode" });
+      const brave = row.getByRole("checkbox", { name: "Brave: Adv against being frightened" });
+      expect(mode).toHaveValue("normal");
+      fireEvent.click(screen.getByRole("button", { name: "Roll Wisdom saving throw" }));
+      await waitFor(() => expect(posts[0]?.mode).toBe("normal"));
+
+      fireEvent.click(brave);
+      expect(mode).toHaveValue("advantage");
+      fireEvent.click(screen.getByRole("button", { name: "Roll Wisdom saving throw" }));
+      await waitFor(() => expect(posts[1]?.mode).toBe("advantage"));
+      await waitFor(() => expect(brave).not.toBeChecked());
+      expect(mode).toHaveValue("normal");
+    });
+
+    it("adds a ticked option's bonus to the roll as a term naming it", async () => {
+      const record = warlock();
+      const derived = derivedFor(record);
+      const { posts } = renderRolling(201, record, {
+        ...derived,
+        rollOptions: {
+          computed: [
+            {
+              source: "Hide in Plain Sight",
+              value: 10,
+              roll: "skill",
+              target: "stealth",
+              condition: "while camouflaged and still",
+            },
+          ],
+          manual: null,
+          terms: [],
+        },
+      });
+      expect(screen.getAllByRole("checkbox", { name: /^Hide in Plain Sight/ })).toHaveLength(1);
+      fireEvent.click(
+        screen.getByRole("checkbox", {
+          name: "Hide in Plain Sight: +10 while camouflaged and still",
+        }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Roll Stealth check" }));
+      await waitFor(() => expect(posts[0]?.notation).toBe("1d20+17"));
+      expect(posts[0]?.terms).toContainEqual({ source: "Hide in Plain Sight", value: 10 });
     });
 
     it("rolls with an override in place of the computed bonus", async () => {

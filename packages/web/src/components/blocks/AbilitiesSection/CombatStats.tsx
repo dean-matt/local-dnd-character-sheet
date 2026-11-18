@@ -2,6 +2,8 @@ import {
   type CharacterDefinition,
   type CharacterDerived,
   characterDerivedSchema,
+  derivedValue,
+  effectsOnRoll,
 } from "@dnd/character";
 import { useConditionEffects } from "../../../hooks/useConditionEffects.ts";
 import { Card } from "../../Card.tsx";
@@ -21,7 +23,10 @@ export function CombatStats({
   definition: CharacterDefinition;
   derived: CharacterDerived;
 }) {
-  const checkExhaustion = useConditionEffects(characterId, definition, "initiative");
+  const conditions = useConditionEffects(characterId, definition, "initiative");
+  const initiative = effectsOnRoll([...derivedValue(derived.rollEffects), ...conditions], {
+    roll: "initiative",
+  });
   return (
     <Card title="Combat">
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -50,7 +55,7 @@ export function CombatStats({
             value={derived.initiative}
             overrideKey="initiative"
           />
-          <RollEffectChip roll="Initiative" effects={checkExhaustion} />
+          <RollEffectChip roll="Initiative" effects={initiative} />
         </StatTile>
         <StatTile label="Speed" name="Speed" labelClassName={COMBAT_LABEL_CLASS}>
           <SpeedValue characterId={characterId} definition={definition} derived={derived} />

@@ -52,6 +52,7 @@ export function AbilitiesSection({
     ...derivedValue(derived.featGrants).savingThrows.map(({ name }) => name),
   ]);
   const rollEffects = derivedValue(derived.rollEffects);
+  const rollOptions = derivedValue(derived.rollOptions);
 
   return (
     <div className="flex flex-col gap-3">
@@ -79,6 +80,7 @@ export function AbilitiesSection({
                   roll: "save",
                   ability,
                 })}
+                options={effectsOnRoll(rollOptions, { roll: "save", ability })}
               />
             ))}
             {derived.concentrationSave && (
@@ -89,7 +91,11 @@ export function AbilitiesSection({
                 overrideKey="concentrationSave"
                 title="Concentration saving throw"
                 rules={undefined}
-                effects={effectsOnRoll(saveConditions, { roll: "save", ability: "con" })}
+                effects={effectsOnRoll([...rollEffects, ...saveConditions], {
+                  roll: "save",
+                  ability: "con",
+                })}
+                options={effectsOnRoll(rollOptions, { roll: "save", ability: "con" })}
               />
             )}
           </ul>

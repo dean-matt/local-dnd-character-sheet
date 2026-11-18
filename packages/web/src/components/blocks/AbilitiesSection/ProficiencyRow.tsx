@@ -4,6 +4,7 @@ import {
   type Derived,
   derivedValue,
   type RollEffectEntry,
+  type RollOption,
 } from "@dnd/character";
 import { FlaskConical } from "lucide-react";
 import type { ReactNode } from "react";
@@ -31,6 +32,7 @@ export function ProficiencyRow({
   title,
   rules,
   effects = [],
+  options = [],
   overrideKey,
   onCycleLevel,
   homebrew = false,
@@ -47,6 +49,8 @@ export function ProficiencyRow({
   title: string;
   rules: Rules | undefined;
   effects?: readonly RollEffectEntry[];
+  /** The conditional bonuses the roll offers. */
+  options?: readonly RollOption[];
   /** Makes the ring a button that moves to the next level, for a row the character owns. */
   onCycleLevel?: () => void;
   /** Marks a skill the table defined, with the Homebrew page's icon beside its ability. */
@@ -129,6 +133,7 @@ export function ProficiencyRow({
       <span className="flex shrink-0 justify-center empty:hidden">
         <ModeRoll
           effects={effects}
+          options={options}
           label={ability ? roll : title}
           type={ability ? "check" : "save"}
           origin={name}
