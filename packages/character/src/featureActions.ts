@@ -85,11 +85,16 @@ const POOL_ROWS: [string, string, string[]][] = [
   ["rages", "XPHB", ["Rage"]],
   ["second_wind", "XPHB", ["Second Wind"]],
   ["channel_divinity", "PHB", ["Channel Divinity", "Channel Divinity: Preserve Life"]],
-  ["channel_divinity", "XPHB", ["Channel Divinity", "Divine Spark", "Preserve Life"]],
+  [
+    "channel_divinity",
+    "XPHB",
+    ["Channel Divinity", "Divine Spark", "Preserve Life", "Sacred Weapon"],
+  ],
   ["wild_shape", "PHB", ["Wild Shape"]],
   ["wild_shape", "XPHB", ["Wild Shape", "Land's Aid"]],
   ["ki_points", "PHB", ["Flurry of Blows", "Patient Defense", "Step of the Wind"]],
   ["focus_points", "XPHB", ["Flurry of Blows"]],
+  ["favored_enemy", "XPHB", ["Favored Enemy"]],
 ];
 
 const FEATURE_POOLS: ReadonlyMap<string, string> = new Map(

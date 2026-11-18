@@ -7,7 +7,7 @@
 import type { CharacterDefinition } from "./definition.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import { type FeatureMechanics, featureMechanicsKey, featureOffers } from "./featureMechanics.ts";
-import { featureKey, refKey } from "./keys.ts";
+import { classFeatureUsesKey, entryKey, featureKey, featureUsesKey, refKey } from "./keys.ts";
 import { type ContentRef, catalogRef, type FeatureKey } from "./refs.ts";
 import { houseRule as houseRuleOf } from "./resolve.ts";
 import { classLevels, totalLevel } from "./summaries.ts";
@@ -63,6 +63,10 @@ export const SUBCLASS_NAMES = new Map([
   ["Open Hand|XPHB", "Warrior of the Open Hand|XPHB"],
   ["Fiend|PHB", "The Fiend|PHB"],
   ["Fiend|XPHB", "Fiend Patron|XPHB"],
+  ["Light|PHB", "Light Domain|PHB"],
+  ["Divination|PHB", "School of Divination|PHB"],
+  ["Evocation|PHB", "School of Evocation|PHB"],
+  ["Evoker|XPHB", "Evoker|XPHB"],
 ]);
 
 /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */
@@ -79,6 +83,8 @@ export type Held = {
   entry: FeatureMechanics;
   /** Levels in the class a subclass feature belongs to, or the character's total level. */
   levels: number;
+  /** Its entry in the state's `featureUses`, as the features the API resolves key it. */
+  usesKey: string;
 };
 
 const BY_KEY = new Map(FEATURE_MECHANICS.map((entry) => [featureMechanicsKey(entry), entry]));
@@ -100,6 +106,7 @@ const SUBCLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
           ref: { name: ref.name, source: ref.source },
           key: `${ref.className}|${ref.classSource}|${subclass}`,
           level: ref.level,
+          usesKey: classFeatureUsesKey(ref),
         },
       ]
     : [];
@@ -114,6 +121,7 @@ const CLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
           ref: { name: ref.name, source: ref.source },
           key: `${ref.className}|${ref.classSource}`,
           level: ref.level,
+          usesKey: classFeatureUsesKey(ref),
         },
       ]
     : [];
@@ -128,10 +136,15 @@ export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" |
   Pick<CharacterDefinition, "feats" | "optionalFeatures" | "race" | "subrace" | "levels">;
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
-  return [...definition.feats, ...definition.optionalFeatures].flatMap(({ ref }) => {
+  return [
+    ...definition.feats.map(({ ref }) => ({ ref, grantor: "feat" })),
+    ...definition.optionalFeatures.map(({ ref }) => ({ ref, grantor: "optionalFeature" })),
+  ].flatMap(({ ref, grantor }) => {
     const catalog = catalogRef(ref);
     const entry = catalog && BY_KEY.get(refKey(catalog));
-    return catalog && entry ? [{ ref: catalog, entry, levels }] : [];
+    if (!catalog || !entry) return [];
+    const usesKey = featureUsesKey([grantor, catalog.source], catalog.name);
+    return [{ ref: catalog, entry, levels, usesKey }];
   });
 }
 
@@ -142,7 +155,12 @@ function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
   const owners = [refKey(race), ...(subrace ? [`${refKey(race)}|${refKey(subrace)}`] : [])];
   return RACE_FEATURES.filter((feature) =>
     feature.owners.some((owner) => owners.includes(owner)),
-  ).map(({ ref, entry }) => ({ ref, entry, levels }));
+  ).map(({ ref, entry }) => ({
+    ref,
+    entry,
+    levels,
+    usesKey: featureUsesKey(["trait", entryKey(definition.race)], ref.name),
+  }));
 }
 
 const optionTaken = (definition: HoldsFeatures, { ref, offeredBy, houseRule }: FeatureMechanics) =>
@@ -165,7 +183,7 @@ function classFeatures(definition: HoldsFeatures): Held[] {
       ...SUBCLASS_FEATURES.filter((feature) => feature.key === subclassKey),
     ]
       .filter((feature) => group.level >= feature.level && optionTaken(definition, feature.entry))
-      .map(({ ref, entry }) => ({ ref, entry, levels: group.level }));
+      .map(({ ref, entry, usesKey }) => ({ ref, entry, levels: group.level, usesKey }));
   });
 }
 

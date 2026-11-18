@@ -6,8 +6,9 @@
  * than one — Action Surge's once becoming twice at 17th level, a use regained on a short
  * rest and all of them on a long one — yields nothing rather than a guess, as does a count
  * the text ties to a modifier, the proficiency bonus, a class level or each of several
- * spells, and a limit stated by more than one named part of the feature. Widening it means
- * adding a pattern here and its sentence to the test.
+ * spells, and a limit stated by more than one named part of the feature. `@dnd/character`
+ * records the count of each such feature instead. Widening it means adding a pattern here and
+ * its sentence to the test.
  */
 import { parseTags, renderText } from "@dnd/tags";
 import { isRecord } from "./json.ts";

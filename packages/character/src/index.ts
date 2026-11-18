@@ -143,6 +143,7 @@ export {
   withoutImprovement,
 } from "./improvements.ts";
 export {
+  classFeatureUsesKey,
   classResourceKey,
   deityKey,
   entryKey,

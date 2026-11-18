@@ -28,7 +28,7 @@ import { chargedItems, featureUses, LONG_REST_REFUSAL, restPreview } from "./res
 export function RestMenu({ character }: { character: CharacterRecord }) {
   const derived = useCharacterDerived(character.id);
   const state = useCharacterState(character.id);
-  const features = useCharacterFeatures(character.id);
+  const features = useCharacterFeatures(character.id, derived.data);
   const inventory = useCharacterInventory(character.id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [resting, setResting] = useState<RestLength>();
