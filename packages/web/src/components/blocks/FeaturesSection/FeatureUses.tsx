@@ -14,7 +14,8 @@ const RESET: Record<LimitedUses["reset"], string> = { short: "Short rest", long:
  * A feature's uses left against its count and the rest that restores them, with a spend and
  * a restore, each one state write announced once it lands. A spend also lands what the
  * feature restores, in the same write, then logs what it rolled. Nothing shows until state
- * loads, since the count left is read from it.
+ * loads, since the count left is read from it, and the spend waits on `derived`, which holds
+ * what the feature restores.
  */
 export function FeatureUses({
   characterId,
@@ -52,8 +53,9 @@ export function FeatureUses({
         icon={Minus}
         label={`Spend a use of ${name}`}
         tooltip="Spend a use"
-        disabled={replace.writing || expended >= uses.count}
+        disabled={replace.writing || !derived || expended >= uses.count}
         onPress={async () => {
+          if (!derived) return;
           const restored = source
             ? restore(derived, { name, source }, stored)
             : { state: stored, text: [], log: () => {} };

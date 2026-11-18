@@ -64,16 +64,14 @@ function featureRestore(
 /**
  * Rolls what one use of a held feature restores, for the caller to write with its spend as
  * one state write. `log` records the rolls once that write lands. A feature that restores
- * nothing, or a derived block not yet loaded, leaves `state` as given.
+ * nothing leaves `state` as given.
  */
 export function useFeatureRestore(characterId: string) {
   const record = useRecordRoll(characterId);
   const onRolled = useContext(OnRolled);
 
-  return (derived: CharacterDerived | undefined, feature: ContentRef, state: CharacterState) => {
-    const restored = derived
-      ? featureRestore(derived, feature, state)
-      : { state, text: [], rolls: [] };
+  return (derived: CharacterDerived, feature: ContentRef, state: CharacterState) => {
+    const restored = featureRestore(derived, feature, state);
     return {
       ...restored,
       log: () => {

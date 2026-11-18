@@ -54,8 +54,14 @@ const FEATURES: CharacterFeatures = {
   ],
 };
 
-/** The section over a stand-in API that keeps each state write and answers later reads with it. */
-function renderFeatures(state: Partial<CharacterState> = {}, derived?: CharacterDerived) {
+/**
+ * The section over a stand-in API that keeps each state write and answers later reads with it.
+ * A null `derived` stands for the derived block still loading.
+ */
+function renderFeatures(
+  state: Partial<CharacterState> = {},
+  derived: CharacterDerived | null = derivedRecord(),
+) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
   const rolls: { label: string; total: number }[] = [];
@@ -80,7 +86,9 @@ function renderFeatures(state: Partial<CharacterState> = {}, derived?: Character
     }),
   );
   const render = () =>
-    renderWithClient(<FeaturesSection character={characterRecord("1", "Vex")} derived={derived} />);
+    renderWithClient(
+      <FeaturesSection character={characterRecord("1", "Vex")} derived={derived ?? undefined} />,
+    );
   const view = render();
   return {
     writes,
@@ -195,5 +203,19 @@ describe("FeatureUses", () => {
     expect(within(row("Relentless Endurance")).getByRole("status")).toHaveTextContent(
       "Relentless Endurance: 1 of 2 left. Relentless Endurance: regained 1 hit point.",
     );
+  });
+
+  it("offers no spend until the derived block that holds what it restores loads", async () => {
+    const { writes } = renderFeatures({}, null);
+    await waitFor(() => expect(row("Second Wind")).toHaveTextContent("1 / 1"));
+    const spend = within(row("Second Wind")).getByRole("button", {
+      name: "Spend a use of Second Wind",
+    });
+    expect(spend).toHaveAttribute("aria-disabled", "true");
+
+    fireEvent.click(spend);
+
+    expect(row("Second Wind")).toHaveTextContent("1 / 1");
+    expect(writes).toHaveLength(0);
   });
 });

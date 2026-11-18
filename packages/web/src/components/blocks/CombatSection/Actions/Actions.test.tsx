@@ -293,7 +293,7 @@ describe("Actions", () => {
         restores: gives,
       });
       fireEvent.click(await within(low.card).findByRole("button", { name: "Use Tireless" }));
-      await waitFor(() => expect(low.writes).toHaveLength(1));
+      await waitFor(() => expect(low.rolls).toHaveLength(1));
       expect(low.writes[0]?.hitPoints).toEqual({ current: 10, temporary: 7 });
       expect(low.rolls[0]).toMatchObject({ type: "temporary-hp", notation: "7", total: 7 });
     });
