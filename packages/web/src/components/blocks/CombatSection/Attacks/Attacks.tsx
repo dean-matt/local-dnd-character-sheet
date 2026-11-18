@@ -351,7 +351,7 @@ export function Attacks({
                 Critical hit
               </label>
             )}
-            {rolling && <AttackTrades options={options} taken={taken} take={take} />}
+            {damage && rolling && <AttackTrades options={options} taken={taken} take={take} />}
             {damage && rolling && alignments.length > 0 && (
               <label className="flex items-center gap-1 text-label">
                 Target alignment

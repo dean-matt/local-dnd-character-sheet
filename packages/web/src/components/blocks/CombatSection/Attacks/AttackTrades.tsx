@@ -16,7 +16,7 @@ export function AttackTrades({
       <input
         type="checkbox"
         checked={taken.includes(option)}
-        aria-label={`${option.source}: ${signed(option.attack)} to hit, ${signed(option.damage)} damage, ${option.condition}`}
+        aria-label={`${option.source} ${signed(option.attack)}/${signed(option.damage)}, ${option.condition}`}
         onChange={(event) => take(option.source, event.target.checked)}
       />
       <span title={option.condition}>

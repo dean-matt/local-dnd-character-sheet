@@ -80,7 +80,7 @@ const saveAdvantage = (against?: string): Mechanic => ({
 });
 const CHARMED_OR_FRIGHTENED = "against being charmed or frightened";
 const critical = (value: number): Mechanic[] => [{ kind: "attack", critical: value }];
-const POWER_ATTACK = "before the attack, -5 to hit for +10 damage on a hit";
+const POWER_ATTACK = "chosen before the attack; the damage lands on a hit";
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [

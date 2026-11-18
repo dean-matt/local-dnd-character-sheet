@@ -2627,6 +2627,44 @@ describe("deriveCharacter", () => {
       expect(others.every((attack) => attack.critThreshold.computed === 20)).toBe(true);
     });
 
+    it("keeps the lower of an item's and a feature's threshold, the feature's on a tie", () => {
+      const champion = (level: number, bib: number) =>
+        deriveCharacter(
+          {
+            ...equipped,
+            inventory: [...equipped.inventory, worn(BIB)],
+            levels: Array.from({ length: level }, (_, index) => ({
+              class: { name: "Fighter", source: "PHB" },
+              ...(index === 0 ? { subclass: { name: "Champion", source: "PHB" } } : {}),
+            })),
+          },
+          {
+            ...itemCatalog,
+            itemBonuses: new Map([...itemCatalog.itemBonuses, trait(BIB, { critThreshold: bib })]),
+            hitDice: new Map([
+              ...itemCatalog.hitDice,
+              [entryKey({ name: "Fighter", source: "PHB" }), 10 as const],
+            ]),
+          },
+        ).unarmedStrike.critThreshold;
+      expect(champion(15, 19)).toEqual({
+        computed: 18,
+        manual: null,
+        terms: [
+          { label: "Base", value: 20 },
+          { label: "Superior Critical", value: -2 },
+        ],
+      });
+      expect(champion(3, 18).terms).toEqual([
+        { label: "Base", value: 20 },
+        { label: BIB.name, value: -2 },
+      ]);
+      expect(champion(3, 19).terms).toEqual([
+        { label: "Base", value: 20 },
+        { label: "Improved Critical", value: -1 },
+      ]);
+    });
+
     it("lists a weapon item's extra damage on its own attack alone, named for the item", () => {
       const block = withItems([worn(KAS)]);
       const sword = block.attacks.find((attack) => attack.entry === equipped.inventory.length);
