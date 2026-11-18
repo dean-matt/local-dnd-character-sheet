@@ -30,6 +30,7 @@ const zero: Counts = {
   sense: 0,
   defense: 0,
   speed: 0,
+  unclassified: 0,
 };
 
 describe("mechanicGaps", () => {
@@ -64,13 +65,24 @@ describe("mechanicGaps", () => {
   feat.run("Alert", "PHB", "classic", json({ srd: true }, "+5 to initiative"));
   feat.run("Quick", "XPHB", "one", json({ srd52: true }, "a bonus to initiative"));
   feat.run("Wary", "XGE", "classic", json({}, "a bonus to initiative"));
+  feat.run("Lucky", "PHB", "classic", json({ srd: true }, "reroll a d20"));
+  feat.run("Monk", "PHB", "classic", json({ srd: true }, "while you aren't wearing any armor"));
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
     expect(gaps.defense).toEqual(["Hardy (PHB), Fighter level 3"]);
     expect(gaps.sense).toEqual(["Hardy (PHB), Fighter level 3"]);
     expect(gaps.bonus).toEqual(["Quick (XPHB)"]);
-    expect(countGaps(gaps)).toEqual({ ...zero, defense: 1, sense: 1, bonus: 1 });
+    expect(gaps.unarmoredBase).toEqual(["Monk (PHB)"]);
+    expect(gaps.unclassified).toEqual(["Lucky (PHB)"]);
+    expect(countGaps(gaps)).toEqual({
+      ...zero,
+      defense: 1,
+      sense: 1,
+      bonus: 1,
+      unarmoredBase: 1,
+      unclassified: 1,
+    });
   });
 
   it("prints the count per kind, the features beneath it, and a rise past the baseline", () => {
