@@ -45,6 +45,23 @@ describe("featureLimitedUses", () => {
     expect(usesOf(levelsOf("Paladin", "PHB", 1), "Divine Sense", 2)?.count).toBe(3);
   });
 
+  it("counts Divine Sense as printed, with no use left at Charisma 8 and none below zero", () => {
+    expect(usesOf(levelsOf("Paladin", "PHB", 1), "Divine Sense", -1)?.count).toBe(0);
+    expect(usesOf(levelsOf("Paladin", "PHB", 1), "Divine Sense", -3)?.count).toBe(0);
+  });
+
+  it("gives Divine Sense a use at Charisma 8 under the minimumOneUse house rule", () => {
+    const paladin = { ...levelsOf("Paladin", "PHB", 1), houseRules: { minimumOneUse: true } };
+    expect(usesOf(paladin, "Divine Sense", -1)?.count).toBe(1);
+  });
+
+  it("keeps Bardic Inspiration's printed minimum of 1 at Charisma 8, with the house rule or without", () => {
+    const bard = levelsOf("Bard", "PHB", 1);
+    expect(usesOf(bard, "Bardic Inspiration", -1)?.count).toBe(1);
+    const house = { ...bard, houseRules: { minimumOneUse: true } };
+    expect(usesOf(house, "Bardic Inspiration", -1)?.count).toBe(1);
+  });
+
   it("keys a feat's uses by the feat", () => {
     const lucky = {
       ...levelsOf("Fighter", "PHB", 4),

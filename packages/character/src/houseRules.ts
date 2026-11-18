@@ -109,6 +109,12 @@ const houseRulesObject = z
      * every hit point, as both rulesets print. `rest` takes it as `slowHealing`.
      */
     slowNaturalHealing: z.boolean().optional(),
+    /**
+     * A feature that counts its uses by a modifier and prints no minimum, such as Divine Sense
+     * (PHB), counts at least 1, as the features printing "a minimum of once" do. Absent, it
+     * counts as printed, so a low modifier leaves no use.
+     */
+    minimumOneUse: z.boolean().optional(),
   })
   .prefault({});
 
@@ -146,6 +152,7 @@ export const PRINTED_RULE: Required<HouseRules> = {
   flanking: "none",
   naturalExtremes: false,
   slowNaturalHealing: false,
+  minimumOneUse: false,
 };
 
 /**

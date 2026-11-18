@@ -243,6 +243,20 @@ const OPTIONS: Record<HouseRule, Option> = {
     },
     editions: ["classic", "one"],
   },
+  minimumOneUse: {
+    name: "Uses counted by a modifier",
+    printed: {
+      label: "No minimum",
+      description:
+        "A feature that prints no minimum, such as Divine Sense, gives no use when its count comes to 0 or less.",
+    },
+    house: {
+      label: "At least one use",
+      description:
+        "Every feature that counts its uses by a modifier gives at least one, as Bardic Inspiration prints.",
+    },
+    editions: ["classic"],
+  },
 };
 
 const RULES = Object.keys(OPTIONS) as HouseRule[];

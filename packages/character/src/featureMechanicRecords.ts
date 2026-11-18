@@ -131,7 +131,7 @@ const LIMITED_USES: FeatureMechanics[] = [
     }),
   ]),
   classFeature(paladin, ["Divine Sense", "PHB"], 1, [
-    { kind: "uses", count: "cha", plus: 1, reset: "long" },
+    { kind: "uses", count: "cha", plus: 1, minimum: 0, reset: "long" },
   ]),
   classFeature(paladin, ["Cleansing Touch", "PHB"], 14, [
     { kind: "uses", count: "cha", reset: "long" },

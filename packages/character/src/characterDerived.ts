@@ -177,7 +177,7 @@ const limitedUsesSchema = z.strictObject({
   origin: z.enum(["class", "subclass", "race", "feat", "optionalFeature"]),
   level: z.int().min(1).max(20).nullable(),
   key: z.string().min(1),
-  count: z.int().min(1),
+  count: z.int().min(0),
   reset: z.enum(["short", "long"]),
 });
 
