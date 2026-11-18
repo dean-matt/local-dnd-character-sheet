@@ -123,12 +123,20 @@ const extraDamageSchema = z
   )
   .optional();
 
+/** A trade a feature offers on one attack, such as Sharpshooter's: `attack` and `damage` added where the player takes it, as `condition` says. */
+const attackOptionSchema = z.strictObject({
+  source: z.string().min(1),
+  attack: z.int(),
+  damage: z.int(),
+  condition: z.string().min(1),
+});
+
 const attackSchema = z.strictObject({
   extraDamage: extraDamageSchema,
   entry: z.int().min(0),
   ability: z.enum(["str", "dex"]),
   attackBonus: derivedSchema(z.int()),
-  /** The lowest d20 result that scores a critical hit: 20, or lower while an item says so. */
+  /** The lowest d20 result that scores a critical hit: 20, or lower while an item or a feature says so. */
   critThreshold: derivedSchema(z.int().min(2).max(20)),
   damage: z
     .strictObject({
@@ -137,6 +145,8 @@ const attackSchema = z.strictObject({
       modifier: derivedSchema(z.int()),
     })
     .nullable(),
+  /** The trades held features offer on this attack, in the order the features are held. */
+  options: z.array(attackOptionSchema),
   grip: z.strictObject({ held: z.enum(GRIPS), twoHandedBlocked: z.boolean() }).nullable(),
   /** The mastery properties the character may use with this weapon: empty unless its kind is among the chosen. */
   mastery: z.array(contentRefSchema),

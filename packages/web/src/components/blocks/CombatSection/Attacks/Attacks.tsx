@@ -40,6 +40,7 @@ import { DerivedValue } from "../../DerivedValue.tsx";
 import { AttackDamage } from "./AttackDamage.tsx";
 import { AttackRoll } from "./AttackRoll.tsx";
 import { AttackRow } from "./AttackRow.tsx";
+import { AttackTrades } from "./AttackTrades.tsx";
 import { WeaponMasteryChoice } from "./WeaponMasteryChoice.tsx";
 
 /** A cell the rules leave empty, shown as a dash and spoken as "none". */
@@ -132,6 +133,18 @@ function weaponNotes(
   );
 }
 
+const addUp = (taken: Attack["options"], part: "attack" | "damage", from: number) =>
+  taken.reduce((sum, option) => sum + option[part], from);
+
+/** The attack roll's bonus and logged terms with each trade taken added as its own term. */
+function tradedAttack(field: Attack["attackBonus"], taken: Attack["options"]) {
+  const terms = rollTerms(field);
+  return {
+    bonus: addUp(taken, "attack", derivedValue(field)),
+    terms: terms && [...terms, ...taken.map(({ source, attack }) => ({ source, value: attack }))],
+  };
+}
+
 export function Attacks({
   character,
   derived,
@@ -151,6 +164,7 @@ export function Attacks({
   const [target, setTarget] = useState<Record<string, string>>({});
   const [crit, setCrit] = useState<Record<string, boolean>>({});
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
+  const [traded, setTraded] = useState<Record<string, readonly string[]>>({});
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const heldEffects = play.data ? conditionRollEffects(play.data.state, definition, "attack") : [];
   const attackEffects = (ability: Ability) => [
@@ -241,7 +255,11 @@ export function Attacks({
     return () => recover(attack, piece, held?.entry);
   }
 
-  /** One weapon-shaped row: the bonus, the attack and damage rolls, and the critical-hit flag the two share. */
+  /**
+   * One weapon-shaped row: the bonus, the attack and damage rolls, and the critical-hit flag
+   * and the feature trades the two share. A trade taken stays taken until a damage roll is
+   * logged, so a miss carries it to the next attack.
+   */
   function strikeRow({
     key,
     name,
@@ -256,7 +274,8 @@ export function Attacks({
     name: string;
     rowKey: string;
     ability: Ability;
-    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage" | "extraDamage">;
+    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage" | "extraDamage"> &
+      Partial<Pick<Attack, "options">>;
     flanking: ComponentProps<typeof AttackRoll>["flanking"];
     beforeRoll?: () => Promise<boolean>;
     notes?: ReactNode;
@@ -266,6 +285,13 @@ export function Attacks({
     const struck = extras.filter(({ targetAlignment }) => targetAlignment === target[rowKey]);
     const alignments = [...new Set(extras.map(({ targetAlignment }) => targetAlignment))];
     const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
+    const options = attack.options ?? [];
+    const taken = options.filter(({ source }) => traded[rowKey]?.includes(source));
+    const take = (source: string, on: boolean) =>
+      setTraded((now) => {
+        const rest = (now[rowKey] ?? []).filter((name) => name !== source);
+        return { ...now, [rowKey]: on ? [...rest, source] : rest };
+      });
     return (
       <AttackRow
         key={key}
@@ -285,8 +311,7 @@ export function Attacks({
             label={`${name} attack`}
             type="attack"
             origin={name}
-            bonus={derivedValue(attack.attackBonus)}
-            terms={rollTerms(attack.attackBonus)}
+            {...tradedAttack(attack.attackBonus, taken)}
             effects={attackEffects(ability)}
             beforeRoll={beforeRoll}
             critAt={derivedValue(attack.critThreshold)}
@@ -297,13 +322,16 @@ export function Attacks({
         rollDamage={
           damage && (
             <RollBonusButton
-              label={`${name} damage${struck.map(({ dice, type }) => ` and ${dice} ${type}`).join("")}`}
+              label={`${name} damage${struck.map(({ dice, type }) => ` and ${dice} ${type}`).join("")}${taken.map(({ source }) => ` with ${source}`).join("")}`}
               type="damage"
               origin={name}
               dice={`${damage.dice}${struck.map(({ dice }) => `+${dice}`).join("")}`}
-              bonus={derivedValue(damage.modifier)}
+              bonus={addUp(taken, "damage", derivedValue(damage.modifier))}
               critical={crit[rowKey] ?? false}
-              onRolled={() => setCritical(rowKey, false)}
+              onRolled={(_hit, logged) => {
+                setCritical(rowKey, false);
+                if (logged) setTraded((now) => ({ ...now, [rowKey]: [] }));
+              }}
             />
           )
         }
@@ -323,6 +351,7 @@ export function Attacks({
                 Critical hit
               </label>
             )}
+            {damage && rolling && <AttackTrades options={options} taken={taken} take={take} />}
             {damage && rolling && alignments.length > 0 && (
               <label className="flex items-center gap-1 text-label">
                 Target alignment

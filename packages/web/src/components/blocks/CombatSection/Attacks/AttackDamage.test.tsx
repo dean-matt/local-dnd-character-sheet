@@ -21,6 +21,7 @@ const attack = (overrides: { modifier?: number; crit?: number } = {}): Attack =>
   range: null,
   ammunition: null,
   reload: null,
+  options: [],
 });
 
 function onPage(ui: ReactElement) {

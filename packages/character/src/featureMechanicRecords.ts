@@ -79,6 +79,8 @@ const saveAdvantage = (against?: string): Mechanic => ({
   ...(against && { against }),
 });
 const CHARMED_OR_FRIGHTENED = "against being charmed or frightened";
+const critical = (value: number): Mechanic[] => [{ kind: "attack", critical: value }];
+const POWER_ATTACK = "chosen before the attack; the damage lands on a hit";
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
@@ -657,6 +659,85 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     ref: { name: "Brave", source: "PHB" },
     mechanics: [saveAdvantage("against being frightened")],
   },
+  {
+    ref: { name: "Archery", source: "PHB" },
+    mechanics: [{ kind: "attack", weapons: "ranged", attack: 2 }],
+  },
+  {
+    ref: { name: "Archery", source: "XPHB" },
+    mechanics: [{ kind: "attack", weapons: "ranged", attack: 2 }],
+  },
+  {
+    ref: { name: "Dueling", source: "PHB" },
+    mechanics: [{ kind: "attack", weapons: "oneHandedMelee", damage: 2 }],
+  },
+  {
+    ref: { name: "Dueling", source: "XPHB" },
+    mechanics: [{ kind: "attack", weapons: "oneHandedMelee", damage: 2 }],
+  },
+  {
+    ref: { name: "Sharpshooter", source: "PHB" },
+    mechanics: [
+      {
+        kind: "attack",
+        weapons: "ranged",
+        proficient: true,
+        attack: -5,
+        damage: 10,
+        option: POWER_ATTACK,
+      },
+    ],
+  },
+  {
+    ref: { name: "Great Weapon Master", source: "PHB" },
+    mechanics: [
+      {
+        kind: "attack",
+        weapons: "heavyMelee",
+        proficient: true,
+        attack: -5,
+        damage: 10,
+        option: POWER_ATTACK,
+      },
+    ],
+  },
+  {
+    ref: { name: "Grappler", source: "PHB" },
+    mechanics: [
+      { kind: "attack", advantage: true, option: "against a creature you are grappling" },
+    ],
+  },
+  {
+    ref: { name: "Grappler", source: "XPHB" },
+    mechanics: [
+      { kind: "attack", advantage: true, option: "against a creature you are grappling" },
+    ],
+  },
+  classFeature(barbarian, ["Reckless Attack", "PHB"], 2, [
+    {
+      kind: "attack",
+      advantage: true,
+      ability: "str",
+      option: "on a melee weapon attack, while attacking recklessly",
+    },
+  ]),
+  classFeature(barbarian24, ["Reckless Attack", "XPHB"], 2, [
+    { kind: "attack", advantage: true, ability: "str", option: "while attacking recklessly" },
+  ]),
+  classFeature(["Ranger", "XPHB"], ["Precise Hunter", "XPHB"], 17, [
+    {
+      kind: "attack",
+      advantage: true,
+      option: "against the creature marked by your Hunter's Mark",
+    },
+  ]),
+  subclassFeature(fighter, ["Champion", "PHB"], ["Improved Critical", "PHB"], 3, critical(19)),
+  subclassFeature(fighter, ["Champion", "PHB"], ["Superior Critical", "PHB"], 15, critical(18)),
+  subclassFeature(fighter24, ["Champion", "XPHB"], ["Improved Critical", "XPHB"], 3, critical(19)),
+  subclassFeature(fighter24, ["Champion", "XPHB"], ["Superior Critical", "XPHB"], 15, critical(18)),
+  // A die rerolled or raised after it lands is not a number the damage roll's notation holds.
+  narrative({ name: "Great Weapon Fighting", source: "PHB" }),
+  narrative({ name: "Great Weapon Fighting", source: "XPHB" }),
   // A reroll changes no modifier on the roll it repeats; only the 2024 Indomitable adds one.
   narrative({
     name: "Indomitable",

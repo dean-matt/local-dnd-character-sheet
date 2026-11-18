@@ -31,6 +31,7 @@ const zero: Counts = {
   defense: 0,
   speed: 0,
   roll: 0,
+  attack: 0,
   unclassified: 0,
 };
 
@@ -68,6 +69,7 @@ describe("mechanicGaps", () => {
   feat.run("Wary", "XGE", "classic", json({}, "a bonus to initiative"));
   feat.run("Lucky", "PHB", "classic", json({ srd: true }, "reroll a d20"));
   feat.run("Steady", "PHB", "classic", json({ srd: true }, "advantage on saving throws"));
+  feat.run("Aimed", "PHB", "classic", json({ srd: true }, "a +1 bonus to attack rolls"));
   feat.run(
     "Venom",
     "PHB",
@@ -95,6 +97,7 @@ describe("mechanicGaps", () => {
     expect(gaps.unarmoredBase).toEqual(["Monk (PHB)"]);
     expect(gaps.armorClass).toEqual(["Monk (PHB)"]);
     expect(gaps.roll).toEqual(["Steady (PHB)"]);
+    expect(gaps.attack).toEqual(["Aimed (PHB)"]);
     expect(gaps.unclassified).toEqual(["Lucky (PHB)", "Strider (PHB)", "Venom (PHB)"]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
@@ -104,6 +107,7 @@ describe("mechanicGaps", () => {
       armorClass: 1,
       unarmoredBase: 1,
       roll: 1,
+      attack: 1,
       unclassified: 3,
     });
   });

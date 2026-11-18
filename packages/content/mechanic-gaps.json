@@ -10,5 +10,6 @@
   "defense": 11,
   "speed": 4,
   "roll": 0,
-  "unclassified": 696
+  "attack": 0,
+  "unclassified": 682
 }

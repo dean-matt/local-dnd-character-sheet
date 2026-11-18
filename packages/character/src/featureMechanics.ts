@@ -176,7 +176,44 @@ const rollMechanicSchema = z
     error: "a bonus falls on saves or on named skills",
   });
 
+/**
+ * A change to the character's own weapon attacks, unarmed strikes included: `attack` and
+ * `damage` added to the rolls, a critical hit on `critical` or more, or advantage on the
+ * attacks using `ability`, or on all of them. `weapons` narrows a bonus to ranged weapons,
+ * heavy melee weapons, or a melee weapon held in one hand with no other weapon equipped, and
+ * `proficient` to a weapon the character is proficient with. `option` says when it holds,
+ * and the attack offers it rather than applying it.
+ */
+const attackMechanicSchema = z
+  .strictObject({
+    kind: z.literal("attack"),
+    weapons: z.enum(["ranged", "heavyMelee", "oneHandedMelee"]).optional(),
+    proficient: z.literal(true).optional(),
+    attack: z.int().optional(),
+    damage: z.int().optional(),
+    critical: z.int().min(2).max(19).optional(),
+    advantage: z.literal(true).optional(),
+    ability: abilitySchema.optional(),
+    option: z.string().min(1).optional(),
+  })
+  .refine(
+    ({ attack, damage, critical, advantage }) =>
+      [attack !== undefined || damage !== undefined, critical, advantage].filter(Boolean).length ===
+      1,
+    { error: "an attack mechanic gives a bonus, a critical range or advantage, one of them" },
+  )
+  .refine(({ advantage, ability }) => !ability || advantage, {
+    error: "only advantage names the ability its attacks use",
+  })
+  .refine(({ advantage, weapons, proficient }) => !advantage || (!weapons && !proficient), {
+    error: "advantage falls on attacks by ability, never by weapon",
+  })
+  .refine(({ critical, option }) => critical === undefined || option === undefined, {
+    error: "a critical range always holds",
+  });
+
 const mechanicSchema = z.union([
+  attackMechanicSchema,
   rollMechanicSchema,
   speedMechanicSchema,
   defenseMechanicSchema,
