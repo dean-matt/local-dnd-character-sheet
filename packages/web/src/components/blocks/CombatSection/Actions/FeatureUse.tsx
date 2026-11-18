@@ -10,8 +10,8 @@ import {
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useFeatureRestore } from "../../../../hooks/useFeatureRestore.ts";
+import { featureResource } from "../../../../lib/featureResource.ts";
 import { Announcer } from "../../../Announcer.tsx";
-import { featureResource } from "./featureResource.ts";
 
 /**
  * A held feature's resource and its Use control. A Use spends the resource, if any, marks

@@ -1,6 +1,6 @@
 import { type CharacterDerived, defaultCharacterState } from "@dnd/character";
 import { describe, expect, it } from "vitest";
-import { derivedRecord } from "../../../../test/records.ts";
+import { derivedRecord } from "../test/records.ts";
 import { featureResource } from "./featureResource.ts";
 
 const BARBARIAN = { name: "Barbarian", source: "XPHB" };
