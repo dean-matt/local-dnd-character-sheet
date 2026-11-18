@@ -91,6 +91,10 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     mechanics: [{ kind: "armorClass", value: 1, when: "armor" }],
   },
   {
+    ref: { name: "Defense", source: "XPHB" },
+    mechanics: [{ kind: "armorClass", value: 1, when: "armor" }],
+  },
+  {
     ref: { name: "Dual Wielder", source: "PHB" },
     mechanics: [{ kind: "armorClass", value: 1, when: "dualWield" }],
   },
@@ -101,6 +105,32 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   {
     ref: { name: "Dragon Hide", source: "XGE" },
     mechanics: [{ kind: "unarmoredBase", value: 3 }],
+  },
+  classFeature(["Barbarian", "PHB"], ["Unarmored Defense", "PHB"], 1, [
+    { kind: "unarmoredBase", value: "con" },
+  ]),
+  classFeature(["Barbarian", "XPHB"], ["Unarmored Defense", "XPHB"], 1, [
+    { kind: "unarmoredBase", value: "con" },
+  ]),
+  classFeature(["Monk", "PHB"], ["Unarmored Defense", "PHB"], 1, [
+    { kind: "unarmoredBase", value: "wis", unlessShield: true },
+  ]),
+  classFeature(["Monk", "XPHB"], ["Unarmored Defense", "XPHB"], 1, [
+    { kind: "unarmoredBase", value: "wis", unlessShield: true },
+  ]),
+  subclassFeature(["Bard", "XPHB"], ["Dance", "XPHB"], ["Unarmored Defense", "XPHB"], 3, [
+    { kind: "unarmoredBase", value: "cha", unlessShield: true },
+  ]),
+  {
+    ref: {
+      name: "Multiattack Defense",
+      source: "PHB",
+      className: "Ranger",
+      classSource: "PHB",
+      subclass: { shortName: "Hunter", source: "PHB" },
+      level: 7,
+    },
+    narrative: true,
   },
   {
     ref: {
@@ -219,8 +249,15 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       subclass: { shortName: "Draconic", source: "PHB" },
       level: 1,
     },
-    mechanics: [{ kind: "bonus", target: "hitPointsPerLevel", value: 1 }],
+    mechanics: [
+      { kind: "bonus", target: "hitPointsPerLevel", value: 1 },
+      { kind: "unarmoredBase", value: 3 },
+    ],
   },
+  subclassFeature(["Sorcerer", "XPHB"], ["Draconic", "XPHB"], ["Draconic Resilience", "XPHB"], 3, [
+    { kind: "bonus", target: "hitPointsPerLevel", value: 1 },
+    { kind: "unarmoredBase", value: "cha" },
+  ]),
 
   {
     ref: {

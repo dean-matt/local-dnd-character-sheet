@@ -9,8 +9,8 @@ const MONK_CLASSES = new Set(["Monk|PHB", "Monk|XPHB"]);
 
 /**
  * The speed with a Monk's Unarmored Movement added to the walk, and its term. The bonus
- * needs no armor and no shield. A homebrew class is absent by design, as in
- * `unarmoredDefense`.
+ * needs no armor and no shield. A homebrew class is absent by design: its rules are the
+ * author's to state.
  */
 export function speedWithUnarmoredMovement(
   base: Speed,

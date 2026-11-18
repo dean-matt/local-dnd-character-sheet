@@ -723,6 +723,17 @@ describe("deriveCharacter", () => {
       expect(ac(classic(defense)).computed).toBe(13);
     });
 
+    it("adds the 2024 Defense feat only while armor is worn", () => {
+      const defense = feat("Defense", "XPHB");
+      expect(ac(classic(defense, hold(STUDDED_LEATHER)))).toMatchObject({
+        computed: 16,
+        terms: expect.arrayContaining([
+          { label: "Defense", value: 1, reference: { name: "Defense", source: "XPHB" } },
+        ]),
+      });
+      expect(ac(classic(defense)).computed).toBe(13);
+    });
+
     it("adds Dual Wielder only with a melee weapon in each hand", () => {
       const dual = feat("Dual Wielder");
       expect(ac(classic(dual, hold(DAGGER), hold(LONGSWORD))).computed).toBe(14);
@@ -1144,7 +1155,11 @@ describe("deriveCharacter", () => {
       terms: [
         { label: "Armor", value: 10 },
         { label: "Dexterity", value: 3 },
-        { label: "Unarmored Defense (Wisdom)", value: 1 },
+        {
+          label: "Unarmored Defense (Wisdom)",
+          value: 1,
+          reference: { name: "Unarmored Defense", source: "XPHB" },
+        },
       ],
     });
     const overridden = deriveCharacter({ ...monk, overrides: { armorClass: 20 } }, withMonk);

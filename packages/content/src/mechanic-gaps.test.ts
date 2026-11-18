@@ -66,7 +66,18 @@ describe("mechanicGaps", () => {
   feat.run("Quick", "XPHB", "one", json({ srd52: true }, "a bonus to initiative"));
   feat.run("Wary", "XGE", "classic", json({}, "a bonus to initiative"));
   feat.run("Lucky", "PHB", "classic", json({ srd: true }, "reroll a d20"));
-  feat.run("Monk", "PHB", "classic", json({ srd: true }, "while you aren't wearing any armor"));
+  feat.run(
+    "Monk",
+    "PHB",
+    "classic",
+    json({ srd: true }, "while you aren't wearing any armor, your AC equals 10 + Wisdom"),
+  );
+  feat.run(
+    "Strider",
+    "PHB",
+    "classic",
+    json({ srd: true }, "while you aren't wearing armor, you gain training with Medium armor"),
+  );
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
@@ -74,14 +85,16 @@ describe("mechanicGaps", () => {
     expect(gaps.sense).toEqual(["Hardy (PHB), Fighter level 3"]);
     expect(gaps.bonus).toEqual(["Quick (XPHB)"]);
     expect(gaps.unarmoredBase).toEqual(["Monk (PHB)"]);
-    expect(gaps.unclassified).toEqual(["Lucky (PHB)"]);
+    expect(gaps.armorClass).toEqual(["Monk (PHB)"]);
+    expect(gaps.unclassified).toEqual(["Lucky (PHB)", "Strider (PHB)"]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
       defense: 1,
       sense: 1,
       bonus: 1,
+      armorClass: 1,
       unarmoredBase: 1,
-      unclassified: 1,
+      unclassified: 2,
     });
   });
 
