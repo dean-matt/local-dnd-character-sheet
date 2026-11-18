@@ -67,6 +67,7 @@ export {
   type CharacterDerived,
   characterDerivedSchema,
   type RollEffectEntry,
+  type RollOption,
 } from "./characterDerived.ts";
 export {
   type CharacterFile,

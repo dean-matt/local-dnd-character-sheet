@@ -57,6 +57,7 @@ export function CatalogSkills({
     character.definition.proficiencies.skills.find((skill) => refKey(skill.ref) === key);
   const shown = (key: string) => heldSkillLevel(stored(key), granted.get(key));
   const rollEffects = derivedValue(derived.rollEffects);
+  const rollOptions = derivedValue(derived.rollOptions);
   const skills = derived.skills
     .filter((skill) => skill.ref.source !== HOMEBREW_SOURCE || stored(refKey(skill.ref)))
     .sort((a, b) => a.ref.name.localeCompare(b.ref.name));
@@ -124,6 +125,11 @@ export function CatalogSkills({
               }),
               ...checkEffects,
             ]}
+            options={effectsOnRoll(rollOptions, {
+              roll: "skill",
+              skill: skill.ref.name,
+              ability: skill.ability,
+            })}
             onCycleLevel={() => cycle(skill.ref)}
             homebrew={homebrew}
             detailFooter={

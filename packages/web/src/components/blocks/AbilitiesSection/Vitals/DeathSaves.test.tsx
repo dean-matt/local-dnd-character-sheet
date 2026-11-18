@@ -3,12 +3,18 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderVitals } from "./renderVitals.tsx";
 
-const d20 = vi.hoisted(() => ({ total: 10, extra: 0, notations: [] as string[] }));
+const d20 = vi.hoisted(() => ({
+  total: 10,
+  extra: 0,
+  notations: [] as string[],
+  modes: [] as (string | undefined)[],
+}));
 vi.mock("@dnd/dice", async (importOriginal) => ({
   isRollable: (await importOriginal<typeof import("@dnd/dice")>()).isRollable,
-  rollDice: (notation: string) => {
+  rollDice: (notation: string, options?: { mode?: string }) => {
     d20.notations.push(notation);
-    return { total: d20.total + d20.extra, dice: [{ value: d20.total }] };
+    d20.modes.push(options?.mode);
+    return { total: d20.total + d20.extra, dice: [{ value: d20.total, kept: true }] };
   },
 }));
 
@@ -35,6 +41,7 @@ beforeEach(() => {
   d20.total = 10;
   d20.extra = 0;
   d20.notations = [];
+  d20.modes = [];
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -97,6 +104,22 @@ describe("DeathSaves", () => {
     );
     expect(d20.notations).toEqual(["1d20+1d4"]);
     expect(writes[0]?.deathSaves).toEqual({ successes: 1, failures: 0 });
+  });
+
+  it("rolls with the advantage a feature gives death saves, and says so", async () => {
+    renderVitals(atZero(0, 0), {
+      rollEffects: {
+        computed: [{ source: "Survivor", mode: "advantage", roll: "deathSave" }],
+        manual: null,
+        terms: [],
+      },
+    });
+    await roll(12);
+
+    await waitFor(() =>
+      expect(announced()).toHaveTextContent("Rolled 12 with advantage: a success."),
+    );
+    expect(d20.modes).toEqual(["advantage"]);
   });
 
   it("rolls nothing for text that is not a die, and names it", async () => {

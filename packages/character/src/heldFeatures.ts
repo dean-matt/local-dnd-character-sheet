@@ -1,6 +1,6 @@
 /**
  * The features with recorded mechanics that a character holds: each catalog feat and option,
- * the trait its subrace gives, and each class or subclass feature its level has reached. A subclass
+ * the traits its race and subrace give, and each class or subclass feature its level has reached. A subclass
  * feature is recorded under its subclass's short name, so `SUBCLASS_NAMES` maps it to the
  * full name a level stores.
  */
@@ -50,10 +50,20 @@ export const SUBCLASS_NAMES = new Map([
   ["Knowledge|PHB", "Knowledge Domain|PHB"],
   ["Cavalier|XGE", "Cavalier|XGE"],
   ["Arcane Archer|XGE", "Arcane Archer|XGE"],
+  ["Devotion|PHB", "Oath of Devotion|PHB"],
+  ["Devotion|XPHB", "Oath of Devotion|XPHB"],
+  ["Land|PHB", "Circle of the Land|PHB"],
+  ["Thief|PHB", "Thief|PHB"],
+  ["Champion|XPHB", "Champion|XPHB"],
 ]);
 
-/** A subrace trait, keyed `race|subrace` by the `(name, source)` of each. */
-const SUBRACE_TRAITS = new Map([["Dwarven Toughness|PHB", "Dwarf|PHB|Hill|PHB"]]);
+/** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */
+const RACE_TRAITS = new Map([
+  ["Dwarven Toughness|PHB", ["Dwarf|PHB|Hill|PHB"]],
+  ["Fey Ancestry|PHB", ["Elf|PHB", "Half-Elf|PHB"]],
+  ["Gnome Cunning|PHB", ["Gnome|PHB"]],
+  ["Brave|PHB", ["Halfling|PHB"]],
+]);
 
 export type Held = {
   ref: ContentRef;
@@ -100,9 +110,9 @@ const CLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
     : [];
 });
 
-const SUBRACE_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
-  const owner = SUBRACE_TRAITS.get(featureMechanicsKey(entry));
-  return owner ? [{ entry, ref: entry.ref as ContentRef, owner }] : [];
+const RACE_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
+  const owners = RACE_TRAITS.get(featureMechanicsKey(entry));
+  return owners ? [{ entry, ref: entry.ref as ContentRef, owners }] : [];
 });
 
 export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" | "houseRules">> &
@@ -116,16 +126,14 @@ function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
   });
 }
 
-function subraceTraits(definition: HoldsFeatures, levels: number): Held[] {
+function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
   const race = catalogRef(definition.race);
+  if (!race) return [];
   const subrace = catalogRef(definition.subrace);
-  if (!race || !subrace) return [];
-  const owner = `${refKey(race)}|${refKey(subrace)}`;
-  return SUBRACE_FEATURES.filter((feature) => feature.owner === owner).map(({ ref, entry }) => ({
-    ref,
-    entry,
-    levels,
-  }));
+  const owners = [refKey(race), ...(subrace ? [`${refKey(race)}|${refKey(subrace)}`] : [])];
+  return RACE_FEATURES.filter((feature) =>
+    feature.owners.some((owner) => owners.includes(owner)),
+  ).map(({ ref, entry }) => ({ ref, entry, levels }));
 }
 
 const optionTaken = (definition: HoldsFeatures, { ref, offeredBy, houseRule }: FeatureMechanics) =>
@@ -158,7 +166,7 @@ export function heldFeatures(definition: HoldsFeatures): Held[] {
   const held = new Map<string, Held>();
   for (const feature of [
     ...pickedFeatures(definition, levels),
-    ...subraceTraits(definition, levels),
+    ...raceTraits(definition, levels),
     ...classFeatures(definition),
   ])
     held.set(featureMechanicsKey(feature.entry), feature);

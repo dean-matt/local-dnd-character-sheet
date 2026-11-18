@@ -8,6 +8,7 @@ import {
   type CharacterDerived,
   type CharacterRecord,
   derivedValue,
+  effectsOnRoll,
 } from "@dnd/character";
 import { Info } from "lucide-react";
 import { useId } from "react";
@@ -181,7 +182,10 @@ export function AbilityScores({
                   origin={ABILITY_LABEL[ability]}
                   bonus={derivedValue(derived.abilityChecks[ability])}
                   terms={rollTerms(derived.abilityChecks[ability])}
-                  effects={checkExhaustion}
+                  effects={[
+                    ...effectsOnRoll(derivedValue(derived.rollEffects), { roll: "check", ability }),
+                    ...checkExhaustion,
+                  ]}
                 />
               </span>
             </StatTile>

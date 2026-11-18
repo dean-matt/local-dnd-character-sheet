@@ -1,13 +1,14 @@
 {
-  "bonus": 13,
+  "bonus": 12,
   "armorClass": 0,
   "unarmoredBase": 0,
   "mediumArmorDexterity": 0,
-  "proficiency": 13,
-  "pick": 5,
+  "proficiency": 11,
+  "pick": 4,
   "halfProficiency": 0,
   "sense": 5,
-  "defense": 12,
+  "defense": 11,
   "speed": 4,
-  "unclassified": 724
+  "roll": 0,
+  "unclassified": 696
 }

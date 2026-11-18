@@ -107,8 +107,10 @@ Heavy encumbrance under the encumbrance variant adds Strength, Dexterity and Con
 disadvantage to the same list, and its attack effects mark only the rows using those abilities.
 Advantage and disadvantage on one roll cancel, and the chip strikes them through. A
 conditional effect draws the chip in outline with an asterisk, since whether a condition
-holds is the table's call; the chip's popover lists each effect and the net result. An ability check marks the
-skills that use the ability, because the sheet has no row for a bare check. A homebrew item states its own
+holds is the table's call; the chip's popover lists each effect and the net result, and the
+roll offers the effect as a checkbox the player ticks where it holds. An ability check effect
+marks the ability's own check and the skills that use it, and a Dexterity one marks initiative
+too. A homebrew item states its own
 in an `advantage` array, which the item form edits.
 
 ## Armor's Stealth penalty and Strength requirement

@@ -1,4 +1,4 @@
-import { netRollEffect, type RollEffectEntry } from "@dnd/character";
+import { netRollEffect, type RollEffectEntry, type RollOption } from "@dnd/character";
 import { type ComponentProps, type ReactNode, useContext, useId, useState } from "react";
 import { useCharacterState } from "../hooks/useCharacterState.ts";
 import { useReplaceCharacterState } from "../hooks/useReplaceCharacterState.ts";
@@ -15,16 +15,25 @@ const MODES: readonly { value: Mode; text: string; label: string }[] = [
   { value: "disadvantage", text: "Dis", label: "Disadvantage" },
 ];
 
-/** The net of the effects that hold without a condition; a conditional one is the table's to judge. */
+/** The net of the effects that hold. */
 function offered(effects: readonly RollEffectEntry[]): Mode {
-  const net = netRollEffect(effects.filter(({ condition }) => condition === undefined));
+  const net = netRollEffect(effects);
   return net && net.mode !== "cancel" ? net.mode : "normal";
 }
+
+/** What a conditional entry does to the roll, as its checkbox reads. */
+const doing = (entry: RollEffectEntry | RollOption) =>
+  "mode" in entry ? (entry.mode === "advantage" ? "Adv" : "Dis") : `+${entry.value}`;
+
+const optionKey = (entry: RollEffectEntry | RollOption) =>
+  `${entry.source}|${doing(entry)}|${entry.condition}`;
 
 /**
  * A roll button with the mode it rolls in: the net of the advantage and disadvantage on it to
  * start, changed by the player, and a die the player names to add or subtract, such as +1d4 for
- * Bless or -1d4 for Bane.
+ * Bless or -1d4 for Bane. An effect with a condition, and each of `options`, is a checkbox the
+ * player ticks where the condition holds: a ticked effect joins the net, and a ticked option
+ * adds its bonus as a term. A logged roll unticks them, since a condition holds roll by roll.
  * A held Bardic Inspiration die is offered as a checkbox, unticked again when the held die
  * changes. A logged roll that adds it clears it in one state write.
  * The sources of every effect, a conditional one included, are spoken with the control.
@@ -32,11 +41,13 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
  */
 export function ModeRoll({
   effects = [],
+  options = [],
   modeLabel,
   children,
   ...roll
 }: Omit<ComponentProps<typeof RollBonusButton>, "mode"> & {
   effects?: readonly RollEffectEntry[];
+  options?: readonly RollOption[];
   /** What the mode control names, where the roll's label changes under it. */
   modeLabel?: string;
   children?: ReactNode;
@@ -44,7 +55,12 @@ export function ModeRoll({
   const characterId = useContext(RollingFor);
   const sources = useId();
   const extraError = useId();
-  const start = offered(effects);
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const conditional = [...effects.filter(({ condition }) => condition !== undefined), ...options];
+  const holds = (entry: RollEffectEntry | RollOption) =>
+    entry.condition === undefined || ticked.has(optionKey(entry));
+  const start = offered(effects.filter(holds));
+  const added = options.filter(holds);
   const [extra, setExtra] = useState("");
   const held = useCharacterState(characterId ?? "").data?.state.bardicInspiration ?? null;
   const replace = useReplaceCharacterState(characterId ?? "");
@@ -101,13 +117,44 @@ export function ModeRoll({
           Bardic Inspiration d{held}
         </label>
       )}
+      {conditional.map((entry) => {
+        const key = optionKey(entry);
+        return (
+          <label key={key} className="flex items-center gap-1 text-label">
+            <input
+              type="checkbox"
+              checked={ticked.has(key)}
+              aria-label={`${entry.source}: ${doing(entry)} ${entry.condition}`}
+              onChange={(event) => {
+                const next = new Set(ticked);
+                if (event.target.checked) next.add(key);
+                else next.delete(key);
+                setTicked(next);
+              }}
+            />
+            <span title={entry.condition}>
+              {entry.source} {doing(entry)}
+            </span>
+          </label>
+        );
+      })}
       <RollBonusButton
         {...roll}
+        bonus={added.reduce((sum, { value }) => sum + value, roll.bonus)}
+        terms={
+          added.length === 0
+            ? roll.terms
+            : roll.terms && [
+                ...roll.terms,
+                ...added.map(({ source, value }) => ({ source, value })),
+              ]
+        }
         mode={mode}
         extra={extra}
         inspiration={inspiration}
         onRolled={(hit, logged) => {
           roll.onRolled?.(hit, logged);
+          if (logged && ticked.size > 0) setTicked(new Set());
           if (inspiration === undefined || !logged) return;
           setInspired(false);
           replace.mutate((latest) => ({ ...latest, bardicInspiration: null }));

@@ -5,35 +5,53 @@ import type { Ability } from "./refs.ts";
 import { exhaustionRuleset } from "./resolve.ts";
 
 /**
- * The roll a sheet row stands for: a saving throw, a skill (checked with its ability, or
- * with none where a flat value stands in for it), or an attack with the ability it uses.
+ * The roll a sheet row stands for: a saving throw, an ability check, a skill (checked with its
+ * ability, or with none where a flat value stands in for it), an attack with the ability it
+ * uses, initiative, or a death save.
  */
 type RollTarget =
   | { roll: "save"; ability: Ability }
+  | { roll: "check"; ability: Ability }
   | { roll: "skill"; skill: string; ability: Ability | null }
-  | { roll: "attack"; ability: Ability };
+  | { roll: "attack"; ability: Ability }
+  | { roll: "initiative" }
+  | { roll: "deathSave" };
 
 /**
- * The effects that mark `target`. A `check` effect marks every skill that uses its ability,
- * or every skill when it names none, flat skills included; a `skill` effect marks the skill
- * it names. A `save` or `attack` effect marks the rolls of its ability, or all of them.
+ * The entries that mark `target`, effects or options alike. A `check` entry marks every check
+ * of its ability, or every check when it names none, flat skills included; initiative is a
+ * Dexterity check. A `skill` entry marks the skill it names, in any case. A `save` or `attack`
+ * entry marks the rolls of its ability, or all of them.
  */
-export function effectsOnRoll(
-  effects: readonly RollEffectEntry[],
+export function effectsOnRoll<T extends { roll: string; target?: string }>(
+  effects: readonly T[],
   target: RollTarget,
-): RollEffectEntry[] {
-  return effects.filter((effect) => {
-    if (target.roll === "attack" || target.roll === "save") {
+): T[] {
+  return effects.filter((effect) => marks(effect, target));
+}
+
+const checkOf = (effect: { roll: string; target?: string }, ability: Ability | null) =>
+  effect.roll === "check" && (effect.target === undefined || effect.target === ability);
+
+function marks(effect: { roll: string; target?: string }, target: RollTarget): boolean {
+  switch (target.roll) {
+    case "deathSave":
+      return effect.roll === "deathSave";
+    case "initiative":
+      return effect.roll === "initiative" || checkOf(effect, "dex");
+    case "attack":
+    case "save":
       return (
         effect.roll === target.roll &&
         (effect.target === undefined || effect.target === target.ability)
       );
-    }
-    if (effect.roll === "skill") return effect.target === target.skill;
-    return (
-      effect.roll === "check" && (effect.target === undefined || effect.target === target.ability)
-    );
-  });
+    case "skill":
+      if (effect.roll === "skill")
+        return effect.target?.toLowerCase() === target.skill.toLowerCase();
+      return checkOf(effect, target.ability);
+    case "check":
+      return checkOf(effect, target.ability);
+  }
 }
 
 /**

@@ -97,9 +97,18 @@ const itemGrantsSchema = z.strictObject({
 const rollEffectSchema = z.strictObject({
   source: z.string().min(1),
   mode: z.enum(ADVANTAGE_MODES),
-  roll: z.enum(ADVANTAGE_ROLLS),
+  roll: z.enum([...ADVANTAGE_ROLLS, "initiative", "deathSave"]),
   target: z.string().min(1).optional(),
   condition: z.string().min(1).optional(),
+});
+
+/** A bonus a feature gives one roll while `condition` holds, which the roll adds only where the player says it does. */
+const rollOptionSchema = z.strictObject({
+  source: z.string().min(1),
+  value: z.int().min(1),
+  roll: z.enum(["save", "skill"]),
+  target: z.string().min(1).optional(),
+  condition: z.string().min(1),
 });
 
 /** Dice an equipped item adds to a damage roll against a target of one alignment, by that alignment's code. */
@@ -305,10 +314,12 @@ export const characterDerivedSchema = z.strictObject({
   /**
    * The advantage and disadvantage equipped items grant, attuned where they must be, in
    * inventory order, then what armor worn without proficiency costs, then heavy
-   * encumbrance's under the variant, then a rage's Strength advantage. Nothing here cancels a pair: the table decides
-   * whether a condition holds.
+   * encumbrance's under the variant, then each held feature's, a raging one's only during a
+   * rage. Nothing here cancels a pair: the table decides whether a condition holds.
    */
   rollEffects: derivedSchema(z.array(rollEffectSchema)),
+  /** The conditional bonuses held features give, in the order the features are held. */
+  rollOptions: derivedSchema(z.array(rollOptionSchema)),
   /**
    * One per inventory entry holding a weapon or armor the character lacks proficiency
    * with, equipped or not, in inventory order. `entry` is the index in the definition's
@@ -339,5 +350,6 @@ export const characterDerivedSchema = z.strictObject({
 export type CharacterDerived = z.infer<typeof characterDerivedSchema>;
 export type Speed = z.infer<typeof speedSchema>;
 export type RollEffectEntry = z.infer<typeof rollEffectSchema>;
+export type RollOption = z.infer<typeof rollOptionSchema>;
 export type Defenses = z.infer<typeof defensesSchema>;
 export type FeatGrants = z.infer<typeof featGrantsSchema>;
