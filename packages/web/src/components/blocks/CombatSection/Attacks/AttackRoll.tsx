@@ -1,5 +1,5 @@
 import type { RollEffectEntry } from "@dnd/character";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { ModeRoll } from "../../../ModeRoll.tsx";
 import type { RollBonusButton } from "../../../RollBonusButton.tsx";
 
@@ -10,8 +10,7 @@ const FLANKING: RollEffectEntry = { source: "Flanking", mode: "advantage", roll:
  * disadvantage on it to start, changed by the player. The sources of every effect, a
  * conditional one included, are spoken with the control. Where the table plays `flanking`, a
  * melee attack offers a Flanking checkbox: as advantage it joins the effects, as a bonus it adds 2
- * and the roll's label names it, so the log shows what the total holds. `children` sit beside
- * the Flanking checkbox.
+ * and the roll's label names it, so the log shows what the total holds.
  */
 export function AttackRoll({
   label,
@@ -24,7 +23,6 @@ export function AttackRoll({
   critAt,
   flanking,
   onRolled,
-  children,
 }: Pick<
   ComponentProps<typeof RollBonusButton>,
   "label" | "type" | "origin" | "bonus" | "terms" | "critAt" | "onRolled"
@@ -33,7 +31,6 @@ export function AttackRoll({
   beforeRoll?: () => Promise<boolean>;
   /** The table's flanking rule where this attack is melee, else absent or `none`. */
   flanking?: "none" | "advantage" | "bonus";
-  children?: ReactNode;
 }) {
   const [flanked, setFlanked] = useState(false);
   const flanks = flanking !== undefined && flanking !== "none";
@@ -73,7 +70,6 @@ export function AttackRoll({
           Flanking
         </label>
       )}
-      {children}
     </ModeRoll>
   );
 }

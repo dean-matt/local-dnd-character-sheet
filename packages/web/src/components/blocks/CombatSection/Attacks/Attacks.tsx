@@ -37,10 +37,10 @@ import { RollingFor } from "../../../rollerContext.ts";
 import { damageText } from "../../attack.ts";
 import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
-import { signed } from "../../signed.ts";
 import { AttackDamage } from "./AttackDamage.tsx";
 import { AttackRoll } from "./AttackRoll.tsx";
 import { AttackRow } from "./AttackRow.tsx";
+import { AttackTrades } from "./AttackTrades.tsx";
 import { WeaponMasteryChoice } from "./WeaponMasteryChoice.tsx";
 
 /** A cell the rules leave empty, shown as a dash and spoken as "none". */
@@ -131,6 +131,18 @@ function weaponNotes(
       {reload && <p className="text-label text-muted">Reload {reload}</p>}
     </>
   );
+}
+
+const addUp = (taken: Attack["options"], part: "attack" | "damage", from: number) =>
+  taken.reduce((sum, option) => sum + option[part], from);
+
+/** The attack roll's bonus and logged terms with each trade taken added as its own term. */
+function tradedAttack(field: Attack["attackBonus"], taken: Attack["options"]) {
+  const terms = rollTerms(field);
+  return {
+    bonus: addUp(taken, "attack", derivedValue(field)),
+    terms: terms && [...terms, ...taken.map(({ source, attack }) => ({ source, value: attack }))],
+  };
 }
 
 export function Attacks({
@@ -275,7 +287,6 @@ export function Attacks({
     const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
     const options = attack.options ?? [];
     const taken = options.filter(({ source }) => traded[rowKey]?.includes(source));
-    const attackTerms = rollTerms(attack.attackBonus);
     const take = (source: string, on: boolean) =>
       setTraded((now) => {
         const rest = (now[rowKey] ?? []).filter((name) => name !== source);
@@ -300,36 +311,13 @@ export function Attacks({
             label={`${name} attack`}
             type="attack"
             origin={name}
-            bonus={taken.reduce(
-              (sum, option) => sum + option.attack,
-              derivedValue(attack.attackBonus),
-            )}
-            terms={
-              attackTerms && [
-                ...attackTerms,
-                ...taken.map((option) => ({ source: option.source, value: option.attack })),
-              ]
-            }
+            {...tradedAttack(attack.attackBonus, taken)}
             effects={attackEffects(ability)}
             beforeRoll={beforeRoll}
             critAt={derivedValue(attack.critThreshold)}
             flanking={flanking}
             onRolled={(hit) => setCritical(rowKey, hit)}
-          >
-            {options.map((option) => (
-              <label key={option.source} className="flex items-center gap-1 text-label">
-                <input
-                  type="checkbox"
-                  checked={taken.includes(option)}
-                  aria-label={`${option.source}: ${signed(option.attack)} to hit, ${signed(option.damage)} damage, ${option.condition}`}
-                  onChange={(event) => take(option.source, event.target.checked)}
-                />
-                <span title={option.condition}>
-                  {option.source} {signed(option.attack)}/{signed(option.damage)}
-                </span>
-              </label>
-            ))}
-          </AttackRoll>
+          />
         }
         rollDamage={
           damage && (
@@ -338,10 +326,7 @@ export function Attacks({
               type="damage"
               origin={name}
               dice={`${damage.dice}${struck.map(({ dice }) => `+${dice}`).join("")}`}
-              bonus={taken.reduce(
-                (sum, option) => sum + option.damage,
-                derivedValue(damage.modifier),
-              )}
+              bonus={addUp(taken, "damage", derivedValue(damage.modifier))}
               critical={crit[rowKey] ?? false}
               onRolled={(_hit, logged) => {
                 setCritical(rowKey, false);
@@ -366,6 +351,7 @@ export function Attacks({
                 Critical hit
               </label>
             )}
+            {rolling && <AttackTrades options={options} taken={taken} take={take} />}
             {damage && rolling && alignments.length > 0 && (
               <label className="flex items-center gap-1 text-label">
                 Target alignment
