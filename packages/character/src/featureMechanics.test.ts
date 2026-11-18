@@ -65,6 +65,22 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ ...mechanics({ resist: ["fire"] }), offeredBy: ref })).toBe(false);
   });
 
+  it("refuses a roll mechanic with both or neither of advantage and a bonus, or one off its roll", () => {
+    const ref = { name: "Brave", source: "PHB" };
+    const parse = (roll: object) =>
+      featureMechanicsSchema.safeParse({ ref, mechanics: [{ kind: "roll", ...roll }] }).success;
+    expect(parse({ roll: "save", advantage: true })).toBe(true);
+    expect(parse({ roll: "save", bonus: 3 })).toBe(true);
+    expect(parse({ roll: "save" })).toBe(false);
+    expect(parse({ roll: "save", advantage: true, bonus: 3 })).toBe(false);
+    expect(parse({ roll: "check", skills: ["stealth"], advantage: true })).toBe(true);
+    expect(parse({ roll: "save", skills: ["stealth"], advantage: true })).toBe(false);
+    expect(parse({ roll: "initiative", abilities: ["dex"], advantage: true })).toBe(false);
+    expect(parse({ roll: "check", skills: ["stealth"], bonus: 10 })).toBe(true);
+    expect(parse({ roll: "check", abilities: ["int"], bonus: 2 })).toBe(false);
+    expect(parse({ roll: "initiative", bonus: 2 })).toBe(false);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);

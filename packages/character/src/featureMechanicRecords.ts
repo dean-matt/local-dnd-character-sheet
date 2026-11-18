@@ -566,9 +566,19 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       against: "while camouflaged and still",
     },
   ]),
-  subclassFeature(ranger, ["Hunter", "PHB"], ["Steel Will", "PHB"], 7, [
-    saveAdvantage("against being frightened"),
-  ]),
+  {
+    ...subclassFeature(ranger, ["Hunter", "PHB"], ["Steel Will", "PHB"], 7, [
+      saveAdvantage("against being frightened"),
+    ]),
+    offeredBy: {
+      name: "Defensive Tactics",
+      source: "PHB",
+      className: "Ranger",
+      classSource: "PHB",
+      subclass: { shortName: "Hunter", source: "PHB" },
+      level: 7,
+    },
+  },
   subclassFeature(rogue, ["Thief", "PHB"], ["Supreme Sneak", "PHB"], 9, [
     {
       kind: "roll",

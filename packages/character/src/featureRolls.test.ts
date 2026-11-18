@@ -107,6 +107,35 @@ describe("featureRolls", () => {
     expect(rolls(levelsOf("Cleric", "XPHB", 1, took("Protector"))).bonuses).toEqual([]);
   });
 
+  it("gives Steel Will's frightened advantage only where Defensive Tactics took it", () => {
+    const tactics = {
+      name: "Defensive Tactics",
+      source: "PHB",
+      className: "Ranger",
+      classSource: "PHB",
+      subclass: { shortName: "Hunter", source: "PHB" },
+      level: 7,
+    };
+    const hunter = (option: string) => {
+      const ranger = levelsOf("Ranger", "PHB", 7, {
+        featureChoices: [{ feature: tactics, options: [{ name: option, source: "PHB" }] }],
+      });
+      return {
+        ...ranger,
+        levels: ranger.levels.map((level) => ({
+          ...level,
+          subclass: { name: "Hunter", source: "PHB" },
+        })),
+      };
+    };
+    const steelWill = (character: CharacterDefinition) =>
+      effectsOnRoll(rolls(character).effects, { roll: "save", ability: "wis" }).filter(
+        ({ source }) => source === "Steel Will",
+      );
+    expect(steelWill(hunter("Steel Will"))).toHaveLength(1);
+    expect(steelWill(hunter("Escape the Horde"))).toEqual([]);
+  });
+
   it("marks initiative and death saves for a 2024 Champion", () => {
     const champion = levelsOf("Fighter", "XPHB", 18);
     const subclassed = {
