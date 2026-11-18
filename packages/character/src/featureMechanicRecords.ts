@@ -149,10 +149,6 @@ const LIMITED_USES: FeatureMechanics[] = [
     { kind: "uses", count: 2, reset: "long", scales: [{ level: 14, count: 3 }] },
   ]),
   { ref: { name: "Lucky", source: "PHB" }, mechanics: [{ kind: "uses", count: 3, reset: "long" }] },
-  // A use on success locks the feature for 7 days, which no rest restores.
-  classFeature(cleric, ["Divine Intervention", "PHB"], 10, [
-    { kind: "uses", count: 1, reset: "long" },
-  ]),
   // Nature Magician is the part a long rest limits.
   classFeature(druid24, ["Archdruid", "XPHB"], 20, [{ kind: "uses", count: 1, reset: "long" }]),
   classFeature(["Warlock", "XPHB"], ["Contact Patron", "XPHB"], 9, [
@@ -180,13 +176,21 @@ const LIMITED_USES: FeatureMechanics[] = [
     subclass: { shortName: "Divination", source: "PHB" },
     level: 14,
   }),
-  // Each restores or locks a count on something other than one rest: initiative, or 2d4 long rests.
+  // Each restores or locks a count on something other than one rest: initiative, 7 days after a
+  // success, or 2d4 long rests.
   narrative({
     name: "Superior Inspiration",
     source: "XPHB",
     className: "Bard",
     classSource: "XPHB",
     level: 18,
+  }),
+  narrative({
+    name: "Divine Intervention",
+    source: "PHB",
+    className: "Cleric",
+    classSource: "PHB",
+    level: 10,
   }),
   narrative({
     name: "Greater Divine Intervention",

@@ -168,11 +168,13 @@ const featureRestoreSchema = z.strictObject({
 
 /**
  * The uses a held feature counts, computed from the character where the content build reads no
- * count from its text: `level` is a class or subclass feature's, null for a feat or trait, and
- * `key` is its entry in the state's `featureUses`. `short` uses return on either rest.
+ * count from its text: `origin` is the features section's group it shows in, `level` is a class
+ * or subclass feature's, null for a feat or trait, and `key` is its entry in the state's
+ * `featureUses`. `short` uses return on either rest.
  */
 const limitedUsesSchema = z.strictObject({
   feature: contentRefSchema,
+  origin: z.enum(["class", "subclass", "race", "feat", "optionalFeature"]),
   level: z.int().min(1).max(20).nullable(),
   key: z.string().min(1),
   count: z.int().min(1),

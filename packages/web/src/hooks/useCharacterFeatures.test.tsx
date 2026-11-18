@@ -40,13 +40,40 @@ describe("useCharacterFeatures", () => {
     stubFetch(new Response(JSON.stringify(body), { status: 200 }));
     const uses = { key: "feature|Fighter|XPHB|||2|XPHB|Action Surge", count: 2, reset: "short" };
     const derived = {
-      limitedUses: [{ feature: { name: "Action Surge", source: "XPHB" }, level: 2, ...uses }],
+      limitedUses: [
+        { feature: { name: "Action Surge", source: "XPHB" }, origin: "class", level: 2, ...uses },
+      ],
     } as unknown as CharacterDerived;
 
     const { result } = renderHook(() => useCharacterFeatures("1", derived), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.groups[0]?.features).toEqual([{ ...surge(2), uses }, surge(17)]);
+  });
+
+  it("folds a feat's uses into the feat alone, not a racial trait of the same name", async () => {
+    const lucky = { resolved: true, name: "Lucky", source: "PHB", entries: [] };
+    const body = {
+      groups: [
+        { origin: "race", name: "Halfling", features: [lucky] },
+        { origin: "feat", features: [lucky] },
+      ],
+    };
+    stubFetch(new Response(JSON.stringify(body), { status: 200 }));
+    const uses = { key: "feat|PHB|Lucky", count: 3, reset: "long" };
+    const derived = {
+      limitedUses: [
+        { feature: { name: "Lucky", source: "PHB" }, origin: "feat", level: null, ...uses },
+      ],
+    } as unknown as CharacterDerived;
+
+    const { result } = renderHook(() => useCharacterFeatures("1", derived), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.groups.map((group) => group.features)).toEqual([
+      [lucky],
+      [{ ...lucky, uses }],
+    ]);
   });
 
   it("reports a 404 without retrying it", async () => {

@@ -7,7 +7,8 @@ import { characterKey } from "./characterKeys.ts";
 
 /**
  * Each feature's limited uses as `derived` counts them from the character, where it counts
- * any: a class or subclass feature matches at the level it arrives at.
+ * any: a feature matches only in its own group, so a feat never lends its uses to a racial
+ * trait of the same name, and a class or subclass feature only at the level it arrives at.
  */
 function withLimitedUses(
   features: CharacterFeatures,
@@ -21,6 +22,7 @@ function withLimitedUses(
         if (!feature.resolved) return feature;
         const counted = derived.limitedUses.find(
           (uses) =>
+            uses.origin === group.origin &&
             uses.feature.name === feature.name &&
             uses.feature.source === feature.source &&
             (uses.level === null || uses.level === feature.level),

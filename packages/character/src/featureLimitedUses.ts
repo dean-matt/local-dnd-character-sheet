@@ -22,6 +22,7 @@ export function featureLimitedUses(
       const { ref } = held.entry;
       return {
         feature: held.ref,
+        origin: held.origin,
         level: "className" in ref ? ref.level : null,
         key: held.usesKey,
         count: Math.max(1, base + plus),

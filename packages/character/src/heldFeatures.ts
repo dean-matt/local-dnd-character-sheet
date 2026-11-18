@@ -78,8 +78,12 @@ const RACE_TRAITS = new Map([
   ["Relentless Endurance|PHB", ["Half-Orc|PHB"]],
 ]);
 
+/** The features section's group a held feature shows in. */
+type HeldOrigin = "class" | "subclass" | "race" | "feat" | "optionalFeature";
+
 export type Held = {
   ref: ContentRef;
+  origin: HeldOrigin;
   entry: FeatureMechanics;
   /** Levels in the class a subclass feature belongs to, or the character's total level. */
   levels: number;
@@ -105,6 +109,7 @@ const SUBCLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
           entry,
           ref: { name: ref.name, source: ref.source },
           key: `${ref.className}|${ref.classSource}|${subclass}`,
+          origin: "subclass" as const,
           level: ref.level,
           usesKey: classFeatureUsesKey(ref),
         },
@@ -120,6 +125,7 @@ const CLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
           entry,
           ref: { name: ref.name, source: ref.source },
           key: `${ref.className}|${ref.classSource}`,
+          origin: "class" as const,
           level: ref.level,
           usesKey: classFeatureUsesKey(ref),
         },
@@ -137,14 +143,14 @@ export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" |
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
   return [
-    ...definition.feats.map(({ ref }) => ({ ref, grantor: "feat" })),
-    ...definition.optionalFeatures.map(({ ref }) => ({ ref, grantor: "optionalFeature" })),
-  ].flatMap(({ ref, grantor }) => {
+    ...definition.feats.map(({ ref }) => ({ ref, origin: "feat" as const })),
+    ...definition.optionalFeatures.map(({ ref }) => ({ ref, origin: "optionalFeature" as const })),
+  ].flatMap(({ ref, origin }) => {
     const catalog = catalogRef(ref);
     const entry = catalog && BY_KEY.get(refKey(catalog));
     if (!catalog || !entry) return [];
-    const usesKey = featureUsesKey([grantor, catalog.source], catalog.name);
-    return [{ ref: catalog, entry, levels, usesKey }];
+    const usesKey = featureUsesKey([origin, catalog.source], catalog.name);
+    return [{ ref: catalog, origin, entry, levels, usesKey }];
   });
 }
 
@@ -157,6 +163,7 @@ function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
     feature.owners.some((owner) => owners.includes(owner)),
   ).map(({ ref, entry }) => ({
     ref,
+    origin: "race" as const,
     entry,
     levels,
     usesKey: featureUsesKey(["trait", entryKey(definition.race)], ref.name),
@@ -183,7 +190,13 @@ function classFeatures(definition: HoldsFeatures): Held[] {
       ...SUBCLASS_FEATURES.filter((feature) => feature.key === subclassKey),
     ]
       .filter((feature) => group.level >= feature.level && optionTaken(definition, feature.entry))
-      .map(({ ref, entry, usesKey }) => ({ ref, entry, levels: group.level, usesKey }));
+      .map(({ ref, origin, entry, usesKey }) => ({
+        ref,
+        origin,
+        entry,
+        levels: group.level,
+        usesKey,
+      }));
   });
 }
 

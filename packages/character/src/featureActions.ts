@@ -52,6 +52,7 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "Bonus Unarmed Strike",
     "Cunning Action",
     "Divine Sense",
+    "Favored Enemy",
     "Flurry of Blows",
     "Font of Magic",
     "Patient Defense",
@@ -65,7 +66,7 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
   ...row("reaction", "XPHB", "Deflect Attacks", "Uncanny Dodge"),
   ...row("free", "PHB", "Action Surge"),
-  ...row("free", "XPHB", "Action Surge"),
+  ...row("free", "XPHB", "Action Surge", "Sacred Weapon"),
 ]);
 
 /** The kind of action a feature takes, or undefined where the curated table does not list it. */

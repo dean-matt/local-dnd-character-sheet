@@ -7,6 +7,8 @@ describe("featureActionType", () => {
     expect(featureActionType({ name: "Action Surge", source: "PHB" })).toBe("free");
     expect(featureActionType({ name: "Uncanny Dodge", source: "PHB" })).toBe("reaction");
     expect(featureActionType({ name: "Wild Shape", source: "PHB" })).toBe("action");
+    expect(featureActionType({ name: "Favored Enemy", source: "XPHB" })).toBe("bonus action");
+    expect(featureActionType({ name: "Sacred Weapon", source: "XPHB" })).toBe("free");
   });
 
   it("is undefined for a feature the table omits", () => {
@@ -20,6 +22,8 @@ describe("featurePoolKey", () => {
     expect(featurePoolKey({ name: "Rage", source: "PHB" })).toBe("rages");
     expect(featurePoolKey({ name: "Flurry of Blows", source: "PHB" })).toBe("ki_points");
     expect(featurePoolKey({ name: "Flurry of Blows", source: "XPHB" })).toBe("focus_points");
+    expect(featurePoolKey({ name: "Sacred Weapon", source: "XPHB" })).toBe("channel_divinity");
+    expect(featurePoolKey({ name: "Favored Enemy", source: "XPHB" })).toBe("favored_enemy");
   });
 
   it("is undefined for a feature that spends no pool", () => {

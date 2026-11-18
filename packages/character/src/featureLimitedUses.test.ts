@@ -23,6 +23,7 @@ describe("featureLimitedUses", () => {
   it("counts Action Surge once until the fighter's 17th level, then twice", () => {
     expect(usesOf(levelsOf("Fighter", "PHB", 2), "Action Surge")).toEqual({
       feature: { name: "Action Surge", source: "PHB" },
+      origin: "class",
       level: 2,
       key: "feature|Fighter|PHB|||2|PHB|Action Surge",
       count: 1,
@@ -49,6 +50,11 @@ describe("featureLimitedUses", () => {
       ...levelsOf("Fighter", "PHB", 4),
       feats: [{ ref: { name: "Lucky", source: "PHB" } }],
     };
-    expect(usesOf(lucky, "Lucky")).toMatchObject({ level: null, key: "feat|PHB|Lucky", count: 3 });
+    expect(usesOf(lucky, "Lucky")).toMatchObject({
+      origin: "feat",
+      level: null,
+      key: "feat|PHB|Lucky",
+      count: 3,
+    });
   });
 });
