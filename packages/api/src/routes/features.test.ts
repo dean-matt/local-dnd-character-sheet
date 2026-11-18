@@ -184,6 +184,7 @@ describe("featuresRoutes", () => {
           offered_by_name: "Totem Spirit",
           offered_by_source: "PHB",
         })),
+        { ...totem("Elk Stride", "SCAG"), offered_by_name: "Elk", offered_by_source: "SCAG" },
         { ...storm("Storm Aura", 3), choose: 1 },
         ...environments("Storm Aura", 3),
         { ...storm("Storm Soul", 6), follows_name: "Storm Aura", follows_source: "XGE" },
@@ -484,7 +485,14 @@ describe("featuresRoutes", () => {
       expect((await totemFeatures())?.map(({ name, source }) => [name, source])).toEqual([
         ["Totem Spirit", "PHB"],
         ["Elk", "SCAG"],
+        ["Elk Stride", "SCAG"],
       ]);
+    });
+
+    it("lists the features an option offers only with that option taken", async () => {
+      store(barbarian([{ feature: totemSpirit, options: [{ name: "Bear", source: "PHB" }] }]));
+
+      expect((await totemFeatures())?.map(({ name }) => name)).toEqual(["Totem Spirit", "Bear"]);
     });
 
     it("carries what the feature offers, so the sheet can change the choice", async () => {

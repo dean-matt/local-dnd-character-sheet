@@ -10,10 +10,12 @@
  * granted together — `Blade Flourish` (XGE) grants all three flourishes — and marks
  * nothing, except where `UNCOUNTED_CHOICES` names its feature. A block of
  * `refOptionalfeature` entries is an optional-feature pick, which
- * `class-optional-features.ts` covers.
+ * `class-optional-features.ts` covers. Where `GROUPED_CHOICES` names a feature, each option
+ * is a named group of features, and this writes a row for the group.
  */
 import type { Row } from "./index.ts";
 import { type Entry, isRecord } from "./json.ts";
+import { usesColumns } from "./limited-uses.ts";
 
 const REF_FIELDS = { refClassFeature: "classFeature", refSubclassFeature: "subclassFeature" };
 
@@ -27,6 +29,15 @@ const UNCOUNTED_CHOICES: Record<string, { follows?: { name: string; source: stri
   "Storm Herald|XGE|Storm Soul|XGE": { follows: { name: "Storm Aura", source: "XGE" } },
   "Storm Herald|XGE|Raging Storm|XGE": { follows: { name: "Storm Aura", source: "XGE" } },
 };
+
+/**
+ * The choices upstream writes as named groups of features: Armor Model (TCE) names the
+ * Guardian and Infiltrator models in prose, each an `entries` node listing the features that
+ * model grants. Each group becomes an option row holding its node, and each feature it lists
+ * is offered by that row, so the features arrive with the model taken. Keyed as
+ * `UNCOUNTED_CHOICES` is.
+ */
+const GROUPED_CHOICES = new Set(["Armorer|TCE|Armor Model|TCE"]);
 
 const uncountedKey = (row: Row) =>
   [row.subclass_short_name ?? "", row.subclass_source ?? "", row.name, row.source].join("|");
@@ -108,6 +119,8 @@ function optionRow(offering: Row, entry: Entry, byKey: Map<string, Row>, context
 export function markFeatureChoices(features: Row[], claims: Map<Row, string>): void {
   const byKey = new Map(features.map((row) => [rowKey(ownerOf(row), row.name, row.source), row]));
   const followers: Row[] = [];
+  const grouped = features.filter((row) => GROUPED_CHOICES.has(uncountedKey(row)));
+  features.push(...grouped.flatMap((row) => markGroups(row, byKey, claims)));
   for (const row of features) {
     const context = `${claims.get(row)}: ${String(row.name)}`;
     const uncounted = UNCOUNTED_CHOICES[uncountedKey(row)];
@@ -139,6 +152,61 @@ function markOptions(row: Row, block: Entry, byKey: Map<string, Row>, context: s
     target.offered_by_name = row.name;
     target.offered_by_source = row.source;
   }
+}
+
+/** Every named `entries` node below `node` that lists feature references, outermost first. */
+function groupNodes(node: unknown): Entry[] {
+  if (Array.isArray(node)) return node.flatMap(groupNodes);
+  if (!isRecord(node)) return [];
+  const isGroup =
+    node.type === "entries" &&
+    typeof node.name === "string" &&
+    Array.isArray(node.entries) &&
+    node.entries.flatMap(listItems).length > 0;
+  return isGroup ? [node] : Object.values(node).flatMap(groupNodes);
+}
+
+/**
+ * The option rows `row` offers as named groups, each feature a group lists marked as offered
+ * by it. Refuses fewer than two groups, so a reshaped feature surfaces rather than offering
+ * one model or none.
+ */
+function markGroups(row: Row, byKey: Map<string, Row>, claims: Map<Row, string>): Row[] {
+  const context = `${claims.get(row)}: ${String(row.name)}`;
+  const { entries, header, ...upstream } = JSON.parse(String(row.json)) as Entry;
+  const groups = groupNodes(entries);
+  if (groups.length < 2) {
+    throw new Error(`${context}: names ${groups.length} feature groups, not a choice of them`);
+  }
+  row.choose = 1;
+  return groups.map((group) => {
+    const option: Row = {
+      ...row,
+      name: String(group.name),
+      json: JSON.stringify({ ...upstream, name: group.name, entries: group.entries }),
+      choose: undefined,
+      offered_by_name: row.name,
+      offered_by_source: row.source,
+      ...usesColumns(group.entries),
+    };
+    if (byKey.has(rowKey(ownerOf(option), option.name, option.source))) {
+      throw new Error(`${context}: group ${String(option.name)} shares a feature's name`);
+    }
+    claims.set(option, String(claims.get(row)));
+    for (const item of (group.entries as unknown[]).flatMap(listItems)) {
+      const target = optionRow(option, item, byKey, context);
+      target.offered_by_name = option.name;
+      target.offered_by_source = option.source;
+    }
+    return option;
+  });
+}
+
+/** The feature references a group lists, directly or in a list. */
+function listItems(entry: unknown): Entry[] {
+  if (!isRecord(entry)) return [];
+  if (entry.type === "list" && Array.isArray(entry.items)) return entry.items.flatMap(listItems);
+  return String(entry.type) in REF_FIELDS ? [entry] : [];
 }
 
 /**

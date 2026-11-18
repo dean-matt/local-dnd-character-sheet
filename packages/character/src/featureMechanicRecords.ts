@@ -171,6 +171,21 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     },
     narrative: true,
   },
+  // Recorded on the model a character takes, which Powered Steps arrives with. A model's
+  // benefits hold while its Arcane Armor is worn, and the sheet takes any armor worn for it.
+  {
+    ...subclassFeature(artificer, ["Armorer", "TCE"], ["Infiltrator", "TCE"], 3, [
+      { kind: "speed", bonus: 5, whileArmored: true, label: "Powered Steps" },
+    ]),
+    offeredBy: {
+      name: "Armor Model",
+      source: "TCE",
+      className: "Artificer",
+      classSource: "TCE",
+      subclass: { shortName: "Armorer", source: "TCE" },
+      level: 3,
+    },
+  },
   classFeature(["Barbarian", "PHB"], ["Fast Movement", "PHB"], 5, [
     { kind: "speed", bonus: 10, unlessHeavyArmor: true },
   ]),

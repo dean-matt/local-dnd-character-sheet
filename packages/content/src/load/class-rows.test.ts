@@ -45,6 +45,7 @@ describe("the class, subclass and feature rows", () => {
           `${name}|${source} (${short_name}) ${class_name}|${class_source} ${edition}`,
       ),
     ).toEqual([
+      "Armorer|TCE (Armorer) Artificer|TCE classic",
       "Path of the Storm Herald|XGE (Storm Herald) Barbarian|PHB classic",
       "Path of the Totem Warrior|PHB (Totem Warrior) Barbarian|PHB classic",
       "Death Domain|DMG (Death) Cleric|PHB classic",
@@ -131,6 +132,7 @@ describe("the class, subclass and feature rows", () => {
         level: 3,
         features: 6,
       },
+      { name: "Armorer", short_name: "Armorer", class_source: "TCE", level: 3, features: 8 },
       { name: "Death Domain", short_name: "Death", class_source: "XPHB", level: 3, features: 1 },
     ]);
   });

@@ -4,6 +4,7 @@
  * and a feature they do not name adds nothing.
  */
 import type { Term } from "@dnd/rules";
+import type { ArmorTrait } from "./catalog.ts";
 import type { Speed } from "./characterDerived.ts";
 import type { TermReference } from "./derivedField.ts";
 import { type Mechanic, mechanicsOfKind } from "./featureMechanics.ts";
@@ -89,7 +90,7 @@ function applySpeedMechanic(
 export function speedWithFeats(
   base: Speed,
   definition: HoldsFeatures,
-  heavyArmorWorn: boolean,
+  armorWorn: Exclude<ArmorTrait["category"], "shield"> | undefined,
 ): { speed: Speed; terms: Term<TermReference>[] } {
   if (base.walk === undefined) return { speed: base, terms: [] };
   const speed = { ...base, walk: base.walk };
@@ -105,7 +106,10 @@ export function speedWithFeats(
   }
   for (const { ref, entry } of heldFeatures(definition))
     for (const mechanic of mechanicsOfKind(entry, "speed"))
-      if (!(mechanic.unlessHeavyArmor && heavyArmorWorn))
+      if (
+        !(mechanic.unlessHeavyArmor && armorWorn === "heavy") &&
+        !(mechanic.whileArmored && armorWorn === undefined)
+      )
         terms.push(...applySpeedMechanic(speed, mechanic, ref));
   return { speed, terms };
 }
