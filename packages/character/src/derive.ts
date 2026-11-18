@@ -74,6 +74,7 @@ import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
+import { startableFeatures } from "./heldFeatures.ts";
 import {
   type ProficiencyItem,
   proficiencyItemTerms,
@@ -582,17 +583,21 @@ function weaponStrike(
   const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
   const { reference } = weapon.bonus;
   const proficiency = weaponProficient(definition, weapon) ? "proficient" : "none";
-  const features = featureStrike(definition, {
-    weapon,
-    proficient: proficiency === "proficient",
-    alone:
-      !offHand &&
-      held === "one-handed" &&
-      !isTwoHanded(weapon) &&
-      !definition.inventory.some(
-        (other, at) => at !== index && other.equipped && catalog.weapons.has(itemKey(other)),
-      ),
-  });
+  const features = featureStrike(
+    definition,
+    {
+      weapon,
+      proficient: proficiency === "proficient",
+      alone:
+        !offHand &&
+        held === "one-handed" &&
+        !isTwoHanded(weapon) &&
+        !definition.inventory.some(
+          (other, at) => at !== index && other.equipped && catalog.weapons.has(itemKey(other)),
+        ),
+    },
+    sheet.modifier,
+  );
   const result = weaponAttack<TermReference>({
     weapon: monk?.covers(weapon) ? monk.apply(weapon) : weapon,
     strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
@@ -676,8 +681,8 @@ function derivedUnarmedStrike(
 ): CharacterDerived["unarmedStrike"] {
   const level = totalLevel(definition);
   const strength = abilityModifier(scoreOf(definition, catalog, "str"));
-  const features = featureStrike(definition, { proficient: true, alone: false });
   const { sheet, monk } = strikeSheet(definition, catalog, rage);
+  const features = featureStrike(definition, { proficient: true, alone: false }, sheet.modifier);
   const unarmed = { kind: "melee" as const, damage: UNARMED_DICE };
   const weapon = monk ? monk.apply(unarmed) : unarmed;
   const result = weaponAttack<TermReference>({
@@ -1115,7 +1120,7 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
  * proficiencies together with what feats grant.
  */
 export function deriveCharacter(
-  stored: CharacterDefinition,
+  input: CharacterDefinition,
   catalog: CharacterCatalog,
   state: Pick<CharacterState, "activeEffects" | "hitPointMaximumReduction" | "temporaryModifiers"> &
     Partial<Pick<CharacterState, "conditions" | "exhaustion">> = {
@@ -1125,8 +1130,10 @@ export function deriveCharacter(
   },
   names?: HomebrewNames,
 ): CharacterDerived {
+  const started = new Set(state.activeEffects.map(({ name }) => name));
+  const stored = { ...input, started };
   const feats = featGrants(stored, catalog);
-  const definition = withFeatGrants(stored, feats.granted, feats.itemSkills);
+  const definition = { ...withFeatGrants(stored, feats.granted, feats.itemSkills), started };
   const level = totalLevel(definition);
   const armorWorn = equippedArmor(definition, catalog.armor).worn?.category;
   const heavyArmorWorn = armorWorn === "heavy";
@@ -1332,9 +1339,12 @@ export function deriveCharacter(
       column: tableColumn(definition, catalog),
       modifier: (ability) => abilityModifier(scores[ability].total),
     }),
-    limitedUses: featureLimitedUses(definition, (ability) =>
-      abilityModifier(scores[ability].total),
+    limitedUses: featureLimitedUses(
+      definition,
+      (ability) => abilityModifier(scores[ability].total),
+      proficiencyBonus.total,
     ),
+    startableFeatures: startableFeatures(definition),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),

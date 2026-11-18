@@ -36,6 +36,7 @@ const ELEMENT_KEY: {
   castingBlockedBy: (name) => name,
   featureRestores: (restore) => `${refKey(restore.feature)}|${restore.kind}`,
   limitedUses: (uses) => uses.key,
+  startableFeatures: refKey,
   attacks: (attack, { inventory }) => {
     const earlier = inventory.slice(0, attack.entry + 1).map(itemKey);
     const item = earlier.pop() ?? "";

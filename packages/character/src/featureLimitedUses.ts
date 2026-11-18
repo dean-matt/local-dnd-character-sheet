@@ -15,6 +15,7 @@ type LimitedUses = CharacterDerived["limitedUses"][number];
 export function featureLimitedUses(
   definition: HoldsFeatures,
   modifier: (ability: Ability) => number,
+  proficiencyBonus: number,
 ): LimitedUses[] {
   const atLeastOne = houseRule({ houseRules: definition.houseRules ?? {} }, "minimumOneUse");
   return heldFeatures(definition).flatMap((held) =>
@@ -22,7 +23,12 @@ export function featureLimitedUses(
       ({ count, plus = 0, minimum = 1, reset, scales = [] }) => {
         const reached = scales.filter((scale) => held.levels >= scale.level);
         const scaled = reached.findLast((scale) => scale.count !== undefined)?.count;
-        const base = typeof count === "number" ? (scaled ?? count) : modifier(count);
+        const base =
+          typeof count === "number"
+            ? (scaled ?? count)
+            : count === "proficiency"
+              ? proficiencyBonus
+              : modifier(count);
         const { ref } = held.entry;
         return {
           feature: held.ref,

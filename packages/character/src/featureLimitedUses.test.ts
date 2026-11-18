@@ -17,7 +17,7 @@ const modifiers =
     ability === "cha" ? cha : 0;
 
 const usesOf = (held: CharacterDefinition, name: string, cha = 3) =>
-  featureLimitedUses(held, modifiers(cha)).find(({ feature }) => feature.name === name);
+  featureLimitedUses(held, modifiers(cha), 2).find(({ feature }) => feature.name === name);
 
 describe("featureLimitedUses", () => {
   it("counts Action Surge once until the fighter's 17th level, then twice", () => {

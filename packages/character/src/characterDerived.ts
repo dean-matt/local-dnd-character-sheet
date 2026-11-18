@@ -386,6 +386,8 @@ export const characterDerivedSchema = z.strictObject({
   featureRestores: z.array(featureRestoreSchema),
   /** The uses each held feature counts, in the order the features are held. */
   limitedUses: z.array(limitedUsesSchema),
+  /** The held features whose effect the player starts and ends from the feature's card. */
+  startableFeatures: z.array(contentRefSchema),
   /**
    * One per inventory entry holding a weapon or armor the character lacks proficiency
    * with, equipped or not, in inventory order. `entry` is the index in the definition's

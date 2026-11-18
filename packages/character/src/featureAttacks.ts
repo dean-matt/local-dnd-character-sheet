@@ -73,9 +73,18 @@ const term = ({ ref }: Held, value: number): Term<TermReference> => ({
   reference: ref,
 });
 
-/** Adds what one bonus or critical mechanic of `held` gives to `into`. */
-function addMechanic(into: FeatureStrike, held: Held, mechanic: AttackMechanic) {
-  const { attack = 0, damage = 0, critical, option } = mechanic;
+/** Adds what one bonus or critical mechanic of `held` gives to `into`; an ability's modifier adds at least 1. */
+function addMechanic(
+  into: FeatureStrike,
+  held: Held,
+  mechanic: AttackMechanic,
+  modifier: (ability: Ability) => number,
+) {
+  const { damage = 0, critical, option } = mechanic;
+  const attack =
+    typeof mechanic.attack === "string"
+      ? Math.max(1, modifier(mechanic.attack))
+      : (mechanic.attack ?? 0);
   if (critical !== undefined) {
     if (critical < (into.critical?.value ?? 20))
       into.critical = { label: held.ref.name, value: critical };
@@ -88,10 +97,15 @@ function addMechanic(into: FeatureStrike, held: Held, mechanic: AttackMechanic) 
 }
 
 /** What held features add to one attack, as terms where a bonus always holds and as options where the player chooses it. */
-export function featureStrike(definition: HoldsFeatures, strike: Strike): FeatureStrike {
+export function featureStrike(
+  definition: HoldsFeatures,
+  strike: Strike,
+  modifier: (ability: Ability) => number,
+): FeatureStrike {
   const result: FeatureStrike = { attack: [], damage: [], options: [] };
   for (const { held, mechanic } of attackMechanics(definition))
-    if (!mechanic.advantage && fits(mechanic, strike)) addMechanic(result, held, mechanic);
+    if (!mechanic.advantage && fits(mechanic, strike))
+      addMechanic(result, held, mechanic, modifier);
   return result;
 }
 
@@ -141,7 +155,7 @@ export function featureDamage(
 ): FeatureDamage[] {
   return heldFeatures(definition).flatMap((held) =>
     mechanicsOfKind(held.entry, "extraDamage").flatMap((mechanic) => {
-      if (!lands(mechanic, strike) || (mechanic.while && !sheet.raging)) return [];
+      if (!lands(mechanic, strike) || (mechanic.while === "raging" && !sheet.raging)) return [];
       const added = amount(mechanic, held.levels, sheet);
       if (!added) return [];
       const { option, oncePerTurn, slot, type } = mechanic;

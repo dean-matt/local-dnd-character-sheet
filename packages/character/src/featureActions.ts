@@ -85,11 +85,15 @@ const POOL_ROWS: [string, string, string[]][] = [
   ["rages", "PHB", ["Rage"]],
   ["rages", "XPHB", ["Rage"]],
   ["second_wind", "XPHB", ["Second Wind"]],
-  ["channel_divinity", "PHB", ["Channel Divinity", "Channel Divinity: Preserve Life"]],
+  [
+    "channel_divinity",
+    "PHB",
+    ["Channel Divinity", "Channel Divinity: Preserve Life", "Sacred Weapon", "Vow of Enmity"],
+  ],
   [
     "channel_divinity",
     "XPHB",
-    ["Channel Divinity", "Divine Spark", "Preserve Life", "Sacred Weapon"],
+    ["Channel Divinity", "Divine Spark", "Divine Sense", "Preserve Life", "Sacred Weapon"],
   ],
   ["wild_shape", "PHB", ["Wild Shape"]],
   ["wild_shape", "XPHB", ["Wild Shape", "Land's Aid"]],

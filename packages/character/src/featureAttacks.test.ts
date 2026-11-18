@@ -51,30 +51,34 @@ describe("featureStrike", () => {
     const archer = character({
       optionalFeatures: [{ featureType: "FS:F", ref: { name: "Archery", source: "PHB" } }],
     } as Partial<CharacterDefinition>);
-    expect(featureStrike(archer, LONGBOW).attack).toEqual([
+    expect(featureStrike(archer, LONGBOW, () => 0).attack).toEqual([
       { label: "Archery", value: 2, reference: { name: "Archery", source: "PHB" } },
     ]);
-    expect(featureStrike(archer, RAPIER).attack).toEqual([]);
-    expect(featureStrike(archer, UNARMED).attack).toEqual([]);
+    expect(featureStrike(archer, RAPIER, () => 0).attack).toEqual([]);
+    expect(featureStrike(archer, UNARMED, () => 0).attack).toEqual([]);
   });
 
   it("adds Dueling to the damage of a melee weapon held alone in one hand", () => {
     const duelist = withFeat("Dueling", "XPHB");
-    expect(featureStrike(duelist, RAPIER).damage).toEqual([
+    expect(featureStrike(duelist, RAPIER, () => 0).damage).toEqual([
       { label: "Dueling", value: 2, reference: { name: "Dueling", source: "XPHB" } },
     ]);
-    expect(featureStrike(duelist, { ...RAPIER, alone: false }).damage).toEqual([]);
+    expect(featureStrike(duelist, { ...RAPIER, alone: false }, () => 0).damage).toEqual([]);
   });
 
   it("lowers the critical threshold to the lowest a Champion's features give, on every attack", () => {
     expect(
-      featureStrike(levelsOf("Fighter", "PHB", 2, "Champion"), UNARMED).critical,
+      featureStrike(levelsOf("Fighter", "PHB", 2, "Champion"), UNARMED, () => 0).critical,
     ).toBeUndefined();
-    expect(featureStrike(levelsOf("Fighter", "PHB", 3, "Champion"), LONGBOW).critical).toEqual({
+    expect(
+      featureStrike(levelsOf("Fighter", "PHB", 3, "Champion"), LONGBOW, () => 0).critical,
+    ).toEqual({
       label: "Improved Critical",
       value: 19,
     });
-    expect(featureStrike(levelsOf("Fighter", "XPHB", 15, "Champion"), UNARMED).critical).toEqual({
+    expect(
+      featureStrike(levelsOf("Fighter", "XPHB", 15, "Champion"), UNARMED, () => 0).critical,
+    ).toEqual({
       label: "Superior Critical",
       value: 18,
     });
@@ -84,17 +88,17 @@ describe("featureStrike", () => {
     const trade = (source: string) => [
       { source, attack: -5, damage: 10, condition: expect.any(String) },
     ];
-    const sharpshooter = featureStrike(withFeat("Sharpshooter"), LONGBOW);
+    const sharpshooter = featureStrike(withFeat("Sharpshooter"), LONGBOW, () => 0);
     expect(sharpshooter.options).toEqual(trade("Sharpshooter"));
     expect(sharpshooter.attack).toEqual([]);
     expect(
-      featureStrike(withFeat("Sharpshooter"), { ...LONGBOW, proficient: false }).options,
+      featureStrike(withFeat("Sharpshooter"), { ...LONGBOW, proficient: false }, () => 0).options,
     ).toEqual([]);
-    expect(featureStrike(withFeat("Great Weapon Master"), GREATSWORD).options).toEqual(
+    expect(featureStrike(withFeat("Great Weapon Master"), GREATSWORD, () => 0).options).toEqual(
       trade("Great Weapon Master"),
     );
-    expect(featureStrike(withFeat("Great Weapon Master"), RAPIER).options).toEqual([]);
-    expect(featureStrike(withFeat("Great Weapon Master"), LONGBOW).options).toEqual([]);
+    expect(featureStrike(withFeat("Great Weapon Master"), RAPIER, () => 0).options).toEqual([]);
+    expect(featureStrike(withFeat("Great Weapon Master"), LONGBOW, () => 0).options).toEqual([]);
   });
 });
 

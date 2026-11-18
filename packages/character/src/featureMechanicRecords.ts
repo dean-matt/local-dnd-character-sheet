@@ -107,6 +107,100 @@ const sneakAttack = (option: string): Mechanic[] => [
   },
 ];
 
+const ALL_BUT_FORCE = [...DAMAGE_TYPES_BUT_PSYCHIC.filter((type) => type !== "force"), "psychic"];
+const sorcerer: [string, string] = ["Sorcerer", "PHB"];
+const sorcerer24: [string, string] = ["Sorcerer", "XPHB"];
+const SACRED_WEAPON = "with the weapon Sacred Weapon imbues";
+
+/**
+ * Effects the player starts and ends, and what holds while each runs. A cost the start spends
+ * past one use of the feature or its pool is the player's to spend.
+ */
+const ONGOING_EFFECTS: FeatureMechanics[] = [
+  classFeature(paladin24, ["Divine Sense", "XPHB"], 3, [{ kind: "active" }]),
+  subclassFeature(paladin, ["Devotion", "PHB"], ["Sacred Weapon", "PHB"], 3, [
+    { kind: "active" },
+    { kind: "attack", attack: "cha", option: SACRED_WEAPON, while: "active" },
+  ]),
+  subclassFeature(paladin24, ["Devotion", "XPHB"], ["Sacred Weapon", "XPHB"], 3, [
+    { kind: "active" },
+    { kind: "attack", attack: "cha", option: SACRED_WEAPON, while: "active" },
+  ]),
+  subclassFeature(paladin, ["Vengeance", "PHB"], ["Vow of Enmity", "PHB"], 3, [
+    { kind: "active" },
+    {
+      kind: "attack",
+      advantage: true,
+      option: "against the creature vowed against",
+      while: "active",
+    },
+  ]),
+  classFeature(monk, ["Empty Body", "PHB"], 18, [
+    { kind: "active" },
+    { kind: "defense", resist: ALL_BUT_FORCE, while: "active" },
+  ]),
+  classFeature(monk24, ["Superior Defense", "XPHB"], 18, [
+    { kind: "active" },
+    { kind: "defense", resist: ALL_BUT_FORCE, while: "active" },
+  ]),
+  classFeature(sorcerer24, ["Innate Sorcery", "XPHB"], 1, [{ kind: "active" }]),
+  subclassFeature(sorcerer, ["Draconic", "PHB"], ["Dragon Wings", "PHB"], 14, [
+    { kind: "active" },
+    { kind: "speed", equalToWalk: ["fly"], while: "active" },
+  ]),
+  subclassFeature(sorcerer24, ["Draconic", "XPHB"], ["Dragon Wings", "XPHB"], 14, [
+    { kind: "active" },
+    { kind: "speed", fly: 60, while: "active" },
+  ]),
+  subclassFeature(["Wizard", "PHB"], ["Bladesinging", "TCE"], ["Bladesong", "TCE"], 2, [
+    { kind: "uses", count: "proficiency", reset: "long" },
+    { kind: "active" },
+    { kind: "armorClass", value: "int", while: "active" },
+    { kind: "speed", bonus: 10, while: "active" },
+    { kind: "roll", roll: "check", skills: ["acrobatics"], advantage: true, while: "active" },
+    {
+      kind: "roll",
+      roll: "save",
+      abilities: ["con"],
+      bonus: "int",
+      against: "to maintain concentration",
+      while: "active",
+    },
+  ]),
+  // Persistent Rage restores uses on initiative; Elemental Affinity's resistance follows the
+  // ancestry the sheet does not hold; the others lay an area or spend a spell slot.
+  narrative({
+    name: "Persistent Rage",
+    source: "XPHB",
+    className: "Barbarian",
+    classSource: "XPHB",
+    level: 15,
+  }),
+  narrative({
+    name: "Primeval Awareness",
+    source: "PHB",
+    className: "Ranger",
+    classSource: "PHB",
+    level: 3,
+  }),
+  narrative({
+    name: "Elemental Affinity",
+    source: "PHB",
+    className: "Sorcerer",
+    classSource: "PHB",
+    subclass: { shortName: "Draconic", source: "PHB" },
+    level: 6,
+  }),
+  narrative({
+    name: "Nature's Sanctuary",
+    source: "XPHB",
+    className: "Druid",
+    classSource: "XPHB",
+    subclass: { shortName: "Land", source: "XPHB" },
+    level: 14,
+  }),
+];
+
 /**
  * Uses whose count the content build cannot read from the text: tied to a modifier, raised
  * at a level, or one limit among several parts.
@@ -132,6 +226,7 @@ const LIMITED_USES: FeatureMechanics[] = [
   ]),
   classFeature(paladin, ["Divine Sense", "PHB"], 1, [
     { kind: "uses", count: "cha", plus: 1, minimum: 0, reset: "long" },
+    { kind: "active" },
   ]),
   classFeature(paladin, ["Cleansing Touch", "PHB"], 14, [
     { kind: "uses", count: "cha", reset: "long" },
@@ -1263,4 +1358,5 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   }),
   narrative({ name: "Fiendish Vigor", source: "XPHB" }),
   ...LIMITED_USES,
+  ...ONGOING_EFFECTS,
 ];

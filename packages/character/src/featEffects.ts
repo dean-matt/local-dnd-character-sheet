@@ -59,11 +59,11 @@ export function featHitPointTerms(definition: HoldsFeatures): Term<TermReference
   );
 }
 
-type SpeedMode = "walk" | "climb" | "swim";
+type SpeedMode = "walk" | "climb" | "swim" | "fly";
 type SpeedMechanic = Extract<Mechanic, { kind: "speed" }>;
 
 /** A climbing or swimming speed a feature keeps equal to the walking speed. */
-type WalkMatch = { mode: "climb" | "swim"; name: string; ref: ContentRef };
+type WalkMatch = { mode: "climb" | "swim" | "fly"; name: string; ref: ContentRef };
 
 /**
  * Raises `speed` in place and returns a term per mode raised. Records each mode the feature
@@ -83,9 +83,10 @@ function applySpeedMechanic(
     terms.push({ label: `${name}: ${mode} ${from} to ${to}`, value: to - from, reference: ref });
     speed[mode] = to;
   };
-  raise("walk", speed.walk + mechanic.bonus);
-  for (const mode of mechanic.alsoOn ?? [])
-    if (speed[mode]) raise(mode, speed[mode] + mechanic.bonus);
+  const { bonus = 0, alsoOn = [], fly = 0 } = mechanic;
+  if (bonus > 0) raise("walk", speed.walk + bonus);
+  for (const mode of alsoOn) if (speed[mode]) raise(mode, speed[mode] + bonus);
+  if ((speed.fly ?? 0) < fly) raise("fly", fly);
   for (const mode of mechanic.equalToWalk ?? []) {
     if ((speed[mode] ?? 0) < speed.walk) raise(mode, speed.walk);
     matches.push({ mode, name, ref });

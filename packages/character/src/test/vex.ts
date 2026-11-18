@@ -86,6 +86,7 @@ export const derivedInput = (traits: object = {}) => ({
   rollOptions: { computed: [] },
   featureRestores: [],
   limitedUses: [],
+  startableFeatures: [],
   unproficientItems: [],
   pendingAbilityPicks: [],
   castingBlockedBy: [],

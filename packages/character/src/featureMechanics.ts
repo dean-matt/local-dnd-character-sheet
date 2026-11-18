@@ -19,11 +19,25 @@ const bonusKindSchema = bonusMechanicSchema.refine(
   { error: "only an initiative bonus can be the proficiency bonus" },
 );
 
-/** Armor class added while `when` holds: any armor worn, heavy armor worn, or a melee weapon in each hand. */
+/**
+ * A feature's effect the player starts and ends from its card, spending what a use of the
+ * feature spends. Its mechanics marked `while: "active"` hold only while it runs.
+ */
+const activeMechanicSchema = z.strictObject({ kind: z.literal("active") });
+
+/** Held only while the feature's effect runs, or only during a rage. */
+const whileSchema = z.enum(["active", "raging"]).optional();
+const whileActive = z.literal("active").optional();
+
+/**
+ * Armor class added, a number or an ability's modifier of at least +1, while `when` holds:
+ * any armor worn, heavy armor worn, or a melee weapon in each hand; always where absent.
+ */
 const armorClassMechanicSchema = z.strictObject({
   kind: z.literal("armorClass"),
-  value: z.int().min(1),
-  when: z.enum(["armor", "heavyArmor", "dualWield"]),
+  value: z.union([z.int().min(1), abilitySchema]),
+  when: z.enum(["armor", "heavyArmor", "dualWield"]).optional(),
+  while: whileActive,
 });
 
 /**
@@ -108,24 +122,21 @@ const senseMechanicSchema = z.strictObject({
   raceBonus: z.int().min(1).optional(),
 });
 
-/**
- * Resistances, damage immunities and condition immunities a feature grants, each lowercased as
- * upstream writes it. `while: "raging"` holds them only during a rage.
- */
+/** Resistances, damage immunities and condition immunities a feature grants, each lowercased as upstream writes it. */
 const defenseMechanicSchema = z
   .strictObject({
     kind: z.literal("defense"),
     resist: names,
     immune: names,
     conditionImmune: names,
-    while: z.literal("raging").optional(),
+    while: whileSchema,
   })
   .refine((grant) => [grant.resist, grant.immune, grant.conditionImmune].some(Boolean), {
     error: "a defense mechanic grants something",
   });
 
 const SPEED_MODES = z
-  .array(z.enum(["climb", "swim"]))
+  .array(z.enum(["climb", "swim", "fly"]))
   .min(1)
   .optional();
 
@@ -134,24 +145,34 @@ const SPEED_MODES = z
  * what the table calls it. `unlessHeavyArmor` withholds it while heavy armor is worn, and
  * `whileArmored` while no armor is. `alsoOn` gives the same increase to those speeds where the
  * character already has them; `equalToWalk` gives the character those speeds at the final
- * walking speed, after every later bonus, where it has less.
+ * walking speed, after every later bonus, where it has less, and `fly` a flying speed of that
+ * many feet where it has less.
  */
-const speedMechanicSchema = z.strictObject({
-  kind: z.literal("speed"),
-  bonus: z.int().min(1),
-  unlessHeavyArmor: z.literal(true).optional(),
-  whileArmored: z.literal(true).optional(),
-  alsoOn: SPEED_MODES,
-  equalToWalk: SPEED_MODES,
-  label: z.string().min(1).optional(),
-});
+const speedMechanicSchema = z
+  .strictObject({
+    kind: z.literal("speed"),
+    bonus: z.int().min(1).optional(),
+    unlessHeavyArmor: z.literal(true).optional(),
+    whileArmored: z.literal(true).optional(),
+    alsoOn: SPEED_MODES,
+    equalToWalk: SPEED_MODES,
+    fly: z.int().min(1).optional(),
+    label: z.string().min(1).optional(),
+    while: whileActive,
+  })
+  .refine(({ bonus, equalToWalk, fly }) => bonus !== undefined || equalToWalk || fly, {
+    error: "a speed mechanic raises a speed",
+  })
+  .refine(({ bonus, alsoOn }) => bonus !== undefined || !alsoOn, {
+    error: "only a bonus falls on other speeds",
+  });
 
 /**
  * Advantage, or a bonus, on saving throws, ability checks, initiative or death saves: of the
  * `abilities` named, or of every one, and for a check of the `skills` named alone. A bonus is
  * a number, an ability's modifier of at least +1, or the levels in the feature's class, and
  * falls on saves or named skills. `against` says when it holds, and the roll offers it rather
- * than applying it; `while: "raging"` holds it only during a rage.
+ * than applying it.
  */
 const rollMechanicSchema = z
   .strictObject({
@@ -162,7 +183,7 @@ const rollMechanicSchema = z
     advantage: z.literal(true).optional(),
     bonus: z.union([z.int().min(1), abilitySchema, z.literal("level")]).optional(),
     against: z.string().min(1).optional(),
-    while: z.literal("raging").optional(),
+    while: whileSchema,
   })
   .refine(({ advantage, bonus }) => (advantage === undefined) !== (bonus === undefined), {
     error: "a roll mechanic gives advantage or a bonus, never both or neither",
@@ -178,7 +199,7 @@ const rollMechanicSchema = z
 
 /**
  * A change to the character's own weapon attacks, unarmed strikes included: `attack` and
- * `damage` added to the rolls, a critical hit on `critical` or more, or advantage on the
+ * `damage` added to the rolls, `attack` a number or an ability's modifier of at least +1, a critical hit on `critical` or more, or advantage on the
  * attacks using `ability`, or on all of them. `weapons` narrows a bonus to ranged weapons,
  * heavy melee weapons, or a melee weapon held in one hand with no other weapon equipped, and
  * `proficient` to a weapon the character is proficient with. `option` says when it holds,
@@ -189,12 +210,13 @@ const attackMechanicSchema = z
     kind: z.literal("attack"),
     weapons: z.enum(["ranged", "heavyMelee", "oneHandedMelee"]).optional(),
     proficient: z.literal(true).optional(),
-    attack: z.int().optional(),
+    attack: z.union([z.int(), abilitySchema]).optional(),
     damage: z.int().optional(),
     critical: z.int().min(2).max(19).optional(),
     advantage: z.literal(true).optional(),
     ability: abilitySchema.optional(),
     option: z.string().min(1).optional(),
+    while: whileActive,
   })
   .refine(
     ({ attack, damage, critical, advantage }) =>
@@ -223,7 +245,6 @@ const diceSchema = z.string().regex(/^\d+d\d+$/);
  * when it holds, and the attack offers it rather than adding it: once a turn where
  * `oncePerTurn` says so, and for a spell slot where `slot` does, a die more for each slot
  * level past the first up to `max` dice, and one more `versus` the creatures it names.
- * `while: "raging"` holds it only during a rage.
  */
 const extraDamageMechanicSchema = z
   .strictObject({
@@ -243,7 +264,7 @@ const extraDamageMechanicSchema = z
     option: z.string().min(1).optional(),
     oncePerTurn: z.literal(true).optional(),
     slot: z.strictObject({ max: z.int().min(2), versus: z.string().min(1) }).optional(),
-    while: z.literal("raging").optional(),
+    while: whileSchema,
   })
   .refine(({ option, oncePerTurn, slot }) => option || (!oncePerTurn && !slot), {
     error: "extra damage the attack offers says when it holds",
@@ -332,7 +353,7 @@ const resetSchema = z.enum(["short", "long"]);
 
 /**
  * The uses a feature counts, restored by a `reset` rest, where `short` means either rest:
- * `count`, a number or an ability's modifier, plus `plus`, at least `minimum`. Absent,
+ * `count`, a number, an ability's modifier or the proficiency bonus, plus `plus`, at least `minimum`. Absent,
  * `minimum` is 1, as a feature printing "a minimum of once" has it; 0 records a feature that
  * prints none. Each of `scales` replaces a number count, the reset or both from a level in
  * the feature's class.
@@ -340,7 +361,7 @@ const resetSchema = z.enum(["short", "long"]);
 const usesMechanicSchema = z
   .strictObject({
     kind: z.literal("uses"),
-    count: z.union([z.int().min(1), abilitySchema]),
+    count: z.union([z.int().min(1), abilitySchema, z.literal("proficiency")]),
     plus: z.int().min(1).optional(),
     minimum: z.literal(0).optional(),
     reset: resetSchema,
@@ -366,6 +387,7 @@ const usesMechanicSchema = z
   );
 
 const mechanicSchema = z.union([
+  activeMechanicSchema,
   usesMechanicSchema,
   healMechanicSchema,
   tempHpMechanicSchema,
@@ -429,6 +451,12 @@ export const featureMechanicsSchema = z
       .refine((all) => all.filter((m) => m.kind === "uses").length <= 1, {
         error: "a feature counts its uses once",
       })
+      .refine(
+        (all) =>
+          all.some((m) => m.kind === "active") ||
+          all.every((m) => !("while" in m) || m.while !== "active"),
+        { error: "only a feature whose effect starts holds a mechanic while active" },
+      )
       .optional(),
     narrative: z.literal(true).optional(),
   })

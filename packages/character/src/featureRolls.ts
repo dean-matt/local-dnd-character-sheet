@@ -71,7 +71,7 @@ export function featureRolls(
   const rolls: FeatureRolls = { effects: [], bonuses: [], options: [] };
   for (const held of heldFeatures(definition))
     for (const mechanic of mechanicsOfKind(held.entry, "roll"))
-      if (!mechanic.while || raging) addMechanic(rolls, held, mechanic, modifier);
+      if (mechanic.while !== "raging" || raging) addMechanic(rolls, held, mechanic, modifier);
   return rolls;
 }
 
