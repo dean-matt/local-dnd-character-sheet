@@ -153,6 +153,19 @@ const featureDamageSchema = z.strictObject({
     .nullable(),
 });
 
+/**
+ * What one use of a held feature restores: hit points for `heal`, temporary hit points for
+ * `tempHp`, of `dice` rolled plus `bonus`, at least 1. `others` falls on another creature, so
+ * the sheet shows the amount and heals no one.
+ */
+const featureRestoreSchema = z.strictObject({
+  feature: contentRefSchema,
+  kind: z.enum(["heal", "tempHp"]),
+  dice: z.string().min(1).nullable(),
+  bonus: z.int(),
+  others: z.boolean(),
+});
+
 const attackSchema = z.strictObject({
   extraDamage: extraDamageSchema,
   featureDamage: z.array(featureDamageSchema),
@@ -354,6 +367,8 @@ export const characterDerivedSchema = z.strictObject({
   rollEffects: derivedSchema(z.array(rollEffectSchema)),
   /** The conditional bonuses held features give, in the order the features are held. */
   rollOptions: derivedSchema(z.array(rollOptionSchema)),
+  /** What a use of each held feature restores, in the order the features are held. */
+  featureRestores: z.array(featureRestoreSchema),
   /**
    * One per inventory entry holding a weapon or armor the character lacks proficiency
    * with, equipped or not, in inventory order. `entry` is the index in the definition's

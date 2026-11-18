@@ -70,6 +70,7 @@ import {
   featureDamage,
   featureStrike,
 } from "./featureAttacks.ts";
+import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
 import {
@@ -527,16 +528,21 @@ function derivedAttacks(
   });
 }
 
+/** Reads a class table column's catalog cell at the character's level in that class. */
+function tableColumn(definition: CharacterDefinition, catalog: CharacterCatalog) {
+  const cells = classLevels(definition).flatMap(
+    (group) => catalog.classResources.get(entryKey(group.class)) ?? [],
+  );
+  return (key: string) => cells.find((cell) => cell.key === key && !cell.homebrew)?.value;
+}
+
 /** What a weapon or unarmed strike reads off the sheet for the damage features add, and the Martial Arts the character holds. */
 function strikeSheet(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   rage: RageBenefits,
 ) {
-  const cells = classLevels(definition).flatMap(
-    (group) => catalog.classResources.get(entryKey(group.class)) ?? [],
-  );
-  const column = (key: string) => cells.find((cell) => cell.key === key && !cell.homebrew)?.value;
+  const column = tableColumn(definition, catalog);
   const sheet: DamageSheet = {
     column,
     modifier: (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
@@ -1321,6 +1327,10 @@ export function deriveCharacter(
       ...featureAttackEffects(definition),
     ]),
     rollOptions: computed(rolls.options),
+    featureRestores: featureRestores(definition, {
+      column: tableColumn(definition, catalog),
+      modifier: (ability) => abilityModifier(scores[ability].total),
+    }),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),

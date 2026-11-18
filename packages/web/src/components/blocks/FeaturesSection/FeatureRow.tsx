@@ -1,5 +1,5 @@
 import type { FeatureGroup, FeatureOrigin, SheetFeature } from "@dnd/catalog";
-import type { CatalogKind, CharacterRecord } from "@dnd/character";
+import type { CatalogKind, CharacterDerived, CharacterRecord } from "@dnd/character";
 import { featureTypeLabel } from "../../../lib/featureTypeLabel.ts";
 import { renamedRef } from "../../../lib/renamed.ts";
 import { firstLine } from "../../../lib/rulesProse.ts";
@@ -57,8 +57,13 @@ export function FeatureRow({
   feature,
   group,
   character,
+  derived,
   featIndex,
-}: Entry & { character: CharacterRecord; featIndex?: number }) {
+}: Entry & {
+  character: CharacterRecord;
+  derived: CharacterDerived | undefined;
+  featIndex?: number;
+}) {
   const type =
     feature.featureType === undefined ? undefined : featureTypeLabel(feature.featureType);
   const level = feature.level;
@@ -98,7 +103,13 @@ export function FeatureRow({
         (feature.uses || controls) && (
           <>
             {feature.uses && (
-              <FeatureUses characterId={character.id} name={feature.name} uses={feature.uses} />
+              <FeatureUses
+                characterId={character.id}
+                derived={derived}
+                name={feature.name}
+                source={feature.source}
+                uses={feature.uses}
+              />
             )}
             {controls}
           </>

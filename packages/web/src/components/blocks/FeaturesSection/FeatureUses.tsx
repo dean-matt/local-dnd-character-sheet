@@ -1,8 +1,9 @@
 import type { LimitedUses } from "@dnd/catalog";
-import { featureUsesSpent, withFeatureUse } from "@dnd/character";
+import { type CharacterDerived, featureUsesSpent, withFeatureUse } from "@dnd/character";
 import { Minus, Plus } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
+import { useFeatureRestore } from "../../../hooks/useFeatureRestore.ts";
 import { Announcer } from "../../Announcer.tsx";
 import { PoolButton } from "../../PoolButton.tsx";
 
@@ -11,20 +12,27 @@ const RESET: Record<LimitedUses["reset"], string> = { short: "Short rest", long:
 
 /**
  * A feature's uses left against its count and the rest that restores them, with a spend and
- * a restore, each one state write announced once it lands. Nothing shows until state loads,
- * since the count left is read from it.
+ * a restore, each one state write announced once it lands. A spend also lands what the
+ * feature restores, in the same write, then logs what it rolled. Nothing shows until state
+ * loads, since the count left is read from it, and the spend waits on `derived`, which holds
+ * what the feature restores.
  */
 export function FeatureUses({
   characterId,
+  derived,
   name,
+  source,
   uses,
 }: {
   characterId: string;
+  derived: CharacterDerived | undefined;
   name: string;
+  source: string | undefined;
   uses: LimitedUses;
 }) {
   const state = useCharacterState(characterId);
   const replace = useAnnouncedStateWrite(characterId);
+  const restore = useFeatureRestore(characterId);
   if (!state.isSuccess) return null;
 
   const stored = state.data.state;
@@ -45,8 +53,17 @@ export function FeatureUses({
         icon={Minus}
         label={`Spend a use of ${name}`}
         tooltip="Spend a use"
-        disabled={replace.writing || expended >= uses.count}
-        onPress={() => change(expended + 1)}
+        disabled={replace.writing || !derived || expended >= uses.count}
+        onPress={async () => {
+          if (!derived) return;
+          const restored = source
+            ? restore(derived, { name, source }, stored)
+            : { state: stored, text: [], log: () => {} };
+          const left = `${name}: ${uses.count - expended - 1} of ${uses.count} left.`;
+          const text = [left, ...restored.text.map((part) => `${part}.`)].join(" ");
+          const after = withFeatureUse(restored.state, uses.key, expended + 1);
+          if (await replace.write(after, text)) restored.log();
+        }}
       />
       <PoolButton
         icon={Plus}

@@ -13,8 +13,26 @@ const row = (type: ActionType, source: string, ...names: string[]): [string, Act
  * action type for a feature, so a feature absent here is listed nowhere on the Actions card.
  */
 const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
-  ...row("action", "PHB", "Channel Divinity", "Divine Sense", "Lay on Hands", "Wild Shape"),
-  ...row("action", "XPHB", "Channel Divinity", "Lay on Hands"),
+  ...row(
+    "action",
+    "PHB",
+    "Channel Divinity",
+    "Channel Divinity: Preserve Life",
+    "Divine Sense",
+    "Lay on Hands",
+    "Wholeness of Body",
+    "Wild Shape",
+  ),
+  ...row(
+    "action",
+    "XPHB",
+    "Channel Divinity",
+    "Divine Spark",
+    "Land's Aid",
+    "Lay on Hands",
+    "Preserve Life",
+    "Tireless",
+  ),
   ...row(
     "bonus action",
     "PHB",
@@ -40,8 +58,10 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "Rage",
     "Second Wind",
     "Step of the Wind",
+    "Wholeness of Body",
     "Wild Shape",
   ),
+  ...row("bonus action", "XGE", "Fighting Spirit"),
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
   ...row("reaction", "XPHB", "Deflect Attacks", "Uncanny Dodge"),
   ...row("free", "PHB", "Action Surge"),
@@ -64,10 +84,10 @@ const POOL_ROWS: [string, string, string[]][] = [
   ["rages", "PHB", ["Rage"]],
   ["rages", "XPHB", ["Rage"]],
   ["second_wind", "XPHB", ["Second Wind"]],
-  ["channel_divinity", "PHB", ["Channel Divinity"]],
-  ["channel_divinity", "XPHB", ["Channel Divinity"]],
+  ["channel_divinity", "PHB", ["Channel Divinity", "Channel Divinity: Preserve Life"]],
+  ["channel_divinity", "XPHB", ["Channel Divinity", "Divine Spark", "Preserve Life"]],
   ["wild_shape", "PHB", ["Wild Shape"]],
-  ["wild_shape", "XPHB", ["Wild Shape"]],
+  ["wild_shape", "XPHB", ["Wild Shape", "Land's Aid"]],
   ["ki_points", "PHB", ["Flurry of Blows", "Patient Defense", "Step of the Wind"]],
   ["focus_points", "XPHB", ["Flurry of Blows"]],
 ];

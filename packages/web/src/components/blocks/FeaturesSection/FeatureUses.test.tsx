@@ -1,8 +1,8 @@
 import type { CharacterFeatures } from "@dnd/catalog";
-import type { CharacterState } from "@dnd/character";
+import type { CharacterDerived, CharacterState } from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { characterRecord, stateRecord } from "../../../test/records.ts";
+import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { FeaturesSection } from "./FeaturesSection.tsx";
 
@@ -54,15 +54,28 @@ const FEATURES: CharacterFeatures = {
   ],
 };
 
-/** The section over a stand-in API that keeps each state write and answers later reads with it. */
-function renderFeatures(state: Partial<CharacterState> = {}) {
+/**
+ * The section over a stand-in API that keeps each state write and answers later reads with it.
+ * A null `derived` stands for the derived block still loading.
+ */
+function renderFeatures(
+  state: Partial<CharacterState> = {},
+  derived: CharacterDerived | null = derivedRecord(),
+) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
+  const rolls: { label: string; total: number }[] = [];
   vi.stubGlobal(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url === "/api/characters/1/features") return new Response(JSON.stringify(FEATURES));
+      if (url === "/api/characters/1/rolls" && init?.method === "POST") {
+        const roll = JSON.parse(String(init.body));
+        rolls.push(roll);
+        const entry = { ...roll, id: 1, characterId: "1", characterName: "Vex" };
+        return Response.json({ ...entry, rolledAt: "2024-01-01T00:00:00.000Z" });
+      }
       if (url !== "/api/characters/1/state") return new Response("{}", { status: 404 });
       if (init?.method === "PUT") {
         const written = JSON.parse(String(init.body));
@@ -74,11 +87,12 @@ function renderFeatures(state: Partial<CharacterState> = {}) {
   );
   const render = () =>
     renderWithClient(
-      <FeaturesSection character={characterRecord("1", "Vex")} derived={undefined} />,
+      <FeaturesSection character={characterRecord("1", "Vex")} derived={derived ?? undefined} />,
     );
   const view = render();
   return {
     writes,
+    rolls,
     reload() {
       view.unmount();
       render();
@@ -157,5 +171,51 @@ describe("FeatureUses", () => {
 
     await waitFor(() => expect(row("Relentless Endurance")).toHaveTextContent("1 / 2"));
     expect(writes).toHaveLength(1);
+  });
+
+  it("lands what a spent feature restores in the spend's one write, then logs it", async () => {
+    const derived: CharacterDerived = {
+      ...derivedRecord(),
+      featureRestores: [
+        {
+          feature: { name: "Relentless Endurance", source: "PHB" },
+          kind: "heal",
+          dice: null,
+          bonus: 1,
+          others: false,
+        },
+      ],
+    };
+    const { writes, rolls } = renderFeatures({ hitPoints: { current: 0, temporary: 0 } }, derived);
+    await waitFor(() => expect(row("Relentless Endurance")).toHaveTextContent("2 / 2"));
+
+    fireEvent.click(
+      within(row("Relentless Endurance")).getByRole("button", {
+        name: "Spend a use of Relentless Endurance",
+      }),
+    );
+
+    await waitFor(() => expect(rolls).toHaveLength(1));
+    expect(writes).toHaveLength(1);
+    expect(writes[0]?.hitPoints.current).toBe(1);
+    expect(writes[0]?.featureUses).toEqual([{ key: RELENTLESS, expended: 1 }]);
+    expect(rolls[0]).toMatchObject({ label: "Relentless Endurance", total: 1 });
+    expect(within(row("Relentless Endurance")).getByRole("status")).toHaveTextContent(
+      "Relentless Endurance: 1 of 2 left. Relentless Endurance: regained 1 hit point.",
+    );
+  });
+
+  it("offers no spend until the derived block that holds what it restores loads", async () => {
+    const { writes } = renderFeatures({}, null);
+    await waitFor(() => expect(row("Second Wind")).toHaveTextContent("1 / 1"));
+    const spend = within(row("Second Wind")).getByRole("button", {
+      name: "Spend a use of Second Wind",
+    });
+    expect(spend).toHaveAttribute("aria-disabled", "true");
+
+    fireEvent.click(spend);
+
+    expect(row("Second Wind")).toHaveTextContent("1 / 1");
+    expect(writes).toHaveLength(0);
   });
 });

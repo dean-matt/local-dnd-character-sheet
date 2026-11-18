@@ -20,6 +20,8 @@ import { CONTENT_SCHEMA } from "./schema.ts";
 const VENDOR = join(import.meta.dirname, "../../../vendor/5etools");
 
 const zero: Counts = {
+  heal: 0,
+  tempHp: 0,
   bonus: 0,
   armorClass: 0,
   unarmoredBase: 0,
@@ -102,6 +104,8 @@ describe("mechanicGaps", () => {
     "classic",
     json({ srd: true }, "roll a d4 in place of the normal damage of your unarmed strike"),
   );
+  feat.run("Mending", "PHB", "classic", json({ srd: true }, "regain {@dice 1d10} hit points"));
+  feat.run("Shielding", "PHB", "classic", json({ srd: true }, "gain 5 temporary hit points"));
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
@@ -114,6 +118,8 @@ describe("mechanicGaps", () => {
     expect(gaps.attack).toEqual(["Aimed (PHB)"]);
     expect(gaps.extraDamage).toEqual(["Smiting (PHB)"]);
     expect(gaps.martialArts).toEqual(["Fists (PHB)"]);
+    expect(gaps.heal).toEqual(["Mending (PHB)"]);
+    expect(gaps.tempHp).toEqual(["Shielding (PHB)"]);
     expect(gaps.unclassified).toEqual(["Lucky (PHB)", "Strider (PHB)", "Venom (PHB)"]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
@@ -126,6 +132,8 @@ describe("mechanicGaps", () => {
       attack: 1,
       extraDamage: 1,
       martialArts: 1,
+      heal: 1,
+      tempHp: 1,
       unclassified: 3,
     });
   });

@@ -122,6 +122,7 @@ export {
 export { featureDamageDice } from "./featureAttacks.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 export type { Mechanic } from "./featureMechanics.ts";
+export { restoredState } from "./featureRestores.ts";
 export { featurePickOffers } from "./heldFeatures.ts";
 export {
   atHitPointMaximum,

@@ -200,6 +200,7 @@ export function FeaturesSection({
                     key={index}
                     {...entry}
                     character={character}
+                    derived={derived}
                     featIndex={
                       entry.group.origin === "feat"
                         ? entry.group.features.indexOf(entry.feature)

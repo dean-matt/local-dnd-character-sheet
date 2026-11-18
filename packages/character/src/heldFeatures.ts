@@ -57,6 +57,12 @@ export const SUBCLASS_NAMES = new Map([
   ["Champion|XPHB", "Champion|XPHB"],
   ["Hunter|XPHB", "Hunter|XPHB"],
   ["Berserker|XPHB", "Path of the Berserker|XPHB"],
+  ["Life|XPHB", "Life Domain|XPHB"],
+  ["Land|XPHB", "Circle of the Land|XPHB"],
+  ["Open Hand|PHB", "Way of the Open Hand|PHB"],
+  ["Open Hand|XPHB", "Warrior of the Open Hand|XPHB"],
+  ["Fiend|PHB", "The Fiend|PHB"],
+  ["Fiend|XPHB", "Fiend Patron|XPHB"],
 ]);
 
 /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */
@@ -65,6 +71,7 @@ const RACE_TRAITS = new Map([
   ["Fey Ancestry|PHB", ["Elf|PHB", "Half-Elf|PHB"]],
   ["Gnome Cunning|PHB", ["Gnome|PHB"]],
   ["Brave|PHB", ["Halfling|PHB"]],
+  ["Relentless Endurance|PHB", ["Half-Orc|PHB"]],
 ]);
 
 export type Held = {

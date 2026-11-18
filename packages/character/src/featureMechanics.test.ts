@@ -81,6 +81,21 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ roll: "initiative", bonus: 2 })).toBe(false);
   });
 
+  it("refuses a restore of nothing, a multiplied die, or a scale it cannot replace", () => {
+    const ref = { name: "Second Wind", source: "PHB" };
+    const parse = (restore: object) =>
+      featureMechanicsSchema.safeParse({ ref, mechanics: [{ kind: "heal", ...restore }] }).success;
+    expect(parse({ dice: "1d10", bonus: ["level"] })).toBe(true);
+    expect(parse({})).toBe(false);
+    expect(parse({ dice: "1d10", times: 2 })).toBe(false);
+    expect(parse({ bonus: [5], scales: [{ level: 10, bonus: 10 }] })).toBe(true);
+    expect(parse({ bonus: ["level"], scales: [{ level: 10, bonus: 10 }] })).toBe(false);
+    expect(parse({ dice: { column: "martial_arts" }, scales: [{ level: 10, dice: "2d8" }] })).toBe(
+      false,
+    );
+    expect(parse({ dice: "1d8", scales: [{ level: 10, dice: "2d8", bonus: 1 }] })).toBe(false);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);
