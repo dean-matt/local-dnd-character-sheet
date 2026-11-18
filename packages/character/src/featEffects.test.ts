@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { featHitPointTerms, featInitiativeTerms, speedWithFeats } from "./featEffects.ts";
+import {
+  featHitPointTerms,
+  featInitiativeTerms,
+  speedMatchingWalk,
+  speedWithFeats,
+} from "./featEffects.ts";
 
 const feats = (...names: [string, string][]) => ({
   feats: names.map(([name, source]) => ({ ref: { name, source } })),
@@ -54,7 +59,7 @@ describe("featEffects", () => {
           reference: { name: "Fast Movement", source: "PHB" },
         },
       ]);
-      expect(named(true, 5)).toEqual({ speed: { walk: 30 }, terms: [] });
+      expect(named(true, 5)).toEqual({ speed: { walk: 30 }, terms: [], matches: [] });
       expect(named(false, 4).speed.walk).toBe(30);
     });
 
@@ -77,10 +82,24 @@ describe("featEffects", () => {
           levelled("Ranger", 6, undefined, houseRules),
           undefined,
         );
-      const { speed, terms } = roving({ optionalClassFeatures: true });
-      expect(speed).toEqual({ walk: 35, climb: 40, swim: 35 });
-      expect(terms.map((t) => t.label)).toEqual(["Roving: walk 30 to 35", "Roving: swim 0 to 35"]);
-      expect(roving({}).speed).toEqual({ walk: 30, climb: 40 });
+      const { speed, terms, matches } = roving({ optionalClassFeatures: true });
+      expect(speed).toEqual({ walk: 35, climb: 40 });
+      expect(terms.map((t) => t.label)).toEqual(["Roving: walk 30 to 35"]);
+      expect(matches.map(({ mode, name }) => [mode, name])).toEqual([
+        ["climb", "Roving"],
+        ["swim", "Roving"],
+      ]);
+      expect(roving({}).matches).toEqual([]);
+    });
+
+    it("raises a matched speed to the walk only where it is slower", () => {
+      const ref = { name: "Deft Explorer Improvement", source: "TCE" };
+      const { speed, terms } = speedMatchingWalk({ walk: 45, climb: 50 }, [
+        { mode: "climb", name: "Roving", ref },
+        { mode: "swim", name: "Roving", ref },
+      ]);
+      expect(speed).toEqual({ walk: 45, climb: 50, swim: 45 });
+      expect(terms).toEqual([{ label: "Roving: swim 0 to 45", value: 45, reference: ref }]);
     });
 
     it("gives an Armorer 5 feet in armor where the Infiltrator model is taken, and not Guardian", () => {

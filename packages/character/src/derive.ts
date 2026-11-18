@@ -59,6 +59,7 @@ import {
   featHitPointTerms,
   featInitiativeTerms,
   initiativeUsesProficiency,
+  speedMatchingWalk,
   speedWithFeats,
 } from "./featEffects.ts";
 import { featGrants, withFeatGrants } from "./featGrants.ts";
@@ -1087,7 +1088,8 @@ export function deriveCharacter(
   );
   const itemSpeed = speedWithItems(movement.speed, bonuses);
   const armorSpeed = speedUnderArmor(itemSpeed.speed, worn, scoreOf(definition, catalog, "str"));
-  const modifiedSpeed = speedWithModifiers(armorSpeed.speed, state);
+  const matchedSpeed = speedMatchingWalk(armorSpeed.speed, featSpeed.matches);
+  const modifiedSpeed = speedWithModifiers(matchedSpeed.speed, state);
   const restrained = speedWithConditions(modifiedSpeed.speed, state.conditions ?? []);
   const speed = {
     speed: restrained.speed,
@@ -1096,6 +1098,7 @@ export function deriveCharacter(
       ...movement.terms,
       ...itemSpeed.terms,
       ...armorSpeed.terms,
+      ...matchedSpeed.terms,
       ...modifiedSpeed.terms,
       ...restrained.terms,
     ],

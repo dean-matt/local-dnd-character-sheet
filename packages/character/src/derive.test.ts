@@ -2351,6 +2351,28 @@ describe("deriveCharacter", () => {
       ]);
     });
 
+    it("keeps Roving's climbing and swimming speeds level with a walk an item raises", () => {
+      const ranger = deriveCharacter(
+        {
+          ...equipped,
+          houseRules: { optionalClassFeatures: true },
+          inventory: [...equipped.inventory, worn(BOOTS)],
+          levels: Array.from({ length: 6 }, () => ({ class: { name: "Ranger", source: "PHB" } })),
+        },
+        {
+          ...itemCatalog,
+          hitDice: new Map([...itemCatalog.hitDice, ["catalog|Ranger|PHB", 10 as const]]),
+        },
+      );
+      expect(ranger.speed.computed).toEqual({ walk: 70, climb: 70, swim: 70 });
+      expect(ranger.speed.terms.map((t) => t.label)).toEqual([
+        "Roving: walk 30 to 35",
+        "Boots of Speed: walk 35 to 70",
+        "Roving: climb 0 to 70",
+        "Roving: swim 0 to 70",
+      ]);
+    });
+
     it("adds a flat bonus to every speed the character has", () => {
       const block = withItems([worn(CLOAK), worn(PENNANT)]);
       expect(block.speed.computed).toEqual({ walk: 35, swim: 65, fly: 35 });
