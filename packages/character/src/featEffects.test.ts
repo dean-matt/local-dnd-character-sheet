@@ -24,7 +24,7 @@ describe("featEffects", () => {
       ["Mobile", "PHB"],
       ["Speedy", "XPHB"],
     ] as [string, string][])
-      expect(speedWithFeats({ walk: 30 }, feats([name, source]), false).speed.walk).toBe(40);
+      expect(speedWithFeats({ walk: 30 }, feats([name, source]), undefined).speed.walk).toBe(40);
   });
 
   describe("speed from class features", () => {
@@ -44,7 +44,7 @@ describe("featEffects", () => {
 
     it("gives a Barbarian 10 feet from 5th level unless heavy armor is worn", () => {
       const named = (heavy: boolean, level: number) =>
-        speedWithFeats({ walk: 30 }, levelled("Barbarian", level), heavy);
+        speedWithFeats({ walk: 30 }, levelled("Barbarian", level), heavy ? "heavy" : "medium");
       const fast = named(false, 5);
       expect(fast.speed.walk).toBe(40);
       expect(fast.terms).toEqual([
@@ -61,13 +61,13 @@ describe("featEffects", () => {
     it("gives a Scout 10 feet on the walk and on a climbing or swimming speed it has", () => {
       const scout = { name: "Scout", source: "XGE" };
       const base = { walk: 30, swim: 30 };
-      const { speed, terms } = speedWithFeats(base, levelled("Rogue", 9, scout), false);
+      const { speed, terms } = speedWithFeats(base, levelled("Rogue", 9, scout), undefined);
       expect(speed).toEqual({ walk: 40, swim: 40 });
       expect(terms.map((t) => t.label)).toEqual([
         "Superior Mobility: walk 30 to 40",
         "Superior Mobility: swim 30 to 40",
       ]);
-      expect(speedWithFeats(base, levelled("Rogue", 8, scout), false).speed).toEqual(base);
+      expect(speedWithFeats(base, levelled("Rogue", 8, scout), undefined).speed).toEqual(base);
     });
 
     it("gives Roving only where the table uses optional class features", () => {
@@ -75,12 +75,42 @@ describe("featEffects", () => {
         speedWithFeats(
           { walk: 30, climb: 40 },
           levelled("Ranger", 6, undefined, houseRules),
-          false,
+          undefined,
         );
       const { speed, terms } = roving({ optionalClassFeatures: true });
       expect(speed).toEqual({ walk: 35, climb: 40, swim: 35 });
       expect(terms.map((t) => t.label)).toEqual(["Roving: walk 30 to 35", "Roving: swim 0 to 35"]);
       expect(roving({}).speed).toEqual({ walk: 30, climb: 40 });
+    });
+
+    it("gives an Armorer 5 feet in armor where the Infiltrator model is taken, and not Guardian", () => {
+      const armorModel = {
+        name: "Armor Model",
+        source: "TCE",
+        className: "Artificer",
+        classSource: "TCE",
+        subclass: { shortName: "Armorer", source: "TCE" },
+        level: 3,
+      };
+      const armorer = (model: string) => ({
+        ...feats(),
+        levels: Array.from({ length: 3 }, () => ({
+          class: { name: "Artificer", source: "TCE" },
+          subclass: { name: "Armorer", source: "TCE" },
+        })),
+        featureChoices: [{ feature: armorModel, options: [{ name: model, source: "TCE" }] }],
+      });
+      const infiltrator = speedWithFeats({ walk: 30 }, armorer("Infiltrator"), "light");
+      expect(infiltrator.speed.walk).toBe(35);
+      expect(infiltrator.terms).toEqual([
+        {
+          label: "Powered Steps: walk 30 to 35",
+          value: 5,
+          reference: { name: "Infiltrator", source: "TCE" },
+        },
+      ]);
+      expect(speedWithFeats({ walk: 30 }, armorer("Infiltrator"), undefined).speed.walk).toBe(30);
+      expect(speedWithFeats({ walk: 30 }, armorer("Guardian"), "light").speed.walk).toBe(30);
     });
   });
 
@@ -88,7 +118,7 @@ describe("featEffects", () => {
     const none = feats(["Actor", "PHB"]);
     expect(featInitiativeTerms(none, 3)).toEqual([]);
     expect(featHitPointTerms(none)).toEqual([]);
-    expect(speedWithFeats({ walk: 30 }, none, false).speed.walk).toBe(30);
+    expect(speedWithFeats({ walk: 30 }, none, undefined).speed.walk).toBe(30);
   });
 
   it("adds 1 hit point per character level for a Hill Dwarf, and nothing for another dwarf", () => {

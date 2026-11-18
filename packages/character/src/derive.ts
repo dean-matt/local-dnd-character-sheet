@@ -1070,14 +1070,15 @@ export function deriveCharacter(
   const feats = featGrants(stored, catalog);
   const definition = withFeatGrants(stored, feats.granted, feats.itemSkills);
   const level = totalLevel(definition);
-  const heavyArmorWorn = equippedArmor(definition, catalog.armor).worn?.category === "heavy";
+  const armorWorn = equippedArmor(definition, catalog.armor).worn?.category;
+  const heavyArmorWorn = armorWorn === "heavy";
   const rage = rageBenefits(definition, catalog, state, heavyArmorWorn);
   const casters = castingClasses(definition, catalog);
   const grants = equippedAbilityGrants(definition, catalog);
   const bonuses = equippedBonuses(definition, catalog);
 
   const worn = wornBurdens(definition, catalog);
-  const featSpeed = speedWithFeats(catalog.speed, definition, heavyArmorWorn);
+  const featSpeed = speedWithFeats(catalog.speed, definition, armorWorn);
   const { worn: bodyArmor, shield: heldShield } = equippedArmor(definition, catalog.armor);
   const movement = speedWithUnarmoredMovement(
     featSpeed.speed,
