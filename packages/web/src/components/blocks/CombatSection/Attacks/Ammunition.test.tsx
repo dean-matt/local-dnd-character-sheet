@@ -39,6 +39,7 @@ const bowAttack = (
   range: { normal: 80, long: 320 },
   ammunition: { type: "arrow|phb", stacks },
   reload: null,
+  options: [],
 });
 
 let posts: unknown[] = [];

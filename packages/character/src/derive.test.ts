@@ -1463,6 +1463,7 @@ describe("deriveCharacter", () => {
         range: null,
         ammunition: null,
         reload: null,
+        options: [],
       });
     });
 
@@ -1531,6 +1532,76 @@ describe("deriveCharacter", () => {
           type: "bludgeoning",
           modifier: { computed: -1, manual: null, terms: [{ label: "Strength", value: -1 }] },
         },
+      });
+    });
+
+    describe("features that change attacks", () => {
+      const fighter = (level: number, extra: Partial<CharacterDefinition> = {}) =>
+        deriveCharacter(
+          {
+            ...definition,
+            levels: Array.from({ length: level }, (_, index) => ({
+              class: { name: "Fighter", source: "PHB" },
+              ...(index === 0 ? { subclass: { name: "Champion", source: "PHB" } } : {}),
+            })),
+            ...extra,
+          },
+          {
+            ...catalog,
+            hitDice: new Map([
+              ...hitDice,
+              [entryKey({ name: "Fighter", source: "PHB" }), 10 as const],
+            ]),
+          },
+        );
+
+      it("scores a Champion's critical hit on 19 with every weapon and unarmed, named for the feature", () => {
+        const champion = fighter(3);
+        const terms = [
+          { label: "Base", value: 20 },
+          { label: "Improved Critical", value: -1 },
+        ];
+        expect(attackOf(champion, 0)?.critThreshold).toEqual({ computed: 19, manual: null, terms });
+        expect(champion.unarmedStrike.critThreshold).toEqual({ computed: 19, manual: null, terms });
+        expect(fighter(2).unarmedStrike.critThreshold.computed).toBe(20);
+      });
+
+      it("adds Dueling to a lone one-handed melee weapon's damage, and not beside a second", () => {
+        const dueling = { feats: [{ ref: { name: "Dueling", source: "XPHB" } }] };
+        const alone = attackOf(fighter(1, dueling), 0)?.damage?.modifier;
+        expect(alone?.terms).toContainEqual({
+          label: "Dueling",
+          value: 2,
+          reference: { name: "Dueling", source: "XPHB" },
+        });
+        const paired = fighter(1, {
+          ...dueling,
+          inventory: [...definition.inventory, longsword({ equipped: true })],
+        });
+        expect(attackOf(paired, 0)?.damage?.modifier.terms).not.toContainEqual(
+          expect.objectContaining({ label: "Dueling" }),
+        );
+      });
+
+      it("lists Reckless Attack as a Strength attack effect with its condition", () => {
+        const barbarian = deriveCharacter(
+          {
+            ...definition,
+            levels: Array.from({ length: 2 }, () => ({
+              class: { name: "Barbarian", source: "XPHB" },
+            })),
+          },
+          {
+            ...catalog,
+            hitDice: new Map([
+              ...hitDice,
+              [entryKey({ name: "Barbarian", source: "XPHB" }), 12 as const],
+            ]),
+          },
+        );
+        expect(barbarian.rollEffects.computed).toContainEqual(
+          expect.objectContaining({ source: "Reckless Attack", roll: "attack", target: "str" }),
+        );
       });
     });
 

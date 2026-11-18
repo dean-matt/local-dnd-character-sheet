@@ -38,6 +38,7 @@ const attack = (entry: number, bonus: number): CharacterDerived["attacks"][numbe
   range: null,
   ammunition: null,
   reload: null,
+  options: [],
 });
 
 const unarmedStrike: CharacterDerived["unarmedStrike"] = {
@@ -676,6 +677,41 @@ describe("Attacks", () => {
           "status",
         );
       });
+    });
+
+    it("applies a feature's trade a player takes to the attack and its damage, until the damage is logged", async () => {
+      const sharpshooter = {
+        source: "Sharpshooter",
+        attack: -5,
+        damage: 10,
+        condition: "before the attack",
+      };
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [{ ...attack(0, 5), options: [sharpshooter] }],
+      });
+      const trade = await longsword().findByRole("checkbox", {
+        name: "Sharpshooter: -5 to hit, +10 damage, before the attack",
+      });
+      expect(longsword().getByText("Sharpshooter -5/+10")).toBeInTheDocument();
+      fireEvent.click(trade);
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({
+        notation: "1d20",
+        terms: [
+          { source: "Strength", value: 5 },
+          { source: "Sharpshooter", value: -5 },
+        ],
+      });
+      expect(trade).toBeChecked();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Sharpshooter" }),
+      );
+
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]).toMatchObject({ notation: "1d8+9", modifier: 9 });
+      await waitFor(() => expect(trade).not.toBeChecked());
     });
 
     const effects = (...list: CharacterDerived["rollEffects"]["computed"]) => ({

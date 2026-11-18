@@ -37,6 +37,7 @@ import { RollingFor } from "../../../rollerContext.ts";
 import { damageText } from "../../attack.ts";
 import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
+import { signed } from "../../signed.ts";
 import { AttackDamage } from "./AttackDamage.tsx";
 import { AttackRoll } from "./AttackRoll.tsx";
 import { AttackRow } from "./AttackRow.tsx";
@@ -151,6 +152,7 @@ export function Attacks({
   const [target, setTarget] = useState<Record<string, string>>({});
   const [crit, setCrit] = useState<Record<string, boolean>>({});
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
+  const [traded, setTraded] = useState<Record<string, readonly string[]>>({});
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const heldEffects = play.data ? conditionRollEffects(play.data.state, definition, "attack") : [];
   const attackEffects = (ability: Ability) => [
@@ -241,7 +243,11 @@ export function Attacks({
     return () => recover(attack, piece, held?.entry);
   }
 
-  /** One weapon-shaped row: the bonus, the attack and damage rolls, and the critical-hit flag the two share. */
+  /**
+   * One weapon-shaped row: the bonus, the attack and damage rolls, and the critical-hit flag
+   * and the feature trades the two share. A trade taken stays taken until a damage roll is
+   * logged, so a miss carries it to the next attack.
+   */
   function strikeRow({
     key,
     name,
@@ -256,7 +262,8 @@ export function Attacks({
     name: string;
     rowKey: string;
     ability: Ability;
-    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage" | "extraDamage">;
+    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage" | "extraDamage"> &
+      Partial<Pick<Attack, "options">>;
     flanking: ComponentProps<typeof AttackRoll>["flanking"];
     beforeRoll?: () => Promise<boolean>;
     notes?: ReactNode;
@@ -266,6 +273,14 @@ export function Attacks({
     const struck = extras.filter(({ targetAlignment }) => targetAlignment === target[rowKey]);
     const alignments = [...new Set(extras.map(({ targetAlignment }) => targetAlignment))];
     const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
+    const options = attack.options ?? [];
+    const taken = options.filter(({ source }) => traded[rowKey]?.includes(source));
+    const attackTerms = rollTerms(attack.attackBonus);
+    const take = (source: string, on: boolean) =>
+      setTraded((now) => {
+        const rest = (now[rowKey] ?? []).filter((name) => name !== source);
+        return { ...now, [rowKey]: on ? [...rest, source] : rest };
+      });
     return (
       <AttackRow
         key={key}
@@ -285,25 +300,53 @@ export function Attacks({
             label={`${name} attack`}
             type="attack"
             origin={name}
-            bonus={derivedValue(attack.attackBonus)}
-            terms={rollTerms(attack.attackBonus)}
+            bonus={taken.reduce(
+              (sum, option) => sum + option.attack,
+              derivedValue(attack.attackBonus),
+            )}
+            terms={
+              attackTerms && [
+                ...attackTerms,
+                ...taken.map((option) => ({ source: option.source, value: option.attack })),
+              ]
+            }
             effects={attackEffects(ability)}
             beforeRoll={beforeRoll}
             critAt={derivedValue(attack.critThreshold)}
             flanking={flanking}
             onRolled={(hit) => setCritical(rowKey, hit)}
-          />
+          >
+            {options.map((option) => (
+              <label key={option.source} className="flex items-center gap-1 text-label">
+                <input
+                  type="checkbox"
+                  checked={taken.includes(option)}
+                  aria-label={`${option.source}: ${signed(option.attack)} to hit, ${signed(option.damage)} damage, ${option.condition}`}
+                  onChange={(event) => take(option.source, event.target.checked)}
+                />
+                <span title={option.condition}>
+                  {option.source} {signed(option.attack)}/{signed(option.damage)}
+                </span>
+              </label>
+            ))}
+          </AttackRoll>
         }
         rollDamage={
           damage && (
             <RollBonusButton
-              label={`${name} damage${struck.map(({ dice, type }) => ` and ${dice} ${type}`).join("")}`}
+              label={`${name} damage${struck.map(({ dice, type }) => ` and ${dice} ${type}`).join("")}${taken.map(({ source }) => ` with ${source}`).join("")}`}
               type="damage"
               origin={name}
               dice={`${damage.dice}${struck.map(({ dice }) => `+${dice}`).join("")}`}
-              bonus={derivedValue(damage.modifier)}
+              bonus={taken.reduce(
+                (sum, option) => sum + option.damage,
+                derivedValue(damage.modifier),
+              )}
               critical={crit[rowKey] ?? false}
-              onRolled={() => setCritical(rowKey, false)}
+              onRolled={(_hit, logged) => {
+                setCritical(rowKey, false);
+                if (logged) setTraded((now) => ({ ...now, [rowKey]: [] }));
+              }}
             />
           )
         }

@@ -63,6 +63,7 @@ import {
   speedWithFeats,
 } from "./featEffects.ts";
 import { featGrants, withFeatGrants } from "./featGrants.ts";
+import { type FeatureStrike, featureAttackEffects, featureStrike } from "./featureAttacks.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
 import {
@@ -538,6 +539,17 @@ function weaponStrike(
   const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
   const { reference } = weapon.bonus;
   const proficiency = weaponProficient(definition, weapon) ? "proficient" : "none";
+  const features = featureStrike(definition, {
+    weapon,
+    proficient: proficiency === "proficient",
+    alone:
+      !offHand &&
+      held === "one-handed" &&
+      !isTwoHanded(weapon) &&
+      !definition.inventory.some(
+        (other, at) => at !== index && other.equipped && catalog.weapons.has(itemKey(other)),
+      ),
+  });
   const result = weaponAttack<TermReference>({
     weapon,
     strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
@@ -557,10 +569,11 @@ function weaponStrike(
         ...result.attack.terms,
         ...(proficiency === "none" ? [{ label: "Not proficient", value: 0 }] : []),
         ...proficiencyItemTerms(level, proficiency, bonuses),
+        ...features.attack,
         ...modifiers,
       ]),
     ),
-    critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index))),
+    critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, index), features)),
     damage: result.damage
       ? {
           dice: result.damage.dice,
@@ -569,10 +582,12 @@ function weaponStrike(
             breakdown([
               ...result.damage.modifier.terms,
               ...rageDamageTerms(rage, definition.edition, weapon.kind, result.ability),
+              ...features.damage,
             ]),
           ),
         }
       : null,
+    options: features.options,
     grip: weapon.versatileDamage === undefined ? null : { held, twoHandedBlocked },
     mastery: weaponMastery(definition, weapon),
     ...rangedFacts(definition, catalog, weapon),
@@ -610,6 +625,7 @@ function derivedUnarmedStrike(
 ): CharacterDerived["unarmedStrike"] {
   const level = totalLevel(definition);
   const strength = abilityModifier(scoreOf(definition, catalog, "str"));
+  const features = featureStrike(definition, { proficient: true, alone: false });
   const result = weaponAttack<TermReference>({
     weapon: { kind: "melee", damage: UNARMED_DICE },
     strengthModifier: strength,
@@ -623,10 +639,11 @@ function derivedUnarmedStrike(
       breakdown([
         ...result.attack.terms,
         ...proficiencyItemTerms(level, "proficient", bonuses),
+        ...features.attack,
         ...modifiers,
       ]),
     ),
-    critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, -1))),
+    critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, -1), features)),
     damage: {
       dice: UNARMED_DICE,
       type: "bludgeoning",
@@ -634,6 +651,7 @@ function derivedUnarmedStrike(
         breakdown([
           ...(result.damage?.modifier.terms ?? []),
           ...rageDamageTerms(rage, definition.edition, "melee", "str"),
+          ...features.damage,
         ]),
       ),
     },
@@ -667,20 +685,21 @@ function extraDamage(
   );
 }
 
-/** 20, less what the best item lowers it by: the lowest result stands rather than adding up. */
-function critThreshold(bonuses: readonly ItemBonusTrait[]): Breakdown<TermReference> {
-  const best = bonuses.reduce<ItemBonusTrait | undefined>(
+/** 20, less what the best item or feature lowers it by: the lowest result stands rather than adding up. */
+function critThreshold(
+  bonuses: readonly ItemBonusTrait[],
+  { critical }: Pick<FeatureStrike, "critical">,
+): Breakdown<TermReference> {
+  const best = bonuses.reduce<{ label: string; value: number } | undefined>(
     (lowest, item) =>
-      item.critThreshold !== undefined && item.critThreshold < (lowest?.critThreshold ?? 20)
-        ? item
+      item.critThreshold !== undefined && item.critThreshold < (lowest?.value ?? 20)
+        ? { label: item.name, value: item.critThreshold }
         : lowest,
-    undefined,
+    critical,
   );
   return breakdown([
     { label: "Base", value: 20 },
-    ...(best?.critThreshold === undefined
-      ? []
-      : [{ label: best.name, value: best.critThreshold - 20 }]),
+    ...(best === undefined ? [] : [{ label: best.label, value: best.value - 20 }]),
   ]);
 }
 
@@ -1249,7 +1268,10 @@ export function deriveCharacter(
     senses: derivedSenses(definition, catalog, feats.senses, names),
     itemGrants: derivedItemGrants(definition, catalog, feats.itemSkills),
     featGrants: computed(feats.granted),
-    rollEffects: derivedRollEffects(definition, catalog, burdened, rolls.effects),
+    rollEffects: derivedRollEffects(definition, catalog, burdened, [
+      ...rolls.effects,
+      ...featureAttackEffects(definition),
+    ]),
     rollOptions: computed(rolls.options),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
