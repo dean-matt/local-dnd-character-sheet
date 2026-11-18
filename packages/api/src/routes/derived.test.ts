@@ -47,6 +47,10 @@ const LONGSWORD = { name: "Longsword", source: "PHB" };
 const PLUS_ONE_WEAPON = { name: "+1 Weapon", source: "DMG" };
 const DAGGER_OF_VENOM = { name: "Dagger of Venom", source: "DMG" };
 const DWARF = { name: "Dwarf", source: "PHB" };
+
+/** The roll effects beside the Fey Ancestry every elf here carries. */
+const itemEffects = (block: CharacterDerived) =>
+  block.rollEffects.computed.filter(({ source }) => source !== "Fey Ancestry");
 const DRAGONBORN = { name: "Dragonborn", source: "PHB" };
 const FIRE_RESISTANCE = { name: "Armor of Fire Resistance", source: "DMG" };
 const HILL_BELT = { name: "Belt of Hill Giant Strength", source: "DMG" };
@@ -951,7 +955,7 @@ describe("derivedRoutes", () => {
       advantage: [{ mode: "advantage", roll: "skill", target: "Stealth" }],
     });
     store(definitionWith({ inventory: [{ ref: MANTLE }, { ref: { homebrewId: "cloak" } }] }));
-    expect((await derived()).rollEffects.computed).toEqual([]);
+    expect(itemEffects(await derived())).toEqual([]);
 
     updateCharacterDefinition(
       opened.charactersDb,
@@ -963,7 +967,7 @@ describe("derivedRoutes", () => {
         ],
       }),
     );
-    expect((await derived()).rollEffects.computed).toEqual([
+    expect(itemEffects(await derived())).toEqual([
       { source: MANTLE.name, mode: "advantage", roll: "save", condition: "against spells" },
       { source: "Cloak of Shadows", mode: "advantage", roll: "skill", target: "Stealth" },
     ]);
@@ -1089,7 +1093,7 @@ describe("derivedRoutes", () => {
     updateCharacterDefinition(opened.charactersDb, "1", untrained(true));
     const worn = await derived();
     expect(worn.castingBlockedBy).toEqual([PLATE.name]);
-    expect(worn.rollEffects.computed.filter((effect) => effect.roll !== "skill")).toHaveLength(6);
+    expect(itemEffects(worn).filter((effect) => effect.roll !== "skill")).toHaveLength(6);
   });
 
   it("marks Stealth and slows a wearer below the armor's Strength, counting a belt toward it, catalog or homebrew", async () => {
@@ -1106,7 +1110,7 @@ describe("derivedRoutes", () => {
     const plate = await derived();
     expect(plate.speed.computed.walk).toBe(25);
     expect(plate.speed.terms).toEqual([{ label: "Plate Armor: Strength 15 required", value: -10 }]);
-    expect(plate.rollEffects.computed).toEqual([
+    expect(itemEffects(plate)).toEqual([
       { source: PLATE.name, mode: "disadvantage", roll: "skill", target: "Stealth" },
     ]);
 
@@ -1124,7 +1128,7 @@ describe("derivedRoutes", () => {
     );
     const belted = await derived();
     expect(belted.speed.terms).toEqual([]);
-    expect(belted.rollEffects.computed.map((effect) => effect.source)).toEqual([
+    expect(itemEffects(belted).map((effect) => effect.source)).toEqual([
       PLATE.name,
       "Rattling Scale",
     ]);
@@ -1136,7 +1140,7 @@ describe("derivedRoutes", () => {
         inventory: [{ ref: LONGSWORD, variant: HOLY_AVENGER, equipped: true, attuned: true }],
       }),
     );
-    expect((await derived()).rollEffects.computed).toEqual([
+    expect(itemEffects(await derived())).toEqual([
       {
         source: "Holy Avenger Longsword",
         mode: "advantage",

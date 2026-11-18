@@ -63,6 +63,7 @@ import {
   speedWithFeats,
 } from "./featEffects.ts";
 import { featGrants, withFeatGrants } from "./featGrants.ts";
+import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
 import {
   type ProficiencyItem,
@@ -74,7 +75,7 @@ import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { reducedMaximum, reducedOverride } from "./maximumReduction.ts";
 import { applyOverrides } from "./overrides.ts";
-import { RAGE, RAGE_RESISTANCES, rageBenefits, rageDamageTerms } from "./rage.ts";
+import { rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
 import { exhaustionRuleset, houseRule } from "./resolve.ts";
 import type { CharacterState } from "./state.ts";
@@ -762,8 +763,8 @@ function gathered(grants: readonly Grant[], names: (grant: Grant) => readonly st
 }
 
 /**
- * The race's grants, its picked resistance among them, then each feat's, then each equipped
- * item's, then a rage's. An item that requires attunement grants only once it is attuned as well. A resistance
+ * The race's grants, its picked resistance among them, then each feat's and feature's, then
+ * each equipped item's. An item that requires attunement grants only once it is attuned as well. A resistance
  * stays listed beside an immunity to the same type, since each names a source the reader
  * may want.
  */
@@ -771,7 +772,6 @@ function derivedDefenses(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   feats: readonly Grant[],
-  rage: RageBenefits,
   names?: HomebrewNames,
 ): ComputedField<Defenses> {
   const { resistChoice, ...race } = catalog.raceDefenses;
@@ -787,15 +787,6 @@ function derivedDefenses(
     if (item && entry.equipped && (entry.attuned || !item.requiresAttunement)) {
       grants.push({ ...item, from: item.name });
     }
-  }
-  if (rage) {
-    grants.push({
-      resist: RAGE_RESISTANCES,
-      immune: [],
-      conditionImmune: [],
-      vulnerable: [],
-      from: RAGE,
-    });
   }
   return computed({
     resistances: gathered(grants, (grant) => grant.resist),
@@ -904,13 +895,13 @@ const disadvantageOn = (source: string, abilities: readonly Ability[]) =>
 /**
  * The advantage and disadvantage of each equipped item, attuned where it must be, in
  * inventory order, then the Stealth disadvantage of worn armor, then the disadvantage of
- * armor worn without proficiency, then heavy encumbrance's where `burdened`.
+ * armor worn without proficiency, then heavy encumbrance's where `burdened`, then `features`'.
  */
 function derivedRollEffects(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
   burdened: boolean,
-  rage: RageBenefits,
+  features: CharacterDerived["rollEffects"]["computed"],
 ): CharacterDerived["rollEffects"] {
   const granted = definition.inventory.flatMap((entry) => {
     const item = catalog.itemAdvantages.get(itemKey(entry));
@@ -929,15 +920,7 @@ function derivedRollEffects(
     disadvantageOn(name, UNPROFICIENT_ARMOR_ABILITIES),
   );
   const encumbered = burdened ? disadvantageOn("Heavily encumbered", BURDENED_ABILITIES) : [];
-  const raging = rage
-    ? (["check", "save"] as const).map((roll) => ({
-        source: RAGE,
-        mode: "advantage" as const,
-        roll,
-        target: "str",
-      }))
-    : [];
-  return computed([...granted, ...stealth, ...unproficient, ...encumbered, ...raging]);
+  return computed([...granted, ...stealth, ...unproficient, ...encumbered, ...features]);
 }
 
 /** A class `hitDice` does not name is rejected the same way `hitPointMaximum` rejects it. */
@@ -1105,6 +1088,11 @@ export function deriveCharacter(
   };
   const exhaustion = exhaustionPenaltyTerms(state.exhaustion ?? 0, exhaustionRuleset(definition));
   const attackModifiers = [...modifierTerms(state, onKind("attackRolls")), ...exhaustion];
+  const rolls = featureRolls(
+    definition,
+    (ability) => abilityModifier(abilityScore(definition, ability, grants)),
+    rage !== null,
+  );
   const savingThrows = Object.fromEntries(
     ABILITIES.map((ability) => {
       const { total, terms } = savingThrowModifier(
@@ -1114,6 +1102,7 @@ export function deriveCharacter(
         [
           ...itemTerms(bonuses, (item) => item.save),
           ...modifierTerms(state, onSave(ability)),
+          ...rollBonusTerms(rolls.bonuses, { roll: "save", ability }),
           ...exhaustion,
         ],
         bonuses,
@@ -1153,6 +1142,7 @@ export function deriveCharacter(
     const skillBonus = [
       ...checkBonus,
       ...modifierTerms(state, onSkill(skill.ref)),
+      ...rollBonusTerms(rolls.bonuses, { roll: "skill", skill: skill.ref.name }),
       ...(unproficient && skill.ability !== "flat" ? halfProficient(skill.ability) : []),
     ];
     const { total, terms } = skillModifier(
@@ -1254,13 +1244,13 @@ export function deriveCharacter(
       definition,
       catalog,
       feats.defenses.filter(({ whileRaging }) => !whileRaging || rage),
-      rage,
       names,
     ),
     senses: derivedSenses(definition, catalog, feats.senses, names),
     itemGrants: derivedItemGrants(definition, catalog, feats.itemSkills),
     featGrants: computed(feats.granted),
-    rollEffects: derivedRollEffects(definition, catalog, burdened, rage),
+    rollEffects: derivedRollEffects(definition, catalog, burdened, rolls.effects),
+    rollOptions: computed(rolls.options),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),

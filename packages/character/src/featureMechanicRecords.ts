@@ -59,6 +59,26 @@ const skillsOf = (count: number, from?: string[], expertise?: true): Mechanic =>
 const grants = (grant: Omit<Extract<Mechanic, { kind: "proficiency" }>, "kind">): Mechanic[] => [
   { kind: "proficiency", ...grant },
 ];
+const narrative = (ref: FeatureMechanics["ref"]): FeatureMechanics => ({ ref, narrative: true });
+const barbarian: [string, string] = ["Barbarian", "PHB"];
+const barbarian24: [string, string] = ["Barbarian", "XPHB"];
+const fighter24: [string, string] = ["Fighter", "XPHB"];
+const paladin: [string, string] = ["Paladin", "PHB"];
+const paladin24: [string, string] = ["Paladin", "XPHB"];
+const ranger: [string, string] = ["Ranger", "PHB"];
+const ALL_SAVES = grants({ savingThrows: ["str", "dex", "con", "int", "wis", "cha"] });
+const raging: Mechanic[] = [
+  { kind: "roll", roll: "check", abilities: ["str"], advantage: true, while: "raging" },
+  { kind: "roll", roll: "save", abilities: ["str"], advantage: true, while: "raging" },
+  { kind: "defense", resist: ["bludgeoning", "piercing", "slashing"], while: "raging" },
+];
+const saveAdvantage = (against?: string): Mechanic => ({
+  kind: "roll",
+  roll: "save",
+  advantage: true,
+  ...(against && { against }),
+});
+const CHARMED_OR_FRIGHTENED = "against being charmed or frightened";
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
@@ -243,7 +263,16 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   },
   {
     ref: { name: "Dungeon Delver", source: "PHB" },
-    narrative: true,
+    mechanics: [
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["perception", "investigation"],
+        advantage: true,
+        against: "to find a secret door",
+      },
+      saveAdvantage("against a trap"),
+    ],
   },
   subclassFeature(["Sorcerer", "PHB"], ["Storm", "XGE"], ["Heart of the Storm", "XGE"], 6, [
     { kind: "defense", resist: ["lightning", "thunder"] },
@@ -474,4 +503,208 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   subclassFeature(fighter, ["Arcane Archer", "XGE"], ["Arcane Archer Lore", "XGE"], 3, [
     skillsOf(1, ["arcana", "nature"]),
   ]),
+  classFeature(barbarian, ["Rage", "PHB"], 1, raging),
+  classFeature(barbarian24, ["Rage", "XPHB"], 1, raging),
+  classFeature(barbarian, ["Danger Sense", "PHB"], 2, [
+    {
+      kind: "roll",
+      roll: "save",
+      abilities: ["dex"],
+      advantage: true,
+      against: "against an effect you can see",
+    },
+  ]),
+  classFeature(barbarian24, ["Danger Sense", "XPHB"], 2, [
+    { kind: "roll", roll: "save", abilities: ["dex"], advantage: true },
+  ]),
+  classFeature(paladin, ["Aura of Protection", "PHB"], 6, [
+    { kind: "roll", roll: "save", bonus: "cha" },
+  ]),
+  classFeature(paladin24, ["Aura of Protection", "XPHB"], 6, [
+    { kind: "roll", roll: "save", bonus: "cha" },
+  ]),
+  classFeature(fighter24, ["Indomitable", "XPHB"], 9, [
+    { kind: "roll", roll: "save", bonus: "level", against: "on the reroll of a failed save" },
+  ]),
+  classFeature(["Monk", "PHB"], ["Diamond Soul", "PHB"], 14, ALL_SAVES),
+  classFeature(["Monk", "XPHB"], ["Disciplined Survivor", "XPHB"], 14, ALL_SAVES),
+  classFeature(bard, ["Countercharm", "PHB"], 6, [
+    saveAdvantage(`${CHARMED_OR_FRIGHTENED}, while you perform`),
+  ]),
+  classFeature(["Bard", "XPHB"], ["Countercharm", "XPHB"], 7, [
+    saveAdvantage(`on the reroll of a save ${CHARMED_OR_FRIGHTENED}`),
+  ]),
+  classFeature(ranger, ["Favored Enemy", "PHB"], 1, [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["survival"],
+      advantage: true,
+      against: "to track a favored enemy",
+    },
+    {
+      kind: "roll",
+      roll: "check",
+      abilities: ["int"],
+      advantage: true,
+      against: "to recall information about a favored enemy",
+    },
+    { kind: "pick", fields: ["languages"], count: 1 },
+  ]),
+  classFeature(ranger, ["Land's Stride", "PHB"], 8, [
+    saveAdvantage("against magical plants that impede movement"),
+  ]),
+  subclassFeature(["Druid", "PHB"], ["Land", "PHB"], ["Land's Stride", "PHB"], 6, [
+    saveAdvantage("against magical plants that impede movement"),
+  ]),
+  classFeature(ranger, ["Hide in Plain Sight", "PHB"], 10, [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["stealth"],
+      bonus: 10,
+      against: "while camouflaged and still",
+    },
+  ]),
+  subclassFeature(ranger, ["Hunter", "PHB"], ["Steel Will", "PHB"], 7, [
+    saveAdvantage("against being frightened"),
+  ]),
+  subclassFeature(rogue, ["Thief", "PHB"], ["Supreme Sneak", "PHB"], 9, [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["stealth"],
+      advantage: true,
+      against: "after moving no more than half your speed this turn",
+    },
+  ]),
+  subclassFeature(paladin, ["Devotion", "PHB"], ["Holy Nimbus", "PHB"], 20, [
+    saveAdvantage("against a spell a fiend or undead casts, while Holy Nimbus lasts"),
+  ]),
+  subclassFeature(paladin24, ["Devotion", "XPHB"], ["Holy Nimbus", "XPHB"], 20, [
+    saveAdvantage("against a fiend or undead, while Holy Nimbus lasts"),
+  ]),
+  subclassFeature(fighter24, ["Champion", "XPHB"], ["Remarkable Athlete", "XPHB"], 3, [
+    { kind: "roll", roll: "initiative", advantage: true },
+    { kind: "roll", roll: "check", skills: ["athletics"], advantage: true },
+  ]),
+  subclassFeature(fighter24, ["Champion", "XPHB"], ["Survivor", "XPHB"], 18, [
+    { kind: "roll", roll: "deathSave", advantage: true },
+  ]),
+  {
+    ...classFeature(["Cleric", "XPHB"], ["Thaumaturge", "XPHB"], 1, [
+      { kind: "roll", roll: "check", skills: ["arcana", "religion"], bonus: "wis" },
+    ]),
+    offeredBy: {
+      name: "Divine Order",
+      source: "XPHB",
+      className: "Cleric",
+      classSource: "XPHB",
+      level: 1,
+    },
+  },
+  {
+    ...classFeature(["Druid", "XPHB"], ["Magician", "XPHB"], 1, [
+      { kind: "roll", roll: "check", skills: ["arcana", "nature"], bonus: "wis" },
+    ]),
+    offeredBy: {
+      name: "Primal Order",
+      source: "XPHB",
+      className: "Druid",
+      classSource: "XPHB",
+      level: 1,
+    },
+  },
+  {
+    ref: { name: "Extended Spell", source: "XPHB" },
+    mechanics: [
+      {
+        kind: "roll",
+        roll: "save",
+        abilities: ["con"],
+        advantage: true,
+        against: "to keep concentration on an extended spell",
+      },
+    ],
+  },
+  {
+    ref: { name: "Fey Ancestry", source: "PHB" },
+    mechanics: [saveAdvantage("against being charmed")],
+  },
+  {
+    ref: { name: "Gnome Cunning", source: "PHB" },
+    mechanics: [
+      {
+        kind: "roll",
+        roll: "save",
+        abilities: ["int", "wis", "cha"],
+        advantage: true,
+        against: "against magic",
+      },
+    ],
+  },
+  {
+    ref: { name: "Brave", source: "PHB" },
+    mechanics: [saveAdvantage("against being frightened")],
+  },
+  // A reroll changes no modifier on the roll it repeats; only the 2024 Indomitable adds one.
+  narrative({
+    name: "Indomitable",
+    source: "PHB",
+    className: "Fighter",
+    classSource: "PHB",
+    level: 9,
+  }),
+  narrative({
+    name: "Indomitable",
+    source: "XPHB",
+    className: "Fighter",
+    classSource: "XPHB",
+    level: 13,
+  }),
+  narrative({
+    name: "Indomitable",
+    source: "XPHB",
+    className: "Fighter",
+    classSource: "XPHB",
+    level: 17,
+  }),
+  // Each adds a die from a pool the feature spends, or falls on another creature's roll.
+  narrative({
+    name: "Bardic Inspiration",
+    source: "PHB",
+    className: "Bard",
+    classSource: "PHB",
+    level: 1,
+  }),
+  narrative({
+    name: "Tactical Mind",
+    source: "XPHB",
+    className: "Fighter",
+    classSource: "XPHB",
+    level: 2,
+  }),
+  narrative({
+    name: "Peerless Skill",
+    source: "PHB",
+    className: "Bard",
+    classSource: "PHB",
+    subclass: { shortName: "Lore", source: "PHB" },
+    level: 14,
+  }),
+  narrative({ name: "Heightened Spell", source: "PHB" }),
+  narrative({
+    name: "Improved Brutal Strike",
+    source: "XPHB",
+    className: "Barbarian",
+    classSource: "XPHB",
+    level: 13,
+  }),
+  narrative({
+    name: "Improved Brutal Strike",
+    source: "XPHB",
+    className: "Barbarian",
+    classSource: "XPHB",
+    level: 17,
+  }),
 ];

@@ -30,6 +30,7 @@ const zero: Counts = {
   sense: 0,
   defense: 0,
   speed: 0,
+  roll: 0,
   unclassified: 0,
 };
 
@@ -66,6 +67,13 @@ describe("mechanicGaps", () => {
   feat.run("Quick", "XPHB", "one", json({ srd52: true }, "a bonus to initiative"));
   feat.run("Wary", "XGE", "classic", json({}, "a bonus to initiative"));
   feat.run("Lucky", "PHB", "classic", json({ srd: true }, "reroll a d20"));
+  feat.run("Steady", "PHB", "classic", json({ srd: true }, "advantage on saving throws"));
+  feat.run(
+    "Venom",
+    "PHB",
+    "classic",
+    json({ srd: true }, "add a toxin to your strike, forcing the target to make a saving throw"),
+  );
   feat.run(
     "Monk",
     "PHB",
@@ -86,7 +94,8 @@ describe("mechanicGaps", () => {
     expect(gaps.bonus).toEqual(["Quick (XPHB)"]);
     expect(gaps.unarmoredBase).toEqual(["Monk (PHB)"]);
     expect(gaps.armorClass).toEqual(["Monk (PHB)"]);
-    expect(gaps.unclassified).toEqual(["Lucky (PHB)", "Strider (PHB)"]);
+    expect(gaps.roll).toEqual(["Steady (PHB)"]);
+    expect(gaps.unclassified).toEqual(["Lucky (PHB)", "Strider (PHB)", "Venom (PHB)"]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
       defense: 1,
@@ -94,7 +103,8 @@ describe("mechanicGaps", () => {
       bonus: 1,
       armorClass: 1,
       unarmoredBase: 1,
-      unclassified: 2,
+      roll: 1,
+      unclassified: 3,
     });
   });
 

@@ -146,7 +146,38 @@ const speedMechanicSchema = z.strictObject({
   label: z.string().min(1).optional(),
 });
 
+/**
+ * Advantage, or a bonus, on saving throws, ability checks, initiative or death saves: of the
+ * `abilities` named, or of every one, and for a check of the `skills` named alone. A bonus is
+ * a number, an ability's modifier of at least +1, or the levels in the feature's class, and
+ * falls on saves or named skills. `against` says when it holds, and the roll offers it rather
+ * than applying it; `while: "raging"` holds it only during a rage.
+ */
+const rollMechanicSchema = z
+  .strictObject({
+    kind: z.literal("roll"),
+    roll: z.enum(["save", "check", "initiative", "deathSave"]),
+    abilities: z.array(abilitySchema).min(1).optional(),
+    skills: names,
+    advantage: z.literal(true).optional(),
+    bonus: z.union([z.int().min(1), abilitySchema, z.literal("level")]).optional(),
+    against: z.string().min(1).optional(),
+    while: z.literal("raging").optional(),
+  })
+  .refine(({ advantage, bonus }) => (advantage === undefined) !== (bonus === undefined), {
+    error: "a roll mechanic gives advantage or a bonus, never both or neither",
+  })
+  .refine(
+    ({ roll, skills, abilities }) =>
+      (!skills || roll === "check") && (!abilities || roll === "save" || roll === "check"),
+    { error: "only a check names skills, and only a save or check names abilities" },
+  )
+  .refine(({ bonus, roll, skills }) => bonus === undefined || roll === "save" || skills, {
+    error: "a bonus falls on saves or on named skills",
+  });
+
 const mechanicSchema = z.union([
+  rollMechanicSchema,
   speedMechanicSchema,
   defenseMechanicSchema,
   senseMechanicSchema,

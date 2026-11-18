@@ -11,7 +11,7 @@ import { classLevels } from "./summaries.ts";
 export const RAGES = "rages";
 
 /** The name a rage goes by in the state's `activeEffects`. */
-export const RAGE = "Rage";
+const RAGE = "Rage";
 
 type Pool = CharacterState["classResources"][number];
 
@@ -43,9 +43,6 @@ export const rageEnded = (state: CharacterState): CharacterState => ({
   ...state,
   activeEffects: state.activeEffects.filter((effect) => effect.name !== RAGE),
 });
-
-/** Damage types a rage resists, in both editions. */
-export const RAGE_RESISTANCES = ["bludgeoning", "piercing", "slashing"] as const;
 
 /**
  * What a rage adds to the derived block, or null while the character is not raging or wears

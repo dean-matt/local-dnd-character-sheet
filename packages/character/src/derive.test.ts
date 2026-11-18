@@ -3240,6 +3240,44 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("saves and checks from class features", () => {
+    const levelled = (className: string, count: number) =>
+      deriveCharacter(
+        {
+          ...equipped,
+          levels: Array.from({ length: count }, () => ({
+            class: { name: className, source: "PHB" },
+          })),
+        },
+        {
+          ...catalog,
+          hitDice: new Map<string, 6 | 8 | 10 | 12>([
+            ...catalog.hitDice,
+            [`catalog|${className}|PHB`, 10],
+          ]),
+        },
+      );
+
+    it("adds Aura of Protection to each save total as a term naming it", () => {
+      const before = levelled("Paladin", 5).savingThrows.dex.computed;
+      const save = levelled("Paladin", 6).savingThrows.dex;
+      const aura = save.terms.find(({ label }) => label === "Aura of Protection");
+      expect(aura?.value).toBeGreaterThanOrEqual(1);
+      expect(save.computed).toBe(before + (aura?.value ?? 0));
+    });
+
+    it("lists Hide in Plain Sight as a roll option, leaving the Stealth total alone", () => {
+      const at9 = levelled("Ranger", 9);
+      const at10 = levelled("Ranger", 10);
+      expect(at10.rollOptions.computed).toEqual([
+        expect.objectContaining({ source: "Hide in Plain Sight", value: 10, target: "stealth" }),
+      ]);
+      expect(at10.skills.map(({ modifier }) => modifier.terms)).toEqual(
+        at9.skills.map(({ modifier }) => modifier.terms),
+      );
+    });
+  });
+
   describe("defenses from class features", () => {
     const rageState = {
       activeEffects: [{ name: "Rage" }],
@@ -3321,7 +3359,7 @@ describe("deriveCharacter", () => {
         levelled("Barbarian", totem, 3, bear, rageState).resistances.find(
           ({ name }) => name === "slashing",
         )?.from,
-      ).toEqual(["Bear", "Rage"]);
+      ).toEqual(["Rage", "Bear"]);
       expect(levelled("Barbarian", totem, 3, bear).resistances).toEqual([]);
       expect(names(levelled("Barbarian", totem, 3, eagle, rageState))).toHaveLength(3);
       expect(names(levelled("Barbarian", totem, 2, bear, rageState))).toHaveLength(3);
@@ -3868,16 +3906,15 @@ describe("deriveCharacter", () => {
       ).toEqual([]);
     });
 
+    const rageEffects = (block: CharacterDerived) =>
+      block.rollEffects.computed.filter(({ source }) => source === "Rage");
+
     it("gives advantage on Strength checks and saves, citing Rage", () => {
-      const effects = deriveCharacter(barbarian(5, "one"), rageCatalog, raging).rollEffects
-        .computed;
-      expect(effects).toEqual([
+      expect(rageEffects(deriveCharacter(barbarian(5, "one"), rageCatalog, raging))).toEqual([
         { source: "Rage", mode: "advantage", roll: "check", target: "str" },
         { source: "Rage", mode: "advantage", roll: "save", target: "str" },
       ]);
-      expect(deriveCharacter(barbarian(5, "one"), rageCatalog, calm).rollEffects.computed).toEqual(
-        [],
-      );
+      expect(rageEffects(deriveCharacter(barbarian(5, "one"), rageCatalog, calm))).toEqual([]);
     });
 
     it("adds the class table's Rage Damage cell as a Rage term, and nothing while calm", () => {
@@ -3930,7 +3967,7 @@ describe("deriveCharacter", () => {
         };
         const block = deriveCharacter(worn, rageCatalog, raging);
         expect(block.defenses.computed.resistances).toEqual([]);
-        expect(block.rollEffects.computed).toEqual([]);
+        expect(rageEffects(block)).toEqual([]);
         expect(damageOf(block, 0)?.terms.map((term) => term.label)).toEqual(["Strength"]);
       },
     );
