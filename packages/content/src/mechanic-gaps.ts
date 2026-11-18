@@ -19,8 +19,8 @@ type Kind = Mechanic["kind"];
 const KIND_PATTERNS: Record<Kind, RegExp> = {
   bonus: /\binitiative\b|hit point maximum increases/i,
   armorClass: /\bArmor Class\b|\bAC\b/,
-  unarmoredBase: /\b(?:not wearing|aren['’]t wearing|wearing no|without) (?:any )?armor\b/i,
-  mediumArmorDexterity: /medium armor/i,
+  unarmoredBase: /\b(?:AC|Armor Class)(?:\|\w+\})? equals\b|\bcalculate your AC\b/,
+  mediumArmorDexterity: /medium armor[^."]*\bDexterity\b/i,
   proficiency: /\bproficiency (?:with|in)\b|Proficiencies":/i,
   pick: /\b(?:skills?|tools?|languages?) of your choice\b/i,
   halfProficiency: /half (?:of )?your proficiency bonus/i,
