@@ -131,6 +131,7 @@ describe("featEffects", () => {
       })),
     });
     expect(featHitPointTerms(sorcerer(2))).toEqual([]);
+    expect(featHitPointTerms(sorcerer(3)).map((t) => t.value)).toEqual([3]);
     expect(featHitPointTerms(sorcerer(4)).map((t) => [t.label, t.value])).toEqual([
       ["Draconic Resilience", 4],
     ]);
