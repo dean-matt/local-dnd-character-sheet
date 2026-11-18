@@ -58,6 +58,21 @@ export const classResourceKey = (pool: { class: EntryRef; key: string }): string
 export const featureUsesKey = (grantor: readonly string[], name: string): string =>
   [...grantor, name].join("|");
 
+/** A class or subclass feature's entry in the state's `featureUses`. */
+export const classFeatureUsesKey = (feature: FeatureKey): string =>
+  featureUsesKey(
+    [
+      "feature",
+      feature.className,
+      feature.classSource,
+      feature.subclass?.shortName ?? "",
+      feature.subclass?.source ?? "",
+      String(feature.level),
+      feature.source,
+    ],
+    feature.name,
+  );
+
 /**
  * An inventory entry's item, which is its `ref` expanded by any `variant`: `Barding`
  * weighs twice the armor it expands, so a base item alone cannot key a weight.

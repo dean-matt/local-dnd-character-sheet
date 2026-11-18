@@ -70,6 +70,7 @@ import {
   featureDamage,
   featureStrike,
 } from "./featureAttacks.ts";
+import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
@@ -1331,6 +1332,9 @@ export function deriveCharacter(
       column: tableColumn(definition, catalog),
       modifier: (ability) => abilityModifier(scores[ability].total),
     }),
+    limitedUses: featureLimitedUses(definition, (ability) =>
+      abilityModifier(scores[ability].total),
+    ),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),

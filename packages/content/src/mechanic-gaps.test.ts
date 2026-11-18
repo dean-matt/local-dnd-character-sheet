@@ -36,6 +36,7 @@ const zero: Counts = {
   attack: 0,
   extraDamage: 0,
   martialArts: 0,
+  uses: 0,
   unclassified: 0,
 };
 
@@ -71,7 +72,7 @@ describe("mechanicGaps", () => {
   feat.run("Alert", "PHB", "classic", json({ srd: true }, "+5 to initiative"));
   feat.run("Quick", "XPHB", "one", json({ srd52: true }, "a bonus to initiative"));
   feat.run("Wary", "XGE", "classic", json({}, "a bonus to initiative"));
-  feat.run("Lucky", "PHB", "classic", json({ srd: true }, "reroll a d20"));
+  feat.run("Fortunate", "PHB", "classic", json({ srd: true }, "reroll a d20"));
   feat.run("Steady", "PHB", "classic", json({ srd: true }, "advantage on saving throws"));
   feat.run("Aimed", "PHB", "classic", json({ srd: true }, "a +1 bonus to attack rolls"));
   feat.run(
@@ -106,6 +107,14 @@ describe("mechanicGaps", () => {
   );
   feat.run("Mending", "PHB", "classic", json({ srd: true }, "regain {@dice 1d10} hit points"));
   feat.run("Shielding", "PHB", "classic", json({ srd: true }, "gain 5 temporary hit points"));
+  const surging = json({ srd: true }, "a number of times equal to your Charisma modifier");
+  feat.run("Surging", "PHB", "classic", surging);
+  db.prepare(
+    "INSERT INTO feats (name, source, edition, json, uses, uses_reset) VALUES (?, ?, ?, ?, ?, ?)",
+  ).run("Counted", "PHB", "classic", surging, 2, "long");
+  db.prepare(
+    "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  ).run("Wild Shape", "PHB", "Druid", "PHB", 2, "classic", surging);
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
@@ -120,7 +129,14 @@ describe("mechanicGaps", () => {
     expect(gaps.martialArts).toEqual(["Fists (PHB)"]);
     expect(gaps.heal).toEqual(["Mending (PHB)"]);
     expect(gaps.tempHp).toEqual(["Shielding (PHB)"]);
-    expect(gaps.unclassified).toEqual(["Lucky (PHB)", "Strider (PHB)", "Venom (PHB)"]);
+    expect(gaps.uses).toEqual(["Surging (PHB)"]);
+    expect(gaps.unclassified).toEqual([
+      "Counted (PHB)",
+      "Fortunate (PHB)",
+      "Strider (PHB)",
+      "Venom (PHB)",
+      "Wild Shape (PHB), Druid level 2",
+    ]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
       defense: 1,
@@ -134,7 +150,8 @@ describe("mechanicGaps", () => {
       martialArts: 1,
       heal: 1,
       tempHp: 1,
-      unclassified: 3,
+      uses: 1,
+      unclassified: 5,
     });
   });
 

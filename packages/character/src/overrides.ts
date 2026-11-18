@@ -14,7 +14,7 @@ type Lists = {
  * the skill, class or slot level it was typed over rather than its position. A list
  * added to the block fails to compile until it names one here.
  *
- * A container, an unproficient item, an armor that stops casting and a feature's restore hold
+ * A container, an unproficient item, an armor that stops casting, a feature's restore and its uses hold
  * no overridable field, so a name or an index stands in for a key nothing reads.
  *
  * An inventory entry carries an id only once it holds something, so a weapon is named by
@@ -35,6 +35,7 @@ const ELEMENT_KEY: {
   pendingAbilityPicks: (pick) => String(pick.entry),
   castingBlockedBy: (name) => name,
   featureRestores: (restore) => `${refKey(restore.feature)}|${restore.kind}`,
+  limitedUses: (uses) => uses.key,
   attacks: (attack, { inventory }) => {
     const earlier = inventory.slice(0, attack.entry + 1).map(itemKey);
     const item = earlier.pop() ?? "";

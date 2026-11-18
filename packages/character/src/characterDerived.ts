@@ -166,6 +166,21 @@ const featureRestoreSchema = z.strictObject({
   others: z.boolean(),
 });
 
+/**
+ * The uses a held feature counts, computed from the character where the content build reads no
+ * count from its text: `origin` is the features section's group it shows in, `level` is a class
+ * or subclass feature's, null for a feat or trait, and `key` is its entry in the state's
+ * `featureUses`. `short` uses return on either rest.
+ */
+const limitedUsesSchema = z.strictObject({
+  feature: contentRefSchema,
+  origin: z.enum(["class", "subclass", "race", "feat", "optionalFeature"]),
+  level: z.int().min(1).max(20).nullable(),
+  key: z.string().min(1),
+  count: z.int().min(0),
+  reset: z.enum(["short", "long"]),
+});
+
 const attackSchema = z.strictObject({
   extraDamage: extraDamageSchema,
   featureDamage: z.array(featureDamageSchema),
@@ -369,6 +384,8 @@ export const characterDerivedSchema = z.strictObject({
   rollOptions: derivedSchema(z.array(rollOptionSchema)),
   /** What a use of each held feature restores, in the order the features are held. */
   featureRestores: z.array(featureRestoreSchema),
+  /** The uses each held feature counts, in the order the features are held. */
+  limitedUses: z.array(limitedUsesSchema),
   /**
    * One per inventory entry holding a weapon or armor the character lacks proficiency
    * with, equipped or not, in inventory order. `entry` is the index in the definition's

@@ -21,6 +21,7 @@ import {
   type CharacterDefinition,
   type ContentRef,
   catalogRef,
+  classFeatureUsesKey,
   classLevels,
   displayName,
   type EntryRef,
@@ -173,22 +174,14 @@ function withChoices(
     );
     return leader ? taken(offerOf(leader)).map(({ name }) => name) : [];
   };
-  const usesKey = (row: ClassFeatureRow) =>
-    featureUsesKey(
-      [
-        "feature",
-        owner.className,
-        owner.classSource,
-        owner.subclass?.shortName ?? "",
-        owner.subclass?.source ?? "",
-        String(row.level),
-        row.source,
-      ],
-      row.name,
-    );
   const asFeature = (row: ClassFeatureRow): SheetFeature => {
-    const feature = rowFeature(row.json, row, { level: row.level }, usesOf(row, usesKey(row)));
     const key = offerOf(row);
+    const feature = rowFeature(
+      row.json,
+      row,
+      { level: row.level },
+      usesOf(row, classFeatureUsesKey(key)),
+    );
     const offers = featurePickOffers(key);
     return offers.length > 0 && feature.resolved
       ? { ...feature, picks: { feature: key, offers } }

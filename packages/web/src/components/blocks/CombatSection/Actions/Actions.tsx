@@ -50,7 +50,7 @@ export function Actions({
   derived: CharacterDerived;
 }) {
   const actions = STANDARD_ACTIONS[character.definition.edition];
-  const held = heldActions(useCharacterFeatures(character.id).data?.groups ?? []);
+  const held = heldActions(useCharacterFeatures(character.id, derived).data?.groups ?? []);
   return (
     <Card title="Actions">
       <div className="flex flex-col gap-2">

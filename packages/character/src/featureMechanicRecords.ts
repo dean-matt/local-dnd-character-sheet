@@ -88,6 +88,15 @@ const druid24: [string, string] = ["Druid", "XPHB"];
 const monk: [string, string] = ["Monk", "PHB"];
 const monk24: [string, string] = ["Monk", "XPHB"];
 const ranger24: [string, string] = ["Ranger", "XPHB"];
+const INDOMITABLE_USES: Mechanic = {
+  kind: "uses",
+  count: 1,
+  reset: "long",
+  scales: [
+    { level: 13, count: 2 },
+    { level: 17, count: 3 },
+  ],
+};
 const sneakAttack = (option: string): Mechanic[] => [
   {
     kind: "extraDamage",
@@ -96,6 +105,130 @@ const sneakAttack = (option: string): Mechanic[] => [
     oncePerTurn: true,
     option,
   },
+];
+
+/**
+ * Uses whose count the content build cannot read from the text: tied to a modifier, raised
+ * at a level, or one limit among several parts.
+ */
+const LIMITED_USES: FeatureMechanics[] = [
+  ...(["PHB", "XPHB"] as const).map((source) =>
+    classFeature(["Fighter", source], ["Action Surge", source], 2, [
+      { kind: "uses", count: 1, reset: "short", scales: [{ level: 17, count: 2 }] },
+    ]),
+  ),
+  // Font of Inspiration is the short-rest reset scaled on Bardic Inspiration.
+  ...(["PHB", "XPHB"] as const).flatMap((source) => [
+    classFeature(["Bard", source], ["Bardic Inspiration", source], 1, [
+      { kind: "uses", count: "cha", reset: "long", scales: [{ level: 5, reset: "short" }] },
+    ]),
+    narrative({
+      name: "Font of Inspiration",
+      source,
+      className: "Bard",
+      classSource: source,
+      level: 5,
+    }),
+  ]),
+  classFeature(paladin, ["Divine Sense", "PHB"], 1, [
+    { kind: "uses", count: "cha", plus: 1, minimum: 0, reset: "long" },
+  ]),
+  classFeature(paladin, ["Cleansing Touch", "PHB"], 14, [
+    { kind: "uses", count: "cha", reset: "long" },
+  ]),
+  classFeature(ranger24, ["Nature's Veil", "XPHB"], 14, [
+    { kind: "uses", count: "wis", reset: "long" },
+  ]),
+  subclassFeature(["Warlock", "XPHB"], ["Fiend", "XPHB"], ["Dark One's Own Luck", "XPHB"], 6, [
+    { kind: "uses", count: "cha", reset: "long" },
+  ]),
+  subclassFeature(cleric, ["Light", "PHB"], ["Warding Flare", "PHB"], 1, [
+    { kind: "uses", count: "wis", reset: "long" },
+  ]),
+  subclassFeature(["Wizard", "PHB"], ["Divination", "PHB"], ["Portent", "PHB"], 2, [
+    { kind: "uses", count: 2, reset: "long", scales: [{ level: 14, count: 3 }] },
+  ]),
+  { ref: { name: "Lucky", source: "PHB" }, mechanics: [{ kind: "uses", count: 3, reset: "long" }] },
+  // Nature Magician is the part a long rest limits.
+  classFeature(druid24, ["Archdruid", "XPHB"], 20, [{ kind: "uses", count: 1, reset: "long" }]),
+  classFeature(["Warlock", "XPHB"], ["Contact Patron", "XPHB"], 9, [
+    { kind: "uses", count: 1, reset: "long" },
+  ]),
+  // Rolling initiative also restores it.
+  {
+    ref: { name: "Boon of Fate", source: "XPHB" },
+    mechanics: [{ kind: "uses", count: 1, reset: "short" }],
+  },
+  // The level 2 row counts the use this repeat adds.
+  narrative({
+    name: "Action Surge",
+    source: "XPHB",
+    className: "Fighter",
+    classSource: "XPHB",
+    level: 17,
+  }),
+  // Portent's row counts the roll this adds.
+  narrative({
+    name: "Greater Portent",
+    source: "PHB",
+    className: "Wizard",
+    classSource: "PHB",
+    subclass: { shortName: "Divination", source: "PHB" },
+    level: 14,
+  }),
+  // Each restores or locks a count on something other than one rest: initiative, 7 days after a
+  // success, or 2d4 long rests.
+  narrative({
+    name: "Superior Inspiration",
+    source: "XPHB",
+    className: "Bard",
+    classSource: "XPHB",
+    level: 18,
+  }),
+  narrative({
+    name: "Divine Intervention",
+    source: "PHB",
+    className: "Cleric",
+    classSource: "PHB",
+    level: 10,
+  }),
+  narrative({
+    name: "Greater Divine Intervention",
+    source: "XPHB",
+    className: "Cleric",
+    classSource: "XPHB",
+    level: 20,
+  }),
+  // Each spell is cast free once, a count per spell rather than one for the feature.
+  ...(["PHB", "XPHB"] as const).map((source) =>
+    narrative({
+      name: "Signature Spells",
+      source,
+      className: "Wizard",
+      classSource: source,
+      level: 20,
+    }),
+  ),
+  // A later use costs damage rather than waiting on a rest.
+  narrative({
+    name: "Overchannel",
+    source: "PHB",
+    className: "Wizard",
+    classSource: "PHB",
+    subclass: { shortName: "Evocation", source: "PHB" },
+    level: 14,
+  }),
+  narrative({
+    name: "Overchannel",
+    source: "XPHB",
+    className: "Wizard",
+    classSource: "XPHB",
+    subclass: { shortName: "Evoker", source: "XPHB" },
+    level: 14,
+  }),
+  // Peerless Aim's limit is a turn, and the pact weapon's is one at a time.
+  narrative({ name: "Boon of Combat Prowess", source: "XPHB" }),
+  narrative({ name: "Pact of the Blade", source: "PHB" }),
 ];
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
@@ -543,6 +676,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ]),
   classFeature(fighter24, ["Indomitable", "XPHB"], 9, [
     { kind: "roll", roll: "save", bonus: "level", against: "on the reroll of a failed save" },
+    INDOMITABLE_USES,
   ]),
   classFeature(["Monk", "PHB"], ["Diamond Soul", "PHB"], 14, ALL_SAVES),
   classFeature(["Monk", "XPHB"], ["Disciplined Survivor", "XPHB"], 14, ALL_SAVES),
@@ -756,13 +890,8 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   narrative({ name: "Great Weapon Fighting", source: "PHB" }),
   narrative({ name: "Great Weapon Fighting", source: "XPHB" }),
   // A reroll changes no modifier on the roll it repeats; only the 2024 Indomitable adds one.
-  narrative({
-    name: "Indomitable",
-    source: "PHB",
-    className: "Fighter",
-    classSource: "PHB",
-    level: 9,
-  }),
+  classFeature(fighter, ["Indomitable", "PHB"], 9, [INDOMITABLE_USES]),
+  // The level 9 row counts the uses each repeat of the feature adds.
   narrative({
     name: "Indomitable",
     source: "XPHB",
@@ -778,13 +907,6 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     level: 17,
   }),
   // Each adds a die from a pool the feature spends, or falls on another creature's roll.
-  narrative({
-    name: "Bardic Inspiration",
-    source: "PHB",
-    className: "Bard",
-    classSource: "PHB",
-    level: 1,
-  }),
   narrative({
     name: "Tactical Mind",
     source: "XPHB",
@@ -1140,4 +1262,5 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     level: 10,
   }),
   narrative({ name: "Fiendish Vigor", source: "XPHB" }),
+  ...LIMITED_USES,
 ];

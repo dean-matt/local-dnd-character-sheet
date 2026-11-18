@@ -1,7 +1,7 @@
 {
   "heal": 0,
   "tempHp": 0,
-  "bonus": 11,
+  "bonus": 8,
   "armorClass": 0,
   "unarmoredBase": 0,
   "mediumArmorDexterity": 0,
@@ -9,11 +9,12 @@
   "pick": 4,
   "halfProficiency": 0,
   "sense": 5,
-  "defense": 11,
+  "defense": 10,
   "speed": 4,
   "roll": 0,
   "attack": 0,
   "extraDamage": 0,
   "martialArts": 0,
-  "unclassified": 632
+  "uses": 0,
+  "unclassified": 614
 }

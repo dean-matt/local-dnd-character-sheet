@@ -76,7 +76,7 @@ export function FeaturesSection({
   character: CharacterRecord | undefined;
   derived: CharacterDerived | undefined;
 }) {
-  const features = useCharacterFeatures(character?.id ?? "");
+  const features = useCharacterFeatures(character?.id ?? "", derived);
   const entitlements = useOptionalFeatureEntitlements(character?.id ?? "");
   const [query, setQuery] = useState("");
   const [ranges, setRanges] = useState<Record<string, Range>>({});
