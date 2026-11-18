@@ -118,6 +118,8 @@ export {
   featureActionType,
   featurePoolKey,
 } from "./featureActions.ts";
+export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
+export type { Mechanic } from "./featureMechanics.ts";
 export { featurePickOffers } from "./heldFeatures.ts";
 export {
   atHitPointMaximum,

@@ -29,6 +29,7 @@ import { resolveCopies } from "./load/copy.ts";
 import { drainUnmatchedFluff } from "./load/fluff.ts";
 import { LOADERS, type Loader, type Row } from "./load/index.ts";
 import { resolveVersions } from "./load/versions.ts";
+import { mechanicGaps, readBaseline, reportGaps } from "./mechanic-gaps.ts";
 import { CONTENT_SCHEMA, SCHEMA_STAMP } from "./schema.ts";
 import { posix, verifyVendor } from "./sync.ts";
 
@@ -285,4 +286,11 @@ if (
   console.log(`  upstream ${tag}, node ${process.version}`);
   if (LOADERS.length === 0) console.log("  no loaders registered — schema and meta only");
   for (const table of Object.keys(counts).sort()) console.log(`  ${table} ${counts[table]}`);
+
+  const db = new Database(resolveContentDb(CONTENT_DIR), { readonly: true });
+  try {
+    for (const line of reportGaps(mechanicGaps(db), readBaseline())) console.log(line);
+  } finally {
+    db.close();
+  }
 }
