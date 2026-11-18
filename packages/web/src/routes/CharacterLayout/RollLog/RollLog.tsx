@@ -26,6 +26,8 @@ const TYPE_LABEL: Record<RollType, string> = {
   "spell-attack": "Spell attack",
   "spell-damage": "Spell damage",
   "hit-die": "Hit Die",
+  healing: "Healing",
+  "temporary-hp": "Temporary HP",
   dice: "Rules text",
   custom: "Dice",
 };

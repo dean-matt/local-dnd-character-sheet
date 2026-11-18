@@ -1,4 +1,4 @@
-import type { CharacterDerived, CharacterRecord, CharacterState } from "@dnd/character";
+import type { CharacterDerived, CharacterRecord, CharacterState, RollRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -126,20 +126,43 @@ describe("Actions", () => {
 
     function renderUse(
       feature: object,
-      { expended = 0, maximum = 2 }: { expended?: number; maximum?: number } = {},
+      {
+        expended = 0,
+        maximum = 2,
+        restores = [],
+        hitPoints = { current: null, temporary: 0 },
+      }: {
+        expended?: number;
+        maximum?: number;
+        restores?: CharacterDerived["featureRestores"];
+        hitPoints?: CharacterState["hitPoints"];
+      } = {},
     ) {
       let stored = stateRecord();
       stored = {
         ...stored,
         state: {
           ...stored.state,
+          hitPoints,
           classResources: [{ class: FIGHTER, key: "second_wind", maximum, expended }],
         },
       };
       const writes: CharacterState[] = [];
+      const rolls: RollRecord[] = [];
       vi.stubGlobal(
         "fetch",
         vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          if (init?.method === "POST") {
+            const roll = JSON.parse(String(init.body));
+            rolls.push(roll);
+            return Response.json({
+              ...roll,
+              id: rolls.length,
+              characterId: "1",
+              characterName: "Vex",
+              rolledAt: "2024-01-01T00:00:00.000Z",
+            });
+          }
           if (init?.method === "PUT") {
             const written = JSON.parse(String(init.body));
             writes.push(written);
@@ -156,6 +179,8 @@ describe("Actions", () => {
       );
       const derived: CharacterDerived = {
         ...derivedRecord(),
+        hitPointMaximum: { computed: 40, manual: null, terms: [] },
+        featureRestores: restores,
         classResources: [
           {
             class: FIGHTER,
@@ -165,7 +190,7 @@ describe("Actions", () => {
         ],
       };
       const card = renderActions("one", derived);
-      return { card, writes };
+      return { card, writes, rolls };
     }
 
     it("spends the pool and the action type in one write, and announces it", async () => {
@@ -208,6 +233,81 @@ describe("Actions", () => {
         { key: "feature|Fighter|PHB|Second Wind", expended: 1 },
       ]);
       expect(writes[0]?.turn.bonusAction).toBe(true);
+    });
+
+    const restore = (
+      name: string,
+      source: string,
+      rest: Partial<CharacterDerived["featureRestores"][number]>,
+    ): CharacterDerived["featureRestores"][number] => ({
+      feature: { name, source },
+      kind: "heal",
+      dice: null,
+      bonus: 1,
+      others: false,
+      ...rest,
+    });
+
+    it("heals by the roll in the spend's one write, then logs the roll under the feature", async () => {
+      const { card, writes, rolls } = renderUse(SECOND_WIND, {
+        hitPoints: { current: 10, temporary: 0 },
+        restores: [restore("Second Wind", "XPHB", { dice: "1d10", bonus: 5 })],
+      });
+      fireEvent.click(await within(card).findByRole("button", { name: "Use Second Wind" }));
+
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      expect(writes).toHaveLength(1);
+      expect(rolls[0]).toMatchObject({ type: "healing", label: "Second Wind", notation: "1d10+5" });
+      const healed = rolls[0]?.total ?? 0;
+      expect(healed).toBeGreaterThanOrEqual(6);
+      expect(writes[0]?.hitPoints.current).toBe(10 + healed);
+      expect(writes[0]?.classResources[0]?.expended).toBe(1);
+      expect(writes[0]?.turn.bonusAction).toBe(true);
+      const row = within(card).getByRole("button", { name: "Use Second Wind" }).closest("li");
+      expect(within(row as HTMLElement).getByRole("status")).toHaveTextContent(
+        `Second Wind: regained ${healed} hit points.`,
+      );
+    });
+
+    it("shows a heal on another creature without healing the character", async () => {
+      const spark = { ...SECOND_WIND, name: "Divine Spark" };
+      const { card, writes, rolls } = renderUse(spark, {
+        hitPoints: { current: 10, temporary: 0 },
+        restores: [restore("Divine Spark", "XPHB", { dice: "1d8", bonus: 3, others: true })],
+      });
+      const use = await within(card).findByRole("button", { name: "Use Divine Spark" });
+      fireEvent.click(use);
+
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 0 });
+      expect(within(use.closest("li") as HTMLElement).getByRole("status")).toHaveTextContent(
+        `Divine Spark: ${rolls[0]?.total} hit points to restore to another creature.`,
+      );
+    });
+
+    it("grants temporary hit points", async () => {
+      const tireless = { ...SECOND_WIND, name: "Tireless" };
+      const gives = [restore("Tireless", "XPHB", { kind: "tempHp", bonus: 7 })];
+      const low = renderUse(tireless, {
+        hitPoints: { current: 10, temporary: 3 },
+        restores: gives,
+      });
+      fireEvent.click(await within(low.card).findByRole("button", { name: "Use Tireless" }));
+      await waitFor(() => expect(low.writes).toHaveLength(1));
+      expect(low.writes[0]?.hitPoints).toEqual({ current: 10, temporary: 7 });
+      expect(low.rolls[0]).toMatchObject({ type: "temporary-hp", notation: "7", total: 7 });
+    });
+
+    it("keeps temporary hit points higher than a feature grants", async () => {
+      const tireless = { ...SECOND_WIND, name: "Tireless" };
+      const gives = [restore("Tireless", "XPHB", { kind: "tempHp", bonus: 7 })];
+      const { card, writes } = renderUse(tireless, {
+        hitPoints: { current: 10, temporary: 9 },
+        restores: gives,
+      });
+      fireEvent.click(await within(card).findByRole("button", { name: "Use Tireless" }));
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 9 });
     });
   });
 });

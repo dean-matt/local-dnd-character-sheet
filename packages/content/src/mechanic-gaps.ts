@@ -17,6 +17,8 @@ type Kind = Mechanic["kind"];
  * Either way, recording the feature — its mechanics or the narrative mark — takes it off.
  */
 const KIND_PATTERNS: Record<Kind, RegExp> = {
+  heal: /\b(?:regain|restore)(?:s|ing)? [^."]{0,60}?\bhit points?\b/i,
+  tempHp: /\btemporary hit points?\b/i,
   bonus: /\binitiative\b|hit point maximum increases/i,
   armorClass: /\bArmor Class\b|\bAC\b/,
   unarmoredBase: /\b(?:AC|Armor Class)(?:\|\w+\})? equals\b|\bcalculate your AC\b/,

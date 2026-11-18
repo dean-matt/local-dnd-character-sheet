@@ -618,6 +618,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ]),
   subclassFeature(fighter24, ["Champion", "XPHB"], ["Survivor", "XPHB"], 18, [
     { kind: "roll", roll: "deathSave", advantage: true },
+    { kind: "heal", bonus: [5, "con"] },
   ]),
   {
     ...classFeature(["Cleric", "XPHB"], ["Thaumaturge", "XPHB"], 1, [
@@ -1003,4 +1004,140 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     level: 11,
   }),
   narrative({ name: "Boon of Irresistible Offense", source: "XPHB" }),
+  classFeature(fighter, ["Second Wind", "PHB"], 1, [
+    { kind: "heal", dice: "1d10", bonus: ["level"] },
+  ]),
+  classFeature(fighter24, ["Second Wind", "XPHB"], 1, [
+    { kind: "heal", dice: "1d10", bonus: ["level"] },
+  ]),
+  subclassFeature(fighter, ["Champion", "PHB"], ["Survivor", "PHB"], 18, [
+    { kind: "heal", bonus: [5, "con"] },
+  ]),
+  subclassFeature(fighter, ["Samurai", "XGE"], ["Fighting Spirit", "XGE"], 3, [
+    {
+      kind: "tempHp",
+      bonus: [5],
+      scales: [
+        { level: 10, bonus: 10 },
+        { level: 15, bonus: 15 },
+      ],
+    },
+    { kind: "attack", advantage: true, option: "on the turn you use Fighting Spirit" },
+  ]),
+  ...(
+    [
+      [cleric, "Channel Divinity: Preserve Life", "PHB", 2],
+      [cleric24, "Channel Divinity: Preserve Life", "PHB", 3],
+      [cleric24, "Preserve Life", "XPHB", 3],
+    ] as const
+  ).map(([owner, name, source, level]) =>
+    subclassFeature(owner, ["Life", source], [name, source], level, [
+      { kind: "heal", bonus: ["level"], times: 5, others: true },
+    ]),
+  ),
+  classFeature(cleric24, ["Divine Spark", "XPHB"], 2, [
+    {
+      kind: "heal",
+      dice: "1d8",
+      bonus: ["wis"],
+      scales: [
+        { level: 7, dice: "2d8" },
+        { level: 13, dice: "3d8" },
+        { level: 18, dice: "4d8" },
+      ],
+      others: true,
+    },
+  ]),
+  subclassFeature(druid24, ["Land", "XPHB"], ["Land's Aid", "XPHB"], 3, [
+    {
+      kind: "heal",
+      dice: "2d6",
+      scales: [
+        { level: 10, dice: "3d6" },
+        { level: 14, dice: "4d6" },
+      ],
+      others: true,
+    },
+  ]),
+  classFeature(druid24, ["Wild Shape", "XPHB"], 2, [{ kind: "tempHp", bonus: ["level"] }]),
+  subclassFeature(monk, ["Open Hand", "PHB"], ["Wholeness of Body", "PHB"], 6, [
+    { kind: "heal", bonus: ["level"], times: 3 },
+  ]),
+  subclassFeature(monk24, ["Open Hand", "XPHB"], ["Wholeness of Body", "XPHB"], 6, [
+    { kind: "heal", dice: { column: "martial_arts" }, bonus: ["wis"] },
+  ]),
+  classFeature(monk24, ["Uncanny Metabolism", "XPHB"], 2, [
+    { kind: "heal", dice: { column: "martial_arts" }, bonus: ["level"] },
+  ]),
+  classFeature(ranger24, ["Tireless", "XPHB"], 10, [
+    { kind: "tempHp", dice: "1d8", bonus: ["wis"] },
+  ]),
+  subclassFeature(["Warlock", "PHB"], ["Fiend", "PHB"], ["Dark One's Blessing", "PHB"], 1, [
+    { kind: "tempHp", bonus: ["cha", "level"] },
+  ]),
+  subclassFeature(["Warlock", "XPHB"], ["Fiend", "XPHB"], ["Dark One's Blessing", "XPHB"], 3, [
+    { kind: "tempHp", bonus: ["cha", "level"] },
+  ]),
+  {
+    ref: { name: "Relentless Endurance", source: "PHB" },
+    mechanics: [{ kind: "heal", bonus: [1] }],
+  },
+  // Each heals through another source, a spell, a rest's hit dice or a pool the player divides,
+  // not on a use of its own.
+  ...(
+    [
+      [cleric, "Disciple of Life", "PHB", 1],
+      [cleric24, "Disciple of Life", "XPHB", 3],
+      [cleric, "Blessed Healer", "PHB", 6],
+      [cleric24, "Blessed Healer", "XPHB", 6],
+      [cleric, "Supreme Healing", "PHB", 17],
+      [cleric24, "Supreme Healing", "XPHB", 17],
+    ] as const
+  ).map(([[className, classSource], name, source, level]) =>
+    narrative({
+      name,
+      source,
+      className,
+      classSource,
+      subclass: { shortName: "Life", source },
+      level,
+    }),
+  ),
+  narrative({
+    name: "Song of Rest (d6)",
+    source: "PHB",
+    className: "Bard",
+    classSource: "PHB",
+    level: 2,
+  }),
+  narrative({
+    name: "Lay on Hands",
+    source: "PHB",
+    className: "Paladin",
+    classSource: "PHB",
+    level: 1,
+  }),
+  narrative({
+    name: "Lay on Hands",
+    source: "XPHB",
+    className: "Paladin",
+    classSource: "XPHB",
+    level: 1,
+  }),
+  narrative({
+    name: "Restoring Touch",
+    source: "XPHB",
+    className: "Paladin",
+    classSource: "XPHB",
+    level: 14,
+  }),
+  // Each rides on another source: Patient Defense's focus point, or a spell cast.
+  narrative({
+    name: "Heightened Focus",
+    source: "XPHB",
+    className: "Monk",
+    classSource: "XPHB",
+    level: 10,
+  }),
+  narrative({ name: "Fiendish Vigor", source: "XPHB" }),
 ];

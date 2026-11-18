@@ -23,6 +23,8 @@ const rollTypeSchema = z.enum([
   "spell-attack",
   "spell-damage",
   "hit-die",
+  "healing",
+  "temporary-hp",
   "dice",
   "custom",
 ]);

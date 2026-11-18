@@ -269,7 +269,68 @@ const martialArtsMechanicSchema = z
     error: "a martial arts mechanic gives a die or Dexterity",
   });
 
+const restoreTermSchema = z.union([z.int().min(1), abilitySchema, z.literal("level")]);
+
+/**
+ * What a use of the feature restores: `dice` rolled, as notation or a class table column's
+ * die, plus each of `bonus`, a number, an ability's modifier or the levels in the feature's
+ * class, the bonus `times` over. `scales` replaces the dice, or a bonus of one number, from a
+ * level in the feature's class.
+ */
+const restoreFields = {
+  dice: z.union([diceSchema, z.strictObject({ column: z.string().min(1) })]).optional(),
+  bonus: z.array(restoreTermSchema).min(1).optional(),
+  times: z.int().min(2).optional(),
+  scales: z
+    .array(
+      z.strictObject({
+        level: z.int().min(2).max(20),
+        dice: diceSchema.optional(),
+        bonus: z.int().min(1).optional(),
+      }),
+    )
+    .min(1)
+    .optional(),
+};
+
+type RestoreFields = z.infer<z.ZodObject<typeof restoreFields>>;
+
+const restoreRefinements = <T extends z.ZodType<RestoreFields>>(schema: T) =>
+  schema
+    .refine(({ dice, bonus }) => dice !== undefined || bonus !== undefined, {
+      error: "a feature restores dice, a bonus or both",
+    })
+    .refine(({ times, bonus }) => times === undefined || bonus !== undefined, {
+      error: "only a bonus is multiplied",
+    })
+    .refine(
+      ({ scales = [], dice, bonus }) =>
+        scales.every(
+          (scale) =>
+            (scale.dice === undefined) !== (scale.bonus === undefined) &&
+            (scale.dice === undefined || typeof dice === "string") &&
+            (scale.bonus === undefined || (bonus?.length === 1 && typeof bonus[0] === "number")),
+        ),
+      { error: "a scale replaces notation dice or a bonus of one number, one of them" },
+    );
+
+/** Hit points a use of the feature restores; on `others`, to another creature, so the sheet heals no one. */
+const healMechanicSchema = restoreRefinements(
+  z.strictObject({
+    kind: z.literal("heal"),
+    ...restoreFields,
+    others: z.literal(true).optional(),
+  }),
+);
+
+/** Temporary hit points a use of the feature gives the character. */
+const tempHpMechanicSchema = restoreRefinements(
+  z.strictObject({ kind: z.literal("tempHp"), ...restoreFields }),
+);
+
 const mechanicSchema = z.union([
+  healMechanicSchema,
+  tempHpMechanicSchema,
   extraDamageMechanicSchema,
   martialArtsMechanicSchema,
   attackMechanicSchema,

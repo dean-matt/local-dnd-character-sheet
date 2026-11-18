@@ -1,0 +1,127 @@
+import { describe, expect, it } from "vitest";
+import type { CharacterDefinition } from "./definition.ts";
+import { featureRestores, type RestoreSheet, restoredState } from "./featureRestores.ts";
+import { defaultCharacterState } from "./state.ts";
+import { definition } from "./test/vex.ts";
+
+const character = (extra: Partial<CharacterDefinition>): CharacterDefinition => ({
+  ...definition,
+  feats: [],
+  optionalFeatures: [],
+  ...extra,
+});
+
+const levelsOf = (
+  className: string,
+  source: string,
+  count: number,
+  subclass?: { name: string; source: string },
+) =>
+  character({
+    levels: Array.from({ length: count }, (_, index) => ({
+      class: { name: className, source },
+      ...(index === 0 && subclass ? { subclass } : {}),
+    })),
+  });
+
+const SHEET: RestoreSheet = {
+  column: (key) => (key === "martial_arts" ? "1d8" : undefined),
+  modifier: (ability) => ({ str: 0, dex: 2, con: 1, int: 0, wis: 3, cha: 4 })[ability],
+};
+
+const restoresOf = (held: CharacterDefinition, name: string, sheet = SHEET) =>
+  featureRestores(held, sheet).filter(({ feature }) => feature.name === name);
+
+describe("featureRestores", () => {
+  it("rolls Second Wind's d10 plus the fighter level", () => {
+    expect(restoresOf(levelsOf("Fighter", "PHB", 5), "Second Wind")).toEqual([
+      {
+        feature: { name: "Second Wind", source: "PHB" },
+        kind: "heal",
+        dice: "1d10",
+        bonus: 5,
+        others: false,
+      },
+    ]);
+  });
+
+  it("gives Preserve Life five times the cleric level, to other creatures", () => {
+    const life = levelsOf("Cleric", "PHB", 4, { name: "Life Domain", source: "PHB" });
+    expect(restoresOf(life, "Channel Divinity: Preserve Life")).toMatchObject([
+      { kind: "heal", dice: null, bonus: 20, others: true },
+    ]);
+  });
+
+  it("scales Fighting Spirit's temporary hit points and Divine Spark's dice by class level", () => {
+    const samurai = (level: number) =>
+      levelsOf("Fighter", "PHB", level, { name: "Samurai", source: "XGE" });
+    expect(restoresOf(samurai(9), "Fighting Spirit")).toMatchObject([
+      { kind: "tempHp", dice: null, bonus: 5 },
+    ]);
+    expect(restoresOf(samurai(15), "Fighting Spirit")).toMatchObject([{ bonus: 15 }]);
+    expect(restoresOf(levelsOf("Cleric", "XPHB", 13), "Divine Spark")).toMatchObject([
+      { dice: "3d8", bonus: 3, others: true },
+    ]);
+  });
+
+  it("rolls the Martial Arts die the class table prints, and none where it prints none", () => {
+    const monk = levelsOf("Monk", "XPHB", 6, {
+      name: "Warrior of the Open Hand",
+      source: "XPHB",
+    });
+    expect(restoresOf(monk, "Wholeness of Body")).toMatchObject([{ dice: "1d8", bonus: 3 }]);
+    expect(restoresOf(monk, "Uncanny Metabolism")).toMatchObject([{ dice: "1d8", bonus: 6 }]);
+    expect(restoresOf(monk, "Uncanny Metabolism", { ...SHEET, column: () => undefined })).toEqual(
+      [],
+    );
+  });
+
+  it("adds the Charisma modifier to the warlock level for Dark One's Blessing", () => {
+    const fiend = levelsOf("Warlock", "PHB", 3, { name: "The Fiend", source: "PHB" });
+    expect(restoresOf(fiend, "Dark One's Blessing")).toMatchObject([
+      { kind: "tempHp", dice: null, bonus: 7 },
+    ]);
+  });
+
+  it("gives a Half-Orc's Relentless Endurance 1 hit point", () => {
+    const orc = character({ race: { name: "Half-Orc", source: "PHB" }, subrace: undefined });
+    expect(restoresOf(orc, "Relentless Endurance")).toMatchObject([
+      { kind: "heal", dice: null, bonus: 1 },
+    ]);
+  });
+});
+
+describe("restoredState", () => {
+  const derived = { hitPointMaximum: { computed: 30, manual: null, terms: [] } };
+  const at = (current: number | null, temporary: number) => ({
+    ...defaultCharacterState(),
+    hitPoints: { current, temporary },
+  });
+  const heal = { kind: "heal", others: false } as const;
+  const temp = { kind: "tempHp", others: false } as const;
+
+  it("heals up to the maximum, and at least 1", () => {
+    expect(restoredState(derived, at(10, 0), heal, 8)).toEqual({
+      state: at(18, 0),
+      amount: 8,
+    });
+    expect(restoredState(derived, at(25, 0), heal, 8).state.hitPoints.current).toBeNull();
+    expect(restoredState(derived, at(0, 0), heal, -2)).toMatchObject({
+      state: at(1, 0),
+      amount: 1,
+    });
+  });
+
+  it("keeps the higher of the old and new temporary hit points", () => {
+    expect(restoredState(derived, at(10, 3), temp, 7).state).toEqual(at(10, 7));
+    expect(restoredState(derived, at(10, 9), temp, 7).state).toEqual(at(10, 9));
+  });
+
+  it("leaves the state alone for a heal on another creature", () => {
+    const state = at(10, 0);
+    expect(restoredState(derived, state, { ...heal, others: true }, 20)).toEqual({
+      state,
+      amount: 20,
+    });
+  });
+});

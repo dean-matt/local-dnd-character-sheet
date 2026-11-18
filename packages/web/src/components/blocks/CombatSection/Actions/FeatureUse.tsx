@@ -9,13 +9,15 @@ import {
 } from "@dnd/character";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
+import { useFeatureRestore } from "../../../../hooks/useFeatureRestore.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { featureResource } from "./featureResource.ts";
 
 /**
- * A held feature's resource and its Use control. A Use spends the resource, if any, and marks
- * the feature's action type spent on the Turn Economy, as one announced state write. Nothing
- * shows until state loads, since the count left is read from it.
+ * A held feature's resource and its Use control. A Use spends the resource, if any, marks
+ * the feature's action type spent on the Turn Economy, and lands what the feature restores,
+ * as one announced state write, then logs what it rolled. Nothing shows until state loads,
+ * since the count left is read from it.
  */
 export function FeatureUse({
   character,
@@ -36,6 +38,7 @@ export function FeatureUse({
 }) {
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
+  const restore = useFeatureRestore(character.id);
   const mark = ACTION_TURN_MARK[type];
   if (!play.isSuccess) return null;
 
@@ -53,17 +56,18 @@ export function FeatureUse({
   const disabled = replace.writing || blocked !== null;
   const counted = resource?.total != null;
 
-  function use() {
+  async function use() {
     if (disabled) return;
     const spent = resource ? resource.spend(stored) : stored;
-    const after = mark ? turnMarkSpent(spent, mark) : spent;
+    const restored = restore(derived, { name, source }, mark ? turnMarkSpent(spent, mark) : spent);
     const parts = [
       resource?.total != null && resource.left != null
         ? `${name} used: ${resource.left - 1} of ${resource.total} left`
         : `${name} used`,
       ...(mark ? [`${TURN_LABELS[mark]} spent`] : []),
+      ...restored.text,
     ];
-    replace.write(after, `${parts.join(". ")}.`);
+    if (await replace.write(restored.state, `${parts.join(". ")}.`)) restored.log();
   }
 
   return (

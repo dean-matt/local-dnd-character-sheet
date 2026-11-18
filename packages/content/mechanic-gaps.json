@@ -1,5 +1,7 @@
 {
-  "bonus": 12,
+  "heal": 0,
+  "tempHp": 0,
+  "bonus": 11,
   "armorClass": 0,
   "unarmoredBase": 0,
   "mediumArmorDexterity": 0,
@@ -13,5 +15,5 @@
   "attack": 0,
   "extraDamage": 0,
   "martialArts": 0,
-  "unclassified": 658
+  "unclassified": 632
 }
