@@ -83,8 +83,8 @@ describe("featEffects", () => {
           undefined,
         );
       const { speed, terms, matches } = roving({ optionalClassFeatures: true });
-      expect(speed).toEqual({ walk: 35, climb: 40 });
-      expect(terms.map((t) => t.label)).toEqual(["Roving: walk 30 to 35"]);
+      expect(speed).toEqual({ walk: 35, climb: 40, swim: 35 });
+      expect(terms.map((t) => t.label)).toEqual(["Roving: walk 30 to 35", "Roving: swim 0 to 35"]);
       expect(matches.map(({ mode, name }) => [mode, name])).toEqual([
         ["climb", "Roving"],
         ["swim", "Roving"],

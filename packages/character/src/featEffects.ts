@@ -62,10 +62,14 @@ export function featHitPointTerms(definition: HoldsFeatures): Term<TermReference
 type SpeedMode = "walk" | "climb" | "swim";
 type SpeedMechanic = Extract<Mechanic, { kind: "speed" }>;
 
-/** A climbing or swimming speed a feature sets to the final walking speed. */
+/** A climbing or swimming speed a feature keeps equal to the walking speed. */
 type WalkMatch = { mode: "climb" | "swim"; name: string; ref: ContentRef };
 
-/** Raises `speed` in place, and adds the modes it matches to the walk to `matches`. */
+/**
+ * Raises `speed` in place and returns a term per mode raised. Records each mode the feature
+ * sets equal to the walk in `matches`, after giving it the walk as it stands, so an item that
+ * changes that mode alone has a speed to change.
+ */
 function applySpeedMechanic(
   speed: Speed & { walk: number },
   mechanic: SpeedMechanic,
@@ -82,14 +86,17 @@ function applySpeedMechanic(
   raise("walk", speed.walk + mechanic.bonus);
   for (const mode of mechanic.alsoOn ?? [])
     if (speed[mode]) raise(mode, speed[mode] + mechanic.bonus);
-  for (const mode of mechanic.equalToWalk ?? []) matches.push({ mode, name, ref });
+  for (const mode of mechanic.equalToWalk ?? []) {
+    if ((speed[mode] ?? 0) < speed.walk) raise(mode, speed.walk);
+    matches.push({ mode, name, ref });
+  }
   return terms;
 }
 
 /**
  * Applied to the race's speed, so an item that sets or scales a speed reads the raised walk.
  * `matches` holds the speeds a feature sets equal to the walk, which `speedMatchingWalk`
- * applies once every later bonus has raised it.
+ * raises again once every later bonus has raised the walk.
  */
 export function speedWithFeats(
   base: Speed,
