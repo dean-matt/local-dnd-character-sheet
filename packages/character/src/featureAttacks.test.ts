@@ -157,6 +157,24 @@ describe("featureDamage", () => {
     expect(sources(life(7), GREATSWORD)).toEqual([]);
   });
 
+  it("offers the 2024 Divine Strike only where Blessed Strikes took it", () => {
+    const blessed = {
+      name: "Blessed Strikes",
+      source: "XPHB",
+      className: "Cleric",
+      classSource: "XPHB",
+      level: 7,
+    };
+    const took = (name: string) => ({
+      ...levelsOf("Cleric", "XPHB", 7),
+      featureChoices: [{ feature: blessed, options: [{ name, source: "XPHB" }] }],
+    });
+    expect(sources(took("Divine Strike"), GREATSWORD)).toEqual([
+      { source: "Divine Strike", dice: "1d8", bonus: 0 },
+    ]);
+    expect(sources(took("Potent Spellcasting"), GREATSWORD)).toEqual([]);
+  });
+
   it("rolls Frenzy's d6s, as many as the Rage Damage cell, only during a rage", () => {
     const berserker = levelsOf("Barbarian", "XPHB", 3, "Path of the Berserker");
     const cells = { rage_damage: "+2" };

@@ -10,10 +10,11 @@ export const initiativeRolled = (state: CharacterState, initiative: number): Cha
   encounter: { round: state.encounter?.round ?? 1, initiative },
 });
 
-/** The state in round 1 of a new encounter with no initiative rolled. */
+/** The state in round 1 of a new encounter with no initiative rolled and no once-a-turn feature used. */
 export const encounterStarted = (state: CharacterState): CharacterState => ({
   ...state,
   encounter: { round: 1, initiative: null },
+  turn: { ...state.turn, features: [] },
 });
 
 /** The state one round on with every turn mark available, or as given where no encounter runs or the last round is reached. */
@@ -23,10 +24,11 @@ export function roundAdvanced(state: CharacterState): CharacterState {
   return turnReset({ ...state, encounter: { ...encounter, round: encounter.round + 1 } });
 }
 
-/** The state with no encounter, and the round concentration began in forgotten with it. */
+/** The state with no encounter, and the round concentration began in forgotten with it, as are the once-a-turn features used. */
 export function encounterEnded(state: CharacterState): CharacterState {
   const { concentration } = state;
-  if (!concentration) return { ...state, encounter: null };
+  const ended = { ...state, encounter: null, turn: { ...state.turn, features: [] } };
+  if (!concentration) return ended;
   const { round: _round, ...held } = concentration;
-  return { ...state, concentration: held, encounter: null };
+  return { ...ended, concentration: held };
 }

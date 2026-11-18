@@ -833,6 +833,50 @@ describe("Attacks", () => {
       expect(puts[0]?.spellSlots).toContainEqual({ level: 3, total: 2, expended: 1 });
     });
 
+    it("drops a smite taken on a row once no slot is left, and still rolls the row's damage", async () => {
+      const smite = {
+        source: "Divine Smite",
+        dice: "2d8",
+        bonus: 0,
+        type: "radiant",
+        offer: {
+          condition: "on a melee weapon hit",
+          oncePerTurn: false,
+          slot: { max: 5, versus: "an undead or a fiend" },
+        },
+      };
+      const { posts, puts } = renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 1, manual: null, terms: [] } }],
+        pactSlots: null,
+        attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
+        unarmedStrike: { ...unarmedStrike, featureDamage: [smite] },
+      });
+      const served = globalThis.fetch;
+      vi.stubGlobal("fetch", async (url: RequestInfo | URL, init?: RequestInit) => {
+        const response = await served(url, init);
+        return init?.method === "PUT"
+          ? Response.json({ ...stateRecord(), state: puts.at(-1) })
+          : response;
+      });
+      const unarmed = () =>
+        within(
+          screen.getByRole("rowheader", { name: /^Unarmed Strike/ }).closest("tr") as HTMLElement,
+        );
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Divine Smite/ }));
+      fireEvent.click(unarmed().getByRole("checkbox", { name: /^Divine Smite/ }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Divine Smite" }),
+      );
+      await waitFor(() => expect(puts).toHaveLength(1));
+
+      expect(await unarmed().findByText("No spell slot left")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Unarmed Strike damage" }));
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]).toMatchObject({ label: "Unarmed Strike damage", notation: "1d1" });
+      expect(puts).toHaveLength(1);
+    });
+
     it("offers no trade on a row with no damage to roll", async () => {
       const trade = { source: "Sharpshooter", attack: -5, damage: 10, condition: "before" };
       renderRolling({

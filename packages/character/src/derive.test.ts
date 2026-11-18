@@ -1649,6 +1649,58 @@ describe("deriveCharacter", () => {
         expect(monk.unarmedStrike.damage.dice).toBe("1d1");
       });
 
+      it("drops Martial Arts while a shield alone is equipped", () => {
+        const monk = classed("Monk", 5, [{ key: "martial_arts", value: "1d6" }], {
+          inventory: [
+            ...definition.inventory,
+            { ref: SHIELD, quantity: 1, carried: true, equipped: true, attuned: false },
+          ],
+        });
+        expect(monk.unarmedStrike.damage.dice).toBe("1d1");
+      });
+
+      it("joins the 2024 Martial Arts die and Dexterous Attacks, and keeps them with a light martial weapon alone", () => {
+        const MONK = { name: "Monk", source: "XPHB" };
+        const SCIMITAR = { name: "Scimitar", source: "XPHB" };
+        const monk = (weapon: { name: string; source: string }) =>
+          deriveCharacter(
+            {
+              ...definition,
+              levels: Array.from({ length: 5 }, () => ({ class: MONK })),
+              inventory: [
+                ...definition.inventory,
+                { ref: weapon, quantity: 1, carried: true, equipped: true, attuned: false },
+              ],
+            },
+            {
+              ...catalog,
+              hitDice: new Map([...hitDice, [entryKey(MONK), 8 as const]]),
+              classResources: new Map([[entryKey(MONK), [{ key: "martial_arts", value: "1d8" }]]]),
+              weights: new Map([...catalog.weights, [entryKey(SCIMITAR), 3]]),
+              weapons: new Map([
+                ...catalog.weapons,
+                [
+                  entryKey(SCIMITAR),
+                  {
+                    ...LONGSWORD_TRAIT,
+                    name: "Scimitar",
+                    properties: ["F|XPHB", "L|XPHB"],
+                    damage: "1d6",
+                    versatileDamage: undefined,
+                  },
+                ],
+              ]),
+            },
+          );
+        const light = monk(SCIMITAR);
+        expect(light.unarmedStrike.damage).toMatchObject({
+          dice: "1d8",
+          modifier: { computed: 3, terms: [{ label: "Dexterity", value: 3 }] },
+        });
+        expect(attackOf(light, 2)?.damage?.dice).toBe("1d8");
+        expect(monk(LONGSWORD).unarmedStrike.damage.dice).toBe("1d1");
+      });
+
       it("offers Sneak Attack at the Rogue table's dice on a finesse weapon, and not unarmed", () => {
         const rogue = classed("Rogue", 5, [{ key: "sneak_attack", value: "3d6" }]);
         expect(attackOf(rogue, 0)?.featureDamage).toEqual([

@@ -856,16 +856,25 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       option: ON_A_HIT,
     },
   ]),
-  classFeature(cleric24, ["Divine Strike", "XPHB"], 7, [
-    {
-      kind: "extraDamage",
-      dice: "1d8",
-      scales: [{ level: 14, dice: "2d8" }],
-      type: "necrotic or radiant",
-      oncePerTurn: true,
-      option: ON_A_HIT,
+  {
+    ...classFeature(cleric24, ["Divine Strike", "XPHB"], 7, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        scales: [{ level: 14, dice: "2d8" }],
+        type: "necrotic or radiant",
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+    offeredBy: {
+      name: "Blessed Strikes",
+      source: "XPHB",
+      className: "Cleric",
+      classSource: "XPHB",
+      level: 7,
     },
-  ]),
+  },
   {
     ...classFeature(druid24, ["Primal Strike", "XPHB"], 7, [
       {

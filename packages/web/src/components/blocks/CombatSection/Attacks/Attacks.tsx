@@ -170,8 +170,7 @@ function featureSpend(
   const used = featuresUsed(latest, once);
   const smiting = taken.find(({ offer }) => offer?.slot);
   const words = once.map((source) => `${source} this turn`);
-  if (!smiting) return { after: used, text: `Used ${words.join(" and ")}` };
-  if (!slot) return { refused: `${smiting.source} needs a spell slot, and none is left.` };
+  if (!smiting || !slot) return { after: used, text: `Used ${words.join(" and ")}` };
   try {
     return {
       after: slotSpent(derived, used, slot),
@@ -188,7 +187,8 @@ const pickedSlot = (slots: readonly SpellCastOption[], picked: SpellCastOption |
 
 /**
  * What a row's feature damage adds to its damage roll: the offers taken and not used up this
- * turn, and the dice and flat bonus of those and of what always lands.
+ * turn, nor wanting a slot where none is left, and the dice and flat bonus of those and of
+ * what always lands.
  */
 function rowFeatureDamage(
   features: Attack["featureDamage"],
@@ -198,7 +198,8 @@ function rowFeatureDamage(
   versus: boolean,
 ) {
   const taken = features.filter(
-    (entry) => entry.offer && !used(entry) && chosen.includes(entry.source),
+    (entry) =>
+      entry.offer && !used(entry) && (!entry.offer.slot || slot) && chosen.includes(entry.source),
   );
   const landing = [...features.filter((entry) => !entry.offer), ...taken];
   return {

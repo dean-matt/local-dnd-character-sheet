@@ -95,7 +95,7 @@ export function featureStrike(definition: HoldsFeatures, strike: Strike): Featur
   return result;
 }
 
-/** What extra damage reads off the sheet: a class table column's cell at the character's level, and an ability's modifier. */
+/** What extra damage reads off the sheet: a class table column's cell at the character's level, an ability's modifier, and whether a rage holds. */
 export type DamageSheet = {
   column: (key: string) => string | undefined;
   modifier: (ability: Ability) => number;
