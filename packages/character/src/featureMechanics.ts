@@ -133,8 +133,8 @@ const SPEED_MODES = z
  * The walking speed raised by `bonus` feet, named `label` where the feature's own name is not
  * what the table calls it. `unlessHeavyArmor` withholds it while heavy armor is worn, and
  * `whileArmored` while no armor is. `alsoOn` gives the same increase to those speeds where the
- * character already has them; `equalToWalk` gives the character those speeds at the raised
- * walking speed, where it has less.
+ * character already has them; `equalToWalk` gives the character those speeds at the final
+ * walking speed, after every later bonus, where it has less.
  */
 const speedMechanicSchema = z.strictObject({
   kind: z.literal("speed"),

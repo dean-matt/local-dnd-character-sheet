@@ -62,10 +62,19 @@ export function featHitPointTerms(definition: HoldsFeatures): Term<TermReference
 type SpeedMode = "walk" | "climb" | "swim";
 type SpeedMechanic = Extract<Mechanic, { kind: "speed" }>;
 
+/** A climbing or swimming speed a feature keeps equal to the walking speed. */
+type WalkMatch = { mode: "climb" | "swim"; name: string; ref: ContentRef };
+
+/**
+ * Raises `speed` in place and returns a term per mode raised. Records each mode the feature
+ * sets equal to the walk in `matches`, after giving it the walk as it stands, so an item that
+ * changes that mode alone has a speed to change.
+ */
 function applySpeedMechanic(
   speed: Speed & { walk: number },
   mechanic: SpeedMechanic,
   ref: ContentRef,
+  matches: WalkMatch[],
 ): Term<TermReference>[] {
   const name = mechanic.label ?? ref.name;
   const terms: Term<TermReference>[] = [];
@@ -77,24 +86,27 @@ function applySpeedMechanic(
   raise("walk", speed.walk + mechanic.bonus);
   for (const mode of mechanic.alsoOn ?? [])
     if (speed[mode]) raise(mode, speed[mode] + mechanic.bonus);
-  for (const mode of mechanic.equalToWalk ?? [])
+  for (const mode of mechanic.equalToWalk ?? []) {
     if ((speed[mode] ?? 0) < speed.walk) raise(mode, speed.walk);
+    matches.push({ mode, name, ref });
+  }
   return terms;
 }
 
 /**
  * Applied to the race's speed, so an item that sets or scales a speed reads the raised walk.
- * Roving sets a climbing or swimming speed to the walk it just raised, and nothing later
- * keeps them level.
+ * `matches` holds the speeds a feature sets equal to the walk, which `speedMatchingWalk`
+ * raises again once every later bonus has raised the walk.
  */
 export function speedWithFeats(
   base: Speed,
   definition: HoldsFeatures,
   armorWorn: Exclude<ArmorTrait["category"], "shield"> | undefined,
-): { speed: Speed; terms: Term<TermReference>[] } {
-  if (base.walk === undefined) return { speed: base, terms: [] };
+): { speed: Speed; terms: Term<TermReference>[]; matches: WalkMatch[] } {
+  if (base.walk === undefined) return { speed: base, terms: [], matches: [] };
   const speed = { ...base, walk: base.walk };
   const terms: Term<TermReference>[] = [];
+  const matches: WalkMatch[] = [];
   for (const { ref, bonus } of bonusFeats(definition)) {
     if (bonus.walk === undefined) continue;
     terms.push({
@@ -110,6 +122,27 @@ export function speedWithFeats(
         !(mechanic.unlessHeavyArmor && armorWorn === "heavy") &&
         !(mechanic.whileArmored && armorWorn === undefined)
       )
-        terms.push(...applySpeedMechanic(speed, mechanic, ref));
-  return { speed, terms };
+        terms.push(...applySpeedMechanic(speed, mechanic, ref, matches));
+  return { speed, terms, matches };
+}
+
+/** `speed` with each matched mode raised to the walk where it is slower, one term per mode raised. */
+export function speedMatchingWalk(
+  speed: Speed,
+  matches: readonly WalkMatch[],
+): { speed: Speed; terms: Term<TermReference>[] } {
+  const matched = { ...speed };
+  const terms: Term<TermReference>[] = [];
+  const walk = speed.walk ?? 0;
+  for (const { mode, name, ref } of matches) {
+    const from = matched[mode] ?? 0;
+    if (from >= walk) continue;
+    matched[mode] = walk;
+    terms.push({
+      label: `${name}: ${mode} ${from} to ${walk}`,
+      value: walk - from,
+      reference: ref,
+    });
+  }
+  return { speed: matched, terms };
 }
