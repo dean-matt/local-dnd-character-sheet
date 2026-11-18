@@ -55,6 +55,8 @@ export const SUBCLASS_NAMES = new Map([
   ["Land|PHB", "Circle of the Land|PHB"],
   ["Thief|PHB", "Thief|PHB"],
   ["Champion|XPHB", "Champion|XPHB"],
+  ["Hunter|XPHB", "Hunter|XPHB"],
+  ["Berserker|XPHB", "Path of the Berserker|XPHB"],
 ]);
 
 /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */

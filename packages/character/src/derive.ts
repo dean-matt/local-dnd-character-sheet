@@ -63,7 +63,13 @@ import {
   speedWithFeats,
 } from "./featEffects.ts";
 import { featGrants, withFeatGrants } from "./featGrants.ts";
-import { type FeatureStrike, featureAttackEffects, featureStrike } from "./featureAttacks.ts";
+import {
+  type DamageSheet,
+  type FeatureStrike,
+  featureAttackEffects,
+  featureDamage,
+  featureStrike,
+} from "./featureAttacks.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
 import {
@@ -74,6 +80,7 @@ import {
 } from "./itemEffects.ts";
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
+import { martialArts } from "./martialArts.ts";
 import { reducedMaximum, reducedOverride } from "./maximumReduction.ts";
 import { applyOverrides } from "./overrides.ts";
 import { rageBenefits, rageDamageTerms } from "./rage.ts";
@@ -520,6 +527,34 @@ function derivedAttacks(
   });
 }
 
+/** What a weapon or unarmed strike reads off the sheet for the damage features add, and the Martial Arts the character holds. */
+function strikeSheet(
+  definition: CharacterDefinition,
+  catalog: CharacterCatalog,
+  rage: RageBenefits,
+) {
+  const cells = classLevels(definition).flatMap(
+    (group) => catalog.classResources.get(entryKey(group.class)) ?? [],
+  );
+  const column = (key: string) => cells.find((cell) => cell.key === key && !cell.homebrew)?.value;
+  const sheet: DamageSheet = {
+    column,
+    modifier: (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
+    raging: rage !== null,
+  };
+  const { worn, shield } = equippedArmor(definition, catalog.armor);
+  const equipped = definition.inventory.flatMap((entry) => {
+    const weapon = entry.equipped ? catalog.weapons.get(itemKey(entry)) : undefined;
+    return weapon ? [weapon] : [];
+  });
+  const monk = martialArts(definition, {
+    armored: worn !== undefined || shield !== undefined,
+    equipped,
+    column,
+  });
+  return { sheet, monk };
+}
+
 function weaponStrike(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
@@ -535,6 +570,7 @@ function weaponStrike(
 ): CharacterDerived["attacks"][number] {
   const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
   const level = totalLevel(definition);
+  const { sheet, monk } = strikeSheet(definition, catalog, rage);
   const twoHandedBlocked = entry.equipped && shield;
   const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
   const { reference } = weapon.bonus;
@@ -551,7 +587,7 @@ function weaponStrike(
       ),
   });
   const result = weaponAttack<TermReference>({
-    weapon,
+    weapon: monk?.covers(weapon) ? monk.apply(weapon) : weapon,
     strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
     dexterityModifier: abilityModifier(scoreOf(definition, catalog, "dex")),
     proficiency: proficiencyContribution(level, proficiency),
@@ -562,6 +598,11 @@ function weaponStrike(
   });
   return {
     extraDamage: extraDamage(definition, catalog, index),
+    featureDamage: featureDamage(
+      definition,
+      { weapon, proficient: proficiency === "proficient", alone: false },
+      sheet,
+    ),
     entry: index,
     ability: result.ability,
     attackBonus: fromBreakdown(
@@ -615,7 +656,10 @@ function derivedOffHandAttack(
 /** The flat 1 an unarmed strike deals, as the one-faced die the roller needs to start a roll with. */
 const UNARMED_DICE = "1d1";
 
-/** Every character's unarmed strike: proficient, Strength-based, 1 bludgeoning plus Strength, in either edition. */
+/**
+ * Every character's unarmed strike: proficient, Strength-based, 1 bludgeoning plus Strength,
+ * in either edition, unless Martial Arts offers Dexterity or a die.
+ */
 function derivedUnarmedStrike(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
@@ -626,15 +670,19 @@ function derivedUnarmedStrike(
   const level = totalLevel(definition);
   const strength = abilityModifier(scoreOf(definition, catalog, "str"));
   const features = featureStrike(definition, { proficient: true, alone: false });
+  const { sheet, monk } = strikeSheet(definition, catalog, rage);
+  const unarmed = { kind: "melee" as const, damage: UNARMED_DICE };
+  const weapon = monk ? monk.apply(unarmed) : unarmed;
   const result = weaponAttack<TermReference>({
-    weapon: { kind: "melee", damage: UNARMED_DICE },
+    weapon,
     strengthModifier: strength,
-    dexterityModifier: strength,
+    dexterityModifier: abilityModifier(scoreOf(definition, catalog, "dex")),
     proficiency: proficiencyContribution(level, "proficient"),
     grip: "one-handed",
   });
   return {
     extraDamage: extraDamage(definition, catalog, -1),
+    featureDamage: featureDamage(definition, { proficient: true, alone: false }, sheet),
     attackBonus: fromBreakdown(
       breakdown([
         ...result.attack.terms,
@@ -645,12 +693,12 @@ function derivedUnarmedStrike(
     ),
     critThreshold: fromBreakdown(critThreshold(critItems(definition, catalog, -1), features)),
     damage: {
-      dice: UNARMED_DICE,
+      dice: weapon.damage,
       type: "bludgeoning",
       modifier: fromBreakdown(
         breakdown([
           ...(result.damage?.modifier.terms ?? []),
-          ...rageDamageTerms(rage, definition.edition, "melee", "str"),
+          ...rageDamageTerms(rage, definition.edition, "melee", result.ability),
           ...features.damage,
         ]),
       ),

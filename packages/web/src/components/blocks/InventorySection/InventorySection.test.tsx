@@ -701,6 +701,7 @@ describe("InventorySection", () => {
       ammunition: null,
       reload: null,
       options: [],
+      featureDamage: [],
     });
     const held = { held: "one-handed" as const, twoHandedBlocked: false };
 

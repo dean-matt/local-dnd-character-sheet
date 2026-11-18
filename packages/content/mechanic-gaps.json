@@ -11,5 +11,7 @@
   "speed": 4,
   "roll": 0,
   "attack": 0,
-  "unclassified": 682
+  "extraDamage": 0,
+  "martialArts": 0,
+  "unclassified": 658
 }

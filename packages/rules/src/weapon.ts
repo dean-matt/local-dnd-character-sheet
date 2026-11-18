@@ -112,6 +112,11 @@ export function isTwoHanded(weapon: Pick<Weapon, "properties">): boolean {
   return weapon.properties?.some((property) => abbreviation(property) === TWO_HANDED) ?? false;
 }
 
+/** Whether the weapon carries the finesse property, which offers Dexterity to a melee weapon. */
+export function isFinesse(weapon: Pick<Weapon, "properties">): boolean {
+  return weapon.properties?.some((property) => abbreviation(property) === FINESSE) ?? false;
+}
+
 /** Whether the weapon carries the heavy property. */
 export function isHeavy(weapon: Pick<Weapon, "properties">): boolean {
   return weapon.properties?.some((property) => abbreviation(property) === HEAVY) ?? false;
@@ -132,8 +137,7 @@ function weaponAbility(
   dexterityModifier: number,
 ): WeaponAbility {
   const own: WeaponAbility = weapon.kind === "ranged" ? "dex" : "str";
-  const finesse = weapon.properties?.some((property) => abbreviation(property) === FINESSE);
-  if (!finesse || strengthModifier === dexterityModifier) {
+  if (!isFinesse(weapon) || strengthModifier === dexterityModifier) {
     return own;
   }
   return strengthModifier > dexterityModifier ? "str" : "dex";

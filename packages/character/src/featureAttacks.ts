@@ -2,15 +2,18 @@
  * What held features do to the character's own weapon attacks and unarmed strikes, read from
  * their recorded `attack` mechanics: advantage as roll effects, a bonus as a term on the
  * attack or damage, the lowest critical threshold, and a trade the player takes attack by
- * attack as an option.
+ * attack as an option. Their `extraDamage` mechanics give the dice a hit adds.
  */
-import { isHeavy, type Term, type Weapon } from "@dnd/rules";
+import { ABILITIES, isFinesse, isHeavy, type Term, type Weapon } from "@dnd/rules";
 import type { CharacterDerived, RollEffectEntry } from "./characterDerived.ts";
 import type { TermReference } from "./derivedField.ts";
 import { type Mechanic, mechanicsOfKind } from "./featureMechanics.ts";
 import { type Held, type HoldsFeatures, heldFeatures } from "./heldFeatures.ts";
+import type { Ability } from "./refs.ts";
 
 type AttackMechanic = Extract<Mechanic, { kind: "attack" }>;
+type ExtraDamageMechanic = Extract<Mechanic, { kind: "extraDamage" }>;
+type FeatureDamage = CharacterDerived["attacks"][number]["featureDamage"][number];
 
 /** One attack as the mechanics judge it; `weapon` is absent for an unarmed strike. */
 export type Strike = {
@@ -90,4 +93,84 @@ export function featureStrike(definition: HoldsFeatures, strike: Strike): Featur
   for (const { held, mechanic } of attackMechanics(definition))
     if (!mechanic.advantage && fits(mechanic, strike)) addMechanic(result, held, mechanic);
   return result;
+}
+
+/** What extra damage reads off the sheet: a class table column's cell at the character's level, and an ability's modifier. */
+export type DamageSheet = {
+  column: (key: string) => string | undefined;
+  modifier: (ability: Ability) => number;
+  raging: boolean;
+};
+
+const isAbility = (dice: ExtraDamageMechanic["dice"]): dice is Ability =>
+  typeof dice === "string" && (ABILITIES as readonly string[]).includes(dice);
+
+function lands({ weapons, unarmed }: ExtraDamageMechanic, { weapon }: Strike): boolean {
+  if (!weapon) return unarmed === true;
+  switch (weapons) {
+    case undefined:
+      return true;
+    case "melee":
+      return weapon.kind === "melee";
+    case "finesseOrRanged":
+      return weapon.kind === "ranged" || isFinesse(weapon);
+  }
+}
+
+/** The dice, or the flat amount, `mechanic` adds at `levels` in its feature's class; null where the sheet prints no cell. */
+function amount(
+  { dice, scales = [] }: ExtraDamageMechanic,
+  levels: number,
+  sheet: DamageSheet,
+): Pick<FeatureDamage, "dice" | "bonus"> | null {
+  if (isAbility(dice)) return { dice: null, bonus: Math.max(1, sheet.modifier(dice)) };
+  if (typeof dice === "string") {
+    const scaled = scales.filter((scale) => levels >= scale.level).at(-1);
+    return { dice: scaled?.dice ?? dice, bonus: 0 };
+  }
+  const cell = sheet.column(dice.column);
+  if (cell === undefined) return null;
+  return { dice: dice.die ? `${Number(cell)}d${dice.die}` : cell, bonus: 0 };
+}
+
+/** The damage held features add to one attack on a hit, in the order the features are held. */
+export function featureDamage(
+  definition: HoldsFeatures,
+  strike: Strike,
+  sheet: DamageSheet,
+): FeatureDamage[] {
+  return heldFeatures(definition).flatMap((held) =>
+    mechanicsOfKind(held.entry, "extraDamage").flatMap((mechanic) => {
+      if (!lands(mechanic, strike) || (mechanic.while && !sheet.raging)) return [];
+      const added = amount(mechanic, held.levels, sheet);
+      if (!added) return [];
+      const { option, oncePerTurn, slot, type } = mechanic;
+      return [
+        {
+          source: held.ref.name,
+          ...added,
+          type: type ?? null,
+          offer: option
+            ? { condition: option, oncePerTurn: oncePerTurn ?? false, slot: slot ?? null }
+            : null,
+        },
+      ];
+    }),
+  );
+}
+
+/**
+ * The dice one feature's damage rolls, null where it adds a flat amount: an offer for a spell
+ * slot grows by a die for each `slotLevel` past the first, up to its `max`, and by one more
+ * `versus` the creatures it names.
+ */
+export function featureDamageDice(
+  { dice, offer }: FeatureDamage,
+  slotLevel?: number,
+  versus = false,
+): string | null {
+  const slot = offer?.slot;
+  if (dice === null || !slot || slotLevel === undefined) return dice;
+  const [count = 0, faces = 0] = dice.split("d").map(Number);
+  return `${Math.min(count + slotLevel - 1, slot.max) + (versus ? 1 : 0)}d${faces}`;
 }

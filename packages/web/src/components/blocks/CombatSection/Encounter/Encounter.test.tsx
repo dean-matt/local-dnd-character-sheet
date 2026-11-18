@@ -125,7 +125,7 @@ describe("Encounter", () => {
   it("makes the spent turn marks available in the same write that advances the round", async () => {
     const writes = renderEncounter({
       encounter: { round: 2, initiative: null },
-      turn: { action: true, bonusAction: true, reaction: false, movement: true },
+      turn: { action: true, bonusAction: true, reaction: false, movement: true, features: [] },
     });
 
     fireEvent.click(await screen.findByRole("button", { name: "Next round" }));
@@ -136,6 +136,7 @@ describe("Encounter", () => {
       bonusAction: false,
       reaction: false,
       movement: false,
+      features: [],
     });
   });
 

@@ -30,6 +30,9 @@ const KIND_PATTERNS: Record<Kind, RegExp> = {
   roll: /\b(?:advantage(?:\|XPHB\})? on|bonus to)[^."]{0,80}(?:saving throws?|checks?\b|\{@skill)|\badd [^."]{0,40}\bto (?:one|the|your|any) [^."]{0,30}\b(?:check|saving throw)|(?:saving throws?|checks?)[^."]{0,60}(?:gains? a bonus|reroll)|\breroll[^."]{0,40}(?:saving throw|check)/i,
   attack:
     /\bbonus to (?:\w+ ){0,2}(?:attack|damage) rolls\b|critical hit(?:\|XPHB\})? on a roll of|\badvantage(?:\|XPHB\})? on (?:melee weapon )?attack rolls\b|penalty to the attack roll/i,
+  extraDamage:
+    /\bextra (?:\{@damage [^}]+\} )?(?:[\w,]+ ){0,5}damage\b|\badditional weapon damage di(?:e|ce)\b/i,
+  martialArts: /\bin place of the normal damage\b/i,
 };
 
 type Bucket = Kind | "unclassified";

@@ -468,12 +468,20 @@ const STATE_CHANGES: {
       (rolled) => rolled ?? undefined,
     ),
   ],
-  turn: (before, after) =>
-    TURN_MARKS.flatMap((mark) =>
+  turn: (before, after) => [
+    ...TURN_MARKS.flatMap((mark) =>
       one(`turn.${mark}`, TURN_LABELS[mark], before.turn[mark], after.turn[mark], (spent) =>
         spent ? "spent" : undefined,
       ),
     ),
+    ...one(
+      "turn.features",
+      "Used this turn",
+      before.turn.features,
+      after.turn.features,
+      (used) => used.join(", ") || undefined,
+    ),
+  ],
   deathSaves: (before, after) => [
     ...one(
       "deathSaves.successes",

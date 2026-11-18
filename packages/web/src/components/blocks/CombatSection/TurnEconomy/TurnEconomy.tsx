@@ -18,7 +18,7 @@ export function TurnEconomy({ characterId }: { characterId: string }) {
   if (!play.data) return null;
   const state = play.data.state;
   const busy = replace.writing;
-  const anySpent = TURN_MARKS.some((mark) => state.turn[mark]);
+  const anySpent = TURN_MARKS.some((mark) => state.turn[mark]) || state.turn.features.length > 0;
 
   function toggle(mark: TurnMark) {
     if (busy) return;

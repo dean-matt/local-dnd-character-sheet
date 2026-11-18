@@ -3,22 +3,30 @@
  * second light weapon, an unarmed strike for every character, then a row per casting class's spell attack. Every number comes off the derived
  * block; a weapon's name comes off `/characters/{id}/inventory`, since the derived block keys a weapon by its entry.
  * Where an item deals extra damage by a target's alignment, the damage cell asks for the target's alignment, since an attack carries no target.
+ * Damage a feature offers is taken by checkbox, and its slot or once-a-turn use is spent before the damage roll.
  */
 import { alignmentName } from "@dnd/catalog";
 import {
   type Ability,
   type CharacterDerived,
   type CharacterRecord,
+  type CharacterState,
   conditionRollEffects,
   derivedValue,
   displayName,
   effectsOnRoll,
   entryKey,
+  featureDamageDice,
+  featuresUsed,
   houseRule,
   itemKey,
   overrideKey,
+  type SpellCastOption,
   type SpentAmmunition,
+  slotSpent,
+  spellCastOptions,
   spentAmmunitionOf,
+  usedThisTurn,
   withAmmunitionSpent,
 } from "@dnd/character";
 import { type ComponentProps, type ReactNode, useContext, useState } from "react";
@@ -41,6 +49,7 @@ import { AttackDamage } from "./AttackDamage.tsx";
 import { AttackRoll } from "./AttackRoll.tsx";
 import { AttackRow } from "./AttackRow.tsx";
 import { AttackTrades } from "./AttackTrades.tsx";
+import { FeatureDamage } from "./FeatureDamage.tsx";
 import { WeaponMasteryChoice } from "./WeaponMasteryChoice.tsx";
 
 /** A cell the rules leave empty, shown as a dash and spoken as "none". */
@@ -145,6 +154,63 @@ function tradedAttack(field: Attack["attackBonus"], taken: Attack["options"]) {
   };
 }
 
+const NO_SMITE: { slot?: SpellCastOption; versus: boolean } = { versus: false };
+
+/**
+ * The state after paying for the damage features taken on a row: the slot a smite takes and
+ * the once-a-turn uses, with words for what was spent; or why it could not be paid.
+ */
+function featureSpend(
+  derived: CharacterDerived,
+  latest: CharacterState,
+  taken: Attack["featureDamage"],
+  slot: SpellCastOption | undefined,
+): { after: CharacterState; text: string } | { refused: string } {
+  const once = taken.filter(({ offer }) => offer?.oncePerTurn).map(({ source }) => source);
+  const used = featuresUsed(latest, once);
+  const smiting = taken.find(({ offer }) => offer?.slot);
+  const words = once.map((source) => `${source} this turn`);
+  if (!smiting) return { after: used, text: `Used ${words.join(" and ")}` };
+  if (!slot) return { refused: `${smiting.source} needs a spell slot, and none is left.` };
+  try {
+    return {
+      after: slotSpent(derived, used, slot),
+      text: `Used ${[`a level ${slot.level} slot on ${smiting.source}`, ...words].join(" and ")}`,
+    };
+  } catch (error) {
+    return { refused: `${smiting.source} was not used: ${(error as Error).message}` };
+  }
+}
+
+/** The slot the player picked while it is still left, else the lowest left. */
+const pickedSlot = (slots: readonly SpellCastOption[], picked: SpellCastOption | undefined) =>
+  slots.find((option) => option.via === picked?.via && option.level === picked.level) ?? slots[0];
+
+/**
+ * What a row's feature damage adds to its damage roll: the offers taken and not used up this
+ * turn, and the dice and flat bonus of those and of what always lands.
+ */
+function rowFeatureDamage(
+  features: Attack["featureDamage"],
+  chosen: readonly string[],
+  used: (entry: Attack["featureDamage"][number]) => boolean,
+  slot: SpellCastOption | undefined,
+  versus: boolean,
+) {
+  const taken = features.filter(
+    (entry) => entry.offer && !used(entry) && chosen.includes(entry.source),
+  );
+  const landing = [...features.filter((entry) => !entry.offer), ...taken];
+  return {
+    taken,
+    dice: landing
+      .map((entry) => featureDamageDice(entry, slot?.level, versus))
+      .flatMap((dice) => (dice ? [`+${dice}`] : []))
+      .join(""),
+    bonus: landing.reduce((sum, { bonus }) => sum + bonus, 0),
+  };
+}
+
 export function Attacks({
   character,
   derived,
@@ -166,6 +232,17 @@ export function Attacks({
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
   const [traded, setTraded] = useState<Record<string, readonly string[]>>({});
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
+  const [adding, setAdding] = useState<Record<string, readonly string[]>>({});
+  const [smite, setSmite] = useState<Record<string, typeof NO_SMITE>>({});
+  const slots: SpellCastOption[] = play.data
+    ? spellCastOptions({ level: 1, ritual: false }, derived, play.data.state).filter(
+        ({ left }) => left !== null && left > 0,
+      )
+    : [];
+  const usedNow = (entry: Attack["featureDamage"][number]) =>
+    entry.offer?.oncePerTurn === true &&
+    play.data !== undefined &&
+    usedThisTurn(play.data.state, entry.source);
   const heldEffects = play.data ? conditionRollEffects(play.data.state, definition, "attack") : [];
   const attackEffects = (ability: Ability) => [
     ...effectsOnRoll(rollEffects, { roll: "attack", ability }),
@@ -256,9 +333,69 @@ export function Attacks({
   }
 
   /**
+   * The slot a smite on a row would spend, what the row's feature damage adds to its roll, and
+   * the spend to run before the roll where what is taken costs a slot or a turn's use.
+   */
+  function rowDamage(rowKey: string, features: Attack["featureDamage"]) {
+    const { slot: picked, versus } = smite[rowKey] ?? NO_SMITE;
+    const slot = pickedSlot(slots, picked);
+    const added = rowFeatureDamage(features, adding[rowKey] ?? [], usedNow, slot, versus);
+    const spends = added.taken.some(({ offer }) => offer?.slot || offer?.oncePerTurn);
+    return { slot, added, spend: spends ? () => spendFeatures(added.taken, slot) : undefined };
+  }
+
+  /** Clears the trades and feature damage taken on a row, once its damage is logged. */
+  function clearTaken(rowKey: string) {
+    setTraded((now) => ({ ...now, [rowKey]: [] }));
+    setAdding((now) => ({ ...now, [rowKey]: [] }));
+  }
+
+  /** The feature damage controls of one row, the slot a smite would spend among them. */
+  function featureCell(
+    rowKey: string,
+    { damage, featureDamage }: Pick<Attack, "damage" | "featureDamage">,
+    slot: SpellCastOption | undefined,
+  ) {
+    const smiting = smite[rowKey] ?? NO_SMITE;
+    const pick = (change: Partial<typeof smiting>) =>
+      setSmite((now) => ({ ...now, [rowKey]: { ...smiting, ...change } }));
+    return (
+      <FeatureDamage
+        entries={damage ? featureDamage : []}
+        rolling={rolling}
+        taken={adding[rowKey] ?? []}
+        take={(source, on) =>
+          setAdding((now) => {
+            const rest = (now[rowKey] ?? []).filter((name) => name !== source);
+            return { ...now, [rowKey]: on ? [...rest, source] : rest };
+          })
+        }
+        used={usedNow}
+        slots={slots}
+        slot={slot}
+        pickSlot={(picked) => pick({ slot: picked })}
+        versus={smiting.versus}
+        setVersus={(on) => pick({ versus: on })}
+      />
+    );
+  }
+
+  /** Writes what the damage features taken on a row cost; false, with the reason spoken, where it could not. */
+  async function spendFeatures(taken: Attack["featureDamage"], slot: SpellCastOption | undefined) {
+    const latest = play.data?.state;
+    if (!latest) return false;
+    const spend = featureSpend(derived, latest, taken, slot);
+    if ("refused" in spend) {
+      replace.announce(spend.refused);
+      return false;
+    }
+    return spend.after === latest || replace.write(spend.after, spend.text);
+  }
+
+  /**
    * One weapon-shaped row: the bonus, the attack and damage rolls, and the critical-hit flag
    * and the feature trades the two share. A trade taken stays taken until a damage roll is
-   * logged, so a miss carries it to the next attack.
+   * logged, so a miss carries it to the next attack; so does feature damage taken.
    */
   function strikeRow({
     key,
@@ -274,7 +411,10 @@ export function Attacks({
     name: string;
     rowKey: string;
     ability: Ability;
-    attack: Pick<Attack, "attackBonus" | "critThreshold" | "damage" | "extraDamage"> &
+    attack: Pick<
+      Attack,
+      "attackBonus" | "critThreshold" | "damage" | "extraDamage" | "featureDamage"
+    > &
       Partial<Pick<Attack, "options">>;
     flanking: ComponentProps<typeof AttackRoll>["flanking"];
     beforeRoll?: () => Promise<boolean>;
@@ -292,6 +432,7 @@ export function Attacks({
         const rest = (now[rowKey] ?? []).filter((name) => name !== source);
         return { ...now, [rowKey]: on ? [...rest, source] : rest };
       });
+    const { slot, added, spend } = rowDamage(rowKey, attack.featureDamage);
     return (
       <AttackRow
         key={key}
@@ -322,15 +463,16 @@ export function Attacks({
         rollDamage={
           damage && (
             <RollBonusButton
-              label={`${name} damage${struck.map(({ dice, type }) => ` and ${dice} ${type}`).join("")}${taken.map(({ source }) => ` with ${source}`).join("")}`}
+              label={`${name} damage${struck.map(({ dice, type }) => ` and ${dice} ${type}`).join("")}${[...taken, ...added.taken].map(({ source }) => ` with ${source}`).join("")}`}
               type="damage"
               origin={name}
-              dice={`${damage.dice}${struck.map(({ dice }) => `+${dice}`).join("")}`}
-              bonus={addUp(taken, "damage", derivedValue(damage.modifier))}
+              dice={`${damage.dice}${struck.map(({ dice }) => `+${dice}`).join("")}${added.dice}`}
+              bonus={addUp(taken, "damage", derivedValue(damage.modifier)) + added.bonus}
               critical={crit[rowKey] ?? false}
+              beforeRoll={spend}
               onRolled={(_hit, logged) => {
                 setCritical(rowKey, false);
-                if (logged) setTraded((now) => ({ ...now, [rowKey]: [] }));
+                if (logged) clearTaken(rowKey);
               }}
             />
           )
@@ -352,6 +494,7 @@ export function Attacks({
               </label>
             )}
             {damage && rolling && <AttackTrades options={options} taken={taken} take={take} />}
+            {featureCell(rowKey, attack, slot)}
             {damage && rolling && alignments.length > 0 && (
               <label className="flex items-center gap-1 text-label">
                 Target alignment
