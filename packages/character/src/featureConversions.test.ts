@@ -125,6 +125,19 @@ describe("convertedState", () => {
     expect(after.classResources[0]?.expended).toBe(0);
   });
 
+  it("expends the pact slot for points, and never creates one", () => {
+    const warlock = { ...sheet, pactSlots: { level: 2, total: total(2) } };
+    const state = { ...holding([], 3), pactSlots: { level: 2, total: 2, expended: 1 } };
+    const options = conversionOptions(warlock, state, font);
+    expect(options.filter(({ via }) => via === "pact")).toEqual([
+      { via: "pact", level: 2, points: 2, refused: null },
+    ]);
+    const after = convertedState(warlock, state, font, { via: "pact", level: 2 });
+    expect(after.pactSlots).toEqual({ level: 2, total: 2, expended: 2 });
+    expect(after.classResources[0]?.expended).toBe(0);
+    expect(conversionOptions(warlock, after, font).at(-1)?.refused).toBe("No pact slot left.");
+  });
+
   it("refuses a trade the options refuse or do not offer", () => {
     const state = holding([[3, 2]], 1);
     expect(() => convertedState(sheet, state, font, { via: "create", level: 1 })).toThrow(

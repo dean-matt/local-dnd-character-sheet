@@ -31,13 +31,13 @@ export function featureConversions(definition: HoldsFeatures, proficiency: numbe
 
 /**
  * One trade a conversion offers: `create` regains an expended slot of `level` for `points`
- * from the pool, `refund` expends one for `points`, its level capped at what the pool has
- * spent. `points` is null where the sheet counts no such pool, as a 2014 cleric's table prints
- * no Channel Divinity column, so the trade costs nothing from it. `refused` says why it cannot
- * go, or is null.
+ * from the pool; `refund` expends one, and `pact` expends the pact slot, for `points`, the
+ * slot's level capped at what the pool has spent. `points` is null where the sheet counts no
+ * such pool, as a 2014 cleric's table prints no Channel Divinity column, so the trade costs
+ * nothing from it. `refused` says why it cannot go, or is null.
  */
 export type ConversionOption = {
-  via: "create" | "refund";
+  via: "create" | "refund" | "pact";
   level: number;
   points: number | null;
   refused: string | null;
@@ -55,9 +55,12 @@ function heldPool(derived: Sheet, sheet: CharacterState, conversion: Conversion)
   return held?.maximum == null ? undefined : { ...held, maximum: held.maximum };
 }
 
+type Slot = CharacterState["spellSlots"][number];
+
 /**
  * Every trade `conversion` offers at each slot level the sheet shows, each creation before each
- * refund. A refund needs a pool the sheet counts. A slot pact magic gives is never traded.
+ * refund, the pact slot's last. A refund needs a pool the sheet counts; a creation never makes a
+ * pact slot.
  */
 export function conversionOptions(
   derived: Sheet,
@@ -79,18 +82,24 @@ export function conversionOptions(
           : null;
     return [{ via: "create", level: slot.level, points: pool ? cost : null, refused }];
   });
-  const refund =
-    conversion.refund && pool
-      ? slots.map(
-          (slot): ConversionOption => ({
-            via: "refund",
-            level: slot.level,
-            points: Math.min(slot.level, pool.expended),
-            refused: slot.expended >= slot.total ? `No level ${slot.level} slot left.` : null,
-          }),
-        )
-      : [];
-  return [...create, ...refund];
+  if (!conversion.refund || !pool) return create;
+  const refund = (via: "refund" | "pact", slot: Slot): ConversionOption => ({
+    via,
+    level: slot.level,
+    points: Math.min(slot.level, pool.expended),
+    refused:
+      slot.expended < slot.total
+        ? null
+        : via === "pact"
+          ? "No pact slot left."
+          : `No level ${slot.level} slot left.`,
+  });
+  const pact = sheet.pactSlots && sheet.pactSlots.total > 0 ? [sheet.pactSlots] : [];
+  return [
+    ...create,
+    ...slots.map((slot) => refund("refund", slot)),
+    ...pact.map((slot) => refund("pact", slot)),
+  ];
 }
 
 /**
@@ -111,8 +120,6 @@ export function convertedState(
   if (option.refused) throw new RangeError(option.refused);
   const sheet = sheetState(derived, state);
   const pool = heldPool(derived, sheet, conversion);
-  const slot = sheet.spellSlots.find((held) => held.level === trade.level);
-  if (!slot) throw new RangeError(`no level ${trade.level} slot to ${trade.via}`);
   const creates = trade.via === "create";
   const points = option.points ?? 0;
   const paid = pool
@@ -121,7 +128,13 @@ export function convertedState(
         expended: pool.expended + (creates ? points : -points),
       })
     : state;
+  const slot =
+    trade.via === "pact"
+      ? sheet.pactSlots
+      : sheet.spellSlots.find((held) => held.level === trade.level);
+  if (!slot) throw new RangeError(`no level ${trade.level} slot to ${trade.via}`);
   const traded = { ...slot, expended: slot.expended + (creates ? -1 : 1) };
+  if (trade.via === "pact") return { ...paid, pactSlots: traded };
   const others = paid.spellSlots.filter((held) => held.level !== traded.level);
   return { ...paid, spellSlots: [...others, traded].sort((a, b) => a.level - b.level) };
 }
