@@ -306,7 +306,8 @@ export const characterDerivedSchema = z.strictObject({
   /**
    * Each pool of uses a class table prints at the character's level in that class, by class
    * in the order it was taken. `key` is the table's `resource_key`; `maximum` is null where
-   * the table prints `Unlimited`. What is spent is state. `resets` is present only on a
+   * the table prints `Unlimited`. What is spent is state. `die` is the size of each die a
+   * pool of dice holds, such as Superiority Dice. `resets` is present only on a
    * homebrew class's pool, whose key is free text: the rest that restores it, or null where
    * the class sets none, so no catalog rule applies to it.
    */
@@ -315,6 +316,7 @@ export const characterDerivedSchema = z.strictObject({
       class: entryRefSchema,
       key: z.string().min(1),
       maximum: derivedSchema(z.int().min(1)).nullable(),
+      die: z.int().min(4).max(12).optional(),
       resets: z.enum(["short", "long"]).nullable().optional(),
     }),
   ),

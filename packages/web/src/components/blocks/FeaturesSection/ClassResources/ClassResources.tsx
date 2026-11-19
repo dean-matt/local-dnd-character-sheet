@@ -32,9 +32,13 @@ type Pool = CharacterState["classResources"][number];
  */
 const ROW = "col-span-full grid min-h-6 grid-cols-subgrid items-center";
 
+/** The pool's name, with its die size where it holds dice: `Superiority dice (d8)`. */
+const poolLabel = (pool: CharacterDerived["classResources"][number]) =>
+  pool.die === undefined ? resourceLabel(pool.key) : `${resourceLabel(pool.key)} (d${pool.die})`;
+
 /**
- * The Class Resources card: each pool the derived block lists, with its uses left against
- * the maximum the sheet shows, read through `sheetState` as a rest reads them. Spend,
+ * The Class Resources card: each pool the derived block lists, with its die size where it
+ * holds dice and its uses left against the maximum the sheet shows, read through `sheetState` as a rest reads them. Spend,
  * restore and reset are each one state write, announced once it lands. An `Unlimited` pool
  * counts nothing, so it offers no use control. The Rages row also starts and ends a rage,
  * each one write that moves the use and the active effect together.
@@ -74,7 +78,7 @@ export function ClassResources({
       >
         {derived.classResources.map((pool, index) => {
           const key = classResourceKey(pool);
-          const label = resourceLabel(pool.key);
+          const label = poolLabel(pool);
           const owner = displayName(pool.class);
           const name = (
             <span className="text-row">

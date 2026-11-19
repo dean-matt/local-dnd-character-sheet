@@ -36,6 +36,36 @@ const pools = (
   });
 
 describe("classResourcePools", () => {
+  it("gives a Battle Master a Superiority Dice pool whose count and die size grow with Fighter levels", () => {
+    const FIGHTER = { name: "Fighter", source: "PHB" };
+    const battleMaster = (level: number) =>
+      classResourcePools(
+        {
+          ...definition,
+          levels: Array.from({ length: level }, (_, index) => ({
+            class: FIGHTER,
+            ...(index >= 2 && { subclass: { name: "Battle Master", source: "PHB" } }),
+          })),
+        },
+        { classResources: new Map() },
+      );
+    const superiority = (count: number, die: number) => [
+      {
+        class: FIGHTER,
+        key: "superiority_dice",
+        maximum: { computed: count, manual: null, terms: [] },
+        die,
+      },
+    ];
+
+    expect(battleMaster(2)).toEqual([]);
+    expect(battleMaster(3)).toEqual(superiority(4, 8));
+    expect(battleMaster(7)).toEqual(superiority(5, 8));
+    expect(battleMaster(10)).toEqual(superiority(5, 10));
+    expect(battleMaster(15)).toEqual(superiority(6, 10));
+    expect(battleMaster(18)).toEqual(superiority(6, 12));
+  });
+
   it("lists each class's pools at its level, leaving out a column that counts no uses", () => {
     expect(
       pools(levels(BARBARIAN, MONK), [

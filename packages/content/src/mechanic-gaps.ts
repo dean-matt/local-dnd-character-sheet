@@ -42,6 +42,7 @@ const KIND_PATTERNS: Record<Kind, RegExp> = {
   extraDamage:
     /\bextra (?:\{@damage [^}]+\} )?(?:[\w,]+ ){0,5}damage\b|\badditional weapon damage di(?:e|ce)\b/i,
   martialArts: /\bin place of the normal damage\b/i,
+  pool: /\byou have (?:\w+ ){1,3}dice, which are\b/i,
   uses: /\bnumber of times equal to\b|\bregain (?:all |one |any )?(?:of )?(?:its |your )?expended uses\b|\buse (?:it|this feature) (?:again|twice|three times)\b|\b(?:can't|cannot) (?:use|do so|cast)[^."]{0,40} again until\b/i,
 };
 
