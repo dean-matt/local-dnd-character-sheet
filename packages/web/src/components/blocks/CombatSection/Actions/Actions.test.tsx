@@ -278,6 +278,25 @@ describe("Actions", () => {
       );
     });
 
+    it("refuses a second added action in one turn while uses remain", async () => {
+      const surge = { name: "Action Surge", source: "XPHB" };
+      const { card, writes } = renderUse(
+        {
+          ...SECOND_WIND,
+          ...surge,
+          uses: { key: "feature|Fighter|XPHB|Action Surge", count: 2, reset: "short" },
+        },
+        { turn: { ...derivedRecord().turn, addsAction: [surge] } },
+      );
+      const use = await within(card).findByRole("button", { name: "Use Action Surge" });
+      fireEvent.click(use);
+      await waitFor(() => expect(use).toHaveAttribute("aria-disabled", "true"));
+      expect(use).toHaveAttribute("title", "Action Surge already used this turn");
+      fireEvent.click(use);
+      expect(writes).toHaveLength(1);
+      expect(writes[0]?.turn.addedActions).toEqual([false]);
+    });
+
     it("refuses a use at 0 left", async () => {
       const { card, writes } = renderUse(SECOND_WIND, { expended: 2 });
       const use = await within(card).findByRole("button", { name: "Use Second Wind" });

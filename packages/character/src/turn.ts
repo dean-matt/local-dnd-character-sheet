@@ -29,11 +29,25 @@ export function turnMarkSpent(state: CharacterState, mark: TurnMark): CharacterS
   return mark !== "action" || added < 0 ? state : addedActionToggled(state, added);
 }
 
-/** The state with one more action available this turn, as Action Surge gives. */
-export const actionAdded = (state: CharacterState): CharacterState => ({
-  ...state,
-  turn: { ...state.turn, addedActions: [...state.turn.addedActions, false] },
-});
+/** Whether `feature` has already added an action this turn. */
+export const actionAddedBy = (state: CharacterState, feature: string): boolean =>
+  state.turn.features.includes(feature);
+
+/**
+ * The state with one more action available this turn, as Action Surge gives, and `feature`
+ * recorded as used this turn. A feature adds its action once a turn, so a second call is a no-op.
+ */
+export const actionAdded = (state: CharacterState, feature: string): CharacterState =>
+  actionAddedBy(state, feature)
+    ? state
+    : {
+        ...state,
+        turn: {
+          ...state.turn,
+          addedActions: [...state.turn.addedActions, false],
+          features: [...state.turn.features, feature],
+        },
+      };
 
 /** The state with the added action at `index` flipped between spent and available. */
 export const addedActionToggled = (state: CharacterState, index: number): CharacterState => ({

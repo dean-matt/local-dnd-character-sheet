@@ -3,6 +3,7 @@ import {
   ACTION_TURN_MARK,
   type ActionType,
   actionAdded,
+  actionAddedBy,
   type CharacterDerived,
   type CharacterRecord,
   type ConversionOption,
@@ -66,19 +67,21 @@ export function FeatureUse({
   );
   if (!resource && !mark) return null;
 
-  const blocked = resource?.blocked ?? null;
+  const addsAction = derived.turn.addsAction.some(
+    (feature) => feature.name === name && feature.source === source,
+  );
+  const blocked =
+    resource?.blocked ??
+    (addsAction && actionAddedBy(stored, name) ? `${name} already used this turn` : null);
   const disabled = replace.writing || blocked !== null;
   const counted = resource?.total != null;
   const conversion = derived.featureConversions.find(
     ({ feature }) => feature.name === name && feature.source === source,
   );
-  const addsAction = derived.turn.addsAction.some(
-    (feature) => feature.name === name && feature.source === source,
-  );
   const spent = () => {
     const after = resource ? resource.spend(stored) : stored;
     const marked = mark ? turnMarkSpent(after, mark) : after;
-    return addsAction ? actionAdded(marked) : marked;
+    return addsAction ? actionAdded(marked, name) : marked;
   };
   const usedWords = (trade?: string) => {
     const used = `${name} used${trade ? ` to ${trade}` : ""}`;

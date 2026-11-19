@@ -269,6 +269,7 @@ export {
 export { hitPointsWithin } from "./temporaryModifiers.ts";
 export {
   actionAdded,
+  actionAddedBy,
   addedActionToggled,
   featuresUsed,
   TURN_LABELS,

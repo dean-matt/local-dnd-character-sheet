@@ -19,7 +19,7 @@ const holding = (extra: Partial<CharacterDefinition>): CharacterDefinition => ({
 });
 
 describe("featureTurn", () => {
-  it("allows one attack and adds nothing without a feature that changes the turn", () => {
+  it("allows one attack and grants no bonus actions below Extra Attack", () => {
     expect(featureTurn(holding({ levels: levels([FIGHTER, 4]) }))).toEqual({
       attacks: 1,
       pactAttacks: null,

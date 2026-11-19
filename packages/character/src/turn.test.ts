@@ -34,7 +34,7 @@ describe("turn marks", () => {
   });
 
   it("spends an added action once the turn's own action is spent", () => {
-    const surged = actionAdded(turnMarkSpent(state, "action"));
+    const surged = actionAdded(turnMarkSpent(state, "action"), "Action Surge");
     expect(surged.turn.addedActions).toEqual([false]);
     const spent = turnMarkSpent(surged, "action");
     expect(spent.turn.addedActions).toEqual([true]);
@@ -43,17 +43,24 @@ describe("turn marks", () => {
   });
 
   it("keeps an action added before the turn's own is spent", () => {
-    const spent = turnMarkSpent(actionAdded(state), "action");
+    const spent = turnMarkSpent(actionAdded(state, "Action Surge"), "action");
     expect(spent.turn).toMatchObject({ action: true, addedActions: [false] });
   });
 
+  it("adds a feature's action once a turn, however many uses it has", () => {
+    const surged = actionAdded(state, "Action Surge");
+    expect(actionAdded(surged, "Action Surge")).toBe(surged);
+    expect(surged.turn.addedActions).toEqual([false]);
+    expect(actionAdded(turnReset(surged), "Action Surge").turn.addedActions).toEqual([false]);
+  });
+
   it("drops the added actions when the turn resets", () => {
-    expect(turnReset(actionAdded(state)).turn.addedActions).toEqual([]);
+    expect(turnReset(actionAdded(state, "Action Surge")).turn.addedActions).toEqual([]);
   });
 
   it("describes an added action", () => {
-    expect(describeStateChange(state, actionAdded(state))).toBe(
-      "Added actions set to 0 of 1 spent",
+    expect(describeStateChange(state, actionAdded(state, "Action Surge"))).toBe(
+      "Added actions set to 0 of 1 spent, Used this turn set to Action Surge",
     );
   });
 
