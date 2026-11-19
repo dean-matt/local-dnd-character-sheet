@@ -1079,6 +1079,32 @@ describe("ItemList", () => {
       );
       expect(JSON.parse(String(write?.[1]?.body)).activeEffects).toEqual([{ name: "Empty Body" }]);
     });
+
+    it("raises no toast where no feature's effect ends in a shield, though the state is unread", async () => {
+      const fetchMock = stubApi({ inventory: shield() });
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) =>
+          String(input) === "/api/characters/1/state"
+            ? json({ error: "disk full" }, 500)
+            : fetchMock(input, init),
+        ),
+      );
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const character = vex();
+      client.setQueryData(characterKey(character.id), character);
+      render(
+        <QueryClientProvider client={client}>
+          <ItemList character={character} derived={derivedRecord()} />
+          <SaveToasts />
+        </QueryClientProvider>,
+      );
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Wooden Shield"));
+
+      expect((await written(fetchMock)).inventory[0].equipped).toBe(true);
+      expect(saveToasts().queryByText(/^Effects:/)).toBeNull();
+    });
   });
 
   describe("a weapon or armor the character lacks proficiency with", () => {

@@ -109,9 +109,9 @@ function longRestEnded(state: CharacterState): CharacterState {
  * others keep what was spent. Each feature in `features` whose reset the rest meets has no
  * use spent. A long rest returns `regained` charges to each of `itemRecharges`, never past
  * what was spent. A rest drops the charges of an entry the inventory no longer lists. Any rest
- * ends a rage, each running effect of a held feature, and each temporary modifier that ends on it, lowering current hit points to the
- * maximum that leaves; a long rest also ends concentration and clears a reduction to the hit
- * point maximum that a long rest clears.
+ * ends a rage, each running effect of a held feature, and each temporary modifier that ends
+ * on it, lowering current hit points to the maximum that leaves; a long rest also ends
+ * concentration and clears a reduction to the hit point maximum that a long rest clears.
  */
 export function restedState(
   definition: Resting,

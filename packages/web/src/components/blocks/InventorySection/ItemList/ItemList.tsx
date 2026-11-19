@@ -70,19 +70,23 @@ export function ItemList({
   const [ending, setEnding] = useState<{ category: Donned; failure: string }>();
   /** Ends each running effect that donning armor of `category` ends: a 2024 rage in heavy armor, and a feature's effect by its `endsOn`. */
   const endEffects = async (category: Donned) => {
+    const rageEnds = character.edition === "one" && category === "heavy";
+    const startable = (derived?.startableFeatures ?? []).filter(({ endsOn }) =>
+      endsOn.includes(category),
+    );
+    if (!rageEnds && startable.length === 0) return setEnding(undefined);
     const stored = state.data?.state;
     if (!stored) {
       setEnding({ category, failure: "Couldn't end effects: the character's state hasn't loaded" });
       return;
     }
-    const raging = character.edition === "one" && category === "heavy" && isRaging(stored);
     const after = effectsEndedBy(
-      raging ? rageEnded(stored) : stored,
-      derived?.startableFeatures ?? [],
+      rageEnds && isRaging(stored) ? rageEnded(stored) : stored,
+      startable,
       category,
     );
     const ended = endedNames(stored, after);
-    if (ended.length === 0) return;
+    if (ended.length === 0) return setEnding(undefined);
     try {
       await replaceState.mutateAsync(after);
       setEnding(undefined);
