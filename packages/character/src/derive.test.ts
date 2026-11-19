@@ -3588,6 +3588,14 @@ describe("deriveCharacter", () => {
         state,
       ).defenses.computed;
 
+    it("resists all but force damage, citing Empty Body, only while it runs", () => {
+      const emptyBody = { ...rageState, activeEffects: [{ name: "Empty Body" }] };
+      const running = levelled("Monk", undefined, 18, {}, emptyBody).resistances;
+      expect(running.map(({ name }) => name)).not.toContain("force");
+      expect(running).toContainEqual({ name: "psychic", from: ["Empty Body"] });
+      expect(levelled("Monk", undefined, 18).resistances).toEqual([]);
+    });
+
     it("grants Purity of Body's poison and disease immunity at Monk level 10, naming it", () => {
       const at10 = levelled("Monk", undefined, 10);
       expect(at10.damageImmunities).toEqual([{ name: "poison", from: ["Purity of Body"] }]);

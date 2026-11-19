@@ -106,7 +106,7 @@ const POOL_ROWS: [string, string, string[]][] = [
   [
     "channel_divinity",
     "XPHB",
-    ["Channel Divinity", "Divine Spark", "Preserve Life", "Sacred Weapon"],
+    ["Channel Divinity", "Divine Spark", "Divine Sense", "Preserve Life", "Sacred Weapon"],
   ],
   ["wild_shape", "XPHB", ["Wild Shape", "Land's Aid"]],
   ["ki_points", "PHB", ["Flurry of Blows", "Patient Defense", "Step of the Wind"]],

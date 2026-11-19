@@ -75,6 +75,7 @@ import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
+import { startableFeatures } from "./heldFeatures.ts";
 import {
   type ProficiencyItem,
   proficiencyItemTerms,
@@ -85,6 +86,7 @@ import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { martialArts } from "./martialArts.ts";
 import { hitPointMaximumUnder, reducedMaximum, reducedOverride } from "./maximumReduction.ts";
+import { effectBlockedBy } from "./ongoingEffects.ts";
 import { applyOverrides } from "./overrides.ts";
 import { rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
@@ -586,17 +588,21 @@ function weaponStrike(
   const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
   const { reference } = weapon.bonus;
   const proficiency = weaponProficient(definition, weapon) ? "proficient" : "none";
-  const features = featureStrike(definition, {
-    weapon,
-    proficient: proficiency === "proficient",
-    alone:
-      !offHand &&
-      held === "one-handed" &&
-      !isTwoHanded(weapon) &&
-      !definition.inventory.some(
-        (other, at) => at !== index && other.equipped && catalog.weapons.has(itemKey(other)),
-      ),
-  });
+  const features = featureStrike(
+    definition,
+    {
+      weapon,
+      proficient: proficiency === "proficient",
+      alone:
+        !offHand &&
+        held === "one-handed" &&
+        !isTwoHanded(weapon) &&
+        !definition.inventory.some(
+          (other, at) => at !== index && other.equipped && catalog.weapons.has(itemKey(other)),
+        ),
+    },
+    sheet.modifier,
+  );
   const result = weaponAttack<TermReference>({
     weapon: monk?.covers(weapon) ? monk.apply(weapon) : weapon,
     strengthModifier: abilityModifier(scoreOf(definition, catalog, "str")),
@@ -680,8 +686,8 @@ function derivedUnarmedStrike(
 ): CharacterDerived["unarmedStrike"] {
   const level = totalLevel(definition);
   const strength = abilityModifier(scoreOf(definition, catalog, "str"));
-  const features = featureStrike(definition, { proficient: true, alone: false });
   const { sheet, monk } = strikeSheet(definition, catalog, bonuses, rage);
+  const features = featureStrike(definition, { proficient: true, alone: false }, sheet.modifier);
   const unarmed = { kind: "melee" as const, damage: UNARMED_DICE };
   const weapon = monk ? monk.apply(unarmed) : unarmed;
   const result = weaponAttack<TermReference>({
@@ -1119,7 +1125,7 @@ function pactSlots(casters: readonly CastingClass[]): CharacterDerived["pactSlot
  * proficiencies together with what feats grant.
  */
 export function deriveCharacter(
-  stored: CharacterDefinition,
+  input: CharacterDefinition,
   catalog: CharacterCatalog,
   state: Pick<CharacterState, "activeEffects" | "hitPointMaximumReduction" | "temporaryModifiers"> &
     Partial<Pick<CharacterState, "conditions" | "exhaustion">> = {
@@ -1129,10 +1135,13 @@ export function deriveCharacter(
   },
   names?: HomebrewNames,
 ): CharacterDerived {
+  const started = new Set(state.activeEffects.map(({ name }) => name));
+  const stored = { ...input, started };
   const feats = featGrants(stored, catalog);
-  const definition = withFeatGrants(stored, feats.granted, feats.itemSkills);
+  const definition = { ...withFeatGrants(stored, feats.granted, feats.itemSkills), started };
   const level = totalLevel(definition);
-  const armorWorn = equippedArmor(definition, catalog.armor).worn?.category;
+  const armor = equippedArmor(definition, catalog.armor);
+  const armorWorn = armor.worn?.category;
   const heavyArmorWorn = armorWorn === "heavy";
   const rage = rageBenefits(definition, catalog, state, heavyArmorWorn);
   const casters = castingClasses(definition, catalog);
@@ -1347,6 +1356,10 @@ export function deriveCharacter(
     limitedUses: featureLimitedUses(definition, (term) =>
       term === "proficiency" ? proficiencyBonus.total : abilityModifier(scores[term].total),
     ),
+    startableFeatures: startableFeatures(definition).map((feature) => ({
+      ...feature,
+      blockedBy: effectBlockedBy(feature.endsOn, [armorWorn, armor.shield && "shield"]),
+    })),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),

@@ -296,7 +296,7 @@ export function featGrants(
           conditionImmune: grant.conditionImmune ?? [],
           vulnerable: [],
           from: ref.name,
-          ...(grant.while && { whileRaging: true as const }),
+          ...(grant.while === "raging" && { whileRaging: true as const }),
         })),
       ),
     ],

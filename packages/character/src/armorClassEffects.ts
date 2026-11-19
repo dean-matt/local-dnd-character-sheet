@@ -31,15 +31,24 @@ const holds = {
 
 type UnarmoredBase = Extract<Mechanic, { kind: "unarmoredBase" }>;
 
+/** A number, or an ability's modifier raised to `least`. */
+function valueTerm(
+  stance: ArmorStance,
+  ref: Held["ref"],
+  value: number | Ability,
+  least = Number.NEGATIVE_INFINITY,
+): Term<TermReference> {
+  if (typeof value === "number") return { label: ref.name, value, reference: ref };
+  const label = `${ref.name} (${ABILITY_LABEL[value]})`;
+  return { label, value: Math.max(least, stance.modifierOf(value)), reference: ref };
+}
+
 function unarmoredTerm(
   stance: ArmorStance,
   ref: Held["ref"],
   { value, unlessShield }: UnarmoredBase,
 ): Term<TermReference> | undefined {
-  if (unlessShield && stance.shield) return undefined;
-  if (typeof value === "number") return { label: ref.name, value, reference: ref };
-  const label = `${ref.name} (${ABILITY_LABEL[value]})`;
-  return { label, value: stance.modifierOf(value), reference: ref };
+  return unlessShield && stance.shield ? undefined : valueTerm(stance, ref, value);
 }
 
 /**
@@ -48,7 +57,7 @@ function unarmoredTerm(
  */
 function apply(effects: ArmorClassEffects, stance: ArmorStance, { ref, entry }: Held): void {
   for (const { value, when } of mechanicsOfKind(entry, "armorClass"))
-    if (holds[when](stance)) effects.bonus.push({ label: ref.name, value, reference: ref });
+    if (!when || holds[when](stance)) effects.bonus.push(valueTerm(stance, ref, value, 1));
   for (const mechanic of mechanicsOfKind(entry, "unarmoredBase")) {
     const term = unarmoredTerm(stance, ref, mechanic);
     if (term && term.value > (effects.unarmoredBase?.value ?? 0)) effects.unarmoredBase = term;

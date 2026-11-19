@@ -22,9 +22,13 @@ type Kind = Mechanic["kind"];
  * a mention that grants nothing; a feature matching no pattern is listed as `unclassified`.
  * Either way, recording the feature — its mechanics or the narrative mark — takes it off.
  * `uses` counts only a feature whose count the build read none of and no class pool holds.
+ * `active` looks for a duration on the character's own benefit, so an effect the feature lays
+ * on another creature is not one.
  * `convert` counts only a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  */
 const KIND_PATTERNS: Record<Kind, RegExp> = {
+  active:
+    /\b(?:for|lasts? for) (?:the next )?(?:1|10|one) (?:minute|hour)s?\b[^.]{0,120}?\byou (?:have|gain|add|know|can sense)\b|\byou (?:have|gain|add|become|can sense)\b[^.]{0,60}?\bfor (?:1|10|one) (?:minute|hour)s?\b|\blasts? (?:for 10 minutes|until you dismiss)|\b(?:during that time|for the duration|until the end of your next turn), you (?:also )?(?:have|gain|know)\b|\bfor (?:1|10) (?:minute|hour)s?, you add\b|\bto gain [^.]{0,40}\bfor (?:1|10) (?:minute|hour)s?\b/i,
   heal: /\b(?:regain|restore)(?:s|ing)? [^."]{0,60}?\bhit points?\b/i,
   tempHp: /\btemporary hit points?\b/i,
   bonus: /\binitiative\b|hit point maximum increases/i,

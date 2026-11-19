@@ -87,6 +87,7 @@ export const derivedInput = (traits: object = {}) => ({
   featureRestores: [],
   featureConversions: [],
   limitedUses: [],
+  startableFeatures: [],
   unproficientItems: [],
   pendingAbilityPicks: [],
   castingBlockedBy: [],

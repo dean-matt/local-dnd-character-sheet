@@ -9,6 +9,7 @@ import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../Tag.tsx";
 import { FeatPicks } from "./FeatPicks.tsx";
 import { FeatureChoiceField } from "./FeatureChoiceField.tsx";
+import { FeatureEffect } from "./FeatureEffect.tsx";
 import { FeaturePicks } from "./FeaturePicks.tsx";
 import { FeatureUses } from "./FeatureUses.tsx";
 
@@ -51,7 +52,8 @@ function featureControls(
  * An unresolved feature with no source is a homebrew reference, which names no source. A
  * feature that offers a choice of features carries the control that changes it, and a feat
  * the controls for what its own fields offer. A feature with limited uses carries its uses
- * left and the controls that spend them. `featIndex` is a feat's place in `feats`.
+ * left and the controls that spend them, and one whose effect runs the control that starts
+ * and ends it. `featIndex` is a feat's place in `feats`.
  */
 export function FeatureRow({
   feature,
@@ -93,6 +95,13 @@ export function FeatureRow({
     return <ListRow name={feature.name} source={feature.source} chips={chips} />;
   }
   const controls = featureControls(feature, character, featIndex);
+  const { source } = feature;
+  const startable =
+    source === undefined
+      ? undefined
+      : derived?.startableFeatures.find(
+          (ref) => ref.name === feature.name && ref.source === source,
+        );
   return (
     <ListRow
       name={feature.name}
@@ -100,7 +109,7 @@ export function FeatureRow({
       chips={chips}
       preview={firstLine(feature.entries)}
       controls={
-        (feature.uses || controls) && (
+        (feature.uses || controls || startable) && (
           <>
             {feature.uses && (
               <FeatureUses
@@ -109,6 +118,15 @@ export function FeatureRow({
                 name={feature.name}
                 source={feature.source}
                 uses={feature.uses}
+              />
+            )}
+            {startable && derived && (
+              <FeatureEffect
+                character={character}
+                derived={derived}
+                startable={startable}
+                uses={feature.uses}
+                group={group}
               />
             )}
             {controls}

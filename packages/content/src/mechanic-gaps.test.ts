@@ -20,6 +20,7 @@ import { CONTENT_SCHEMA } from "./schema.ts";
 const VENDOR = join(import.meta.dirname, "../../../vendor/5etools");
 
 const zero: Counts = {
+  active: 0,
   heal: 0,
   tempHp: 0,
   bonus: 0,
@@ -131,6 +132,13 @@ describe("mechanicGaps", () => {
   db.prepare(
     "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
   ).run("Flurry of Blows", "PHB", "Monk", "PHB", 2, "classic", surging);
+  feat.run(
+    "Winged",
+    "PHB",
+    "classic",
+    json({ srd: true }, "For the duration, you have a fly speed"),
+  );
+  feat.run("Turning", "PHB", "classic", json({ srd: true }, "it is turned for 1 minute"));
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
@@ -148,12 +156,14 @@ describe("mechanicGaps", () => {
     expect(gaps.pool).toEqual(["Superior (PHB)"]);
     expect(gaps.convert).toEqual(["Flexible (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
+    expect(gaps.active).toEqual(["Winged (PHB)"]);
     expect(gaps.unclassified).toEqual([
       "Counted (PHB)",
       "Flurry of Blows (PHB), Monk level 2",
       "Fortunate (PHB)",
       "Fountain (XPHB)",
       "Strider (PHB)",
+      "Turning (PHB)",
       "Venom (PHB)",
     ]);
     expect(countGaps(gaps)).toEqual({
@@ -172,7 +182,8 @@ describe("mechanicGaps", () => {
       pool: 1,
       convert: 1,
       uses: 1,
-      unclassified: 6,
+      active: 1,
+      unclassified: 7,
     });
   });
 

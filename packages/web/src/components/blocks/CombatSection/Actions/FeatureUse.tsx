@@ -14,9 +14,9 @@ import { useRef, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useFeatureRestore } from "../../../../hooks/useFeatureRestore.ts";
+import { featureResource } from "../../../../lib/featureResource.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { ConvertDialog } from "./ConvertDialog.tsx";
-import { featureResource } from "./featureResource.ts";
 import { tradeWords } from "./tradeWords.ts";
 
 const BUTTON =

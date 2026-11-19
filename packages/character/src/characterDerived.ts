@@ -9,7 +9,7 @@ import {
 } from "@dnd/rules";
 import { z } from "zod";
 import { derivedSchema } from "./derivedField.ts";
-import { dieSizeSchema } from "./featureMechanics.ts";
+import { dieSizeSchema, effectEndSchema } from "./featureMechanics.ts";
 import { abilitySchema, contentRefSchema, entryRefSchema } from "./refs.ts";
 
 /**
@@ -410,6 +410,16 @@ export const characterDerivedSchema = z.strictObject({
   featureConversions: z.array(featureConversionSchema),
   /** The uses each held feature counts, in the order the features are held. */
   limitedUses: z.array(limitedUsesSchema),
+  /**
+   * The held features whose effect the player starts and ends from the feature's card: what
+   * ends each early, and why it cannot start now, null where it can.
+   */
+  startableFeatures: z.array(
+    contentRefSchema.extend({
+      endsOn: z.array(effectEndSchema),
+      blockedBy: z.string().min(1).nullable(),
+    }),
+  ),
   /**
    * One per inventory entry holding a weapon or armor the character lacks proficiency
    * with, equipped or not, in inventory order. `entry` is the index in the definition's

@@ -3,6 +3,7 @@ import type { CharacterDerived } from "./characterDerived.ts";
 import { withClassResource } from "./classResources.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { entryKey } from "./keys.ts";
+import { effectEnded, effectRunning, effectStarted } from "./ongoingEffects.ts";
 import type { Ability } from "./refs.ts";
 import type { CharacterState } from "./state.ts";
 import { classLevels } from "./summaries.ts";
@@ -16,7 +17,7 @@ const RAGE = "Rage";
 type Pool = CharacterState["classResources"][number];
 
 export const isRaging = (state: Pick<CharacterState, "activeEffects">) =>
-  state.activeEffects.some((effect) => effect.name === RAGE);
+  effectRunning(state, RAGE);
 
 /** Why a rage cannot start from this pool, or null where it can. Both editions refuse in heavy armor, where a 2014 rage gains nothing. */
 export function rageBlockedBy(derived: Pick<CharacterDerived, "heavyArmorWorn">, pool: Pool) {
@@ -35,14 +36,11 @@ export function rageStarted(state: CharacterState, pool: Pool): CharacterState {
           ...pool,
           expended: pool.expended + 1,
         });
-  return { ...spent, activeEffects: [...spent.activeEffects, { name: RAGE }] };
+  return effectStarted(spent, RAGE);
 }
 
 /** The state with the rage ended and no use restored. */
-export const rageEnded = (state: CharacterState): CharacterState => ({
-  ...state,
-  activeEffects: state.activeEffects.filter((effect) => effect.name !== RAGE),
-});
+export const rageEnded = (state: CharacterState): CharacterState => effectEnded(state, RAGE);
 
 /**
  * What a rage adds to the derived block, or null while the character is not raging or wears

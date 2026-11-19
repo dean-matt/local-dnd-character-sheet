@@ -19,6 +19,9 @@ const sheet = {
       { label: "Aid", value: 5, reference: { derivedField: "temporaryModifier" } },
     ],
   },
+  startableFeatures: [
+    { name: "Bladesong", source: "TCE", endsOn: ["incapacitated" as const], blockedBy: null },
+  ],
 };
 
 const BARBARIAN = { name: "Barbarian", source: "PHB" };
@@ -275,10 +278,10 @@ describe("restedState", () => {
   });
 });
 
-describe("a rest ends a rage", () => {
+describe("a rest ends a rage and a held feature's effect", () => {
   const raging = {
     ...defaultCharacterState(),
-    activeEffects: [{ name: "Rage" }, { name: "Bless" }],
+    activeEffects: [{ name: "Rage" }, { name: "Bladesong" }, { name: "Bless" }],
   };
 
   it.each(["short", "long"] as const)("on a %s rest, and leaves any other effect", (length) => {

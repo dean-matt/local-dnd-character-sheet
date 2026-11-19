@@ -5,6 +5,7 @@ import { concentrationEnded } from "./concentration.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import type { Derived } from "./derivedField.ts";
 import { classResourceKey } from "./keys.ts";
+import { effectEnded } from "./ongoingEffects.ts";
 import { rageEnded } from "./rage.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import { type CharacterState, itemChargesSpent } from "./state.ts";
@@ -108,13 +109,13 @@ function longRestEnded(state: CharacterState): CharacterState {
  * others keep what was spent. Each feature in `features` whose reset the rest meets has no
  * use spent. A long rest returns `regained` charges to each of `itemRecharges`, never past
  * what was spent. A rest drops the charges of an entry the inventory no longer lists. Any rest
- * ends a rage and each temporary modifier that ends on it, lowering current hit points to the
- * maximum that leaves; a long rest also ends concentration and clears a reduction to the hit
- * point maximum that a long rest clears.
+ * ends a rage, each running effect of a held feature, and each temporary modifier that ends
+ * on it, lowering current hit points to the maximum that leaves; a long rest also ends
+ * concentration and clears a reduction to the hit point maximum that a long rest clears.
  */
 export function restedState(
   definition: Resting,
-  derived: Sheet & Pick<CharacterDerived, "hitPointMaximum">,
+  derived: Sheet & Pick<CharacterDerived, "hitPointMaximum" | "startableFeatures">,
   state: CharacterState,
   length: RestLength,
   picked?: readonly HitDie[],
@@ -126,7 +127,13 @@ export function restedState(
     ...options(definition),
     picked,
   });
-  const ended = modifiersEnded(rageEnded(rested), length);
+  // A short rest takes an hour, which outlasts every recorded effect but the 2014 Dragon
+  // Wings, whose restart spends nothing.
+  const effectsEnded = derived.startableFeatures.reduce(
+    (ending, { name }) => effectEnded(ending, name),
+    rageEnded(rested),
+  );
+  const ended = modifiersEnded(effectsEnded, length);
   const settled = hitPointsWithin(
     definition,
     derived,

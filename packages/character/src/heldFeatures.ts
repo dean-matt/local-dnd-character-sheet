@@ -6,7 +6,13 @@
  */
 import type { CharacterDefinition } from "./definition.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
-import { type FeatureMechanics, featureMechanicsKey, featureOffers } from "./featureMechanics.ts";
+import {
+  type EffectEnd,
+  type FeatureMechanics,
+  featureMechanicsKey,
+  featureOffers,
+  mechanicsOfKind,
+} from "./featureMechanics.ts";
 import { classFeatureUsesKey, entryKey, featureKey, featureUsesKey, refKey } from "./keys.ts";
 import { type ContentRef, catalogRef, type FeatureKey } from "./refs.ts";
 import { houseRule as houseRuleOf } from "./resolve.ts";
@@ -54,6 +60,7 @@ export const SUBCLASS_NAMES = new Map([
   ["Arcane Archer|XGE", "Arcane Archer|XGE"],
   ["Devotion|PHB", "Oath of Devotion|PHB"],
   ["Devotion|XPHB", "Oath of Devotion|XPHB"],
+  ["Vengeance|PHB", "Oath of Vengeance|PHB"],
   ["Land|PHB", "Circle of the Land|PHB"],
   ["Thief|PHB", "Thief|PHB"],
   ["Champion|XPHB", "Champion|XPHB"],
@@ -179,7 +186,10 @@ const RACE_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
 });
 
 export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" | "houseRules">> &
-  Pick<CharacterDefinition, "feats" | "optionalFeatures" | "race" | "subrace" | "levels">;
+  Pick<CharacterDefinition, "feats" | "optionalFeatures" | "race" | "subrace" | "levels"> & {
+    /** The names of the features whose effect runs, as the state's `activeEffects` holds them; none where absent. */
+    started?: ReadonlySet<string>;
+  };
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
   return [
@@ -240,6 +250,16 @@ function classFeatures(definition: HoldsFeatures): Held[] {
   });
 }
 
+/** `held` without the mechanics that hold only while its effect runs, unless it runs. */
+function asStarted(held: Held, started: ReadonlySet<string>): Held {
+  const { mechanics } = held.entry;
+  if (!mechanics || started.has(held.ref.name)) return held;
+  const now = mechanics.filter((mechanic) => !("while" in mechanic) || mechanic.while !== "active");
+  return now.length === mechanics.length
+    ? held
+    : { ...held, entry: { ...held.entry, mechanics: now } };
+}
+
 /** Each feature once, the later source of a repeat winning. */
 export function heldFeatures(definition: HoldsFeatures): Held[] {
   const levels = totalLevel(definition);
@@ -250,5 +270,14 @@ export function heldFeatures(definition: HoldsFeatures): Held[] {
     ...classFeatures(definition),
   ])
     held.set(featureMechanicsKey(feature.entry), feature);
-  return [...held.values()];
+  const started = definition.started ?? new Set();
+  return [...held.values()].map((feature) => asStarted(feature, started));
 }
+
+/** The held features whose effect the player starts and ends, with what ends each early. */
+export const startableFeatures = (
+  definition: HoldsFeatures,
+): (ContentRef & { endsOn: EffectEnd[] })[] =>
+  heldFeatures(definition).flatMap(({ ref, entry }) =>
+    mechanicsOfKind(entry, "active").map(({ endsOn = [] }) => ({ ...ref, endsOn })),
+  );
