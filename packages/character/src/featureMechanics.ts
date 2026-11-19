@@ -385,8 +385,43 @@ const usesMechanicSchema = z
     error: "times multiplies only an ability or proficiency count",
   });
 
+export const dieSizeSchema = z.union([
+  z.literal(4),
+  z.literal(6),
+  z.literal(8),
+  z.literal(10),
+  z.literal(12),
+]);
+
+/**
+ * A class pool the feature gives where no class table prints a column for it: `count` dice
+ * of `die` sides, keyed `key` as a table's `resource_key` would be. Each of `scales` replaces
+ * the count, the die or both from a level in the feature's class.
+ */
+const poolMechanicSchema = z.strictObject({
+  kind: z.literal("pool"),
+  key: z.string().regex(/^[a-z]+(?:_[a-z]+)*$/),
+  count: z.int().min(1),
+  die: dieSizeSchema,
+  scales: z
+    .array(
+      z
+        .strictObject({
+          level: z.int().min(2).max(20),
+          count: z.int().min(1).optional(),
+          die: dieSizeSchema.optional(),
+        })
+        .refine((scale) => scale.count !== undefined || scale.die !== undefined, {
+          error: "a scale replaces the count, the die or both",
+        }),
+    )
+    .min(1)
+    .optional(),
+});
+
 const mechanicSchema = z.union([
   usesMechanicSchema,
+  poolMechanicSchema,
   healMechanicSchema,
   tempHpMechanicSchema,
   extraDamageMechanicSchema,

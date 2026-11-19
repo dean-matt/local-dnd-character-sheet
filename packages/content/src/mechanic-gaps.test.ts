@@ -36,6 +36,7 @@ const zero: Counts = {
   attack: 0,
   extraDamage: 0,
   martialArts: 0,
+  pool: 0,
   uses: 0,
   unclassified: 0,
 };
@@ -107,6 +108,12 @@ describe("mechanicGaps", () => {
   );
   feat.run("Mending", "PHB", "classic", json({ srd: true }, "regain {@dice 1d10} hit points"));
   feat.run("Shielding", "PHB", "classic", json({ srd: true }, "gain 5 temporary hit points"));
+  feat.run(
+    "Superior",
+    "PHB",
+    "classic",
+    json({ srd: true }, "You have four superiority dice, which are {@dice d8}s."),
+  );
   const surging = json({ srd: true }, "a number of times equal to your Charisma modifier");
   feat.run("Surging", "PHB", "classic", surging);
   db.prepare(
@@ -129,6 +136,7 @@ describe("mechanicGaps", () => {
     expect(gaps.martialArts).toEqual(["Fists (PHB)"]);
     expect(gaps.heal).toEqual(["Mending (PHB)"]);
     expect(gaps.tempHp).toEqual(["Shielding (PHB)"]);
+    expect(gaps.pool).toEqual(["Superior (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.unclassified).toEqual([
       "Counted (PHB)",
@@ -150,6 +158,7 @@ describe("mechanicGaps", () => {
       martialArts: 1,
       heal: 1,
       tempHp: 1,
+      pool: 1,
       uses: 1,
       unclassified: 5,
     });

@@ -1448,6 +1448,18 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       unarmed: true,
       option: SUPERIORITY_DIE,
     },
+    {
+      kind: "pool",
+      key: "superiority_dice",
+      count: 4,
+      die: 8,
+      scales: [
+        { level: 7, count: 5 },
+        { level: 10, die: 10 },
+        { level: 15, count: 6 },
+        { level: 18, die: 12 },
+      ],
+    },
   ]),
   ...[
     { name: "Martial Adept", source: "PHB" },
