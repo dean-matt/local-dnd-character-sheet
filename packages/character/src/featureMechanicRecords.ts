@@ -1751,9 +1751,10 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       { kind: "uses", count: 1, reset: "short" },
     ],
   },
-  // Each restores another creature, a pool the player divides, a ward or a summon's hit points,
-  // or heals through a spell, a rest's hit dice, a random table, an option picked as it lands,
-  // or an amount no restore term records.
+  // Each narrative record from here to the limited uses heals on an event rather than a use,
+  // restores another creature, a pool the player divides, a ward or a summon's hit points, or
+  // heals through a spell, a rest's hit dice, a random table, an option picked as it lands, or
+  // an amount no restore term records.
   ...(
     [
       [cleric, "Circle of Mortality", ["Grave", "XGE"], "XGE", 1],
