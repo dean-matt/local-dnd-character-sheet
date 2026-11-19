@@ -31,12 +31,20 @@ describe("featurePoolKey", () => {
     expect(featurePoolKey({ name: "Channel Divinity: Twilight Sanctuary", source: "TCE" })).toBe(
       "channel_divinity",
     );
-    expect(featurePoolKey({ name: "Symbiotic Entity", source: "TCE" })).toBe("wild_shape");
   });
 
   it("is undefined for a feature that spends no pool", () => {
     expect(featurePoolKey({ name: "Second Wind", source: "PHB" })).toBeUndefined();
     expect(featurePoolKey({ name: "Action Surge", source: "XPHB" })).toBeUndefined();
+  });
+
+  it("is undefined for a feature only the 2014 classes hold, whose tables carry no pool", () => {
+    expect(featurePoolKey({ name: "Channel Divinity", source: "PHB" })).toBeUndefined();
+    expect(featurePoolKey({ name: "Wild Shape", source: "PHB" })).toBeUndefined();
+    expect(featurePoolKey({ name: "Symbiotic Entity", source: "TCE" })).toBeUndefined();
+    expect(featurePoolKey({ name: "Channel Divinity: Preserve Life", source: "PHB" })).toBe(
+      "channel_divinity",
+    );
   });
 });
 

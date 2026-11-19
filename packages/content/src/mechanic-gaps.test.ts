@@ -114,7 +114,7 @@ describe("mechanicGaps", () => {
   ).run("Counted", "PHB", "classic", surging, 2, "long");
   db.prepare(
     "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  ).run("Wild Shape", "PHB", "Druid", "PHB", 2, "classic", surging);
+  ).run("Flurry of Blows", "PHB", "Monk", "PHB", 2, "classic", surging);
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
@@ -132,10 +132,10 @@ describe("mechanicGaps", () => {
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.unclassified).toEqual([
       "Counted (PHB)",
+      "Flurry of Blows (PHB), Monk level 2",
       "Fortunate (PHB)",
       "Strider (PHB)",
       "Venom (PHB)",
-      "Wild Shape (PHB), Druid level 2",
     ]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
