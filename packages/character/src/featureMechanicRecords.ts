@@ -1908,10 +1908,11 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     { kind: "heal", bonus: [1] },
   ]),
   classFeature(artificer, ["Soul of Artifice", "TCE"], 20, [{ kind: "heal", bonus: [1] }]),
-  // Each lands when the character finishes a rest or casts Evard's black tentacles, not on a use.
+  // Lands when the character finishes a rest, not on a use.
   subclassFeature(warlock, ["Celestial", "XGE"], ["Celestial Resilience", "XGE"], 10, [
     { kind: "tempHp", bonus: ["level", "cha"] },
   ]),
+  // The use is the free cast of Evard's black tentacles.
   subclassFeature(warlock, ["Fathomless", "TCE"], ["Grasping Tentacles", "TCE"], 10, [
     { kind: "tempHp", bonus: ["level"] },
     { kind: "uses", count: 1, reset: "long" },
