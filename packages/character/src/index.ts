@@ -121,6 +121,11 @@ export {
   featurePoolKey,
 } from "./featureActions.ts";
 export { featureDamageDice, offerSlots } from "./featureAttacks.ts";
+export {
+  type ConversionOption,
+  conversionOptions,
+  convertedState,
+} from "./featureConversions.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 export type { Mechanic } from "./featureMechanics.ts";
 export { restoredState } from "./featureRestores.ts";

@@ -37,6 +37,7 @@ const zero: Counts = {
   extraDamage: 0,
   martialArts: 0,
   pool: 0,
+  convert: 0,
   uses: 0,
   unclassified: 0,
 };
@@ -114,6 +115,14 @@ describe("mechanicGaps", () => {
     "classic",
     json({ srd: true }, "You have four superiority dice, which are {@dice d8}s."),
   );
+  const flexible = json({ srd: true }, "expend one spell slot to gain sorcery points");
+  feat.run("Flexible", "PHB", "classic", flexible);
+  feat.run(
+    "Fountain",
+    "XPHB",
+    "one",
+    json({ srd52: true }, "transform points into one spell slot"),
+  );
   const surging = json({ srd: true }, "a number of times equal to your Charisma modifier");
   feat.run("Surging", "PHB", "classic", surging);
   db.prepare(
@@ -137,11 +146,13 @@ describe("mechanicGaps", () => {
     expect(gaps.heal).toEqual(["Mending (PHB)"]);
     expect(gaps.tempHp).toEqual(["Shielding (PHB)"]);
     expect(gaps.pool).toEqual(["Superior (PHB)"]);
+    expect(gaps.convert).toEqual(["Flexible (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.unclassified).toEqual([
       "Counted (PHB)",
       "Flurry of Blows (PHB), Monk level 2",
       "Fortunate (PHB)",
+      "Fountain (XPHB)",
       "Strider (PHB)",
       "Venom (PHB)",
     ]);
@@ -159,8 +170,9 @@ describe("mechanicGaps", () => {
       heal: 1,
       tempHp: 1,
       pool: 1,
+      convert: 1,
       uses: 1,
-      unclassified: 5,
+      unclassified: 6,
     });
   });
 

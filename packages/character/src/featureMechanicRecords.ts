@@ -313,6 +313,7 @@ const LIMITED_USES: FeatureMechanics[] = [
     ] as const
   ).map(([owner, level, twice, thrice]) => ({
     ...classFeature(owner, ["Channel Divinity: Harness Divine Power", "TCE"], level, [
+      { kind: "convert", pool: "channel_divinity", costs: [1, 1, 1], upTo: "halfProficiency" },
       {
         kind: "uses",
         count: 1,
@@ -2000,5 +2001,16 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     { name: "Homunculus Servant", source: "TCE" },
     { name: "Tomb of Levistus", source: "XGE" },
   ].map(narrative),
+  classFeature(sorcerer, ["Font of Magic", "PHB"], 2, [
+    { kind: "convert", pool: "sorcery_points", costs: [2, 3, 5, 6, 7], refund: true },
+  ]),
+  // Its conversion is recorded on Font of Magic, the feature whose row the sheet lists.
+  narrative({
+    name: "Flexible Casting",
+    source: "PHB",
+    className: "Sorcerer",
+    classSource: "PHB",
+    level: 2,
+  }),
   ...LIMITED_USES,
 ];

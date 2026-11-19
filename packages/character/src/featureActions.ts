@@ -72,6 +72,7 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "Quickened Healing",
     "Symbiotic Entity",
   ),
+  ...row("bonus action", "TCE", "Channel Divinity: Harness Divine Power"),
   ...row("bonus action", "XGE", "Fighting Spirit", "Mantle of Inspiration", "Unearthly Recovery"),
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
   ...row("reaction", "TCE", "Soul of Artifice"),

@@ -174,6 +174,19 @@ const featureRestoreSchema = z.strictObject({
 });
 
 /**
+ * A held feature's trade between its class's pool keyed `pool` and spell slots: `costs` from
+ * the pool for one expended slot, the first a level 1 slot's, and no slot above the last at the
+ * character's level; `refund` lets a slot be expended for as many uses as its level.
+ */
+const featureConversionSchema = z.strictObject({
+  feature: contentRefSchema,
+  class: contentRefSchema,
+  pool: z.string().min(1),
+  costs: z.array(z.int().min(1)).max(9),
+  refund: z.boolean(),
+});
+
+/**
  * The uses a held feature counts, computed from the character where the content build reads no
  * count from its text: `origin` is the features section's group it shows in, `level` is a class
  * or subclass feature's, null for a feat or trait, and `key` is its entry in the state's
@@ -393,6 +406,8 @@ export const characterDerivedSchema = z.strictObject({
   rollOptions: derivedSchema(z.array(rollOptionSchema)),
   /** What a use of each held feature restores, in the order the features are held. */
   featureRestores: z.array(featureRestoreSchema),
+  /** The pool and slot trades held features make, in the order the features are held. */
+  featureConversions: z.array(featureConversionSchema),
   /** The uses each held feature counts, in the order the features are held. */
   limitedUses: z.array(limitedUsesSchema),
   /**
