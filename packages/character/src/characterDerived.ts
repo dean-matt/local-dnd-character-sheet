@@ -162,7 +162,7 @@ const featureDamageSchema = z.strictObject({
 /**
  * What one use of a held feature restores: hit points for `heal`, temporary hit points for
  * `tempHp`, of `dice` rolled plus `bonus`, at least 1. `others` falls on another creature, so
- * the sheet shows the amount and heals no one.
+ * the sheet shows the amount and restores nothing to the character.
  */
 const featureRestoreSchema = z.strictObject({
   feature: contentRefSchema,

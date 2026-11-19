@@ -338,6 +338,27 @@ describe("deriveCharacter", () => {
       expect(deriveCharacter(overridden(40), catalog).hitPointMaximum.manual).toBe(40);
     });
 
+    it("halves the maximum the sheet shows for a restore of half of it", () => {
+      const warlock = { name: "Warlock", source: "PHB" };
+      const celestial: CharacterDefinition = {
+        ...equipped,
+        edition: "classic",
+        levels: Array.from({ length: 14 }, (_, index) => ({
+          class: warlock,
+          ...(index === 0 && { subclass: { name: "The Celestial", source: "XGE" } }),
+        })),
+        overrides: { hitPointMaximum: 61 },
+      };
+      const withWarlock = {
+        ...catalog,
+        hitDice: new Map<string, HitDie>([...hitDice, [entryKey(warlock), 8]]),
+      };
+      const restore = deriveCharacter(celestial, withWarlock, reduced(10)).featureRestores.find(
+        ({ feature }) => feature.name === "Searing Vengeance",
+      );
+      expect(restore).toMatchObject({ kind: "heal", dice: null, bonus: 25 });
+    });
+
     it("holds across a level-up, which changes the definition alone", () => {
       const leveled = { ...equipped, levels: [...equipped.levels, { class: WARLOCK }] };
       const unreduced = deriveCharacter(leveled, catalog).hitPointMaximum.computed;

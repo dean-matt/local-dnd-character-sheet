@@ -1196,6 +1196,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       option: "expending a use of Bardic Inspiration on a flourish",
     },
   ]),
+  // Its heal is the alternative to this damage on a use, so a `heal` would land on every use.
   subclassFeature(artificer, ["Battle Smith", "TCE"], ["Arcane Jolt", "TCE"], 9, [
     {
       kind: "extraDamage",
@@ -1207,6 +1208,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     },
   ]),
   subclassFeature(["Druid", "PHB"], ["Spores", "TCE"], ["Symbiotic Entity", "TCE"], 2, [
+    { kind: "tempHp", bonus: ["level"], times: 4 },
     {
       kind: "extraDamage",
       dice: "1d6",
@@ -1392,7 +1394,8 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       option: ON_A_HIT,
     },
   ]),
-  // Its critical range against the cursed target is no `attack` mechanic, which always holds.
+  // Its critical range against the cursed target is no `attack` mechanic, which always holds,
+  // and its heal lands when the target dies, which a `heal` would move to the use that curses it.
   subclassFeature(warlock, ["Hexblade", "XGE"], ["Hexblade's Curse", "XGE"], 1, [
     {
       kind: "extraDamage",
@@ -1670,5 +1673,151 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     level: 10,
   }),
   narrative({ name: "Fiendish Vigor", source: "XPHB" }),
+  ...(
+    [
+      [cleric, 2],
+      [cleric24, 3],
+    ] as const
+  ).flatMap(([owner, level]) => [
+    subclassFeature(owner, ["Peace", "TCE"], ["Channel Divinity: Balm of Peace", "TCE"], level, [
+      { kind: "heal", dice: "2d6", bonus: ["wis"], others: true },
+    ]),
+    subclassFeature(
+      owner,
+      ["Twilight", "TCE"],
+      ["Channel Divinity: Twilight Sanctuary", "TCE"],
+      level,
+      [{ kind: "tempHp", dice: "1d6", bonus: ["level"] }],
+    ),
+  ]),
+  subclassFeature(monk, ["Mercy", "TCE"], ["Hand of Healing", "TCE"], 3, [
+    { kind: "heal", dice: { column: "martial_arts" }, bonus: ["wis"], others: true },
+  ]),
+  subclassFeature(monk, ["Mercy", "TCE"], ["Hand of Ultimate Mercy", "TCE"], 17, [
+    { kind: "heal", dice: "4d10", bonus: ["wis"], others: true },
+  ]),
+  {
+    ...classFeature(monk, ["Quickened Healing", "TCE"], 4, [
+      { kind: "heal", dice: { column: "martial_arts" }, bonus: ["proficiency"] },
+    ]),
+    houseRule: "optionalClassFeatures",
+  },
+  {
+    ...classFeature(ranger, ["Deft Explorer Improvement", "TCE"], 10, [
+      { kind: "tempHp", dice: "1d8", bonus: ["wis"] },
+    ]),
+    houseRule: "optionalClassFeatures",
+  },
+  subclassFeature(bard, ["Glamour", "XGE"], ["Mantle of Inspiration", "XGE"], 3, [
+    {
+      kind: "tempHp",
+      bonus: [5],
+      scales: [
+        { level: 5, bonus: 8 },
+        { level: 10, bonus: 11 },
+        { level: 15, bonus: 14 },
+      ],
+      others: true,
+    },
+  ]),
+  subclassFeature(["Sorcerer", "PHB"], ["Divine Soul", "XGE"], ["Unearthly Recovery", "XGE"], 18, [
+    { kind: "heal", bonus: ["halfMaximum"] },
+  ]),
+  subclassFeature(warlock, ["Celestial", "XGE"], ["Searing Vengeance", "XGE"], 14, [
+    { kind: "heal", bonus: ["halfMaximum"] },
+  ]),
+  subclassFeature(["Druid", "PHB"], ["Wildfire", "TCE"], ["Blazing Revival", "TCE"], 14, [
+    { kind: "heal", bonus: ["halfMaximum"] },
+  ]),
+  subclassFeature(paladin, ["Ancients", "PHB"], ["Undying Sentinel", "PHB"], 15, [
+    { kind: "heal", bonus: [1] },
+  ]),
+  subclassFeature(["Sorcerer", "PHB"], ["Shadow", "XGE"], ["Strength of the Grave", "XGE"], 1, [
+    { kind: "heal", bonus: [1] },
+  ]),
+  classFeature(artificer, ["Soul of Artifice", "TCE"], 20, [{ kind: "heal", bonus: [1] }]),
+  // Each lands when the character finishes a rest or casts Evard's black tentacles, not on a use.
+  subclassFeature(warlock, ["Celestial", "XGE"], ["Celestial Resilience", "XGE"], 10, [
+    { kind: "tempHp", bonus: ["level", "cha"] },
+  ]),
+  subclassFeature(warlock, ["Fathomless", "TCE"], ["Grasping Tentacles", "TCE"], 10, [
+    { kind: "tempHp", bonus: ["level"] },
+  ]),
+  // A creature gains these once between rests, so the use counts the character's own.
+  {
+    ref: { name: "Inspiring Leader", source: "PHB" },
+    mechanics: [
+      { kind: "tempHp", bonus: ["level", "cha"] },
+      { kind: "uses", count: 1, reset: "short" },
+    ],
+  },
+  // Each narrative record from here to the limited uses heals on an event rather than a use,
+  // restores another creature, a pool the player divides, a ward or a summon's hit points, or
+  // heals through a spell, a rest's hit dice, a random table, an option picked as it lands, or
+  // an amount no restore term records.
+  ...(
+    [
+      [cleric, "Circle of Mortality", ["Grave", "XGE"], "XGE", 1],
+      [cleric, "Keeper of Souls", ["Grave", "XGE"], "XGE", 17],
+      [["Druid", "PHB"], "Combat Wild Shape", ["Moon", "PHB"], "PHB", 2],
+      [["Druid", "PHB"], "Balm of the Summer Court", ["Dreams", "XGE"], "XGE", 2],
+      [["Druid", "PHB"], "Spirit Totem", ["Shepherd", "XGE"], "XGE", 2],
+      [["Druid", "PHB"], "Guardian Spirit", ["Shepherd", "XGE"], "XGE", 10],
+      [["Druid", "PHB"], "Chalice", ["Stars", "TCE"], "TCE", 2],
+      [["Druid", "PHB"], "Enhanced Bond", ["Wildfire", "TCE"], "TCE", 6],
+      [["Druid", "PHB"], "Cauterizing Flames", ["Wildfire", "TCE"], "TCE", 10],
+      [paladin, "Elder Champion", ["Ancients", "PHB"], "PHB", 20],
+      [paladin, "Protective Spirit", ["Redemption", "XGE"], "XGE", 15],
+      [paladin, "Inspiring Smite", ["Glory", "TCE"], "TCE", 3],
+      [warlock, "Healing Light", ["Celestial", "XGE"], "XGE", 1],
+      [warlock, "Accursed Specter", ["Hexblade", "XGE"], "XGE", 6],
+      [["Sorcerer", "PHB"], "Wild Magic Surge", ["Wild", "PHB"], "PHB", 1],
+      [["Sorcerer", "PHB"], "Hound of Ill Omen", ["Shadow", "XGE"], "XGE", 6],
+      [["Sorcerer", "PHB"], "Clockwork Cavalcade", ["Clockwork Soul", "TCE"], "TCE", 18],
+      [["Wizard", "PHB"], "Arcane Ward", ["Abjuration", "PHB"], "PHB", 2],
+      [["Wizard", "PHB"], "Grim Harvest", ["Necromancy", "PHB"], "PHB", 2],
+      [["Wizard", "PHB"], "Master Transmuter", ["Transmutation", "PHB"], "PHB", 14],
+      [["Wizard", "PHB"], "Durable Summons", ["Conjuration", "PHB"], "PHB", 14],
+      [barbarian, "Form of the Beast", ["Beast", "TCE"], "TCE", 3],
+      [barbarian, "Call the Hunt", ["Beast", "TCE"], "TCE", 14],
+      [barbarian, "Wild Surge", ["Wild Magic", "TCE"], "TCE", 3],
+      [barbarian, "Tundra", ["Storm Herald", "XGE"], "XGE", 3],
+      [bard, "Mote of Potential", ["Creation", "TCE"], "TCE", 3],
+      [artificer, "Experimental Elixir", ["Alchemist", "TCE"], "TCE", 3],
+      [artificer, "Alchemical Savant", ["Alchemist", "TCE"], "TCE", 5],
+      [artificer, "Restorative Reagents", ["Alchemist", "TCE"], "TCE", 9],
+      [artificer, "Eldritch Cannon", ["Artillerist", "TCE"], "TCE", 3],
+      [artificer, "Steel Defender", ["Battle Smith", "TCE"], "TCE", 3],
+      [artificer, "Defensive Field", ["Armorer", "TCE"], "TCE", 3],
+      [warlock, "Sanctuary Vessel", ["Genie", "TCE"], "TCE", 10],
+    ] as const
+  ).map(([[className, classSource], name, [shortName, subclassSource], source, level]) =>
+    narrative({
+      name,
+      source,
+      className,
+      classSource,
+      subclass: { shortName, source: subclassSource },
+      level,
+    }),
+  ),
+  narrative({
+    name: "Magical Inspiration",
+    source: "TCE",
+    className: "Bard",
+    classSource: "PHB",
+    level: 2,
+  }),
+  ...[
+    { name: "Healer", source: "PHB" },
+    { name: "Durable", source: "PHB" },
+    { name: "Dwarven Fortitude", source: "XGE" },
+    { name: "Chef", source: "TCE" },
+    { name: "Rally", source: "PHB" },
+    { name: "Gift of the Ever-Living Ones", source: "XGE" },
+    { name: "Gift of the Protectors", source: "TCE" },
+    { name: "Homunculus Servant", source: "TCE" },
+    { name: "Tomb of Levistus", source: "XGE" },
+  ].map(narrative),
   ...LIMITED_USES,
 ];

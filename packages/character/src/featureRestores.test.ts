@@ -27,6 +27,8 @@ const levelsOf = (
 const SHEET: RestoreSheet = {
   column: (key) => (key === "martial_arts" ? "1d8" : undefined),
   modifier: (ability) => ({ str: 0, dex: 2, con: 1, int: 0, wis: 3, cha: 4 })[ability],
+  proficiency: 3,
+  hitPointMaximum: 61,
 };
 
 const restoresOf = (held: CharacterDefinition, name: string, sheet = SHEET) =>
@@ -83,6 +85,54 @@ describe("featureRestores", () => {
     ]);
   });
 
+  it("restores half the hit point maximum the sheet shows, rounded down", () => {
+    const soul = levelsOf("Sorcerer", "PHB", 18, { name: "Divine Soul", source: "XGE" });
+    expect(restoresOf(soul, "Unearthly Recovery")).toMatchObject([
+      { kind: "heal", dice: null, bonus: 30, others: false },
+    ]);
+  });
+
+  it("adds the proficiency bonus to Quickened Healing, under the optional class features rule", () => {
+    const monk = levelsOf("Monk", "PHB", 4);
+    expect(restoresOf(monk, "Quickened Healing")).toEqual([]);
+    const optional = { ...monk, houseRules: { optionalClassFeatures: true } };
+    expect(restoresOf(optional, "Quickened Healing")).toMatchObject([
+      { kind: "heal", dice: "1d8", bonus: 3 },
+    ]);
+  });
+
+  it("gives other creatures Balm of Peace's healing and Mantle of Inspiration's temporary hit points", () => {
+    const peace = levelsOf("Cleric", "XPHB", 3, { name: "Peace Domain", source: "TCE" });
+    expect(restoresOf(peace, "Channel Divinity: Balm of Peace")).toMatchObject([
+      { kind: "heal", dice: "2d6", bonus: 3, others: true },
+    ]);
+    const glamour = levelsOf("Bard", "PHB", 10, { name: "College of Glamour", source: "XGE" });
+    expect(restoresOf(glamour, "Mantle of Inspiration")).toMatchObject([
+      { kind: "tempHp", dice: null, bonus: 11, others: true },
+    ]);
+  });
+
+  it("gives Symbiotic Entity four temporary hit points per druid level", () => {
+    const spores = levelsOf("Druid", "PHB", 3, { name: "Circle of Spores", source: "TCE" });
+    expect(restoresOf(spores, "Symbiotic Entity")).toMatchObject([
+      { kind: "tempHp", dice: null, bonus: 12 },
+    ]);
+  });
+
+  it("adds the Charisma modifier to the character's total level for Inspiring Leader", () => {
+    const leader = character({
+      levels: [
+        { class: { name: "Fighter", source: "PHB" } },
+        { class: { name: "Fighter", source: "PHB" } },
+        { class: { name: "Wizard", source: "PHB" } },
+      ],
+      feats: [{ ref: { name: "Inspiring Leader", source: "PHB" } }],
+    });
+    expect(restoresOf(leader, "Inspiring Leader")).toMatchObject([
+      { kind: "tempHp", dice: null, bonus: 7, others: false },
+    ]);
+  });
+
   it("gives a Half-Orc's Relentless Endurance 1 hit point", () => {
     const orc = character({ race: { name: "Half-Orc", source: "PHB" }, subrace: undefined });
     expect(restoresOf(orc, "Relentless Endurance")).toMatchObject([
@@ -117,11 +167,12 @@ describe("restoredState", () => {
     expect(restoredState(derived, at(10, 9), temp, 7).state).toEqual(at(10, 9));
   });
 
-  it("leaves the state alone for a heal on another creature", () => {
+  it("leaves the state alone for a restore on another creature", () => {
     const state = at(10, 0);
     expect(restoredState(derived, state, { ...heal, others: true }, 20)).toEqual({
       state,
       amount: 20,
     });
+    expect(restoredState(derived, state, { ...temp, others: true }, 8).state).toEqual(state);
   });
 });

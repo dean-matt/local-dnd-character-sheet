@@ -27,7 +27,8 @@ const points = (amount: number, temporary = false) =>
   `${amount} ${temporary ? "temporary " : ""}hit point${amount === 1 ? "" : "s"}`;
 
 function said({ kind, others }: Restore, amount: number, before: CharacterState) {
-  if (others) return `${points(amount)} to restore to another creature`;
+  if (others && kind === "heal") return `${points(amount)} to restore to another creature`;
+  if (others) return `${points(amount, true)} to give another creature`;
   if (kind === "heal") return `regained ${points(amount)}`;
   return before.hitPoints.temporary > amount
     ? `kept ${points(before.hitPoints.temporary, true)} over ${amount}`
