@@ -283,13 +283,18 @@ const martialArtsMechanicSchema = z
     error: "a martial arts mechanic gives a die or Dexterity",
   });
 
-const restoreTermSchema = z.union([z.int().min(1), abilitySchema, z.literal("level")]);
+const restoreTermSchema = z.union([
+  z.int().min(1),
+  abilitySchema,
+  z.enum(["level", "proficiency", "halfMaximum"]),
+]);
 
 /**
  * What a use of the feature restores: `dice` rolled, as notation or a class table column's
- * die, plus each of `bonus`, a number, an ability's modifier or the levels in the feature's
- * class, the bonus `times` over. `scales` replaces the dice, or a bonus of one number, from a
- * level in the feature's class.
+ * die, plus each of `bonus`, a number, an ability's modifier, the levels in the feature's
+ * class, the proficiency bonus or half the hit point maximum, the bonus `times` over.
+ * `scales` replaces the dice, or a bonus of one number, from a level in the feature's class.
+ * On `others`, it lands on another creature, so the sheet restores no one.
  */
 const restoreFields = {
   dice: z.union([diceSchema, z.strictObject({ column: z.string().min(1) })]).optional(),
@@ -305,6 +310,7 @@ const restoreFields = {
     )
     .min(1)
     .optional(),
+  others: z.literal(true).optional(),
 };
 
 type RestoreFields = z.infer<z.ZodObject<typeof restoreFields>>;
@@ -328,16 +334,12 @@ const restoreRefinements = <T extends z.ZodType<RestoreFields>>(schema: T) =>
       { error: "a scale replaces notation dice or a bonus of one number, one of them" },
     );
 
-/** Hit points a use of the feature restores; on `others`, to another creature, so the sheet heals no one. */
+/** Hit points a use of the feature restores. */
 const healMechanicSchema = restoreRefinements(
-  z.strictObject({
-    kind: z.literal("heal"),
-    ...restoreFields,
-    others: z.literal(true).optional(),
-  }),
+  z.strictObject({ kind: z.literal("heal"), ...restoreFields }),
 );
 
-/** Temporary hit points a use of the feature gives the character. */
+/** Temporary hit points a use of the feature gives. */
 const tempHpMechanicSchema = restoreRefinements(
   z.strictObject({ kind: z.literal("tempHp"), ...restoreFields }),
 );

@@ -83,7 +83,7 @@ import {
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { martialArts } from "./martialArts.ts";
-import { reducedMaximum, reducedOverride } from "./maximumReduction.ts";
+import { hitPointMaximumUnder, reducedMaximum, reducedOverride } from "./maximumReduction.ts";
 import { applyOverrides } from "./overrides.ts";
 import { rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
@@ -1260,6 +1260,22 @@ export function deriveCharacter(
         ...exhaustion,
       ]),
     );
+  const maximum = fromBreakdown(
+    reducedMaximum(
+      withModifiers(
+        exhaustedMaximum(
+          hitPointMaximum(definition, catalog.hitDice, grants),
+          state.exhaustion ?? 0,
+          exhaustionRuleset(definition),
+        ),
+        modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
+          ...term,
+          reference: MODIFIER_REFERENCE,
+        })),
+      ),
+      state.hitPointMaximumReduction,
+    ),
+  );
   const block: CharacterDerived = {
     abilityScores: perAbility((ability) => fromBreakdown(scores[ability])),
     abilityModifiers: perAbility((ability) =>
@@ -1268,22 +1284,7 @@ export function deriveCharacter(
     abilityChecks: perAbility((ability) =>
       abilityCheck(ability, abilityModifier(scores[ability].total)),
     ),
-    hitPointMaximum: fromBreakdown(
-      reducedMaximum(
-        withModifiers(
-          exhaustedMaximum(
-            hitPointMaximum(definition, catalog.hitDice, grants),
-            state.exhaustion ?? 0,
-            exhaustionRuleset(definition),
-          ),
-          modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
-            ...term,
-            reference: MODIFIER_REFERENCE,
-          })),
-        ),
-        state.hitPointMaximumReduction,
-      ),
-    ),
+    hitPointMaximum: maximum,
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
     speed: { computed: speed.speed, manual: null, terms: speed.terms },
@@ -1334,6 +1335,12 @@ export function deriveCharacter(
     featureRestores: featureRestores(definition, {
       column: tableColumn(definition, catalog),
       modifier: (ability) => abilityModifier(scores[ability].total),
+      proficiency: proficiencyBonus.total,
+      hitPointMaximum: hitPointMaximumUnder(
+        stored,
+        { hitPointMaximum: maximum },
+        state.hitPointMaximumReduction,
+      ),
     }),
     limitedUses: featureLimitedUses(definition, (ability) =>
       abilityModifier(scores[ability].total),

@@ -285,6 +285,26 @@ describe("Actions", () => {
       );
     });
 
+    it("shows temporary hit points for another creature without granting them", async () => {
+      const mantle = { ...SECOND_WIND, name: "Mantle of Inspiration", source: "XGE" };
+      const gives = [
+        restore("Mantle of Inspiration", "XGE", { kind: "tempHp", bonus: 8, others: true }),
+      ];
+      const { card, writes, rolls } = renderUse(mantle, {
+        hitPoints: { current: 10, temporary: 0 },
+        restores: gives,
+      });
+      const use = await within(card).findByRole("button", { name: "Use Mantle of Inspiration" });
+      fireEvent.click(use);
+
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 0 });
+      expect(rolls[0]).toMatchObject({ type: "temporary-hp", label: "Mantle of Inspiration" });
+      expect(within(use.closest("li") as HTMLElement).getByRole("status")).toHaveTextContent(
+        "Mantle of Inspiration: 8 temporary hit points to give another creature.",
+      );
+    });
+
     it("grants temporary hit points", async () => {
       const tireless = { ...SECOND_WIND, name: "Tireless" };
       const gives = [restore("Tireless", "XPHB", { kind: "tempHp", bonus: 7 })];

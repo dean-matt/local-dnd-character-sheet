@@ -9,6 +9,9 @@ describe("featureActionType", () => {
     expect(featureActionType({ name: "Wild Shape", source: "PHB" })).toBe("action");
     expect(featureActionType({ name: "Favored Enemy", source: "XPHB" })).toBe("bonus action");
     expect(featureActionType({ name: "Sacred Weapon", source: "XPHB" })).toBe("free");
+    expect(featureActionType({ name: "Hand of Healing", source: "TCE" })).toBe("action");
+    expect(featureActionType({ name: "Unearthly Recovery", source: "XGE" })).toBe("bonus action");
+    expect(featureActionType({ name: "Soul of Artifice", source: "TCE" })).toBe("reaction");
   });
 
   it("is undefined for a feature the table omits", () => {
@@ -24,6 +27,11 @@ describe("featurePoolKey", () => {
     expect(featurePoolKey({ name: "Flurry of Blows", source: "XPHB" })).toBe("focus_points");
     expect(featurePoolKey({ name: "Sacred Weapon", source: "XPHB" })).toBe("channel_divinity");
     expect(featurePoolKey({ name: "Favored Enemy", source: "XPHB" })).toBe("favored_enemy");
+    expect(featurePoolKey({ name: "Hand of Healing", source: "TCE" })).toBe("ki_points");
+    expect(featurePoolKey({ name: "Channel Divinity: Twilight Sanctuary", source: "TCE" })).toBe(
+      "channel_divinity",
+    );
+    expect(featurePoolKey({ name: "Symbiotic Entity", source: "TCE" })).toBe("wild_shape");
   });
 
   it("is undefined for a feature that spends no pool", () => {
