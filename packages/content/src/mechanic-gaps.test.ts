@@ -39,6 +39,7 @@ const zero: Counts = {
   martialArts: 0,
   pool: 0,
   convert: 0,
+  turn: 0,
   uses: 0,
   unclassified: 0,
 };
@@ -139,6 +140,18 @@ describe("mechanicGaps", () => {
     json({ srd: true }, "For the duration, you have a fly speed"),
   );
   feat.run("Turning", "PHB", "classic", json({ srd: true }, "it is turned for 1 minute"));
+  feat.run(
+    "Twice",
+    "PHB",
+    "classic",
+    json({ srd: true }, "you can attack twice whenever you take the {@action Attack} action"),
+  );
+  feat.run(
+    "Nimble",
+    "PHB",
+    "classic",
+    json({ srd: true }, "you can take the {@action Dash} action as a bonus action"),
+  );
 
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
@@ -157,6 +170,7 @@ describe("mechanicGaps", () => {
     expect(gaps.convert).toEqual(["Flexible (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.active).toEqual(["Winged (PHB)"]);
+    expect(gaps.turn).toEqual(["Nimble (PHB)", "Twice (PHB)"]);
     expect(gaps.unclassified).toEqual([
       "Counted (PHB)",
       "Flurry of Blows (PHB), Monk level 2",
@@ -183,6 +197,7 @@ describe("mechanicGaps", () => {
       convert: 1,
       uses: 1,
       active: 1,
+      turn: 2,
       unclassified: 7,
     });
   });

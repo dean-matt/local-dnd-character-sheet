@@ -1,4 +1,4 @@
-import type { FeatureMechanics, Mechanic } from "./featureMechanics.ts";
+import type { BonusActionAction, FeatureMechanics, Mechanic } from "./featureMechanics.ts";
 import type { FeatureKey } from "./refs.ts";
 
 const subclassFeature = (
@@ -208,6 +208,65 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
   }),
 ];
 
+const attacks = (count: number): Mechanic[] => [{ kind: "turn", attacks: count }];
+const asBonusAction = (...bonusAction: BonusActionAction[]): Mechanic[] => [
+  { kind: "turn", bonusAction },
+];
+
+/**
+ * What a feature changes about a turn: the attacks the Attack action allows, or the standard
+ * actions it lets the character take as a bonus action. Action Surge adds its action from
+ * `LIMITED_USES`, where its uses are recorded.
+ */
+const TURN_ECONOMY: FeatureMechanics[] = [
+  ...(["PHB", "XPHB"] as const).flatMap((source) =>
+    ["Barbarian", "Fighter", "Monk", "Paladin", "Ranger"].map((className) =>
+      classFeature([className, source], ["Extra Attack", source], 5, attacks(2)),
+    ),
+  ),
+  classFeature(fighter, ["Extra Attack (2)", "PHB"], 11, attacks(3)),
+  classFeature(fighter, ["Extra Attack (3)", "PHB"], 20, attacks(4)),
+  classFeature(fighter24, ["Two Extra Attacks", "XPHB"], 11, attacks(3)),
+  classFeature(fighter24, ["Three Extra Attacks", "XPHB"], 20, attacks(4)),
+  subclassFeature(artificer, ["Armorer", "TCE"], ["Extra Attack", "TCE"], 5, attacks(2)),
+  subclassFeature(artificer, ["Battle Smith", "TCE"], ["Extra Attack", "TCE"], 5, attacks(2)),
+  subclassFeature(bard, ["Valor", "PHB"], ["Extra Attack", "PHB"], 6, attacks(2)),
+  subclassFeature(bard, ["Swords", "XGE"], ["Extra Attack", "XGE"], 6, attacks(2)),
+  subclassFeature(wizard, ["Bladesinging", "TCE"], ["Extra Attack", "TCE"], 6, attacks(2)),
+  ...(["PHB", "XPHB"] as const).map((source) => ({
+    ref: { name: "Thirsting Blade", source },
+    mechanics: [{ kind: "turn", attacks: 2, pact: true }] satisfies Mechanic[],
+  })),
+  ...(["PHB", "XPHB"] as const).map((source) =>
+    classFeature(
+      ["Rogue", source],
+      ["Cunning Action", source],
+      2,
+      asBonusAction("Dash", "Disengage", "Hide"),
+    ),
+  ),
+  subclassFeature(
+    rogue,
+    ["Thief", "PHB"],
+    ["Fast Hands", "PHB"],
+    3,
+    asBonusAction("Use an Object"),
+  ),
+  subclassFeature(
+    rogue,
+    ["Mastermind", "XGE"],
+    ["Master of Tactics", "XGE"],
+    3,
+    asBonusAction("Help"),
+  ),
+  classFeature(ranger, ["Vanish", "PHB"], 14, asBonusAction("Hide")),
+  classFeature(monk, ["Patient Defense", "PHB"], 2, asBonusAction("Dodge")),
+  classFeature(monk, ["Step of the Wind", "PHB"], 2, asBonusAction("Disengage", "Dash")),
+  // The second action of each comes with a focus point spent.
+  classFeature(monk24, ["Patient Defense", "XPHB"], 2, asBonusAction("Disengage", "Dodge")),
+  classFeature(monk24, ["Step of the Wind", "XPHB"], 2, asBonusAction("Dash", "Disengage")),
+];
+
 /**
  * Uses whose count the content build cannot read from the text: tied to a modifier, raised
  * at a level, or one limit among several parts.
@@ -216,6 +275,7 @@ const LIMITED_USES: FeatureMechanics[] = [
   ...(["PHB", "XPHB"] as const).map((source) =>
     classFeature(["Fighter", source], ["Action Surge", source], 2, [
       { kind: "uses", count: 1, reset: "short", scales: [{ level: 17, count: 2 }] },
+      { kind: "turn", action: true },
     ]),
   ),
   // Font of Inspiration is the short-rest reset scaled on Bardic Inspiration.
@@ -2109,4 +2169,5 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   }),
   ...LIMITED_USES,
   ...ONGOING_EFFECTS,
+  ...TURN_ECONOMY,
 ];

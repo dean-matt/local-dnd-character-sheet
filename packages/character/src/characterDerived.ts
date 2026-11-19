@@ -408,6 +408,18 @@ export const characterDerivedSchema = z.strictObject({
   featureRestores: z.array(featureRestoreSchema),
   /** The pool and slot trades held features make, in the order the features are held. */
   featureConversions: z.array(featureConversionSchema),
+  /**
+   * What held features change about a turn: the attacks the Attack action allows, and with the
+   * pact weapon where that allows more, null where it does not; the features a use of which adds
+   * an action to the turn; and each standard action a feature lets the character take as a bonus
+   * action, with the names of the features that do.
+   */
+  turn: z.strictObject({
+    attacks: z.int().min(1),
+    pactAttacks: z.int().min(2).nullable(),
+    addsAction: z.array(contentRefSchema),
+    bonusActions: z.array(z.strictObject({ action: z.string().min(1), features: grantorsSchema })),
+  }),
   /** The uses each held feature counts, in the order the features are held. */
   limitedUses: z.array(limitedUsesSchema),
   /**

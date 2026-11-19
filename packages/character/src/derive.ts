@@ -74,6 +74,7 @@ import { featureConversions } from "./featureConversions.ts";
 import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
+import { featureTurn } from "./featureTurn.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
 import { startableFeatures } from "./heldFeatures.ts";
 import {
@@ -1353,6 +1354,7 @@ export function deriveCharacter(
       ),
     }),
     featureConversions: featureConversions(definition, proficiencyBonus.total),
+    turn: featureTurn(definition),
     limitedUses: featureLimitedUses(definition, (term) =>
       term === "proficiency" ? proficiencyBonus.total : abilityModifier(scores[term].total),
     ),

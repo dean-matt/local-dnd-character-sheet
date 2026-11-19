@@ -251,7 +251,6 @@ export {
   spentAmmunitionOf,
   type TemporaryModifier,
   TURN_MARKS,
-  type TurnMark,
   temporaryModifierSchema,
   withAmmunitionSpent,
   withFeatureUse,
@@ -269,6 +268,8 @@ export {
 } from "./summaries.ts";
 export { hitPointsWithin } from "./temporaryModifiers.ts";
 export {
+  actionAdded,
+  addedActionToggled,
   featuresUsed,
   TURN_LABELS,
   turnMarkSpent,

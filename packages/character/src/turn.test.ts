@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  actionAdded,
+  addedActionToggled,
   characterStateSchema,
   describeStateChange,
   featuresUsed,
@@ -19,6 +21,7 @@ describe("turn marks", () => {
       bonusAction: false,
       reaction: true,
       movement: false,
+      addedActions: [],
       features: [],
     });
     expect(turnMarkToggled(spent, "reaction").turn).toEqual(state.turn);
@@ -28,6 +31,30 @@ describe("turn marks", () => {
     const spent = turnMarkSpent(state, "bonusAction");
     expect(spent.turn.bonusAction).toBe(true);
     expect(turnMarkSpent(spent, "bonusAction")).toBe(spent);
+  });
+
+  it("spends an added action once the turn's own action is spent", () => {
+    const surged = actionAdded(turnMarkSpent(state, "action"));
+    expect(surged.turn.addedActions).toEqual([false]);
+    const spent = turnMarkSpent(surged, "action");
+    expect(spent.turn.addedActions).toEqual([true]);
+    expect(turnMarkSpent(spent, "action")).toBe(spent);
+    expect(addedActionToggled(spent, 0).turn.addedActions).toEqual([false]);
+  });
+
+  it("keeps an action added before the turn's own is spent", () => {
+    const spent = turnMarkSpent(actionAdded(state), "action");
+    expect(spent.turn).toMatchObject({ action: true, addedActions: [false] });
+  });
+
+  it("drops the added actions when the turn resets", () => {
+    expect(turnReset(actionAdded(state)).turn.addedActions).toEqual([]);
+  });
+
+  it("describes an added action", () => {
+    expect(describeStateChange(state, actionAdded(state))).toBe(
+      "Added actions set to 0 of 1 spent",
+    );
   });
 
   it("resets every mark", () => {
