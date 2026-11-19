@@ -90,6 +90,9 @@ const druid24: [string, string] = ["Druid", "XPHB"];
 const monk: [string, string] = ["Monk", "PHB"];
 const monk24: [string, string] = ["Monk", "XPHB"];
 const ranger24: [string, string] = ["Ranger", "XPHB"];
+const druid: [string, string] = ["Druid", "PHB"];
+const sorcerer: [string, string] = ["Sorcerer", "PHB"];
+const wizard: [string, string] = ["Wizard", "PHB"];
 const INDOMITABLE_USES: Mechanic = {
   kind: "uses",
   count: 1,
@@ -99,6 +102,7 @@ const INDOMITABLE_USES: Mechanic = {
     { level: 17, count: 3 },
   ],
 };
+const PROFICIENCY_USES: Mechanic = { kind: "uses", count: "proficiency", reset: "long" };
 const sneakAttack = (option: string): Mechanic[] => [
   {
     kind: "extraDamage",
@@ -231,6 +235,168 @@ const LIMITED_USES: FeatureMechanics[] = [
   // Peerless Aim's limit is a turn, and the pact weapon's is one at a time.
   narrative({ name: "Boon of Combat Prowess", source: "XPHB" }),
   narrative({ name: "Pact of the Blade", source: "PHB" }),
+  // Accursed Specter, Call the Hunt, Cauterizing Flames, Defensive Field and Restorative
+  // Reagents give hit points or temporary hit points no heal or tempHp term records yet, so
+  // they count their uses alone.
+  ...(
+    [
+      [artificer, "Restorative Reagents", ["Alchemist", "TCE"], "TCE", 9, "int"],
+      [artificer, "Defensive Field", ["Armorer", "TCE"], "TCE", 3, "proficiency"],
+      [artificer, "Guardian", ["Armorer", "TCE"], "TCE", 15, "proficiency"],
+      [barbarian, "Magic Awareness", ["Wild Magic", "TCE"], "TCE", 3, "proficiency"],
+      [barbarian, "Bolstering Magic", ["Wild Magic", "TCE"], "TCE", 6, "proficiency"],
+      [barbarian, "Infectious Fury", ["Beast", "TCE"], "TCE", 10, "proficiency"],
+      [barbarian, "Call the Hunt", ["Beast", "TCE"], "TCE", 14, "proficiency"],
+      [bard, "Infectious Inspiration", ["Eloquence", "TCE"], "TCE", 14, "cha"],
+      [cleric, "Eyes of the Grave", ["Grave", "XGE"], "XGE", 1, "wis"],
+      [cleric, "Sentinel at Death's Door", ["Grave", "XGE"], "XGE", 6, "wis"],
+      [cleric, "Embodiment of the Law", ["Order", "TCE"], "TCE", 6, "wis"],
+      [cleric, "Emboldening Bond", ["Peace", "TCE"], "TCE", 1, "proficiency"],
+      [cleric, "Wrath of the Storm", ["Tempest", "PHB"], "PHB", 1, "wis"],
+      [cleric, "Steps of Night", ["Twilight", "TCE"], "TCE", 6, "proficiency"],
+      [cleric, "War Priest", ["War", "PHB"], "PHB", 1, "wis"],
+      [druid, "Hidden Paths", ["Dreams", "XGE"], "XGE", 10, "wis"],
+      [druid, "Fungal Infestation", ["Spores", "TCE"], "TCE", 6, "wis"],
+      [druid, "Star Map", ["Stars", "TCE"], "TCE", 2, "proficiency"],
+      [druid, "Cosmic Omen", ["Stars", "TCE"], "TCE", 6, "proficiency"],
+      [druid, "Cauterizing Flames", ["Wildfire", "TCE"], "TCE", 10, "proficiency"],
+      [fighter, "Warding Maneuver", ["Cavalier", "XGE"], "XGE", 7, "con"],
+      [fighter, "Runic Shield", ["Rune Knight", "TCE"], "TCE", 7, "proficiency"],
+      [paladin, "Glorious Defense", ["Glory", "TCE"], "TCE", 15, "cha"],
+      [ranger, "Fey Reinforcements", ["Fey Wanderer", "TCE"], "TCE", 11, 1],
+      [ranger, "Misty Wanderer", ["Fey Wanderer", "TCE"], "TCE", 15, "wis"],
+      [ranger, "Hunter's Sense", ["Monster Slayer", "XGE"], "XGE", 3, "wis"],
+      [ranger, "Writhing Tide", ["Swarmkeeper", "TCE"], "TCE", 7, "proficiency"],
+      [ranger, "Swarming Dispersal", ["Swarmkeeper", "TCE"], "TCE", 15, "proficiency"],
+      [rogue, "Unerring Eye", ["Inquisitive", "XGE"], "XGE", 13, "wis"],
+      [rogue, "Wails from the Grave", ["Phantom", "TCE"], "TCE", 3, "proficiency"],
+      // Destroying a soul trinket also restores it.
+      [rogue, "Ghost Walk", ["Phantom", "TCE"], "TCE", 13, 1],
+      [sorcerer, "Restore Balance", ["Clockwork Soul", "TCE"], "TCE", 1, "proficiency"],
+      [warlock, "Tentacle of the Deeps", ["Fathomless", "TCE"], "TCE", 1, "proficiency"],
+      [warlock, "Bottled Respite", ["Genie", "TCE"], "TCE", 1, 1],
+      [warlock, "Elemental Gift", ["Genie", "TCE"], "TCE", 6, "proficiency"],
+      [warlock, "Accursed Specter", ["Hexblade", "XGE"], "XGE", 6, 1],
+      [wizard, "Bladesong", ["Bladesinging", "TCE"], "TCE", 2, "proficiency"],
+      // The conjuring is the other limit, once a long rest unless a spell slot pays for it.
+      [wizard, "Manifest Mind", ["Scribes", "TCE"], "TCE", 6, "proficiency"],
+    ] as const
+  ).map(([owner, name, [shortName, subclassSource], source, level, count]) =>
+    subclassFeature(owner, [shortName, subclassSource], [name, source], level, [
+      { kind: "uses", count, reset: "long" },
+    ]),
+  ),
+  subclassFeature(wizard, ["Divination", "PHB"], ["The Third Eye", "PHB"], 10, [
+    { kind: "uses", count: 1, reset: "short" },
+  ]),
+  subclassFeature(bard, ["Whispers", "XGE"], ["Mantle of Whispers", "XGE"], 6, [
+    { kind: "uses", count: 1, reset: "short" },
+  ]),
+  // Twice the proficiency bonus in Psionic Energy dice; the bonus action that regains one is
+  // limited by a short rest of its own.
+  ...(["Psi Warrior", "Soulknife"] as const).map((shortName) =>
+    subclassFeature(
+      shortName === "Psi Warrior" ? fighter : rogue,
+      [shortName, "TCE"],
+      ["Psionic Power", "TCE"],
+      3,
+      [{ kind: "uses", count: "proficiency", times: 2, reset: "long" }],
+    ),
+  ),
+  classFeature(artificer, ["Flash of Genius", "TCE"], 7, [
+    { kind: "uses", count: "int", reset: "long" },
+  ]),
+  ...(
+    [
+      [cleric, 2, 6, 18],
+      [paladin, 3, 7, 15],
+    ] as const
+  ).map(([owner, level, twice, thrice]) => ({
+    ...classFeature(owner, ["Channel Divinity: Harness Divine Power", "TCE"], level, [
+      {
+        kind: "uses",
+        count: 1,
+        reset: "long",
+        scales: [
+          { level: twice, count: 2 },
+          { level: thrice, count: 3 },
+        ],
+      },
+    ]),
+    houseRule: "optionalClassFeatures" as const,
+  })),
+  {
+    ...classFeature(ranger, ["Nature's Veil", "TCE"], 10, [PROFICIENCY_USES]),
+    houseRule: "optionalClassFeatures",
+  },
+  ...["Pact of the Talisman", "Bond of the Talisman", "Protection of the Talisman"].map((name) => ({
+    ref: { name, source: "TCE" },
+    mechanics: [PROFICIENCY_USES],
+  })),
+  ...[
+    { name: "Undying Servitude", source: "TCE" },
+    { name: "Gift of the Depths", source: "XGE" },
+    { name: "Trickster's Escape", source: "XGE" },
+    { name: "Magic Initiate", source: "PHB" },
+    { name: "Artificer Initiate", source: "TCE" },
+    { name: "Telepathic", source: "TCE" },
+  ].map(
+    (ref): FeatureMechanics => ({ ref, mechanics: [{ kind: "uses", count: 1, reset: "long" }] }),
+  ),
+  {
+    ref: { name: "Fey Teleportation", source: "XGE" },
+    mechanics: [{ kind: "uses", count: 1, reset: "short" }],
+  },
+  // Rolling initiative also restores it.
+  {
+    ref: { name: "Second Chance", source: "XGE" },
+    mechanics: [{ kind: "uses", count: 1, reset: "short" }],
+  },
+  // Its free casts are a count per spell, left to the spells a feature grants.
+  subclassFeature(artificer, ["Alchemist", "TCE"], ["Chemical Mastery", "TCE"], 15, [
+    { kind: "defense", resist: ["acid", "poison"], conditionImmune: ["poisoned"] },
+  ]),
+  // Each casts each of its spells free once a long rest, a count per spell.
+  ...[
+    { name: "Fey Touched", source: "TCE" },
+    { name: "Shadow Touched", source: "TCE" },
+    { name: "Drow High Magic", source: "XGE" },
+    { name: "Wood Elf Magic", source: "XGE" },
+  ].map(narrative),
+  {
+    ...narrative({
+      name: "Primal Awareness",
+      source: "TCE",
+      className: "Ranger",
+      classSource: "PHB",
+      level: 3,
+    }),
+    houseRule: "optionalClassFeatures",
+  },
+  // Each restores on something other than a rest, or counts per rune or per stored spell.
+  narrative({
+    name: "Limited Wish",
+    source: "TCE",
+    className: "Warlock",
+    classSource: "PHB",
+    subclass: { shortName: "Genie", source: "TCE" },
+    level: 14,
+  }),
+  narrative({
+    name: "Master of Runes",
+    source: "TCE",
+    className: "Fighter",
+    classSource: "PHB",
+    subclass: { shortName: "Rune Knight", source: "TCE" },
+    level: 15,
+  }),
+  narrative({
+    name: "Spell-Storing Item",
+    source: "TCE",
+    className: "Artificer",
+    classSource: "TCE",
+    level: 11,
+  }),
 ];
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
@@ -1101,6 +1267,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
         oncePerTurn: true,
         option: "against your favored enemy",
       },
+      PROFICIENCY_USES,
     ]),
     houseRule: "optionalClassFeatures",
   },
@@ -1206,6 +1373,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       oncePerTurn: true,
       option: "with a magic weapon, spending a use",
     },
+    { kind: "uses", count: "int", reset: "long" },
   ]),
   subclassFeature(["Druid", "PHB"], ["Spores", "TCE"], ["Symbiotic Entity", "TCE"], 2, [
     { kind: "tempHp", bonus: ["level"], times: 4 },
@@ -1230,6 +1398,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       oncePerTurn: true,
       option: "while Giant's Might is active",
     },
+    PROFICIENCY_USES,
   ]),
   subclassFeature(fighter, ["Cavalier", "XGE"], ["Unwavering Mark", "XGE"], 3, [
     {
@@ -1239,6 +1408,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       unarmed: true,
       option: "on the bonus action attack against a creature you marked",
     },
+    { kind: "uses", count: "str", reset: "long" },
   ]),
   subclassFeature(fighter, ["Psi Warrior", "TCE"], ["Psionic Strike", "TCE"], 3, [
     {
@@ -1265,6 +1435,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       oncePerTurn: true,
       option: "with an Arcane Shot option that adds damage to the arrow's target",
     },
+    { kind: "uses", count: 2, reset: "short" },
   ]),
   subclassFeature(fighter, ["Battle Master", "PHB"], ["Combat Superiority", "PHB"], 3, [
     {
@@ -1705,6 +1876,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   {
     ...classFeature(ranger, ["Deft Explorer Improvement", "TCE"], 10, [
       { kind: "tempHp", dice: "1d8", bonus: ["wis"] },
+      PROFICIENCY_USES,
     ]),
     houseRule: "optionalClassFeatures",
   },
@@ -1736,12 +1908,14 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     { kind: "heal", bonus: [1] },
   ]),
   classFeature(artificer, ["Soul of Artifice", "TCE"], 20, [{ kind: "heal", bonus: [1] }]),
-  // Each lands when the character finishes a rest or casts Evard's black tentacles, not on a use.
+  // Lands when the character finishes a rest, not on a use.
   subclassFeature(warlock, ["Celestial", "XGE"], ["Celestial Resilience", "XGE"], 10, [
     { kind: "tempHp", bonus: ["level", "cha"] },
   ]),
+  // The use is the free cast of Evard's black tentacles.
   subclassFeature(warlock, ["Fathomless", "TCE"], ["Grasping Tentacles", "TCE"], 10, [
     { kind: "tempHp", bonus: ["level"] },
+    { kind: "uses", count: 1, reset: "long" },
   ]),
   // A creature gains these once between rests, so the use counts the character's own.
   {
@@ -1765,12 +1939,10 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       [["Druid", "PHB"], "Guardian Spirit", ["Shepherd", "XGE"], "XGE", 10],
       [["Druid", "PHB"], "Chalice", ["Stars", "TCE"], "TCE", 2],
       [["Druid", "PHB"], "Enhanced Bond", ["Wildfire", "TCE"], "TCE", 6],
-      [["Druid", "PHB"], "Cauterizing Flames", ["Wildfire", "TCE"], "TCE", 10],
       [paladin, "Elder Champion", ["Ancients", "PHB"], "PHB", 20],
       [paladin, "Protective Spirit", ["Redemption", "XGE"], "XGE", 15],
       [paladin, "Inspiring Smite", ["Glory", "TCE"], "TCE", 3],
       [warlock, "Healing Light", ["Celestial", "XGE"], "XGE", 1],
-      [warlock, "Accursed Specter", ["Hexblade", "XGE"], "XGE", 6],
       [["Sorcerer", "PHB"], "Wild Magic Surge", ["Wild", "PHB"], "PHB", 1],
       [["Sorcerer", "PHB"], "Hound of Ill Omen", ["Shadow", "XGE"], "XGE", 6],
       [["Sorcerer", "PHB"], "Clockwork Cavalcade", ["Clockwork Soul", "TCE"], "TCE", 18],
@@ -1779,16 +1951,13 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       [["Wizard", "PHB"], "Master Transmuter", ["Transmutation", "PHB"], "PHB", 14],
       [["Wizard", "PHB"], "Durable Summons", ["Conjuration", "PHB"], "PHB", 14],
       [barbarian, "Form of the Beast", ["Beast", "TCE"], "TCE", 3],
-      [barbarian, "Call the Hunt", ["Beast", "TCE"], "TCE", 14],
       [barbarian, "Wild Surge", ["Wild Magic", "TCE"], "TCE", 3],
       [barbarian, "Tundra", ["Storm Herald", "XGE"], "XGE", 3],
       [bard, "Mote of Potential", ["Creation", "TCE"], "TCE", 3],
       [artificer, "Experimental Elixir", ["Alchemist", "TCE"], "TCE", 3],
       [artificer, "Alchemical Savant", ["Alchemist", "TCE"], "TCE", 5],
-      [artificer, "Restorative Reagents", ["Alchemist", "TCE"], "TCE", 9],
       [artificer, "Eldritch Cannon", ["Artillerist", "TCE"], "TCE", 3],
       [artificer, "Steel Defender", ["Battle Smith", "TCE"], "TCE", 3],
-      [artificer, "Defensive Field", ["Armorer", "TCE"], "TCE", 3],
       [warlock, "Sanctuary Vessel", ["Genie", "TCE"], "TCE", 10],
     ] as const
   ).map(([[className, classSource], name, [shortName, subclassSource], source, level]) =>

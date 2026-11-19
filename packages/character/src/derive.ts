@@ -1342,8 +1342,8 @@ export function deriveCharacter(
         state.hitPointMaximumReduction,
       ),
     }),
-    limitedUses: featureLimitedUses(definition, (ability) =>
-      abilityModifier(scores[ability].total),
+    limitedUses: featureLimitedUses(definition, (term) =>
+      term === "proficiency" ? proficiencyBonus.total : abilityModifier(scores[term].total),
     ),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
