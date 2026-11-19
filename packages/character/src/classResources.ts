@@ -46,6 +46,8 @@ export const regainsOneOnShortRest = (key: string, edition: Edition) =>
 
 const UNLIMITED = "Unlimited";
 
+type PoolDie = NonNullable<CharacterDerived["classResources"][number]["die"]>;
+
 /** A class table's `resource_key` as words: `ki_points` as `Ki points`. */
 export const resourceLabel = (key: string) => {
   const words = key.replaceAll("_", " ");
@@ -66,7 +68,7 @@ const namesPool = (resource: string, key: string) =>
 function featurePoolCells(
   held: readonly Held[],
   group: ReturnType<typeof classLevels>[number],
-): (ClassResourceCell & { die: number })[] {
+): (ClassResourceCell & { die: PoolDie })[] {
   const owner = catalogRef(group.class);
   if (!owner) return [];
   return held.flatMap(({ entry, levels }) =>
@@ -99,7 +101,7 @@ export function classResourcePools(
 ): CharacterDerived["classResources"] {
   const held = heldFeatures(definition);
   return classLevels(definition).flatMap((group) => {
-    const cells: (ClassResourceCell & { die?: number })[] = [
+    const cells: (ClassResourceCell & { die?: PoolDie })[] = [
       ...(catalog.classResources.get(entryKey(group.class)) ?? []).filter(
         (cell) => cell.homebrew || POOL_RESETS.has(cell.key),
       ),

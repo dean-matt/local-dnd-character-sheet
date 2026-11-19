@@ -184,7 +184,9 @@ describe("restedState", () => {
       const fighter = { name: "Fighter", source: "PHB" };
       const dice = {
         ...sheet,
-        classResources: [{ class: fighter, key: "superiority_dice", maximum: total(4), die: 8 }],
+        classResources: [
+          { class: fighter, key: "superiority_dice", maximum: total(4), die: 8 as const },
+        ],
       };
       const used = {
         ...state(),

@@ -9,6 +9,7 @@ import {
 } from "@dnd/rules";
 import { z } from "zod";
 import { derivedSchema } from "./derivedField.ts";
+import { dieSizeSchema } from "./featureMechanics.ts";
 import { abilitySchema, contentRefSchema, entryRefSchema } from "./refs.ts";
 
 /**
@@ -316,7 +317,7 @@ export const characterDerivedSchema = z.strictObject({
       class: entryRefSchema,
       key: z.string().min(1),
       maximum: derivedSchema(z.int().min(1)).nullable(),
-      die: z.int().min(4).max(12).optional(),
+      die: dieSizeSchema.optional(),
       resets: z.enum(["short", "long"]).nullable().optional(),
     }),
   ),

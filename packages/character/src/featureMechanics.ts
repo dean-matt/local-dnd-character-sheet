@@ -385,7 +385,7 @@ const usesMechanicSchema = z
     error: "times multiplies only an ability or proficiency count",
   });
 
-const dieSizeSchema = z.union([
+export const dieSizeSchema = z.union([
   z.literal(4),
   z.literal(6),
   z.literal(8),
