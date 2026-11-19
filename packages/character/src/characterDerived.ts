@@ -135,9 +135,9 @@ const attackOptionSchema = z.strictObject({
  * Damage a held feature adds to one attack on a hit: `dice`, or a flat `bonus` where `dice`
  * is null, of `type`, or of the weapon's type where that is null. With no `offer` it always
  * lands. An offer lands where the player takes it, as `condition` says: once a turn while an
- * encounter runs where `oncePerTurn` is set, and spending a spell slot where `slot` is, with a
- * die more for each slot level past the first up to `max` dice, and one more `versus` the
- * creatures it names.
+ * encounter runs where `oncePerTurn` is set, and spending a spell slot where `slot` is, a pact
+ * slot alone where `pact` says so, with a die more for each slot level past the first up to
+ * `max` dice, and one more `versus` the creatures it names.
  */
 const featureDamageSchema = z.strictObject({
   source: z.string().min(1),
@@ -148,7 +148,13 @@ const featureDamageSchema = z.strictObject({
     .strictObject({
       condition: z.string().min(1),
       oncePerTurn: z.boolean(),
-      slot: z.strictObject({ max: z.int().min(2), versus: z.string().min(1) }).nullable(),
+      slot: z
+        .strictObject({
+          max: z.int().min(2),
+          versus: z.string().min(1).optional(),
+          pact: z.literal(true).optional(),
+        })
+        .nullable(),
     })
     .nullable(),
 });

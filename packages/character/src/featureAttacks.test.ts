@@ -6,6 +6,7 @@ import {
   featureDamage,
   featureDamageDice,
   featureStrike,
+  offerSlots,
   type Strike,
 } from "./featureAttacks.ts";
 import { effectsOnRoll } from "./rollEffects.ts";
@@ -18,11 +19,17 @@ const character = (extra: Partial<CharacterDefinition> = {}): CharacterDefinitio
   ...extra,
 });
 
-const levelsOf = (className: string, source: string, count: number, subclass?: string) =>
+const levelsOf = (
+  className: string,
+  source: string,
+  count: number,
+  subclass?: string,
+  subclassSource = source,
+) =>
   character({
     levels: Array.from({ length: count }, (_, index) => ({
       class: { name: className, source },
-      ...(index === 0 && subclass ? { subclass: { name: subclass, source } } : {}),
+      ...(index === 0 && subclass ? { subclass: { name: subclass, source: subclassSource } } : {}),
     })),
   });
 
@@ -125,7 +132,8 @@ describe("featureAttackEffects", () => {
 describe("featureDamage", () => {
   const sheet = (cells: Record<string, string> = {}, raging = false): DamageSheet => ({
     column: (key) => cells[key],
-    modifier: (ability) => (ability === "cha" ? 3 : 0),
+    modifier: (ability) => ({ cha: 3, wis: 2 })[ability as string] ?? 0,
+    proficiency: 3,
     raging,
   });
   const sources = (definition: CharacterDefinition, strike: Strike, on = sheet()) =>
@@ -155,6 +163,14 @@ describe("featureDamage", () => {
       { source: "Divine Strike", dice: "2d8", bonus: 0 },
     ]);
     expect(sources(life(7), GREATSWORD)).toEqual([]);
+  });
+
+  it("offers TCE's Blessed Strikes beside Divine Strike only under optional class features", () => {
+    const grave = levelsOf("Cleric", "PHB", 8, "Grave Domain", "XGE");
+    expect(sources(grave, GREATSWORD)).toEqual([]);
+    expect(sources({ ...grave, houseRules: { optionalClassFeatures: true } }, UNARMED)).toEqual([
+      { source: "Blessed Strikes", dice: "1d8", bonus: 0 },
+    ]);
   });
 
   it("offers the 2024 Divine Strike only where Blessed Strikes took it", () => {
@@ -198,6 +214,61 @@ describe("featureDamage", () => {
       },
     ]);
   });
+
+  it("adds Divine Fury's half barbarian level to its die, only during a rage", () => {
+    const zealot = levelsOf("Barbarian", "PHB", 7, "Path of the Zealot", "XGE");
+    expect(sources(zealot, GREATSWORD, sheet({}, true))).toEqual([
+      { source: "Divine Fury", dice: "1d6", bonus: 3 },
+    ]);
+    expect(sources(zealot, GREATSWORD)).toEqual([]);
+  });
+
+  it("adds the proficiency bonus for Genie's Wrath and Hexblade's Curse", () => {
+    expect(sources(levelsOf("Warlock", "PHB", 5, "The Genie", "TCE"), UNARMED)).toEqual([
+      { source: "Genie's Wrath", dice: null, bonus: 3 },
+    ]);
+    expect(sources(levelsOf("Warlock", "PHB", 1, "The Hexblade", "XGE"), RAPIER)).toEqual([
+      { source: "Hexblade's Curse", dice: null, bonus: 3 },
+    ]);
+  });
+
+  it("adds Hand of Harm's Martial Arts die and Wisdom to the unarmed strike alone", () => {
+    const mercy = levelsOf("Monk", "PHB", 5, "Way of Mercy", "TCE");
+    const cells = sheet({ martial_arts: "1d6" });
+    expect(sources(mercy, UNARMED, cells)).toEqual([
+      { source: "Hand of Harm", dice: "1d6", bonus: 2 },
+    ]);
+    expect(sources(mercy, RAPIER, cells)).toEqual([]);
+  });
+
+  it("offers Kensei's Shot on ranged weapons alone", () => {
+    const kensei = levelsOf("Monk", "PHB", 3, "Way of the Kensei", "XGE");
+    expect(sources(kensei, LONGBOW)).toEqual([{ source: "Kensei's Shot", dice: "1d4", bonus: 0 }]);
+    expect(sources(kensei, RAPIER)).toEqual([]);
+  });
+
+  it("scales the superiority die with Battle Master levels, and the Martial Adept die not at all", () => {
+    expect(sources(levelsOf("Fighter", "PHB", 10, "Battle Master"), RAPIER)).toEqual([
+      { source: "Combat Superiority", dice: "1d10", bonus: 0 },
+    ]);
+    expect(sources(withFeat("Martial Adept"), RAPIER)).toEqual([
+      { source: "Martial Adept", dice: "1d6", bonus: 0 },
+    ]);
+  });
+
+  it("scales a domain's Divine Strike and gives it the domain's damage type", () => {
+    const tempest = featureDamage(levelsOf("Cleric", "PHB", 14, "Tempest Domain"), RAPIER, sheet());
+    expect(tempest).toEqual([expect.objectContaining({ dice: "2d8", type: "thunder" })]);
+  });
+
+  it("offers Favored Foe only where the table uses optional class features", () => {
+    const ranger = levelsOf("Ranger", "PHB", 6);
+    expect(sources(ranger, LONGBOW)).toEqual([]);
+    const optional = { ...ranger, houseRules: { optionalClassFeatures: true } };
+    expect(sources(optional as CharacterDefinition, LONGBOW)).toEqual([
+      { source: "Favored Foe", dice: "1d6", bonus: 0 },
+    ]);
+  });
 });
 
 describe("featureDamageDice", () => {
@@ -220,8 +291,35 @@ describe("featureDamageDice", () => {
     expect(featureDamageDice(smite, 5, true)).toBe("6d8");
   });
 
+  it("adds a die for each pact slot level past the first for Eldritch Smite, never one versus", () => {
+    const eldritch = {
+      ...smite,
+      source: "Eldritch Smite",
+      offer: {
+        condition: "with your pact weapon",
+        oncePerTurn: true,
+        slot: { max: 6, pact: true as const },
+      },
+    };
+    expect(featureDamageDice(eldritch, 3, true)).toBe("4d8");
+    expect(featureDamageDice(eldritch, 5)).toBe("6d8");
+  });
+
   it("leaves dice that spend no slot as they are", () => {
     expect(featureDamageDice({ ...smite, offer: null }, 3)).toBe("2d8");
     expect(featureDamageDice({ ...smite, dice: null, bonus: 3 })).toBeNull();
+  });
+});
+
+describe("offerSlots", () => {
+  const slots = [
+    { via: "slot" as const, level: 1, left: 2 },
+    { via: "pact" as const, level: 3, left: 1 },
+  ];
+
+  it("keeps pact slots alone for an offer that says so, and every slot otherwise", () => {
+    const offer = { condition: "x", oncePerTurn: false, slot: { max: 6, pact: true as const } };
+    expect(offerSlots(slots, offer)).toEqual([slots[1]]);
+    expect(offerSlots(slots, { ...offer, slot: { max: 5 } })).toEqual(slots);
   });
 });

@@ -33,6 +33,7 @@ const bard: [string, string] = ["Bard", "PHB"];
 const rogue: [string, string] = ["Rogue", "PHB"];
 const fighter: [string, string] = ["Fighter", "PHB"];
 const cleric: [string, string] = ["Cleric", "PHB"];
+const warlock: [string, string] = ["Warlock", "PHB"];
 const artificer: [string, string] = ["Artificer", "TCE"];
 const DAMAGE_TYPES_BUT_PSYCHIC = [
   "acid",
@@ -82,6 +83,7 @@ const CHARMED_OR_FRIGHTENED = "against being charmed or frightened";
 const critical = (value: number): Mechanic[] => [{ kind: "attack", critical: value }];
 const POWER_ATTACK = "chosen before the attack; the damage lands on a hit";
 const ON_A_HIT = "on a weapon hit";
+const SUPERIORITY_DIE = "expending a superiority die on a maneuver that adds it to the damage";
 const rogue24: [string, string] = ["Rogue", "XPHB"];
 const cleric24: [string, string] = ["Cleric", "XPHB"];
 const druid24: [string, string] = ["Druid", "XPHB"];
@@ -331,17 +333,6 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   subclassFeature(["Ranger", "PHB"], ["Gloom Stalker", "XGE"], ["Umbral Sight", "XGE"], 3, [
     { kind: "sense", name: "darkvision", range: 60, raceBonus: 30 },
   ]),
-  {
-    ref: {
-      name: "Dread Ambusher",
-      source: "XGE",
-      className: "Ranger",
-      classSource: "PHB",
-      subclass: { shortName: "Gloom Stalker", source: "XGE" },
-      level: 3,
-    },
-    narrative: true,
-  },
   // Recorded on the model a character takes, which Powered Steps arrives with. A model's
   // benefits hold while its Arcane Armor is worn, and the sheet takes any armor worn for it.
   {
@@ -1097,6 +1088,423 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       },
     ],
   },
+  {
+    ...classFeature(ranger, ["Favored Foe", "TCE"], 1, [
+      {
+        kind: "extraDamage",
+        dice: "1d4",
+        scales: [
+          { level: 6, dice: "1d6" },
+          { level: 14, dice: "1d8" },
+        ],
+        unarmed: true,
+        oncePerTurn: true,
+        option: "against your favored enemy",
+      },
+    ]),
+    houseRule: "optionalClassFeatures",
+  },
+  ...(
+    [
+      ["Nature", "PHB", "cold, fire or lightning"],
+      ["Tempest", "PHB", "thunder"],
+      ["Trickery", "PHB", "poison"],
+      ["War", "PHB", undefined],
+      ["Order", "TCE", "psychic"],
+      ["Twilight", "TCE", "radiant"],
+      ["Forge", "XGE", "fire"],
+    ] as const
+  ).map(([domain, source, type]) =>
+    subclassFeature(cleric, [domain, source], ["Divine Strike", source], 8, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        scales: [{ level: 14, dice: "2d8" }],
+        ...(type && { type }),
+        unarmed: true,
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+  ),
+  ...(
+    [
+      ["Life", "PHB"],
+      ["Nature", "PHB"],
+      ["Tempest", "PHB"],
+      ["Trickery", "PHB"],
+      ["War", "PHB"],
+      ["Knowledge", "PHB"],
+      ["Light", "PHB"],
+      ["Forge", "XGE"],
+      ["Grave", "XGE"],
+      ["Order", "TCE"],
+      ["Peace", "TCE"],
+      ["Twilight", "TCE"],
+    ] as const
+  ).map(([domain, domainSource]) => ({
+    ...subclassFeature(cleric, [domain, domainSource], ["Blessed Strikes", "TCE"], 8, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        type: "radiant",
+        unarmed: true,
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+    houseRule: "optionalClassFeatures" as const,
+  })),
+  subclassFeature(barbarian, ["Zealot", "XGE"], ["Divine Fury", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      plus: "halfLevel",
+      type: "necrotic or radiant",
+      unarmed: true,
+      oncePerTurn: true,
+      while: "raging",
+      option: "on the first creature you hit this turn",
+    },
+  ]),
+  subclassFeature(bard, ["Whispers", "XGE"], ["Psychic Blades", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "2d6",
+      scales: [
+        { level: 5, dice: "3d6" },
+        { level: 10, dice: "5d6" },
+        { level: 15, dice: "8d6" },
+      ],
+      type: "psychic",
+      unarmed: true,
+      oncePerTurn: true,
+      option: "expending a use of Bardic Inspiration",
+    },
+  ]),
+  subclassFeature(bard, ["Swords", "XGE"], ["Blade Flourish", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      scales: [
+        { level: 5, dice: "1d8" },
+        { level: 10, dice: "1d10" },
+        { level: 15, dice: "1d12" },
+      ],
+      unarmed: true,
+      oncePerTurn: true,
+      option: "expending a use of Bardic Inspiration on a flourish",
+    },
+  ]),
+  subclassFeature(artificer, ["Battle Smith", "TCE"], ["Arcane Jolt", "TCE"], 9, [
+    {
+      kind: "extraDamage",
+      dice: "2d6",
+      scales: [{ level: 15, dice: "4d6" }],
+      type: "force",
+      oncePerTurn: true,
+      option: "with a magic weapon, spending a use",
+    },
+  ]),
+  subclassFeature(["Druid", "PHB"], ["Spores", "TCE"], ["Symbiotic Entity", "TCE"], 2, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      type: "necrotic",
+      weapons: "melee",
+      unarmed: true,
+      option: "while Symbiotic Entity is active",
+    },
+  ]),
+  subclassFeature(fighter, ["Rune Knight", "TCE"], ["Giant's Might", "TCE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      scales: [
+        { level: 10, dice: "1d8" },
+        { level: 18, dice: "1d10" },
+      ],
+      unarmed: true,
+      oncePerTurn: true,
+      option: "while Giant's Might is active",
+    },
+  ]),
+  subclassFeature(fighter, ["Cavalier", "XGE"], ["Unwavering Mark", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "halfLevel",
+      weapons: "melee",
+      unarmed: true,
+      option: "on the bonus action attack against a creature you marked",
+    },
+  ]),
+  subclassFeature(fighter, ["Psi Warrior", "TCE"], ["Psionic Strike", "TCE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      scales: [
+        { level: 5, dice: "1d8" },
+        { level: 11, dice: "1d10" },
+        { level: 17, dice: "1d12" },
+      ],
+      plus: "int",
+      type: "force",
+      oncePerTurn: true,
+      option: "expending a Psionic Energy die, against a target within 30 feet",
+    },
+  ]),
+  subclassFeature(fighter, ["Arcane Archer", "XGE"], ["Arcane Shot", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "2d6",
+      scales: [{ level: 18, dice: "4d6" }],
+      type: "force, necrotic, poison or psychic",
+      weapons: "ranged",
+      oncePerTurn: true,
+      option: "with an Arcane Shot option that adds damage to the arrow's target",
+    },
+  ]),
+  subclassFeature(fighter, ["Battle Master", "PHB"], ["Combat Superiority", "PHB"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      scales: [
+        { level: 10, dice: "1d10" },
+        { level: 18, dice: "1d12" },
+      ],
+      unarmed: true,
+      option: SUPERIORITY_DIE,
+    },
+  ]),
+  ...[
+    { name: "Martial Adept", source: "PHB" },
+    { name: "Superior Technique", source: "TCE" },
+  ].map(
+    (ref): FeatureMechanics => ({
+      ref,
+      mechanics: [{ kind: "extraDamage", dice: "1d6", unarmed: true, option: SUPERIORITY_DIE }],
+    }),
+  ),
+  subclassFeature(monk, ["Astral Self", "TCE"], ["Body of the Astral Self", "TCE"], 11, [
+    {
+      kind: "extraDamage",
+      dice: { column: "martial_arts" },
+      weapons: "unarmed",
+      oncePerTurn: true,
+      option: "with the arms of your astral self, while your astral body is present",
+    },
+  ]),
+  subclassFeature(monk, ["Mercy", "TCE"], ["Hand of Harm", "TCE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: { column: "martial_arts" },
+      plus: "wis",
+      type: "necrotic",
+      weapons: "unarmed",
+      oncePerTurn: true,
+      option: "spending 1 ki point",
+    },
+  ]),
+  subclassFeature(monk, ["Kensei", "XGE"], ["Kensei's Shot", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d4",
+      weapons: "ranged",
+      option: "with a kensei weapon, after the bonus action this turn",
+    },
+  ]),
+  subclassFeature(monk, ["Kensei", "XGE"], ["One with the Blade", "XGE"], 6, [
+    {
+      kind: "extraDamage",
+      dice: { column: "martial_arts" },
+      oncePerTurn: true,
+      option: "with a kensei weapon, spending 1 ki point",
+    },
+  ]),
+  {
+    ref: { name: "Fangs of the Fire Snake", source: "PHB" },
+    mechanics: [
+      {
+        kind: "extraDamage",
+        dice: "1d10",
+        type: "fire",
+        weapons: "unarmed",
+        option: "spending 1 ki point on the hit",
+      },
+    ],
+  },
+  subclassFeature(ranger, ["Fey Wanderer", "TCE"], ["Dreadful Strikes", "TCE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d4",
+      scales: [{ level: 11, dice: "1d6" }],
+      type: "psychic",
+      oncePerTurn: true,
+      option: ON_A_HIT,
+    },
+  ]),
+  subclassFeature(ranger, ["Gloom Stalker", "XGE"], ["Dread Ambusher", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      unarmed: true,
+      option: "on the additional attack of your first turn in combat",
+    },
+  ]),
+  subclassFeature(ranger, ["Horizon Walker", "XGE"], ["Planar Warrior", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      scales: [{ level: 11, dice: "2d8" }],
+      type: "force",
+      unarmed: true,
+      oncePerTurn: true,
+      option: "against the creature chosen with a bonus action this turn",
+    },
+  ]),
+  subclassFeature(ranger, ["Monster Slayer", "XGE"], ["Slayer's Prey", "XGE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      unarmed: true,
+      oncePerTurn: true,
+      option: "against the creature you designated",
+    },
+  ]),
+  subclassFeature(ranger, ["Swarmkeeper", "TCE"], ["Gathered Swarm", "TCE"], 3, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      scales: [{ level: 11, dice: "1d8" }],
+      type: "piercing",
+      unarmed: true,
+      oncePerTurn: true,
+      option: "choosing the swarm's damage",
+    },
+  ]),
+  subclassFeature(warlock, ["Genie", "TCE"], ["Genie's Wrath", "TCE"], 1, [
+    {
+      kind: "extraDamage",
+      dice: "proficiency",
+      type: "bludgeoning, cold, fire or thunder",
+      unarmed: true,
+      oncePerTurn: true,
+      option: ON_A_HIT,
+    },
+  ]),
+  // Its critical range against the cursed target is no `attack` mechanic, which always holds.
+  subclassFeature(warlock, ["Hexblade", "XGE"], ["Hexblade's Curse", "XGE"], 1, [
+    {
+      kind: "extraDamage",
+      dice: "proficiency",
+      unarmed: true,
+      option: "against your cursed target",
+    },
+  ]),
+  {
+    ref: { name: "Eldritch Smite", source: "XGE" },
+    mechanics: [
+      {
+        kind: "extraDamage",
+        dice: "2d8",
+        type: "force",
+        oncePerTurn: true,
+        option: "with your pact weapon",
+        slot: { max: 6, pact: true },
+      },
+    ],
+  },
+  subclassFeature(["Wizard", "PHB"], ["Bladesinging", "TCE"], ["Song of Victory", "TCE"], 14, [
+    {
+      kind: "extraDamage",
+      dice: "int",
+      weapons: "melee",
+      unarmed: true,
+      option: "while your Bladesong is active",
+    },
+  ]),
+  {
+    ref: { name: "Fire Rune", source: "TCE" },
+    mechanics: [
+      { kind: "extraDamage", dice: "2d6", type: "fire", option: "invoking the fire rune" },
+    ],
+  },
+  // The die each adds is the one recorded on the feature it improves or is an option of.
+  ...(
+    [
+      [
+        bard,
+        ["Swords", "XGE"],
+        "XGE",
+        ["Defensive Flourish", "Mobile Flourish", "Slashing Flourish"],
+        3,
+      ],
+      [bard, ["Swords", "XGE"], "XGE", ["Master's Flourish"], 14],
+      [artificer, ["Battle Smith", "TCE"], "TCE", ["Improved Defender"], 15],
+      [fighter, ["Battle Master", "PHB"], "PHB", ["Improved Combat Superiority (d10)"], 10],
+      [fighter, ["Battle Master", "PHB"], "PHB", ["Improved Combat Superiority (d12)"], 18],
+      [fighter, ["Rune Knight", "TCE"], "TCE", ["Great Stature"], 10],
+      [fighter, ["Rune Knight", "TCE"], "TCE", ["Runic Juggernaut"], 18],
+      [ranger, ["Swarmkeeper", "TCE"], "TCE", ["Mighty Swarm"], 11],
+    ] as const
+  ).flatMap(
+    ([[className, classSource], [shortName, subclassSource], source, featureNames, level]) =>
+      featureNames.map((name) =>
+        narrative({
+          name,
+          source,
+          className,
+          classSource,
+          subclass: { shortName, source: subclassSource },
+          level,
+        }),
+      ),
+  ),
+  ...[
+    ...["Brace", "Quick Toss"].map((name) => ({ name, source: "TCE" })),
+    ...[
+      "Disarming Attack",
+      "Distracting Strike",
+      "Feinting Attack",
+      "Goading Attack",
+      "Lunging Attack",
+      "Maneuvering Attack",
+      "Menacing Attack",
+      "Pushing Attack",
+      "Riposte",
+      "Trip Attack",
+    ].map((name) => ({ name, source: "PHB" })),
+    ...[
+      "Banishing Arrow",
+      "Beguiling Arrow",
+      "Bursting Arrow",
+      "Enfeebling Arrow",
+      "Grasping Arrow",
+      "Piercing Arrow",
+      "Seeking Arrow",
+      "Shadow Arrow",
+    ].map((name) => ({ name, source: "XGE" })),
+  ].map(narrative),
+  // The launcher is no weapon the inventory holds, and the glimmer's damage lands on any attack.
+  ...(
+    [
+      ["Lightning Launcher", 3],
+      ["Infiltrator", 15],
+    ] as const
+  ).map(([name, level]) =>
+    narrative({
+      name,
+      source: "TCE",
+      className: "Artificer",
+      classSource: "TCE",
+      subclass: { shortName: "Armorer", source: "TCE" },
+      level,
+    }),
+  ),
+  // Orcish Fury rolls one of the weapon's own dice again, and Piercer rerolls one or adds one
+  // on a critical hit, which doubles every die the roll holds.
+  narrative({ name: "Orcish Fury", source: "XGE" }),
+  narrative({ name: "Piercer", source: "TCE" }),
   classFeature(monk, ["Martial Arts", "PHB"], 1, [
     { kind: "martialArts", monkWeapons: "classic", die: "martial_arts", dexterity: true },
   ]),

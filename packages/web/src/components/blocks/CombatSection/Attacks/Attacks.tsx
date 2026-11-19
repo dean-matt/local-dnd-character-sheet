@@ -20,6 +20,7 @@ import {
   featuresUsed,
   houseRule,
   itemKey,
+  offerSlots,
   overrideKey,
   type SpellCastOption,
   type SpentAmmunition,
@@ -339,8 +340,10 @@ export function Attacks({
    */
   function rowDamage(rowKey: string, features: Attack["featureDamage"]) {
     const { slot: picked, versus } = smite[rowKey] ?? NO_SMITE;
-    const slot = pickedSlot(slots, picked);
-    const added = rowFeatureDamage(features, adding[rowKey] ?? [], usedNow, slot, versus);
+    const chosen = adding[rowKey] ?? [];
+    const smiting = features.find(({ source, offer }) => offer?.slot && chosen.includes(source));
+    const slot = pickedSlot(offerSlots(slots, smiting?.offer ?? null), picked);
+    const added = rowFeatureDamage(features, chosen, usedNow, slot, versus);
     const spends = added.taken.some(({ offer }) => offer?.slot || offer?.oncePerTurn);
     return { slot, added, spend: spends ? () => spendFeatures(added.taken, slot) : undefined };
   }
@@ -367,7 +370,11 @@ export function Attacks({
         taken={adding[rowKey] ?? []}
         take={(source, on) =>
           setAdding((now) => {
-            const rest = (now[rowKey] ?? []).filter((name) => name !== source);
+            const spendsSlot = (name: string) =>
+              featureDamage.some((entry) => entry.source === name && entry.offer?.slot);
+            const rest = (now[rowKey] ?? []).filter(
+              (name) => name !== source && !(on && spendsSlot(source) && spendsSlot(name)),
+            );
             return { ...now, [rowKey]: on ? [...rest, source] : rest };
           })
         }

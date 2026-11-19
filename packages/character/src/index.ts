@@ -119,7 +119,7 @@ export {
   featureActionType,
   featurePoolKey,
 } from "./featureActions.ts";
-export { featureDamageDice } from "./featureAttacks.ts";
+export { featureDamageDice, offerSlots } from "./featureAttacks.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 export type { Mechanic } from "./featureMechanics.ts";
 export { restoredState } from "./featureRestores.ts";
