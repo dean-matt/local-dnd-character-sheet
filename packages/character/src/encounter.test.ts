@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  actionAdded,
   characterStateSchema,
   describeStateChange,
   encounterEnded,
@@ -57,6 +58,19 @@ describe("encounter", () => {
     const used = featuresUsed(fighting, ["Sneak Attack"]);
     expect(encounterEnded(used).turn.features).toEqual([]);
     expect(encounterStarted({ ...used, encounter: null }).turn.features).toEqual([]);
+  });
+
+  it("drops an added action with the once-a-turn record, so a feature adds one action a turn", () => {
+    const surged = actionAdded(
+      { ...state, encounter: { round: 2, initiative: 11 } },
+      "Action Surge",
+    );
+    for (const changed of [
+      encounterEnded(surged),
+      encounterStarted({ ...surged, encounter: null }),
+    ]) {
+      expect(actionAdded(changed, "Action Surge").turn.addedActions).toEqual([false]);
+    }
   });
 
   it("refuses a round past the bound", () => {
