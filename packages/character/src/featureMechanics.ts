@@ -348,15 +348,16 @@ const resetSchema = z.enum(["short", "long"]);
 
 /**
  * The uses a feature counts, restored by a `reset` rest, where `short` means either rest:
- * `count`, a number or an ability's modifier, plus `plus`, at least `minimum`. Absent,
- * `minimum` is 1, as a feature printing "a minimum of once" has it; 0 records a feature that
- * prints none. Each of `scales` replaces a number count, the reset or both from a level in
- * the feature's class.
+ * `count`, a number, an ability's modifier or the proficiency bonus, `times` over, plus `plus`,
+ * at least `minimum`. Absent, `minimum` is 1, as a feature printing "a minimum of once" has it;
+ * 0 records a feature that prints none. Each of `scales` replaces a number count, the reset or
+ * both from a level in the feature's class.
  */
 const usesMechanicSchema = z
   .strictObject({
     kind: z.literal("uses"),
-    count: z.union([z.int().min(1), abilitySchema]),
+    count: z.union([z.int().min(1), abilitySchema, z.literal("proficiency")]),
+    times: z.int().min(2).optional(),
     plus: z.int().min(1).optional(),
     minimum: z.literal(0).optional(),
     reset: resetSchema,

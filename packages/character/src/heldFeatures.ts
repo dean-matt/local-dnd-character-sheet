@@ -102,6 +102,11 @@ export const SUBCLASS_NAMES = new Map([
   ["Wild Magic|TCE", "Path of Wild Magic|TCE"],
   ["Wildfire|TCE", "Circle of Wildfire|TCE"],
   ["Wild|PHB", "Wild Magic|PHB"],
+  ["Eloquence|TCE", "College of Eloquence|TCE"],
+  ["Inquisitive|XGE", "Inquisitive|XGE"],
+  ["Phantom|TCE", "Phantom|TCE"],
+  ["Soulknife|TCE", "Soulknife|TCE"],
+  ["Scribes|TCE", "Order of Scribes|TCE"],
 ]);
 
 /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */
