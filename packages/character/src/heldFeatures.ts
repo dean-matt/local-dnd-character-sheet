@@ -24,6 +24,8 @@ export const SUBCLASS_NAMES = new Map([
   ["War|PHB", "War Domain|PHB"],
   ["Order|TCE", "Order Domain|TCE"],
   ["Twilight|TCE", "Twilight Domain|TCE"],
+  ["Grave|XGE", "Grave Domain|XGE"],
+  ["Peace|TCE", "Peace Domain|TCE"],
   ["Valor|PHB", "College of Valor|PHB"],
   ["Swords|XGE", "College of Swords|XGE"],
   ["Champion|PHB", "Champion|PHB"],

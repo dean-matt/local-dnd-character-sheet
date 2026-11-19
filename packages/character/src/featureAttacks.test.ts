@@ -165,6 +165,14 @@ describe("featureDamage", () => {
     expect(sources(life(7), GREATSWORD)).toEqual([]);
   });
 
+  it("offers TCE's Blessed Strikes beside Divine Strike only under optional class features", () => {
+    const grave = levelsOf("Cleric", "PHB", 8, "Grave Domain", "XGE");
+    expect(sources(grave, GREATSWORD)).toEqual([]);
+    expect(sources({ ...grave, houseRules: { optionalClassFeatures: true } }, UNARMED)).toEqual([
+      { source: "Blessed Strikes", dice: "1d8", bonus: 0 },
+    ]);
+  });
+
   it("offers the 2024 Divine Strike only where Blessed Strikes took it", () => {
     const blessed = {
       name: "Blessed Strikes",

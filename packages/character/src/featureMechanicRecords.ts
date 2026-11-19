@@ -1106,16 +1106,16 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   },
   ...(
     [
-      ["Nature", "PHB", "PHB", "cold, fire or lightning"],
-      ["Tempest", "PHB", "PHB", "thunder"],
-      ["Trickery", "PHB", "PHB", "poison"],
-      ["War", "PHB", "PHB", undefined],
-      ["Order", "TCE", "TCE", "psychic"],
-      ["Twilight", "TCE", "TCE", "radiant"],
-      ["Forge", "XGE", "XGE", "fire"],
+      ["Nature", "PHB", "cold, fire or lightning"],
+      ["Tempest", "PHB", "thunder"],
+      ["Trickery", "PHB", "poison"],
+      ["War", "PHB", undefined],
+      ["Order", "TCE", "psychic"],
+      ["Twilight", "TCE", "radiant"],
+      ["Forge", "XGE", "fire"],
     ] as const
-  ).map(([domain, domainSource, source, type]) =>
-    subclassFeature(cleric, [domain, domainSource], ["Divine Strike", source], 8, [
+  ).map(([domain, source, type]) =>
+    subclassFeature(cleric, [domain, source], ["Divine Strike", source], 8, [
       {
         kind: "extraDamage",
         dice: "1d8",
@@ -1127,6 +1127,34 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       },
     ]),
   ),
+  ...(
+    [
+      ["Life", "PHB"],
+      ["Nature", "PHB"],
+      ["Tempest", "PHB"],
+      ["Trickery", "PHB"],
+      ["War", "PHB"],
+      ["Knowledge", "PHB"],
+      ["Light", "PHB"],
+      ["Forge", "XGE"],
+      ["Grave", "XGE"],
+      ["Order", "TCE"],
+      ["Peace", "TCE"],
+      ["Twilight", "TCE"],
+    ] as const
+  ).map(([domain, domainSource]) => ({
+    ...subclassFeature(cleric, [domain, domainSource], ["Blessed Strikes", "TCE"], 8, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        type: "radiant",
+        unarmed: true,
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+    houseRule: "optionalClassFeatures" as const,
+  })),
   subclassFeature(barbarian, ["Zealot", "XGE"], ["Divine Fury", "XGE"], 3, [
     {
       kind: "extraDamage",
@@ -1163,6 +1191,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
         { level: 10, dice: "1d10" },
         { level: 15, dice: "1d12" },
       ],
+      unarmed: true,
       oncePerTurn: true,
       option: "expending a use of Bardic Inspiration on a flourish",
     },

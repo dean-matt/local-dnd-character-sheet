@@ -2599,6 +2599,25 @@ describe("deriveCharacter", () => {
       expect(block.speed.computed).toEqual({ walk: 35, swim: 65, fly: 35 });
     });
 
+    it("adds the item-raised proficiency bonus at total level to a feature's damage", () => {
+      const warlock = { name: "Warlock", source: "PHB" };
+      const levels = [
+        ...Array.from({ length: 4 }, () => ({ class: ROGUE })),
+        { class: warlock, subclass: { name: "The Genie", source: "TCE" } },
+      ];
+      const genieCatalog = {
+        ...itemCatalog,
+        hitDice: new Map([...hitDice, [entryKey(warlock), 8 as const]]),
+      };
+      const wrath = (inventory: CharacterDefinition["inventory"]) =>
+        deriveCharacter(
+          { ...equipped, levels, inventory },
+          genieCatalog,
+        ).unarmedStrike.featureDamage.find((damage) => damage.source === "Genie's Wrath")?.bonus;
+      expect(wrath([])).toBe(3);
+      expect(wrath([worn(MASTERY)])).toBe(4);
+    });
+
     it("never lowers a speed a static or matching item sets", () => {
       const fast = { ...itemCatalog, speed: { walk: 40, swim: 80 } };
       const block = deriveCharacter({ ...equipped, inventory: [worn(CLOAK)] }, fast);

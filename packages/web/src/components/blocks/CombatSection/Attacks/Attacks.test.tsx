@@ -868,6 +868,28 @@ describe("Attacks", () => {
       expect(puts[0]?.pactSlots).toEqual({ level: 3, total: 2, expended: 1 });
     });
 
+    it("names the pact slot Eldritch Smite lacks while spell slots remain", async () => {
+      const smite = {
+        source: "Eldritch Smite",
+        dice: "2d8",
+        bonus: 0,
+        type: "force",
+        offer: {
+          condition: "with your pact weapon",
+          oncePerTurn: true,
+          slot: { max: 6, pact: true as const },
+        },
+      };
+      renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 4, manual: null, terms: [] } }],
+        pactSlots: null,
+        attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
+      });
+      expect(await longsword().findByText("No pact slot left")).toBeInTheDocument();
+      expect(longsword().getByRole("checkbox", { name: /^Eldritch Smite/ })).toBeDisabled();
+    });
+
     it("takes one feature that spends a slot on a row at a time", async () => {
       const slotOffer = (source: string, pact?: true) => ({
         source,

@@ -15,8 +15,8 @@ const amount = (entry: Entry, slot?: SpellCastOption, versus = false) => {
 /**
  * The damage held features add to one row: a line per feature that always lands, a checkbox
  * per one the attack offers, and a note for a once-a-turn one already used. A feature that
- * spends a spell slot asks for the slot once taken, and whether the target is the kind its
- * extra die falls on.
+ * spends a slot asks for the slot once taken and, where it names a kind of target, whether the
+ * target is that kind.
  */
 export function FeatureDamage({
   entries,
@@ -75,7 +75,11 @@ export function FeatureDamage({
             {source} {amount(entry, at, versus)}
           </span>
         </label>
-        {noSlot && <p className="text-label text-muted">No spell slot left</p>}
+        {noSlot && (
+          <p className="text-label text-muted">
+            No {offer.slot?.pact ? "pact" : "spell"} slot left
+          </p>
+        )}
         {checked && offer.slot && at && (
           <>
             <label className="flex items-center gap-1 text-label">
