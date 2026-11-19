@@ -541,12 +541,15 @@ function tableColumn(definition: CharacterDefinition, catalog: CharacterCatalog)
 function strikeSheet(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
+  bonuses: readonly ItemBonusTrait[],
   rage: RageBenefits,
 ) {
   const column = tableColumn(definition, catalog);
+  const raised = bonuses.reduce((sum, item) => sum + item.proficiencyBonus, 0);
   const sheet: DamageSheet = {
     column,
     modifier: (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
+    proficiency: proficiencyContribution(totalLevel(definition), "proficient", raised),
     raging: rage !== null,
   };
   const { worn, shield } = equippedArmor(definition, catalog.armor);
@@ -577,7 +580,7 @@ function weaponStrike(
 ): CharacterDerived["attacks"][number] {
   const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
   const level = totalLevel(definition);
-  const { sheet, monk } = strikeSheet(definition, catalog, rage);
+  const { sheet, monk } = strikeSheet(definition, catalog, bonuses, rage);
   const twoHandedBlocked = entry.equipped && shield;
   const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
   const { reference } = weapon.bonus;
@@ -677,7 +680,7 @@ function derivedUnarmedStrike(
   const level = totalLevel(definition);
   const strength = abilityModifier(scoreOf(definition, catalog, "str"));
   const features = featureStrike(definition, { proficient: true, alone: false });
-  const { sheet, monk } = strikeSheet(definition, catalog, rage);
+  const { sheet, monk } = strikeSheet(definition, catalog, bonuses, rage);
   const unarmed = { kind: "melee" as const, damage: UNARMED_DICE };
   const weapon = monk ? monk.apply(unarmed) : unarmed;
   const result = weaponAttack<TermReference>({

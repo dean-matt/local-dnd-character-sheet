@@ -67,6 +67,19 @@ export const SUBCLASS_NAMES = new Map([
   ["Divination|PHB", "School of Divination|PHB"],
   ["Evocation|PHB", "School of Evocation|PHB"],
   ["Evoker|XPHB", "Evoker|XPHB"],
+  ["Trickery|PHB", "Trickery Domain|PHB"],
+  ["Zealot|XGE", "Path of the Zealot|XGE"],
+  ["Whispers|XGE", "College of Whispers|XGE"],
+  ["Spores|TCE", "Circle of Spores|TCE"],
+  ["Battle Master|PHB", "Battle Master|PHB"],
+  ["Psi Warrior|TCE", "Psi Warrior|TCE"],
+  ["Kensei|XGE", "Way of the Kensei|XGE"],
+  ["Astral Self|TCE", "Way of the Astral Self|TCE"],
+  ["Horizon Walker|XGE", "Horizon Walker|XGE"],
+  ["Monster Slayer|XGE", "Monster Slayer|XGE"],
+  ["Fey Wanderer|TCE", "Fey Wanderer|TCE"],
+  ["Swarmkeeper|TCE", "Swarmkeeper|TCE"],
+  ["Genie|TCE", "The Genie|TCE"],
 ]);
 
 /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */

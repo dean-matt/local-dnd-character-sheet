@@ -214,16 +214,20 @@ const attackMechanicSchema = z
 
 const diceSchema = z.string().regex(/^\d+d\d+$/);
 
+const flatSchema = z.union([abilitySchema, z.enum(["proficiency", "halfLevel"])]);
+
 /**
  * Damage a feature adds to the character's own weapon attacks on a hit: `dice` as notation, a
- * class table column's cell, or as many `die`-sided dice as that cell's number; or an
- * ability's modifier, at least 1. `scales` replaces the dice from a level in the feature's
- * class. `type` is the damage's, the weapon's own where absent. `weapons` narrows it to melee
- * weapons or finesse and ranged ones, and `unarmed` adds the unarmed strike. `option` says
- * when it holds, and the attack offers it rather than adding it: once a turn where
- * `oncePerTurn` says so, and for a spell slot where `slot` does, a die more for each slot
- * level past the first up to `max` dice, and one more `versus` the creatures it names.
- * `while: "raging"` holds it only during a rage.
+ * class table column's cell, or as many `die`-sided dice as that cell's number; or a flat
+ * amount, an ability's modifier of at least 1, the proficiency bonus, or half the levels in
+ * the feature's class. `plus` adds a flat amount to the dice, an ability's modifier as it
+ * stands. `scales` replaces the dice from a level in the feature's class. `type` is the
+ * damage's, the weapon's own where absent. `weapons` narrows it to melee weapons, ranged
+ * ones, finesse and ranged ones, or the unarmed strike alone, and `unarmed` adds the unarmed
+ * strike. `option` says when it holds, and the attack offers it rather than adding it: once a
+ * turn where `oncePerTurn` says so, and for a spell slot where `slot` does, a pact slot alone
+ * where `pact` says so, a die more for each slot level past the first up to `max` dice, and
+ * one more `versus` the creatures it names. `while: "raging"` holds it only during a rage.
  */
 const extraDamageMechanicSchema = z
   .strictObject({
@@ -231,25 +235,35 @@ const extraDamageMechanicSchema = z
     dice: z.union([
       diceSchema,
       z.strictObject({ column: z.string().min(1), die: z.int().min(2).optional() }),
-      abilitySchema,
+      flatSchema,
     ]),
+    plus: z.union([abilitySchema, z.literal("halfLevel")]).optional(),
     scales: z
       .array(z.strictObject({ level: z.int().min(2).max(20), dice: diceSchema }))
       .min(1)
       .optional(),
     type: z.string().min(1).optional(),
-    weapons: z.enum(["melee", "finesseOrRanged"]).optional(),
+    weapons: z.enum(["melee", "ranged", "finesseOrRanged", "unarmed"]).optional(),
     unarmed: z.literal(true).optional(),
     option: z.string().min(1).optional(),
     oncePerTurn: z.literal(true).optional(),
-    slot: z.strictObject({ max: z.int().min(2), versus: z.string().min(1) }).optional(),
+    slot: z
+      .strictObject({
+        max: z.int().min(2),
+        versus: z.string().min(1).optional(),
+        pact: z.literal(true).optional(),
+      })
+      .optional(),
     while: z.literal("raging").optional(),
   })
   .refine(({ option, oncePerTurn, slot }) => option || (!oncePerTurn && !slot), {
     error: "extra damage the attack offers says when it holds",
   })
-  .refine(({ slot, dice }) => !slot || typeof dice === "string", {
+  .refine(({ slot, dice }) => !slot || diceSchema.safeParse(dice).success, {
     error: "a slot adds dice to notation",
+  })
+  .refine(({ plus, dice }) => !plus || !flatSchema.safeParse(dice).success, {
+    error: "a flat amount is added to dice",
   });
 
 /**

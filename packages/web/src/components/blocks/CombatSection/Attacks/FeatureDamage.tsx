@@ -1,4 +1,4 @@
-import { featureDamageDice, type SpellCastOption } from "@dnd/character";
+import { featureDamageDice, offerSlots, type SpellCastOption } from "@dnd/character";
 import type { Attack } from "../../attack.ts";
 
 type Entry = Attack["featureDamage"][number];
@@ -8,7 +8,8 @@ const slotKey = ({ via, level }: SpellCastOption) => `${via}:${level}`;
 
 const amount = (entry: Entry, slot?: SpellCastOption, versus = false) => {
   const dice = featureDamageDice(entry, slot?.level, versus);
-  return `+${dice ?? entry.bonus}${entry.type ? ` ${entry.type}` : ""}`;
+  const bonus = entry.bonus === 0 ? "" : `${entry.bonus > 0 ? "+" : ""}${entry.bonus}`;
+  return `+${dice === null ? entry.bonus : `${dice}${bonus}`}${entry.type ? ` ${entry.type}` : ""}`;
 };
 
 /**
@@ -56,7 +57,10 @@ export function FeatureDamage({
         </p>
       );
     const checked = taken.includes(source);
-    const noSlot = offer.slot !== null && slots.length === 0;
+    const own = offerSlots(slots, offer);
+    const noSlot = offer.slot !== null && own.length === 0;
+    const at =
+      own.find((option) => option.via === slot?.via && option.level === slot.level) ?? own[0];
     return (
       <div key={source} className="flex flex-col gap-0.5">
         <label className="flex items-center gap-1 text-label">
@@ -64,27 +68,27 @@ export function FeatureDamage({
             type="checkbox"
             checked={checked && !noSlot}
             disabled={noSlot}
-            aria-label={`${source} ${amount(entry, slot, versus)}, ${offer.condition}`}
+            aria-label={`${source} ${amount(entry, at, versus)}, ${offer.condition}`}
             onChange={(event) => take(source, event.target.checked)}
           />
           <span title={offer.condition}>
-            {source} {amount(entry, slot, versus)}
+            {source} {amount(entry, at, versus)}
           </span>
         </label>
         {noSlot && <p className="text-label text-muted">No spell slot left</p>}
-        {checked && offer.slot && slot && (
+        {checked && offer.slot && at && (
           <>
             <label className="flex items-center gap-1 text-label">
               Slot
               <select
-                value={slotKey(slot)}
+                value={slotKey(at)}
                 onChange={(event) => {
-                  const picked = slots.find((option) => slotKey(option) === event.target.value);
+                  const picked = own.find((option) => slotKey(option) === event.target.value);
                   if (picked) pickSlot(picked);
                 }}
                 className="min-h-6 min-w-0 rounded-control border border-border bg-surface"
               >
-                {slots.map((option) => (
+                {own.map((option) => (
                   <option key={slotKey(option)} value={slotKey(option)}>
                     Level {option.level}
                     {option.via === "pact" ? " pact" : ""} ({option.left} left)
@@ -92,14 +96,16 @@ export function FeatureDamage({
                 ))}
               </select>
             </label>
-            <label className="flex items-center gap-1 text-label">
-              <input
-                type="checkbox"
-                checked={versus}
-                onChange={(event) => setVersus(event.target.checked)}
-              />
-              Against {offer.slot.versus}
-            </label>
+            {offer.slot.versus && (
+              <label className="flex items-center gap-1 text-label">
+                <input
+                  type="checkbox"
+                  checked={versus}
+                  onChange={(event) => setVersus(event.target.checked)}
+                />
+                Against {offer.slot.versus}
+              </label>
+            )}
           </>
         )}
       </div>
