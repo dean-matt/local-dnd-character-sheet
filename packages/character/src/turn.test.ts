@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  actionAdded,
+  addedActionToggled,
   characterStateSchema,
   describeStateChange,
   featuresUsed,
@@ -19,6 +21,7 @@ describe("turn marks", () => {
       bonusAction: false,
       reaction: true,
       movement: false,
+      addedActions: [],
       features: [],
     });
     expect(turnMarkToggled(spent, "reaction").turn).toEqual(state.turn);
@@ -28,6 +31,37 @@ describe("turn marks", () => {
     const spent = turnMarkSpent(state, "bonusAction");
     expect(spent.turn.bonusAction).toBe(true);
     expect(turnMarkSpent(spent, "bonusAction")).toBe(spent);
+  });
+
+  it("spends an added action once the turn's own action is spent", () => {
+    const surged = actionAdded(turnMarkSpent(state, "action"), "Action Surge");
+    expect(surged.turn.addedActions).toEqual([false]);
+    const spent = turnMarkSpent(surged, "action");
+    expect(spent.turn.addedActions).toEqual([true]);
+    expect(turnMarkSpent(spent, "action")).toBe(spent);
+    expect(addedActionToggled(spent, 0).turn.addedActions).toEqual([false]);
+  });
+
+  it("keeps an action added before the turn's own is spent", () => {
+    const spent = turnMarkSpent(actionAdded(state, "Action Surge"), "action");
+    expect(spent.turn).toMatchObject({ action: true, addedActions: [false] });
+  });
+
+  it("adds a feature's action once a turn, however many uses it has", () => {
+    const surged = actionAdded(state, "Action Surge");
+    expect(actionAdded(surged, "Action Surge")).toBe(surged);
+    expect(surged.turn.addedActions).toEqual([false]);
+    expect(actionAdded(turnReset(surged), "Action Surge").turn.addedActions).toEqual([false]);
+  });
+
+  it("drops the added actions when the turn resets", () => {
+    expect(turnReset(actionAdded(state, "Action Surge")).turn.addedActions).toEqual([]);
+  });
+
+  it("describes an added action", () => {
+    expect(describeStateChange(state, actionAdded(state, "Action Surge"))).toBe(
+      "Added actions set to 0 of 1 spent, Used this turn set to Action Surge",
+    );
   });
 
   it("resets every mark", () => {

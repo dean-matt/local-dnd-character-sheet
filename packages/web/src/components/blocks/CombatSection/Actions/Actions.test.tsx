@@ -1,6 +1,6 @@
 import type { CharacterDerived, CharacterRecord, CharacterState, RollRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord, stateRecord } from "../../../../test/records.ts";
 import { stubFetchByUrl } from "../../../../test/stubFetch.ts";
@@ -64,6 +64,47 @@ describe("Actions", () => {
     expect(
       JSON.parse(String(fetchMock.mock.calls.find((call) => call[1]?.body)?.[1]?.body)).refs,
     ).toEqual([{ tag: "action", name: "Dash", source: "XPHB" }]);
+  });
+
+  it("says how many attacks the Attack action allows where a feature raises it", () => {
+    stubFetchByUrl({});
+    const turn = (attacks: number, pactAttacks: number | null) => ({
+      ...derivedRecord(),
+      turn: { ...derivedRecord().turn, attacks, pactAttacks },
+    });
+    const attack = (card: HTMLElement) =>
+      within(card).getByRole("button", { name: "Attack" }).closest("li");
+
+    expect(attack(renderActions("classic", turn(3, null)))).toHaveTextContent("Attack3 attacks");
+    cleanup();
+    expect(attack(renderActions("classic", turn(1, 2)))).toHaveTextContent(
+      "2 attacks with the pact weapon",
+    );
+    cleanup();
+    expect(attack(renderActions("classic"))).toHaveTextContent(/^Attack$/);
+  });
+
+  it("lists each action a feature lets the character take as a bonus action, and why", async () => {
+    const fetchMock = stubFetchByUrl({});
+    const card = renderActions("classic", {
+      ...derivedRecord(),
+      turn: {
+        ...derivedRecord().turn,
+        bonusActions: [{ action: "Dash", features: ["Cunning Action", "Step of the Wind"] }],
+      },
+    });
+    const bonus = within(card).getByRole("heading", { name: "bonus action" })
+      .nextElementSibling as HTMLElement;
+    expect(names(bonus)).toEqual(["Two-Weapon Fighting", "Dash"]);
+    const dash = within(bonus).getByRole("button", { name: "Dash" });
+    expect(dash.closest("li")).toHaveTextContent("via Cunning Action, Step of the Wind");
+
+    fireEvent.click(dash);
+    await waitFor(() =>
+      expect(
+        JSON.parse(String(fetchMock.mock.calls.find((call) => call[1]?.body)?.[1]?.body)).refs,
+      ).toEqual([{ tag: "action", name: "Dash", source: "PHB" }]),
+    );
   });
 
   it("lists a held feature under its action type with its rules text one click away", async () => {
@@ -131,11 +172,13 @@ describe("Actions", () => {
         maximum = 2,
         restores = [],
         hitPoints = { current: null, temporary: 0 },
+        turn = derivedRecord().turn,
       }: {
         expended?: number;
         maximum?: number;
         restores?: CharacterDerived["featureRestores"];
         hitPoints?: CharacterState["hitPoints"];
+        turn?: CharacterDerived["turn"];
       } = {},
     ) {
       let stored = stateRecord();
@@ -181,6 +224,7 @@ describe("Actions", () => {
         ...derivedRecord(),
         hitPointMaximum: { computed: 40, manual: null, terms: [] },
         featureRestores: restores,
+        turn,
         classResources: [
           {
             class: FIGHTER,
@@ -209,6 +253,48 @@ describe("Actions", () => {
       expect(within(row).getByRole("status")).toHaveTextContent(
         "Second Wind used: 1 of 2 left. Bonus action spent.",
       );
+    });
+
+    it("adds an action to the turn in the spend's one write where the feature does", async () => {
+      const surge = { name: "Action Surge", source: "XPHB" };
+      const { card, writes } = renderUse(
+        {
+          ...SECOND_WIND,
+          ...surge,
+          uses: { key: "feature|Fighter|XPHB|Action Surge", count: 1, reset: "short" },
+        },
+        { turn: { ...derivedRecord().turn, addsAction: [surge] } },
+      );
+      const use = await within(card).findByRole("button", { name: "Use Action Surge" });
+      fireEvent.click(use);
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.turn.addedActions).toEqual([false]);
+      expect(writes[0]?.featureUses).toEqual([
+        { key: "feature|Fighter|XPHB|Action Surge", expended: 1 },
+      ]);
+      expect(within(use.closest("li") as HTMLElement).getByRole("status")).toHaveTextContent(
+        "Action Surge used: 0 of 1 left. Action added to the turn.",
+      );
+    });
+
+    it("refuses a second added action in one turn while uses remain", async () => {
+      const surge = { name: "Action Surge", source: "XPHB" };
+      const { card, writes } = renderUse(
+        {
+          ...SECOND_WIND,
+          ...surge,
+          uses: { key: "feature|Fighter|XPHB|Action Surge", count: 2, reset: "short" },
+        },
+        { turn: { ...derivedRecord().turn, addsAction: [surge] } },
+      );
+      const use = await within(card).findByRole("button", { name: "Use Action Surge" });
+      fireEvent.click(use);
+      await waitFor(() => expect(use).toHaveAttribute("aria-disabled", "true"));
+      expect(use).toHaveAttribute("title", "Action Surge already used this turn");
+      fireEvent.click(use);
+      expect(writes).toHaveLength(1);
+      expect(writes[0]?.turn.addedActions).toEqual([false]);
     });
 
     it("refuses a use at 0 left", async () => {

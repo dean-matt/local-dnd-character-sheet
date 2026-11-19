@@ -112,6 +112,21 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ count: 2, times: 2 })).toBe(false);
   });
 
+  it("refuses a turn mechanic that changes nothing or more than one thing, or a pact count off attacks", () => {
+    const ref = { name: "Extra Attack", source: "PHB" };
+    const parse = (turn: object) =>
+      featureMechanicsSchema.safeParse({ ref, mechanics: [{ kind: "turn", ...turn }] }).success;
+    expect(parse({ attacks: 2 })).toBe(true);
+    expect(parse({ attacks: 2, pact: true })).toBe(true);
+    expect(parse({ action: true })).toBe(true);
+    expect(parse({ bonusAction: ["Dash"] })).toBe(true);
+    expect(parse({})).toBe(false);
+    expect(parse({ attacks: 1 })).toBe(false);
+    expect(parse({ attacks: 2, action: true })).toBe(false);
+    expect(parse({ action: true, pact: true })).toBe(false);
+    expect(parse({ bonusAction: ["Attack"] })).toBe(false);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);

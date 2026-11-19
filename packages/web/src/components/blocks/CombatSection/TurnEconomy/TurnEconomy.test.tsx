@@ -48,6 +48,7 @@ describe("TurnEconomy", () => {
       bonusAction: false,
       reaction: true,
       movement: false,
+      addedActions: [],
       features: [],
     });
     expect(screen.getByRole("button", { name: /Reaction/ })).toHaveTextContent("spent");
@@ -65,7 +66,25 @@ describe("TurnEconomy", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("reset"));
     expect(writes).toHaveLength(1);
-    expect(Object.values(writes[0]?.turn ?? {})).toEqual([false, false, false, false, []]);
+    expect(Object.values(writes[0]?.turn ?? {})).toEqual([false, false, false, false, [], []]);
+  });
+
+  it("shows each action a feature added beside the action, and spends it in one write", async () => {
+    const writes = renderCard({ action: true, addedActions: [false] });
+    const added = await screen.findByRole("button", { name: /^Action 2/ });
+    expect(added).toHaveTextContent("available");
+
+    fireEvent.click(added);
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Action 2 spent"));
+    expect(writes[0]?.turn).toMatchObject({ action: true, addedActions: [true] });
+  });
+
+  it("drops the added actions on a reset", async () => {
+    const writes = renderCard({ addedActions: [false] });
+    fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.turn.addedActions).toEqual([]);
   });
 
   it("resets a once-a-turn feature used with no mark spent", async () => {

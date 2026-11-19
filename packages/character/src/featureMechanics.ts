@@ -466,8 +466,42 @@ const convertMechanicSchema = z.strictObject({
   refund: z.literal(true).optional(),
 });
 
+/** The standard actions a feature lets the character take as a bonus action, as each edition names them. */
+const BONUS_ACTION_ACTIONS = [
+  "Dash",
+  "Disengage",
+  "Dodge",
+  "Help",
+  "Hide",
+  "Use an Object",
+] as const;
+export type BonusActionAction = (typeof BONUS_ACTION_ACTIONS)[number];
+
+/**
+ * What a feature changes about the character's turn, one of: the `attacks` the Attack action
+ * allows, with the pact weapon alone where `pact` says so; an action a use of the feature adds
+ * to the current turn; or the standard actions it lets the character take as a bonus action.
+ */
+const turnMechanicSchema = z
+  .strictObject({
+    kind: z.literal("turn"),
+    attacks: z.int().min(2).max(4).optional(),
+    pact: z.literal(true).optional(),
+    action: z.literal(true).optional(),
+    bonusAction: z.array(z.enum(BONUS_ACTION_ACTIONS)).min(1).optional(),
+  })
+  .refine(
+    ({ attacks, action, bonusAction }) =>
+      [attacks !== undefined, action, bonusAction].filter(Boolean).length === 1,
+    { error: "a turn mechanic sets attacks, adds an action or names bonus actions, one of them" },
+  )
+  .refine(({ pact, attacks }) => !pact || attacks !== undefined, {
+    error: "only an attack count is the pact weapon's",
+  });
+
 const mechanicSchema = z.union([
   activeMechanicSchema,
+  turnMechanicSchema,
   usesMechanicSchema,
   poolMechanicSchema,
   convertMechanicSchema,

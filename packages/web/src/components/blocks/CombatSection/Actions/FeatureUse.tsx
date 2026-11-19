@@ -2,6 +2,8 @@ import type { FeatureGroup, LimitedUses } from "@dnd/catalog";
 import {
   ACTION_TURN_MARK,
   type ActionType,
+  actionAdded,
+  actionAddedBy,
   type CharacterDerived,
   type CharacterRecord,
   type ConversionOption,
@@ -24,7 +26,8 @@ const BUTTON =
 
 /**
  * A held feature's resource and its Use control. A Use spends the resource, if any, marks
- * the feature's action type spent on the Turn Economy, and lands what the feature restores,
+ * the feature's action type spent on the Turn Economy, adds an action to the turn where the
+ * feature does, as Action Surge does, and lands what the feature restores,
  * as one announced state write, then logs what it rolled. A feature that trades between a
  * pool and spell slots offers Convert instead, whose pick lands with the spend and the mark in
  * the same one write. Nothing shows until state loads, since the count left is read from it.
@@ -64,7 +67,12 @@ export function FeatureUse({
   );
   if (!resource && !mark) return null;
 
-  const blocked = resource?.blocked ?? null;
+  const addsAction = derived.turn.addsAction.some(
+    (feature) => feature.name === name && feature.source === source,
+  );
+  const blocked =
+    resource?.blocked ??
+    (addsAction && actionAddedBy(stored, name) ? `${name} already used this turn` : null);
   const disabled = replace.writing || blocked !== null;
   const counted = resource?.total != null;
   const conversion = derived.featureConversions.find(
@@ -72,7 +80,8 @@ export function FeatureUse({
   );
   const spent = () => {
     const after = resource ? resource.spend(stored) : stored;
-    return mark ? turnMarkSpent(after, mark) : after;
+    const marked = mark ? turnMarkSpent(after, mark) : after;
+    return addsAction ? actionAdded(marked, name) : marked;
   };
   const usedWords = (trade?: string) => {
     const used = `${name} used${trade ? ` to ${trade}` : ""}`;
@@ -81,6 +90,7 @@ export function FeatureUse({
         ? `${used}: ${resource.left - 1} of ${resource.total} left`
         : used,
       ...(mark ? [`${TURN_LABELS[mark]} spent`] : []),
+      ...(addsAction ? ["Action added to the turn"] : []),
     ];
   };
 

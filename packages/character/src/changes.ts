@@ -475,6 +475,14 @@ const STATE_CHANGES: {
       ),
     ),
     ...one(
+      "turn.addedActions",
+      "Added actions",
+      before.turn.addedActions,
+      after.turn.addedActions,
+      (added) =>
+        added.length ? `${added.filter(Boolean).length} of ${added.length} spent` : undefined,
+    ),
+    ...one(
       "turn.features",
       "Used this turn",
       before.turn.features,
