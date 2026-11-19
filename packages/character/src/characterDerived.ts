@@ -9,7 +9,7 @@ import {
 } from "@dnd/rules";
 import { z } from "zod";
 import { derivedSchema } from "./derivedField.ts";
-import { effectEndSchema } from "./featureMechanics.ts";
+import { dieSizeSchema, effectEndSchema } from "./featureMechanics.ts";
 import { abilitySchema, contentRefSchema, entryRefSchema } from "./refs.ts";
 
 /**
@@ -136,9 +136,9 @@ const attackOptionSchema = z.strictObject({
  * Damage a held feature adds to one attack on a hit: `dice`, or a flat `bonus` where `dice`
  * is null, of `type`, or of the weapon's type where that is null. With no `offer` it always
  * lands. An offer lands where the player takes it, as `condition` says: once a turn while an
- * encounter runs where `oncePerTurn` is set, and spending a spell slot where `slot` is, with a
- * die more for each slot level past the first up to `max` dice, and one more `versus` the
- * creatures it names.
+ * encounter runs where `oncePerTurn` is set, and spending a spell slot where `slot` is, a pact
+ * slot alone where `pact` says so, with a die more for each slot level past the first up to
+ * `max` dice, and one more `versus` the creatures it names.
  */
 const featureDamageSchema = z.strictObject({
   source: z.string().min(1),
@@ -149,7 +149,13 @@ const featureDamageSchema = z.strictObject({
     .strictObject({
       condition: z.string().min(1),
       oncePerTurn: z.boolean(),
-      slot: z.strictObject({ max: z.int().min(2), versus: z.string().min(1) }).nullable(),
+      slot: z
+        .strictObject({
+          max: z.int().min(2),
+          versus: z.string().min(1).optional(),
+          pact: z.literal(true).optional(),
+        })
+        .nullable(),
     })
     .nullable(),
 });
@@ -157,7 +163,7 @@ const featureDamageSchema = z.strictObject({
 /**
  * What one use of a held feature restores: hit points for `heal`, temporary hit points for
  * `tempHp`, of `dice` rolled plus `bonus`, at least 1. `others` falls on another creature, so
- * the sheet shows the amount and heals no one.
+ * the sheet shows the amount and restores nothing to the character.
  */
 const featureRestoreSchema = z.strictObject({
   feature: contentRefSchema,
@@ -165,6 +171,19 @@ const featureRestoreSchema = z.strictObject({
   dice: z.string().min(1).nullable(),
   bonus: z.int(),
   others: z.boolean(),
+});
+
+/**
+ * A held feature's trade between its class's pool keyed `pool` and spell slots: `costs` from
+ * the pool for one expended slot, the first a level 1 slot's, and no slot above the last at the
+ * character's level; `refund` lets a slot be expended for as many uses as its level.
+ */
+const featureConversionSchema = z.strictObject({
+  feature: contentRefSchema,
+  class: contentRefSchema,
+  pool: z.string().min(1),
+  costs: z.array(z.int().min(1)).max(9),
+  refund: z.boolean(),
 });
 
 /**
@@ -301,7 +320,8 @@ export const characterDerivedSchema = z.strictObject({
   /**
    * Each pool of uses a class table prints at the character's level in that class, by class
    * in the order it was taken. `key` is the table's `resource_key`; `maximum` is null where
-   * the table prints `Unlimited`. What is spent is state. `resets` is present only on a
+   * the table prints `Unlimited`. What is spent is state. `die` is the size of each die a
+   * pool of dice holds, such as Superiority Dice. `resets` is present only on a
    * homebrew class's pool, whose key is free text: the rest that restores it, or null where
    * the class sets none, so no catalog rule applies to it.
    */
@@ -310,6 +330,7 @@ export const characterDerivedSchema = z.strictObject({
       class: entryRefSchema,
       key: z.string().min(1),
       maximum: derivedSchema(z.int().min(1)).nullable(),
+      die: dieSizeSchema.optional(),
       resets: z.enum(["short", "long"]).nullable().optional(),
     }),
   ),
@@ -385,6 +406,8 @@ export const characterDerivedSchema = z.strictObject({
   rollOptions: derivedSchema(z.array(rollOptionSchema)),
   /** What a use of each held feature restores, in the order the features are held. */
   featureRestores: z.array(featureRestoreSchema),
+  /** The pool and slot trades held features make, in the order the features are held. */
+  featureConversions: z.array(featureConversionSchema),
   /** The uses each held feature counts, in the order the features are held. */
   limitedUses: z.array(limitedUsesSchema),
   /**

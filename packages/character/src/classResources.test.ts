@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { classResourcePools } from "./classResources.ts";
+import { classResourcePools, poolReset } from "./classResources.ts";
+import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
+import { mechanicsOfKind } from "./featureMechanics.ts";
 import { entryKey } from "./keys.ts";
 import { definition } from "./test/vex.ts";
 
@@ -36,6 +38,74 @@ const pools = (
   });
 
 describe("classResourcePools", () => {
+  it("gives a Battle Master a Superiority Dice pool whose count and die size grow with Fighter levels", () => {
+    const FIGHTER = { name: "Fighter", source: "PHB" };
+    const battleMaster = (level: number) =>
+      classResourcePools(
+        {
+          ...definition,
+          levels: Array.from({ length: level }, (_, index) => ({
+            class: FIGHTER,
+            ...(index >= 2 && { subclass: { name: "Battle Master", source: "PHB" } }),
+          })),
+        },
+        { classResources: new Map() },
+      );
+    const superiority = (count: number, die: number) => [
+      {
+        class: FIGHTER,
+        key: "superiority_dice",
+        maximum: { computed: count, manual: null, terms: [] },
+        die,
+      },
+    ];
+
+    expect(battleMaster(2)).toEqual([]);
+    expect(battleMaster(3)).toEqual(superiority(4, 8));
+    expect(battleMaster(7)).toEqual(superiority(5, 8));
+    expect(battleMaster(10)).toEqual(superiority(5, 10));
+    expect(battleMaster(15)).toEqual(superiority(6, 10));
+    expect(battleMaster(18)).toEqual(superiority(6, 12));
+  });
+
+  it("sizes a multiclass Battle Master's Superiority Dice by Fighter levels, under Fighter alone", () => {
+    const FIGHTER = { name: "Fighter", source: "PHB" };
+    const ROGUE = { name: "Rogue", source: "PHB" };
+    const subclass = { name: "Battle Master", source: "PHB" };
+    expect(
+      classResourcePools(
+        {
+          ...definition,
+          levels: [
+            { class: FIGHTER },
+            { class: FIGHTER },
+            { class: FIGHTER, subclass },
+            ...Array.from({ length: 4 }, () => ({ class: ROGUE })),
+          ],
+        },
+        { classResources: new Map() },
+      ),
+    ).toEqual([
+      {
+        class: FIGHTER,
+        key: "superiority_dice",
+        maximum: { computed: 4, manual: null, terms: [] },
+        die: 8,
+      },
+    ]);
+  });
+
+  it("restores every pool a feature records on some rest under each edition", () => {
+    const keys = FEATURE_MECHANICS.flatMap((record) =>
+      mechanicsOfKind(record, "pool").map(({ key }) => key),
+    );
+    expect(keys).not.toEqual([]);
+    for (const key of keys) {
+      expect(poolReset(key, "classic"), key).toBeDefined();
+      expect(poolReset(key, "one"), key).toBeDefined();
+    }
+  });
+
   it("lists each class's pools at its level, leaving out a column that counts no uses", () => {
     expect(
       pools(levels(BARBARIAN, MONK), [

@@ -37,6 +37,8 @@ const zero: Counts = {
   attack: 0,
   extraDamage: 0,
   martialArts: 0,
+  pool: 0,
+  convert: 0,
   uses: 0,
   unclassified: 0,
 };
@@ -108,6 +110,20 @@ describe("mechanicGaps", () => {
   );
   feat.run("Mending", "PHB", "classic", json({ srd: true }, "regain {@dice 1d10} hit points"));
   feat.run("Shielding", "PHB", "classic", json({ srd: true }, "gain 5 temporary hit points"));
+  feat.run(
+    "Superior",
+    "PHB",
+    "classic",
+    json({ srd: true }, "You have four superiority dice, which are {@dice d8}s."),
+  );
+  const flexible = json({ srd: true }, "expend one spell slot to gain sorcery points");
+  feat.run("Flexible", "PHB", "classic", flexible);
+  feat.run(
+    "Fountain",
+    "XPHB",
+    "one",
+    json({ srd52: true }, "transform points into one spell slot"),
+  );
   const surging = json({ srd: true }, "a number of times equal to your Charisma modifier");
   feat.run("Surging", "PHB", "classic", surging);
   db.prepare(
@@ -115,7 +131,7 @@ describe("mechanicGaps", () => {
   ).run("Counted", "PHB", "classic", surging, 2, "long");
   db.prepare(
     "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  ).run("Wild Shape", "PHB", "Druid", "PHB", 2, "classic", surging);
+  ).run("Flurry of Blows", "PHB", "Monk", "PHB", 2, "classic", surging);
   feat.run(
     "Winged",
     "PHB",
@@ -137,15 +153,18 @@ describe("mechanicGaps", () => {
     expect(gaps.martialArts).toEqual(["Fists (PHB)"]);
     expect(gaps.heal).toEqual(["Mending (PHB)"]);
     expect(gaps.tempHp).toEqual(["Shielding (PHB)"]);
+    expect(gaps.pool).toEqual(["Superior (PHB)"]);
+    expect(gaps.convert).toEqual(["Flexible (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.active).toEqual(["Winged (PHB)"]);
     expect(gaps.unclassified).toEqual([
       "Counted (PHB)",
+      "Flurry of Blows (PHB), Monk level 2",
       "Fortunate (PHB)",
+      "Fountain (XPHB)",
       "Strider (PHB)",
       "Turning (PHB)",
       "Venom (PHB)",
-      "Wild Shape (PHB), Druid level 2",
     ]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
@@ -160,9 +179,11 @@ describe("mechanicGaps", () => {
       martialArts: 1,
       heal: 1,
       tempHp: 1,
+      pool: 1,
+      convert: 1,
       uses: 1,
       active: 1,
-      unclassified: 6,
+      unclassified: 7,
     });
   });
 

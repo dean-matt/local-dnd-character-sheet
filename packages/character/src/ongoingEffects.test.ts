@@ -79,7 +79,7 @@ describe("a started feature's mechanics", () => {
         endsOn: ["incapacitated", "medium", "heavy", "shield"],
       },
     ]);
-    const uses = featureLimitedUses(bladesinger(), modifiers({}), 2);
+    const uses = featureLimitedUses(bladesinger(), (term) => (term === "proficiency" ? 2 : 0));
     expect(uses.find(({ feature }) => feature.name === "Bladesong")?.count).toBe(2);
   });
 

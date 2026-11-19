@@ -4,20 +4,30 @@ import { featureLimitedUses } from "./featureLimitedUses.ts";
 import type { Ability } from "./refs.ts";
 import { definition } from "./test/vex.ts";
 
-const levelsOf = (className: string, source: string, count: number): CharacterDefinition => ({
+const levelsOf = (
+  className: string,
+  source: string,
+  count: number,
+  subclass?: { name: string; source: string },
+): CharacterDefinition => ({
   ...definition,
   feats: [],
   optionalFeatures: [],
-  levels: Array.from({ length: count }, () => ({ class: { name: className, source } })),
+  levels: Array.from({ length: count }, () => ({
+    class: { name: className, source },
+    ...(subclass && { subclass }),
+  })),
 });
 
-const modifiers =
+const PROFICIENCY = 4;
+
+const values =
   (cha: number) =>
-  (ability: Ability): number =>
-    ability === "cha" ? cha : 0;
+  (term: Ability | "proficiency"): number =>
+    term === "cha" ? cha : term === "proficiency" ? PROFICIENCY : 0;
 
 const usesOf = (held: CharacterDefinition, name: string, cha = 3) =>
-  featureLimitedUses(held, modifiers(cha), 2).find(({ feature }) => feature.name === name);
+  featureLimitedUses(held, values(cha)).find(({ feature }) => feature.name === name);
 
 describe("featureLimitedUses", () => {
   it("counts Action Surge once until the fighter's 17th level, then twice", () => {
@@ -60,6 +70,55 @@ describe("featureLimitedUses", () => {
     expect(usesOf(bard, "Bardic Inspiration", -1)?.count).toBe(1);
     const house = { ...bard, houseRules: { minimumOneUse: true } };
     expect(usesOf(house, "Bardic Inspiration", -1)?.count).toBe(1);
+  });
+
+  it("counts Bladesong by the proficiency bonus", () => {
+    const bladesinger = levelsOf("Wizard", "PHB", 2, { name: "Bladesinging", source: "TCE" });
+    expect(usesOf(bladesinger, "Bladesong")).toMatchObject({
+      origin: "subclass",
+      count: PROFICIENCY,
+      reset: "long",
+    });
+  });
+
+  it("counts twice the proficiency bonus in Psionic Energy dice", () => {
+    const psiWarrior = levelsOf("Fighter", "PHB", 3, { name: "Psi Warrior", source: "TCE" });
+    expect(usesOf(psiWarrior, "Psionic Power")?.count).toBe(2 * PROFICIENCY);
+  });
+
+  it("counts Glorious Defense by the Charisma modifier, at least once", () => {
+    const glory = levelsOf("Paladin", "PHB", 15, { name: "Oath of Glory", source: "TCE" });
+    expect(usesOf(glory, "Glorious Defense")?.count).toBe(3);
+    expect(usesOf(glory, "Glorious Defense", -1)?.count).toBe(1);
+  });
+
+  it("counts Harness Divine Power by cleric level, only under the optional class features rule", () => {
+    const cleric = (count: number) => ({
+      ...levelsOf("Cleric", "PHB", count),
+      houseRules: { optionalClassFeatures: true },
+    });
+    const harness = "Channel Divinity: Harness Divine Power";
+    expect(usesOf(cleric(5), harness)?.count).toBe(1);
+    expect(usesOf(cleric(6), harness)?.count).toBe(2);
+    expect(usesOf(cleric(18), harness)?.count).toBe(3);
+    expect(usesOf(levelsOf("Cleric", "PHB", 6), harness)).toBeUndefined();
+  });
+
+  it("keys a pact boon's uses by the option", () => {
+    const warlock = {
+      ...levelsOf("Warlock", "PHB", 3),
+      optionalFeatures: [
+        {
+          ref: { name: "Pact of the Talisman", source: "TCE" },
+          featureType: "PB",
+          grantedBy: { kind: "class" as const, ref: { name: "Warlock", source: "PHB" } },
+        },
+      ],
+    };
+    expect(usesOf(warlock, "Pact of the Talisman")).toMatchObject({
+      origin: "optionalFeature",
+      count: PROFICIENCY,
+    });
   });
 
   it("keys a feat's uses by the feat", () => {

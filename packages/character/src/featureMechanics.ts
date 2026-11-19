@@ -245,15 +245,20 @@ const attackMechanicSchema = z
 
 const diceSchema = z.string().regex(/^\d+d\d+$/);
 
+const flatSchema = z.union([abilitySchema, z.enum(["proficiency", "halfLevel"])]);
+
 /**
  * Damage a feature adds to the character's own weapon attacks on a hit: `dice` as notation, a
- * class table column's cell, or as many `die`-sided dice as that cell's number; or an
- * ability's modifier, at least 1. `scales` replaces the dice from a level in the feature's
- * class. `type` is the damage's, the weapon's own where absent. `weapons` narrows it to melee
- * weapons or finesse and ranged ones, and `unarmed` adds the unarmed strike. `option` says
- * when it holds, and the attack offers it rather than adding it: once a turn where
- * `oncePerTurn` says so, and for a spell slot where `slot` does, a die more for each slot
- * level past the first up to `max` dice, and one more `versus` the creatures it names.
+ * class table column's cell, or as many `die`-sided dice as that cell's number; or a flat
+ * amount, an ability's modifier of at least 1, the proficiency bonus, or half the levels in
+ * the feature's class. `plus` adds a flat amount to the dice, an ability's modifier as it
+ * stands. `scales` replaces the dice from a level in the feature's class. `type` is the
+ * damage's, the weapon's own where absent. `weapons` narrows it to melee weapons, ranged
+ * ones, finesse and ranged ones, or the unarmed strike alone, and `unarmed` adds the unarmed
+ * strike. `option` says when it holds, and the attack offers it rather than adding it: once a
+ * turn where `oncePerTurn` says so, and for a spell slot where `slot` does, a pact slot alone
+ * where `pact` says so, a die more for each slot level past the first up to `max` dice, and
+ * one more `versus` the creatures it names.
  */
 const extraDamageMechanicSchema = z
   .strictObject({
@@ -261,25 +266,35 @@ const extraDamageMechanicSchema = z
     dice: z.union([
       diceSchema,
       z.strictObject({ column: z.string().min(1), die: z.int().min(2).optional() }),
-      abilitySchema,
+      flatSchema,
     ]),
+    plus: z.union([abilitySchema, z.literal("halfLevel")]).optional(),
     scales: z
       .array(z.strictObject({ level: z.int().min(2).max(20), dice: diceSchema }))
       .min(1)
       .optional(),
     type: z.string().min(1).optional(),
-    weapons: z.enum(["melee", "finesseOrRanged"]).optional(),
+    weapons: z.enum(["melee", "ranged", "finesseOrRanged", "unarmed"]).optional(),
     unarmed: z.literal(true).optional(),
     option: z.string().min(1).optional(),
     oncePerTurn: z.literal(true).optional(),
-    slot: z.strictObject({ max: z.int().min(2), versus: z.string().min(1) }).optional(),
+    slot: z
+      .strictObject({
+        max: z.int().min(2),
+        versus: z.string().min(1).optional(),
+        pact: z.literal(true).optional(),
+      })
+      .optional(),
     while: whileSchema,
   })
   .refine(({ option, oncePerTurn, slot }) => option || (!oncePerTurn && !slot), {
     error: "extra damage the attack offers says when it holds",
   })
-  .refine(({ slot, dice }) => !slot || typeof dice === "string", {
+  .refine(({ slot, dice }) => !slot || diceSchema.safeParse(dice).success, {
     error: "a slot adds dice to notation",
+  })
+  .refine(({ plus, dice }) => !plus || !flatSchema.safeParse(dice).success, {
+    error: "a flat amount is added to dice",
   });
 
 /**
@@ -299,13 +314,18 @@ const martialArtsMechanicSchema = z
     error: "a martial arts mechanic gives a die or Dexterity",
   });
 
-const restoreTermSchema = z.union([z.int().min(1), abilitySchema, z.literal("level")]);
+const restoreTermSchema = z.union([
+  z.int().min(1),
+  abilitySchema,
+  z.enum(["level", "proficiency", "halfMaximum"]),
+]);
 
 /**
  * What a use of the feature restores: `dice` rolled, as notation or a class table column's
- * die, plus each of `bonus`, a number, an ability's modifier or the levels in the feature's
- * class, the bonus `times` over. `scales` replaces the dice, or a bonus of one number, from a
- * level in the feature's class.
+ * die, plus each of `bonus`, a number, an ability's modifier, the levels in the feature's
+ * class, the proficiency bonus or half the hit point maximum, the bonus `times` over.
+ * `scales` replaces the dice, or a bonus of one number, from a level in the feature's class.
+ * On `others`, it lands on another creature, so the sheet restores no one.
  */
 const restoreFields = {
   dice: z.union([diceSchema, z.strictObject({ column: z.string().min(1) })]).optional(),
@@ -321,6 +341,7 @@ const restoreFields = {
     )
     .min(1)
     .optional(),
+  others: z.literal(true).optional(),
 };
 
 type RestoreFields = z.infer<z.ZodObject<typeof restoreFields>>;
@@ -344,16 +365,12 @@ const restoreRefinements = <T extends z.ZodType<RestoreFields>>(schema: T) =>
       { error: "a scale replaces notation dice or a bonus of one number, one of them" },
     );
 
-/** Hit points a use of the feature restores; on `others`, to another creature, so the sheet heals no one. */
+/** Hit points a use of the feature restores. */
 const healMechanicSchema = restoreRefinements(
-  z.strictObject({
-    kind: z.literal("heal"),
-    ...restoreFields,
-    others: z.literal(true).optional(),
-  }),
+  z.strictObject({ kind: z.literal("heal"), ...restoreFields }),
 );
 
-/** Temporary hit points a use of the feature gives the character. */
+/** Temporary hit points a use of the feature gives. */
 const tempHpMechanicSchema = restoreRefinements(
   z.strictObject({ kind: z.literal("tempHp"), ...restoreFields }),
 );
@@ -362,15 +379,16 @@ const resetSchema = z.enum(["short", "long"]);
 
 /**
  * The uses a feature counts, restored by a `reset` rest, where `short` means either rest:
- * `count`, a number, an ability's modifier or the proficiency bonus, plus `plus`, at least
- * `minimum`. Absent, `minimum` is 1, as a feature printing "a minimum of once" has it; 0
- * records a feature that prints none. Each of `scales` replaces a number count, the reset or
+ * `count`, a number, an ability's modifier or the proficiency bonus, `times` over, plus `plus`,
+ * at least `minimum`. Absent, `minimum` is 1, as a feature printing "a minimum of once" has it;
+ * 0 records a feature that prints none. Each of `scales` replaces a number count, the reset or
  * both from a level in the feature's class.
  */
 const usesMechanicSchema = z
   .strictObject({
     kind: z.literal("uses"),
     count: z.union([z.int().min(1), abilitySchema, z.literal("proficiency")]),
+    times: z.int().min(2).optional(),
     plus: z.int().min(1).optional(),
     minimum: z.literal(0).optional(),
     reset: resetSchema,
@@ -393,11 +411,66 @@ const usesMechanicSchema = z
     ({ count, scales = [] }) =>
       typeof count === "number" || scales.every((scale) => scale.count === undefined),
     { error: "a scale replaces only a number count" },
-  );
+  )
+  .refine(({ count, times }) => times === undefined || typeof count !== "number", {
+    error: "times multiplies only an ability or proficiency count",
+  });
+
+export const dieSizeSchema = z.union([
+  z.literal(4),
+  z.literal(6),
+  z.literal(8),
+  z.literal(10),
+  z.literal(12),
+]);
+
+/**
+ * A class pool the feature gives where no class table prints a column for it: `count` dice
+ * of `die` sides, keyed `key` as a table's `resource_key` would be. Each of `scales` replaces
+ * the count, the die or both from a level in the feature's class.
+ */
+const poolKeySchema = z.string().regex(/^[a-z]+(?:_[a-z]+)*$/);
+
+const poolMechanicSchema = z.strictObject({
+  kind: z.literal("pool"),
+  key: poolKeySchema,
+  count: z.int().min(1),
+  die: dieSizeSchema,
+  scales: z
+    .array(
+      z
+        .strictObject({
+          level: z.int().min(2).max(20),
+          count: z.int().min(1).optional(),
+          die: dieSizeSchema.optional(),
+        })
+        .refine((scale) => scale.count !== undefined || scale.die !== undefined, {
+          error: "a scale replaces the count, the die or both",
+        }),
+    )
+    .min(1)
+    .optional(),
+});
+
+/**
+ * A trade between the class pool keyed `pool` and spell slots: one expended slot regained for
+ * `costs` from the pool, the first cost a level 1 slot's, and no slot above the last; under
+ * `upTo`, none above half the proficiency bonus, rounded up. Where `refund` says so, a slot
+ * can be expended for as many of the pool's uses as its level.
+ */
+const convertMechanicSchema = z.strictObject({
+  kind: z.literal("convert"),
+  pool: poolKeySchema,
+  costs: z.array(z.int().min(1)).min(1).max(9),
+  upTo: z.literal("halfProficiency").optional(),
+  refund: z.literal(true).optional(),
+});
 
 const mechanicSchema = z.union([
   activeMechanicSchema,
   usesMechanicSchema,
+  poolMechanicSchema,
+  convertMechanicSchema,
   healMechanicSchema,
   tempHpMechanicSchema,
   extraDamageMechanicSchema,

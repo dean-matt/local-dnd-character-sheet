@@ -16,6 +16,8 @@
   "attack": 0,
   "extraDamage": 0,
   "martialArts": 0,
-  "uses": 0,
-  "unclassified": 606
+  "pool": 0,
+  "convert": 0,
+  "uses": 2,
+  "unclassified": 603
 }

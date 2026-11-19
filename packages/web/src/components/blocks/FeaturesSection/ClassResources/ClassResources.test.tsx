@@ -83,6 +83,24 @@ describe("ClassResources", () => {
     expect(count("Focus points", "Monk")).toBe("3 / 4");
   });
 
+  it("names the die size of a pool of dice", async () => {
+    const FIGHTER = { name: "Fighter", source: "PHB" };
+    renderPools(
+      {},
+      {
+        sheet: {
+          ...derived,
+          classResources: [
+            { class: FIGHTER, key: "superiority_dice", maximum: computed(5), die: 10 },
+          ],
+        },
+      },
+    );
+    await screen.findByRole("region", { name: "Class Resources" });
+
+    expect(item("Superiority dice (d10)", "Fighter")).toHaveTextContent(/Fighter5 \/ .*maximum5$/);
+  });
+
   it("shows no card for a character with no pools", () => {
     renderPools({}, { sheet: { ...derived, classResources: [] } });
 

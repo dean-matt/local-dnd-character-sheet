@@ -62,8 +62,20 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "Wholeness of Body",
     "Wild Shape",
   ),
-  ...row("bonus action", "XGE", "Fighting Spirit"),
+  ...row(
+    "action",
+    "TCE",
+    "Channel Divinity: Balm of Peace",
+    "Channel Divinity: Twilight Sanctuary",
+    "Hand of Healing",
+    "Hand of Ultimate Mercy",
+    "Quickened Healing",
+    "Symbiotic Entity",
+  ),
+  ...row("bonus action", "TCE", "Channel Divinity: Harness Divine Power"),
+  ...row("bonus action", "XGE", "Fighting Spirit", "Mantle of Inspiration", "Unearthly Recovery"),
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
+  ...row("reaction", "TCE", "Soul of Artifice"),
   ...row("reaction", "XPHB", "Deflect Attacks", "Uncanny Dodge"),
   ...row("free", "PHB", "Action Surge"),
   ...row("free", "XPHB", "Action Surge", "Sacred Weapon"),
@@ -85,25 +97,31 @@ const POOL_ROWS: [string, string, string[]][] = [
   ["rages", "PHB", ["Rage"]],
   ["rages", "XPHB", ["Rage"]],
   ["second_wind", "XPHB", ["Second Wind"]],
+  ["channel_divinity", "PHB", ["Channel Divinity: Preserve Life"]],
   [
     "channel_divinity",
-    "PHB",
-    ["Channel Divinity", "Channel Divinity: Preserve Life", "Sacred Weapon", "Vow of Enmity"],
+    "TCE",
+    ["Channel Divinity: Balm of Peace", "Channel Divinity: Twilight Sanctuary"],
   ],
   [
     "channel_divinity",
     "XPHB",
     ["Channel Divinity", "Divine Spark", "Divine Sense", "Preserve Life", "Sacred Weapon"],
   ],
-  ["wild_shape", "PHB", ["Wild Shape"]],
   ["wild_shape", "XPHB", ["Wild Shape", "Land's Aid"]],
   ["ki_points", "PHB", ["Flurry of Blows", "Patient Defense", "Step of the Wind"]],
+  ["ki_points", "TCE", ["Hand of Healing"]],
   ["focus_points", "XPHB", ["Flurry of Blows"]],
   ["favored_enemy", "XPHB", ["Favored Enemy"]],
 ];
 
+/** Every feature the curated table ties to a class pool, beside that pool's `resource_key`. */
+export const FEATURE_POOL_ENTRIES: readonly { ref: ContentRef; key: string }[] = POOL_ROWS.flatMap(
+  ([key, source, names]) => names.map((name) => ({ ref: { name, source }, key })),
+);
+
 const FEATURE_POOLS: ReadonlyMap<string, string> = new Map(
-  POOL_ROWS.flatMap(([key, source, names]) => names.map((name) => [refKey({ name, source }), key])),
+  FEATURE_POOL_ENTRIES.map(({ ref, key }) => [refKey(ref), key]),
 );
 
 /**

@@ -338,6 +338,27 @@ describe("deriveCharacter", () => {
       expect(deriveCharacter(overridden(40), catalog).hitPointMaximum.manual).toBe(40);
     });
 
+    it("halves the maximum the sheet shows for a restore of half of it", () => {
+      const warlock = { name: "Warlock", source: "PHB" };
+      const celestial: CharacterDefinition = {
+        ...equipped,
+        edition: "classic",
+        levels: Array.from({ length: 14 }, (_, index) => ({
+          class: warlock,
+          ...(index === 0 && { subclass: { name: "The Celestial", source: "XGE" } }),
+        })),
+        overrides: { hitPointMaximum: 61 },
+      };
+      const withWarlock = {
+        ...catalog,
+        hitDice: new Map<string, HitDie>([...hitDice, [entryKey(warlock), 8]]),
+      };
+      const restore = deriveCharacter(celestial, withWarlock, reduced(10)).featureRestores.find(
+        ({ feature }) => feature.name === "Searing Vengeance",
+      );
+      expect(restore).toMatchObject({ kind: "heal", dice: null, bonus: 25 });
+    });
+
     it("holds across a level-up, which changes the definition alone", () => {
       const leveled = { ...equipped, levels: [...equipped.levels, { class: WARLOCK }] };
       const unreduced = deriveCharacter(leveled, catalog).hitPointMaximum.computed;
@@ -2597,6 +2618,25 @@ describe("deriveCharacter", () => {
     it("adds a flat bonus to every speed the character has", () => {
       const block = withItems([worn(CLOAK), worn(PENNANT)]);
       expect(block.speed.computed).toEqual({ walk: 35, swim: 65, fly: 35 });
+    });
+
+    it("adds the item-raised proficiency bonus at total level to a feature's damage", () => {
+      const warlock = { name: "Warlock", source: "PHB" };
+      const levels = [
+        ...Array.from({ length: 4 }, () => ({ class: ROGUE })),
+        { class: warlock, subclass: { name: "The Genie", source: "TCE" } },
+      ];
+      const genieCatalog = {
+        ...itemCatalog,
+        hitDice: new Map([...hitDice, [entryKey(warlock), 8 as const]]),
+      };
+      const wrath = (inventory: CharacterDefinition["inventory"]) =>
+        deriveCharacter(
+          { ...equipped, levels, inventory },
+          genieCatalog,
+        ).unarmedStrike.featureDamage.find((damage) => damage.source === "Genie's Wrath")?.bonus;
+      expect(wrath([])).toBe(3);
+      expect(wrath([worn(MASTERY)])).toBe(4);
     });
 
     it("never lowers a speed a static or matching item sets", () => {

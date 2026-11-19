@@ -38,7 +38,7 @@ Four traps in reading a group:
 
 - **Only 6 of 322 subclasses have `subclassTableGroups`** — Eldritch Knight and Arcane
   Trickster spell progression, plus Psi Warrior and Soulknife energy dice. Battle Master
-  superiority dice live in feature prose and are not extractable. Each such group repeats
+  superiority dice live in feature prose and are not extractable; see below. Each such group repeats
   its own subclass in a `subclasses` list, and all 10 name only their owner.
 - **Warlock pact magic** uses separate `Spell Slots` and `Slot Level` columns instead of
   `rowsSpellProgression`. The slot level reads as `1st` in `PHB` and as `1` in `XPHB`.
@@ -57,11 +57,15 @@ class, and state records what is spent, so a level change moves every maximum wi
 sheet reads state through `sheetState`, which caps what is spent at the maximum and drops a
 pool the table no longer prints. `Unlimited` reads as no maximum.
 
-Superiority Dice and the other resources no table prints are counters the user adds,
-stored whole in state's `resources`:
+A Battle Master's Superiority Dice live in feature prose, so a `pool` mechanic on Combat
+Superiority in `featureMechanicRecords.ts` records their count and die size by level, and
+the derived block lists them beside the table's pools.
+
+The other resources no table prints are counters the user adds, stored whole in state's
+`resources`:
 
 ```
-name          "Superiority Dice"
+name          "Hero Points"
 current       3
 maximum       4
 resets_on     short | long | dawn | manual

@@ -183,6 +183,21 @@ describe("restedState", () => {
       expect(expended(restedState(classic, pools, spent, "long"))).toEqual([0, 0]);
     });
 
+    it("restores the Superiority Dice a feature gives on a short rest", () => {
+      const fighter = { name: "Fighter", source: "PHB" };
+      const dice = {
+        ...sheet,
+        classResources: [
+          { class: fighter, key: "superiority_dice", maximum: total(4), die: 8 as const },
+        ],
+      };
+      const used = {
+        ...state(),
+        classResources: [{ class: fighter, key: "superiority_dice", maximum: 4, expended: 3 }],
+      };
+      expect(expended(restedState(classic, dice, used, "short"))).toEqual([0]);
+    });
+
     it("restores a pool on the rest its edition names", () => {
       const wild = {
         ...sheet,

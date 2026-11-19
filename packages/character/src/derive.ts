@@ -70,6 +70,7 @@ import {
   featureDamage,
   featureStrike,
 } from "./featureAttacks.ts";
+import { featureConversions } from "./featureConversions.ts";
 import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
@@ -84,7 +85,7 @@ import {
 import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { martialArts } from "./martialArts.ts";
-import { reducedMaximum, reducedOverride } from "./maximumReduction.ts";
+import { hitPointMaximumUnder, reducedMaximum, reducedOverride } from "./maximumReduction.ts";
 import { effectBlockedBy } from "./ongoingEffects.ts";
 import { applyOverrides } from "./overrides.ts";
 import { rageBenefits, rageDamageTerms } from "./rage.ts";
@@ -543,12 +544,15 @@ function tableColumn(definition: CharacterDefinition, catalog: CharacterCatalog)
 function strikeSheet(
   definition: CharacterDefinition,
   catalog: CharacterCatalog,
+  bonuses: readonly ItemBonusTrait[],
   rage: RageBenefits,
 ) {
   const column = tableColumn(definition, catalog);
+  const raised = bonuses.reduce((sum, item) => sum + item.proficiencyBonus, 0);
   const sheet: DamageSheet = {
     column,
     modifier: (ability) => abilityModifier(scoreOf(definition, catalog, ability)),
+    proficiency: proficiencyContribution(totalLevel(definition), "proficient", raised),
     raging: rage !== null,
   };
   const { worn, shield } = equippedArmor(definition, catalog.armor);
@@ -579,7 +583,7 @@ function weaponStrike(
 ): CharacterDerived["attacks"][number] {
   const shield = equippedArmor(definition, catalog.armor).shield !== undefined;
   const level = totalLevel(definition);
-  const { sheet, monk } = strikeSheet(definition, catalog, rage);
+  const { sheet, monk } = strikeSheet(definition, catalog, bonuses, rage);
   const twoHandedBlocked = entry.equipped && shield;
   const held = twoHandedBlocked ? "one-handed" : (entry.grip ?? "one-handed");
   const { reference } = weapon.bonus;
@@ -682,7 +686,7 @@ function derivedUnarmedStrike(
 ): CharacterDerived["unarmedStrike"] {
   const level = totalLevel(definition);
   const strength = abilityModifier(scoreOf(definition, catalog, "str"));
-  const { sheet, monk } = strikeSheet(definition, catalog, rage);
+  const { sheet, monk } = strikeSheet(definition, catalog, bonuses, rage);
   const features = featureStrike(definition, { proficient: true, alone: false }, sheet.modifier);
   const unarmed = { kind: "melee" as const, damage: UNARMED_DICE };
   const weapon = monk ? monk.apply(unarmed) : unarmed;
@@ -1266,6 +1270,22 @@ export function deriveCharacter(
         ...exhaustion,
       ]),
     );
+  const maximum = fromBreakdown(
+    reducedMaximum(
+      withModifiers(
+        exhaustedMaximum(
+          hitPointMaximum(definition, catalog.hitDice, grants),
+          state.exhaustion ?? 0,
+          exhaustionRuleset(definition),
+        ),
+        modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
+          ...term,
+          reference: MODIFIER_REFERENCE,
+        })),
+      ),
+      state.hitPointMaximumReduction,
+    ),
+  );
   const block: CharacterDerived = {
     abilityScores: perAbility((ability) => fromBreakdown(scores[ability])),
     abilityModifiers: perAbility((ability) =>
@@ -1274,22 +1294,7 @@ export function deriveCharacter(
     abilityChecks: perAbility((ability) =>
       abilityCheck(ability, abilityModifier(scores[ability].total)),
     ),
-    hitPointMaximum: fromBreakdown(
-      reducedMaximum(
-        withModifiers(
-          exhaustedMaximum(
-            hitPointMaximum(definition, catalog.hitDice, grants),
-            state.exhaustion ?? 0,
-            exhaustionRuleset(definition),
-          ),
-          modifierTerms(state, onKind("hitPointMaximum")).map((term) => ({
-            ...term,
-            reference: MODIFIER_REFERENCE,
-          })),
-        ),
-        state.hitPointMaximumReduction,
-      ),
-    ),
+    hitPointMaximum: maximum,
     hitDice: hitDicePools(definition, catalog.hitDice),
     size: { computed: raceSize(definition, catalog), manual: null, terms: [] },
     speed: { computed: speed.speed, manual: null, terms: speed.terms },
@@ -1340,11 +1345,16 @@ export function deriveCharacter(
     featureRestores: featureRestores(definition, {
       column: tableColumn(definition, catalog),
       modifier: (ability) => abilityModifier(scores[ability].total),
+      proficiency: proficiencyBonus.total,
+      hitPointMaximum: hitPointMaximumUnder(
+        stored,
+        { hitPointMaximum: maximum },
+        state.hitPointMaximumReduction,
+      ),
     }),
-    limitedUses: featureLimitedUses(
-      definition,
-      (ability) => abilityModifier(scores[ability].total),
-      proficiencyBonus.total,
+    featureConversions: featureConversions(definition, proficiencyBonus.total),
+    limitedUses: featureLimitedUses(definition, (term) =>
+      term === "proficiency" ? proficiencyBonus.total : abilityModifier(scores[term].total),
     ),
     startableFeatures: startableFeatures(definition).map((feature) => ({
       ...feature,

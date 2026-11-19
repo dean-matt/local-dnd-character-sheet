@@ -35,7 +35,7 @@ export const spellSlotSchema = z
   })
   .refine((slot) => slot.expended <= slot.total, { error: "expended exceeds total" });
 
-/** A counter the user added, such as Superiority Dice, which no class table prints. */
+/** A counter the user added for a resource the sheet counts nowhere else. */
 export const resourceSchema = z
   .strictObject({
     name: z.string().min(1),

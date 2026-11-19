@@ -10,25 +10,19 @@ type LimitedUses = CharacterDerived["limitedUses"][number];
 /**
  * A count is at least the feature's printed minimum: 1 for each that prints "a minimum of
  * once", 0 for Divine Sense (PHB), which prints none. The `minimumOneUse` house rule raises
- * that 0 to 1.
+ * that 0 to 1. `value` gives an ability's modifier or the proficiency bonus.
  */
 export function featureLimitedUses(
   definition: HoldsFeatures,
-  modifier: (ability: Ability) => number,
-  proficiencyBonus: number,
+  value: (term: Ability | "proficiency") => number,
 ): LimitedUses[] {
   const atLeastOne = houseRule({ houseRules: definition.houseRules ?? {} }, "minimumOneUse");
   return heldFeatures(definition).flatMap((held) =>
     mechanicsOfKind(held.entry, "uses").map(
-      ({ count, plus = 0, minimum = 1, reset, scales = [] }) => {
+      ({ count, times = 1, plus = 0, minimum = 1, reset, scales = [] }) => {
         const reached = scales.filter((scale) => held.levels >= scale.level);
         const scaled = reached.findLast((scale) => scale.count !== undefined)?.count;
-        const base =
-          typeof count === "number"
-            ? (scaled ?? count)
-            : count === "proficiency"
-              ? proficiencyBonus
-              : modifier(count);
+        const base = (typeof count === "number" ? (scaled ?? count) : value(count)) * times;
         const { ref } = held.entry;
         return {
           feature: held.ref,

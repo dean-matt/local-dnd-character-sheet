@@ -24,6 +24,7 @@ type Kind = Mechanic["kind"];
  * `uses` counts only a feature whose count the build read none of and no class pool holds.
  * `active` looks for a duration on the character's own benefit, so an effect the feature lays
  * on another creature is not one.
+ * `convert` counts only a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  */
 const KIND_PATTERNS: Record<Kind, RegExp> = {
   active:
@@ -46,6 +47,9 @@ const KIND_PATTERNS: Record<Kind, RegExp> = {
   extraDamage:
     /\bextra (?:\{@damage [^}]+\} )?(?:[\w,]+ ){0,5}damage\b|\badditional weapon damage di(?:e|ce)\b/i,
   martialArts: /\bin place of the normal damage\b/i,
+  pool: /\byou have (?:\w+ ){1,3}dice, which are\b/i,
+  convert:
+    /\b(?:transform|convert)\w*[^."]{0,60}\bspell slots?\b|\bspell slots?\b[^."]{0,60}\bto (?:gain|regain) [^."]{0,40}\b(?:points?|uses?)\b|\bregain one expended spell slot\b/i,
   uses: /\bnumber of times equal to\b|\bregain (?:all |one |any )?(?:of )?(?:its |your )?expended uses\b|\buse (?:it|this feature) (?:again|twice|three times)\b|\b(?:can't|cannot) (?:use|do so|cast)[^."]{0,40} again until\b/i,
 };
 
@@ -59,6 +63,7 @@ export type Counts = Record<Bucket, number>;
 type FeatureRow = {
   name: string;
   source: string;
+  edition: string;
   json: string;
   class_name?: string;
   class_source?: string;
@@ -95,11 +100,12 @@ function labelOf(row: FeatureRow): string {
 }
 
 const QUERIES = [
-  "SELECT name, source, json, uses, class_name, class_source, level FROM class_features",
-  `SELECT name, source, json, uses, class_name, class_source, subclass_short_name, subclass_source, level
+  "SELECT name, source, edition, json, uses, class_name, class_source, level FROM class_features",
+  `SELECT name, source, edition, json, uses, class_name, class_source, subclass_short_name,
+          subclass_source, level
      FROM subclass_features`,
-  "SELECT name, source, json, uses FROM feats",
-  "SELECT name, source, json, uses FROM optional_features",
+  "SELECT name, source, edition, json, uses FROM feats",
+  "SELECT name, source, edition, json, uses FROM optional_features",
 ];
 
 function isGap(row: FeatureRow): boolean {
@@ -111,7 +117,8 @@ export function mechanicGaps(db: Database.Database): Gaps {
   const rows = QUERIES.flatMap((query) => db.prepare(query).all() as FeatureRow[]).filter(isGap);
   const suggests = (row: FeatureRow, kind: Kind) =>
     KIND_PATTERNS[kind].test(row.json) &&
-    (kind !== "uses" || (row.uses === null && featurePoolKey(row) === undefined));
+    (kind !== "uses" || (row.uses === null && featurePoolKey(row) === undefined)) &&
+    (kind !== "convert" || row.edition === "classic");
   const matches = (row: FeatureRow, bucket: Bucket) =>
     bucket === "unclassified" ? KINDS.every((kind) => !suggests(row, kind)) : suggests(row, bucket);
   return Object.fromEntries(

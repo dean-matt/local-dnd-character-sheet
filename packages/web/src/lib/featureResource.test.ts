@@ -23,25 +23,41 @@ const RAGE = { name: "Rage", source: "XPHB", uses: undefined };
 const SECOND_WIND = { name: "Second Wind", source: "XPHB", uses: undefined };
 
 describe("featureResource", () => {
-  it.each([
-    ["Sacred Weapon", "PHB"],
-    ["Vow of Enmity", "PHB"],
-    ["Divine Sense", "XPHB"],
-  ])("spends a Channel Divinity use on %s (%s)", (name, source) => {
-    const paladin = { name: "Paladin", source };
-    const derived = derivedWith([pool("channel_divinity", paladin, 1)]);
-    const stored = defaultCharacterState();
-    const feature = featureResource(
-      derived,
-      stored,
-      source === "PHB" ? "classic" : "one",
-      { name, source, uses: undefined },
-      { class: paladin },
-    );
+  it.each(["Divine Sense", "Sacred Weapon"])(
+    "spends a Channel Divinity use on %s (XPHB)",
+    (name) => {
+      const paladin = { name: "Paladin", source: "XPHB" };
+      const derived = derivedWith([pool("channel_divinity", paladin, 1)]);
+      const stored = defaultCharacterState();
+      const feature = featureResource(
+        derived,
+        stored,
+        "one",
+        { name, source: "XPHB", uses: undefined },
+        { class: paladin },
+      );
 
-    expect(feature).toMatchObject({ left: 1, total: 1, blocked: null });
-    expect(feature?.spend(stored).classResources[0]?.expended).toBe(1);
-  });
+      expect(feature).toMatchObject({ left: 1, total: 1, blocked: null });
+      expect(feature?.spend(stored).classResources[0]?.expended).toBe(1);
+    },
+  );
+
+  it.each(["Sacred Weapon", "Vow of Enmity"])(
+    "spends no pool on %s (PHB), whose class table carries no Channel Divinity",
+    (name) => {
+      const paladin = { name: "Paladin", source: "PHB" };
+      const derived = derivedWith([pool("channel_divinity", paladin, 1)]);
+      const feature = featureResource(
+        derived,
+        defaultCharacterState(),
+        "classic",
+        { name, source: "PHB", uses: undefined },
+        { class: paladin },
+      );
+
+      expect(feature).toBeNull();
+    },
+  );
 
   it("starts a rage with its use and refuses a second while raging", () => {
     const derived = derivedWith([pool("rages", BARBARIAN, 2)]);

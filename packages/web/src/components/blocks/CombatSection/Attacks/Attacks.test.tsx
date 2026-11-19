@@ -833,6 +833,117 @@ describe("Attacks", () => {
       expect(puts[0]?.spellSlots).toContainEqual({ level: 3, total: 2, expended: 1 });
     });
 
+    it("spends a pact slot alone on Eldritch Smite, asking nothing about the target", async () => {
+      const smite = {
+        source: "Eldritch Smite",
+        dice: "2d8",
+        bonus: 0,
+        type: "force",
+        offer: {
+          condition: "with your pact weapon",
+          oncePerTurn: true,
+          slot: { max: 6, pact: true as const },
+        },
+      };
+      const { posts, puts } = renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 4, manual: null, terms: [] } }],
+        pactSlots: { level: 3, total: { computed: 2, manual: null, terms: [] } },
+        attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
+      });
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Eldritch Smite \+4d8/ }));
+      const slot = longsword().getByRole("combobox", { name: "Slot" });
+      expect(
+        within(slot)
+          .getAllByRole("option")
+          .map((option) => option.textContent),
+      ).toEqual(["Level 3 pact (2 left)"]);
+      expect(longsword().queryByRole("checkbox", { name: /^Against/ })).toBeNull();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Eldritch Smite" }),
+      );
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ notation: "1d8+4d8-1" });
+      expect(puts[0]?.pactSlots).toEqual({ level: 3, total: 2, expended: 1 });
+    });
+
+    it("names the pact slot Eldritch Smite lacks while spell slots remain", async () => {
+      const smite = {
+        source: "Eldritch Smite",
+        dice: "2d8",
+        bonus: 0,
+        type: "force",
+        offer: {
+          condition: "with your pact weapon",
+          oncePerTurn: true,
+          slot: { max: 6, pact: true as const },
+        },
+      };
+      renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 4, manual: null, terms: [] } }],
+        pactSlots: null,
+        attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
+      });
+      expect(await longsword().findByText("No pact slot left")).toBeInTheDocument();
+      expect(longsword().getByRole("checkbox", { name: /^Eldritch Smite/ })).toBeDisabled();
+    });
+
+    it("takes one feature that spends a slot on a row at a time", async () => {
+      const slotOffer = (source: string, pact?: true) => ({
+        source,
+        dice: "2d8",
+        bonus: 0,
+        type: null,
+        offer: {
+          condition: "on a hit",
+          oncePerTurn: false,
+          slot: { max: 5, ...(pact && { pact }) },
+        },
+      });
+      renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 4, manual: null, terms: [] } }],
+        pactSlots: { level: 3, total: { computed: 2, manual: null, terms: [] } },
+        attacks: [
+          {
+            ...attack(0, 5),
+            featureDamage: [slotOffer("Divine Smite"), slotOffer("Eldritch Smite", true)],
+          },
+        ],
+      });
+      const divine = await longsword().findByRole("checkbox", { name: /^Divine Smite/ });
+      fireEvent.click(divine);
+      fireEvent.click(longsword().getByRole("checkbox", { name: /^Eldritch Smite/ }));
+      expect(divine).not.toBeChecked();
+      expect(longsword().getByRole("checkbox", { name: /^Eldritch Smite/ })).toBeChecked();
+    });
+
+    it("shows and adds a feature's dice with the flat amount it adds to them", async () => {
+      const harm = {
+        source: "Hand of Harm",
+        dice: "1d6",
+        bonus: 2,
+        type: "necrotic",
+        offer: { condition: "spending 1 ki point", oncePerTurn: true, slot: null },
+      };
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [{ ...attack(0, 5), featureDamage: [harm] }],
+      });
+      fireEvent.click(
+        await longsword().findByRole("checkbox", {
+          name: "Hand of Harm +1d6+2 necrotic, spending 1 ki point",
+        }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword damage with Hand of Harm" }),
+      );
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ notation: "1d8+1d6+1" });
+    });
+
     it("drops a smite taken on a row once no slot is left, and still rolls the row's damage", async () => {
       const smite = {
         source: "Divine Smite",

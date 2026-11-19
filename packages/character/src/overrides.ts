@@ -14,8 +14,9 @@ type Lists = {
  * the skill, class or slot level it was typed over rather than its position. A list
  * added to the block fails to compile until it names one here.
  *
- * A container, an unproficient item, an armor that stops casting, a feature's restore and its uses hold
- * no overridable field, so a name or an index stands in for a key nothing reads.
+ * A container, an unproficient item, an armor that stops casting, a feature's restore, its uses
+ * and its conversion hold no overridable field, so a name or an index stands in for a key
+ * nothing reads.
  *
  * An inventory entry carries an id only once it holds something, so a weapon is named by
  * its item and which copy of that item it is. Removing another item leaves the override on
@@ -37,6 +38,7 @@ const ELEMENT_KEY: {
   featureRestores: (restore) => `${refKey(restore.feature)}|${restore.kind}`,
   limitedUses: (uses) => uses.key,
   startableFeatures: refKey,
+  featureConversions: (conversion) => refKey(conversion.feature),
   attacks: (attack, { inventory }) => {
     const earlier = inventory.slice(0, attack.entry + 1).map(itemKey);
     const item = earlier.pop() ?? "";

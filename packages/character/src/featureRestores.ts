@@ -12,10 +12,15 @@ import type { CharacterState } from "./state.ts";
 type Restore = CharacterDerived["featureRestores"][number];
 type RestoreMechanic = Extract<Mechanic, { kind: "heal" | "tempHp" }>;
 
-/** What a restore reads off the sheet: a class table column's cell at the character's level, and an ability's modifier. */
+/**
+ * What a restore reads off the sheet: a class table column's cell at the character's level, an
+ * ability's modifier, the proficiency bonus and the hit point maximum the sheet shows.
+ */
 export type RestoreSheet = {
   column: (key: string) => string | undefined;
   modifier: (ability: Ability) => number;
+  proficiency: number;
+  hitPointMaximum: number;
 };
 
 /** The dice and bonus `mechanic` restores at `levels` in its feature's class; null where the sheet prints no cell. */
@@ -29,8 +34,11 @@ function amount(
   if (typeof dice === "object" && rolled === undefined) return null;
   const terms = scaled?.bonus === undefined ? bonus : [scaled.bonus];
   const sum = terms.reduce<number>((total, term) => {
+    if (typeof term === "number") return total + term;
     if (term === "level") return total + levels;
-    return total + (typeof term === "number" ? term : sheet.modifier(term));
+    if (term === "proficiency") return total + sheet.proficiency;
+    if (term === "halfMaximum") return total + Math.floor(sheet.hitPointMaximum / 2);
+    return total + sheet.modifier(term);
   }, 0);
   return { dice: rolled ?? null, bonus: sum * times };
 }
@@ -46,7 +54,7 @@ export function featureRestores(definition: HoldsFeatures, sheet: RestoreSheet):
             feature: held.ref,
             kind: mechanic.kind,
             ...restored,
-            others: mechanic.kind === "heal" && mechanic.others === true,
+            others: mechanic.others === true,
           },
         ];
       },

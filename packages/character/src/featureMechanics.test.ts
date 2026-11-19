@@ -96,7 +96,7 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ dice: "1d8", scales: [{ level: 10, dice: "2d8", bonus: 1 }] })).toBe(false);
   });
 
-  it("refuses a uses scale that replaces nothing, or a count it cannot replace", () => {
+  it("refuses a uses scale that replaces nothing, a count it cannot replace, or a multiplied number count", () => {
     const ref = { name: "Action Surge", source: "PHB" };
     const parse = (...mechanics: object[]) =>
       featureMechanicsSchema.safeParse({
@@ -108,6 +108,8 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ count: 1, scales: [{ level: 17 }] })).toBe(false);
     expect(parse({ count: "cha", scales: [{ level: 5, count: 2 }] })).toBe(false);
     expect(parse({ count: 1 }, { count: 2 })).toBe(false);
+    expect(parse({ count: "proficiency", times: 2 })).toBe(true);
+    expect(parse({ count: 2, times: 2 })).toBe(false);
   });
 
   it("keeps every committed record valid and keyed once", () => {

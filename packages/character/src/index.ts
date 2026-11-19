@@ -116,10 +116,16 @@ export {
   ACTION_TURN_MARK,
   ACTION_TYPES,
   type ActionType,
+  FEATURE_POOL_ENTRIES,
   featureActionType,
   featurePoolKey,
 } from "./featureActions.ts";
-export { featureDamageDice } from "./featureAttacks.ts";
+export { featureDamageDice, offerSlots } from "./featureAttacks.ts";
+export {
+  type ConversionOption,
+  conversionOptions,
+  convertedState,
+} from "./featureConversions.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 export type { Mechanic } from "./featureMechanics.ts";
 export { restoredState } from "./featureRestores.ts";

@@ -10,6 +10,7 @@ import type { TermReference } from "./derivedField.ts";
 import { type Mechanic, mechanicsOfKind } from "./featureMechanics.ts";
 import { type Held, type HoldsFeatures, heldFeatures } from "./heldFeatures.ts";
 import type { Ability } from "./refs.ts";
+import type { SpellCastOption } from "./spellCast.ts";
 
 type AttackMechanic = Extract<Mechanic, { kind: "attack" }>;
 type ExtraDamageMechanic = Extract<Mechanic, { kind: "extraDamage" }>;
@@ -112,10 +113,11 @@ export function featureStrike(
   return result;
 }
 
-/** What extra damage reads off the sheet: a class table column's cell at the character's level, an ability's modifier, and whether a rage holds. */
+/** What extra damage reads off the sheet: a class table column's cell at the character's level, an ability's modifier, the proficiency bonus, and whether a rage holds. */
 export type DamageSheet = {
   column: (key: string) => string | undefined;
   modifier: (ability: Ability) => number;
+  proficiency: number;
   raging: boolean;
 };
 
@@ -123,31 +125,44 @@ const isAbility = (dice: ExtraDamageMechanic["dice"]): dice is Ability =>
   typeof dice === "string" && (ABILITIES as readonly string[]).includes(dice);
 
 function lands({ weapons, unarmed }: ExtraDamageMechanic, { weapon }: Strike): boolean {
-  if (!weapon) return unarmed === true;
+  if (!weapon) return unarmed === true || weapons === "unarmed";
   switch (weapons) {
     case undefined:
       return true;
     case "melee":
-      return weapon.kind === "melee";
+    case "ranged":
+      return weapon.kind === weapons;
     case "finesseOrRanged":
       return weapon.kind === "ranged" || isFinesse(weapon);
+    case "unarmed":
+      return false;
   }
+}
+
+/** The flat amount a `dice` or `plus` term names, at `levels` in the feature's class. */
+function flat(term: Ability | "proficiency" | "halfLevel", levels: number, sheet: DamageSheet) {
+  if (term === "proficiency") return sheet.proficiency;
+  if (term === "halfLevel") return Math.floor(levels / 2);
+  return sheet.modifier(term);
 }
 
 /** The dice, or the flat amount, `mechanic` adds at `levels` in its feature's class; null where the sheet prints no cell. */
 function amount(
-  { dice, scales = [] }: ExtraDamageMechanic,
+  { dice, plus, scales = [] }: ExtraDamageMechanic,
   levels: number,
   sheet: DamageSheet,
 ): Pick<FeatureDamage, "dice" | "bonus"> | null {
+  const bonus = plus ? flat(plus, levels, sheet) : 0;
   if (isAbility(dice)) return { dice: null, bonus: Math.max(1, sheet.modifier(dice)) };
+  if (dice === "proficiency" || dice === "halfLevel")
+    return { dice: null, bonus: flat(dice, levels, sheet) };
   if (typeof dice === "string") {
     const scaled = scales.filter((scale) => levels >= scale.level).at(-1);
-    return { dice: scaled?.dice ?? dice, bonus: 0 };
+    return { dice: scaled?.dice ?? dice, bonus };
   }
   const cell = sheet.column(dice.column);
   if (cell === undefined) return null;
-  return { dice: dice.die ? `${Number(cell)}d${dice.die}` : cell, bonus: 0 };
+  return { dice: dice.die ? `${Number(cell)}d${dice.die}` : cell, bonus };
 }
 
 /** The damage held features add to one attack on a hit, in the order the features are held. */
@@ -189,5 +204,9 @@ export function featureDamageDice(
   const slot = offer?.slot;
   if (dice === null || !slot || slotLevel === undefined) return dice;
   const [count = 0, faces = 0] = dice.split("d").map(Number);
-  return `${Math.min(count + slotLevel - 1, slot.max) + (versus ? 1 : 0)}d${faces}`;
+  return `${Math.min(count + slotLevel - 1, slot.max) + (versus && slot.versus ? 1 : 0)}d${faces}`;
 }
+
+/** The slots left that a feature's offer can spend: pact slots alone where it says so. */
+export const offerSlots = (slots: readonly SpellCastOption[], offer: FeatureDamage["offer"]) =>
+  offer?.slot?.pact ? slots.filter(({ via }) => via === "pact") : slots;
