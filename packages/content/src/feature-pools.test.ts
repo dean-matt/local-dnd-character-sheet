@@ -21,7 +21,7 @@ const CARRIES = `
 
 type Holder = { class_name: string; class_source: string };
 
-/** The pool entries no class holding their feature carries the resource key of. */
+/** Labels each pool entry whose key no class holding its feature carries. */
 function unresolved(db: Database.Database): string[] {
   const holders = db.prepare(HOLDERS);
   const carries = db.prepare(CARRIES);

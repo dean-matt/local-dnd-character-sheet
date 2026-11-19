@@ -31,6 +31,9 @@ describe("featurePoolKey", () => {
     expect(featurePoolKey({ name: "Channel Divinity: Twilight Sanctuary", source: "TCE" })).toBe(
       "channel_divinity",
     );
+    expect(featurePoolKey({ name: "Channel Divinity: Preserve Life", source: "PHB" })).toBe(
+      "channel_divinity",
+    );
   });
 
   it("is undefined for a feature that spends no pool", () => {
@@ -42,9 +45,6 @@ describe("featurePoolKey", () => {
     expect(featurePoolKey({ name: "Channel Divinity", source: "PHB" })).toBeUndefined();
     expect(featurePoolKey({ name: "Wild Shape", source: "PHB" })).toBeUndefined();
     expect(featurePoolKey({ name: "Symbiotic Entity", source: "TCE" })).toBeUndefined();
-    expect(featurePoolKey({ name: "Channel Divinity: Preserve Life", source: "PHB" })).toBe(
-      "channel_divinity",
-    );
   });
 });
 
