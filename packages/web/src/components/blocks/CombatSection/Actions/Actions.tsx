@@ -37,10 +37,18 @@ function heldActions(groups: FeatureGroup[]): HeldFeature[] {
   return held;
 }
 
+/** How many attacks the Attack action allows, where held features raise it past one. */
+function attackCount({ attacks, pactAttacks }: CharacterDerived["turn"]): string | null {
+  if (pactAttacks) return `${pactAttacks} attacks with the pact weapon`;
+  return attacks > 1 ? `${attacks} attacks` : null;
+}
+
 /**
- * The Actions card: the standard actions the character's edition prints, then the features the
- * character holds that take an action, grouped by the kind of action each takes. A name is a
- * button that opens the catalog's rules text for it, beside the resource it spends and a Use control.
+ * The Actions card: the standard actions the character's edition prints, the standard actions
+ * held features let the character take as a bonus action, then the features the character
+ * holds that take an action, grouped by the kind of action each takes. A name is a button that
+ * opens the catalog's rules text for it, beside the resource it spends and a Use control. The
+ * Attack action says how many attacks it allows where a feature raises it.
  */
 export function Actions({
   character,
@@ -50,6 +58,10 @@ export function Actions({
   derived: CharacterDerived;
 }) {
   const actions = STANDARD_ACTIONS[character.definition.edition];
+  const sourceOf = (name: string) =>
+    [...actions, ...STANDARD_ACTIONS.classic].find((action) => action.name === name)?.source ??
+    "PHB";
+  const attacks = attackCount(derived.turn);
   const held = heldActions(useCharacterFeatures(character.id, derived).data?.groups ?? []);
   return (
     <Card title="Actions">
@@ -57,7 +69,8 @@ export function Actions({
         {ACTION_TYPES.map((type) => {
           const group = actions.filter((action) => action.type === type);
           const features = held.filter((feature) => feature.type === type);
-          if (group.length === 0 && features.length === 0) return null;
+          const granted = type === "bonus action" ? derived.turn.bonusActions : [];
+          if (group.length === 0 && features.length === 0 && granted.length === 0) return null;
           return (
             <div key={type}>
               <h4 className="font-semibold text-label text-muted capitalize">{type}</h4>
@@ -72,6 +85,22 @@ export function Actions({
                     >
                       {name}
                     </DetailTrigger>
+                    {name === "Attack" && attacks && (
+                      <span className="ml-1.5 text-muted text-row">{attacks}</span>
+                    )}
+                  </li>
+                ))}
+                {granted.map(({ action, features }) => (
+                  <li key={action} className="flex min-h-6 items-center">
+                    <DetailTrigger
+                      title={action}
+                      meta={`${type} • ${features.join(", ")}`}
+                      detail={<ActionRules name={action} source={sourceOf(action)} />}
+                      className="hover:underline"
+                    >
+                      {action}
+                    </DetailTrigger>
+                    <span className="ml-1.5 text-muted text-row">via {features.join(", ")}</span>
                   </li>
                 ))}
                 {features.map(({ name, source, entries, uses, group }) => (
