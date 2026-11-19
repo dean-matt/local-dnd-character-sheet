@@ -96,7 +96,7 @@ const POOL_ROWS: [string, string, string[]][] = [
   ["rages", "PHB", ["Rage"]],
   ["rages", "XPHB", ["Rage"]],
   ["second_wind", "XPHB", ["Second Wind"]],
-  ["channel_divinity", "PHB", ["Channel Divinity", "Channel Divinity: Preserve Life"]],
+  ["channel_divinity", "PHB", ["Channel Divinity: Preserve Life"]],
   [
     "channel_divinity",
     "TCE",
@@ -107,8 +107,6 @@ const POOL_ROWS: [string, string, string[]][] = [
     "XPHB",
     ["Channel Divinity", "Divine Spark", "Preserve Life", "Sacred Weapon"],
   ],
-  ["wild_shape", "PHB", ["Wild Shape"]],
-  ["wild_shape", "TCE", ["Symbiotic Entity"]],
   ["wild_shape", "XPHB", ["Wild Shape", "Land's Aid"]],
   ["ki_points", "PHB", ["Flurry of Blows", "Patient Defense", "Step of the Wind"]],
   ["ki_points", "TCE", ["Hand of Healing"]],
@@ -116,8 +114,13 @@ const POOL_ROWS: [string, string, string[]][] = [
   ["favored_enemy", "XPHB", ["Favored Enemy"]],
 ];
 
+/** Every feature the curated table ties to a class pool, beside that pool's `resource_key`. */
+export const FEATURE_POOL_ENTRIES: readonly { ref: ContentRef; key: string }[] = POOL_ROWS.flatMap(
+  ([key, source, names]) => names.map((name) => ({ ref: { name, source }, key })),
+);
+
 const FEATURE_POOLS: ReadonlyMap<string, string> = new Map(
-  POOL_ROWS.flatMap(([key, source, names]) => names.map((name) => [refKey({ name, source }), key])),
+  FEATURE_POOL_ENTRIES.map(({ ref, key }) => [refKey(ref), key]),
 );
 
 /**

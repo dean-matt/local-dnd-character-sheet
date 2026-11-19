@@ -116,6 +116,7 @@ export {
   ACTION_TURN_MARK,
   ACTION_TYPES,
   type ActionType,
+  FEATURE_POOL_ENTRIES,
   featureActionType,
   featurePoolKey,
 } from "./featureActions.ts";
