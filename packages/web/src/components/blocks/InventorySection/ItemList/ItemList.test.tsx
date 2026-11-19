@@ -1006,6 +1006,32 @@ describe("ItemList", () => {
       ).toBeInTheDocument();
     });
 
+    it("keeps a failed end's toast up when a shield ends nothing next", async () => {
+      const items = [
+        ...plate(),
+        { ...plate()[0], name: "Wooden Shield", armor: { category: "shield", armorClass: 2 } },
+      ] as SheetItem[];
+      const fetchMock = renderList(derivedRecord(), items, { running: ["Rage"] });
+      await screen.findByText("Plate Armor");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+      failPut(fetchMock, "/api/characters/1/state");
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
+      await saveToasts().findByText("Effects: Couldn't end Rage: disk full");
+      fireEvent.click(await screen.findByLabelText("Equipped, Wooden Shield"));
+
+      await waitFor(() =>
+        expect(
+          fetchMock.mock.calls.filter(
+            ([url, init]) => url === "/api/characters/1" && init?.method === "PUT",
+          ),
+        ).toHaveLength(2),
+      );
+      expect(saveToasts().getByText("Effects: Couldn't end Rage: disk full")).toBeInTheDocument();
+    });
+
     it("keeps the rage when the armor failed to save", async () => {
       const fetchMock = renderList(derivedRecord(), plate(), { running: ["Rage"] });
       await screen.findByText("Plate Armor");

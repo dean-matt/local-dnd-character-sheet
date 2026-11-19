@@ -74,7 +74,10 @@ export function ItemList({
     const startable = (derived?.startableFeatures ?? []).filter(({ endsOn }) =>
       endsOn.includes(category),
     );
-    if (!rageEnds && startable.length === 0) return setEnding(undefined);
+    // Clears only this category's failure, so another category's stays up with its Retry.
+    const settled = () =>
+      setEnding((failed) => (failed?.category === category ? undefined : failed));
+    if (!rageEnds && startable.length === 0) return settled();
     const stored = state.data?.state;
     if (!stored) {
       setEnding({ category, failure: "Couldn't end effects: the character's state hasn't loaded" });
@@ -86,10 +89,10 @@ export function ItemList({
       category,
     );
     const ended = endedNames(stored, after);
-    if (ended.length === 0) return setEnding(undefined);
+    if (ended.length === 0) return settled();
     try {
       await replaceState.mutateAsync(after);
-      setEnding(undefined);
+      settled();
     } catch (error) {
       setEnding({
         category,
