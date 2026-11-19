@@ -380,7 +380,10 @@ const usesMechanicSchema = z
     ({ count, scales = [] }) =>
       typeof count === "number" || scales.every((scale) => scale.count === undefined),
     { error: "a scale replaces only a number count" },
-  );
+  )
+  .refine(({ count, times }) => times === undefined || typeof count !== "number", {
+    error: "times multiplies only an ability or proficiency count",
+  });
 
 const mechanicSchema = z.union([
   usesMechanicSchema,

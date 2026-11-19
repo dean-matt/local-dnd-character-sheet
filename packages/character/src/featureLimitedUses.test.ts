@@ -104,13 +104,13 @@ describe("featureLimitedUses", () => {
     expect(usesOf(levelsOf("Cleric", "PHB", 6), harness)).toBeUndefined();
   });
 
-  it("keys an eldritch invocation's uses by the option", () => {
+  it("keys a pact boon's uses by the option", () => {
     const warlock = {
       ...levelsOf("Warlock", "PHB", 3),
       optionalFeatures: [
         {
           ref: { name: "Pact of the Talisman", source: "TCE" },
-          featureType: "EI",
+          featureType: "PB",
           grantedBy: { kind: "class" as const, ref: { name: "Warlock", source: "PHB" } },
         },
       ],

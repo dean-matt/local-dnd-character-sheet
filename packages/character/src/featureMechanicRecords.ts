@@ -236,8 +236,8 @@ const LIMITED_USES: FeatureMechanics[] = [
   narrative({ name: "Boon of Combat Prowess", source: "XPHB" }),
   narrative({ name: "Pact of the Blade", source: "PHB" }),
   // Accursed Specter, Call the Hunt, Cauterizing Flames, Defensive Field and Restorative
-  // Reagents restore hit points on an event, to another creature or past what a restore term
-  // records, so they count their uses alone.
+  // Reagents give hit points or temporary hit points no heal or tempHp term records yet, so
+  // they count their uses alone.
   ...(
     [
       [artificer, "Restorative Reagents", ["Alchemist", "TCE"], "TCE", 9, "int"],
@@ -1914,6 +1914,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ]),
   subclassFeature(warlock, ["Fathomless", "TCE"], ["Grasping Tentacles", "TCE"], 10, [
     { kind: "tempHp", bonus: ["level"] },
+    { kind: "uses", count: 1, reset: "long" },
   ]),
   // A creature gains these once between rests, so the use counts the character's own.
   {
