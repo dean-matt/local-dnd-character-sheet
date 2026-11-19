@@ -43,15 +43,12 @@ export type ConversionOption = {
   refused: string | null;
 };
 
-/** The conversion's pool as the sheet shows it, the feature's own class's where two classes hold one; undefined where the sheet counts none. */
+/** The conversion's pool as the feature's own class counts it; undefined where that class counts none. */
 function heldPool(derived: Sheet, sheet: CharacterState, conversion: Conversion) {
-  const candidates = derived.classResources
-    .map((pool, index) => ({ pool, index }))
-    .filter(({ pool }) => pool.key === conversion.pool);
-  const picked =
-    candidates.find(({ pool }) => entryKey(pool.class) === entryKey(conversion.class)) ??
-    candidates[0];
-  const held = picked && sheet.classResources[picked.index];
+  const index = derived.classResources.findIndex(
+    (pool) => pool.key === conversion.pool && entryKey(pool.class) === entryKey(conversion.class),
+  );
+  const held = index < 0 ? undefined : sheet.classResources[index];
   return held?.maximum == null ? undefined : { ...held, maximum: held.maximum };
 }
 

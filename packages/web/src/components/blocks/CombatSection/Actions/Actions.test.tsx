@@ -424,5 +424,72 @@ describe("Actions", () => {
       expect(writes[0]?.spellSlots).toEqual([{ level: 2, total: 2, expended: 1 }]);
       expect(writes[0]?.classResources[0]?.expended).toBe(0);
     });
+
+    it("spends a feature's own use once with the trade, in one write", async () => {
+      const CLERIC = { name: "Cleric", source: "PHB" };
+      const HARNESS = "Channel Divinity: Harness Divine Power";
+      const key = `feature|Cleric|PHB|${HARNESS}`;
+      let stored = stateRecord();
+      stored = {
+        ...stored,
+        state: { ...stored.state, spellSlots: [{ level: 1, total: 4, expended: 1 }] },
+      };
+      const writes: CharacterState[] = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          if (init?.method === "PUT") {
+            const written = JSON.parse(String(init.body));
+            writes.push(written);
+            stored = { ...stored, state: written };
+            return Response.json(stored);
+          }
+          if (String(input).endsWith("/features")) {
+            const feature = {
+              resolved: true,
+              name: HARNESS,
+              source: "TCE",
+              level: 2,
+              entries: [],
+              uses: { key, count: 1, reset: "long" },
+            };
+            return Response.json({
+              groups: [{ origin: "class", name: "Cleric", class: CLERIC, features: [feature] }],
+            });
+          }
+          return Response.json(stored);
+        }),
+      );
+      const derived: CharacterDerived = {
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: total(4) }],
+        featureConversions: [
+          {
+            feature: { name: HARNESS, source: "TCE" },
+            class: CLERIC,
+            pool: "channel_divinity",
+            costs: [1],
+            refund: false,
+          },
+        ],
+      };
+      const card = renderActions("classic", derived);
+      const opener = await within(card).findByRole("button", { name: `Convert with ${HARNESS}` });
+      expect(opener.closest("li")).toHaveTextContent("1 / 1 Long rest");
+      fireEvent.click(opener);
+      const dialog = await screen.findByRole("dialog");
+      fireEvent.click(within(dialog).getByRole("radio", { name: /Regain a level 1 slot/ }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Convert" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.spellSlots).toEqual([{ level: 1, total: 4, expended: 0 }]);
+      expect(writes[0]?.featureUses).toEqual([{ key, expended: 1 }]);
+      expect(writes[0]?.turn.bonusAction).toBe(true);
+      await waitFor(() =>
+        expect(
+          within(card).getByRole("button", { name: `Convert with ${HARNESS}` }),
+        ).toHaveAttribute("aria-disabled", "true"),
+      );
+    });
   });
 });

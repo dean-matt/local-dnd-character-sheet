@@ -104,6 +104,24 @@ describe("conversionOptions", () => {
       { via: "create", level: 2, points: null, refused: "No level 2 slot is expended." },
     ]);
   });
+
+  it("charges only the feature's own class's pool, never another class's of the same key", () => {
+    const harness = { ...font, class: CLERIC, pool: "channel_divinity", costs: [1], refund: false };
+    const paladin = { name: "Paladin", source: "XPHB" };
+    const multiclass = {
+      ...sheet,
+      classResources: [{ class: paladin, key: "channel_divinity", maximum: total(2) }],
+    };
+    const state = {
+      ...holding([[1, 1]], 5),
+      classResources: [{ class: paladin, key: "channel_divinity", maximum: 2, expended: 0 }],
+    };
+    expect(conversionOptions(multiclass, state, harness)).toEqual([
+      { via: "create", level: 1, points: null, refused: null },
+    ]);
+    const after = convertedState(multiclass, state, harness, { via: "create", level: 1 });
+    expect(after.classResources).toEqual(state.classResources);
+  });
 });
 
 describe("convertedState", () => {
