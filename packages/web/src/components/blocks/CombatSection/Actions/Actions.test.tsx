@@ -330,4 +330,166 @@ describe("Actions", () => {
       expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 9 });
     });
   });
+
+  describe("Convert", () => {
+    const SORCERER = { name: "Sorcerer", source: "PHB" };
+    const FONT = { resolved: true, name: "Font of Magic", source: "PHB", level: 2, entries: [] };
+    const total = (computed: number) => ({ computed, manual: null, terms: [] });
+
+    function renderConvert(points: number, slots: CharacterState["spellSlots"]) {
+      let stored = stateRecord();
+      stored = {
+        ...stored,
+        state: {
+          ...stored.state,
+          spellSlots: slots,
+          classResources: [
+            { class: SORCERER, key: "sorcery_points", maximum: 3, expended: 3 - points },
+          ],
+        },
+      };
+      const writes: CharacterState[] = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          if (init?.method === "PUT") {
+            const written = JSON.parse(String(init.body));
+            writes.push(written);
+            stored = { ...stored, state: written };
+            return Response.json(stored);
+          }
+          if (String(input).endsWith("/features")) {
+            return Response.json({
+              groups: [{ origin: "class", name: "Sorcerer", class: SORCERER, features: [FONT] }],
+            });
+          }
+          return Response.json(stored);
+        }),
+      );
+      const derived: CharacterDerived = {
+        ...derivedRecord(),
+        spellSlots: [
+          { level: 1, total: total(4) },
+          { level: 2, total: total(2) },
+        ],
+        classResources: [{ class: SORCERER, key: "sorcery_points", maximum: total(3) }],
+        featureConversions: [
+          {
+            feature: { name: "Font of Magic", source: "PHB" },
+            class: SORCERER,
+            pool: "sorcery_points",
+            costs: [2, 3, 5, 6, 7],
+            refund: true,
+          },
+        ],
+      };
+      return { card: renderActions("classic", derived), writes };
+    }
+
+    it("refills a slot from the points, with the bonus action, in one write", async () => {
+      const { card, writes } = renderConvert(2, [{ level: 1, total: 4, expended: 1 }]);
+      fireEvent.click(
+        await within(card).findByRole("button", { name: "Convert with Font of Magic" }),
+      );
+      const dialog = await screen.findByRole("dialog");
+      expect(within(dialog).getByRole("radio", { name: /Regain a level 2 slot/ })).toBeDisabled();
+      expect(dialog).toHaveTextContent(
+        "Regain a level 2 slot for 3 sorcery points (Sorcery points: 2 left, 3 needed.)",
+      );
+      fireEvent.click(within(dialog).getByRole("radio", { name: /Regain a level 1 slot/ }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Convert" }));
+
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(writes).toHaveLength(1);
+      expect(writes[0]?.spellSlots).toEqual([{ level: 1, total: 4, expended: 0 }]);
+      expect(writes[0]?.classResources[0]?.expended).toBe(3);
+      expect(writes[0]?.turn.bonusAction).toBe(true);
+      expect(within(card).getByRole("status")).toHaveTextContent(
+        "Font of Magic used to regain a level 1 slot for 2 sorcery points. Bonus action spent.",
+      );
+    });
+
+    it("expends a slot for points, gaining no more than the pool spent", async () => {
+      const { card, writes } = renderConvert(2, []);
+      fireEvent.click(
+        await within(card).findByRole("button", { name: "Convert with Font of Magic" }),
+      );
+      const dialog = await screen.findByRole("dialog");
+      fireEvent.click(
+        within(dialog).getByRole("radio", { name: "Expend a level 2 slot for 1 sorcery point" }),
+      );
+      fireEvent.click(within(dialog).getByRole("button", { name: "Convert" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.spellSlots).toEqual([{ level: 2, total: 2, expended: 1 }]);
+      expect(writes[0]?.classResources[0]?.expended).toBe(0);
+    });
+
+    it("spends a feature's own use once with the trade, in one write", async () => {
+      const CLERIC = { name: "Cleric", source: "PHB" };
+      const HARNESS = "Channel Divinity: Harness Divine Power";
+      const key = `feature|Cleric|PHB|${HARNESS}`;
+      let stored = stateRecord();
+      stored = {
+        ...stored,
+        state: { ...stored.state, spellSlots: [{ level: 1, total: 4, expended: 1 }] },
+      };
+      const writes: CharacterState[] = [];
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          if (init?.method === "PUT") {
+            const written = JSON.parse(String(init.body));
+            writes.push(written);
+            stored = { ...stored, state: written };
+            return Response.json(stored);
+          }
+          if (String(input).endsWith("/features")) {
+            const feature = {
+              resolved: true,
+              name: HARNESS,
+              source: "TCE",
+              level: 2,
+              entries: [],
+              uses: { key, count: 1, reset: "long" },
+            };
+            return Response.json({
+              groups: [{ origin: "class", name: "Cleric", class: CLERIC, features: [feature] }],
+            });
+          }
+          return Response.json(stored);
+        }),
+      );
+      const derived: CharacterDerived = {
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: total(4) }],
+        featureConversions: [
+          {
+            feature: { name: HARNESS, source: "TCE" },
+            class: CLERIC,
+            pool: "channel_divinity",
+            costs: [1],
+            refund: false,
+          },
+        ],
+      };
+      const card = renderActions("classic", derived);
+      const opener = await within(card).findByRole("button", { name: `Convert with ${HARNESS}` });
+      expect(opener.closest("li")).toHaveTextContent("1 / 1 Long rest");
+      fireEvent.click(opener);
+      const dialog = await screen.findByRole("dialog");
+      fireEvent.click(within(dialog).getByRole("radio", { name: /Regain a level 1 slot/ }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "Convert" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.spellSlots).toEqual([{ level: 1, total: 4, expended: 0 }]);
+      expect(writes[0]?.featureUses).toEqual([{ key, expended: 1 }]);
+      expect(writes[0]?.turn.bonusAction).toBe(true);
+      await waitFor(() =>
+        expect(
+          within(card).getByRole("button", { name: `Convert with ${HARNESS}` }),
+        ).toHaveAttribute("aria-disabled", "true"),
+      );
+    });
+  });
 });

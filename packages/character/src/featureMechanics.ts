@@ -398,9 +398,11 @@ export const dieSizeSchema = z.union([
  * of `die` sides, keyed `key` as a table's `resource_key` would be. Each of `scales` replaces
  * the count, the die or both from a level in the feature's class.
  */
+const poolKeySchema = z.string().regex(/^[a-z]+(?:_[a-z]+)*$/);
+
 const poolMechanicSchema = z.strictObject({
   kind: z.literal("pool"),
-  key: z.string().regex(/^[a-z]+(?:_[a-z]+)*$/),
+  key: poolKeySchema,
   count: z.int().min(1),
   die: dieSizeSchema,
   scales: z
@@ -419,9 +421,24 @@ const poolMechanicSchema = z.strictObject({
     .optional(),
 });
 
+/**
+ * A trade between the class pool keyed `pool` and spell slots: one expended slot regained for
+ * `costs` from the pool, the first cost a level 1 slot's, and no slot above the last; under
+ * `upTo`, none above half the proficiency bonus, rounded up. Where `refund` says so, a slot
+ * can be expended for as many of the pool's uses as its level.
+ */
+const convertMechanicSchema = z.strictObject({
+  kind: z.literal("convert"),
+  pool: poolKeySchema,
+  costs: z.array(z.int().min(1)).min(1).max(9),
+  upTo: z.literal("halfProficiency").optional(),
+  refund: z.literal(true).optional(),
+});
+
 const mechanicSchema = z.union([
   usesMechanicSchema,
   poolMechanicSchema,
+  convertMechanicSchema,
   healMechanicSchema,
   tempHpMechanicSchema,
   extraDamageMechanicSchema,

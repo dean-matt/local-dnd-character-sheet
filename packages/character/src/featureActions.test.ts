@@ -12,6 +12,9 @@ describe("featureActionType", () => {
     expect(featureActionType({ name: "Hand of Healing", source: "TCE" })).toBe("action");
     expect(featureActionType({ name: "Unearthly Recovery", source: "XGE" })).toBe("bonus action");
     expect(featureActionType({ name: "Soul of Artifice", source: "TCE" })).toBe("reaction");
+    expect(
+      featureActionType({ name: "Channel Divinity: Harness Divine Power", source: "TCE" }),
+    ).toBe("bonus action");
   });
 
   it("is undefined for a feature the table omits", () => {

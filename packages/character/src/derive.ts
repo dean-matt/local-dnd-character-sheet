@@ -70,6 +70,7 @@ import {
   featureDamage,
   featureStrike,
 } from "./featureAttacks.ts";
+import { featureConversions } from "./featureConversions.ts";
 import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
@@ -1342,6 +1343,7 @@ export function deriveCharacter(
         state.hitPointMaximumReduction,
       ),
     }),
+    featureConversions: featureConversions(definition, proficiencyBonus.total),
     limitedUses: featureLimitedUses(definition, (term) =>
       term === "proficiency" ? proficiencyBonus.total : abilityModifier(scores[term].total),
     ),
