@@ -97,9 +97,11 @@ export function FeatureRow({
   const controls = featureControls(feature, character, featIndex);
   const { source } = feature;
   const startable =
-    derived !== undefined &&
-    source !== undefined &&
-    derived.startableFeatures.some((ref) => ref.name === feature.name && ref.source === source);
+    source === undefined
+      ? undefined
+      : derived?.startableFeatures.find(
+          (ref) => ref.name === feature.name && ref.source === source,
+        );
   return (
     <ListRow
       name={feature.name}
@@ -118,12 +120,11 @@ export function FeatureRow({
                 uses={feature.uses}
               />
             )}
-            {startable && (
+            {startable && derived && (
               <FeatureEffect
                 character={character}
                 derived={derived}
-                name={feature.name}
-                source={source}
+                startable={startable}
                 uses={feature.uses}
                 group={group}
               />

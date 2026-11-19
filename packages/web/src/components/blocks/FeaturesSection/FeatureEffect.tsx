@@ -15,20 +15,19 @@ import { PoolButton } from "../../PoolButton.tsx";
 
 /**
  * Starts and ends a feature's effect, each one announced state write. A start spends what a
- * Use of the feature spends, and refuses where that is spent out; an end restores nothing.
+ * Use of the feature spends, and refuses where that is spent out or the armor worn ends the
+ * effect; an end restores nothing.
  */
 export function FeatureEffect({
   character,
   derived,
-  name,
-  source,
+  startable,
   uses,
   group,
 }: {
   character: CharacterRecord;
   derived: CharacterDerived;
-  name: string;
-  source: string;
+  startable: CharacterDerived["startableFeatures"][number];
   uses: LimitedUses | undefined;
   group: Pick<FeatureGroup, "class">;
 }) {
@@ -36,6 +35,7 @@ export function FeatureEffect({
   const replace = useAnnouncedStateWrite(character.id);
   if (!state.isSuccess) return null;
 
+  const { name, source } = startable;
   const stored = state.data.state;
   const running = effectRunning(stored, name);
   const resource = featureResource(
@@ -45,7 +45,7 @@ export function FeatureEffect({
     { name, source, uses },
     group,
   );
-  const blocked = running ? null : (resource?.blocked ?? null);
+  const blocked = running ? null : (startable.blockedBy ?? resource?.blocked ?? null);
 
   return (
     <>

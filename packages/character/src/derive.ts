@@ -85,6 +85,7 @@ import { entryKey, itemKey, refKey } from "./keys.ts";
 import { carriedWeight, containerOverflows } from "./load.ts";
 import { martialArts } from "./martialArts.ts";
 import { reducedMaximum, reducedOverride } from "./maximumReduction.ts";
+import { effectBlockedBy } from "./ongoingEffects.ts";
 import { applyOverrides } from "./overrides.ts";
 import { rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
@@ -1135,7 +1136,8 @@ export function deriveCharacter(
   const feats = featGrants(stored, catalog);
   const definition = { ...withFeatGrants(stored, feats.granted, feats.itemSkills), started };
   const level = totalLevel(definition);
-  const armorWorn = equippedArmor(definition, catalog.armor).worn?.category;
+  const armor = equippedArmor(definition, catalog.armor);
+  const armorWorn = armor.worn?.category;
   const heavyArmorWorn = armorWorn === "heavy";
   const rage = rageBenefits(definition, catalog, state, heavyArmorWorn);
   const casters = castingClasses(definition, catalog);
@@ -1344,7 +1346,10 @@ export function deriveCharacter(
       (ability) => abilityModifier(scores[ability].total),
       proficiencyBonus.total,
     ),
-    startableFeatures: startableFeatures(definition),
+    startableFeatures: startableFeatures(definition).map((feature) => ({
+      ...feature,
+      blockedBy: effectBlockedBy(feature.endsOn, [armorWorn, armor.shield && "shield"]),
+    })),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),

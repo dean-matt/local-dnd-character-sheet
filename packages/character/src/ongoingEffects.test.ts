@@ -7,7 +7,7 @@ import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureMechanicsSchema } from "./featureMechanics.ts";
 import { featureRolls } from "./featureRolls.ts";
 import { startableFeatures } from "./heldFeatures.ts";
-import { effectEnded, effectRunning, effectStarted } from "./ongoingEffects.ts";
+import { effectBlockedBy, effectEnded, effectRunning, effectStarted } from "./ongoingEffects.ts";
 import type { Ability } from "./refs.ts";
 import { definition } from "./test/vex.ts";
 
@@ -56,9 +56,29 @@ describe("effectStarted and effectEnded", () => {
   });
 });
 
+describe("effectBlockedBy", () => {
+  const bladesong = ["incapacitated", "medium", "heavy", "shield"] as const;
+
+  it("refuses a start in armor of a category that ends the effect", () => {
+    expect(effectBlockedBy(bladesong, ["medium", undefined])).toBe("Medium armor is worn.");
+    expect(effectBlockedBy(bladesong, ["light", "shield"])).toBe("A shield is equipped.");
+  });
+
+  it("allows a start in other armor, or with no armor that ends it", () => {
+    expect(effectBlockedBy(bladesong, ["light", undefined])).toBeNull();
+    expect(effectBlockedBy(["incapacitated"], ["heavy", "shield"])).toBeNull();
+  });
+});
+
 describe("a started feature's mechanics", () => {
   it("lists Bladesong as startable, counting its uses by the proficiency bonus", () => {
-    expect(startableFeatures(bladesinger())).toEqual([{ name: "Bladesong", source: "TCE" }]);
+    expect(startableFeatures(bladesinger())).toEqual([
+      {
+        name: "Bladesong",
+        source: "TCE",
+        endsOn: ["incapacitated", "medium", "heavy", "shield"],
+      },
+    ]);
     const uses = featureLimitedUses(bladesinger(), modifiers({}), 2);
     expect(uses.find(({ feature }) => feature.name === "Bladesong")?.count).toBe(2);
   });

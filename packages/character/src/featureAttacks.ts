@@ -73,7 +73,10 @@ const term = ({ ref }: Held, value: number): Term<TermReference> => ({
   reference: ref,
 });
 
-/** Adds what one bonus or critical mechanic of `held` gives to `into`; an ability's modifier adds at least 1. */
+/**
+ * Adds what one bonus or critical mechanic of `held` gives to `into`; an ability's modifier
+ * adds at least 1.
+ */
 function addMechanic(
   into: FeatureStrike,
   held: Held,

@@ -112,9 +112,9 @@ function searchPage(url: string) {
   return json({ items, total: items.length, limit: 20, offset: 0 });
 }
 
-/** Answers the character's play state, raging or not, and takes a write to it. */
-function stateStub(raging: boolean) {
-  let state = { ...defaultCharacterState(), activeEffects: raging ? [{ name: "Rage" }] : [] };
+/** Answers the character's play state, with the effects `running`, and takes a write to it. */
+function stateStub(running: string[]) {
+  let state = { ...defaultCharacterState(), activeEffects: running.map((name) => ({ name })) };
   return (url: string, init?: RequestInit) => {
     if (url !== "/api/characters/1/state") return undefined;
     if (init?.method === "PUT") state = JSON.parse(String(init.body));
@@ -162,7 +162,7 @@ function stubApi({
   houseRules,
   firstEntry,
   homebrewItem,
-  raging = false,
+  running = [],
 }: {
   inventory?: SheetItem[];
   variantStatus?: number;
@@ -174,7 +174,8 @@ function stubApi({
   firstEntry?: object;
   /** The homebrew record `/api/homebrew/items/{id}` reads, which a `PUT` there renames. */
   homebrewItem?: { id: string; name: string };
-  raging?: boolean;
+  /** The names of the effects the state holds running. */
+  running?: string[];
 } = {}) {
   let reads = 0;
   let homebrewRow = homebrewItem;
@@ -197,7 +198,7 @@ function stubApi({
         releasePut = resolve;
       })
     : undefined;
-  const stateReply = stateStub(raging);
+  const stateReply = stateStub(running);
   const bothReply = (url: string, init?: RequestInit) => {
     if (init?.method !== "PUT" || url !== "/api/characters/1/definition-and-state")
       return undefined;
@@ -968,7 +969,7 @@ describe("ItemList", () => {
       );
 
     it("ends the rage", async () => {
-      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      const fetchMock = renderList(derivedRecord(), plate(), { running: ["Rage"] });
       await screen.findByText("Plate Armor");
       await waitFor(() =>
         expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
@@ -991,7 +992,7 @@ describe("ItemList", () => {
       );
 
     it("toasts a rage that failed to end", async () => {
-      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      const fetchMock = renderList(derivedRecord(), plate(), { running: ["Rage"] });
       await screen.findByText("Plate Armor");
       await waitFor(() =>
         expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
@@ -1001,12 +1002,12 @@ describe("ItemList", () => {
       fireEvent.click(await screen.findByLabelText("Equipped, Plate Armor"));
 
       expect(
-        await saveToasts().findByText("Rage: Couldn't end the rage: disk full"),
+        await saveToasts().findByText("Effects: Couldn't end Rage: disk full"),
       ).toBeInTheDocument();
     });
 
     it("keeps the rage when the armor failed to save", async () => {
-      const fetchMock = renderList(derivedRecord(), plate(), { raging: true });
+      const fetchMock = renderList(derivedRecord(), plate(), { running: ["Rage"] });
       await screen.findByText("Plate Armor");
       await waitFor(() =>
         expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
@@ -1030,6 +1031,53 @@ describe("ItemList", () => {
 
       expect((await written(fetchMock)).inventory[0].equipped).toBe(true);
       expect(stateWrites(fetchMock)).toHaveLength(0);
+    });
+  });
+
+  describe("a shield equipped during Bladesong", () => {
+    const shield = (): SheetItem[] => [
+      {
+        ...ITEMS[0],
+        name: "Wooden Shield",
+        weapon: null,
+        armor: { category: "shield", armorClass: 2 },
+      } as SheetItem,
+    ];
+    const bladesinger = (): CharacterDerived => ({
+      ...derivedRecord(),
+      startableFeatures: [
+        {
+          name: "Bladesong",
+          source: "TCE",
+          endsOn: ["incapacitated", "medium", "heavy", "shield"],
+          blockedBy: null,
+        },
+        { name: "Empty Body", source: "PHB", endsOn: [], blockedBy: null },
+      ],
+    });
+
+    it("ends Bladesong and leaves an effect the shield does not end", async () => {
+      const fetchMock = renderList(bladesinger(), shield(), {
+        running: ["Bladesong", "Empty Body"],
+      });
+      await screen.findByText("Wooden Shield");
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith("/api/characters/1/state", undefined),
+      );
+
+      fireEvent.click(await screen.findByLabelText("Equipped, Wooden Shield"));
+
+      await waitFor(() =>
+        expect(
+          fetchMock.mock.calls.filter(
+            ([url, init]) => url === "/api/characters/1/state" && init?.method === "PUT",
+          ),
+        ).toHaveLength(1),
+      );
+      const write = fetchMock.mock.calls.find(
+        ([url, init]) => url === "/api/characters/1/state" && init?.method === "PUT",
+      );
+      expect(JSON.parse(String(write?.[1]?.body)).activeEffects).toEqual([{ name: "Empty Body" }]);
     });
   });
 

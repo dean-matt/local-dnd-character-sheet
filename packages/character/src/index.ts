@@ -159,7 +159,7 @@ export {
   maximumBeforeReduction,
   maximumReducedState,
 } from "./maximumReduction.ts";
-export { effectEnded, effectRunning, effectStarted } from "./ongoingEffects.ts";
+export { effectEnded, effectRunning, effectStarted, effectsEndedBy } from "./ongoingEffects.ts";
 export {
   grantorKey,
   type OptionalFeatureEntitlement,

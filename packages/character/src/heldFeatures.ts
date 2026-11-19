@@ -7,6 +7,7 @@
 import type { CharacterDefinition } from "./definition.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import {
+  type EffectEnd,
   type FeatureMechanics,
   featureMechanicsKey,
   featureOffers,
@@ -233,8 +234,10 @@ export function heldFeatures(definition: HoldsFeatures): Held[] {
   return [...held.values()].map((feature) => asStarted(feature, started));
 }
 
-/** The held features whose effect the player starts and ends. */
-export const startableFeatures = (definition: HoldsFeatures): ContentRef[] =>
+/** The held features whose effect the player starts and ends, with what ends each early. */
+export const startableFeatures = (
+  definition: HoldsFeatures,
+): (ContentRef & { endsOn: EffectEnd[] })[] =>
   heldFeatures(definition).flatMap(({ ref, entry }) =>
-    mechanicsOfKind(entry, "active").length > 0 ? [ref] : [],
+    mechanicsOfKind(entry, "active").map(({ endsOn = [] }) => ({ ...ref, endsOn })),
   );

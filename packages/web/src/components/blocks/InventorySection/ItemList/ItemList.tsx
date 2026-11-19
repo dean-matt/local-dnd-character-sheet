@@ -2,6 +2,8 @@ import { isConsumable, type SheetItem } from "@dnd/catalog";
 import {
   type CharacterDerived,
   type CharacterRecord,
+  type CharacterState,
+  effectsEndedBy,
   houseRule,
   isRaging,
   rageEnded,
@@ -41,6 +43,16 @@ import { UnresolvedItemRow } from "./UnresolvedItemRow.tsx";
 
 type EntryChange = (entry: InventoryEntry) => InventoryEntry | null;
 
+type Donned = "medium" | "heavy" | "shield";
+
+const isDonned = (category: string | undefined): category is Donned =>
+  category === "medium" || category === "heavy" || category === "shield";
+
+const endedNames = (before: CharacterState, after: CharacterState) =>
+  before.activeEffects
+    .filter(({ name }) => !after.activeEffects.some((effect) => effect.name === name))
+    .map(({ name }) => name);
+
 export function ItemList({
   character,
   derived,
@@ -55,24 +67,33 @@ export function ItemList({
   const counts = useUpdateCharacterDefinition(character.id);
   const state = useCharacterState(character.id);
   const replaceState = useReplaceCharacterState(character.id);
-  const [rageFailure, setRageFailure] = useState<string>();
-  const endRage = async () => {
+  const [ending, setEnding] = useState<{ category: Donned; failure: string }>();
+  /** Ends each running effect that donning armor of `category` ends: a 2024 rage in heavy armor, and a feature's effect by its `endsOn`. */
+  const endEffects = async (category: Donned) => {
     const stored = state.data?.state;
     if (!stored) {
-      setRageFailure("Couldn't end the rage: the character's state hasn't loaded");
+      setEnding({ category, failure: "Couldn't end effects: the character's state hasn't loaded" });
       return;
     }
-    if (!isRaging(stored)) return;
+    const raging = character.edition === "one" && category === "heavy" && isRaging(stored);
+    const after = effectsEndedBy(
+      raging ? rageEnded(stored) : stored,
+      derived?.startableFeatures ?? [],
+      category,
+    );
+    const ended = endedNames(stored, after);
+    if (ended.length === 0) return;
     try {
-      await replaceState.mutateAsync(rageEnded(stored));
-      setRageFailure(undefined);
+      await replaceState.mutateAsync(after);
+      setEnding(undefined);
     } catch (error) {
-      setRageFailure(`Couldn't end the rage: ${(error as Error).message}`);
+      setEnding({
+        category,
+        failure: `Couldn't end ${ended.join(", ")}: ${(error as Error).message}`,
+      });
     }
   };
-  const endsRage = (category: string | undefined) =>
-    character.edition === "one" && category === "heavy";
-  useSaveToast("Rage", rageFailure, endRage, rageFailure);
+  useSaveToast("Effects", ending?.failure, ending && (() => endEffects(ending.category)), ending);
   const { settled, hold, writing } = useRowWrites(characterInventoryKey(character.id));
   const busy = writing || inventory.isFetching;
   const drawn = character.definition.inventory;
@@ -268,7 +289,8 @@ export function ItemList({
                       equipped,
                       carried: entry.carried || equipped,
                     }))?.then((landed) => {
-                      if (landed && equipped && endsRage(item.armor?.category)) endRage();
+                      const category = item.armor?.category;
+                      if (landed && equipped && isDonned(category)) endEffects(category);
                     });
                   }}
                   onAttune={(on) => edit(index, (entry) => ({ ...entry, attuned: on }))}

@@ -117,9 +117,11 @@ const SACRED_WEAPON = "with the weapon Sacred Weapon imbues";
  * past one use of the feature or its pool is the player's to spend.
  */
 const ONGOING_EFFECTS: FeatureMechanics[] = [
-  classFeature(paladin24, ["Divine Sense", "XPHB"], 3, [{ kind: "active" }]),
+  classFeature(paladin24, ["Divine Sense", "XPHB"], 3, [
+    { kind: "active", endsOn: ["incapacitated"] },
+  ]),
   subclassFeature(paladin, ["Devotion", "PHB"], ["Sacred Weapon", "PHB"], 3, [
-    { kind: "active" },
+    { kind: "active", endsOn: ["incapacitated"] },
     { kind: "attack", attack: "cha", option: SACRED_WEAPON, while: "active" },
   ]),
   subclassFeature(paladin24, ["Devotion", "XPHB"], ["Sacred Weapon", "XPHB"], 3, [
@@ -140,7 +142,7 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
     { kind: "defense", resist: ALL_BUT_FORCE, while: "active" },
   ]),
   classFeature(monk24, ["Superior Defense", "XPHB"], 18, [
-    { kind: "active" },
+    { kind: "active", endsOn: ["incapacitated"] },
     { kind: "defense", resist: ALL_BUT_FORCE, while: "active" },
   ]),
   classFeature(sorcerer24, ["Innate Sorcery", "XPHB"], 1, [{ kind: "active" }]),
@@ -154,7 +156,7 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
   ]),
   subclassFeature(["Wizard", "PHB"], ["Bladesinging", "TCE"], ["Bladesong", "TCE"], 2, [
     { kind: "uses", count: "proficiency", reset: "long" },
-    { kind: "active" },
+    { kind: "active", endsOn: ["incapacitated", "medium", "heavy", "shield"] },
     { kind: "armorClass", value: "int", while: "active" },
     { kind: "speed", bonus: 10, while: "active" },
     { kind: "roll", roll: "check", skills: ["acrobatics"], advantage: true, while: "active" },

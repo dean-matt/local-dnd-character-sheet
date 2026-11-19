@@ -23,6 +23,26 @@ const RAGE = { name: "Rage", source: "XPHB", uses: undefined };
 const SECOND_WIND = { name: "Second Wind", source: "XPHB", uses: undefined };
 
 describe("featureResource", () => {
+  it.each([
+    ["Sacred Weapon", "PHB"],
+    ["Vow of Enmity", "PHB"],
+    ["Divine Sense", "XPHB"],
+  ])("spends a Channel Divinity use on %s (%s)", (name, source) => {
+    const paladin = { name: "Paladin", source };
+    const derived = derivedWith([pool("channel_divinity", paladin, 1)]);
+    const stored = defaultCharacterState();
+    const feature = featureResource(
+      derived,
+      stored,
+      source === "PHB" ? "classic" : "one",
+      { name, source, uses: undefined },
+      { class: paladin },
+    );
+
+    expect(feature).toMatchObject({ left: 1, total: 1, blocked: null });
+    expect(feature?.spend(stored).classResources[0]?.expended).toBe(1);
+  });
+
   it("starts a rage with its use and refuses a second while raging", () => {
     const derived = derivedWith([pool("rages", BARBARIAN, 2)]);
     const stored = defaultCharacterState();

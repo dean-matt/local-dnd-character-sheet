@@ -11,6 +11,7 @@ import {
 import type { CharacterDerived } from "./characterDerived.ts";
 import { concentrationLapsed } from "./concentration.ts";
 import type { CharacterDefinition } from "./definition.ts";
+import { effectsEndedBy } from "./ongoingEffects.ts";
 import { rageEnded } from "./rage.ts";
 import { derivedValue, houseRule } from "./resolve.ts";
 import { sheetState } from "./rest.ts";
@@ -59,11 +60,11 @@ function defensesAgainst(
  * shows against it, by `adjustedDamage`; untyped damage applies as given. Returns the amount
  * taken and the defenses that changed it. Damage at 0 counts one death save failure, or two
  * from a `critical` hit. Damage that leaves the character at 0 ends concentration, by
- * `concentrationLapsed`, and any rage, by `rageEnded`.
+ * `concentrationLapsed`, any rage, by `rageEnded`, and each effect that incapacitation ends.
  */
 export function damagedState(
   definition: Pick<CharacterDefinition, "houseRules" | "addedDefenses">,
-  derived: Sheet & Pick<CharacterDerived, "defenses">,
+  derived: Sheet & Pick<CharacterDerived, "defenses" | "startableFeatures">,
   state: CharacterState,
   amount: number,
   { type, critical = false }: { type?: string; critical?: boolean } = {},
@@ -83,7 +84,10 @@ export function damagedState(
   const lapsed = concentrationLapsed(after.state);
   return {
     ...after,
-    state: lapsed.hitPoints.current === 0 ? rageEnded(lapsed) : lapsed,
+    state:
+      lapsed.hitPoints.current === 0
+        ? effectsEndedBy(rageEnded(lapsed), derived.startableFeatures, "incapacitated")
+        : lapsed,
     ...adjusted,
   };
 }

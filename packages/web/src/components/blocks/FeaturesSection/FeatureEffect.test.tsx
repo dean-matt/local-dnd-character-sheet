@@ -34,7 +34,10 @@ const FEATURES: CharacterFeatures = {
 };
 
 /** The section over a stand-in API that keeps each state write and answers later reads with it. */
-function renderFeatures(state: Partial<CharacterState> = {}) {
+function renderFeatures(
+  state: Partial<CharacterState> = {},
+  bladesongBlockedBy: string | null = null,
+) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
   vi.stubGlobal(
@@ -54,8 +57,13 @@ function renderFeatures(state: Partial<CharacterState> = {}) {
   const derived = {
     ...derivedRecord(),
     startableFeatures: [
-      { name: "Bladesong", source: "TCE" },
-      { name: "Empty Body", source: "PHB" },
+      {
+        name: "Bladesong",
+        source: "TCE",
+        endsOn: ["incapacitated" as const, "shield" as const],
+        blockedBy: bladesongBlockedBy,
+      },
+      { name: "Empty Body", source: "PHB", endsOn: [], blockedBy: null },
     ],
   };
   renderWithClient(<FeaturesSection character={characterRecord("1", "Vex")} derived={derived} />);
@@ -94,6 +102,14 @@ describe("FeatureEffect", () => {
     fireEvent.click(within(row("Empty Body")).getByRole("button", { name: "Start Empty Body" }));
     await waitFor(() => expect(writes).toHaveLength(1));
     expect(writes[0]?.activeEffects).toEqual([{ name: "Empty Body" }]);
+  });
+
+  it("refuses a start in armor that ends the effect", async () => {
+    renderFeatures({}, "A shield is equipped.");
+
+    const start = await screen.findByRole("button", { name: "Start Bladesong" });
+    expect(start).toHaveAttribute("aria-disabled", "true");
+    expect(start).toHaveAttribute("title", "A shield is equipped.");
   });
 
   it("offers no start on a feature with no effect to run", async () => {

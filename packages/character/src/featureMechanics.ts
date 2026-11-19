@@ -19,11 +19,19 @@ const bonusKindSchema = bonusMechanicSchema.refine(
   { error: "only an initiative bonus can be the proficiency bonus" },
 );
 
+/** What ends an effect early: falling incapacitated, or donning armor of a category. */
+export const effectEndSchema = z.enum(["incapacitated", "medium", "heavy", "shield"]);
+export type EffectEnd = z.infer<typeof effectEndSchema>;
+
 /**
  * A feature's effect the player starts and ends from its card, spending what a use of the
- * feature spends. Its mechanics marked `while: "active"` hold only while it runs.
+ * feature spends. Its mechanics marked `while: "active"` hold only while it runs. `endsOn`
+ * names what ends it early; an armor category it names also refuses the start while worn.
  */
-const activeMechanicSchema = z.strictObject({ kind: z.literal("active") });
+const activeMechanicSchema = z.strictObject({
+  kind: z.literal("active"),
+  endsOn: z.array(effectEndSchema).min(1).optional(),
+});
 
 /** Held only while the feature's effect runs, or only during a rage. */
 const whileSchema = z.enum(["active", "raging"]).optional();
@@ -199,11 +207,12 @@ const rollMechanicSchema = z
 
 /**
  * A change to the character's own weapon attacks, unarmed strikes included: `attack` and
- * `damage` added to the rolls, `attack` a number or an ability's modifier of at least +1, a critical hit on `critical` or more, or advantage on the
- * attacks using `ability`, or on all of them. `weapons` narrows a bonus to ranged weapons,
- * heavy melee weapons, or a melee weapon held in one hand with no other weapon equipped, and
- * `proficient` to a weapon the character is proficient with. `option` says when it holds,
- * and the attack offers it rather than applying it.
+ * `damage` added to the rolls, `attack` a number or an ability's modifier of at least +1, a
+ * critical hit on `critical` or more, or advantage on the attacks using `ability`, or on all
+ * of them. `weapons` narrows a bonus to ranged weapons, heavy melee weapons, or a melee weapon
+ * held in one hand with no other weapon equipped, and `proficient` to a weapon the character
+ * is proficient with. `option` says when it holds, and the attack offers it rather than
+ * applying it.
  */
 const attackMechanicSchema = z
   .strictObject({
@@ -353,10 +362,10 @@ const resetSchema = z.enum(["short", "long"]);
 
 /**
  * The uses a feature counts, restored by a `reset` rest, where `short` means either rest:
- * `count`, a number, an ability's modifier or the proficiency bonus, plus `plus`, at least `minimum`. Absent,
- * `minimum` is 1, as a feature printing "a minimum of once" has it; 0 records a feature that
- * prints none. Each of `scales` replaces a number count, the reset or both from a level in
- * the feature's class.
+ * `count`, a number, an ability's modifier or the proficiency bonus, plus `plus`, at least
+ * `minimum`. Absent, `minimum` is 1, as a feature printing "a minimum of once" has it; 0
+ * records a feature that prints none. Each of `scales` replaces a number count, the reset or
+ * both from a level in the feature's class.
  */
 const usesMechanicSchema = z
   .strictObject({

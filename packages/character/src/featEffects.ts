@@ -62,7 +62,7 @@ export function featHitPointTerms(definition: HoldsFeatures): Term<TermReference
 type SpeedMode = "walk" | "climb" | "swim" | "fly";
 type SpeedMechanic = Extract<Mechanic, { kind: "speed" }>;
 
-/** A climbing or swimming speed a feature keeps equal to the walking speed. */
+/** A climbing, swimming or flying speed a feature keeps equal to the walking speed. */
 type WalkMatch = { mode: "climb" | "swim" | "fly"; name: string; ref: ContentRef };
 
 /**

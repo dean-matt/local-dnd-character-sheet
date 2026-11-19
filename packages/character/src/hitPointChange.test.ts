@@ -25,6 +25,10 @@ const defended = {
     manual: null,
     terms: [],
   },
+  startableFeatures: [
+    { name: "Bladesong", source: "TCE", endsOn: ["incapacitated" as const], blockedBy: null },
+    { name: "Empty Body", source: "PHB", endsOn: [], blockedBy: null },
+  ],
 };
 
 const unhurt = {
@@ -53,11 +57,14 @@ describe("damagedState", () => {
     expect(damagedState(unhurt, defended, held, 4).state.concentration).toEqual(bless);
   });
 
-  it("ends a rage in the same state when the damage leaves 0 hit points", () => {
-    const raging = { ...state(5), activeEffects: [{ name: "Rage" }, { name: "Haste" }] };
+  it("ends a rage and each effect incapacitation ends when the damage leaves 0 hit points", () => {
+    const raging = {
+      ...state(5),
+      activeEffects: [{ name: "Rage" }, { name: "Bladesong" }, { name: "Empty Body" }],
+    };
     expect(damagedState(unhurt, defended, raging, 5).state).toMatchObject({
       hitPoints: { current: 0 },
-      activeEffects: [{ name: "Haste" }],
+      activeEffects: [{ name: "Empty Body" }],
     });
     expect(damagedState(unhurt, defended, raging, 4).state.activeEffects).toEqual(
       raging.activeEffects,
