@@ -54,6 +54,15 @@ describe("featureRestores", () => {
     ]);
   });
 
+  it("lets Hand of Healing, Land's Aid and 2024 Preserve Life land on the character", () => {
+    const mercy = levelsOf("Monk", "PHB", 3, { name: "Way of Mercy", source: "TCE" });
+    expect(restoresOf(mercy, "Hand of Healing")).toMatchObject([{ kind: "heal", others: false }]);
+    const life = levelsOf("Cleric", "XPHB", 3, { name: "Life Domain", source: "XPHB" });
+    expect(restoresOf(life, "Preserve Life")).toMatchObject([{ kind: "heal", others: false }]);
+    const land = levelsOf("Druid", "XPHB", 3, { name: "Circle of the Land", source: "XPHB" });
+    expect(restoresOf(land, "Land's Aid")).toMatchObject([{ kind: "heal", others: false }]);
+  });
+
   it("scales Fighting Spirit's temporary hit points and Divine Spark's dice by class level", () => {
     const samurai = (level: number) =>
       levelsOf("Fighter", "PHB", level, { name: "Samurai", source: "XGE" });
