@@ -334,4 +334,124 @@ describe("FeatureUses", () => {
       ).toHaveAttribute("aria-disabled", "true");
     });
   });
+  describe("regain", () => {
+    const ELDRITCH = "feature|Warlock|PHB|||20|PHB|Eldritch Master";
+    const PSI = "feature|Fighter|PHB|Psi Warrior|TCE|3|TCE|Psionic Power";
+    const PSI_REGAIN = `${PSI}|recovery`;
+    const feature = (name: string, level: number, uses: object[]): CharacterFeatures => ({
+      groups: [
+        {
+          origin: name === "Psionic Power" ? "subclass" : "class",
+          name: "Owner",
+          features: [
+            {
+              resolved: true,
+              name,
+              source: name === "Psionic Power" ? "TCE" : "PHB",
+              level,
+              entries: [],
+              uses: uses[0] as never,
+              ...(uses[1] && { otherUses: [uses[1] as never] }),
+            },
+          ],
+        },
+      ],
+    });
+    const limited = (
+      name: string,
+      source: string,
+      origin: "class" | "subclass",
+      level: number,
+      uses: { key: string; count: number; reset: "short" | "long"; part?: "recovery" },
+    ) => ({ feature: { name, source }, origin, level, ...uses });
+
+    it("regains every expended pact slot and spends the use in one write", async () => {
+      const derived: CharacterDerived = {
+        ...derivedRecord(),
+        pactSlots: { level: 5, total: { computed: 4, manual: null, terms: [] } },
+        regains: [
+          {
+            feature: { name: "Eldritch Master", source: "PHB" },
+            class: { name: "Warlock", source: "PHB" },
+            target: "pactSlots",
+          },
+        ],
+      };
+      const uses = { key: ELDRITCH, count: 1, reset: "long" as const };
+      const { writes } = renderFeatures(
+        { pactSlots: { level: 5, total: 4, expended: 3 } },
+        derived,
+        feature("Eldritch Master", 20, [uses]),
+      );
+      fireEvent.click(await screen.findByRole("button", { name: "Regain with Eldritch Master" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.pactSlots?.expended).toBe(0);
+      expect(writes[0]?.featureUses).toEqual([{ key: ELDRITCH, expended: 1 }]);
+    });
+
+    it("offers nothing to regain while nothing is expended", async () => {
+      const derived: CharacterDerived = {
+        ...derivedRecord(),
+        pactSlots: { level: 5, total: { computed: 4, manual: null, terms: [] } },
+        regains: [
+          {
+            feature: { name: "Eldritch Master", source: "PHB" },
+            class: { name: "Warlock", source: "PHB" },
+            target: "pactSlots",
+          },
+        ],
+      };
+      const { writes } = renderFeatures(
+        { pactSlots: { level: 5, total: 4, expended: 0 } },
+        derived,
+        feature("Eldritch Master", 20, [{ key: ELDRITCH, count: 1, reset: "long" }]),
+      );
+      const button = await screen.findByRole("button", { name: "Regain with Eldritch Master" });
+      expect(button).toHaveAttribute("aria-disabled", "true");
+      fireEvent.click(button);
+      expect(writes).toHaveLength(0);
+    });
+
+    it("regains a Psionic Energy die from the recovery count alone", async () => {
+      const main = { key: PSI, count: 6, reset: "long" as const };
+      const part = {
+        key: PSI_REGAIN,
+        count: 1,
+        reset: "short" as const,
+        part: "recovery" as const,
+      };
+      const derived: CharacterDerived = {
+        ...derivedRecord(),
+        limitedUses: [
+          limited("Psionic Power", "TCE", "subclass", 3, main),
+          limited("Psionic Power", "TCE", "subclass", 3, part),
+        ],
+        regains: [
+          {
+            feature: { name: "Psionic Power", source: "TCE" },
+            class: { name: "Fighter", source: "PHB" },
+            target: "uses",
+            count: 1,
+          },
+        ],
+      };
+      const { writes } = renderFeatures(
+        { featureUses: [{ key: PSI, expended: 4 }] },
+        derived,
+        feature("Psionic Power", 3, [main, part]),
+      );
+      const buttons = await screen.findAllByRole("button", { name: "Regain with Psionic Power" });
+      expect(buttons).toHaveLength(1);
+      fireEvent.click(buttons[0] as HTMLElement);
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.featureUses).toEqual(
+        expect.arrayContaining([
+          { key: PSI, expended: 3 },
+          { key: PSI_REGAIN, expended: 1 },
+        ]),
+      );
+    });
+  });
 });

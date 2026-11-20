@@ -25,7 +25,7 @@ type Kind = Mechanic["kind"] | "poolCost";
  * `uses` counts only a feature whose count the build read none of and no class pool holds.
  * `active` looks for a duration on the character's own benefit, so an effect the feature lays
  * on another creature is not one.
- * `convert` and `slotRecovery` count only a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
+ * `convert`, `slotRecovery` and `regain` count only a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  * `poolCost` counts a feature that names a cost from ki, sorcery points, Channel Divinity,
  * superiority dice or psionic energy dice and neither the cost table nor its notes list, in
  * a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
@@ -56,6 +56,8 @@ const KIND_PATTERNS: Record<Kind, RegExp> = {
     /\b(?:transform|convert)\w*[^."]{0,60}\bspell slots?\b|\bspell slots?\b[^."]{0,60}\bto (?:gain|regain) [^."]{0,40}\b(?:points?|uses?)\b|\bregain one expended spell slot\b/i,
   slotRecovery:
     /\bchoose expended spell slots to recover\b|\brecover(?:s)? expended spell slots\b/i,
+  regain:
+    /\bregains? (?:\d+|all|one) (?:of )?(?:your )?expended (?:sorcery points?|(?:spell slots? from your )?Pact Magic|Psionic Energy di(?:e|ce))\b/i,
   turn: /\battack (?:\w+ ){0,3}(?:twice|three times|four times)\b|\bone additional action\b|\{@action (?!Attack)[^}]+\}[^."]{0,80}\bas a (?:\{@variantrule )?(?:bonus action|reaction)\b|\bas a (?:\{@variantrule )?bonus action\b[^."]{0,20}\{@action|\bbonus action on each of your turns in combat\b|\bgranted by your Cunning Action\b/i,
   spells:
     /"additionalSpells":|\byou (?:can|may) cast (?:the )?\{@spell [^}]+\}[^."]{0,40}\b(?:at will|once)\b|\bwithout expending a spell slot\b|\balways (?:have|has) (?!prepared)[^."]{1,80}\bprepared\b|\byou (?:learn|know) (?:the )?\{@spell [^}]+\} (?:cantrip|spell)\b|\bspells? of your choice from any\b/i,
@@ -129,7 +131,8 @@ export function mechanicGaps(db: Database.Database): Gaps {
   const suggests = (row: FeatureRow, kind: Kind) =>
     KIND_PATTERNS[kind].test(row.json) &&
     (kind !== "uses" || (row.uses === null && featurePoolKey(row) === undefined)) &&
-    ((kind !== "convert" && kind !== "slotRecovery") || row.edition === "classic") &&
+    ((kind !== "convert" && kind !== "slotRecovery" && kind !== "regain") ||
+      row.edition === "classic") &&
     (kind !== "poolCost" || (row.edition === "classic" && !featureCostRecorded(row)));
   const matches = (row: FeatureRow, bucket: Bucket) =>
     bucket === "unclassified" ? KINDS.every((kind) => !suggests(row, kind)) : suggests(row, bucket);

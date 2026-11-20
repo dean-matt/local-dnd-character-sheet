@@ -436,7 +436,7 @@ const resetSchema = z.enum(["short", "long", "manual"]);
 export const USES_RESTORED_BY = ["initiative", "soulTrinket"] as const;
 
 /** The count a feature keeps beside its main one, when it limits two things apart. */
-export const USES_PARTS = ["conjuring"] as const;
+export const USES_PARTS = ["conjuring", "recovery"] as const;
 
 /**
  * The uses a feature counts, restored by a `reset` rest, where `short` means either rest and
@@ -537,6 +537,24 @@ const slotRecoveryMechanicSchema = z.strictObject({
   maxLevel: z.int().min(1).max(9),
 });
 
+/**
+ * What a use of the feature regains: `count` expended uses of the class pool keyed `pool`, all
+ * the expended pact slots, or `count` expended uses of the feature's own main count.
+ */
+const regainMechanicSchema = z
+  .strictObject({
+    kind: z.literal("regain"),
+    target: z.enum(["pool", "pactSlots", "uses"]),
+    pool: poolKeySchema.optional(),
+    count: z.int().min(1).optional(),
+  })
+  .refine(({ target, pool }) => (target === "pool") === (pool !== undefined), {
+    error: "only a pool regain names its pool, and it must",
+  })
+  .refine(({ target, count }) => (target === "pactSlots") === (count === undefined), {
+    error: "pact slots regain all of them, any other target a count",
+  });
+
 /** The standard actions a feature lets the character take as a bonus action, as each edition names them. */
 const BONUS_ACTION_ACTIONS = [
   "Dash",
@@ -585,6 +603,7 @@ const mechanicSchema = z.union([
   poolMechanicSchema,
   convertMechanicSchema,
   slotRecoveryMechanicSchema,
+  regainMechanicSchema,
   healMechanicSchema,
   tempHpMechanicSchema,
   extraDamageMechanicSchema,

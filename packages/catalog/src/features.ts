@@ -81,7 +81,7 @@ const limitedUsesSchema = z.strictObject({
   count: z.int().min(1),
   reset: z.enum(["short", "long", "manual"]),
   restoredBy: z.enum(["initiative", "soulTrinket"]).optional(),
-  part: z.enum(["conjuring"]).optional(),
+  part: z.enum(["conjuring", "recovery"]).optional(),
 });
 
 const sheetFeatureSchema = z.discriminatedUnion("resolved", [

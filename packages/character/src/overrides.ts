@@ -15,7 +15,7 @@ type Lists = {
  * added to the block fails to compile until it names one here.
  *
  * A container, an unproficient item, an armor that stops casting, a feature's restore, its uses,
- * its conversion and its slot recovery hold no overridable field, so a name or an index stands in for a key
+ * its conversion, its slot recovery and its regain hold no overridable field, so a name or an index stands in for a key
  * nothing reads.
  *
  * An inventory entry carries an id only once it holds something, so a weapon is named by
@@ -40,6 +40,7 @@ const ELEMENT_KEY: {
   startableFeatures: refKey,
   featureConversions: (conversion) => refKey(conversion.feature),
   slotRecoveries: (recovery) => refKey(recovery.feature),
+  regains: (regain) => refKey(regain.feature),
   attacks: (attack, { inventory }) => {
     const earlier = inventory.slice(0, attack.entry + 1).map(itemKey);
     const item = earlier.pop() ?? "";
