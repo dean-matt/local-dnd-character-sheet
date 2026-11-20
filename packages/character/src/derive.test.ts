@@ -3645,7 +3645,7 @@ describe("deriveCharacter", () => {
       expect(levelled("Wizard", necromancy, 9).resistances).toEqual([]);
     });
 
-    it("resists all but psychic damage for the Bear totem, only while raging", () => {
+    it("resists all but psychic damage for the Bear totem, and Dashes as a bonus action for the Eagle, only while raging", () => {
       const totem = { name: "Path of the Totem Warrior", source: "PHB" };
       const spirit = {
         name: "Totem Spirit",
@@ -3674,6 +3674,24 @@ describe("deriveCharacter", () => {
       expect(levelled("Barbarian", totem, 3, bear).resistances).toEqual([]);
       expect(names(levelled("Barbarian", totem, 3, eagle, rageState))).toHaveLength(3);
       expect(names(levelled("Barbarian", totem, 2, bear, rageState))).toHaveLength(3);
+      const dash = (state?: Parameters<typeof deriveCharacter>[2]) =>
+        deriveCharacter(
+          {
+            ...equipped,
+            levels: Array.from({ length: 3 }, () => ({
+              class: { name: "Barbarian", source: "PHB" },
+              subclass: totem,
+            })),
+            ...eagle,
+          },
+          {
+            ...catalog,
+            hitDice: new Map<string, 6 | 8 | 10 | 12>([["catalog|Barbarian|PHB", 12]]),
+          },
+          state,
+        ).turn.bonusActions;
+      expect(dash(rageState)).toEqual([{ action: "Dash", features: ["Eagle"] }]);
+      expect(dash()).toEqual([]);
     });
   });
 

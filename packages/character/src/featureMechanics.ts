@@ -568,24 +568,36 @@ export type BonusActionAction = (typeof BONUS_ACTION_ACTIONS)[number];
 
 /**
  * What a feature changes about the character's turn, one of: the `attacks` the Attack action
- * allows, with the pact weapon alone where `pact` says so; an action a use of the feature adds
- * to the current turn; or the standard actions it lets the character take as a bonus action.
+ * allows, with the pact weapon alone where `pact` says so; `more` attacks added to whatever
+ * count the character holds; an action a use of the feature adds to the current turn; or the
+ * standard actions it lets the character take as a bonus action. An attack count carrying an
+ * `option` holds only under that condition, so it is named and never added to the count. `while`
+ * holds the mechanic only during a rage or while the feature's effect runs.
  */
 const turnMechanicSchema = z
   .strictObject({
     kind: z.literal("turn"),
     attacks: z.int().min(2).max(4).optional(),
+    more: z.literal(1).optional(),
     pact: z.literal(true).optional(),
+    option: z.string().min(1).optional(),
     action: z.literal(true).optional(),
     bonusAction: z.array(z.enum(BONUS_ACTION_ACTIONS)).min(1).optional(),
+    while: whileSchema,
   })
   .refine(
-    ({ attacks, action, bonusAction }) =>
-      [attacks !== undefined, action, bonusAction].filter(Boolean).length === 1,
-    { error: "a turn mechanic sets attacks, adds an action or names bonus actions, one of them" },
+    ({ attacks, more, action, bonusAction }) =>
+      [attacks !== undefined, more, action, bonusAction].filter(Boolean).length === 1,
+    {
+      error:
+        "a turn mechanic sets attacks, adds attacks, adds an action or names bonus actions, one of them",
+    },
   )
   .refine(({ pact, attacks }) => !pact || attacks !== undefined, {
     error: "only an attack count is the pact weapon's",
+  })
+  .refine(({ option, attacks, more }) => !option || attacks !== undefined || more, {
+    error: "only an attack count carries a condition",
   });
 
 /**

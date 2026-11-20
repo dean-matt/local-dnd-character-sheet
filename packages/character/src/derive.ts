@@ -1361,7 +1361,7 @@ export function deriveCharacter(
     featureConversions: featureConversions(definition, proficiencyBonus.total),
     slotRecoveries: slotRecoveries(definition),
     regains: regains(definition),
-    turn: featureTurn(definition),
+    turn: featureTurn(definition, rage !== null),
     limitedUses: featureLimitedUses(definition, (term) =>
       term === "proficiency" ? proficiencyBonus.total : abilityModifier(scores[term].total),
     ),
