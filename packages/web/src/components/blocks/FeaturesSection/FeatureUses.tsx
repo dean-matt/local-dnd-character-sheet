@@ -76,6 +76,11 @@ export function FeatureUses({
     (each) => each.feature.name === name && each.feature.source === source,
   );
 
+  function setDialog(open: boolean) {
+    replace.reset();
+    setRecovering(open);
+  }
+
   async function recover(picks: SlotRecoveryPick[]) {
     if (!derived || !recovery) return;
     const after = withFeatureUse(
@@ -85,7 +90,7 @@ export function FeatureUses({
     );
     const levels = picks.map(({ level, count }) => `${count} level ${level}`).join(", ");
     const left = `${name}: ${uses.count - expended - 1} of ${uses.count} left.`;
-    if (await replace.write(after, `${left} Recovered ${levels} slots.`)) setRecovering(false);
+    if (await replace.write(after, `${left} Recovered ${levels} slots.`)) setDialog(false);
   }
 
   return (
@@ -126,7 +131,7 @@ export function FeatureUses({
           aria-label={`Recover slots with ${name}`}
           title={expended >= uses.count ? "No use left" : "Recover slots"}
           aria-disabled={replace.writing || expended >= uses.count}
-          onClick={() => !replace.writing && expended < uses.count && setRecovering(true)}
+          onClick={() => !replace.writing && expended < uses.count && setDialog(true)}
           className="h-6 rounded-control border border-border bg-surface px-2 font-semibold text-label hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
         >
           Recover
@@ -140,7 +145,7 @@ export function FeatureUses({
           busy={replace.writing}
           error={replace.error?.message}
           onRecover={recover}
-          onClose={() => setRecovering(false)}
+          onClose={() => setDialog(false)}
         />
       )}
       {replace.error && !recovering && (
