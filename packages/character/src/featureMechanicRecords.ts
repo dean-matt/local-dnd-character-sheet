@@ -84,6 +84,13 @@ const CHARMED_OR_FRIGHTENED = "against being charmed or frightened";
 const critical = (value: number): Mechanic[] => [{ kind: "attack", critical: value }];
 const POWER_ATTACK = "chosen before the attack; the damage lands on a hit";
 const ON_A_HIT = "on a weapon hit";
+const PRECISION_ATTACK = "with Precision Attack, expending a superiority die on a miss";
+const GUIDED_STRIKE: Mechanic = {
+  kind: "attack",
+  attack: 10,
+  afterRoll: true,
+  option: "after the roll, using Channel Divinity",
+};
 const SUPERIORITY_DIE = "expending a superiority die on a maneuver that adds it to the damage";
 const rogue24: [string, string] = ["Rogue", "XPHB"];
 const cleric24: [string, string] = ["Cleric", "XPHB"];
@@ -125,7 +132,8 @@ const INFUSED = "with the weapon you infused";
 /**
  * What PHB, XGE and TCE features outside the SRD change about the character's own attacks. A
  * bonus the player picks the size of, as ki spent or an artificer's level, is one option per
- * size. A bonus added after the roll lands is narrative, since a trade is taken before it.
+ * size. A die or a bonus added after the roll lands is offered once the attack has rolled,
+ * since a trade is taken before it.
  */
 const ATTACK_CHANGES: FeatureMechanics[] = [
   ...(
@@ -134,10 +142,9 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       [cleric24, 3],
     ] as const
   ).flatMap(([owner, level]) => [
-    narrative(
-      subclassFeature(owner, ["War", "PHB"], ["Channel Divinity: Guided Strike", "PHB"], level, [])
-        .ref,
-    ),
+    subclassFeature(owner, ["War", "PHB"], ["Channel Divinity: Guided Strike", "PHB"], level, [
+      GUIDED_STRIKE,
+    ]),
     subclassFeature(
       owner,
       ["Trickery", "PHB"],
@@ -146,7 +153,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       [advantageOn("against a creature within 5 feet of both you and your illusion")],
     ),
   ]),
-  narrative(subclassFeature(paladin, ["Conquest", "XGE"], ["Guided Strike", "XGE"], 3, []).ref),
+  subclassFeature(paladin, ["Conquest", "XGE"], ["Guided Strike", "XGE"], 3, [GUIDED_STRIKE]),
   // Its armor's +1 is no `armorClass` mechanic, which always holds.
   subclassFeature(cleric, ["Forge", "XGE"], ["Blessing of the Forge", "XGE"], 1, [
     {
@@ -195,7 +202,36 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       option: `with the kensei weapon you spent ${spent} on, unless magic already gives it a bonus`,
     })),
   ),
-  narrative(classFeature(monk, ["Focused Aim", "TCE"], 5, []).ref),
+  {
+    ...classFeature(
+      monk,
+      ["Focused Aim", "TCE"],
+      5,
+      KI_POINTS.map((spent, index) => ({
+        kind: "attack",
+        attack: (index + 1) * 2,
+        afterRoll: true,
+        option: `after a miss, spending ${spent}`,
+      })),
+    ),
+    houseRule: "optionalClassFeatures",
+  },
+  subclassFeature(sorcerer, ["Divine Soul", "XGE"], ["Favored by the Gods", "XGE"], 1, [
+    { kind: "attack", dice: "2d4", afterRoll: true, option: "after a miss" },
+  ]),
+  subclassFeature(rogue, ["Soulknife", "TCE"], ["Homing Strikes", "TCE"], 9, [
+    {
+      kind: "attack",
+      dice: "1d6",
+      scales: [
+        { level: 5, dice: "1d8" },
+        { level: 11, dice: "1d10" },
+        { level: 17, dice: "1d12" },
+      ],
+      afterRoll: true,
+      option: "with your Psychic Blades after a miss, expending the Psionic Energy die if it hits",
+    },
+  ]),
   subclassFeature(paladin, ["Conquest", "XGE"], ["Invincible Conqueror", "XGE"], 20, [
     {
       kind: "attack",
@@ -302,7 +338,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
     ref: { name: "Repeating Shot", source: "TCE" },
     mechanics: [{ kind: "attack", weapons: "ranged", attack: 1, damage: 1, option: INFUSED }],
   },
-  // A superiority die added to the roll is a die, and an attack term holds a number.
+  // Its die is the one Combat Superiority and the feats that grant maneuvers record.
   narrative({ name: "Precision Attack", source: "PHB" }),
 ];
 
@@ -589,14 +625,12 @@ const LIMITED_USES: FeatureMechanics[] = [
       [artificer, "Defensive Field", ["Armorer", "TCE"], "TCE", 3, "proficiency"],
       [artificer, "Guardian", ["Armorer", "TCE"], "TCE", 15, "proficiency"],
       [barbarian, "Magic Awareness", ["Wild Magic", "TCE"], "TCE", 3, "proficiency"],
-      [barbarian, "Bolstering Magic", ["Wild Magic", "TCE"], "TCE", 6, "proficiency"],
       [barbarian, "Infectious Fury", ["Beast", "TCE"], "TCE", 10, "proficiency"],
       [barbarian, "Call the Hunt", ["Beast", "TCE"], "TCE", 14, "proficiency"],
       [bard, "Infectious Inspiration", ["Eloquence", "TCE"], "TCE", 14, "cha"],
       [cleric, "Eyes of the Grave", ["Grave", "XGE"], "XGE", 1, "wis"],
       [cleric, "Sentinel at Death's Door", ["Grave", "XGE"], "XGE", 6, "wis"],
       [cleric, "Embodiment of the Law", ["Order", "TCE"], "TCE", 6, "wis"],
-      [cleric, "Emboldening Bond", ["Peace", "TCE"], "TCE", 1, "proficiency"],
       [cleric, "Wrath of the Storm", ["Tempest", "PHB"], "PHB", 1, "wis"],
       [cleric, "Steps of Night", ["Twilight", "TCE"], "TCE", 6, "proficiency"],
       [cleric, "War Priest", ["War", "PHB"], "PHB", 1, "wis"],
@@ -630,6 +664,22 @@ const LIMITED_USES: FeatureMechanics[] = [
       { kind: "uses", count, reset: "long" },
     ]),
   ),
+  subclassFeature(barbarian, ["Wild Magic", "TCE"], ["Bolstering Magic", "TCE"], 6, [
+    { kind: "uses", count: "proficiency", reset: "long" },
+    {
+      kind: "attack",
+      dice: "1d3",
+      option: "for the 10 minutes Bolstering Magic lasts on you",
+    },
+  ]),
+  subclassFeature(cleric, ["Peace", "TCE"], ["Emboldening Bond", "TCE"], 1, [
+    { kind: "uses", count: "proficiency", reset: "long" },
+    {
+      kind: "attack",
+      dice: "1d4",
+      option: "once a turn while a bonded creature is within 30 feet",
+    },
+  ]),
   subclassFeature(wizard, ["Divination", "PHB"], ["The Third Eye", "PHB"], 10, [
     { kind: "uses", count: 1, reset: "short" },
   ]),
@@ -1846,6 +1896,16 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       option: SUPERIORITY_DIE,
     },
     {
+      kind: "attack",
+      dice: "1d8",
+      scales: [
+        { level: 10, dice: "1d10" },
+        { level: 18, dice: "1d12" },
+      ],
+      afterRoll: true,
+      option: PRECISION_ATTACK,
+    },
+    {
       kind: "pool",
       key: "superiority_dice",
       count: 4,
@@ -1864,7 +1924,10 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ].map(
     (ref): FeatureMechanics => ({
       ref,
-      mechanics: [{ kind: "extraDamage", dice: "1d6", unarmed: true, option: SUPERIORITY_DIE }],
+      mechanics: [
+        { kind: "extraDamage", dice: "1d6", unarmed: true, option: SUPERIORITY_DIE },
+        { kind: "attack", dice: "1d6", afterRoll: true, option: PRECISION_ATTACK },
+      ],
     }),
   ),
   subclassFeature(monk, ["Astral Self", "TCE"], ["Body of the Astral Self", "TCE"], 11, [

@@ -98,7 +98,15 @@ describe("featureStrike", () => {
 
   it("offers Sharpshooter and Great Weapon Master's trade on a proficient weapon of their kind, never as a term", () => {
     const trade = (source: string) => [
-      { source, attack: -5, damage: 10, critical: null, condition: expect.any(String) },
+      {
+        source,
+        attack: -5,
+        damage: 10,
+        critical: null,
+        dice: null,
+        afterRoll: false,
+        condition: expect.any(String),
+      },
     ];
     const sharpshooter = featureStrike(withFeat("Sharpshooter"), LONGBOW, () => 0);
     expect(sharpshooter.options).toEqual(trade("Sharpshooter"));
@@ -116,9 +124,13 @@ describe("featureStrike", () => {
 
 describe("featureStrike, outside the SRD", () => {
   const offered = (definition: CharacterDefinition, strike: Strike) =>
-    featureStrike(definition, strike, () => 0).options.map(
-      ({ source, attack, damage, critical }) => ({ source, attack, damage, critical }),
-    );
+    featureStrike(definition, strike, () => 0)
+      .options.filter(({ dice, afterRoll }) => !dice && !afterRoll)
+      .map(({ source, attack, damage, critical }) => ({ source, attack, damage, critical }));
+  const adds = (definition: CharacterDefinition, strike: Strike) =>
+    featureStrike(definition, strike, () => 0)
+      .options.filter(({ dice, afterRoll }) => dice || afterRoll)
+      .map(({ source, attack, dice, afterRoll }) => ({ source, attack, dice, afterRoll }));
 
   it("offers Hexblade's Curse's critical range as a trade, never lowering every attack's", () => {
     const hexblade = levelsOf("Warlock", "PHB", 1, "The Hexblade", "XGE");
@@ -160,11 +172,47 @@ describe("featureStrike, outside the SRD", () => {
     ]);
   });
 
-  it("offers no bonus added after the roll lands, as Focused Aim and Guided Strike add", () => {
+  it("offers a bonus added after the roll lands, as Focused Aim and Guided Strike add, never as a trade", () => {
     const monk = { ...levelsOf("Monk", "PHB", 5), houseRules: { optionalClassFeatures: true } };
     expect(offered(monk, UNARMED)).toEqual([]);
+    expect(adds(monk, UNARMED)).toEqual(
+      [2, 4, 6].map((attack) => ({ source: "Focused Aim", attack, dice: null, afterRoll: true })),
+    );
+    expect(adds(levelsOf("Monk", "PHB", 5), UNARMED)).toEqual([]);
     const conqueror = levelsOf("Paladin", "PHB", 3, "Oath of Conquest", "XGE");
     expect(offered(conqueror, RAPIER)).toEqual([]);
+    expect(adds(conqueror, RAPIER)).toEqual([
+      { source: "Guided Strike", attack: 10, dice: null, afterRoll: true },
+    ]);
+    expect(adds(levelsOf("Cleric", "PHB", 2, "War Domain", "PHB"), RAPIER)).toEqual([
+      { source: "Channel Divinity: Guided Strike", attack: 10, dice: null, afterRoll: true },
+    ]);
+  });
+
+  it("offers a die before the roll for Bolstering Magic and Emboldening Bond", () => {
+    expect(adds(levelsOf("Barbarian", "PHB", 6, "Path of Wild Magic", "TCE"), GREATSWORD)).toEqual([
+      { source: "Bolstering Magic", attack: 0, dice: "1d3", afterRoll: false },
+    ]);
+    expect(adds(levelsOf("Cleric", "PHB", 1, "Peace Domain", "TCE"), LONGBOW)).toEqual([
+      { source: "Emboldening Bond", attack: 0, dice: "1d4", afterRoll: false },
+    ]);
+  });
+
+  it("offers a die after the roll for Favored by the Gods, Homing Strikes and Precision Attack, scaled by the class's levels", () => {
+    const after = (dice: string, source: string) => ({ source, attack: 0, dice, afterRoll: true });
+    expect(adds(levelsOf("Sorcerer", "PHB", 1, "Divine Soul", "XGE"), RAPIER)).toEqual([
+      after("2d4", "Favored by the Gods"),
+    ]);
+    expect(adds(levelsOf("Rogue", "PHB", 9, "Soulknife", "TCE"), UNARMED)).toEqual([
+      after("1d8", "Homing Strikes"),
+    ]);
+    expect(adds(levelsOf("Rogue", "PHB", 11, "Soulknife", "TCE"), UNARMED)).toEqual([
+      after("1d10", "Homing Strikes"),
+    ]);
+    expect(adds(levelsOf("Fighter", "PHB", 10, "Battle Master", "PHB"), RAPIER)).toEqual([
+      after("1d10", "Combat Superiority"),
+    ]);
+    expect(adds(withFeat("Martial Adept"), RAPIER)).toEqual([after("1d6", "Martial Adept")]);
   });
 
   it("offers Invincible Conqueror's critical range on melee weapons and the unarmed strike", () => {

@@ -205,6 +205,12 @@ const rollMechanicSchema = z
     error: "a bonus falls on saves or on named skills",
   });
 
+const diceSchema = z.string().regex(/^\d+d\d+$/);
+
+const scalesSchema = z
+  .array(z.strictObject({ level: z.int().min(2).max(20), dice: diceSchema }))
+  .min(1);
+
 /**
  * A change to the character's own weapon attacks, unarmed strikes included: `attack` and
  * `damage` added to the rolls, `attack` a number or an ability's modifier of at least +1, a
@@ -213,7 +219,9 @@ const rollMechanicSchema = z
  * thrown or heavy melee weapons; or to a melee weapon held in one hand with no other weapon
  * equipped. Every `weapons` value leaves out the unarmed strike, and `unarmed` adds it back.
  * `proficient` narrows it to a weapon the character is proficient with. `option` says when it
- * holds, and the attack offers it rather than applying it.
+ * holds, and the attack offers it rather than applying it. `dice` adds a die to the attack
+ * roll instead, `scales` replacing it from a level in the feature's class, and `afterRoll`
+ * has the player add a die or an `attack` number once the roll shows a miss; both are offered.
  */
 const attackMechanicSchema = z
   .strictObject({
@@ -228,14 +236,28 @@ const attackMechanicSchema = z
     critical: z.int().min(2).max(19).optional(),
     advantage: z.literal(true).optional(),
     ability: abilitySchema.optional(),
+    dice: diceSchema.optional(),
+    scales: scalesSchema.optional(),
+    afterRoll: z.literal(true).optional(),
     option: z.string().min(1).optional(),
     while: whileActive,
   })
   .refine(
-    ({ attack, damage, critical, advantage }) =>
-      [attack !== undefined || damage !== undefined, critical, advantage].filter(Boolean).length ===
-      1,
-    { error: "an attack mechanic gives a bonus, a critical range or advantage, one of them" },
+    ({ attack, damage, critical, advantage, dice }) =>
+      [attack !== undefined || damage !== undefined, critical, advantage, dice].filter(Boolean)
+        .length === 1,
+    {
+      error: "an attack mechanic gives a bonus, a critical range, advantage or a die, one of them",
+    },
+  )
+  .refine(({ dice, scales }) => dice !== undefined || !scales, {
+    error: "only a die scales",
+  })
+  .refine(
+    ({ dice, afterRoll, attack, damage, option }) =>
+      (dice === undefined && !afterRoll) ||
+      (option !== undefined && (dice !== undefined || (typeof attack === "number" && !damage))),
+    { error: "a die or a bonus after the roll is offered, and the bonus is a number" },
   )
   .refine(({ advantage, ability }) => !ability || advantage, {
     error: "only advantage names the ability its attacks use",
@@ -246,8 +268,6 @@ const attackMechanicSchema = z
   .refine(({ unarmed, weapons }) => !unarmed || weapons, {
     error: "the unarmed strike is added back to a narrowed set of weapons",
   });
-
-const diceSchema = z.string().regex(/^\d+d\d+$/);
 
 const flatSchema = z.union([abilitySchema, z.enum(["proficiency", "halfLevel"])]);
 
@@ -273,10 +293,7 @@ const extraDamageMechanicSchema = z
       flatSchema,
     ]),
     plus: z.union([abilitySchema, z.literal("halfLevel")]).optional(),
-    scales: z
-      .array(z.strictObject({ level: z.int().min(2).max(20), dice: diceSchema }))
-      .min(1)
-      .optional(),
+    scales: scalesSchema.optional(),
     type: z.string().min(1).optional(),
     weapons: z.enum(["melee", "ranged", "finesseOrRanged", "unarmed"]).optional(),
     unarmed: z.literal(true).optional(),

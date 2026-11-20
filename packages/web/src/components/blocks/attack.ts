@@ -1,7 +1,14 @@
-import { type CharacterDerived, derivedValue } from "@dnd/character";
+import { type CharacterDerived, derivedValue, type RollRecord } from "@dnd/character";
 import { signed } from "./signed.ts";
 
 export type Attack = CharacterDerived["attacks"][number];
+
+/** An attack roll that landed, and the features that have added to it since. */
+export type Landed = {
+  label: string;
+  roll: Pick<RollRecord, "notation" | "total" | "dice" | "modifier" | "critical" | "mode">;
+  sources: string[];
+};
 
 export type Grip = NonNullable<Attack["grip"]>["held"];
 

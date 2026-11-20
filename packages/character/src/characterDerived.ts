@@ -127,13 +127,16 @@ const extraDamageSchema = z
 /**
  * A trade a feature offers on one attack, such as Sharpshooter's: `attack` and `damage` added,
  * and a critical hit on `critical` or more where it is set, where the player takes it, as
- * `condition` says.
+ * `condition` says. A `dice` die joins the attack roll, and `afterRoll` has the player add
+ * the die or the `attack` number once the roll is seen.
  */
 const attackOptionSchema = z.strictObject({
   source: z.string().min(1),
   attack: z.int(),
   damage: z.int(),
   critical: z.int().min(2).max(19).nullable(),
+  dice: z.string().min(1).nullable(),
+  afterRoll: z.boolean(),
   condition: z.string().min(1),
 });
 

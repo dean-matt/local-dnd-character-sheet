@@ -83,9 +83,16 @@ const term = ({ ref }: Held, value: number): Term<TermReference> => ({
   reference: ref,
 });
 
+/** `dice` as a feature scales it, at `levels` in the feature's class. */
+const scaledDice = (
+  { dice, scales = [] }: { dice: string; scales?: { level: number; dice: string }[] },
+  levels: number,
+) => scales.filter((scale) => levels >= scale.level).at(-1)?.dice ?? dice;
+
 /**
  * Adds what one bonus or critical mechanic of `held` gives to `into`; an ability's modifier
- * adds at least 1. An option carries its critical range, null where it lowers none.
+ * adds at least 1. An option carries its critical range, null where it lowers none, and the
+ * die it adds to the attack roll, null where it adds a number.
  */
 function addMechanic(
   into: FeatureStrike,
@@ -104,6 +111,8 @@ function addMechanic(
       attack,
       damage,
       critical: critical ?? null,
+      dice: mechanic.dice ? scaledDice({ ...mechanic, dice: mechanic.dice }, held.levels) : null,
+      afterRoll: mechanic.afterRoll === true,
       condition: option,
     });
   } else if (critical !== undefined) {
@@ -171,10 +180,7 @@ function amount(
   if (isAbility(dice)) return { dice: null, bonus: Math.max(1, sheet.modifier(dice)) };
   if (dice === "proficiency" || dice === "halfLevel")
     return { dice: null, bonus: flat(dice, levels, sheet) };
-  if (typeof dice === "string") {
-    const scaled = scales.filter((scale) => levels >= scale.level).at(-1);
-    return { dice: scaled?.dice ?? dice, bonus };
-  }
+  if (typeof dice === "string") return { dice: scaledDice({ dice, scales }, levels), bonus };
   const cell = sheet.column(dice.column);
   if (cell === undefined) return null;
   return { dice: dice.die ? `${Number(cell)}d${dice.die}` : cell, bonus };

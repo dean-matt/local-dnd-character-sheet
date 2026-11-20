@@ -10,7 +10,8 @@ const FLANKING: RollEffectEntry = { source: "Flanking", mode: "advantage", roll:
  * disadvantage on it to start, changed by the player. The sources of every effect, a
  * conditional one included, are spoken with the control. Where the table plays `flanking`, a
  * melee attack offers a Flanking checkbox: as advantage it joins the effects, as a bonus it adds 2
- * and the roll's label names it, so the log shows what the total holds.
+ * and the roll's label names it, so the log shows what the total holds. Each of `riders` is
+ * a die that rolls with the d20, named in the label as well.
  */
 export function AttackRoll({
   label,
@@ -22,6 +23,7 @@ export function AttackRoll({
   beforeRoll,
   critAt,
   flanking,
+  riders = [],
   onRolled,
 }: Pick<
   ComponentProps<typeof RollBonusButton>,
@@ -31,20 +33,23 @@ export function AttackRoll({
   beforeRoll?: () => Promise<boolean>;
   /** The table's flanking rule where this attack is melee, else absent or `none`. */
   flanking?: "none" | "advantage" | "bonus";
+  riders?: readonly { source: string; dice: string }[];
 }) {
   const [flanked, setFlanked] = useState(false);
   const flanks = flanking !== undefined && flanking !== "none";
   const flankingAdvantage = flanks && flanked && flanking === "advantage";
   const flankingBonus = flanks && flanked && flanking === "bonus";
+  const named = riders.map(({ source }) => ` with ${source}`).join("");
   return (
     <ModeRoll
       effects={flankingAdvantage ? [...effects, FLANKING] : effects}
       modeLabel={label}
       label={
         flankingAdvantage || flankingBonus
-          ? `${label} while flanking${flankingBonus ? " +2" : ""}`
-          : label
+          ? `${label} while flanking${flankingBonus ? " +2" : ""}${named}`
+          : `${label}${named}`
       }
+      rider={riders.map(({ dice }) => `+${dice}`).join("")}
       type={type}
       origin={origin}
       terms={

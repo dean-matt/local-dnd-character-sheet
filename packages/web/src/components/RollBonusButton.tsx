@@ -1,4 +1,5 @@
 import type { RollRecord } from "@dnd/character";
+import type { rollDice } from "@dnd/dice";
 import { Dices } from "lucide-react";
 import { useContext, useState } from "react";
 import { useRollAndRecord } from "../hooks/useRollAndRecord.ts";
@@ -21,9 +22,10 @@ function included(
  * A held `inspiration` die rolls with the d20 as another term. An `extra` die the player
  * typed, such as `+1d4`, rolls with the d20 as its own term, and a result that is not a die is
  * spoken and rolls nothing.
+ * A `rider` die, such as `+1d3`, rolls with the d20 as another term.
  * `critAt` makes it an attack that scores a critical hit on a kept die of that number or more,
  * and says so; `critical` rolls the damage of one, doubling the dice. `onRolled` hears whether
- * the roll was a critical hit and whether it was logged.
+ * the roll was a critical hit, whether it was logged, and what was rolled.
  */
 export function RollBonusButton({
   label,
@@ -34,6 +36,7 @@ export function RollBonusButton({
   dice = "1d20",
   mode,
   extra = "",
+  rider = "",
   inspiration,
   beforeRoll,
   critAt,
@@ -43,11 +46,12 @@ export function RollBonusButton({
   bonus: number;
   dice?: string;
   extra?: string;
+  rider?: string;
   /** The size of a held Bardic Inspiration die this roll adds. */
   inspiration?: number;
   critAt?: number;
   critical?: boolean;
-  onRolled?: (hit: boolean, logged: boolean) => void;
+  onRolled?: (hit: boolean, logged: boolean, rolled: ReturnType<typeof rollDice>) => void;
   beforeRoll?: () => Promise<boolean>;
 }) {
   const characterId = useContext(RollingFor);
@@ -57,7 +61,7 @@ export function RollBonusButton({
   const die = parseExtraDie(extra);
   const inspired = inspiration === undefined ? "" : `+1d${inspiration}`;
   const added = { notation: `${die.notation}${inspired}`, count: die.count + (inspired ? 1 : 0) };
-  const notation = `${dice}${added.notation}${bonus === 0 ? "" : `${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}`}`;
+  const notation = `${dice}${rider}${added.notation}${bonus === 0 ? "" : `${bonus < 0 ? "-" : "+"}${Math.abs(bonus)}`}`;
 
   return (
     <>
@@ -76,7 +80,7 @@ export function RollBonusButton({
             (rolled, logged, outcome) => {
               const kept = rolled.dice.find((die) => die.kept)?.value ?? 0;
               const hit = critAt !== undefined && kept >= critAt;
-              onRolled?.(hit, logged);
+              onRolled?.(hit, logged, rolled);
               const said = [hit && "critical hit", outcome, !logged && "not logged"].filter(
                 Boolean,
               );
