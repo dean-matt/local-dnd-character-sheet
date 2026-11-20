@@ -337,6 +337,16 @@ const martialArtsMechanicSchema = z
     error: "a martial arts mechanic gives a die or Dexterity",
   });
 
+export const dieSizeSchema = z.union([
+  z.literal(4),
+  z.literal(6),
+  z.literal(8),
+  z.literal(10),
+  z.literal(12),
+]);
+
+const poolKeySchema = z.string().regex(/^[a-z]+(?:_[a-z]+)*$/);
+
 const restoreTermSchema = z.union([
   z.int().min(1),
   abilitySchema,
@@ -347,11 +357,21 @@ const restoreTermSchema = z.union([
  * What a use of the feature restores: `dice` rolled, as notation or a class table column's
  * die, plus each of `bonus`, a number, an ability's modifier, the levels in the feature's
  * class, the proficiency bonus or half the hit point maximum, the bonus `times` over.
- * `scales` replaces the dice, or a bonus of one number, from a level in the feature's class.
- * On `others`, it lands on another creature, so the sheet restores no one.
+ * `scales` replaces the dice, or a bonus of one number, from a level in the feature's class,
+ * and `levelsIn` counts the levels of another class for a feature that knows only the
+ * character's total level. `dice` may be the size of the dice the class pool keyed `pool`
+ * holds, `die` where the character holds none. On `others`, it lands on another creature, so
+ * the sheet restores no one. A `per` amount lands once for each level of the spell slot the
+ * player expends, or each creature that accepts, at most `most`'s modifier and at least one.
  */
 const restoreFields = {
-  dice: z.union([diceSchema, z.strictObject({ column: z.string().min(1) })]).optional(),
+  dice: z
+    .union([
+      diceSchema,
+      z.strictObject({ column: z.string().min(1) }),
+      z.strictObject({ pool: poolKeySchema, die: dieSizeSchema }),
+    ])
+    .optional(),
   bonus: z.array(restoreTermSchema).min(1).optional(),
   times: z.int().min(2).optional(),
   scales: z
@@ -364,7 +384,10 @@ const restoreFields = {
     )
     .min(1)
     .optional(),
+  levelsIn: contentRefSchema.optional(),
   others: z.literal(true).optional(),
+  per: z.enum(["slotLevel", "creature"]).optional(),
+  most: abilitySchema.optional(),
 };
 
 type RestoreFields = z.infer<z.ZodObject<typeof restoreFields>>;
@@ -386,7 +409,16 @@ const restoreRefinements = <T extends z.ZodType<RestoreFields>>(schema: T) =>
             (scale.bonus === undefined || (bonus?.length === 1 && typeof bonus[0] === "number")),
         ),
       { error: "a scale replaces notation dice or a bonus of one number, one of them" },
-    );
+    )
+    .refine(
+      ({ per, dice }) => per === undefined || dice === undefined || typeof dice === "string",
+      {
+        error: "an amount per choice is notation dice or a bonus",
+      },
+    )
+    .refine(({ most, per }) => most === undefined || per === "creature", {
+      error: "only an amount per creature is limited by an ability",
+    });
 
 /** Hit points a use of the feature restores. */
 const healMechanicSchema = restoreRefinements(
@@ -455,22 +487,12 @@ const usesMechanicSchema = z
     error: "levelsIn is read only by scales",
   });
 
-export const dieSizeSchema = z.union([
-  z.literal(4),
-  z.literal(6),
-  z.literal(8),
-  z.literal(10),
-  z.literal(12),
-]);
-
 /**
  * A class pool the feature gives where no class table prints a column for it: `count` dice
  * of `die` sides, or plain uses where it has no die, keyed `key` as a table's `resource_key`
  * would be. Each of `scales` replaces the count, the die or both from a level in the
  * feature's class.
  */
-const poolKeySchema = z.string().regex(/^[a-z]+(?:_[a-z]+)*$/);
-
 const poolMechanicSchema = z.strictObject({
   kind: z.literal("pool"),
   key: poolKeySchema,

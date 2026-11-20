@@ -1,11 +1,14 @@
 import type { LimitedUses } from "@dnd/catalog";
 import { type CharacterDerived, featureUsesSpent, withFeatureUse } from "@dnd/character";
 import { Minus, Plus } from "lucide-react";
+import { useState } from "react";
 import { useAnnouncedStateWrite } from "../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { useFeatureRestore } from "../../../hooks/useFeatureRestore.ts";
+import { chosenValue, restoreChoice } from "../../../lib/restoreChoice.ts";
 import { Announcer } from "../../Announcer.tsx";
 import { PoolButton } from "../../PoolButton.tsx";
+import { RestoreChoiceSelect } from "../../RestoreChoiceSelect.tsx";
 
 /** `short` is restored by either rest, so it reads as the shorter one; `manual` only by the player. */
 const RESET: Record<LimitedUses["reset"], string> = {
@@ -44,9 +47,12 @@ export function FeatureUses({
   const state = useCharacterState(characterId);
   const replace = useAnnouncedStateWrite(characterId);
   const restore = useFeatureRestore(characterId);
+  const [picked, setPicked] = useState<number | null>(null);
   if (!state.isSuccess) return null;
 
   const stored = state.data.state;
+  const choice = derived && source ? restoreChoice(derived, stored, { name, source }) : null;
+  const count = chosenValue(choice, picked);
   const expended = featureUsesSpent(stored, uses.key, uses.count);
   const reset = uses.restoredBy
     ? `${RESET[uses.reset]} or ${RESTORED_BY[uses.restoredBy]}`
@@ -63,15 +69,18 @@ export function FeatureUses({
         {uses.part && `${PART[uses.part]}: `}
         {uses.count - expended} / {uses.count} <span className="text-muted">{reset}</span>
       </span>
+      <RestoreChoiceSelect name={name} choice={choice} value={count} onChange={setPicked} />
       <PoolButton
         icon={Minus}
         label={`Spend a use of ${name}`}
         tooltip="Spend a use"
-        disabled={replace.writing || !derived || expended >= uses.count}
+        disabled={
+          replace.writing || !derived || expended >= uses.count || choice?.values.length === 0
+        }
         onPress={async () => {
           if (!derived) return;
           const restored = source
-            ? restore(derived, { name, source }, stored)
+            ? restore(derived, { name, source }, stored, count)
             : { state: stored, text: [], log: () => {} };
           const left = `${name}: ${uses.count - expended - 1} of ${uses.count} left.`;
           const text = [left, ...restored.text.map((part) => `${part}.`)].join(" ");

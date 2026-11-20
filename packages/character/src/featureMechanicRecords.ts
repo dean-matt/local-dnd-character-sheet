@@ -628,7 +628,7 @@ const LIMITED_USES: FeatureMechanics[] = [
   // Peerless Aim's limit is a turn, and the pact weapon's is one at a time.
   narrative({ name: "Boon of Combat Prowess", source: "XPHB" }),
   narrative({ name: "Pact of the Blade", source: "PHB" }),
-  // Accursed Specter, Call the Hunt, Cauterizing Flames, Defensive Field and Restorative
+  // Accursed Specter, Cauterizing Flames, Defensive Field and Restorative
   // Reagents give hit points or temporary hit points no heal or tempHp term records yet, so
   // they count their uses alone.
   ...(
@@ -638,7 +638,6 @@ const LIMITED_USES: FeatureMechanics[] = [
       [artificer, "Guardian", ["Armorer", "TCE"], "TCE", 15, "proficiency"],
       [barbarian, "Magic Awareness", ["Wild Magic", "TCE"], "TCE", 3, "proficiency"],
       [barbarian, "Infectious Fury", ["Beast", "TCE"], "TCE", 10, "proficiency"],
-      [barbarian, "Call the Hunt", ["Beast", "TCE"], "TCE", 14, "proficiency"],
       [bard, "Infectious Inspiration", ["Eloquence", "TCE"], "TCE", 14, "cha"],
       [cleric, "Eyes of the Grave", ["Grave", "XGE"], "XGE", 1, "wis"],
       [cleric, "Sentinel at Death's Door", ["Grave", "XGE"], "XGE", 6, "wis"],
@@ -2441,6 +2440,28 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       { kind: "uses", count: 1, reset: "short" },
     ],
   },
+  // The player picks the creatures that accept, as many as the Constitution modifier allows.
+  subclassFeature(barbarian, ["Beast", "TCE"], ["Call the Hunt", "TCE"], 14, [
+    { kind: "tempHp", bonus: [5], per: "creature", most: "con" },
+    { kind: "uses", count: "proficiency", reset: "long" },
+  ]),
+  subclassFeature(druid, ["Moon", "PHB"], ["Combat Wild Shape", "PHB"], 2, [
+    { kind: "heal", dice: "1d8", per: "slotLevel" },
+  ]),
+  // The superiority die is the Battle Master's where held, else the d6 of Martial Adept.
+  {
+    ref: { name: "Rally", source: "PHB" },
+    mechanics: [
+      { kind: "tempHp", dice: { pool: "superiority_dice", die: 6 }, bonus: ["cha"], others: true },
+    ],
+  },
+  {
+    ref: { name: "Tomb of Levistus", source: "XGE" },
+    mechanics: [
+      { kind: "tempHp", bonus: ["level"], times: 10, levelsIn: { name: "Warlock", source: "PHB" } },
+      { kind: "uses", count: 1, reset: "short" },
+    ],
+  },
   // Each narrative record from here to the limited uses heals on an event rather than a use,
   // restores another creature, a pool the player divides, a ward or a summon's hit points, or
   // heals through a spell, a rest's hit dice, a random table, an option picked as it lands, or
@@ -2449,7 +2470,6 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     [
       [cleric, "Circle of Mortality", ["Grave", "XGE"], "XGE", 1],
       [cleric, "Keeper of Souls", ["Grave", "XGE"], "XGE", 17],
-      [["Druid", "PHB"], "Combat Wild Shape", ["Moon", "PHB"], "PHB", 2],
       [["Druid", "PHB"], "Balm of the Summer Court", ["Dreams", "XGE"], "XGE", 2],
       [["Druid", "PHB"], "Spirit Totem", ["Shepherd", "XGE"], "XGE", 2],
       [["Druid", "PHB"], "Guardian Spirit", ["Shepherd", "XGE"], "XGE", 10],
@@ -2498,11 +2518,9 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     { name: "Durable", source: "PHB" },
     { name: "Dwarven Fortitude", source: "XGE" },
     { name: "Chef", source: "TCE" },
-    { name: "Rally", source: "PHB" },
     { name: "Gift of the Ever-Living Ones", source: "XGE" },
     { name: "Gift of the Protectors", source: "TCE" },
     { name: "Homunculus Servant", source: "TCE" },
-    { name: "Tomb of Levistus", source: "XGE" },
   ].map(narrative),
   classFeature(sorcerer, ["Font of Magic", "PHB"], 2, [
     { kind: "convert", pool: "sorcery_points", costs: [2, 3, 5, 6, 7], refund: true },

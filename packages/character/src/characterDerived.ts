@@ -177,7 +177,9 @@ const featureDamageSchema = z.strictObject({
 /**
  * What one use of a held feature restores: hit points for `heal`, temporary hit points for
  * `tempHp`, of `dice` rolled plus `bonus`, at least 1. `others` falls on another creature, so
- * the sheet shows the amount and restores nothing to the character.
+ * the sheet shows the amount and restores nothing to the character. Under `per`, the dice and
+ * bonus land once for each level of the spell slot the player expends or each creature that
+ * accepts, at most `most` creatures where it is not null.
  */
 const featureRestoreSchema = z.strictObject({
   feature: contentRefSchema,
@@ -185,6 +187,12 @@ const featureRestoreSchema = z.strictObject({
   dice: z.string().min(1).nullable(),
   bonus: z.int(),
   others: z.boolean(),
+  per: z
+    .strictObject({
+      unit: z.enum(["slotLevel", "creature"]),
+      most: z.int().min(1).nullable(),
+    })
+    .optional(),
 });
 
 /**

@@ -4,6 +4,8 @@ import {
   type ContentRef,
   type RollRecord,
   restoredState,
+  restoreFor,
+  slotSpent,
 } from "@dnd/character";
 import { rollDice } from "@dnd/dice";
 import { useContext } from "react";
@@ -35,14 +37,25 @@ function said({ kind, others }: Restore, amount: number, before: CharacterState)
     : `gained ${points(amount, true)}`;
 }
 
+/** What the player chose for an amount per choice, in the words that follow the restore. */
+const chosenWords = ({ per }: Restore, count: number) =>
+  per?.unit === "slotLevel"
+    ? ` from a level ${count} slot`
+    : per
+      ? ` for ${count} creature${count === 1 ? "" : "s"}`
+      : "";
+
 /**
  * What one use of `feature` restores, rolled: each of its restores landed on `state` by
- * `restoredState`, what to announce, and the rolls under the feature's name.
+ * `restoredState`, what to announce, and the rolls under the feature's name. An amount per
+ * choice is multiplied by `count`, the slot level or creatures the player chose, and a slot
+ * level also spends a slot of that level.
  */
 function featureRestore(
-  derived: Pick<CharacterDerived, "featureRestores" | "hitPointMaximum">,
+  derived: CharacterDerived,
   feature: ContentRef,
   state: CharacterState,
+  count = 1,
   roll: (restore: Restore) => Omit<RollRecord, "type" | "label"> = rolled,
 ): { state: CharacterState; text: string[]; rolls: RollRecord[] } {
   const restores = derived.featureRestores.filter(
@@ -50,11 +63,18 @@ function featureRestore(
   );
   return restores.reduce<{ state: CharacterState; text: string[]; rolls: RollRecord[] }>(
     (into, restore) => {
-      const record = roll(restore);
-      const landed = restoredState(derived, into.state, restore, record.total);
+      const record = roll({ ...restore, ...restoreFor(restore, count) });
+      const spent =
+        restore.per?.unit === "slotLevel"
+          ? slotSpent(derived, into.state, { via: "slot", level: count, left: null })
+          : into.state;
+      const landed = restoredState(derived, spent, restore, record.total);
       return {
         state: landed.state,
-        text: [...into.text, `${feature.name}: ${said(restore, landed.amount, into.state)}`],
+        text: [
+          ...into.text,
+          `${feature.name}: ${said(restore, landed.amount, into.state)}${chosenWords(restore, count)}`,
+        ],
         rolls: [...into.rolls, { type: ROLL_TYPE[restore.kind], label: feature.name, ...record }],
       };
     },
@@ -71,8 +91,8 @@ export function useFeatureRestore(characterId: string) {
   const record = useRecordRoll(characterId);
   const onRolled = useContext(OnRolled);
 
-  return (derived: CharacterDerived, feature: ContentRef, state: CharacterState) => {
-    const restored = featureRestore(derived, feature, state);
+  return (derived: CharacterDerived, feature: ContentRef, state: CharacterState, count = 1) => {
+    const restored = featureRestore(derived, feature, state, count);
     return {
       ...restored,
       log: () => {

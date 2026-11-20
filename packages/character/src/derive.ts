@@ -1175,6 +1175,7 @@ export function deriveCharacter(
       ...restrained.terms,
     ],
   };
+  const pools = classResourcePools(definition, catalog, bonuses);
   const exhaustion = exhaustionPenaltyTerms(state.exhaustion ?? 0, exhaustionRuleset(definition));
   const attackModifiers = [...modifierTerms(state, onKind("attackRolls")), ...exhaustion];
   const rolls = featureRolls(
@@ -1323,7 +1324,7 @@ export function deriveCharacter(
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
-    classResources: classResourcePools(definition, catalog, bonuses),
+    classResources: pools,
     ...carrying,
     attunementSlots: computed(attunementSlots(artificerLevel(definition))),
     weaponMasteryLimit: fromBreakdown(weaponMasteryLimit(definition, catalog)),
@@ -1346,6 +1347,7 @@ export function deriveCharacter(
     rollOptions: computed(rolls.options),
     featureRestores: featureRestores(definition, {
       column: tableColumn(definition, catalog),
+      die: (key) => pools.find((pool) => pool.key === key)?.die,
       modifier: (ability) => abilityModifier(scores[ability].total),
       proficiency: proficiencyBonus.total,
       hitPointMaximum: hitPointMaximumUnder(
