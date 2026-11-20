@@ -2525,6 +2525,14 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   classFeature(sorcerer, ["Font of Magic", "PHB"], 2, [
     { kind: "convert", pool: "sorcery_points", costs: [2, 3, 5, 6, 7], refund: true },
   ]),
+  classFeature(wizard, ["Arcane Recovery", "PHB"], 1, [
+    { kind: "slotRecovery", maxLevel: 5 },
+    { kind: "uses", count: 1, reset: "long" },
+  ]),
+  subclassFeature(druid, ["Land", "PHB"], ["Natural Recovery", "PHB"], 2, [
+    { kind: "slotRecovery", maxLevel: 5 },
+    { kind: "uses", count: 1, reset: "long" },
+  ]),
   // Its conversion is recorded on Font of Magic, the feature whose row the sheet lists.
   narrative({
     name: "Flexible Casting",

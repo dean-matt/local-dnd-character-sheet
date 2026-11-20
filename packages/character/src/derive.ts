@@ -92,6 +92,7 @@ import { applyOverrides } from "./overrides.ts";
 import { rageBenefits, rageDamageTerms } from "./rage.ts";
 import { type Ability, type ContentRef, catalogRef, type EntryRef } from "./refs.ts";
 import { exhaustionRuleset, houseRule } from "./resolve.ts";
+import { slotRecoveries } from "./slotRecovery.ts";
 import type { CharacterState } from "./state.ts";
 import { subclassInitiativeTerms } from "./subclassEffects.ts";
 import { classLevels, type HomebrewNames, raceSummary, totalLevel } from "./summaries.ts";
@@ -1357,6 +1358,7 @@ export function deriveCharacter(
       ),
     }),
     featureConversions: featureConversions(definition, proficiencyBonus.total),
+    slotRecoveries: slotRecoveries(definition),
     turn: featureTurn(definition),
     limitedUses: featureLimitedUses(definition, (term) =>
       term === "proficiency" ? proficiencyBonus.total : abilityModifier(scores[term].total),

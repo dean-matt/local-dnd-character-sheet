@@ -234,6 +234,11 @@ export {
   rollRecordSchema,
 } from "./rollLog.ts";
 export {
+  recoverableSlots,
+  recoveredState,
+  type SlotRecoveryPick,
+} from "./slotRecovery.ts";
+export {
   type SpellCastOption,
   slotSpent,
   spellBeams,

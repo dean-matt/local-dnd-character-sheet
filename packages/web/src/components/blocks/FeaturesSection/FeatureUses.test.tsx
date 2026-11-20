@@ -61,6 +61,7 @@ const FEATURES: CharacterFeatures = {
 function renderFeatures(
   state: Partial<CharacterState> = {},
   derived: CharacterDerived | null = derivedRecord(),
+  features: CharacterFeatures = FEATURES,
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
@@ -69,7 +70,7 @@ function renderFeatures(
     "fetch",
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
-      if (url === "/api/characters/1/features") return new Response(JSON.stringify(FEATURES));
+      if (url === "/api/characters/1/features") return new Response(JSON.stringify(features));
       if (url === "/api/characters/1/rolls" && init?.method === "POST") {
         const roll = JSON.parse(String(init.body));
         rolls.push(roll);
@@ -252,5 +253,85 @@ describe("FeatureUses", () => {
 
     expect(row("Second Wind")).toHaveTextContent("1 / 1");
     expect(writes).toHaveLength(0);
+  });
+
+  describe("slot recovery", () => {
+    const ARCANE = "feature|Wizard|PHB|||1|PHB|Arcane Recovery";
+    const WIZARD: CharacterFeatures = {
+      groups: [
+        {
+          origin: "class",
+          name: "Wizard",
+          features: [
+            {
+              resolved: true,
+              name: "Arcane Recovery",
+              source: "PHB",
+              level: 1,
+              entries: [],
+              uses: { key: ARCANE, count: 1, reset: "long" },
+            },
+          ],
+        },
+      ],
+    };
+    const derived = (): CharacterDerived => ({
+      ...derivedRecord(),
+      spellSlots: [1, 2, 3].map((level) => ({
+        level,
+        total: { computed: 2, manual: null, terms: [] },
+      })),
+      slotRecoveries: [
+        { feature: { name: "Arcane Recovery", source: "PHB" }, budget: 2, maxLevel: 5 },
+      ],
+    });
+    const expended = [
+      { level: 1, total: 2, expended: 2 },
+      { level: 2, total: 2, expended: 1 },
+      { level: 3, total: 2, expended: 1 },
+    ];
+
+    it("recovers the picked slots and spends the use in one write", async () => {
+      const { writes } = renderFeatures({ spellSlots: expended }, derived(), WIZARD);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Recover slots with Arcane Recovery" }),
+      );
+      const dialog = await screen.findByRole("dialog");
+      expect(dialog).not.toHaveTextContent("Level 4");
+      fireEvent.change(within(dialog).getByLabelText(/Level 1 slots/), { target: { value: "2" } });
+      fireEvent.click(within(dialog).getByRole("button", { name: "Recover" }));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.spellSlots).toEqual([
+        { level: 1, total: 2, expended: 0 },
+        { level: 2, total: 2, expended: 1 },
+        { level: 3, total: 2, expended: 1 },
+      ]);
+      expect(writes[0]?.featureUses).toEqual([{ key: ARCANE, expended: 1 }]);
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    });
+
+    it("refuses a pick past the budget", async () => {
+      const { writes } = renderFeatures({ spellSlots: expended }, derived(), WIZARD);
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Recover slots with Arcane Recovery" }),
+      );
+      const dialog = await screen.findByRole("dialog");
+      fireEvent.change(within(dialog).getByLabelText(/Level 3 slots/), { target: { value: "1" } });
+      expect(dialog).toHaveTextContent("3 of 2 slot levels");
+      fireEvent.click(within(dialog).getByRole("button", { name: "Recover" }));
+      expect(writes).toHaveLength(0);
+    });
+
+    it("offers no recovery once the use is spent", async () => {
+      renderFeatures(
+        { spellSlots: expended, featureUses: [{ key: ARCANE, expended: 1 }] },
+        derived(),
+        WIZARD,
+      );
+      expect(
+        await screen.findByRole("button", { name: "Recover slots with Arcane Recovery" }),
+      ).toHaveAttribute("aria-disabled", "true");
+    });
   });
 });

@@ -528,6 +528,15 @@ const convertMechanicSchema = z.strictObject({
   refund: z.literal(true).optional(),
 });
 
+/**
+ * Expended spell slots a use of the feature recovers: a combined level of at most half the
+ * levels in the feature's class, rounded up, no slot above `maxLevel`.
+ */
+const slotRecoveryMechanicSchema = z.strictObject({
+  kind: z.literal("slotRecovery"),
+  maxLevel: z.int().min(1).max(9),
+});
+
 /** The standard actions a feature lets the character take as a bonus action, as each edition names them. */
 const BONUS_ACTION_ACTIONS = [
   "Dash",
@@ -575,6 +584,7 @@ const mechanicSchema = z.union([
   usesMechanicSchema,
   poolMechanicSchema,
   convertMechanicSchema,
+  slotRecoveryMechanicSchema,
   healMechanicSchema,
   tempHpMechanicSchema,
   extraDamageMechanicSchema,
