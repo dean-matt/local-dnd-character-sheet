@@ -61,6 +61,10 @@ describe("featureRestores", () => {
     expect(restoresOf(life, "Preserve Life")).toMatchObject([{ kind: "heal", others: false }]);
     const land = levelsOf("Druid", "XPHB", 3, { name: "Circle of the Land", source: "XPHB" });
     expect(restoresOf(land, "Land's Aid")).toMatchObject([{ kind: "heal", others: false }]);
+    const classic = levelsOf("Cleric", "PHB", 2, { name: "Life Domain", source: "PHB" });
+    expect(restoresOf(classic, "Channel Divinity: Preserve Life")).toMatchObject([
+      { kind: "heal", others: true },
+    ]);
   });
 
   it("scales Fighting Spirit's temporary hit points and Divine Spark's dice by class level", () => {
