@@ -20,16 +20,22 @@ function withLimitedUses(
       ...group,
       features: group.features.map((feature) => {
         if (!feature.resolved) return feature;
-        const counted = derived.limitedUses.find(
+        const counted = derived.limitedUses.filter(
           (uses) =>
             uses.origin === group.origin &&
             uses.feature.name === feature.name &&
             uses.feature.source === feature.source &&
             (uses.level === null || uses.level === feature.level),
         );
-        if (!counted) return feature;
-        const { key, count, reset } = counted;
-        return { ...feature, uses: { key, count, reset } };
+        const [main, ...others] = counted.map(({ key, count, reset, restoredBy, part }) => ({
+          key,
+          count,
+          reset,
+          ...(restoredBy && { restoredBy }),
+          ...(part && { part }),
+        }));
+        if (!main) return feature;
+        return { ...feature, uses: main, ...(others.length > 0 && { otherUses: others }) };
       }),
     })),
   };

@@ -6,6 +6,7 @@ import {
   effectsOnRoll,
   encounterEnded,
   encounterStarted,
+  initiativeRestored,
   initiativeRolled,
   netRollEffect,
   roundAdvanced,
@@ -35,7 +36,7 @@ export function Encounter({
   derived,
 }: {
   character: CharacterRecord;
-  derived: Pick<CharacterDerived, "initiative" | "rollEffects">;
+  derived: Pick<CharacterDerived, "initiative" | "limitedUses" | "rollEffects">;
 }) {
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
@@ -72,7 +73,7 @@ export function Encounter({
     const rolled = rollDice(notation, { mode });
     try {
       await both.mutateAsync({
-        state: (latest) => initiativeRolled(latest, rolled.total),
+        state: (latest) => initiativeRolled(initiativeRestored(derived, latest), rolled.total),
         edit: (latest) => latest,
         roll: {
           label: "Initiative",

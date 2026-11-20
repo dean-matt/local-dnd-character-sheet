@@ -14,6 +14,13 @@ const RESET: Record<LimitedUses["reset"], string> = {
   manual: "Manual reset",
 };
 
+const RESTORED_BY: Record<NonNullable<LimitedUses["restoredBy"]>, string> = {
+  initiative: "rolling initiative with none left",
+  soulTrinket: "destroying a soul trinket",
+};
+
+const PART: Record<NonNullable<LimitedUses["part"]>, string> = { conjuring: "Conjuring" };
+
 /**
  * A feature's uses left against its count and the rest that restores them, with a spend and
  * a restore, each one state write announced once it lands. A spend also lands what the
@@ -41,7 +48,9 @@ export function FeatureUses({
 
   const stored = state.data.state;
   const expended = featureUsesSpent(stored, uses.key, uses.count);
-  const reset = RESET[uses.reset];
+  const reset = uses.restoredBy
+    ? `${RESET[uses.reset]} or ${RESTORED_BY[uses.restoredBy]}`
+    : RESET[uses.reset];
   const change = (next: number) =>
     replace.write(
       withFeatureUse(stored, uses.key, next),
@@ -51,6 +60,7 @@ export function FeatureUses({
   return (
     <span className="flex items-center gap-1.5">
       <span className="text-row">
+        {uses.part && `${PART[uses.part]}: `}
         {uses.count - expended} / {uses.count} <span className="text-muted">{reset}</span>
       </span>
       <PoolButton

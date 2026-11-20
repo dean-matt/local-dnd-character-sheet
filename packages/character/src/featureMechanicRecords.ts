@@ -661,21 +661,24 @@ const LIMITED_USES: FeatureMechanics[] = [
       [ranger, "Swarming Dispersal", ["Swarmkeeper", "TCE"], "TCE", 15, "proficiency"],
       [rogue, "Unerring Eye", ["Inquisitive", "XGE"], "XGE", 13, "wis"],
       [rogue, "Wails from the Grave", ["Phantom", "TCE"], "TCE", 3, "proficiency"],
-      // Destroying a soul trinket also restores it.
-      [rogue, "Ghost Walk", ["Phantom", "TCE"], "TCE", 13, 1],
       [sorcerer, "Restore Balance", ["Clockwork Soul", "TCE"], "TCE", 1, "proficiency"],
       [warlock, "Tentacle of the Deeps", ["Fathomless", "TCE"], "TCE", 1, "proficiency"],
       [warlock, "Bottled Respite", ["Genie", "TCE"], "TCE", 1, 1],
       [warlock, "Elemental Gift", ["Genie", "TCE"], "TCE", 6, "proficiency"],
       [warlock, "Accursed Specter", ["Hexblade", "XGE"], "XGE", 6, 1],
-      // The conjuring is the other limit, once a long rest unless a spell slot pays for it.
-      [wizard, "Manifest Mind", ["Scribes", "TCE"], "TCE", 6, "proficiency"],
     ] as const
   ).map(([owner, name, [shortName, subclassSource], source, level, count]) =>
     subclassFeature(owner, [shortName, subclassSource], [name, source], level, [
       { kind: "uses", count, reset: "long" },
     ]),
   ),
+  subclassFeature(rogue, ["Phantom", "TCE"], ["Ghost Walk", "TCE"], 13, [
+    { kind: "uses", count: 1, reset: "long", restoredBy: "soulTrinket" },
+  ]),
+  subclassFeature(wizard, ["Scribes", "TCE"], ["Manifest Mind", "TCE"], 6, [
+    { kind: "uses", count: "proficiency", reset: "long" },
+    { kind: "uses", count: 1, reset: "long", part: "conjuring" },
+  ]),
   subclassFeature(barbarian, ["Wild Magic", "TCE"], ["Bolstering Magic", "TCE"], 6, [
     { kind: "uses", count: "proficiency", reset: "long" },
     {
@@ -762,10 +765,9 @@ const LIMITED_USES: FeatureMechanics[] = [
     ref: { name: "Fey Teleportation", source: "XGE" },
     mechanics: [{ kind: "uses", count: 1, reset: "short" }, SPELLS],
   },
-  // Rolling initiative also restores it.
   {
     ref: { name: "Second Chance", source: "XGE" },
-    mechanics: [{ kind: "uses", count: 1, reset: "short" }],
+    mechanics: [{ kind: "uses", count: 1, reset: "short", restoredBy: "initiative" }],
   },
   // Its free casts are a count per spell, left to the spells a feature grants.
   subclassFeature(artificer, ["Alchemist", "TCE"], ["Chemical Mastery", "TCE"], 15, [

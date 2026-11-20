@@ -9,7 +9,12 @@ import {
 } from "@dnd/rules";
 import { z } from "zod";
 import { derivedSchema } from "./derivedField.ts";
-import { dieSizeSchema, effectEndSchema } from "./featureMechanics.ts";
+import {
+  dieSizeSchema,
+  effectEndSchema,
+  USES_PARTS,
+  USES_RESTORED_BY,
+} from "./featureMechanics.ts";
 import { abilitySchema, contentRefSchema, entryRefSchema } from "./refs.ts";
 
 /**
@@ -208,6 +213,8 @@ const limitedUsesSchema = z.strictObject({
   key: z.string().min(1),
   count: z.int().min(0),
   reset: z.enum(["short", "long", "manual"]),
+  restoredBy: z.enum(USES_RESTORED_BY).optional(),
+  part: z.enum(USES_PARTS).optional(),
 });
 
 const attackSchema = z.strictObject({

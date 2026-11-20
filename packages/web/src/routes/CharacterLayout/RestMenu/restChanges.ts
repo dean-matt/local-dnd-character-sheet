@@ -42,8 +42,9 @@ export type FeatureUse = LimitedUses & { name: string };
 export function featureUses(features: CharacterFeatures): FeatureUse[] {
   const byKey = new Map<string, FeatureUse>();
   for (const feature of features.groups.flatMap((group) => group.features)) {
-    if (feature.resolved && feature.uses) {
-      byKey.set(feature.uses.key, { name: feature.name, ...feature.uses });
+    if (!feature.resolved) continue;
+    for (const uses of [feature.uses, ...(feature.otherUses ?? [])]) {
+      if (uses) byKey.set(uses.key, { name: feature.name, ...uses });
     }
   }
   return [...byKey.values()];

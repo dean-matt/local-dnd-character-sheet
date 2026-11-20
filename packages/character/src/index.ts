@@ -110,7 +110,13 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
-export { encounterEnded, encounterStarted, initiativeRolled, roundAdvanced } from "./encounter.ts";
+export {
+  encounterEnded,
+  encounterStarted,
+  initiativeRestored,
+  initiativeRolled,
+  roundAdvanced,
+} from "./encounter.ts";
 export { allocatePicks, type FeatPick, grantedSkillLevels, heldSkillLevel } from "./featGrants.ts";
 export {
   ACTION_TURN_MARK,
@@ -127,7 +133,7 @@ export {
   convertedState,
 } from "./featureConversions.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
-export type { Mechanic } from "./featureMechanics.ts";
+export { type Mechanic, USES_PARTS, USES_RESTORED_BY } from "./featureMechanics.ts";
 export { restoredState } from "./featureRestores.ts";
 export { featurePickOffers } from "./heldFeatures.ts";
 export {

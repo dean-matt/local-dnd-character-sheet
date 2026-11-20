@@ -400,6 +400,12 @@ const tempHpMechanicSchema = restoreRefinements(
 
 const resetSchema = z.enum(["short", "long", "manual"]);
 
+/** What besides a rest restores a feature's uses; the sheet says so and the player restores them. */
+export const USES_RESTORED_BY = ["initiative", "soulTrinket"] as const;
+
+/** The count a feature keeps beside its main one, when it limits two things apart. */
+export const USES_PARTS = ["conjuring"] as const;
+
 /**
  * The uses a feature counts, restored by a `reset` rest, where `short` means either rest and
  * `manual` no rest, only the player's word: `count`, a number, an ability's modifier or the
@@ -407,7 +413,9 @@ const resetSchema = z.enum(["short", "long", "manual"]);
  * feature printing "a minimum of once" has it; 0 records a feature that prints none, 2 one that
  * prints "a minimum of twice". Each of `scales` replaces a number count, the reset or both from a
  * level in the feature's class, or in `levelsIn` for a feature that knows only the character's
- * total level, such as an optional feature.
+ * total level, such as an optional feature. `restoredBy` names what else restores them: rolling
+ * initiative with none left restores them on the sheet, any other is the player's to restore. A
+ * `part` is a second count of the feature, apart from its main one.
  */
 const usesMechanicSchema = z
   .strictObject({
@@ -417,6 +425,8 @@ const usesMechanicSchema = z
     plus: z.int().min(1).optional(),
     minimum: z.union([z.literal(0), z.literal(2)]).optional(),
     reset: resetSchema,
+    restoredBy: z.enum(USES_RESTORED_BY).optional(),
+    part: z.enum(USES_PARTS).optional(),
     levelsIn: contentRefSchema.optional(),
     scales: z
       .array(
@@ -601,9 +611,13 @@ export const featureMechanicsSchema = z
         },
         { error: "a feature bonuses each target once" },
       )
-      .refine((all) => all.filter((m) => m.kind === "uses").length <= 1, {
-        error: "a feature counts its uses once",
-      })
+      .refine(
+        (all) => {
+          const parts = all.flatMap((m) => (m.kind === "uses" ? [m.part] : []));
+          return new Set(parts).size === parts.length;
+        },
+        { error: "a feature counts its uses once, and each part once" },
+      )
       .refine(
         (all) =>
           all.some((m) => m.kind === "active") ||

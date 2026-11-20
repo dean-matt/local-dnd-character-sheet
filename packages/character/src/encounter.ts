@@ -1,4 +1,5 @@
-import { type CharacterState, MAX_ROUND } from "./state.ts";
+import type { CharacterDerived } from "./characterDerived.ts";
+import { type CharacterState, featureUsesSpent, MAX_ROUND, withFeatureUse } from "./state.ts";
 import { turnReset } from "./turn.ts";
 
 /**
@@ -9,6 +10,19 @@ export const initiativeRolled = (state: CharacterState, initiative: number): Cha
   ...state,
   encounter: { round: state.encounter?.round ?? 1, initiative },
 });
+
+/** The state with each use a roll of initiative restores, where all its uses are spent. */
+export const initiativeRestored = (
+  derived: Pick<CharacterDerived, "limitedUses">,
+  state: CharacterState,
+): CharacterState =>
+  derived.limitedUses
+    .filter(({ restoredBy }) => restoredBy === "initiative")
+    .reduce(
+      (into, { key, count }) =>
+        featureUsesSpent(into, key, count) >= count ? withFeatureUse(into, key, 0) : into,
+      state,
+    );
 
 /** The state in round 1 of a new encounter with no initiative rolled, no once-a-turn feature used and no action added. */
 export const encounterStarted = (state: CharacterState): CharacterState => ({
