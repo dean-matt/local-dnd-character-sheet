@@ -563,7 +563,7 @@ const LIMITED_USES: FeatureMechanics[] = [
   }),
 ];
 
-/** The feats, optional features and race traits whose spells come with them alone. */
+/** The feats, optional features and race traits that grant spells outright and count no uses. */
 const SPELLS_GRANTED: FeatureMechanics[] = [
   { name: "Telekinetic", source: "TCE" },
   ...[

@@ -667,6 +667,11 @@ describe("characterSpellsRoutes", () => {
         expect(await darkness()).toEqual([free, costed]);
       });
 
+      it("lists both where the definition lists neither", async () => {
+        monk(MONK, SHADOW, 5, [], { race: TIEFLING });
+        expect(await darkness()).toEqual([costed, { ...free, fromGrantor: TIEFLING.name }]);
+      });
+
       it("leaves a feat's entry free", async () => {
         monk(MONK, SHADOW, 3, [DARKNESS], { feats: [GLOOM_TOUCHED] });
         expect(await darkness()).toEqual([free, costed]);

@@ -123,9 +123,6 @@ const RACE_TRAITS = new Map([
   ["Gnome Cunning|PHB", ["Gnome|PHB"]],
   ["Brave|PHB", ["Halfling|PHB"]],
   ["Relentless Endurance|PHB", ["Half-Orc|PHB"]],
-  ["Infernal Legacy|PHB", ["Tiefling|PHB"]],
-  ["Drow Magic|PHB", ["Elf|PHB|Drow|PHB"]],
-  ["Natural Illusionist|PHB", ["Gnome|PHB|Forest|PHB"]],
 ]);
 
 /** The features section's group a held feature shows in. */

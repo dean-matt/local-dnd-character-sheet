@@ -226,10 +226,7 @@ function featureGrantors(definition: CharacterDefinition) {
     ...definition.feats.map(({ ref }) => grantorOf(definition, "feat", ref)),
     ...definition.optionalFeatures.map(({ ref }) => grantorOf(definition, "optionalFeature", ref)),
   ];
-  return grantors.flatMap((grantor) =>
-    // The base subrace of a race with none named, as the 2014 tiefling's, has an empty name.
-    grantor ? [{ grantor, level, label: grantor.name || grantor.parent?.name || "" }] : [],
-  );
+  return grantors.flatMap((grantor) => (grantor ? [{ grantor, level, label: grantor.name }] : []));
 }
 
 /** The spells each catalog class gives outright by its level, by `entryKey`. */
