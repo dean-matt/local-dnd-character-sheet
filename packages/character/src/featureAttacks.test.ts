@@ -52,6 +52,11 @@ const GREATSWORD: Strike = {
   alone: false,
 };
 const UNARMED: Strike = { proficient: true, alone: false };
+const DAGGER: Strike = {
+  weapon: { kind: "melee", properties: ["F", "L", "T"] },
+  proficient: true,
+  alone: true,
+};
 
 describe("featureStrike", () => {
   it("adds Archery to ranged attacks alone, named for the feature", () => {
@@ -93,7 +98,7 @@ describe("featureStrike", () => {
 
   it("offers Sharpshooter and Great Weapon Master's trade on a proficient weapon of their kind, never as a term", () => {
     const trade = (source: string) => [
-      { source, attack: -5, damage: 10, condition: expect.any(String) },
+      { source, attack: -5, damage: 10, critical: null, condition: expect.any(String) },
     ];
     const sharpshooter = featureStrike(withFeat("Sharpshooter"), LONGBOW, () => 0);
     expect(sharpshooter.options).toEqual(trade("Sharpshooter"));
@@ -106,6 +111,63 @@ describe("featureStrike", () => {
     );
     expect(featureStrike(withFeat("Great Weapon Master"), RAPIER, () => 0).options).toEqual([]);
     expect(featureStrike(withFeat("Great Weapon Master"), LONGBOW, () => 0).options).toEqual([]);
+  });
+});
+
+describe("featureStrike, outside the SRD", () => {
+  const offered = (definition: CharacterDefinition, strike: Strike) =>
+    featureStrike(definition, strike, () => 0).options.map(
+      ({ source, attack, damage, critical }) => ({ source, attack, damage, critical }),
+    );
+
+  it("offers Hexblade's Curse's critical range as a trade, never lowering every attack's", () => {
+    const hexblade = levelsOf("Warlock", "PHB", 1, "The Hexblade", "XGE");
+    expect(featureStrike(hexblade, LONGBOW, () => 0).critical).toBeUndefined();
+    expect(offered(hexblade, LONGBOW)).toEqual([
+      { source: "Hexblade's Curse", attack: 0, damage: 0, critical: 19 },
+    ]);
+  });
+
+  it("offers Charger on melee weapons and Thrown Weapon Fighting on thrown ones", () => {
+    const charger = withFeat("Charger");
+    expect(offered(charger, RAPIER)).toEqual([
+      { source: "Charger", attack: 0, damage: 5, critical: null },
+    ]);
+    expect(offered(charger, LONGBOW)).toEqual([]);
+    const thrower = withFeat("Thrown Weapon Fighting", "TCE");
+    expect(offered(thrower, DAGGER)).toEqual([
+      { source: "Thrown Weapon Fighting", attack: 0, damage: 2, critical: null },
+    ]);
+    expect(offered(thrower, RAPIER)).toEqual([]);
+  });
+
+  it("offers each size of Sharpen the Blade's bonus, from Kensei level 11", () => {
+    const kensei = (level: number) => levelsOf("Monk", "PHB", level, "Way of the Kensei", "XGE");
+    expect(offered(kensei(10), RAPIER)).toEqual([]);
+    expect(offered(kensei(11), RAPIER).map(({ attack, damage }) => [attack, damage])).toEqual([
+      [1, 1],
+      [2, 2],
+      [3, 3],
+    ]);
+  });
+
+  it("offers Focused Aim only where the table plays optional class features", () => {
+    const monk = levelsOf("Monk", "PHB", 5);
+    expect(offered(monk, UNARMED)).toEqual([]);
+    const optional = { ...monk, houseRules: { optionalClassFeatures: true } };
+    expect(offered(optional, UNARMED).map(({ attack }) => attack)).toEqual([2, 4, 6]);
+  });
+
+  it("lowers melee attacks' critical threshold while Invincible Conqueror runs", () => {
+    const conqueror = levelsOf("Paladin", "PHB", 20, "Oath of Conquest", "XGE");
+    const running = { ...conqueror, started: new Set(["Invincible Conqueror"]) };
+    expect(featureStrike(conqueror, RAPIER, () => 0).critical).toBeUndefined();
+    expect(featureStrike(running, RAPIER, () => 0).critical).toEqual({
+      label: "Invincible Conqueror",
+      value: 19,
+    });
+    expect(featureStrike(running, UNARMED, () => 0).critical?.value).toBe(19);
+    expect(featureStrike(running, LONGBOW, () => 0).critical).toBeUndefined();
   });
 });
 
@@ -123,6 +185,14 @@ describe("featureAttackEffects", () => {
     ]);
     expect(effectsOnRoll(effects, { roll: "attack", ability: "dex" })).toEqual([]);
     expect(featureAttackEffects(levelsOf("Barbarian", "PHB", 1))).toEqual([]);
+  });
+
+  it("offers Assassinate's advantage to an Assassin from level 3", () => {
+    const assassin = (level: number) => levelsOf("Rogue", "PHB", level, "Assassin");
+    expect(featureAttackEffects(assassin(2))).toEqual([]);
+    expect(featureAttackEffects(assassin(3))).toEqual([
+      expect.objectContaining({ source: "Assassinate", mode: "advantage", roll: "attack" }),
+    ]);
   });
 
   it("offers Grappler's advantage on every attack", () => {

@@ -76,4 +76,12 @@ export {
 export type { Breakdown, Term } from "./term.ts";
 export { breakdown } from "./term.ts";
 export type { Weapon } from "./weapon.ts";
-export { GRIPS, isFinesse, isHeavy, isLight, isTwoHanded, weaponAttack } from "./weapon.ts";
+export {
+  GRIPS,
+  isFinesse,
+  isHeavy,
+  isLight,
+  isThrown,
+  isTwoHanded,
+  weaponAttack,
+} from "./weapon.ts";

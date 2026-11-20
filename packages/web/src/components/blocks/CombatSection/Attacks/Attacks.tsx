@@ -43,7 +43,7 @@ import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
 import { RollingFor } from "../../../rollerContext.ts";
-import { damageText } from "../../attack.ts";
+import { damageText, tradeKey } from "../../attack.ts";
 import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
 import { AttackDamage } from "./AttackDamage.tsx";
@@ -151,7 +151,10 @@ function tradedAttack(field: Attack["attackBonus"], taken: Attack["options"]) {
   const terms = rollTerms(field);
   return {
     bonus: addUp(taken, "attack", derivedValue(field)),
-    terms: terms && [...terms, ...taken.map(({ source, attack }) => ({ source, value: attack }))],
+    terms: terms && [
+      ...terms,
+      ...taken.flatMap(({ source, attack }) => (attack === 0 ? [] : [{ source, value: attack }])),
+    ],
   };
 }
 
@@ -434,11 +437,11 @@ export function Attacks({
     const alignments = [...new Set(extras.map(({ targetAlignment }) => targetAlignment))];
     const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
     const options = attack.options ?? [];
-    const taken = options.filter(({ source }) => traded[rowKey]?.includes(source));
-    const take = (source: string, on: boolean) =>
+    const taken = options.filter((option) => traded[rowKey]?.includes(tradeKey(option)));
+    const take = (key: string, on: boolean) =>
       setTraded((now) => {
-        const rest = (now[rowKey] ?? []).filter((name) => name !== source);
-        return { ...now, [rowKey]: on ? [...rest, source] : rest };
+        const rest = (now[rowKey] ?? []).filter((other) => other !== key);
+        return { ...now, [rowKey]: on ? [...rest, key] : rest };
       });
     const { slot, added, spend } = rowDamage(rowKey, attack.featureDamage);
     return (
@@ -463,7 +466,10 @@ export function Attacks({
             {...tradedAttack(attack.attackBonus, taken)}
             effects={attackEffects(ability)}
             beforeRoll={beforeRoll}
-            critAt={derivedValue(attack.critThreshold)}
+            critAt={Math.min(
+              derivedValue(attack.critThreshold),
+              ...taken.map(({ critical }) => critical ?? 20),
+            )}
             flanking={flanking}
             onRolled={(hit) => setCritical(rowKey, hit)}
           />

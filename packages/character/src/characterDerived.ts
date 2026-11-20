@@ -124,11 +124,16 @@ const extraDamageSchema = z
   )
   .optional();
 
-/** A trade a feature offers on one attack, such as Sharpshooter's: `attack` and `damage` added where the player takes it, as `condition` says. */
+/**
+ * A trade a feature offers on one attack, such as Sharpshooter's: `attack` and `damage` added,
+ * and a critical hit on `critical` or more where it is set, where the player takes it, as
+ * `condition` says.
+ */
 const attackOptionSchema = z.strictObject({
   source: z.string().min(1),
   attack: z.int(),
   damage: z.int(),
+  critical: z.int().min(2).max(19).nullable(),
   condition: z.string().min(1),
 });
 

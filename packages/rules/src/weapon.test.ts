@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isHeavy, isLight, isTwoHanded, type Weapon, weaponAttack } from "./index.ts";
+import { isHeavy, isLight, isThrown, isTwoHanded, type Weapon, weaponAttack } from "./index.ts";
 
 const LONGSWORD: Weapon = {
   kind: "melee",
@@ -279,6 +279,15 @@ describe("isHeavy", () => {
     expect(isHeavy({ properties: [{ uid: "h" }] })).toBe(true);
     expect(isHeavy({ properties: ["2H"] })).toBe(false);
     expect(isHeavy({})).toBe(false);
+  });
+});
+
+describe("isThrown", () => {
+  it("reads the thrown property from either spelling, and nothing else", () => {
+    expect(isThrown({ properties: ["F", "L", "T|XPHB"] })).toBe(true);
+    expect(isThrown({ properties: [{ uid: "t" }] })).toBe(true);
+    expect(isThrown({ properties: ["2H"] })).toBe(false);
+    expect(isThrown({})).toBe(false);
   });
 });
 
