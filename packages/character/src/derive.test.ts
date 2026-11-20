@@ -1555,6 +1555,7 @@ describe("deriveCharacter", () => {
           type: "bludgeoning",
           modifier: { computed: -1, manual: null, terms: [{ label: "Strength", value: -1 }] },
         },
+        options: [],
       });
     });
 
@@ -1587,6 +1588,18 @@ describe("deriveCharacter", () => {
         expect(attackOf(champion, 0)?.critThreshold).toEqual({ computed: 19, manual: null, terms });
         expect(champion.unarmedStrike.critThreshold).toEqual({ computed: 19, manual: null, terms });
         expect(fighter(2).unarmedStrike.critThreshold.computed).toBe(20);
+      });
+
+      it("offers a feature's trade on the unarmed strike", () => {
+        expect(fighter(1).unarmedStrike.options).toEqual([]);
+        const pact = fighter(1, {
+          optionalFeatures: [
+            { featureType: "EI", ref: { name: "Improved Pact Weapon", source: "XGE" } },
+          ],
+        } as Partial<CharacterDefinition>);
+        expect(pact.unarmedStrike.options).toEqual([
+          expect.objectContaining({ source: "Improved Pact Weapon", attack: 1, damage: 1 }),
+        ]);
       });
 
       it("adds Dueling to a lone one-handed melee weapon's damage, and not beside a second", () => {

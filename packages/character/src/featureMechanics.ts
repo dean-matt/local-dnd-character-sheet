@@ -209,10 +209,9 @@ const rollMechanicSchema = z
  * A change to the character's own weapon attacks, unarmed strikes included: `attack` and
  * `damage` added to the rolls, `attack` a number or an ability's modifier of at least +1, a
  * critical hit on `critical` or more, or advantage on the attacks using `ability`, or on all
- * of them. `weapons` narrows a bonus or a critical range to melee weapons and the unarmed
- * strike, ranged weapons, thrown weapons, heavy melee weapons, or a melee weapon held in one
- * hand with no other weapon equipped, and `proficient` to a weapon the character is
- * proficient with. `option` says when it holds, and the attack offers it rather than
+ * of them. `weapons` narrows a bonus or a critical range to melee, ranged, thrown or heavy
+ * melee weapons, or a melee weapon held in one hand with no other weapon equipped, and
+ * `proficient` to a weapon the character is proficient with. `option` says when it holds, and the attack offers it rather than
  * applying it.
  */
 const attackMechanicSchema = z

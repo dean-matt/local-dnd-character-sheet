@@ -158,16 +158,14 @@ describe("featureStrike, outside the SRD", () => {
     expect(offered(optional, UNARMED).map(({ attack }) => attack)).toEqual([2, 4, 6]);
   });
 
-  it("lowers melee attacks' critical threshold while Invincible Conqueror runs", () => {
+  it("offers Guided Strike on every attack and Invincible Conqueror's critical range on melee ones", () => {
     const conqueror = levelsOf("Paladin", "PHB", 20, "Oath of Conquest", "XGE");
-    const running = { ...conqueror, started: new Set(["Invincible Conqueror"]) };
     expect(featureStrike(conqueror, RAPIER, () => 0).critical).toBeUndefined();
-    expect(featureStrike(running, RAPIER, () => 0).critical).toEqual({
-      label: "Invincible Conqueror",
-      value: 19,
-    });
-    expect(featureStrike(running, UNARMED, () => 0).critical?.value).toBe(19);
-    expect(featureStrike(running, LONGBOW, () => 0).critical).toBeUndefined();
+    expect(offered(conqueror, RAPIER)).toEqual([
+      { source: "Guided Strike", attack: 10, damage: 0, critical: null },
+      { source: "Invincible Conqueror", attack: 0, damage: 0, critical: 19 },
+    ]);
+    expect(offered(conqueror, LONGBOW).map(({ source }) => source)).toEqual(["Guided Strike"]);
   });
 });
 

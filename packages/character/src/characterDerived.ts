@@ -383,6 +383,8 @@ export const characterDerivedSchema = z.strictObject({
       type: z.string().min(1),
       modifier: derivedSchema(z.int()),
     }),
+    /** The trades held features offer on the unarmed strike, in the order the features are held. */
+    options: z.array(attackOptionSchema),
   }),
   /**
    * Resistances, immunities and vulnerabilities from the race, then from each feat, then from each equipped item, attuned where it must be, then a rage's while the play state holds one.

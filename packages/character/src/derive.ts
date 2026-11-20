@@ -721,6 +721,7 @@ function derivedUnarmedStrike(
         ]),
       ),
     },
+    options: features.options,
   };
 }
 

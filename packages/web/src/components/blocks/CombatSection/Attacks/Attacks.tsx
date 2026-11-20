@@ -424,9 +424,8 @@ export function Attacks({
     ability: Ability;
     attack: Pick<
       Attack,
-      "attackBonus" | "critThreshold" | "damage" | "extraDamage" | "featureDamage"
-    > &
-      Partial<Pick<Attack, "options">>;
+      "attackBonus" | "critThreshold" | "damage" | "extraDamage" | "featureDamage" | "options"
+    >;
     flanking: ComponentProps<typeof AttackRoll>["flanking"];
     beforeRoll?: () => Promise<boolean>;
     notes?: ReactNode;
@@ -436,7 +435,7 @@ export function Attacks({
     const struck = extras.filter(({ targetAlignment }) => targetAlignment === target[rowKey]);
     const alignments = [...new Set(extras.map(({ targetAlignment }) => targetAlignment))];
     const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
-    const options = attack.options ?? [];
+    const { options } = attack;
     const taken = options.filter((option) => traded[rowKey]?.includes(tradeKey(option)));
     const take = (key: string, on: boolean) =>
       setTraded((now) => {

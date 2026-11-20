@@ -62,6 +62,7 @@ const unarmedStrike: CharacterDerived["unarmedStrike"] = {
     type: "bludgeoning",
     modifier: { computed: 0, manual: null, terms: [] },
   },
+  options: [],
 };
 
 function renderAttacks(derived: CharacterDerived) {

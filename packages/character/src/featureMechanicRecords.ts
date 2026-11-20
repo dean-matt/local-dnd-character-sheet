@@ -124,8 +124,6 @@ const GUIDED_STRIKE: Mechanic = {
   attack: 10,
   option: "spending Channel Divinity, after you see the roll",
 };
-const TIDES_OF_CHAOS = "spending Tides of Chaos";
-const STORM_RUNE = "spending your reaction while the rune's prophetic state lasts";
 const KI_POINTS = [1, 2, 3].map((ki) => `${ki} ki point${ki === 1 ? "" : "s"}`);
 const INFUSED = "with the weapon you infused";
 
@@ -168,7 +166,6 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
     advantageOn("against a creature that hasn't taken a turn in the combat yet"),
   ]),
   subclassFeature(rogue, ["Scout", "XGE"], ["Ambush Master", "XGE"], 13, [
-    { kind: "roll", roll: "initiative", advantage: true },
     advantageOn(
       "against the first creature you hit in a combat's first round, until your next turn",
     ),
@@ -213,10 +210,16 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
     ),
     houseRule: "optionalClassFeatures",
   },
+  subclassFeature(paladin, ["Conquest", "XGE"], ["Invincible Conqueror", "XGE"], 20, [
+    { kind: "attack", weapons: "melee", critical: 19, option: "while Invincible Conqueror lasts" },
+  ]),
+  subclassFeature(paladin, ["Watchers", "TCE"], ["Mortal Bulwark", "TCE"], 20, [
+    advantageOn(
+      "against an aberration, celestial, elemental, fey or fiend, while Mortal Bulwark lasts",
+    ),
+  ]),
   subclassFeature(sorcerer, ["Wild", "PHB"], ["Tides of Chaos", "PHB"], 1, [
-    advantageOn(TIDES_OF_CHAOS),
-    { kind: "roll", roll: "check", advantage: true, against: TIDES_OF_CHAOS },
-    { kind: "roll", roll: "save", advantage: true, against: TIDES_OF_CHAOS },
+    advantageOn("spending Tides of Chaos"),
   ]),
   subclassFeature(warlock, ["Great Old One", "PHB"], ["Entropic Ward", "PHB"], 6, [
     advantageOn("against the creature Entropic Ward made miss, until the end of your next turn"),
@@ -267,12 +270,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
   },
   {
     ref: { name: "Storm Rune", source: "TCE" },
-    mechanics: [
-      advantageOn(STORM_RUNE),
-      { kind: "roll", roll: "check", advantage: true, against: STORM_RUNE },
-      { kind: "roll", roll: "save", advantage: true, against: STORM_RUNE },
-      { kind: "roll", roll: "check", skills: ["arcana"], advantage: true },
-    ],
+    mechanics: [advantageOn("spending your reaction while the rune's prophetic state lasts")],
   },
   // An optional feature knows only the character's total level, so the player takes the size
   // the artificer's own level gives.
@@ -338,22 +336,6 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
   subclassFeature(sorcerer24, ["Draconic", "XPHB"], ["Dragon Wings", "XPHB"], 14, [
     { kind: "active" },
     { kind: "speed", fly: 60, while: "active" },
-  ]),
-  // Its additional attack is no `turn` mechanic, which always holds.
-  subclassFeature(paladin, ["Conquest", "XGE"], ["Invincible Conqueror", "XGE"], 20, [
-    { kind: "active" },
-    { kind: "defense", resist: [...DAMAGE_TYPES_BUT_PSYCHIC, "psychic"], while: "active" },
-    { kind: "attack", weapons: "melee", critical: 19, while: "active" },
-  ]),
-  // Its truesight is no `sense` mechanic, which always holds.
-  subclassFeature(paladin, ["Watchers", "TCE"], ["Mortal Bulwark", "TCE"], 20, [
-    { kind: "active" },
-    {
-      kind: "attack",
-      advantage: true,
-      option: "against an aberration, celestial, elemental, fey or fiend",
-      while: "active",
-    },
   ]),
   subclassFeature(["Wizard", "PHB"], ["Bladesinging", "TCE"], ["Bladesong", "TCE"], 2, [
     { kind: "uses", count: "proficiency", reset: "long" },
