@@ -32,8 +32,12 @@ export type FeatureStrike = {
   options: CharacterDerived["attacks"][number]["options"];
 };
 
-function fits({ weapons, proficient }: AttackMechanic, { weapon, ...strike }: Strike): boolean {
+function fits(
+  { weapons, unarmed, proficient }: AttackMechanic,
+  { weapon, ...strike }: Strike,
+): boolean {
   if (proficient && !strike.proficient) return false;
+  if (!weapon && weapons) return unarmed === true;
   switch (weapons) {
     case undefined:
       return true;

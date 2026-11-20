@@ -128,17 +128,26 @@ describe("featureStrike, outside the SRD", () => {
     ]);
   });
 
-  it("offers Charger on melee weapons and Thrown Weapon Fighting on thrown ones", () => {
+  it("offers Charger on melee weapons and the unarmed strike, and Thrown Weapon Fighting on thrown weapons", () => {
     const charger = withFeat("Charger");
-    expect(offered(charger, RAPIER)).toEqual([
-      { source: "Charger", attack: 0, damage: 5, critical: null },
-    ]);
+    const bonus = [{ source: "Charger", attack: 0, damage: 5, critical: null }];
+    expect(offered(charger, RAPIER)).toEqual(bonus);
+    expect(offered(charger, UNARMED)).toEqual(bonus);
     expect(offered(charger, LONGBOW)).toEqual([]);
     const thrower = withFeat("Thrown Weapon Fighting", "TCE");
     expect(offered(thrower, DAGGER)).toEqual([
       { source: "Thrown Weapon Fighting", attack: 0, damage: 2, critical: null },
     ]);
     expect(offered(thrower, RAPIER)).toEqual([]);
+    expect(offered(thrower, UNARMED)).toEqual([]);
+  });
+
+  it("offers Returning Weapon on a thrown weapon alone", () => {
+    const infuser = character({
+      optionalFeatures: [{ featureType: "AI", ref: { name: "Returning Weapon", source: "TCE" } }],
+    } as Partial<CharacterDefinition>);
+    expect(offered(infuser, DAGGER).map(({ source }) => source)).toEqual(["Returning Weapon"]);
+    expect(offered(infuser, RAPIER)).toEqual([]);
   });
 
   it("offers each size of Sharpen the Blade's bonus, from Kensei level 11", () => {
@@ -151,21 +160,20 @@ describe("featureStrike, outside the SRD", () => {
     ]);
   });
 
-  it("offers Focused Aim only where the table plays optional class features", () => {
-    const monk = levelsOf("Monk", "PHB", 5);
+  it("offers no bonus added after the roll lands, as Focused Aim and Guided Strike add", () => {
+    const monk = { ...levelsOf("Monk", "PHB", 5), houseRules: { optionalClassFeatures: true } };
     expect(offered(monk, UNARMED)).toEqual([]);
-    const optional = { ...monk, houseRules: { optionalClassFeatures: true } };
-    expect(offered(optional, UNARMED).map(({ attack }) => attack)).toEqual([2, 4, 6]);
+    const conqueror = levelsOf("Paladin", "PHB", 3, "Oath of Conquest", "XGE");
+    expect(offered(conqueror, RAPIER)).toEqual([]);
   });
 
-  it("offers Guided Strike on every attack and Invincible Conqueror's critical range on melee ones", () => {
+  it("offers Invincible Conqueror's critical range on melee weapons and the unarmed strike", () => {
     const conqueror = levelsOf("Paladin", "PHB", 20, "Oath of Conquest", "XGE");
     expect(featureStrike(conqueror, RAPIER, () => 0).critical).toBeUndefined();
-    expect(offered(conqueror, RAPIER)).toEqual([
-      { source: "Guided Strike", attack: 10, damage: 0, critical: null },
-      { source: "Invincible Conqueror", attack: 0, damage: 0, critical: 19 },
-    ]);
-    expect(offered(conqueror, LONGBOW).map(({ source }) => source)).toEqual(["Guided Strike"]);
+    const range = [{ source: "Invincible Conqueror", attack: 0, damage: 0, critical: 19 }];
+    expect(offered(conqueror, RAPIER)).toEqual(range);
+    expect(offered(conqueror, UNARMED)).toEqual(range);
+    expect(offered(conqueror, LONGBOW)).toEqual([]);
   });
 });
 

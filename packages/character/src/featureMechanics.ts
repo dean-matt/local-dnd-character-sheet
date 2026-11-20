@@ -209,11 +209,11 @@ const rollMechanicSchema = z
  * A change to the character's own weapon attacks, unarmed strikes included: `attack` and
  * `damage` added to the rolls, `attack` a number or an ability's modifier of at least +1, a
  * critical hit on `critical` or more, or advantage on the attacks using `ability`, or on all
- * of them. `weapons` narrows a bonus or a critical range to weapons, never the unarmed strike;
- * to melee, ranged, thrown or heavy melee weapons; or to a melee weapon held in one hand with
- * no other weapon equipped; and
- * `proficient` to a weapon the character is proficient with. `option` says when it holds, and the attack offers it rather than
- * applying it.
+ * of them. `weapons` narrows a bonus or a critical range to any weapon; to melee, ranged,
+ * thrown or heavy melee weapons; or to a melee weapon held in one hand with no other weapon
+ * equipped. Every `weapons` value leaves out the unarmed strike, and `unarmed` adds it back.
+ * `proficient` narrows it to a weapon the character is proficient with. `option` says when it
+ * holds, and the attack offers it rather than applying it.
  */
 const attackMechanicSchema = z
   .strictObject({
@@ -221,6 +221,7 @@ const attackMechanicSchema = z
     weapons: z
       .enum(["any", "melee", "ranged", "thrown", "heavyMelee", "oneHandedMelee"])
       .optional(),
+    unarmed: z.literal(true).optional(),
     proficient: z.literal(true).optional(),
     attack: z.union([z.int(), abilitySchema]).optional(),
     damage: z.int().optional(),
@@ -241,6 +242,9 @@ const attackMechanicSchema = z
   })
   .refine(({ advantage, weapons, proficient }) => !advantage || (!weapons && !proficient), {
     error: "advantage falls on attacks by ability, never by weapon",
+  })
+  .refine(({ unarmed, weapons }) => !unarmed || weapons, {
+    error: "the unarmed strike is added back to a narrowed set of weapons",
   });
 
 const diceSchema = z.string().regex(/^\d+d\d+$/);

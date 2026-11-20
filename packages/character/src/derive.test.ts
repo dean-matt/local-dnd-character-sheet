@@ -1662,14 +1662,12 @@ describe("deriveCharacter", () => {
           },
         );
 
-      it("offers Focused Aim on a Monk's unarmed strike where the table plays optional class features", () => {
+      it("offers Charger's trade on a Monk's unarmed strike", () => {
         const monk = classed("Monk", 5, [{ key: "martial_arts", value: "1d6" }], {
-          houseRules: { optionalClassFeatures: true },
+          feats: [{ ref: { name: "Charger", source: "PHB" } }],
         } as Partial<CharacterDefinition>);
-        expect(monk.unarmedStrike.options.map(({ source, attack }) => [source, attack])).toEqual([
-          ["Focused Aim", 2],
-          ["Focused Aim", 4],
-          ["Focused Aim", 6],
+        expect(monk.unarmedStrike.options.map(({ source, damage }) => [source, damage])).toEqual([
+          ["Charger", 5],
         ]);
       });
 

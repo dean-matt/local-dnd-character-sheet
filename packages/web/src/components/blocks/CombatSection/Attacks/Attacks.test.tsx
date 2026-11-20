@@ -561,7 +561,7 @@ describe("Attacks", () => {
       expect(posts[1]).toMatchObject({ terms: [{ source: "Strength", value: 5 }] });
     });
 
-    it("takes each of a feature's trades on its own", async () => {
+    it("takes one size of a feature's trade at a time", async () => {
       const blade = (bonus: number) => ({
         source: "Sharpen the Blade",
         attack: bonus,
@@ -576,8 +576,11 @@ describe("Attacks", () => {
       const two = await longsword().findByRole("checkbox", {
         name: "Sharpen the Blade +2/+2, 2 ki",
       });
+      const three = longsword().getByRole("checkbox", { name: "Sharpen the Blade +3/+3, 3 ki" });
+      fireEvent.click(three);
       fireEvent.click(two);
       expect(two).toBeChecked();
+      expect(three).not.toBeChecked();
       expect(
         longsword().getByRole("checkbox", { name: "Sharpen the Blade +1/+1, 1 ki" }),
       ).not.toBeChecked();

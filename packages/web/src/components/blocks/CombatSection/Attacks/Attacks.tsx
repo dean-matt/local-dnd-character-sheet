@@ -437,10 +437,13 @@ export function Attacks({
     const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
     const { options } = attack;
     const taken = options.filter((option) => traded[rowKey]?.includes(tradeKey(option)));
-    const take = (key: string, on: boolean) =>
+    const take = (trade: Attack["options"][number], on: boolean) =>
       setTraded((now) => {
-        const rest = (now[rowKey] ?? []).filter((other) => other !== key);
-        return { ...now, [rowKey]: on ? [...rest, key] : rest };
+        const sameSource = new Set(
+          options.filter(({ source }) => source === trade.source).map(tradeKey),
+        );
+        const rest = (now[rowKey] ?? []).filter((other) => !sameSource.has(other));
+        return { ...now, [rowKey]: on ? [...rest, tradeKey(trade)] : rest };
       });
     const { slot, added, spend } = rowDamage(rowKey, attack.featureDamage);
     return (

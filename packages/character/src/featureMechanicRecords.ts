@@ -119,18 +119,13 @@ const sorcerer24: [string, string] = ["Sorcerer", "XPHB"];
 const SACRED_WEAPON = "with the weapon Sacred Weapon imbues";
 
 const advantageOn = (option: string): Mechanic => ({ kind: "attack", advantage: true, option });
-const GUIDED_STRIKE: Mechanic = {
-  kind: "attack",
-  attack: 10,
-  option: "spending Channel Divinity, after you see the roll",
-};
 const KI_POINTS = [1, 2, 3].map((ki) => `${ki} ki point${ki === 1 ? "" : "s"}`);
 const INFUSED = "with the weapon you infused";
 
 /**
  * What PHB, XGE and TCE features outside the SRD change about the character's own attacks. A
  * bonus the player picks the size of, as ki spent or an artificer's level, is one option per
- * size.
+ * size. A bonus added after the roll lands is narrative, since a trade is taken before it.
  */
 const ATTACK_CHANGES: FeatureMechanics[] = [
   ...(
@@ -139,9 +134,10 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       [cleric24, 3],
     ] as const
   ).flatMap(([owner, level]) => [
-    subclassFeature(owner, ["War", "PHB"], ["Channel Divinity: Guided Strike", "PHB"], level, [
-      GUIDED_STRIKE,
-    ]),
+    narrative(
+      subclassFeature(owner, ["War", "PHB"], ["Channel Divinity: Guided Strike", "PHB"], level, [])
+        .ref,
+    ),
     subclassFeature(
       owner,
       ["Trickery", "PHB"],
@@ -150,7 +146,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       [advantageOn("against a creature within 5 feet of both you and your illusion")],
     ),
   ]),
-  subclassFeature(paladin, ["Conquest", "XGE"], ["Guided Strike", "XGE"], 3, [GUIDED_STRIKE]),
+  narrative(subclassFeature(paladin, ["Conquest", "XGE"], ["Guided Strike", "XGE"], 3, []).ref),
   // Its armor's +1 is no `armorClass` mechanic, which always holds.
   subclassFeature(cleric, ["Forge", "XGE"], ["Blessing of the Forge", "XGE"], 1, [
     {
@@ -199,21 +195,15 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       option: `with the kensei weapon you spent ${spent} on, unless magic already gives it a bonus`,
     })),
   ),
-  {
-    ...classFeature(
-      monk,
-      ["Focused Aim", "TCE"],
-      5,
-      KI_POINTS.map((spent, index) => ({
-        kind: "attack",
-        attack: 2 * (index + 1),
-        option: `spending ${spent} after a miss`,
-      })),
-    ),
-    houseRule: "optionalClassFeatures",
-  },
+  narrative(classFeature(monk, ["Focused Aim", "TCE"], 5, []).ref),
   subclassFeature(paladin, ["Conquest", "XGE"], ["Invincible Conqueror", "XGE"], 20, [
-    { kind: "attack", weapons: "melee", critical: 19, option: "while Invincible Conqueror lasts" },
+    {
+      kind: "attack",
+      weapons: "melee",
+      unarmed: true,
+      critical: 19,
+      option: "while Invincible Conqueror lasts",
+    },
   ]),
   subclassFeature(paladin, ["Watchers", "TCE"], ["Mortal Bulwark", "TCE"], 20, [
     advantageOn(
@@ -244,6 +234,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       {
         kind: "attack",
         weapons: "melee",
+        unarmed: true,
         damage: 5,
         option: "on the bonus action attack after you Dash 10 feet in a straight line",
       },
@@ -296,10 +287,15 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
       },
     ],
   },
-  ...["Radiant Weapon", "Returning Weapon"].map(
-    (name): FeatureMechanics => ({
+  ...(
+    [
+      ["Radiant Weapon", "any"],
+      ["Returning Weapon", "thrown"],
+    ] as const
+  ).map(
+    ([name, weapons]): FeatureMechanics => ({
       ref: { name, source: "TCE" },
-      mechanics: [{ kind: "attack", weapons: "any", attack: 1, damage: 1, option: INFUSED }],
+      mechanics: [{ kind: "attack", weapons, attack: 1, damage: 1, option: INFUSED }],
     }),
   ),
   {
