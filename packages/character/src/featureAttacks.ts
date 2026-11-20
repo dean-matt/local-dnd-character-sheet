@@ -4,7 +4,7 @@
  * attack or damage, the lowest critical threshold, and a trade the player takes attack by
  * attack as an option. Their `extraDamage` mechanics give the dice a hit adds.
  */
-import { ABILITIES, isFinesse, isHeavy, type Term, type Weapon } from "@dnd/rules";
+import { ABILITIES, isFinesse, isHeavy, isThrown, type Term, type Weapon } from "@dnd/rules";
 import type { CharacterDerived, RollEffectEntry } from "./characterDerived.ts";
 import type { TermReference } from "./derivedField.ts";
 import { type Mechanic, mechanicsOfKind } from "./featureMechanics.ts";
@@ -32,13 +32,22 @@ export type FeatureStrike = {
   options: CharacterDerived["attacks"][number]["options"];
 };
 
-function fits({ weapons, proficient }: AttackMechanic, { weapon, ...strike }: Strike): boolean {
+function fits(
+  { weapons, unarmed, proficient }: AttackMechanic,
+  { weapon, ...strike }: Strike,
+): boolean {
   if (proficient && !strike.proficient) return false;
+  if (!weapon && weapons) return unarmed === true;
   switch (weapons) {
     case undefined:
       return true;
+    case "any":
+      return weapon !== undefined;
+    case "melee":
     case "ranged":
-      return weapon?.kind === "ranged";
+      return weapon?.kind === weapons;
+    case "thrown":
+      return weapon !== undefined && isThrown(weapon);
     case "heavyMelee":
       return weapon?.kind === "melee" && isHeavy(weapon);
     case "oneHandedMelee":
@@ -76,7 +85,7 @@ const term = ({ ref }: Held, value: number): Term<TermReference> => ({
 
 /**
  * Adds what one bonus or critical mechanic of `held` gives to `into`; an ability's modifier
- * adds at least 1.
+ * adds at least 1. An option carries its critical range, null where it lowers none.
  */
 function addMechanic(
   into: FeatureStrike,
@@ -89,11 +98,17 @@ function addMechanic(
     typeof mechanic.attack === "string"
       ? Math.max(1, modifier(mechanic.attack))
       : (mechanic.attack ?? 0);
-  if (critical !== undefined) {
+  if (option) {
+    into.options.push({
+      source: held.ref.name,
+      attack,
+      damage,
+      critical: critical ?? null,
+      condition: option,
+    });
+  } else if (critical !== undefined) {
     if (critical < (into.critical?.value ?? 20))
       into.critical = { label: held.ref.name, value: critical };
-  } else if (option) {
-    into.options.push({ source: held.ref.name, attack, damage, condition: option });
   } else {
     if (attack !== 0) into.attack.push(term(held, attack));
     if (damage !== 0) into.damage.push(term(held, damage));

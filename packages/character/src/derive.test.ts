@@ -1555,6 +1555,7 @@ describe("deriveCharacter", () => {
           type: "bludgeoning",
           modifier: { computed: -1, manual: null, terms: [{ label: "Strength", value: -1 }] },
         },
+        options: [],
       });
     });
 
@@ -1587,6 +1588,21 @@ describe("deriveCharacter", () => {
         expect(attackOf(champion, 0)?.critThreshold).toEqual({ computed: 19, manual: null, terms });
         expect(champion.unarmedStrike.critThreshold).toEqual({ computed: 19, manual: null, terms });
         expect(fighter(2).unarmedStrike.critThreshold.computed).toBe(20);
+      });
+
+      it("offers a feature's trade on the unarmed strike, and none bound to a weapon", () => {
+        const pact = { name: "Improved Pact Weapon", source: "XGE" };
+        const feature = (ref: { name: string; source: string }) =>
+          fighter(1, {
+            optionalFeatures: [{ featureType: "EI", ref }],
+          } as Partial<CharacterDefinition>);
+        expect(feature(pact).unarmedStrike.options).toEqual([]);
+        expect(attackOf(feature(pact), 0)?.options).toEqual([
+          expect.objectContaining({ source: "Improved Pact Weapon", attack: 1, damage: 1 }),
+        ]);
+        expect(feature({ name: "Feinting Attack", source: "PHB" }).unarmedStrike.options).toEqual(
+          [],
+        );
       });
 
       it("adds Dueling to a lone one-handed melee weapon's damage, and not beside a second", () => {
@@ -1645,6 +1661,15 @@ describe("deriveCharacter", () => {
             classResources: new Map([[entryKey({ name, source: "PHB" }), cells]]),
           },
         );
+
+      it("offers Charger's trade on a Monk's unarmed strike", () => {
+        const monk = classed("Monk", 5, [{ key: "martial_arts", value: "1d6" }], {
+          feats: [{ ref: { name: "Charger", source: "PHB" } }],
+        } as Partial<CharacterDefinition>);
+        expect(monk.unarmedStrike.options.map(({ source, damage }) => [source, damage])).toEqual([
+          ["Charger", 5],
+        ]);
+      });
 
       it("rolls a Monk's unarmed strike and dagger with the Martial Arts die and Dexterity, until armor is worn", () => {
         const monk = classed("Monk", 5, [{ key: "martial_arts", value: "1d6" }]);

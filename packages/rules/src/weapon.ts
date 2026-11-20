@@ -91,6 +91,7 @@ const FINESSE = "F";
 const LIGHT = "L";
 const TWO_HANDED = "2H";
 const HEAVY = "H";
+const THROWN = "T";
 
 /**
  * The abbreviation alone, from either spelling. Case is folded because `homebrew.db`
@@ -120,6 +121,11 @@ export function isFinesse(weapon: Pick<Weapon, "properties">): boolean {
 /** Whether the weapon carries the heavy property. */
 export function isHeavy(weapon: Pick<Weapon, "properties">): boolean {
   return weapon.properties?.some((property) => abbreviation(property) === HEAVY) ?? false;
+}
+
+/** Whether the weapon carries the thrown property. */
+export function isThrown(weapon: Pick<Weapon, "properties">): boolean {
+  return weapon.properties?.some((property) => abbreviation(property) === THROWN) ?? false;
 }
 
 /**

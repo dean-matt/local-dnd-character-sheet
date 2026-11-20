@@ -5,6 +5,10 @@ export type Attack = CharacterDerived["attacks"][number];
 
 export type Grip = NonNullable<Attack["grip"]>["held"];
 
+/** What tells one trade from another on a row: a feature offering several names each by its condition. */
+export const tradeKey = ({ source, condition }: Attack["options"][number]) =>
+  `${source}|${condition}`;
+
 /** Dice and modifier as a roll is written, `1d8+3`, the modifier left off at zero. */
 export function damageText(damage: NonNullable<Attack["damage"]>): string {
   const modifier = derivedValue(damage.modifier);

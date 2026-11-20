@@ -67,6 +67,7 @@ export const derivedInput = (traits: object = {}) => ({
     attackBonus: { computed: 2 },
     critThreshold: { computed: 20 },
     damage: { dice: "1d1", type: "bludgeoning", modifier: { computed: 0 } },
+    options: [],
   },
   defenses: {
     computed: {

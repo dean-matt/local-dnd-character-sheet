@@ -124,11 +124,16 @@ const extraDamageSchema = z
   )
   .optional();
 
-/** A trade a feature offers on one attack, such as Sharpshooter's: `attack` and `damage` added where the player takes it, as `condition` says. */
+/**
+ * A trade a feature offers on one attack, such as Sharpshooter's: `attack` and `damage` added,
+ * and a critical hit on `critical` or more where it is set, where the player takes it, as
+ * `condition` says.
+ */
 const attackOptionSchema = z.strictObject({
   source: z.string().min(1),
   attack: z.int(),
   damage: z.int(),
+  critical: z.int().min(2).max(19).nullable(),
   condition: z.string().min(1),
 });
 
@@ -378,6 +383,8 @@ export const characterDerivedSchema = z.strictObject({
       type: z.string().min(1),
       modifier: derivedSchema(z.int()),
     }),
+    /** The trades held features offer on the unarmed strike, in the order the features are held. */
+    options: z.array(attackOptionSchema),
   }),
   /**
    * Resistances, immunities and vulnerabilities from the race, then from each feat, then from each equipped item, attuned where it must be, then a rage's while the play state holds one.

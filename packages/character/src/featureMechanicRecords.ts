@@ -118,6 +118,194 @@ const ALL_BUT_FORCE = [...DAMAGE_TYPES_BUT_PSYCHIC.filter((type) => type !== "fo
 const sorcerer24: [string, string] = ["Sorcerer", "XPHB"];
 const SACRED_WEAPON = "with the weapon Sacred Weapon imbues";
 
+const advantageOn = (option: string): Mechanic => ({ kind: "attack", advantage: true, option });
+const KI_POINTS = [1, 2, 3].map((ki) => `${ki} ki point${ki === 1 ? "" : "s"}`);
+const INFUSED = "with the weapon you infused";
+
+/**
+ * What PHB, XGE and TCE features outside the SRD change about the character's own attacks. A
+ * bonus the player picks the size of, as ki spent or an artificer's level, is one option per
+ * size. A bonus added after the roll lands is narrative, since a trade is taken before it.
+ */
+const ATTACK_CHANGES: FeatureMechanics[] = [
+  ...(
+    [
+      [cleric, 2],
+      [cleric24, 3],
+    ] as const
+  ).flatMap(([owner, level]) => [
+    narrative(
+      subclassFeature(owner, ["War", "PHB"], ["Channel Divinity: Guided Strike", "PHB"], level, [])
+        .ref,
+    ),
+    subclassFeature(
+      owner,
+      ["Trickery", "PHB"],
+      ["Channel Divinity: Invoke Duplicity", "PHB"],
+      level,
+      [advantageOn("against a creature within 5 feet of both you and your illusion")],
+    ),
+  ]),
+  narrative(subclassFeature(paladin, ["Conquest", "XGE"], ["Guided Strike", "XGE"], 3, []).ref),
+  // Its armor's +1 is no `armorClass` mechanic, which always holds.
+  subclassFeature(cleric, ["Forge", "XGE"], ["Blessing of the Forge", "XGE"], 1, [
+    {
+      kind: "attack",
+      weapons: "any",
+      attack: 1,
+      damage: 1,
+      option: "with the weapon Blessing of the Forge imbues",
+    },
+  ]),
+  // A hit against a surprised creature is a critical hit whatever the d20 shows, which no
+  // threshold holds.
+  subclassFeature(rogue, ["Assassin", "PHB"], ["Assassinate", "PHB"], 3, [
+    advantageOn("against a creature that hasn't taken a turn in the combat yet"),
+  ]),
+  subclassFeature(rogue, ["Scout", "XGE"], ["Ambush Master", "XGE"], 13, [
+    advantageOn(
+      "against the first creature you hit in a combat's first round, until your next turn",
+    ),
+  ]),
+  subclassFeature(rogue, ["Swashbuckler", "XGE"], ["Master Duelist", "XGE"], 17, [
+    advantageOn("on the reroll of an attack you missed"),
+  ]),
+  subclassFeature(rogue, ["Arcane Trickster", "PHB"], ["Versatile Trickster", "PHB"], 13, [
+    advantageOn("against the creature your mage hand distracts, this turn"),
+  ]),
+  {
+    ...classFeature(rogue, ["Steady Aim", "TCE"], 3, [
+      advantageOn("on your next attack this turn, not having moved"),
+    ]),
+    houseRule: "optionalClassFeatures",
+  },
+  subclassFeature(monk, ["Shadow", "PHB"], ["Shadow Step", "PHB"], 6, [
+    advantageOn("on your first melee attack this turn after Shadow Step"),
+  ]),
+  subclassFeature(
+    monk,
+    ["Kensei", "XGE"],
+    ["Sharpen the Blade", "XGE"],
+    11,
+    KI_POINTS.map((spent, index) => ({
+      kind: "attack",
+      weapons: "any",
+      attack: index + 1,
+      damage: index + 1,
+      option: `with the kensei weapon you spent ${spent} on, unless magic already gives it a bonus`,
+    })),
+  ),
+  narrative(classFeature(monk, ["Focused Aim", "TCE"], 5, []).ref),
+  subclassFeature(paladin, ["Conquest", "XGE"], ["Invincible Conqueror", "XGE"], 20, [
+    {
+      kind: "attack",
+      weapons: "melee",
+      unarmed: true,
+      critical: 19,
+      option: "while Invincible Conqueror lasts",
+    },
+  ]),
+  subclassFeature(paladin, ["Watchers", "TCE"], ["Mortal Bulwark", "TCE"], 20, [
+    advantageOn(
+      "against an aberration, celestial, elemental, fey or fiend, while Mortal Bulwark lasts",
+    ),
+  ]),
+  subclassFeature(sorcerer, ["Wild", "PHB"], ["Tides of Chaos", "PHB"], 1, [
+    advantageOn("spending Tides of Chaos"),
+  ]),
+  subclassFeature(warlock, ["Great Old One", "PHB"], ["Entropic Ward", "PHB"], 6, [
+    advantageOn("against the creature Entropic Ward made miss, until the end of your next turn"),
+  ]),
+  {
+    ref: { name: "Improved Pact Weapon", source: "XGE" },
+    mechanics: [
+      {
+        kind: "attack",
+        weapons: "any",
+        attack: 1,
+        damage: 1,
+        option: "with your pact weapon, unless magic already gives it a bonus",
+      },
+    ],
+  },
+  {
+    ref: { name: "Charger", source: "PHB" },
+    mechanics: [
+      {
+        kind: "attack",
+        weapons: "melee",
+        unarmed: true,
+        damage: 5,
+        option: "on the bonus action attack after you Dash 10 feet in a straight line",
+      },
+    ],
+  },
+  {
+    ref: { name: "Thrown Weapon Fighting", source: "TCE" },
+    mechanics: [{ kind: "attack", weapons: "thrown", damage: 2, option: "on a ranged attack" }],
+  },
+  {
+    ref: { name: "Mounted Combatant", source: "PHB" },
+    mechanics: [
+      advantageOn("on a melee attack against an unmounted creature smaller than your mount"),
+    ],
+  },
+  {
+    ref: { name: "Crusher", source: "TCE" },
+    mechanics: [
+      advantageOn(
+        "against a creature you dealt a bludgeoning critical hit, until the start of your next turn",
+      ),
+    ],
+  },
+  {
+    ref: { name: "Feinting Attack", source: "PHB" },
+    mechanics: [advantageOn("on your next attack this turn against the creature you feint")],
+  },
+  {
+    ref: { name: "Storm Rune", source: "TCE" },
+    mechanics: [advantageOn("spending your reaction while the rune's prophetic state lasts")],
+  },
+  // An optional feature knows only the character's total level, so the player takes the size
+  // the artificer's own level gives.
+  {
+    ref: { name: "Enhanced Weapon", source: "TCE" },
+    mechanics: [
+      {
+        kind: "attack",
+        weapons: "any",
+        attack: 1,
+        damage: 1,
+        option: `${INFUSED}, below artificer level 10`,
+      },
+      {
+        kind: "attack",
+        weapons: "any",
+        attack: 2,
+        damage: 2,
+        option: `${INFUSED}, from artificer level 10`,
+      },
+    ],
+  },
+  ...(
+    [
+      ["Radiant Weapon", "any"],
+      ["Returning Weapon", "thrown"],
+    ] as const
+  ).map(
+    ([name, weapons]): FeatureMechanics => ({
+      ref: { name, source: "TCE" },
+      mechanics: [{ kind: "attack", weapons, attack: 1, damage: 1, option: INFUSED }],
+    }),
+  ),
+  {
+    ref: { name: "Repeating Shot", source: "TCE" },
+    mechanics: [{ kind: "attack", weapons: "ranged", attack: 1, damage: 1, option: INFUSED }],
+  },
+  // A superiority die added to the roll is a die, and an attack term holds a number.
+  narrative({ name: "Precision Attack", source: "PHB" }),
+];
+
 /**
  * Effects the player starts and ends, and what holds while each runs. A cost the start spends
  * past one use of the feature or its pool is the player's to spend.
@@ -128,11 +316,11 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
   ]),
   subclassFeature(paladin, ["Devotion", "PHB"], ["Sacred Weapon", "PHB"], 3, [
     { kind: "active", endsOn: ["incapacitated"] },
-    { kind: "attack", attack: "cha", option: SACRED_WEAPON, while: "active" },
+    { kind: "attack", weapons: "any", attack: "cha", option: SACRED_WEAPON, while: "active" },
   ]),
   subclassFeature(paladin24, ["Devotion", "XPHB"], ["Sacred Weapon", "XPHB"], 3, [
     { kind: "active" },
-    { kind: "attack", attack: "cha", option: SACRED_WEAPON, while: "active" },
+    { kind: "attack", weapons: "any", attack: "cha", option: SACRED_WEAPON, while: "active" },
   ]),
   subclassFeature(paladin, ["Vengeance", "PHB"], ["Vow of Enmity", "PHB"], 3, [
     { kind: "active" },
@@ -1251,6 +1439,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   subclassFeature(fighter, ["Champion", "PHB"], ["Superior Critical", "PHB"], 15, critical(18)),
   subclassFeature(fighter24, ["Champion", "XPHB"], ["Improved Critical", "XPHB"], 3, critical(19)),
   subclassFeature(fighter24, ["Champion", "XPHB"], ["Superior Critical", "XPHB"], 15, critical(18)),
+  ...ATTACK_CHANGES,
   // A die rerolled or raised after it lands is not a number the damage roll's notation holds.
   narrative({ name: "Great Weapon Fighting", source: "PHB" }),
   narrative({ name: "Great Weapon Fighting", source: "XPHB" }),
@@ -1785,8 +1974,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       option: ON_A_HIT,
     },
   ]),
-  // Its critical range against the cursed target is no `attack` mechanic, which always holds,
-  // and its heal lands when the target dies, which a `heal` would move to the use that curses it.
+  // Its heal lands when the target dies, which a `heal` would move to the use that curses it.
   subclassFeature(warlock, ["Hexblade", "XGE"], ["Hexblade's Curse", "XGE"], 1, [
     {
       kind: "extraDamage",
@@ -1794,6 +1982,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
       unarmed: true,
       option: "against your cursed target",
     },
+    { kind: "attack", critical: 19, option: "against your cursed target" },
   ]),
   {
     ref: { name: "Eldritch Smite", source: "XGE" },
@@ -1859,7 +2048,6 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     ...[
       "Disarming Attack",
       "Distracting Strike",
-      "Feinting Attack",
       "Goading Attack",
       "Lunging Attack",
       "Maneuvering Attack",

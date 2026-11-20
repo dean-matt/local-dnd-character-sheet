@@ -114,6 +114,12 @@ export const SUBCLASS_NAMES = new Map([
   ["Phantom|TCE", "Phantom|TCE"],
   ["Soulknife|TCE", "Soulknife|TCE"],
   ["Scribes|TCE", "Order of Scribes|TCE"],
+  ["Conquest|XGE", "Oath of Conquest|XGE"],
+  ["Watchers|TCE", "Oath of the Watchers|TCE"],
+  ["Shadow|PHB", "Way of Shadow|PHB"],
+  ["Swashbuckler|XGE", "Swashbuckler|XGE"],
+  ["Arcane Trickster|PHB", "Arcane Trickster|PHB"],
+  ["Great Old One|PHB", "The Great Old One|PHB"],
 ]);
 
 /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */

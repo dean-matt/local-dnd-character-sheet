@@ -62,6 +62,7 @@ const unarmedStrike: CharacterDerived["unarmedStrike"] = {
     type: "bludgeoning",
     modifier: { computed: 0, manual: null, terms: [] },
   },
+  options: [],
 };
 
 function renderAttacks(derived: CharacterDerived) {
@@ -532,6 +533,67 @@ describe("Attacks", () => {
       );
     });
 
+    it("calls out a roll at the threshold a trade taken lowers, and adds no term for it", async () => {
+      const curse = {
+        source: "Hexblade's Curse",
+        attack: 0,
+        damage: 0,
+        critical: 19,
+        condition: "against your cursed target",
+      };
+      vi.spyOn(Math, "random").mockReturnValue(0.9);
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [{ ...attack(0, 5), options: [curse] }],
+      });
+      const mark = await longsword().findByRole("checkbox", { name: "Critical hit" });
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(mark).not.toBeChecked();
+
+      fireEvent.click(
+        longsword().getByRole("checkbox", {
+          name: "Hexblade's Curse crit 19–20, against your cursed target",
+        }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(mark).toBeChecked());
+      expect(posts[1]).toMatchObject({ terms: [{ source: "Strength", value: 5 }] });
+    });
+
+    it("takes one size of a feature's trade at a time", async () => {
+      const blade = (bonus: number) => ({
+        source: "Sharpen the Blade",
+        attack: bonus,
+        damage: bonus,
+        critical: null,
+        condition: `${bonus} ki`,
+      });
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [{ ...attack(0, 5), options: [blade(1), blade(2), blade(3)] }],
+      });
+      const two = await longsword().findByRole("checkbox", {
+        name: "Sharpen the Blade +2/+2, 2 ki",
+      });
+      const three = longsword().getByRole("checkbox", { name: "Sharpen the Blade +3/+3, 3 ki" });
+      fireEvent.click(three);
+      fireEvent.click(two);
+      expect(two).toBeChecked();
+      expect(three).not.toBeChecked();
+      expect(
+        longsword().getByRole("checkbox", { name: "Sharpen the Blade +1/+1, 1 ki" }),
+      ).not.toBeChecked();
+      fireEvent.click(screen.getByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({
+        terms: [
+          { source: "Strength", value: 5 },
+          { source: "Sharpen the Blade", value: 2 },
+        ],
+      });
+    });
+
     it("does not call out a roll one below a lowered threshold", async () => {
       const lowered = {
         ...attack(0, 5),
@@ -693,6 +755,7 @@ describe("Attacks", () => {
         source: "Sharpshooter",
         attack: -5,
         damage: 10,
+        critical: null,
         condition: "before the attack",
       };
       const { posts } = renderRolling({
@@ -989,7 +1052,13 @@ describe("Attacks", () => {
     });
 
     it("offers no trade on a row with no damage to roll", async () => {
-      const trade = { source: "Sharpshooter", attack: -5, damage: 10, condition: "before" };
+      const trade = {
+        source: "Sharpshooter",
+        attack: -5,
+        damage: 10,
+        critical: null,
+        condition: "before",
+      };
       renderRolling({
         ...derivedRecord(),
         attacks: [{ ...attack(0, 5), damage: null, options: [trade] }],
