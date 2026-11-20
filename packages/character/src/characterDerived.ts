@@ -207,7 +207,7 @@ const limitedUsesSchema = z.strictObject({
   level: z.int().min(1).max(20).nullable(),
   key: z.string().min(1),
   count: z.int().min(0),
-  reset: z.enum(["short", "long"]),
+  reset: z.enum(["short", "long", "manual"]),
 });
 
 const attackSchema = z.strictObject({

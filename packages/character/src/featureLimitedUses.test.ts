@@ -24,7 +24,7 @@ const PROFICIENCY = 4;
 const values =
   (cha: number) =>
   (term: Ability | "proficiency"): number =>
-    term === "cha" ? cha : term === "proficiency" ? PROFICIENCY : 0;
+    term === "cha" ? cha : term === "int" ? 2 : term === "proficiency" ? PROFICIENCY : 0;
 
 const usesOf = (held: CharacterDefinition, name: string, cha = 3) =>
   featureLimitedUses(held, values(cha)).find(({ feature }) => feature.name === name);
@@ -132,5 +132,43 @@ describe("featureLimitedUses", () => {
       key: "feat|PHB|Lucky",
       count: 3,
     });
+  });
+
+  it("counts Limited Wish once, and leaves it to the player to restore", () => {
+    const genie = levelsOf("Warlock", "PHB", 14, { name: "The Genie", source: "TCE" });
+    expect(usesOf(genie, "Limited Wish")).toMatchObject({ count: 1, reset: "manual" });
+  });
+
+  it("counts a Spell-Storing Item's stored spell twice the Intelligence modifier, at least twice", () => {
+    const artificer = levelsOf("Artificer", "TCE", 11);
+    expect(usesOf(artificer, "Spell-Storing Item")).toMatchObject({ count: 4, reset: "long" });
+    const dull = { ...artificer, houseRules: { minimumOneUse: true } };
+    expect(
+      featureLimitedUses(dull, () => -1).find((u) => u.feature.name === "Spell-Storing Item"),
+    ).toMatchObject({ count: 2 });
+  });
+
+  const runeKnight = (fighter: number, other = 0): CharacterDefinition => ({
+    ...levelsOf("Fighter", "PHB", fighter, { name: "Rune Knight", source: "TCE" }),
+    levels: [
+      ...levelsOf("Fighter", "PHB", fighter, { name: "Rune Knight", source: "TCE" }).levels,
+      ...levelsOf("Wizard", "PHB", other).levels,
+    ],
+    optionalFeatures: ["Cloud Rune", "Fire Rune"].map((name) => ({
+      ref: { name, source: "TCE" },
+      featureType: "RN",
+      grantedBy: { kind: "class" as const, ref: { name: "Fighter", source: "PHB" } },
+    })),
+  });
+
+  it("counts each rune once per short rest, twice from the fighter's 15th level", () => {
+    for (const rune of ["Cloud Rune", "Fire Rune"]) {
+      expect(usesOf(runeKnight(14), rune)).toMatchObject({ count: 1, reset: "short" });
+      expect(usesOf(runeKnight(15), rune)).toMatchObject({ count: 2, reset: "short" });
+    }
+  });
+
+  it("reads the doubling from fighter levels, not the character's total", () => {
+    expect(usesOf(runeKnight(14, 6), "Cloud Rune")?.count).toBe(1);
   });
 });

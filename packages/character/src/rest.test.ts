@@ -373,6 +373,7 @@ describe("a rest and a feature's limited uses", () => {
   const features = [
     { key: "Race|Dwarf|PHB|Stone's Endurance", reset: "short" as const },
     { key: "Race|Half-Orc|PHB|Relentless Endurance", reset: "long" as const },
+    { key: "Class|Warlock|PHB|Limited Wish", reset: "manual" as const },
   ];
   const used = {
     ...defaultCharacterState(),
@@ -381,12 +382,15 @@ describe("a rest and a feature's limited uses", () => {
   const spent = (length: "short" | "long") =>
     restedState(classic, sheet, used, length, undefined, features).featureUses;
 
-  it("restores every feature's uses on a long rest", () => {
-    expect(spent("long")).toEqual([]);
+  it("restores every feature's uses on a long rest but a manual one's", () => {
+    expect(spent("long")).toEqual([{ key: features[2]?.key, expended: 1 }]);
   });
 
   it("restores only a short-rest feature's uses on a short rest", () => {
-    expect(spent("short")).toEqual([{ key: features[1]?.key, expended: 1 }]);
+    expect(spent("short")).toEqual([
+      { key: features[1]?.key, expended: 1 },
+      { key: features[2]?.key, expended: 1 },
+    ]);
   });
 });
 
