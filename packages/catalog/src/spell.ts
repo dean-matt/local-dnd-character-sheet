@@ -160,7 +160,8 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
  * names the race, subrace, background, feat or optional feature a pick was made for; its
  * `kind` stays a string because `@dnd/character` owns that vocabulary. `fromItem` names the
  * equipped item that lets the character cast a spell the player did not pick, and
- * `fromSubclass` the subclass that grants one by its class's level. `cost` is what casting a
+ * `fromGrantor` the subclass, race, subrace, background, feat or optional feature that grants
+ * one the definition does not list. `cost` is what casting a
  * granted spell spends, such as 2 Ki.
  */
 const sheetSpellFields = {
@@ -170,7 +171,7 @@ const sheetSpellFields = {
   prepared: z.boolean(),
   granted: z.literal(true).optional(),
   fromItem: z.string().min(1).optional(),
-  fromSubclass: z.string().min(1).optional(),
+  fromGrantor: z.string().min(1).optional(),
   cost: z.strictObject({ amount: z.int().min(1), resource: z.string().min(1) }).optional(),
   origin: contentRef.optional(),
   pickedFor: z

@@ -51,6 +51,8 @@ const KIND_PATTERNS: Record<Kind, RegExp> = {
   convert:
     /\b(?:transform|convert)\w*[^."]{0,60}\bspell slots?\b|\bspell slots?\b[^."]{0,60}\bto (?:gain|regain) [^."]{0,40}\b(?:points?|uses?)\b|\bregain one expended spell slot\b/i,
   turn: /\battack (?:\w+ ){0,3}(?:twice|three times|four times)\b|\bone additional action\b|\{@action (?!Attack)[^}]+\}[^."]{0,80}\bas a (?:\{@variantrule )?(?:bonus action|reaction)\b|\bas a (?:\{@variantrule )?bonus action\b[^."]{0,20}\{@action|\bbonus action on each of your turns in combat\b|\bgranted by your Cunning Action\b/i,
+  spells:
+    /"additionalSpells":|\byou (?:can|may) cast (?:the )?\{@spell [^}]+\}[^."]{0,40}\b(?:at will|once)\b|\bwithout expending a spell slot\b|\balways (?:have|has) (?!prepared)[^."]{1,80}\bprepared\b|\byou (?:learn|know) (?:the )?\{@spell [^}]+\} (?:cantrip|spell)\b|\bspells? of your choice from any\b/i,
   uses: /\bnumber of times equal to\b|\bregain (?:all |one |any )?(?:of )?(?:its |your )?expended uses\b|\buse (?:it|this feature) (?:again|twice|three times)\b|\b(?:can't|cannot) (?:use|do so|cast)[^."]{0,40} again until\b/i,
 };
 

@@ -19,6 +19,7 @@
   "pool": 0,
   "convert": 0,
   "turn": 0,
+  "spells": 40,
   "uses": 2,
-  "unclassified": 579
+  "unclassified": 519
 }

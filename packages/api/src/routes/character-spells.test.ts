@@ -111,6 +111,7 @@ const TIEFLING = { name: "Tiefling", source: "PHB" };
 const GLOOM_TOUCHED = { name: "Gloom Touched", source: "PHB" };
 const ASMODEUS = { name: "Asmodeus", source: "MTF" };
 const HAUNTED_ONE = { name: "Haunted One", source: "CoS" };
+const MIST_STANCE = { name: "Mist Stance", source: "PHB" };
 
 /** A spell row carrying only what the sheet's facts read. */
 const spellRow = (name: string, source: string, level: number) => ({
@@ -349,6 +350,7 @@ describe("characterSpellsRoutes", () => {
             ["subraces", ASMODEUS, 0, TIEFLING],
             ["backgrounds", HAUNTED_ONE, 0, undefined],
             ["feats", GLOOM_TOUCHED, 0, undefined],
+            ["optional_features", MIST_STANCE, 0, undefined],
           ] as const
         ).map(([granted_by, row, level, parent]) => ({
           spell_name: "Darkness",
@@ -545,10 +547,10 @@ describe("characterSpellsRoutes", () => {
       } as CharacterDefinition);
     };
     const listed = async () =>
-      (await spells()).map(({ name, source, fromSubclass, fromItem, cost, granted }) => ({
+      (await spells()).map(({ name, source, fromGrantor, fromItem, cost, granted }) => ({
         name,
         source,
-        fromSubclass,
+        fromGrantor,
         fromItem,
         cost,
         granted,
@@ -558,17 +560,17 @@ describe("characterSpellsRoutes", () => {
       monk(MONK, SHADOW, 3);
       const ki = { amount: 2, resource: "Ki" };
       expect(await listed()).toEqual([
-        { name: "Darkness", source: "PHB", fromSubclass: SHADOW.name, cost: ki, granted: true },
-        { name: "Darkvision", source: "PHB", fromSubclass: SHADOW.name, cost: ki, granted: true },
-        { name: "Minor Illusion", source: "PHB", fromSubclass: SHADOW.name, granted: true },
+        { name: "Darkness", source: "PHB", fromGrantor: SHADOW.name, cost: ki, granted: true },
+        { name: "Darkvision", source: "PHB", fromGrantor: SHADOW.name, cost: ki, granted: true },
+        { name: "Minor Illusion", source: "PHB", fromGrantor: SHADOW.name, granted: true },
         {
           name: "Pass without Trace",
           source: "PHB",
-          fromSubclass: SHADOW.name,
+          fromGrantor: SHADOW.name,
           cost: ki,
           granted: true,
         },
-        { name: "Silence", source: "PHB", fromSubclass: SHADOW.name, cost: ki, granted: true },
+        { name: "Silence", source: "PHB", fromGrantor: SHADOW.name, cost: ki, granted: true },
       ]);
     });
 
@@ -578,14 +580,14 @@ describe("characterSpellsRoutes", () => {
         {
           name: "Darkness",
           source: "XPHB",
-          fromSubclass: WARRIOR_OF_SHADOW.name,
+          fromGrantor: WARRIOR_OF_SHADOW.name,
           cost: { amount: 1, resource: "Focus Point" },
           granted: true,
         },
         {
           name: "Minor Illusion",
           source: "XPHB",
-          fromSubclass: WARRIOR_OF_SHADOW.name,
+          fromGrantor: WARRIOR_OF_SHADOW.name,
           granted: true,
         },
       ]);
@@ -618,7 +620,7 @@ describe("characterSpellsRoutes", () => {
           {
             name: "Silence",
             source: "PHB",
-            fromSubclass: LAND.name,
+            fromGrantor: LAND.name,
             cost: { amount: 1, resource: "Tide" },
             granted: true,
           },
@@ -648,7 +650,7 @@ describe("characterSpellsRoutes", () => {
       expect(all.filter(({ name }) => name === "Darkness")).toEqual([
         expect.objectContaining({ cost: { amount: 2, resource: "Ki" } }),
       ]);
-      expect(all[0]).not.toHaveProperty("fromSubclass");
+      expect(all[0]).not.toHaveProperty("fromGrantor");
       const silence = all.filter(({ name }) => name === "Silence");
       expect(silence).toHaveLength(1);
       expect(silence[0]).not.toHaveProperty("cost");
@@ -658,11 +660,16 @@ describe("characterSpellsRoutes", () => {
       const DARKNESS = { ref: { name: "Darkness", source: "PHB" }, prepared: true, granted: true };
       const darkness = async () => (await listed()).filter(({ name }) => name === "Darkness");
       const free = { name: "Darkness", source: "PHB", granted: true };
-      const costed = { ...free, fromSubclass: SHADOW.name, cost: { amount: 2, resource: "Ki" } };
+      const costed = { ...free, fromGrantor: SHADOW.name, cost: { amount: 2, resource: "Ki" } };
 
       it("lists a Tiefling Shadow Monk's free Darkness beside Way of Shadow's", async () => {
         monk(MONK, SHADOW, 5, [DARKNESS], { race: TIEFLING });
         expect(await darkness()).toEqual([free, costed]);
+      });
+
+      it("lists both where the definition lists neither", async () => {
+        monk(MONK, SHADOW, 5, [], { race: TIEFLING });
+        expect(await darkness()).toEqual([costed, { ...free, fromGrantor: TIEFLING.name }]);
       });
 
       it("leaves a feat's entry free", async () => {
@@ -742,13 +749,13 @@ describe("characterSpellsRoutes", () => {
       const darkness = async () =>
         (await spells())
           .filter(({ name }) => name === "Darkness")
-          .map(({ fromItem, fromSubclass, cost }) => ({ fromItem, fromSubclass, cost }));
+          .map(({ fromItem, fromGrantor, cost }) => ({ fromItem, fromGrantor, cost }));
       const ki = { amount: 2, resource: "Ki" };
 
       it("lists the item's row beside the subclass's", async () => {
         monk(MONK, SHADOW, 3, [], cloak);
         expect(await darkness()).toEqual([
-          { fromSubclass: SHADOW.name, cost: ki },
+          { fromGrantor: SHADOW.name, cost: ki },
           { fromItem: "Cloak of Shade" },
         ]);
       });
@@ -763,6 +770,64 @@ describe("characterSpellsRoutes", () => {
         );
         expect(await darkness()).toEqual([{ cost: ki }, { fromItem: "Cloak of Shade" }]);
       });
+    });
+  });
+
+  describe("a spell a race, subrace, background, feat or optional feature grants", () => {
+    const wizard = (level: number, extra: object, spells: object[] = []) =>
+      store({
+        ...withSpells(spells),
+        ...extra,
+        levels: Array.from({ length: level }, () => ({ class: WIZARD })),
+      } as CharacterDefinition);
+    const listed = async () =>
+      (await spells()).map(({ name, fromGrantor, prepared, granted }) => ({
+        name,
+        fromGrantor,
+        prepared,
+        granted,
+      }));
+    const darkness = (fromGrantor: string) => ({
+      name: "Darkness",
+      fromGrantor,
+      prepared: true,
+      granted: true,
+    });
+
+    it("leaves out a race's spell below the character level that grants it", async () => {
+      wizard(4, { race: TIEFLING });
+      expect(await spells()).toEqual([]);
+    });
+
+    it("lists a race's spell from the character level that grants it", async () => {
+      wizard(5, { race: TIEFLING });
+      expect(await listed()).toEqual([darkness(TIEFLING.name)]);
+    });
+
+    it.each([
+      [{ race: TIEFLING, subrace: ASMODEUS }, ASMODEUS.name],
+      [{ background: HAUNTED_ONE }, HAUNTED_ONE.name],
+      [{ feats: [GLOOM_TOUCHED] }, GLOOM_TOUCHED.name],
+      [
+        {
+          optionalFeatures: [
+            { ref: MIST_STANCE, featureType: "ED", grantedBy: { kind: "class", ref: MONK } },
+          ],
+        },
+        MIST_STANCE.name,
+      ],
+    ])("lists the spell %o grants under %s", async (extra, name) => {
+      wizard(1, extra);
+      expect(await listed()).toEqual([darkness(name)]);
+    });
+
+    it("leaves out a spell the definition already lists", async () => {
+      wizard(5, { race: TIEFLING }, [
+        { ref: { name: "Darkness", source: "PHB" }, prepared: true, granted: true },
+      ]);
+      expect(await listed()).toEqual([
+        { name: "Darkness", fromGrantor: undefined, prepared: true, granted: true },
+      ]);
     });
   });
 

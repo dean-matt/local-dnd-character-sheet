@@ -340,7 +340,7 @@ describe("SpellsSection", () => {
     renderSection(NON_CASTER, {
       spells: [
         { ...hex, granted: true, fromItem: "Wand of Hexing" },
-        { ...hex, name: "Darkness", granted: true, fromSubclass: "Way of Shadow" },
+        { ...hex, name: "Darkness", granted: true, fromGrantor: "Way of Shadow" },
       ] as CharacterSpells["spells"],
     });
 
