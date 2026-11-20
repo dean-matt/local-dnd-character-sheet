@@ -39,6 +39,7 @@ const zero: Counts = {
   martialArts: 0,
   pool: 0,
   convert: 0,
+  poolCost: 0,
   turn: 0,
   spells: 0,
   uses: 0,
@@ -134,6 +135,13 @@ describe("mechanicGaps", () => {
   db.prepare(
     "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
   ).run("Flurry of Blows", "PHB", "Monk", "PHB", 2, "classic", surging);
+  feat.run("Spender", "PHB", "classic", json({ srd: true }, "you can spend 2 ki points to strike"));
+  feat.run(
+    "Stunning Strike",
+    "PHB",
+    "classic",
+    json({ srd: true, consumes: { name: "Ki", amount: 1 } }, "stun the target"),
+  );
   feat.run(
     "Winged",
     "PHB",
@@ -183,6 +191,7 @@ describe("mechanicGaps", () => {
     expect(gaps.pool).toEqual(["Superior (PHB)"]);
     expect(gaps.convert).toEqual(["Flexible (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
+    expect(gaps.poolCost).toEqual(["Spender (PHB)"]);
     expect(gaps.active).toEqual(["Winged (PHB)"]);
     expect(gaps.turn).toEqual(["Nimble (PHB)", "Twice (PHB)"]);
     expect(gaps.spells).toEqual(["Arcane (PHB)", "Gifted (PHB)"]);
@@ -192,6 +201,7 @@ describe("mechanicGaps", () => {
       "Fortunate (PHB)",
       "Fountain (XPHB)",
       "Strider (PHB)",
+      "Stunning Strike (PHB)",
       "Turning (PHB)",
       "Venom (PHB)",
     ]);
@@ -210,11 +220,12 @@ describe("mechanicGaps", () => {
       tempHp: 1,
       pool: 1,
       convert: 1,
+      poolCost: 1,
       uses: 1,
       active: 1,
       turn: 2,
       spells: 2,
-      unclassified: 7,
+      unclassified: 8,
     });
   });
 

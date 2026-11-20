@@ -43,21 +43,82 @@ describe("featureResource", () => {
   );
 
   it.each(["Sacred Weapon", "Vow of Enmity"])(
-    "spends no pool on %s (PHB), whose class table carries no Channel Divinity",
+    "spends a Channel Divinity use on %s (PHB) from the pool the Paladin's feature gives",
     (name) => {
       const paladin = { name: "Paladin", source: "PHB" };
       const derived = derivedWith([pool("channel_divinity", paladin, 1)]);
+      const stored = defaultCharacterState();
       const feature = featureResource(
         derived,
-        defaultCharacterState(),
+        stored,
         "classic",
         { name, source: "PHB", uses: undefined },
         { class: paladin },
       );
 
-      expect(feature).toBeNull();
+      expect(feature).toMatchObject({ left: 1, total: 1, min: 1, max: 1, blocked: null });
+      expect(feature?.spend(stored).classResources[0]?.expended).toBe(1);
     },
   );
+
+  it("spends the whole cost of a feature and refuses it when the pool is short", () => {
+    const monk = { name: "Monk", source: "PHB" };
+    const feature = { name: "Shadow Arts", source: "PHB", uses: undefined };
+    const stored = defaultCharacterState();
+
+    const enough = featureResource(
+      derivedWith([pool("ki_points", monk, 3)]),
+      stored,
+      "classic",
+      feature,
+      { class: monk },
+    );
+    expect(enough).toMatchObject({ left: 3, min: 2, max: 2, blocked: null });
+    expect(enough?.spend(stored).classResources[0]?.expended).toBe(2);
+
+    const short = featureResource(
+      derivedWith([pool("ki_points", monk, 1)]),
+      stored,
+      "classic",
+      feature,
+      { class: monk },
+    );
+    expect(short?.blocked).toBe("Needs 2; 1 left.");
+  });
+
+  it("spends a chosen amount of a cost that varies, up to what is left", () => {
+    const sorcerer = { name: "Sorcerer", source: "PHB" };
+    const twinned = { name: "Twinned Spell", source: "PHB", uses: undefined };
+    const stored = defaultCharacterState();
+    const feature = featureResource(
+      derivedWith([pool("sorcery_points", sorcerer, 5)]),
+      stored,
+      "classic",
+      twinned,
+      { class: sorcerer },
+    );
+
+    expect(feature).toMatchObject({ min: 1, max: 5, blocked: null });
+    expect(feature?.spend(stored, 3).classResources[0]?.expended).toBe(3);
+  });
+
+  it("spends the uses of the feature a Psionic Energy die is counted by", () => {
+    const fighter = { name: "Fighter", source: "PHB" };
+    const power = { key: "psionic-power", count: 4, reset: "long" as const };
+    const strike = { name: "Psionic Strike", source: "TCE", uses: undefined };
+    const stored = defaultCharacterState();
+    const feature = featureResource(
+      derivedWith([]),
+      stored,
+      "classic",
+      strike,
+      { class: fighter },
+      (name) => (name === "Psionic Power" ? power : undefined),
+    );
+
+    expect(feature).toMatchObject({ left: 4, total: 4, blocked: null });
+    expect(feature?.spend(stored).featureUses).toEqual([{ key: "psionic-power", expended: 1 }]);
+  });
 
   it("starts a rage with its use and refuses a second while raging", () => {
     const derived = derivedWith([pool("rages", BARBARIAN, 2)]);

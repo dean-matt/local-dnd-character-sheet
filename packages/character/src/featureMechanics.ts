@@ -465,8 +465,9 @@ export const dieSizeSchema = z.union([
 
 /**
  * A class pool the feature gives where no class table prints a column for it: `count` dice
- * of `die` sides, keyed `key` as a table's `resource_key` would be. Each of `scales` replaces
- * the count, the die or both from a level in the feature's class.
+ * of `die` sides, or plain uses where it has no die, keyed `key` as a table's `resource_key`
+ * would be. Each of `scales` replaces the count, the die or both from a level in the
+ * feature's class.
  */
 const poolKeySchema = z.string().regex(/^[a-z]+(?:_[a-z]+)*$/);
 
@@ -474,7 +475,7 @@ const poolMechanicSchema = z.strictObject({
   kind: z.literal("pool"),
   key: poolKeySchema,
   count: z.int().min(1),
-  die: dieSizeSchema,
+  die: dieSizeSchema.optional(),
   scales: z
     .array(
       z

@@ -68,7 +68,7 @@ const namesPool = (resource: string, key: string) =>
 function featurePoolCells(
   held: readonly Held[],
   group: ReturnType<typeof classLevels>[number],
-): (ClassResourceCell & { die: PoolDie })[] {
+): (ClassResourceCell & { die?: PoolDie })[] {
   const owner = catalogRef(group.class);
   if (!owner) return [];
   return held.flatMap(({ entry, levels }) =>
@@ -77,10 +77,11 @@ function featurePoolCells(
     entry.ref.classSource === owner.source
       ? mechanicsOfKind(entry, "pool").map(({ key, count, die, scales = [] }) => {
           const reached = scales.filter((scale) => levels >= scale.level);
+          const sized = reached.findLast((scale) => scale.die !== undefined)?.die ?? die;
           return {
             key,
             value: String(reached.findLast((scale) => scale.count !== undefined)?.count ?? count),
-            die: reached.findLast((scale) => scale.die !== undefined)?.die ?? die,
+            ...(sized !== undefined && { die: sized }),
           };
         })
       : [],

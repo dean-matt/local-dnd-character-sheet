@@ -173,12 +173,14 @@ describe("Actions", () => {
         restores = [],
         hitPoints = { current: null, temporary: 0 },
         turn = derivedRecord().turn,
+        poolKey = "second_wind",
       }: {
         expended?: number;
         maximum?: number;
         restores?: CharacterDerived["featureRestores"];
         hitPoints?: CharacterState["hitPoints"];
         turn?: CharacterDerived["turn"];
+        poolKey?: string;
       } = {},
     ) {
       let stored = stateRecord();
@@ -187,7 +189,7 @@ describe("Actions", () => {
         state: {
           ...stored.state,
           hitPoints,
-          classResources: [{ class: FIGHTER, key: "second_wind", maximum, expended }],
+          classResources: [{ class: FIGHTER, key: poolKey, maximum, expended }],
         },
       };
       const writes: CharacterState[] = [];
@@ -228,7 +230,7 @@ describe("Actions", () => {
         classResources: [
           {
             class: FIGHTER,
-            key: "second_wind",
+            key: poolKey,
             maximum: { computed: maximum, manual: null, terms: [] },
           },
         ],
@@ -253,6 +255,31 @@ describe("Actions", () => {
       expect(within(row).getByRole("status")).toHaveTextContent(
         "Second Wind used: 1 of 2 left. Bonus action spent.",
       );
+    });
+
+    it("spends a chosen amount of a cost that varies, listed as a free action", async () => {
+      const twinned = {
+        resolved: true,
+        name: "Twinned Spell",
+        source: "PHB",
+        level: 3,
+        entries: [],
+      };
+      const { card, writes } = renderUse(twinned, { poolKey: "sorcery_points", maximum: 5 });
+      const row = (await within(card).findByRole("button", { name: "Use Twinned Spell" })).closest(
+        "li",
+      ) as HTMLElement;
+      expect(row).toHaveTextContent("5 / 5");
+
+      fireEvent.change(within(row).getByLabelText("Amount to spend on Twinned Spell"), {
+        target: { value: "3" },
+      });
+      fireEvent.click(within(row).getByRole("button", { name: "Use Twinned Spell" }));
+
+      await waitFor(() => expect(row).toHaveTextContent("2 / 5"));
+      expect(writes[0]?.classResources[0]?.expended).toBe(3);
+      expect(writes[0]?.turn.bonusAction).toBe(false);
+      expect(within(row).getByRole("status")).toHaveTextContent("Twinned Spell used: 2 of 5 left.");
     });
 
     it("adds an action to the turn in the spend's one write where the feature does", async () => {

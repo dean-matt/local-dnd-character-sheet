@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { ACTION_TURN_MARK, featureActionType, featurePoolKey } from "./featureActions.ts";
+import {
+  ACTION_TURN_MARK,
+  featureActionType,
+  featureCost,
+  featureCostRecorded,
+  featurePoolKey,
+} from "./featureActions.ts";
 
 describe("featureActionType", () => {
   it("names the action a curated feature takes, by source", () => {
@@ -48,6 +54,53 @@ describe("featurePoolKey", () => {
     expect(featurePoolKey({ name: "Channel Divinity", source: "PHB" })).toBeUndefined();
     expect(featurePoolKey({ name: "Wild Shape", source: "PHB" })).toBeUndefined();
     expect(featurePoolKey({ name: "Symbiotic Entity", source: "TCE" })).toBeUndefined();
+  });
+});
+
+describe("featureCost", () => {
+  it("prices a feature in its pool, what a use spends at least and at most", () => {
+    expect(featureCost({ name: "Stunning Strike", source: "PHB" })).toEqual({
+      pool: "ki_points",
+      min: 1,
+    });
+    expect(featureCost({ name: "Empty Body", source: "PHB" })).toEqual({
+      pool: "ki_points",
+      min: 4,
+      max: 8,
+    });
+    expect(featureCost({ name: "Twinned Spell", source: "PHB" })).toEqual({
+      pool: "sorcery_points",
+      min: 1,
+      max: 9,
+    });
+    expect(featureCost({ name: "Revelation in Flesh", source: "TCE" })).toEqual({
+      pool: "sorcery_points",
+      min: 1,
+      max: null,
+    });
+    expect(featureCost({ name: "Riposte", source: "PHB" })).toEqual({
+      pool: "superiority_dice",
+      min: 1,
+    });
+    expect(featureCost({ name: "Turn Undead", source: "XPHB" })).toBeUndefined();
+  });
+
+  it("prices the Psionic Energy dice from the uses of Psionic Power", () => {
+    expect(featureCost({ name: "Psionic Strike", source: "TCE" })).toEqual({
+      feature: "Psionic Power",
+      min: 1,
+    });
+  });
+
+  it("is recorded for a priced feature and one whose cost is the player's to spend", () => {
+    expect(featureCostRecorded({ name: "Quickened Spell", source: "PHB" })).toBe(true);
+    expect(featureCostRecorded({ name: "Rend Mind", source: "TCE" })).toBe(true);
+    expect(featureCostRecorded({ name: "Rend Mind", source: "PHB" })).toBe(false);
+  });
+
+  it("lists a pool-priced feature without an action of its own as a free one", () => {
+    expect(featureActionType({ name: "Careful Spell", source: "PHB" })).toBe("free");
+    expect(featureActionType({ name: "Flurry of Blows", source: "PHB" })).toBe("bonus action");
   });
 });
 

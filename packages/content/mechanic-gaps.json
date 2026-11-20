@@ -20,6 +20,7 @@
   "convert": 0,
   "turn": 0,
   "spells": 40,
-  "uses": 2,
-  "unclassified": 519
+  "poolCost": 0,
+  "uses": 1,
+  "unclassified": 518
 }

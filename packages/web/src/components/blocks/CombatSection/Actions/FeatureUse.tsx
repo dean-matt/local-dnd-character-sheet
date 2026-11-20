@@ -16,13 +16,27 @@ import { useRef, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useFeatureRestore } from "../../../../hooks/useFeatureRestore.ts";
-import { featureResource } from "../../../../lib/featureResource.ts";
+import { type FeatureResource, featureResource } from "../../../../lib/featureResource.ts";
 import { Announcer } from "../../../Announcer.tsx";
+import { AmountInput } from "./AmountInput.tsx";
 import { ConvertDialog } from "./ConvertDialog.tsx";
 import { tradeWords } from "./tradeWords.ts";
 
 const BUTTON =
   "h-6 rounded-control border border-border bg-surface px-2 font-semibold text-label hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
+
+/** The amount a use spends: the one chosen, held between the least and most the resource allows. */
+function amountSpent(resource: FeatureResource | null, chosen: number | null) {
+  if (!resource) return 1;
+  return Math.min(Math.max(chosen ?? resource.min, resource.min), resource.max);
+}
+
+/** `used`, with what is left of a counted resource after spending `amount` of it. */
+function countLeft(resource: FeatureResource | null, amount: number, used: string) {
+  return resource?.total != null && resource.left != null
+    ? `${used}: ${resource.left - amount} of ${resource.total} left`
+    : used;
+}
 
 /**
  * A held feature's resource and its Use control. A Use spends the resource, if any, marks
@@ -40,6 +54,7 @@ export function FeatureUse({
   type,
   group,
   uses,
+  usesOf,
 }: {
   character: CharacterRecord;
   derived: CharacterDerived;
@@ -48,11 +63,13 @@ export function FeatureUse({
   type: ActionType;
   group: Pick<FeatureGroup, "class">;
   uses: LimitedUses | undefined;
+  usesOf?: (name: string) => LimitedUses | undefined;
 }) {
   const play = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
   const restore = useFeatureRestore(character.id);
   const [converting, setConverting] = useState(false);
+  const [chosen, setChosen] = useState<number | null>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const mark = ACTION_TURN_MARK[type];
   if (!play.isSuccess) return null;
@@ -64,8 +81,11 @@ export function FeatureUse({
     character.definition.edition,
     { name, source, uses },
     group,
+    usesOf,
   );
   if (!resource && !mark) return null;
+
+  const amount = amountSpent(resource, chosen);
 
   const addsAction = derived.turn.addsAction.some(
     (feature) => feature.name === name && feature.source === source,
@@ -79,16 +99,14 @@ export function FeatureUse({
     ({ feature }) => feature.name === name && feature.source === source,
   );
   const spent = () => {
-    const after = resource ? resource.spend(stored) : stored;
+    const after = resource ? resource.spend(stored, amount) : stored;
     const marked = mark ? turnMarkSpent(after, mark) : after;
     return addsAction ? actionAdded(marked, name) : marked;
   };
   const usedWords = (trade?: string) => {
     const used = `${name} used${trade ? ` to ${trade}` : ""}`;
     return [
-      resource?.total != null && resource.left != null
-        ? `${used}: ${resource.left - 1} of ${resource.total} left`
-        : used,
+      countLeft(resource, amount, used),
       ...(mark ? [`${TURN_LABELS[mark]} spent`] : []),
       ...(addsAction ? ["Action added to the turn"] : []),
     ];
@@ -121,6 +139,7 @@ export function FeatureUse({
           {resource.rest && <span className="text-muted"> {resource.rest}</span>}
         </span>
       )}
+      <AmountInput name={name} resource={resource} amount={amount} onChange={setChosen} />
       {conversion ? (
         <button
           ref={opener}
