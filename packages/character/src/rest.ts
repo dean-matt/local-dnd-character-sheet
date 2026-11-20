@@ -1,4 +1,4 @@
-import { type HitDie, hitDicePick, resets, rest } from "@dnd/rules";
+import { type HitDie, hitDicePick, type ResetTrigger, resets, rest } from "@dnd/rules";
 import type { CharacterDerived } from "./characterDerived.ts";
 import { poolReset, regainsOneOnShortRest } from "./classResources.ts";
 import { concentrationEnded } from "./concentration.ts";
@@ -22,8 +22,8 @@ type Slot = NonNullable<CharacterState["pactSlots"]>;
 /** An item's charges as the inventory endpoint lists them, and how many a long rest returns to it. */
 type ItemRecharge = { id: string; max: number; regained: number };
 
-/** A feature's limited uses as the features endpoint lists them: `short` uses return on any rest. */
-type FeatureReset = { key: string; reset: RestLength };
+/** A feature's limited uses as the features endpoint lists them: `short` uses return on any rest, `manual` on none. */
+type FeatureReset = { key: string; reset: ResetTrigger };
 
 function sheetHitDice(derived: Sheet, state: CharacterState): CharacterState["hitDice"] {
   return derived.hitDice.map((pool) => {

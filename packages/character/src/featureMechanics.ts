@@ -398,14 +398,16 @@ const tempHpMechanicSchema = restoreRefinements(
   z.strictObject({ kind: z.literal("tempHp"), ...restoreFields }),
 );
 
-const resetSchema = z.enum(["short", "long"]);
+const resetSchema = z.enum(["short", "long", "manual"]);
 
 /**
- * The uses a feature counts, restored by a `reset` rest, where `short` means either rest:
- * `count`, a number, an ability's modifier or the proficiency bonus, `times` over, plus `plus`,
- * at least `minimum`. Absent, `minimum` is 1, as a feature printing "a minimum of once" has it;
- * 0 records a feature that prints none. Each of `scales` replaces a number count, the reset or
- * both from a level in the feature's class.
+ * The uses a feature counts, restored by a `reset` rest, where `short` means either rest and
+ * `manual` no rest, only the player's word: `count`, a number, an ability's modifier or the
+ * proficiency bonus, `times` over, plus `plus`, at least `minimum`. Absent, `minimum` is 1, as a
+ * feature printing "a minimum of once" has it; 0 records a feature that prints none, 2 one that
+ * prints "a minimum of twice". Each of `scales` replaces a number count, the reset or both from a
+ * level in the feature's class, or in `levelsIn` for a feature that knows only the character's
+ * total level, such as an optional feature.
  */
 const usesMechanicSchema = z
   .strictObject({
@@ -413,8 +415,9 @@ const usesMechanicSchema = z
     count: z.union([z.int().min(1), abilitySchema, z.literal("proficiency")]),
     times: z.int().min(2).optional(),
     plus: z.int().min(1).optional(),
-    minimum: z.literal(0).optional(),
+    minimum: z.union([z.literal(0), z.literal(2)]).optional(),
     reset: resetSchema,
+    levelsIn: contentRefSchema.optional(),
     scales: z
       .array(
         z
@@ -437,6 +440,9 @@ const usesMechanicSchema = z
   )
   .refine(({ count, times }) => times === undefined || typeof count !== "number", {
     error: "times multiplies only an ability or proficiency count",
+  })
+  .refine(({ levelsIn, scales }) => levelsIn === undefined || scales !== undefined, {
+    error: "levelsIn is read only by scales",
   });
 
 export const dieSizeSchema = z.union([

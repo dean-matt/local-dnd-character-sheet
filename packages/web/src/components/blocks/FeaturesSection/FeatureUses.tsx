@@ -7,8 +7,12 @@ import { useFeatureRestore } from "../../../hooks/useFeatureRestore.ts";
 import { Announcer } from "../../Announcer.tsx";
 import { PoolButton } from "../../PoolButton.tsx";
 
-/** `short` is restored by either rest, so it reads as the shorter one. */
-const RESET: Record<LimitedUses["reset"], string> = { short: "Short rest", long: "Long rest" };
+/** `short` is restored by either rest, so it reads as the shorter one; `manual` only by the player. */
+const RESET: Record<LimitedUses["reset"], string> = {
+  short: "Short rest",
+  long: "Long rest",
+  manual: "Manual reset",
+};
 
 /**
  * A feature's uses left against its count and the rest that restores them, with a spend and

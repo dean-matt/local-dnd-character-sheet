@@ -79,7 +79,7 @@ const featureFields = {
 const limitedUsesSchema = z.strictObject({
   key: z.string().min(1),
   count: z.int().min(1),
-  reset: z.enum(["short", "long"]),
+  reset: z.enum(["short", "long", "manual"]),
 });
 
 const sheetFeatureSchema = z.discriminatedUnion("resolved", [

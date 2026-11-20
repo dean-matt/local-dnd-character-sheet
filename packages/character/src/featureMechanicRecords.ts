@@ -61,6 +61,15 @@ const grants = (grant: Omit<Extract<Mechanic, { kind: "proficiency" }>, "kind">)
   { kind: "proficiency", ...grant },
 ];
 const narrative = (ref: FeatureMechanics["ref"]): FeatureMechanics => ({ ref, narrative: true });
+
+/** Invoking a rune once, twice from Master of Runes, which only a fighter's own levels reach. */
+const RUNE_USES: Mechanic = {
+  kind: "uses",
+  count: 1,
+  reset: "short",
+  levelsIn: { name: "Fighter", source: "PHB" },
+  scales: [{ level: 15, count: 2 }],
+};
 const SPELLS: Mechanic = { kind: "spells" };
 const barbarian: [string, string] = ["Barbarian", "PHB"];
 const barbarian24: [string, string] = ["Barbarian", "XPHB"];
@@ -300,7 +309,10 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
   },
   {
     ref: { name: "Storm Rune", source: "TCE" },
-    mechanics: [advantageOn("spending your reaction while the rune's prophetic state lasts")],
+    mechanics: [
+      advantageOn("spending your reaction while the rune's prophetic state lasts"),
+      RUNE_USES,
+    ],
   },
   // An optional feature knows only the character's total level, so the player takes the size
   // the artificer's own level gives.
@@ -776,15 +788,30 @@ const LIMITED_USES: FeatureMechanics[] = [
     }),
     houseRule: "optionalClassFeatures",
   },
-  // Each restores on something other than a rest, or counts per rune or per stored spell.
-  narrative({
-    name: "Limited Wish",
-    source: "TCE",
-    className: "Warlock",
-    classSource: "PHB",
-    subclass: { shortName: "Genie", source: "TCE" },
-    level: 14,
-  }),
+  // A use the player restores once the 1d4 long rests have passed, which no rest does.
+  {
+    ref: {
+      name: "Limited Wish",
+      source: "TCE",
+      className: "Warlock",
+      classSource: "PHB",
+      subclass: { shortName: "Genie", source: "TCE" },
+      level: 14,
+    },
+    mechanics: [{ kind: "uses", count: 1, reset: "manual" }],
+  },
+  // The stored spell's uses; a long rest is when a new spell replaces it.
+  {
+    ref: {
+      name: "Spell-Storing Item",
+      source: "TCE",
+      className: "Artificer",
+      classSource: "TCE",
+      level: 11,
+    },
+    mechanics: [{ kind: "uses", count: "int", times: 2, minimum: 2, reset: "long" }],
+  },
+  // Its twice per rune is each rune's own count, which RUNE_USES scales.
   narrative({
     name: "Master of Runes",
     source: "TCE",
@@ -793,14 +820,15 @@ const LIMITED_USES: FeatureMechanics[] = [
     subclass: { shortName: "Rune Knight", source: "TCE" },
     level: 15,
   }),
-  narrative({
-    name: "Spell-Storing Item",
-    source: "TCE",
-    className: "Artificer",
-    classSource: "TCE",
-    level: 11,
-  }),
 ];
+
+/** The runes whose records carry only their uses. */
+const RUNES_INVOKED: FeatureMechanics[] = [
+  "Cloud Rune",
+  "Frost Rune",
+  "Hill Rune",
+  "Stone Rune",
+].map((name) => ({ ref: { name, source: "TCE" }, mechanics: [RUNE_USES] }));
 
 /** The feats, optional features and race traits that grant spells outright and count no uses. */
 const SPELLS_GRANTED: FeatureMechanics[] = [
@@ -2074,6 +2102,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     ref: { name: "Fire Rune", source: "TCE" },
     mechanics: [
       { kind: "extraDamage", dice: "2d6", type: "fire", option: "invoking the fire rune" },
+      RUNE_USES,
     ],
   },
   // The die each adds is the one recorded on the feature it improves or is an option of.
@@ -2471,6 +2500,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     level: 2,
   }),
   ...LIMITED_USES,
+  ...RUNES_INVOKED,
   ...ONGOING_EFFECTS,
   ...TURN_ECONOMY,
   ...SPELLS_GRANTED,
