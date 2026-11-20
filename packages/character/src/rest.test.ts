@@ -183,6 +183,21 @@ describe("restedState", () => {
       expect(expended(restedState(classic, pools, spent, "long"))).toEqual([0, 0]);
     });
 
+    it("restores a 2014 Cleric's and Paladin's Channel Divinity on a short rest", () => {
+      for (const name of ["Cleric", "Paladin"]) {
+        const cls = { name, source: "PHB" };
+        const channel = {
+          ...sheet,
+          classResources: [{ class: cls, key: "channel_divinity", maximum: total(2) }],
+        };
+        const used = {
+          ...state(),
+          classResources: [{ class: cls, key: "channel_divinity", maximum: 2, expended: 2 }],
+        };
+        expect(expended(restedState(classic, channel, used, "short"))).toEqual([0]);
+      }
+    });
+
     it("restores the Superiority Dice a feature gives on a short rest", () => {
       const fighter = { name: "Fighter", source: "PHB" };
       const dice = {

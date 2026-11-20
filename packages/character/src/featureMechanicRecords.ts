@@ -2231,6 +2231,20 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     },
     { kind: "attack", advantage: true, option: "on the turn you use Fighting Spirit" },
   ]),
+  classFeature(cleric, ["Channel Divinity", "PHB"], 2, [
+    {
+      kind: "pool",
+      key: "channel_divinity",
+      count: 1,
+      scales: [
+        { level: 6, count: 2 },
+        { level: 18, count: 3 },
+      ],
+    },
+  ]),
+  classFeature(paladin, ["Channel Divinity", "PHB"], 3, [
+    { kind: "pool", key: "channel_divinity", count: 1 },
+  ]),
   ...(
     [
       [cleric, "Channel Divinity: Preserve Life", "PHB", 2],

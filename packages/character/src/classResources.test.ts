@@ -68,6 +68,23 @@ describe("classResourcePools", () => {
     expect(battleMaster(18)).toEqual(superiority(6, 12));
   });
 
+  it("gives a 2014 Cleric and Paladin Channel Divinity uses, with no die, where their tables print none", () => {
+    const CLERIC = { name: "Cleric", source: "PHB" };
+    const PALADIN = { name: "Paladin", source: "PHB" };
+    const channel = (cls: typeof CLERIC, level: number) =>
+      classResourcePools(
+        { ...definition, levels: Array.from({ length: level }, () => ({ class: cls })) },
+        { classResources: new Map() },
+      ).map(({ key, maximum }) => [key, maximum?.computed]);
+
+    expect(channel(CLERIC, 1)).toEqual([]);
+    expect(channel(CLERIC, 2)).toEqual([["channel_divinity", 1]]);
+    expect(channel(CLERIC, 6)).toEqual([["channel_divinity", 2]]);
+    expect(channel(CLERIC, 18)).toEqual([["channel_divinity", 3]]);
+    expect(channel(PALADIN, 2)).toEqual([]);
+    expect(channel(PALADIN, 3)).toEqual([["channel_divinity", 1]]);
+  });
+
   it("sizes a multiclass Battle Master's Superiority Dice by Fighter levels, under Fighter alone", () => {
     const FIGHTER = { name: "Fighter", source: "PHB" };
     const ROGUE = { name: "Rogue", source: "PHB" };

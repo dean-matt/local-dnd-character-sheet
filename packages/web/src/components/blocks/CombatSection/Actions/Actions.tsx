@@ -17,7 +17,7 @@ import { STANDARD_ACTIONS } from "./standardActions.ts";
 type HeldFeature = Extract<SheetFeature, { resolved: true }> & {
   source: string;
   type: ActionType;
-  group: Pick<FeatureGroup, "class">;
+  group: FeatureGroup;
 };
 
 /** The resolved features the curated table maps to an action type, once each however many levels name them. */
@@ -35,6 +35,14 @@ function heldActions(groups: FeatureGroup[]): HeldFeature[] {
     held.push({ ...feature, source: feature.source, type, group });
   }
   return held;
+}
+
+/** The limited uses of the feature named `name` in any group, where it has any. */
+function usesOfFeature(groups: FeatureGroup[], name: string) {
+  for (const { features } of groups)
+    for (const feature of features)
+      if (feature.resolved && feature.name === name) return feature.uses;
+  return undefined;
 }
 
 /** How many attacks the Attack action allows, where held features raise it past one. */
@@ -62,7 +70,8 @@ export function Actions({
     [...actions, ...STANDARD_ACTIONS.classic].find((action) => action.name === name)?.source ??
     "PHB";
   const attacks = attackCount(derived.turn);
-  const held = heldActions(useCharacterFeatures(character.id, derived).data?.groups ?? []);
+  const groups = useCharacterFeatures(character.id, derived).data?.groups ?? [];
+  const held = heldActions(groups);
   return (
     <Card title="Actions">
       <div className="flex flex-col gap-2">
@@ -121,6 +130,7 @@ export function Actions({
                       type={type}
                       group={group}
                       uses={uses}
+                      usesOf={(sibling) => usesOfFeature(groups, sibling)}
                     />
                   </li>
                 ))}

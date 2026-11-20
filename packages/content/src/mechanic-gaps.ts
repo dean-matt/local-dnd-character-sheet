@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   FEATURE_MECHANICS,
+  featureCostRecorded,
   featureKey,
   featurePoolKey,
   type Mechanic,
@@ -15,7 +16,7 @@ import {
 } from "@dnd/character";
 import type Database from "better-sqlite3";
 
-type Kind = Mechanic["kind"];
+type Kind = Mechanic["kind"] | "poolCost";
 
 /**
  * A keyword match over a feature's JSON, so it misses a mechanic worded otherwise and flags
@@ -25,6 +26,9 @@ type Kind = Mechanic["kind"];
  * `active` looks for a duration on the character's own benefit, so an effect the feature lays
  * on another creature is not one.
  * `convert` counts only a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
+ * `poolCost` counts a feature that names a cost from ki, sorcery points, Channel Divinity,
+ * superiority dice or psionic energy dice and neither the cost table nor its notes list, in
+ * a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  */
 const KIND_PATTERNS: Record<Kind, RegExp> = {
   active:
@@ -53,6 +57,8 @@ const KIND_PATTERNS: Record<Kind, RegExp> = {
   turn: /\battack (?:\w+ ){0,3}(?:twice|three times|four times)\b|\bone additional action\b|\{@action (?!Attack)[^}]+\}[^."]{0,80}\bas a (?:\{@variantrule )?(?:bonus action|reaction)\b|\bas a (?:\{@variantrule )?bonus action\b[^."]{0,20}\{@action|\bbonus action on each of your turns in combat\b|\bgranted by your Cunning Action\b/i,
   spells:
     /"additionalSpells":|\byou (?:can|may) cast (?:the )?\{@spell [^}]+\}[^."]{0,40}\b(?:at will|once)\b|\bwithout expending a spell slot\b|\balways (?:have|has) (?!prepared)[^."]{1,80}\bprepared\b|\byou (?:learn|know) (?:the )?\{@spell [^}]+\} (?:cantrip|spell)\b|\bspells? of your choice from any\b/i,
+  poolCost:
+    /"consumes":\{"name":"(?:Ki|Sorcery Point|Channel Divinity|Superiority Die|Psionic Energy Die)"|\b(?:spend|expend)s? (?:up to )?(?:\d+|one|two|three|four|five|six) (?:ki|sorcery) points?/i,
   uses: /\bnumber of times equal to\b|\bregain (?:all |one |any )?(?:of )?(?:its |your )?expended uses\b|\buse (?:it|this feature) (?:again|twice|three times)\b|\b(?:can't|cannot) (?:use|do so|cast)[^."]{0,40} again until\b/i,
 };
 
@@ -121,7 +127,8 @@ export function mechanicGaps(db: Database.Database): Gaps {
   const suggests = (row: FeatureRow, kind: Kind) =>
     KIND_PATTERNS[kind].test(row.json) &&
     (kind !== "uses" || (row.uses === null && featurePoolKey(row) === undefined)) &&
-    (kind !== "convert" || row.edition === "classic");
+    (kind !== "convert" || row.edition === "classic") &&
+    (kind !== "poolCost" || (row.edition === "classic" && !featureCostRecorded(row)));
   const matches = (row: FeatureRow, bucket: Bucket) =>
     bucket === "unclassified" ? KINDS.every((kind) => !suggests(row, kind)) : suggests(row, bucket);
   return Object.fromEntries(

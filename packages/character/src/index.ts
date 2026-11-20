@@ -122,8 +122,11 @@ export {
   ACTION_TURN_MARK,
   ACTION_TYPES,
   type ActionType,
-  FEATURE_POOL_ENTRIES,
+  FEATURE_COST_ENTRIES,
+  type FeatureCost,
   featureActionType,
+  featureCost,
+  featureCostRecorded,
   featurePoolKey,
 } from "./featureActions.ts";
 export { featureDamageDice, offerSlots } from "./featureAttacks.ts";
