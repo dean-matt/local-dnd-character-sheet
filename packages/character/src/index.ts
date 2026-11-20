@@ -110,7 +110,13 @@ export {
   skillModifier,
 } from "./derive.ts";
 export { type Derived, derivedSchema } from "./derivedField.ts";
-export { encounterEnded, encounterStarted, initiativeRolled, roundAdvanced } from "./encounter.ts";
+export {
+  encounterEnded,
+  encounterStarted,
+  initiativeRestored,
+  initiativeRolled,
+  roundAdvanced,
+} from "./encounter.ts";
 export { allocatePicks, type FeatPick, grantedSkillLevels, heldSkillLevel } from "./featGrants.ts";
 export {
   ACTION_TURN_MARK,

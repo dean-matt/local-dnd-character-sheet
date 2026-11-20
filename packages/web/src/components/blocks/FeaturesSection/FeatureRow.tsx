@@ -111,14 +111,18 @@ export function FeatureRow({
       controls={
         (feature.uses || controls || startable) && (
           <>
-            {feature.uses && (
-              <FeatureUses
-                characterId={character.id}
-                derived={derived}
-                name={feature.name}
-                source={feature.source}
-                uses={feature.uses}
-              />
+            {[feature.uses, ...(feature.otherUses ?? [])].map(
+              (uses) =>
+                uses && (
+                  <FeatureUses
+                    key={uses.key}
+                    characterId={character.id}
+                    derived={derived}
+                    name={feature.name}
+                    source={feature.source}
+                    uses={uses}
+                  />
+                ),
             )}
             {startable && derived && (
               <FeatureEffect

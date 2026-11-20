@@ -80,6 +80,8 @@ const limitedUsesSchema = z.strictObject({
   key: z.string().min(1),
   count: z.int().min(1),
   reset: z.enum(["short", "long", "manual"]),
+  restoredBy: z.enum(["initiative", "soulTrinket"]).optional(),
+  part: z.enum(["conjuring"]).optional(),
 });
 
 const sheetFeatureSchema = z.discriminatedUnion("resolved", [
@@ -88,6 +90,7 @@ const sheetFeatureSchema = z.discriminatedUnion("resolved", [
     ...featureFields,
     entries: entriesSchema,
     uses: limitedUsesSchema.optional(),
+    otherUses: z.array(limitedUsesSchema).optional(),
   }),
   z.strictObject({ resolved: z.literal(false), ...featureFields }),
 ]);

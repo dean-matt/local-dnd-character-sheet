@@ -171,4 +171,33 @@ describe("featureLimitedUses", () => {
   it("reads the doubling from fighter levels, not the character's total", () => {
     expect(usesOf(runeKnight(14, 6), "Cloud Rune")?.count).toBe(1);
   });
+
+  it("names what besides a rest restores Second Chance and Ghost Walk", () => {
+    const chance = {
+      ...levelsOf("Fighter", "PHB", 1),
+      feats: [{ ref: { name: "Second Chance", source: "XGE" } }],
+    } as CharacterDefinition;
+    expect(usesOf(chance, "Second Chance")).toMatchObject({
+      reset: "short",
+      restoredBy: "initiative",
+    });
+    const phantom = levelsOf("Rogue", "PHB", 13, { name: "Phantom", source: "TCE" });
+    expect(usesOf(phantom, "Ghost Walk")).toMatchObject({
+      count: 1,
+      reset: "long",
+      restoredBy: "soulTrinket",
+    });
+  });
+
+  it("counts Manifest Mind's casts apart from its conjuring", () => {
+    const scribe = levelsOf("Wizard", "PHB", 6, { name: "Order of Scribes", source: "TCE" });
+    const mind = featureLimitedUses(scribe, values(3)).filter(
+      ({ feature }) => feature.name === "Manifest Mind",
+    );
+    expect(mind.map(({ count, part }) => [count, part])).toEqual([
+      [PROFICIENCY, undefined],
+      [1, "conjuring"],
+    ]);
+    expect(new Set(mind.map(({ key }) => key)).size).toBe(2);
+  });
 });

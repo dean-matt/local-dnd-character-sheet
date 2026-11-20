@@ -21,7 +21,17 @@ export function featureLimitedUses(
   const atLeastOne = houseRule({ houseRules: definition.houseRules ?? {} }, "minimumOneUse");
   return heldFeatures(definition).flatMap((held) =>
     mechanicsOfKind(held.entry, "uses").map(
-      ({ count, times = 1, plus = 0, minimum = 1, reset, scales = [], levelsIn }) => {
+      ({
+        count,
+        times = 1,
+        plus = 0,
+        minimum = 1,
+        reset,
+        scales = [],
+        levelsIn,
+        restoredBy,
+        part,
+      }) => {
         const levels = levelsIn
           ? (classLevels(definition).find(
               (group) => !("homebrewId" in group.class) && refKey(group.class) === refKey(levelsIn),
@@ -35,9 +45,11 @@ export function featureLimitedUses(
           feature: held.ref,
           origin: held.origin,
           level: "className" in ref ? ref.level : null,
-          key: held.usesKey,
+          key: [held.usesKey, part].filter(Boolean).join("|"),
           count: Math.max(atLeastOne ? Math.max(1, minimum) : minimum, base + plus),
           reset: reached.findLast((scale) => scale.reset !== undefined)?.reset ?? reset,
+          restoredBy,
+          part,
         };
       },
     ),

@@ -6,9 +6,12 @@ import {
   encounterEnded,
   encounterStarted,
   featuresUsed,
+  featureUsesSpent,
+  initiativeRestored,
   initiativeRolled,
   roundAdvanced,
   turnMarkToggled,
+  withFeatureUse,
 } from "./index.ts";
 import { state } from "./test/vex.ts";
 
@@ -24,6 +27,23 @@ describe("encounter", () => {
     expect(rolled.encounter).toEqual({ round: 1, initiative: 14 });
     const later = roundAdvanced(roundAdvanced(rolled));
     expect(initiativeRolled(later, 9).encounter).toEqual({ round: 3, initiative: 9 });
+  });
+
+  it("restores a use initiative restores only once none is left", () => {
+    const use = {
+      feature: { name: "Second Chance", source: "XGE" },
+      origin: "feat" as const,
+      level: null,
+      key: "feat|XGE|Second Chance",
+      count: 1,
+      reset: "short" as const,
+      restoredBy: "initiative" as const,
+    };
+    const spent = withFeatureUse(idle, use.key, 1);
+    expect(featureUsesSpent(initiativeRestored({ limitedUses: [use] }, spent), use.key, 1)).toBe(0);
+    expect(initiativeRestored({ limitedUses: [use] }, idle)).toBe(idle);
+    const other = { ...use, restoredBy: undefined };
+    expect(initiativeRestored({ limitedUses: [other] }, spent)).toBe(spent);
   });
 
   it("advances a round and stops at the bound", () => {
