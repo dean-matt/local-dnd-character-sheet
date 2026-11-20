@@ -40,6 +40,7 @@ const zero: Counts = {
   pool: 0,
   convert: 0,
   turn: 0,
+  spells: 0,
   uses: 0,
   unclassified: 0,
 };
@@ -153,6 +154,19 @@ describe("mechanicGaps", () => {
     json({ srd: true }, "you can take the {@action Dash} action as a bonus action"),
   );
 
+  feat.run(
+    "Gifted",
+    "PHB",
+    "classic",
+    JSON.stringify({ srd: true, additionalSpells: [{ innate: { _: ["mage armor"] } }] }),
+  );
+  feat.run(
+    "Arcane",
+    "PHB",
+    "classic",
+    json({ srd: true }, "you can cast {@spell fly} once without expending a spell slot"),
+  );
+
   it("names an SRD feature with no record under each kind its text suggests", () => {
     const gaps = mechanicGaps(db);
     expect(gaps.defense).toEqual(["Hardy (PHB), Fighter level 3"]);
@@ -171,6 +185,7 @@ describe("mechanicGaps", () => {
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.active).toEqual(["Winged (PHB)"]);
     expect(gaps.turn).toEqual(["Nimble (PHB)", "Twice (PHB)"]);
+    expect(gaps.spells).toEqual(["Arcane (PHB)", "Gifted (PHB)"]);
     expect(gaps.unclassified).toEqual([
       "Counted (PHB)",
       "Flurry of Blows (PHB), Monk level 2",
@@ -198,6 +213,7 @@ describe("mechanicGaps", () => {
       uses: 1,
       active: 1,
       turn: 2,
+      spells: 2,
       unclassified: 7,
     });
   });

@@ -61,6 +61,7 @@ const grants = (grant: Omit<Extract<Mechanic, { kind: "proficiency" }>, "kind">)
   { kind: "proficiency", ...grant },
 ];
 const narrative = (ref: FeatureMechanics["ref"]): FeatureMechanics => ({ ref, narrative: true });
+const SPELLS: Mechanic = { kind: "spells" };
 const barbarian: [string, string] = ["Barbarian", "PHB"];
 const barbarian24: [string, string] = ["Barbarian", "XPHB"];
 const fighter24: [string, string] = ["Fighter", "XPHB"];
@@ -493,15 +494,22 @@ const LIMITED_USES: FeatureMechanics[] = [
     { name: "Undying Servitude", source: "TCE" },
     { name: "Gift of the Depths", source: "XGE" },
     { name: "Trickster's Escape", source: "XGE" },
+    { name: "Telepathic", source: "TCE" },
+  ].map(
+    (ref): FeatureMechanics => ({
+      ref,
+      mechanics: [{ kind: "uses", count: 1, reset: "long" }, SPELLS],
+    }),
+  ),
+  ...[
     { name: "Magic Initiate", source: "PHB" },
     { name: "Artificer Initiate", source: "TCE" },
-    { name: "Telepathic", source: "TCE" },
   ].map(
     (ref): FeatureMechanics => ({ ref, mechanics: [{ kind: "uses", count: 1, reset: "long" }] }),
   ),
   {
     ref: { name: "Fey Teleportation", source: "XGE" },
-    mechanics: [{ kind: "uses", count: 1, reset: "short" }],
+    mechanics: [{ kind: "uses", count: 1, reset: "short" }, SPELLS],
   },
   // Rolling initiative also restores it.
   {
@@ -512,13 +520,13 @@ const LIMITED_USES: FeatureMechanics[] = [
   subclassFeature(artificer, ["Alchemist", "TCE"], ["Chemical Mastery", "TCE"], 15, [
     { kind: "defense", resist: ["acid", "poison"], conditionImmune: ["poisoned"] },
   ]),
-  // Each casts each of its spells free once a long rest, a count per spell.
+  // Each casts each of its spells free once a long rest, a count per spell, so it counts no uses.
   ...[
     { name: "Fey Touched", source: "TCE" },
     { name: "Shadow Touched", source: "TCE" },
     { name: "Drow High Magic", source: "XGE" },
     { name: "Wood Elf Magic", source: "XGE" },
-  ].map(narrative),
+  ].map((ref): FeatureMechanics => ({ ref, mechanics: [SPELLS] })),
   {
     ...narrative({
       name: "Primal Awareness",
@@ -554,6 +562,50 @@ const LIMITED_USES: FeatureMechanics[] = [
     level: 11,
   }),
 ];
+
+/** The feats, optional features and race traits whose spells come with them alone. */
+const SPELLS_GRANTED: FeatureMechanics[] = [
+  { name: "Telekinetic", source: "TCE" },
+  ...[
+    "Armor of Shadows",
+    "Ascendant Step",
+    "Beast Speech",
+    "Bewitching Whispers",
+    "Chains of Carceri",
+    "Dreadful Word",
+    "Eldritch Sight",
+    "Fiendish Vigor",
+    "Mask of Many Faces",
+    "Master of Myriad Forms",
+    "Minions of Chaos",
+    "Mire the Mind",
+    "Misty Visions",
+    "Otherworldly Leap",
+    "Pact of the Chain",
+    "Sculptor of Flesh",
+    "Sign of Ill Omen",
+    "Thief of Five Fates",
+    "Visions of Distant Realms",
+    "Whispers of the Grave",
+    "Breath of Winter",
+    "Clench of the North Wind",
+    "Eternal Mountain Defense",
+    "Fist of Four Thunders",
+    "Flames of the Phoenix",
+    "Gong of the Summit",
+    "Mist Stance",
+    "Ride the Wind",
+    "River of Hungry Flame",
+    "Rush of the Gale Spirits",
+    "Sweeping Cinder Strike",
+    "Wave of Rolling Earth",
+    "Infernal Legacy",
+    "Drow Magic",
+    "Natural Illusionist",
+  ].map((name) => ({ name, source: "PHB" })),
+  { name: "Shroud of Shadow", source: "XGE" },
+  { name: "Far Scribe", source: "TCE" },
+].map((ref) => ({ ref, mechanics: [SPELLS] }));
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
@@ -2170,4 +2222,5 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ...LIMITED_USES,
   ...ONGOING_EFFECTS,
   ...TURN_ECONOMY,
+  ...SPELLS_GRANTED,
 ];

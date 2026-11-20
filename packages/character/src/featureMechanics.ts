@@ -499,8 +499,16 @@ const turnMechanicSchema = z
     error: "only an attack count is the pact weapon's",
   });
 
+/**
+ * Spells the feature grants outright, which the sheet lists from the `additionalSpells` of the
+ * row that gives them, at the level each arrives: the feat's or optional feature's own, or a
+ * race trait's race or subrace. A spell the player picks is not recorded here.
+ */
+const spellsMechanicSchema = z.strictObject({ kind: z.literal("spells") });
+
 const mechanicSchema = z.union([
   activeMechanicSchema,
+  spellsMechanicSchema,
   turnMechanicSchema,
   usesMechanicSchema,
   poolMechanicSchema,
