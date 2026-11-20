@@ -158,31 +158,33 @@ function tradedAttack(field: Attack["attackBonus"], taken: Attack["options"]) {
   };
 }
 
-const NO_SMITE: { slot?: SpellCastOption; versus: boolean } = { versus: false };
+type SlotPick = { slot?: SpellCastOption; versus: boolean };
+const NO_SMITE: SlotPick = { versus: false };
 
 /**
- * The state after paying for the damage features taken on a row: the slot a smite takes and
+ * The state after paying for the damage features taken on a row: the slot each smite takes and
  * the once-a-turn uses, with words for what was spent; or why it could not be paid.
  */
 function featureSpend(
   derived: CharacterDerived,
   latest: CharacterState,
   taken: Attack["featureDamage"],
-  slot: SpellCastOption | undefined,
+  pickFor: (entry: Attack["featureDamage"][number]) => SlotPick,
 ): { after: CharacterState; text: string } | { refused: string } {
   const once = taken.filter(({ offer }) => offer?.oncePerTurn).map(({ source }) => source);
-  const used = featuresUsed(latest, once);
-  const smiting = taken.find(({ offer }) => offer?.slot);
   const words = once.map((source) => `${source} this turn`);
-  if (!smiting || !slot) return { after: used, text: `Used ${words.join(" and ")}` };
-  try {
-    return {
-      after: slotSpent(derived, used, slot),
-      text: `Used ${[`a level ${slot.level} slot on ${smiting.source}`, ...words].join(" and ")}`,
-    };
-  } catch (error) {
-    return { refused: `${smiting.source} was not used: ${(error as Error).message}` };
+  let after = featuresUsed(latest, once);
+  for (const entry of taken.filter(({ offer }) => offer?.slot)) {
+    const { slot } = pickFor(entry);
+    if (!slot) continue;
+    try {
+      after = slotSpent(derived, after, slot);
+      words.unshift(`a level ${slot.level} slot on ${entry.source}`);
+    } catch (error) {
+      return { refused: `${entry.source} was not used: ${(error as Error).message}` };
+    }
   }
+  return { after, text: `Used ${words.join(" and ")}` };
 }
 
 /** The slot the player picked while it is still left, else the lowest left. */
@@ -198,18 +200,20 @@ function rowFeatureDamage(
   features: Attack["featureDamage"],
   chosen: readonly string[],
   used: (entry: Attack["featureDamage"][number]) => boolean,
-  slot: SpellCastOption | undefined,
-  versus: boolean,
+  pickFor: (entry: Attack["featureDamage"][number]) => SlotPick,
 ) {
   const taken = features.filter(
     (entry) =>
-      entry.offer && !used(entry) && (!entry.offer.slot || slot) && chosen.includes(entry.source),
+      entry.offer &&
+      !used(entry) &&
+      (!entry.offer.slot || pickFor(entry).slot) &&
+      chosen.includes(entry.source),
   );
   const landing = [...features.filter((entry) => !entry.offer), ...taken];
   return {
     taken,
     dice: landing
-      .map((entry) => featureDamageDice(entry, slot?.level, versus))
+      .map((entry) => featureDamageDice(entry, pickFor(entry).slot?.level, pickFor(entry).versus))
       .flatMap((dice) => (dice ? [`+${dice}`] : []))
       .join(""),
     bonus: landing.reduce((sum, { bonus }) => sum + bonus, 0),
@@ -238,7 +242,7 @@ export function Attacks({
   const [traded, setTraded] = useState<Record<string, readonly string[]>>({});
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
   const [adding, setAdding] = useState<Record<string, readonly string[]>>({});
-  const [smite, setSmite] = useState<Record<string, typeof NO_SMITE>>({});
+  const [smite, setSmite] = useState<Record<string, Record<string, SlotPick>>>({});
   const slots: SpellCastOption[] = play.data
     ? spellCastOptions({ level: 1, ritual: false }, derived, play.data.state).filter(
         ({ left }) => left !== null && left > 0,
@@ -338,17 +342,22 @@ export function Attacks({
   }
 
   /**
-   * The slot a smite on a row would spend, what the row's feature damage adds to its roll, and
+   * What the row's feature damage adds to its roll, the slot each smite on it would spend, and
    * the spend to run before the roll where what is taken costs a slot or a turn's use.
    */
   function rowDamage(rowKey: string, features: Attack["featureDamage"]) {
-    const { slot: picked, versus } = smite[rowKey] ?? NO_SMITE;
     const chosen = adding[rowKey] ?? [];
-    const smiting = features.find(({ source, offer }) => offer?.slot && chosen.includes(source));
-    const slot = pickedSlot(offerSlots(slots, smiting?.offer ?? null), picked);
-    const added = rowFeatureDamage(features, chosen, usedNow, slot, versus);
+    const pickFor = ({ source, offer }: Attack["featureDamage"][number]): SlotPick => {
+      const own = smite[rowKey]?.[source] ?? NO_SMITE;
+      return { ...own, slot: pickedSlot(offerSlots(slots, offer), own.slot) };
+    };
+    const added = rowFeatureDamage(features, chosen, usedNow, pickFor);
     const spends = added.taken.some(({ offer }) => offer?.slot || offer?.oncePerTurn);
-    return { slot, added, spend: spends ? () => spendFeatures(added.taken, slot) : undefined };
+    return {
+      pickFor,
+      added,
+      spend: spends ? () => spendFeatures(added.taken, pickFor) : undefined,
+    };
   }
 
   /** Clears the trades and feature damage taken on a row, once its damage is logged. */
@@ -357,15 +366,20 @@ export function Attacks({
     setAdding((now) => ({ ...now, [rowKey]: [] }));
   }
 
-  /** The feature damage controls of one row, the slot a smite would spend among them. */
+  /** The feature damage controls of one row, the slot each smite would spend among them. */
   function featureCell(
     rowKey: string,
     { damage, featureDamage }: Pick<Attack, "damage" | "featureDamage">,
-    slot: SpellCastOption | undefined,
+    pickFor: (entry: Attack["featureDamage"][number]) => SlotPick,
   ) {
-    const smiting = smite[rowKey] ?? NO_SMITE;
-    const pick = (change: Partial<typeof smiting>) =>
-      setSmite((now) => ({ ...now, [rowKey]: { ...smiting, ...change } }));
+    const pick = (source: string, change: Partial<SlotPick>) =>
+      setSmite((now) => ({
+        ...now,
+        [rowKey]: {
+          ...now[rowKey],
+          [source]: { ...(now[rowKey]?.[source] ?? NO_SMITE), ...change },
+        },
+      }));
     return (
       <FeatureDamage
         entries={damage ? featureDamage : []}
@@ -373,29 +387,27 @@ export function Attacks({
         taken={adding[rowKey] ?? []}
         take={(source, on) =>
           setAdding((now) => {
-            const spendsSlot = (name: string) =>
-              featureDamage.some((entry) => entry.source === name && entry.offer?.slot);
-            const rest = (now[rowKey] ?? []).filter(
-              (name) => name !== source && !(on && spendsSlot(source) && spendsSlot(name)),
-            );
+            const rest = (now[rowKey] ?? []).filter((name) => name !== source);
             return { ...now, [rowKey]: on ? [...rest, source] : rest };
           })
         }
         used={usedNow}
         slots={slots}
-        slot={slot}
-        pickSlot={(picked) => pick({ slot: picked })}
-        versus={smiting.versus}
-        setVersus={(on) => pick({ versus: on })}
+        pickFor={pickFor}
+        pickSlot={(source, slot) => pick(source, { slot })}
+        setVersus={(source, on) => pick(source, { versus: on })}
       />
     );
   }
 
   /** Writes what the damage features taken on a row cost; false, with the reason spoken, where it could not. */
-  async function spendFeatures(taken: Attack["featureDamage"], slot: SpellCastOption | undefined) {
+  async function spendFeatures(
+    taken: Attack["featureDamage"],
+    pickFor: (entry: Attack["featureDamage"][number]) => SlotPick,
+  ) {
     const latest = play.data?.state;
     if (!latest) return false;
-    const spend = featureSpend(derived, latest, taken, slot);
+    const spend = featureSpend(derived, latest, taken, pickFor);
     if ("refused" in spend) {
       replace.announce(spend.refused);
       return false;
@@ -445,7 +457,7 @@ export function Attacks({
         const rest = (now[rowKey] ?? []).filter((other) => !sameSource.has(other));
         return { ...now, [rowKey]: on ? [...rest, tradeKey(trade)] : rest };
       });
-    const { slot, added, spend } = rowDamage(rowKey, attack.featureDamage);
+    const { pickFor, added, spend } = rowDamage(rowKey, attack.featureDamage);
     return (
       <AttackRow
         key={key}
@@ -510,7 +522,7 @@ export function Attacks({
               </label>
             )}
             {damage && rolling && <AttackTrades options={options} taken={taken} take={take} />}
-            {featureCell(rowKey, attack, slot)}
+            {featureCell(rowKey, attack, pickFor)}
             {damage && rolling && alignments.length > 0 && (
               <label className="flex items-center gap-1 text-label">
                 Target alignment
