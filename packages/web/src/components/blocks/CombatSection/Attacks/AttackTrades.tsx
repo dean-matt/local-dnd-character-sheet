@@ -3,10 +3,12 @@ import { signed } from "../../signed.ts";
 
 type Trade = Attack["options"][number];
 
-const tradeText = ({ source, attack, damage, critical }: Trade) =>
-  critical === null
+const tradeText = ({ source, attack, damage, critical, dice }: Trade) => {
+  if (dice) return `${source} +${dice}`;
+  return critical === null
     ? `${source} ${signed(attack)}/${signed(damage)}`
     : `${source} crit ${critical}–20`;
+};
 
 /**
  * A checkbox per trade a feature offers on the row, such as Sharpshooter's -5/+10. A feature

@@ -127,6 +127,21 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ bonusAction: ["Attack"] })).toBe(false);
   });
 
+  it("refuses a die that is not offered, a scaled bonus, and a bonus after the roll that is not a number", () => {
+    const ref = { name: "Homing Strikes", source: "TCE" };
+    const parse = (mechanic: object) =>
+      featureMechanicsSchema.safeParse({ ref, mechanics: [{ kind: "attack", ...mechanic }] })
+        .success;
+    expect(parse({ dice: "1d6", option: "after a miss" })).toBe(true);
+    expect(parse({ dice: "1d6", afterRoll: true, option: "after a miss" })).toBe(true);
+    expect(parse({ attack: 10, afterRoll: true, option: "after a miss" })).toBe(true);
+    expect(parse({ dice: "1d6" })).toBe(false);
+    expect(parse({ attack: 10, afterRoll: true })).toBe(false);
+    expect(parse({ attack: "str", afterRoll: true, option: "after a miss" })).toBe(false);
+    expect(parse({ dice: "1d6", attack: 1, option: "after a miss" })).toBe(false);
+    expect(parse({ attack: 1, scales: [{ level: 5, dice: "1d8" }], option: "x" })).toBe(false);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);

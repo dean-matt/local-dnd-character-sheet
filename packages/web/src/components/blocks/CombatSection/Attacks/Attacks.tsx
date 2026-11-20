@@ -43,9 +43,10 @@ import { Card } from "../../../Card.tsx";
 import { RollBonusButton } from "../../../RollBonusButton.tsx";
 import { RulesText } from "../../../RulesText/RulesText.tsx";
 import { RollingFor } from "../../../rollerContext.ts";
-import { damageText, tradeKey } from "../../attack.ts";
+import { damageText, type Landed, tradeKey } from "../../attack.ts";
 import { CastingBlockedNote } from "../../CastingBlockedNote.tsx";
 import { DerivedValue } from "../../DerivedValue.tsx";
+import { AttackAfterRoll } from "./AttackAfterRoll.tsx";
 import { AttackDamage } from "./AttackDamage.tsx";
 import { AttackRoll } from "./AttackRoll.tsx";
 import { AttackRow } from "./AttackRow.tsx";
@@ -146,6 +147,10 @@ function weaponNotes(
 const addUp = (taken: Attack["options"], part: "attack" | "damage", from: number) =>
   taken.reduce((sum, option) => sum + option[part], from);
 
+/** The dice that roll with the d20 for the trades taken. */
+const ridersOf = (taken: Attack["options"]) =>
+  taken.flatMap(({ source, dice }) => (dice ? [{ source, dice }] : []));
+
 /** The attack roll's bonus and logged terms with each trade taken added as its own term. */
 function tradedAttack(field: Attack["attackBonus"], taken: Attack["options"]) {
   const terms = rollTerms(field);
@@ -242,6 +247,7 @@ export function Attacks({
   const setCritical = (key: string, on: boolean) => setCrit((now) => ({ ...now, [key]: on }));
   const [traded, setTraded] = useState<Record<string, readonly string[]>>({});
   const [refused, setRefused] = useState<Record<number, { message: string; left: number }>>({});
+  const [landed, setLanded] = useState<Record<string, Landed | undefined>>({});
   const [adding, setAdding] = useState<Record<string, readonly string[]>>({});
   const [smite, setSmite] = useState<Record<string, Record<string, SlotPick>>>({});
   const slots: SpellCastOption[] = play.data
@@ -365,6 +371,7 @@ export function Attacks({
   function clearTaken(rowKey: string) {
     setTraded((now) => ({ ...now, [rowKey]: [] }));
     setAdding((now) => ({ ...now, [rowKey]: [] }));
+    setLanded((now) => ({ ...now, [rowKey]: undefined }));
   }
 
   /** The feature damage controls of one row, the slot each smite would spend among them. */
@@ -448,7 +455,8 @@ export function Attacks({
     const struck = extras.filter(({ targetAlignment }) => targetAlignment === target[rowKey]);
     const alignments = [...new Set(extras.map(({ targetAlignment }) => targetAlignment))];
     const chosen = alignments.includes(target[rowKey] ?? "") ? (target[rowKey] ?? "") : "";
-    const { options } = attack;
+    const options = attack.options.filter(({ afterRoll }) => !afterRoll);
+    const afterRoll = attack.options.filter((option) => option.afterRoll);
     const taken = options.filter((option) => traded[rowKey]?.includes(tradeKey(option)));
     const take = (trade: Attack["options"][number], on: boolean) =>
       setTraded((now) => {
@@ -486,7 +494,22 @@ export function Attacks({
               ...taken.map(({ critical }) => critical ?? 20),
             )}
             flanking={flanking}
-            onRolled={(hit) => setCritical(rowKey, hit)}
+            riders={ridersOf(taken)}
+            onRolled={(hit, logged, rolled) => {
+              setCritical(rowKey, hit);
+              if (!logged) return;
+              const spent = new Set(
+                taken.filter(({ dice, oncePerTurn }) => dice && oncePerTurn).map(tradeKey),
+              );
+              setTraded((now) => ({
+                ...now,
+                [rowKey]: (now[rowKey] ?? []).filter((each) => !spent.has(each)),
+              }));
+              setLanded((now) => ({
+                ...now,
+                [rowKey]: { label: `${name} attack`, roll: rolled, sources: [] },
+              }));
+            }}
           />
         }
         rollDamage={
@@ -523,6 +546,15 @@ export function Attacks({
               </label>
             )}
             {damage && rolling && <AttackTrades options={options} taken={taken} take={take} />}
+            {damage && rolling && (
+              <AttackAfterRoll
+                characterId={character.id}
+                origin={name}
+                options={afterRoll}
+                landed={landed[rowKey]}
+                applied={(next) => setLanded((now) => ({ ...now, [rowKey]: next }))}
+              />
+            )}
             {featureCell(rowKey, attack, pickFor)}
             {damage && rolling && alignments.length > 0 && (
               <label className="flex items-center gap-1 text-label">

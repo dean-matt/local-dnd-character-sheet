@@ -152,8 +152,8 @@ export function ModeRoll({
         mode={mode}
         extra={extra}
         inspiration={inspiration}
-        onRolled={(hit, logged) => {
-          roll.onRolled?.(hit, logged);
+        onRolled={(hit, logged, rolled) => {
+          roll.onRolled?.(hit, logged, rolled);
           if (logged && ticked.size > 0) setTicked(new Set());
           if (inspiration === undefined || !logged) return;
           setInspired(false);
