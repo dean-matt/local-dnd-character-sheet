@@ -172,18 +172,19 @@ function featureSpend(
   pickFor: (entry: Attack["featureDamage"][number]) => SlotPick,
 ): { after: CharacterState; text: string } | { refused: string } {
   const once = taken.filter(({ offer }) => offer?.oncePerTurn).map(({ source }) => source);
-  const words = once.map((source) => `${source} this turn`);
+  const slotWords: string[] = [];
   let after = featuresUsed(latest, once);
   for (const entry of taken.filter(({ offer }) => offer?.slot)) {
     const { slot } = pickFor(entry);
     if (!slot) continue;
     try {
       after = slotSpent(derived, after, slot);
-      words.unshift(`a level ${slot.level} slot on ${entry.source}`);
+      slotWords.push(`a level ${slot.level} slot on ${entry.source}`);
     } catch (error) {
       return { refused: `${entry.source} was not used: ${(error as Error).message}` };
     }
   }
+  const words = [...slotWords, ...once.map((source) => `${source} this turn`)];
   return { after, text: `Used ${words.join(" and ")}` };
 }
 

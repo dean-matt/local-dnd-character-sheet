@@ -992,6 +992,33 @@ describe("Attacks", () => {
       expect(puts[0]?.pactSlots).toEqual({ level: 3, total: 2, expended: 1 });
     });
 
+    it("refuses the roll's slots and spends none when a second smite finds its slot gone", async () => {
+      const smite = (source: string) => ({
+        source,
+        dice: "2d8",
+        bonus: 0,
+        type: "radiant",
+        offer: { condition: "on a hit", oncePerTurn: false, slot: { max: 5 } },
+      });
+      const { posts, puts } = renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 1, manual: null, terms: [] } }],
+        pactSlots: null,
+        attacks: [{ ...attack(0, 5), featureDamage: [smite("Divine Smite"), smite("Holy Smite")] }],
+      });
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Divine Smite/ }));
+      fireEvent.click(longsword().getByRole("checkbox", { name: /^Holy Smite/ }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Roll Longsword damage with Divine Smite with Holy Smite",
+        }),
+      );
+
+      expect(await screen.findAllByText(/Holy Smite was not used/)).not.toHaveLength(0);
+      expect(puts).toHaveLength(0);
+      expect(posts).toHaveLength(0);
+    });
+
     it("shows and adds a feature's dice with the flat amount it adds to them", async () => {
       const harm = {
         source: "Hand of Harm",
