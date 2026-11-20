@@ -155,6 +155,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
   subclassFeature(cleric, ["Forge", "XGE"], ["Blessing of the Forge", "XGE"], 1, [
     {
       kind: "attack",
+      weapons: "any",
       attack: 1,
       damage: 1,
       option: "with the weapon Blessing of the Forge imbues",
@@ -192,6 +193,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
     11,
     KI_POINTS.map((spent, index) => ({
       kind: "attack",
+      weapons: "any",
       attack: index + 1,
       damage: index + 1,
       option: `with the kensei weapon you spent ${spent} on, unless magic already gives it a bonus`,
@@ -229,6 +231,7 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
     mechanics: [
       {
         kind: "attack",
+        weapons: "any",
         attack: 1,
         damage: 1,
         option: "with your pact weapon, unless magic already gives it a bonus",
@@ -277,14 +280,26 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
   {
     ref: { name: "Enhanced Weapon", source: "TCE" },
     mechanics: [
-      { kind: "attack", attack: 1, damage: 1, option: `${INFUSED}, below artificer level 10` },
-      { kind: "attack", attack: 2, damage: 2, option: `${INFUSED}, from artificer level 10` },
+      {
+        kind: "attack",
+        weapons: "any",
+        attack: 1,
+        damage: 1,
+        option: `${INFUSED}, below artificer level 10`,
+      },
+      {
+        kind: "attack",
+        weapons: "any",
+        attack: 2,
+        damage: 2,
+        option: `${INFUSED}, from artificer level 10`,
+      },
     ],
   },
   ...["Radiant Weapon", "Returning Weapon"].map(
     (name): FeatureMechanics => ({
       ref: { name, source: "TCE" },
-      mechanics: [{ kind: "attack", attack: 1, damage: 1, option: INFUSED }],
+      mechanics: [{ kind: "attack", weapons: "any", attack: 1, damage: 1, option: INFUSED }],
     }),
   ),
   {
@@ -305,11 +320,11 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
   ]),
   subclassFeature(paladin, ["Devotion", "PHB"], ["Sacred Weapon", "PHB"], 3, [
     { kind: "active", endsOn: ["incapacitated"] },
-    { kind: "attack", attack: "cha", option: SACRED_WEAPON, while: "active" },
+    { kind: "attack", weapons: "any", attack: "cha", option: SACRED_WEAPON, while: "active" },
   ]),
   subclassFeature(paladin24, ["Devotion", "XPHB"], ["Sacred Weapon", "XPHB"], 3, [
     { kind: "active" },
-    { kind: "attack", attack: "cha", option: SACRED_WEAPON, while: "active" },
+    { kind: "attack", weapons: "any", attack: "cha", option: SACRED_WEAPON, while: "active" },
   ]),
   subclassFeature(paladin, ["Vengeance", "PHB"], ["Vow of Enmity", "PHB"], 3, [
     { kind: "active" },

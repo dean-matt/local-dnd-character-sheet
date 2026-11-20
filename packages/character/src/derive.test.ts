@@ -1590,16 +1590,19 @@ describe("deriveCharacter", () => {
         expect(fighter(2).unarmedStrike.critThreshold.computed).toBe(20);
       });
 
-      it("offers a feature's trade on the unarmed strike", () => {
-        expect(fighter(1).unarmedStrike.options).toEqual([]);
-        const pact = fighter(1, {
-          optionalFeatures: [
-            { featureType: "EI", ref: { name: "Improved Pact Weapon", source: "XGE" } },
-          ],
-        } as Partial<CharacterDefinition>);
-        expect(pact.unarmedStrike.options).toEqual([
+      it("offers a feature's trade on the unarmed strike, and none bound to a weapon", () => {
+        const pact = { name: "Improved Pact Weapon", source: "XGE" };
+        const feature = (ref: { name: string; source: string }) =>
+          fighter(1, {
+            optionalFeatures: [{ featureType: "EI", ref }],
+          } as Partial<CharacterDefinition>);
+        expect(feature(pact).unarmedStrike.options).toEqual([]);
+        expect(attackOf(feature(pact), 0)?.options).toEqual([
           expect.objectContaining({ source: "Improved Pact Weapon", attack: 1, damage: 1 }),
         ]);
+        expect(feature({ name: "Feinting Attack", source: "PHB" }).unarmedStrike.options).toEqual(
+          [],
+        );
       });
 
       it("adds Dueling to a lone one-handed melee weapon's damage, and not beside a second", () => {
@@ -1658,6 +1661,17 @@ describe("deriveCharacter", () => {
             classResources: new Map([[entryKey({ name, source: "PHB" }), cells]]),
           },
         );
+
+      it("offers Focused Aim on a Monk's unarmed strike where the table plays optional class features", () => {
+        const monk = classed("Monk", 5, [{ key: "martial_arts", value: "1d6" }], {
+          houseRules: { optionalClassFeatures: true },
+        } as Partial<CharacterDefinition>);
+        expect(monk.unarmedStrike.options.map(({ source, attack }) => [source, attack])).toEqual([
+          ["Focused Aim", 2],
+          ["Focused Aim", 4],
+          ["Focused Aim", 6],
+        ]);
+      });
 
       it("rolls a Monk's unarmed strike and dagger with the Martial Arts die and Dexterity, until armor is worn", () => {
         const monk = classed("Monk", 5, [{ key: "martial_arts", value: "1d6" }]);

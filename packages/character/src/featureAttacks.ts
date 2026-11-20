@@ -37,6 +37,8 @@ function fits({ weapons, proficient }: AttackMechanic, { weapon, ...strike }: St
   switch (weapons) {
     case undefined:
       return true;
+    case "any":
+      return weapon !== undefined;
     case "melee":
     case "ranged":
       return weapon?.kind === weapons;

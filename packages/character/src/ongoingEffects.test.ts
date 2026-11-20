@@ -114,14 +114,18 @@ describe("a started feature's mechanics", () => {
     );
   });
 
-  it("offers Sacred Weapon's Charisma on attacks, at least +1, only while it runs", () => {
+  it("offers Sacred Weapon's Charisma on weapon attacks, at least +1, only while it runs", () => {
     const paladin = (started: string[] = []) =>
       levelled(["Paladin", "PHB"], 3, { name: "Oath of Devotion", source: "PHB" }, started);
-    const strike = { proficient: true, alone: false };
+    const strike = { weapon: { kind: "melee" as const }, proficient: true, alone: false };
     expect(featureStrike(paladin(), strike, modifiers({ cha: 3 })).options).toEqual([]);
-    expect(featureStrike(paladin(["Sacred Weapon"]), strike, modifiers({})).options).toEqual([
+    const running = paladin(["Sacred Weapon"]);
+    expect(featureStrike(running, strike, modifiers({})).options).toEqual([
       expect.objectContaining({ source: "Sacred Weapon", attack: 1, damage: 0 }),
     ]);
+    expect(
+      featureStrike(running, { proficient: true, alone: false }, modifiers({})).options,
+    ).toEqual([]);
   });
 });
 
