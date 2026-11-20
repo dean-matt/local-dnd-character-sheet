@@ -18,9 +18,10 @@
   "martialArts": 0,
   "pool": 0,
   "convert": 0,
+  "slotRecovery": 0,
   "turn": 0,
   "spells": 40,
   "poolCost": 0,
   "uses": 1,
-  "unclassified": 518
+  "unclassified": 516
 }

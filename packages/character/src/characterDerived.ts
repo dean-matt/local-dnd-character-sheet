@@ -209,6 +209,16 @@ const featureConversionSchema = z.strictObject({
 });
 
 /**
+ * A held feature's recovery of expended spell slots: `budget` is the most combined slot level
+ * one use recovers, and no slot above `maxLevel`.
+ */
+const slotRecoverySchema = z.strictObject({
+  feature: contentRefSchema,
+  budget: z.int().min(1),
+  maxLevel: z.int().min(1).max(9),
+});
+
+/**
  * The uses a held feature counts, computed from the character where the content build reads no
  * count from its text: `origin` is the features section's group it shows in, `level` is a class
  * or subclass feature's, null for a feat or trait, and `key` is its entry in the state's
@@ -434,6 +444,8 @@ export const characterDerivedSchema = z.strictObject({
   featureRestores: z.array(featureRestoreSchema),
   /** The pool and slot trades held features make, in the order the features are held. */
   featureConversions: z.array(featureConversionSchema),
+  /** The slot recoveries held features make, in the order the features are held. */
+  slotRecoveries: z.array(slotRecoverySchema),
   /**
    * What held features change about a turn. `attacks`: the attacks the Attack action allows;
    * `pactAttacks`: the count with the pact weapon where it is higher, else null; `addsAction`:

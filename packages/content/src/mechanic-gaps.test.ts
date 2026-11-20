@@ -39,6 +39,7 @@ const zero: Counts = {
   martialArts: 0,
   pool: 0,
   convert: 0,
+  slotRecovery: 0,
   poolCost: 0,
   turn: 0,
   spells: 0,
@@ -127,6 +128,18 @@ describe("mechanicGaps", () => {
     "one",
     json({ srd52: true }, "transform points into one spell slot"),
   );
+  feat.run(
+    "Recovering",
+    "PHB",
+    "classic",
+    json({ srd: true }, "choose expended spell slots to recover"),
+  );
+  feat.run(
+    "Recovered",
+    "XPHB",
+    "one",
+    json({ srd52: true }, "choose expended spell slots to recover"),
+  );
   const surging = json({ srd: true }, "a number of times equal to your Charisma modifier");
   feat.run("Surging", "PHB", "classic", surging);
   db.prepare(
@@ -190,6 +203,7 @@ describe("mechanicGaps", () => {
     expect(gaps.tempHp).toEqual(["Shielding (PHB)"]);
     expect(gaps.pool).toEqual(["Superior (PHB)"]);
     expect(gaps.convert).toEqual(["Flexible (PHB)"]);
+    expect(gaps.slotRecovery).toEqual(["Recovering (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.poolCost).toEqual(["Spender (PHB)"]);
     expect(gaps.active).toEqual(["Winged (PHB)"]);
@@ -200,6 +214,7 @@ describe("mechanicGaps", () => {
       "Flurry of Blows (PHB), Monk level 2",
       "Fortunate (PHB)",
       "Fountain (XPHB)",
+      "Recovered (XPHB)",
       "Strider (PHB)",
       "Stunning Strike (PHB)",
       "Turning (PHB)",
@@ -220,12 +235,13 @@ describe("mechanicGaps", () => {
       tempHp: 1,
       pool: 1,
       convert: 1,
+      slotRecovery: 1,
       poolCost: 1,
       uses: 1,
       active: 1,
       turn: 2,
       spells: 2,
-      unclassified: 8,
+      unclassified: 9,
     });
   });
 

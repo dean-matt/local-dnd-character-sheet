@@ -1,5 +1,12 @@
 import type { LimitedUses } from "@dnd/catalog";
-import { type CharacterDerived, featureUsesSpent, withFeatureUse } from "@dnd/character";
+import {
+  type CharacterDerived,
+  featureUsesSpent,
+  recoverableSlots,
+  recoveredState,
+  type SlotRecoveryPick,
+  withFeatureUse,
+} from "@dnd/character";
 import { Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { useAnnouncedStateWrite } from "../../../hooks/useAnnouncedStateWrite.ts";
@@ -9,6 +16,7 @@ import { chosenValue, restoreChoice } from "../../../lib/restoreChoice.ts";
 import { Announcer } from "../../Announcer.tsx";
 import { PoolButton } from "../../PoolButton.tsx";
 import { RestoreChoiceSelect } from "../../RestoreChoiceSelect.tsx";
+import { SlotRecoveryDialog } from "./SlotRecoveryDialog.tsx";
 
 /** `short` is restored by either rest, so it reads as the shorter one; `manual` only by the player. */
 const RESET: Record<LimitedUses["reset"], string> = {
@@ -48,6 +56,7 @@ export function FeatureUses({
   const replace = useAnnouncedStateWrite(characterId);
   const restore = useFeatureRestore(characterId);
   const [picked, setPicked] = useState<number | null>(null);
+  const [recovering, setRecovering] = useState(false);
   if (!state.isSuccess) return null;
 
   const stored = state.data.state;
@@ -62,6 +71,27 @@ export function FeatureUses({
       withFeatureUse(stored, uses.key, next),
       `${name}: ${uses.count - next} of ${uses.count} left.`,
     );
+
+  const recovery = derived?.slotRecoveries.find(
+    (each) => each.feature.name === name && each.feature.source === source,
+  );
+
+  function setDialog(open: boolean) {
+    replace.reset();
+    setRecovering(open);
+  }
+
+  async function recover(picks: SlotRecoveryPick[]) {
+    if (!derived || !recovery) return;
+    const after = withFeatureUse(
+      recoveredState(derived, stored, recovery, picks),
+      uses.key,
+      expended + 1,
+    );
+    const levels = picks.map(({ level, count }) => `${count} level ${level}`).join(", ");
+    const left = `${name}: ${uses.count - expended - 1} of ${uses.count} left.`;
+    if (await replace.write(after, `${left} Recovered ${levels} slots.`)) setDialog(false);
+  }
 
   return (
     <span className="flex items-center gap-1.5">
@@ -95,7 +125,30 @@ export function FeatureUses({
         disabled={replace.writing || expended === 0}
         onPress={() => change(expended - 1)}
       />
-      {replace.error && (
+      {recovery && (
+        <button
+          type="button"
+          aria-label={`Recover slots with ${name}`}
+          title={expended >= uses.count ? "No use left" : "Recover slots"}
+          aria-disabled={replace.writing || expended >= uses.count}
+          onClick={() => !replace.writing && expended < uses.count && setDialog(true)}
+          className="h-6 rounded-control border border-border bg-surface px-2 font-semibold text-label hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        >
+          Recover
+        </button>
+      )}
+      {derived && recovery && recovering && (
+        <SlotRecoveryDialog
+          name={name}
+          budget={recovery.budget}
+          slots={recoverableSlots(derived, stored, recovery)}
+          busy={replace.writing}
+          error={replace.error?.message}
+          onRecover={recover}
+          onClose={() => setDialog(false)}
+        />
+      )}
+      {replace.error && !recovering && (
         <span role="alert" className="text-error text-row">
           {name} was not changed: {replace.error.message}
         </span>
