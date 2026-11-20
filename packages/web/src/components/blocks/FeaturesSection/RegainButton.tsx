@@ -34,7 +34,8 @@ export function RegainButton({
     (each) => each.feature.name === name && each.feature.source === source,
   );
   const hasRecoveryCount = derived.limitedUses.some(
-    (each) => each.part === "recovery" && each.feature.name === name,
+    (each) =>
+      each.part === "recovery" && each.feature.name === name && each.feature.source === source,
   );
   if (!regain || uses.part !== (hasRecoveryCount ? "recovery" : undefined)) return null;
 
