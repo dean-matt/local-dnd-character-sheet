@@ -883,7 +883,7 @@ describe("Attacks", () => {
         attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
       });
       fireEvent.click(await longsword().findByRole("checkbox", { name: /^Divine Smite/ }));
-      fireEvent.change(longsword().getByRole("combobox", { name: "Slot" }), {
+      fireEvent.change(longsword().getByRole("combobox", { name: "Divine Smite slot" }), {
         target: { value: "slot:3" },
       });
       fireEvent.click(longsword().getByRole("checkbox", { name: "Against an undead or a fiend" }));
@@ -915,7 +915,7 @@ describe("Attacks", () => {
         attacks: [{ ...attack(0, 5), featureDamage: [smite] }],
       });
       fireEvent.click(await longsword().findByRole("checkbox", { name: /^Eldritch Smite \+4d8/ }));
-      const slot = longsword().getByRole("combobox", { name: "Slot" });
+      const slot = longsword().getByRole("combobox", { name: "Eldritch Smite slot" });
       expect(
         within(slot)
           .getAllByRole("option")
@@ -953,7 +953,7 @@ describe("Attacks", () => {
       expect(longsword().getByRole("checkbox", { name: /^Eldritch Smite/ })).toBeDisabled();
     });
 
-    it("takes one feature that spends a slot on a row at a time", async () => {
+    it("applies each slot-spending feature taken on one hit, spending a slot for each", async () => {
       const slotOffer = (source: string, pact?: true) => ({
         source,
         dice: "2d8",
@@ -965,7 +965,7 @@ describe("Attacks", () => {
           slot: { max: 5, ...(pact && { pact }) },
         },
       });
-      renderRolling({
+      const { posts, puts } = renderRolling({
         ...derivedRecord(),
         spellSlots: [{ level: 1, total: { computed: 4, manual: null, terms: [] } }],
         pactSlots: { level: 3, total: { computed: 2, manual: null, terms: [] } },
@@ -976,11 +976,47 @@ describe("Attacks", () => {
           },
         ],
       });
-      const divine = await longsword().findByRole("checkbox", { name: /^Divine Smite/ });
-      fireEvent.click(divine);
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Divine Smite/ }));
       fireEvent.click(longsword().getByRole("checkbox", { name: /^Eldritch Smite/ }));
-      expect(divine).not.toBeChecked();
+      expect(longsword().getByRole("checkbox", { name: /^Divine Smite/ })).toBeChecked();
       expect(longsword().getByRole("checkbox", { name: /^Eldritch Smite/ })).toBeChecked();
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Roll Longsword damage with Divine Smite with Eldritch Smite",
+        }),
+      );
+
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]).toMatchObject({ notation: "1d8+2d8+4d8-1" });
+      expect(puts[0]?.spellSlots).toContainEqual({ level: 1, total: 4, expended: 1 });
+      expect(puts[0]?.pactSlots).toEqual({ level: 3, total: 2, expended: 1 });
+    });
+
+    it("refuses the roll's slots and spends none when a second smite finds its slot gone", async () => {
+      const smite = (source: string) => ({
+        source,
+        dice: "2d8",
+        bonus: 0,
+        type: "radiant",
+        offer: { condition: "on a hit", oncePerTurn: false, slot: { max: 5 } },
+      });
+      const { posts, puts } = renderRolling({
+        ...derivedRecord(),
+        spellSlots: [{ level: 1, total: { computed: 1, manual: null, terms: [] } }],
+        pactSlots: null,
+        attacks: [{ ...attack(0, 5), featureDamage: [smite("Divine Smite"), smite("Holy Smite")] }],
+      });
+      fireEvent.click(await longsword().findByRole("checkbox", { name: /^Divine Smite/ }));
+      fireEvent.click(longsword().getByRole("checkbox", { name: /^Holy Smite/ }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Roll Longsword damage with Divine Smite with Holy Smite",
+        }),
+      );
+
+      expect(await screen.findAllByText(/Holy Smite was not used/)).not.toHaveLength(0);
+      expect(puts).toHaveLength(0);
+      expect(posts).toHaveLength(0);
     });
 
     it("shows and adds a feature's dice with the flat amount it adds to them", async () => {

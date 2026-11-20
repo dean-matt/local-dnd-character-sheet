@@ -25,9 +25,8 @@ export function FeatureDamage({
   take,
   used,
   slots,
-  slot,
+  pickFor,
   pickSlot,
-  versus,
   setVersus,
 }: {
   entries: readonly Entry[];
@@ -36,10 +35,9 @@ export function FeatureDamage({
   take: (source: string, on: boolean) => void;
   used: (entry: Entry) => boolean;
   slots: readonly SpellCastOption[];
-  slot: SpellCastOption | undefined;
-  pickSlot: (slot: SpellCastOption) => void;
-  versus: boolean;
-  setVersus: (on: boolean) => void;
+  pickFor: (entry: Entry) => { slot?: SpellCastOption; versus: boolean };
+  pickSlot: (source: string, slot: SpellCastOption) => void;
+  setVersus: (source: string, on: boolean) => void;
 }) {
   return entries.map((entry) => {
     const { source, offer } = entry;
@@ -59,8 +57,7 @@ export function FeatureDamage({
     const checked = taken.includes(source);
     const own = offerSlots(slots, offer);
     const noSlot = offer.slot !== null && own.length === 0;
-    const at =
-      own.find((option) => option.via === slot?.via && option.level === slot.level) ?? own[0];
+    const { slot: at, versus } = pickFor(entry);
     return (
       <div key={source} className="flex flex-col gap-0.5">
         <label className="flex items-center gap-1 text-label">
@@ -86,9 +83,10 @@ export function FeatureDamage({
               Slot
               <select
                 value={slotKey(at)}
+                aria-label={`${source} slot`}
                 onChange={(event) => {
                   const picked = own.find((option) => slotKey(option) === event.target.value);
-                  if (picked) pickSlot(picked);
+                  if (picked) pickSlot(source, picked);
                 }}
                 className="min-h-6 min-w-0 rounded-control border border-border bg-surface"
               >
@@ -105,7 +103,7 @@ export function FeatureDamage({
                 <input
                   type="checkbox"
                   checked={versus}
-                  onChange={(event) => setVersus(event.target.checked)}
+                  onChange={(event) => setVersus(source, event.target.checked)}
                 />
                 Against {offer.slot.versus}
               </label>
