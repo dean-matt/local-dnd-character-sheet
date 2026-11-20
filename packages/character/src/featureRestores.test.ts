@@ -200,6 +200,15 @@ describe("restores the player scales", () => {
     expect(master).toMatchObject([{ dice: "1d10" }]);
   });
 
+  it("restores nothing from Tomb of Levistus without a warlock level", () => {
+    const tomb = { ref: { name: "Tomb of Levistus", source: "XGE" }, featureType: "EI" } as never;
+    const fighter = character({
+      levels: [{ class: { name: "Fighter", source: "PHB" } }],
+      optionalFeatures: [tomb],
+    });
+    expect(restoresOf(fighter, "Tomb of Levistus")).toEqual([]);
+  });
+
   it("gives ten temporary hit points for each warlock level from Tomb of Levistus, whatever the other classes", () => {
     const tomb = { ref: { name: "Tomb of Levistus", source: "XGE" }, featureType: "EI" } as never;
     const multi = character({

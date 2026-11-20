@@ -62,7 +62,7 @@ export function featureRestores(definition: HoldsFeatures, sheet: RestoreSheet):
               (group) => !("homebrewId" in group.class) && refKey(group.class) === refKey(levelsIn),
             )?.level ?? 0)
           : held.levels;
-        const restored = amount(mechanic, levels, sheet);
+        const restored = levelsIn && levels === 0 ? null : amount(mechanic, levels, sheet);
         if (!restored) return [];
         return [
           {
@@ -82,7 +82,7 @@ export function featureRestores(definition: HoldsFeatures, sheet: RestoreSheet):
 
 const NOTATION = /^(\d+)d(\d+)$/;
 
-/** The dice and bonus of `restore` for `count` of what it lands per: slot levels or creatures; as it stands without a `per`. */
+/** The dice and bonus of `restore` for `count` slot levels or creatures; unchanged without a `per`. */
 export function restoreFor(
   { dice, bonus, per }: Pick<Restore, "dice" | "bonus" | "per">,
   count: number,
