@@ -157,7 +157,7 @@ const featureDamageSchema = z.strictObject({
   offer: z
     .strictObject({
       condition: z.string().min(1),
-      oncePerTurn: z.boolean().optional(),
+      oncePerTurn: z.boolean(),
       slot: z
         .strictObject({
           max: z.int().min(2),
