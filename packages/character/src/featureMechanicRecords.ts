@@ -2208,7 +2208,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     ] as const
   ).map(([owner, name, source, level]) =>
     subclassFeature(owner, ["Life", source], [name, source], level, [
-      { kind: "heal", bonus: ["level"], times: 5, others: true },
+      { kind: "heal", bonus: ["level"], times: 5, ...(source === "XPHB" ? {} : { others: true }) },
     ]),
   ),
   classFeature(cleric24, ["Divine Spark", "XPHB"], 2, [
@@ -2232,7 +2232,6 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
         { level: 10, dice: "3d6" },
         { level: 14, dice: "4d6" },
       ],
-      others: true,
     },
   ]),
   classFeature(druid24, ["Wild Shape", "XPHB"], 2, [{ kind: "tempHp", bonus: ["level"] }]),
@@ -2334,7 +2333,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
     ),
   ]),
   subclassFeature(monk, ["Mercy", "TCE"], ["Hand of Healing", "TCE"], 3, [
-    { kind: "heal", dice: { column: "martial_arts" }, bonus: ["wis"], others: true },
+    { kind: "heal", dice: { column: "martial_arts" }, bonus: ["wis"] },
   ]),
   subclassFeature(monk, ["Mercy", "TCE"], ["Hand of Ultimate Mercy", "TCE"], 17, [
     { kind: "heal", dice: "4d10", bonus: ["wis"], others: true },
