@@ -702,14 +702,18 @@ const LIMITED_USES: FeatureMechanics[] = [
     { kind: "uses", count: 1, reset: "short" },
   ]),
   // Twice the proficiency bonus in Psionic Energy dice; the bonus action that regains one is
-  // limited by a short rest of its own.
+  // the `recovery` count, restored by a short rest.
   ...(["Psi Warrior", "Soulknife"] as const).map((shortName) =>
     subclassFeature(
       shortName === "Psi Warrior" ? fighter : rogue,
       [shortName, "TCE"],
       ["Psionic Power", "TCE"],
       3,
-      [{ kind: "uses", count: "proficiency", times: 2, reset: "long" }],
+      [
+        { kind: "uses", count: "proficiency", times: 2, reset: "long" },
+        { kind: "regain", target: "uses", count: 1 },
+        { kind: "uses", count: 1, reset: "short", part: "recovery" },
+      ],
     ),
   ),
   classFeature(artificer, ["Flash of Genius", "TCE"], 7, [
@@ -2531,6 +2535,15 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ]),
   subclassFeature(druid, ["Land", "PHB"], ["Natural Recovery", "PHB"], 2, [
     { kind: "slotRecovery", maxLevel: 5 },
+    { kind: "uses", count: 1, reset: "long" },
+  ]),
+  // The sheet tracks no rest taken, so the one use a short rest restores stands for finishing it.
+  classFeature(sorcerer, ["Sorcerous Restoration", "PHB"], 20, [
+    { kind: "regain", target: "pool", pool: "sorcery_points", count: 4 },
+    { kind: "uses", count: 1, reset: "short" },
+  ]),
+  classFeature(warlock, ["Eldritch Master", "PHB"], 20, [
+    { kind: "regain", target: "pactSlots" },
     { kind: "uses", count: 1, reset: "long" },
   ]),
   // Its conversion is recorded on Font of Magic, the feature whose row the sheet lists.

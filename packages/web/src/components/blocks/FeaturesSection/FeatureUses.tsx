@@ -16,6 +16,7 @@ import { chosenValue, restoreChoice } from "../../../lib/restoreChoice.ts";
 import { Announcer } from "../../Announcer.tsx";
 import { PoolButton } from "../../PoolButton.tsx";
 import { RestoreChoiceSelect } from "../../RestoreChoiceSelect.tsx";
+import { RegainButton } from "./RegainButton.tsx";
 import { SlotRecoveryDialog } from "./SlotRecoveryDialog.tsx";
 
 /** `short` is restored by either rest, so it reads as the shorter one; `manual` only by the player. */
@@ -30,7 +31,10 @@ const RESTORED_BY: Record<NonNullable<LimitedUses["restoredBy"]>, string> = {
   soulTrinket: "destroying a soul trinket",
 };
 
-const PART: Record<NonNullable<LimitedUses["part"]>, string> = { conjuring: "Conjuring" };
+const PART: Record<NonNullable<LimitedUses["part"]>, string> = {
+  conjuring: "Conjuring",
+  recovery: "Regaining",
+};
 
 /**
  * A feature's uses left against its count and the rest that restores them, with a spend and
@@ -136,6 +140,18 @@ export function FeatureUses({
         >
           Recover
         </button>
+      )}
+      {derived && (
+        <RegainButton
+          derived={derived}
+          stored={stored}
+          name={name}
+          source={source}
+          uses={uses}
+          expended={expended}
+          writing={replace.writing}
+          onRegain={replace.write}
+        />
       )}
       {derived && recovery && recovering && (
         <SlotRecoveryDialog

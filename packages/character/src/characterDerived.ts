@@ -219,6 +219,18 @@ const slotRecoverySchema = z.strictObject({
 });
 
 /**
+ * What a use of a held class or subclass feature regains: the pool `pool` of `class`, the pact
+ * slots, or its own main uses, `count` of them or, absent, all.
+ */
+const regainSchema = z.strictObject({
+  feature: contentRefSchema,
+  class: contentRefSchema,
+  target: z.enum(["pool", "pactSlots", "uses"]),
+  pool: z.string().min(1).optional(),
+  count: z.int().min(1).optional(),
+});
+
+/**
  * The uses a held feature counts, computed from the character where the content build reads no
  * count from its text: `origin` is the features section's group it shows in, `level` is a class
  * or subclass feature's, null for a feat or trait, and `key` is its entry in the state's
@@ -446,6 +458,8 @@ export const characterDerivedSchema = z.strictObject({
   featureConversions: z.array(featureConversionSchema),
   /** The slot recoveries held features make, in the order the features are held. */
   slotRecoveries: z.array(slotRecoverySchema),
+  /** The pool, pact slot and use regains held features make, in the order the features are held. */
+  regains: z.array(regainSchema),
   /**
    * What held features change about a turn. `attacks`: the attacks the Attack action allows;
    * `pactAttacks`: the count with the pact weapon where it is higher, else null; `addsAction`:

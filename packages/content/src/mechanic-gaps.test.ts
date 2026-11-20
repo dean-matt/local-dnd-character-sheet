@@ -40,6 +40,7 @@ const zero: Counts = {
   pool: 0,
   convert: 0,
   slotRecovery: 0,
+  regain: 0,
   poolCost: 0,
   turn: 0,
   spells: 0,
@@ -140,6 +141,18 @@ describe("mechanicGaps", () => {
     "one",
     json({ srd52: true }, "choose expended spell slots to recover"),
   );
+  feat.run(
+    "Restoring",
+    "PHB",
+    "classic",
+    json({ srd: true }, "you regain 4 expended sorcery points whenever you finish a short rest"),
+  );
+  feat.run(
+    "Restored",
+    "XPHB",
+    "one",
+    json({ srd52: true }, "you regain 4 expended sorcery points whenever you finish a short rest"),
+  );
   const surging = json({ srd: true }, "a number of times equal to your Charisma modifier");
   feat.run("Surging", "PHB", "classic", surging);
   db.prepare(
@@ -204,6 +217,7 @@ describe("mechanicGaps", () => {
     expect(gaps.pool).toEqual(["Superior (PHB)"]);
     expect(gaps.convert).toEqual(["Flexible (PHB)"]);
     expect(gaps.slotRecovery).toEqual(["Recovering (PHB)"]);
+    expect(gaps.regain).toEqual(["Restoring (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.poolCost).toEqual(["Spender (PHB)"]);
     expect(gaps.active).toEqual(["Winged (PHB)"]);
@@ -215,6 +229,7 @@ describe("mechanicGaps", () => {
       "Fortunate (PHB)",
       "Fountain (XPHB)",
       "Recovered (XPHB)",
+      "Restored (XPHB)",
       "Strider (PHB)",
       "Stunning Strike (PHB)",
       "Turning (PHB)",
@@ -236,12 +251,13 @@ describe("mechanicGaps", () => {
       pool: 1,
       convert: 1,
       slotRecovery: 1,
+      regain: 1,
       poolCost: 1,
       uses: 1,
       active: 1,
       turn: 2,
       spells: 2,
-      unclassified: 9,
+      unclassified: 10,
     });
   });
 
