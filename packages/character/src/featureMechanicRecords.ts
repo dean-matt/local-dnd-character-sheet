@@ -677,6 +677,7 @@ const LIMITED_USES: FeatureMechanics[] = [
     {
       kind: "attack",
       dice: "1d4",
+      oncePerTurn: true,
       option: "once a turn while a bonded creature is within 30 feet",
     },
   ]),

@@ -1,5 +1,5 @@
 import { rollDice } from "@dnd/dice";
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { useRecordRoll } from "../../../../hooks/useRecordRoll.ts";
 import { OnRolled } from "../../../rollerContext.ts";
 import type { Attack, Landed } from "../../attack.ts";
@@ -29,11 +29,13 @@ export function AttackAfterRoll({
   const record = useRecordRoll(characterId);
   const onRolled = useContext(OnRolled);
   const [heard, setHeard] = useState("");
+  const sending = useRef(false);
   const offered = landed ? options.filter(({ source }) => !landed.sources.includes(source)) : [];
   if (!landed || offered.length === 0) return null;
 
   function apply(option: Attack["options"][number]) {
-    if (!landed) return;
+    if (!landed || sending.current) return;
+    sending.current = true;
     const die = option.dice ? rollDice(option.dice) : undefined;
     const roll = {
       ...landed.roll,
@@ -47,6 +49,9 @@ export function AttackAfterRoll({
     record.mutate(
       { type: "attack", label, origin, ...roll },
       {
+        onSettled: () => {
+          sending.current = false;
+        },
         onSuccess: (entry) => {
           onRolled(entry);
           setHeard(`${label}: ${roll.total}`);
@@ -63,6 +68,7 @@ export function AttackAfterRoll({
         <button
           key={`${option.source}|${option.condition}`}
           type="button"
+          disabled={record.isPending}
           onClick={() => apply(option)}
           aria-label={`Add ${added(option)} to the ${landed.label}, ${option.condition}`}
           title={option.condition}

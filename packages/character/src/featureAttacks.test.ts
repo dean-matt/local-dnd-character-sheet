@@ -196,6 +196,14 @@ describe("featureStrike, outside the SRD", () => {
     expect(adds(levelsOf("Cleric", "PHB", 1, "Peace Domain", "TCE"), LONGBOW)).toEqual([
       { source: "Emboldening Bond", attack: 0, dice: "1d4", afterRoll: false },
     ]);
+    const spent = (definition: CharacterDefinition, strike: Strike) =>
+      featureStrike(definition, strike, () => 0).options.map(
+        ({ oncePerTurn }) => oncePerTurn ?? false,
+      );
+    expect(spent(levelsOf("Barbarian", "PHB", 6, "Path of Wild Magic", "TCE"), GREATSWORD)).toEqual(
+      [false],
+    );
+    expect(spent(levelsOf("Cleric", "PHB", 1, "Peace Domain", "TCE"), LONGBOW)).toEqual([true]);
   });
 
   it("offers a die after the roll for Favored by the Gods, Homing Strikes and Precision Attack, scaled by the class's levels", () => {

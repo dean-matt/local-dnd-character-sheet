@@ -137,6 +137,7 @@ const attackOptionSchema = z.strictObject({
   critical: z.int().min(2).max(19).nullable(),
   dice: z.string().min(1).nullable(),
   afterRoll: z.boolean(),
+  oncePerTurn: z.boolean().optional(),
   condition: z.string().min(1),
 });
 
@@ -156,7 +157,7 @@ const featureDamageSchema = z.strictObject({
   offer: z
     .strictObject({
       condition: z.string().min(1),
-      oncePerTurn: z.boolean(),
+      oncePerTurn: z.boolean().optional(),
       slot: z
         .strictObject({
           max: z.int().min(2),

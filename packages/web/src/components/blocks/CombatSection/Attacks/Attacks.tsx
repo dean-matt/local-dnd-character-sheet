@@ -498,7 +498,9 @@ export function Attacks({
             onRolled={(hit, logged, rolled) => {
               setCritical(rowKey, hit);
               if (!logged) return;
-              const spent = new Set(taken.filter(({ dice }) => dice).map(tradeKey));
+              const spent = new Set(
+                taken.filter(({ dice, oncePerTurn }) => dice && oncePerTurn).map(tradeKey),
+              );
               setTraded((now) => ({
                 ...now,
                 [rowKey]: (now[rowKey] ?? []).filter((each) => !spent.has(each)),

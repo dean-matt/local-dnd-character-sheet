@@ -113,6 +113,7 @@ function addMechanic(
       critical: critical ?? null,
       dice: mechanic.dice ? scaledDice({ ...mechanic, dice: mechanic.dice }, held.levels) : null,
       afterRoll: mechanic.afterRoll === true,
+      oncePerTurn: mechanic.oncePerTurn,
       condition: option,
     });
   } else if (critical !== undefined) {

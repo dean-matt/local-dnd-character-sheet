@@ -598,7 +598,34 @@ describe("Attacks", () => {
       });
     });
 
-    it("rolls a die a feature adds with the d20 when taken, and untakes it once the attack is logged", async () => {
+    it("rolls a die a feature adds with the d20 when taken, and untakes a once-a-turn die once the attack is logged", async () => {
+      const bolster = {
+        source: "Emboldening Bond",
+        attack: 0,
+        damage: 0,
+        critical: null,
+        dice: "1d3",
+        afterRoll: false,
+        oncePerTurn: true,
+        condition: "once a turn while a bonded creature is within 30 feet",
+      };
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [{ ...attack(0, 5), options: [bolster] }],
+      });
+      const taken = await longsword().findByRole("checkbox", {
+        name: "Emboldening Bond +1d3, once a turn while a bonded creature is within 30 feet",
+      });
+      fireEvent.click(taken);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Roll Longsword attack with Emboldening Bond" }),
+      );
+      await waitFor(() => expect(posts).toHaveLength(1));
+      expect(posts[0]?.notation).toMatch(/^1d20\+1d3\+5$/);
+      await waitFor(() => expect(taken).not.toBeChecked());
+    });
+
+    it("keeps a die ticked for as long as its feature lasts", async () => {
       const bolster = {
         source: "Bolstering Magic",
         attack: 0,
@@ -616,12 +643,15 @@ describe("Attacks", () => {
         name: "Bolstering Magic +1d3, for the 10 minutes Bolstering Magic lasts on you",
       });
       fireEvent.click(taken);
-      fireEvent.click(
-        screen.getByRole("button", { name: "Roll Longsword attack with Bolstering Magic" }),
-      );
+      const roll = screen.getByRole("button", {
+        name: "Roll Longsword attack with Bolstering Magic",
+      });
+      fireEvent.click(roll);
       await waitFor(() => expect(posts).toHaveLength(1));
-      expect(posts[0]?.notation).toMatch(/^1d20\+1d3\+5$/);
-      await waitFor(() => expect(taken).not.toBeChecked());
+      fireEvent.click(roll);
+      await waitFor(() => expect(posts).toHaveLength(2));
+      expect(posts[1]?.notation).toMatch(/^1d20\+1d3\+5$/);
+      expect(taken).toBeChecked();
     });
 
     it("adds a bonus or die to the attack that landed, logging the new total once per feature", async () => {
@@ -666,6 +696,39 @@ describe("Attacks", () => {
         label: "Longsword attack with Guided Strike and Favored by the Gods",
         total: roll.total + 10 + 2,
       });
+    });
+
+    it("logs an after-roll bonus once however often its button is clicked", async () => {
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      const { posts } = renderRolling({
+        ...derivedRecord(),
+        attacks: [
+          {
+            ...attack(0, 5),
+            options: [
+              {
+                source: "Guided Strike",
+                attack: 10,
+                damage: 0,
+                critical: null,
+                dice: null,
+                afterRoll: true,
+                condition: "after a miss",
+              },
+            ],
+          },
+        ],
+      });
+      fireEvent.click(await screen.findByRole("button", { name: "Roll Longsword attack" }));
+      await waitFor(() => expect(posts).toHaveLength(1));
+      const add = await longsword().findByRole("button", { name: /^Add Guided Strike/ });
+      fireEvent.click(add);
+      fireEvent.click(add);
+      await waitFor(() => expect(posts).toHaveLength(2));
+      await waitFor(() =>
+        expect(screen.queryByRole("button", { name: /^Add Guided Strike/ })).toBeNull(),
+      );
+      expect(posts).toHaveLength(2);
     });
 
     it("does not call out a roll one below a lowered threshold", async () => {

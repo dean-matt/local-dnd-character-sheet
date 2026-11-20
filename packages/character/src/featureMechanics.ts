@@ -222,6 +222,7 @@ const scalesSchema = z
  * holds, and the attack offers it rather than applying it. `dice` adds a die to the attack
  * roll instead, `scales` replacing it from a level in the feature's class, and `afterRoll`
  * has the player add a die or an `attack` number once the roll shows a miss; both are offered.
+ * A die with `oncePerTurn` is spent by the roll that takes it; one without lasts until unticked.
  */
 const attackMechanicSchema = z
   .strictObject({
@@ -239,6 +240,7 @@ const attackMechanicSchema = z
     dice: diceSchema.optional(),
     scales: scalesSchema.optional(),
     afterRoll: z.literal(true).optional(),
+    oncePerTurn: z.literal(true).optional(),
     option: z.string().min(1).optional(),
     while: whileActive,
   })
