@@ -1,4 +1,4 @@
-import type { CharacterState } from "@dnd/character";
+import type { CharacterDerived, CharacterState } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -11,7 +11,11 @@ type Body = {
   roll?: { label: string; notation: string; total: number; mode?: string };
 };
 
-function renderEncounter(state: Partial<CharacterState> = {}, edition: "classic" | "one" = "one") {
+function renderEncounter(
+  state: Partial<CharacterState> = {},
+  edition: "classic" | "one" = "one",
+  limitedUses: CharacterDerived["limitedUses"] = [],
+) {
   const base = characterRecord("1", "Vex");
   const character = { ...base, edition, definition: { ...base.definition, edition } };
   let play = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
@@ -33,7 +37,7 @@ function renderEncounter(state: Partial<CharacterState> = {}, edition: "classic"
   client.setQueryData(characterStateKey("1"), play);
   render(
     <QueryClientProvider client={client}>
-      <Encounter character={character} derived={derivedRecord()} />
+      <Encounter character={character} derived={{ ...derivedRecord(), limitedUses }} />
     </QueryClientProvider>,
   );
   return writes;
@@ -66,6 +70,25 @@ describe("Encounter", () => {
     expect(write?.body.roll?.notation).toMatch(/^1d20/);
     expect(write?.body.state.encounter).toEqual({ round: 1, initiative: write?.body.roll?.total });
     expect(await screen.findByRole("button", { name: "Reroll initiative" })).toBeInTheDocument();
+  });
+
+  it("restores a spent use initiative restores, in the same write as the roll", async () => {
+    const key = "feat|XGE|Second Chance";
+    const use = {
+      feature: { name: "Second Chance", source: "XGE" },
+      origin: "feat" as const,
+      level: null,
+      key,
+      count: 1,
+      reset: "short" as const,
+      restoredBy: "initiative" as const,
+    };
+    const writes = renderEncounter({ featureUses: [{ key, expended: 1 }] }, "one", [use]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Roll initiative" }));
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.body.state.featureUses).toEqual([{ key, expended: 0 }]);
   });
 
   it("rolls initiative with disadvantage at classic exhaustion 1, and normally in 2024", async () => {

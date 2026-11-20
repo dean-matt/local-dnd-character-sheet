@@ -1,6 +1,7 @@
-import type { CharacterInventory, ItemRegains } from "@dnd/catalog";
-import { describe, expect, it } from "vitest";
-import { chargedItems, rechargeOf } from "./restChanges.ts";
+import type { CharacterFeatures, CharacterInventory, ItemRegains, LimitedUses } from "@dnd/catalog";
+import type { USES_PARTS, USES_RESTORED_BY } from "@dnd/character";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import { chargedItems, featureUses, rechargeOf } from "./restChanges.ts";
 
 const item = (regains: ItemRegains) => ({ id: "wand", name: "Wand", max: 7, regains });
 
@@ -46,5 +47,39 @@ describe("chargedItems", () => {
       ]),
     );
     expect(listed.map(({ id }) => id)).toEqual(["a"]);
+  });
+});
+
+describe("featureUses", () => {
+  it("lists a feature's main use and each other use under its own key", () => {
+    const use = (key: string) => ({ key, count: 1, reset: "long" as const });
+    const features = {
+      groups: [
+        {
+          features: [
+            {
+              resolved: true,
+              name: "Manifest Mind",
+              uses: use("a"),
+              otherUses: [{ ...use("a|conjuring"), part: "conjuring" }],
+            },
+            { resolved: false, name: "Unresolved", uses: use("b") },
+          ],
+        },
+      ],
+    } as unknown as CharacterFeatures;
+    expect(featureUses(features).map(({ key, name }) => [key, name])).toEqual([
+      ["a", "Manifest Mind"],
+      ["a|conjuring", "Manifest Mind"],
+    ]);
+  });
+});
+
+describe("the catalog's limited uses", () => {
+  it("carries the character package's restoredBy and part vocabularies", () => {
+    expectTypeOf<NonNullable<LimitedUses["restoredBy"]>>().toEqualTypeOf<
+      (typeof USES_RESTORED_BY)[number]
+    >();
+    expectTypeOf<NonNullable<LimitedUses["part"]>>().toEqualTypeOf<(typeof USES_PARTS)[number]>();
   });
 });

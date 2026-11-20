@@ -110,6 +110,8 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ count: 1 }, { count: 2 })).toBe(false);
     expect(parse({ count: "proficiency", times: 2 })).toBe(true);
     expect(parse({ count: 2, times: 2 })).toBe(false);
+    expect(parse({ count: 1 }, { count: 1, part: "conjuring" })).toBe(true);
+    expect(parse({ count: 1, part: "conjuring" }, { count: 1, part: "conjuring" })).toBe(false);
   });
 
   it("refuses a turn mechanic that changes nothing or more than one thing, or a pact count off attacks", () => {
