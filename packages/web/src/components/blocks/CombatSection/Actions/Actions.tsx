@@ -37,10 +37,11 @@ function heldActions(groups: FeatureGroup[]): HeldFeature[] {
   return held;
 }
 
-/** The limited uses of the feature named `name` in the group, where it has any. */
-function usesOfFeature({ features }: FeatureGroup, name: string) {
-  for (const feature of features)
-    if (feature.resolved && feature.name === name) return feature.uses;
+/** The limited uses of the feature named `name` in any group, where it has any. */
+function usesOfFeature(groups: FeatureGroup[], name: string) {
+  for (const { features } of groups)
+    for (const feature of features)
+      if (feature.resolved && feature.name === name) return feature.uses;
   return undefined;
 }
 
@@ -69,7 +70,8 @@ export function Actions({
     [...actions, ...STANDARD_ACTIONS.classic].find((action) => action.name === name)?.source ??
     "PHB";
   const attacks = attackCount(derived.turn);
-  const held = heldActions(useCharacterFeatures(character.id, derived).data?.groups ?? []);
+  const groups = useCharacterFeatures(character.id, derived).data?.groups ?? [];
+  const held = heldActions(groups);
   return (
     <Card title="Actions">
       <div className="flex flex-col gap-2">
@@ -128,7 +130,7 @@ export function Actions({
                       type={type}
                       group={group}
                       uses={uses}
-                      usesOf={(sibling) => usesOfFeature(group, sibling)}
+                      usesOf={(sibling) => usesOfFeature(groups, sibling)}
                     />
                   </li>
                 ))}

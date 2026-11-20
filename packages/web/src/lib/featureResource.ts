@@ -125,3 +125,10 @@ export function featureResource(
   if (pool && cost) return poolResource(derived, stored, edition, pool, cost);
   return feature.uses ? usesResource(stored, feature.uses, ONE_USE) : null;
 }
+
+/** The amount a use spends: the one chosen, held between the least and most the resource allows. */
+export function amountSpent(resource: FeatureResource | null, chosen: number | null) {
+  if (!resource) return 1;
+  const whole = chosen !== null && Number.isFinite(chosen) ? Math.round(chosen) : resource.min;
+  return Math.min(Math.max(whole, resource.min), resource.max);
+}

@@ -14,6 +14,8 @@ describe("featureActionType", () => {
     expect(featureActionType({ name: "Uncanny Dodge", source: "PHB" })).toBe("reaction");
     expect(featureActionType({ name: "Wild Shape", source: "PHB" })).toBe("action");
     expect(featureActionType({ name: "Favored Enemy", source: "XPHB" })).toBe("bonus action");
+    expect(featureActionType({ name: "Divine Sense", source: "XPHB" })).toBe("bonus action");
+    expect(featureActionType({ name: "Preserve Life", source: "XPHB" })).toBe("action");
     expect(featureActionType({ name: "Sacred Weapon", source: "XPHB" })).toBe("free");
     expect(featureActionType({ name: "Hand of Healing", source: "TCE" })).toBe("action");
     expect(featureActionType({ name: "Unearthly Recovery", source: "XGE" })).toBe("bonus action");

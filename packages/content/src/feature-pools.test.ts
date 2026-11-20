@@ -73,7 +73,7 @@ function agrees(cost: FeatureCost, target: { pool?: string; feature?: string }, 
   const most = c.amountMax ?? spent;
   const same = target.pool ? cost.pool === target.pool : cost.feature === target.feature;
   const within = cost.min <= least && most <= (cost.max ?? cost.min) && spent >= cost.min;
-  return same && (within || cost.max === null);
+  return same && (within || (cost.max === null && least >= cost.min));
 }
 
 /** Labels each PHB, XGE or TCE feature the catalog says consumes a pool that the table prices differently, or neither prices nor notes. */

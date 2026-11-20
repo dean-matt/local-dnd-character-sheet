@@ -16,7 +16,11 @@ import { useRef, useState } from "react";
 import { useAnnouncedStateWrite } from "../../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../../hooks/useCharacterState.ts";
 import { useFeatureRestore } from "../../../../hooks/useFeatureRestore.ts";
-import { type FeatureResource, featureResource } from "../../../../lib/featureResource.ts";
+import {
+  amountSpent,
+  type FeatureResource,
+  featureResource,
+} from "../../../../lib/featureResource.ts";
 import { Announcer } from "../../../Announcer.tsx";
 import { AmountInput } from "./AmountInput.tsx";
 import { ConvertDialog } from "./ConvertDialog.tsx";
@@ -24,12 +28,6 @@ import { tradeWords } from "./tradeWords.ts";
 
 const BUTTON =
   "h-6 rounded-control border border-border bg-surface px-2 font-semibold text-label hover:bg-subtle aria-disabled:cursor-not-allowed aria-disabled:opacity-50";
-
-/** The amount a use spends: the one chosen, held between the least and most the resource allows. */
-function amountSpent(resource: FeatureResource | null, chosen: number | null) {
-  if (!resource) return 1;
-  return Math.min(Math.max(chosen ?? resource.min, resource.min), resource.max);
-}
 
 /** `used`, with what is left of a counted resource after spending `amount` of it. */
 function countLeft(resource: FeatureResource | null, amount: number, used: string) {
