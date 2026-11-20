@@ -267,7 +267,7 @@ describe("SpellList", () => {
         {
           ...spell("Darkness", 2, true),
           granted: true,
-          fromSubclass: "Way of Shadow",
+          fromGrantor: "Way of Shadow",
           cost: { amount: 2, resource: "Ki" },
         },
       ],

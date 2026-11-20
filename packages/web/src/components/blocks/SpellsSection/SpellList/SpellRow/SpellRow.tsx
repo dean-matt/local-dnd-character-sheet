@@ -54,8 +54,8 @@ export function SpellRow({
   onRemove: () => void;
 }) {
   const classTag = className && <Tag>{className}</Tag>;
-  // An item's or a subclass's spell is no definition entry, so it has nothing to remove.
-  const grantor = spell.fromItem ?? spell.fromSubclass;
+  // A spell an item or another row grants is no definition entry, so it has nothing to remove.
+  const grantor = spell.fromItem ?? spell.fromGrantor;
   const remove = grantor ? undefined : (
     <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />
   );

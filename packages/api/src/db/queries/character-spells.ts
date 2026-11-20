@@ -127,7 +127,7 @@ function rowFacts(
 type Cost = NonNullable<SheetSpell["cost"]>;
 
 /** What the sheet says of a spell beyond its definition entry. */
-type Grant = { fromItem?: string; fromSubclass?: string; cost?: Cost };
+type Grant = { fromItem?: string; fromGrantor?: string; cost?: Cost };
 
 function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, grant: Grant = {}) {
   const { ref, prepared, granted, origin, pickedFor } = entry;
@@ -158,84 +158,87 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, grant: Grant =
   };
 }
 
-type SubclassSpell = { row: CatalogSpellRow; subclass: string; cost?: Cost };
+type GrantedSpell = { row: CatalogSpellRow; grantor: string; cost?: Cost };
+
+/** A catalog row the definition holds as a grantor, with the block chosen for it; none for homebrew. */
+function grantorOf(
+  definition: CharacterDefinition,
+  kind: Grantor["kind"],
+  ref: EntryRef | undefined,
+  parent?: { class: ContentRef } | { race: ContentRef },
+): Grantor | undefined {
+  const found = catalogRef(ref);
+  if (!found) return undefined;
+  const key = spellBlockKey({ kind, ref: found, ...parent });
+  const block = definition.spellBlocks.find((choice) => spellBlockKey(choice.grantor) === key);
+  const parentRef = parent && ("class" in parent ? parent.class : parent.race);
+  return {
+    kind,
+    ...found,
+    ...(parentRef && { parent: parentRef }),
+    ...(block && { block: block.block }),
+  };
+}
 
 /**
- * The spells each catalog subclass the character holds gives outright by its class's level,
- * by `entryKey`, each once under the first subclass that gives it, with what casting it costs.
- * A subclass offering alternative blocks gives its chosen block's. A homebrew class or
- * subclass gives none here.
+ * The spells each grantor gives outright by its level, by `entryKey`, each once under the
+ * first grantor that gives it, named by its label, with what casting it costs. A grantor
+ * offering alternative blocks gives its chosen block's.
  */
-function subclassSpells(
+function grantedSpells(
   dataDir: string,
-  definition: CharacterDefinition,
-): Map<string, SubclassSpell> {
-  const found = new Map<string, SubclassSpell>();
-  for (const group of classLevels(definition)) {
-    const cls = catalogRef(group.class);
-    const subclass = catalogRef(group.subclass);
-    if (!cls || !subclass) continue;
-    const key = spellBlockKey({ kind: "subclass", ref: subclass, class: cls });
-    const block = definition.spellBlocks.find((choice) => spellBlockKey(choice.grantor) === key);
-    const grantor = {
-      kind: "subclass" as const,
-      ...subclass,
-      parent: cls,
-      ...(block && { block: block.block }),
-    };
+  grantors: readonly { grantor: Grantor; level: number; label: string }[],
+): Map<string, GrantedSpell> {
+  const found = new Map<string, GrantedSpell>();
+  for (const { grantor, level, label } of grantors) {
     const costs = grantedSpellCosts(getGrantorJson(dataDir, grantor), grantor.block);
-    const refs = getGrantedSpells(dataDir, grantor, group.level).spells;
+    const refs = getGrantedSpells(dataDir, grantor, level).spells;
     for (const row of getSpells(dataDir, refs)) {
       if (!row || found.has(entryKey(row))) continue;
       const cost = costs.get(grantedSpellKey(`${row.name}|${row.source}`));
-      found.set(entryKey(row), { row, subclass: subclass.name, ...(cost && { cost }) });
+      found.set(entryKey(row), { row, grantor: label, ...(cost && { cost }) });
     }
   }
   return found;
 }
 
+/** Each catalog subclass the character holds, read at its class's level. */
+function subclassGrantors(definition: CharacterDefinition) {
+  return classLevels(definition).flatMap((group) => {
+    const cls = catalogRef(group.class);
+    const grantor = cls && grantorOf(definition, "subclass", group.subclass, { class: cls });
+    return grantor ? [{ grantor, level: group.level, label: grantor.name }] : [];
+  });
+}
+
 /**
- * The spells every catalog row but a subclass gives outright, by `entryKey`: each class at
- * its level, and the race or its subrace, the background, the feats and the optional
- * features at the character's. A homebrew row gives none here, so a granted entry only a
- * homebrew race gives still reads as its subclass's.
+ * The race or its subrace, the background, the feats and the optional features, each read at
+ * the character's level, so a race's spell arrives at the level that grants it.
  */
-function nonSubclassSpells(dataDir: string, definition: CharacterDefinition): Set<string> {
+function featureGrantors(definition: CharacterDefinition) {
   const level = Math.max(1, definition.levels.length);
-  const at = (
-    kind: Grantor["kind"],
-    ref: EntryRef | undefined,
-    parent?: { race: ContentRef },
-  ): { grantor: Grantor; level: number }[] => {
-    const found = catalogRef(ref);
-    if (!found) return [];
-    const key = spellBlockKey({ kind, ref: found, ...parent });
-    const block = definition.spellBlocks.find((choice) => spellBlockKey(choice.grantor) === key);
-    const grantor = {
-      kind,
-      ...found,
-      ...(parent && { parent: parent.race }),
-      ...(block && { block: block.block }),
-    };
-    return [{ grantor, level }];
-  };
   const race = catalogRef(definition.race);
+  const subrace = race && grantorOf(definition, "subrace", definition.subrace, { race });
   const grantors = [
-    ...classLevels(definition).flatMap((group) =>
-      at("class", group.class).map((each) => ({ ...each, level: group.level })),
-    ),
     // A subrace's grants already hold its race's.
-    ...(catalogRef(definition.subrace) && race
-      ? at("subrace", definition.subrace, { race })
-      : at("race", definition.race)),
-    ...at("background", definition.background),
-    ...definition.feats.flatMap(({ ref }) => at("feat", ref)),
-    ...definition.optionalFeatures.flatMap(({ ref }) => at("optionalFeature", ref)),
+    subrace ?? grantorOf(definition, "race", definition.race),
+    grantorOf(definition, "background", definition.background),
+    ...definition.feats.map(({ ref }) => grantorOf(definition, "feat", ref)),
+    ...definition.optionalFeatures.map(({ ref }) => grantorOf(definition, "optionalFeature", ref)),
   ];
+  return grantors.flatMap((grantor) =>
+    // The base subrace of a race with none named, as the 2014 tiefling's, has an empty name.
+    grantor ? [{ grantor, level, label: grantor.name || grantor.parent?.name || "" }] : [],
+  );
+}
+
+/** The spells each catalog class gives outright by its level, by `entryKey`. */
+function classSpellKeys(dataDir: string, definition: CharacterDefinition): Set<string> {
   return new Set(
-    grantors.flatMap(({ grantor, level }) =>
-      getGrantedSpells(dataDir, grantor, level).spells.map(entryKey),
-    ),
+    classLevels(definition).flatMap((group) => {
+      const grantor = grantorOf(definition, "class", group.class);
+      return grantor ? getGrantedSpells(dataDir, grantor, group.level).spells.map(entryKey) : [];
+    }),
   );
 }
 
@@ -298,9 +301,10 @@ function itemSpells(
 
 /**
  * The definition's spells in order, then those its subclasses give that it does not list,
- * then its equipped items'. An entry does not record its grantor, so a granted entry a
- * subclass gives is that subclass's, carrying its cost, unless another row gives the spell
- * too: a Tiefling Shadow Monk's free Darkness stays free, and Way of Shadow's costed
+ * then those its race or subrace, background, feats and optional features give that it does
+ * not list, then its equipped items'. An entry does not record its grantor, so a granted
+ * entry a subclass gives is that subclass's, carrying its cost, unless another row gives the
+ * spell too: a Tiefling Shadow Monk's free Darkness stays free, and Way of Shadow's costed
  * Darkness lists beside it. An item's spell folds into an entry the character picked, and
  * lists beside every granted one, so the sheet always cites the item.
  */
@@ -310,31 +314,42 @@ export function resolveCharacterSpells(
   definition: CharacterDefinition,
 ): CharacterSpells {
   const rows = rowFacts(dataDir, homebrewDb, definition.spells);
-  const bySubclass = subclassSpells(dataDir, definition);
+  const bySubclass = grantedSpells(dataDir, subclassGrantors(definition));
+  const byFeature = grantedSpells(dataDir, featureGrantors(definition));
   const elsewhere =
-    bySubclass.size > 0 ? nonSubclassSpells(dataDir, definition) : new Set<string>();
+    bySubclass.size > 0
+      ? new Set([...classSpellKeys(dataDir, definition), ...byFeature.keys()])
+      : new Set<string>();
+  const defined = new Set<string>();
   const listed = new Set<string>();
   const picked = new Set<string>();
   const spells: SheetSpell[] = definition.spells.map((entry, index) => {
     if ("homebrewId" in entry.ref) return sheetSpell(entry, rows[index]);
     const key = entryKey(entry.ref);
+    defined.add(key);
     const given = entry.granted ? bySubclass.get(key) : undefined;
     const subclassOwn = given && !elsewhere.has(key);
     if (!given || subclassOwn) listed.add(key);
     if (!entry.granted) picked.add(key);
     return sheetSpell(entry, rows[index], subclassOwn && given.cost ? { cost: given.cost } : {});
   });
-  const subclass = [...bySubclass].flatMap(([key, { row, subclass, cost }]) => {
-    if (listed.has(key)) return [];
-    const ref = { name: row.name, source: row.source };
-    return [
-      sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), {
-        fromSubclass: subclass,
-        ...(cost && { cost }),
-      }),
-    ];
-  });
+  const unlisted = (found: Map<string, GrantedSpell>, skip: ReadonlySet<string>) =>
+    [...found].flatMap(([key, { row, grantor, cost }]) => {
+      if (skip.has(key)) return [];
+      const ref = { name: row.name, source: row.source };
+      return [
+        sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), {
+          fromGrantor: grantor,
+          ...(cost && { cost }),
+        }),
+      ];
+    });
   return {
-    spells: [...spells, ...subclass, ...itemSpells(dataDir, homebrewDb, definition, picked)],
+    spells: [
+      ...spells,
+      ...unlisted(bySubclass, listed),
+      ...unlisted(byFeature, defined),
+      ...itemSpells(dataDir, homebrewDb, definition, picked),
+    ],
   };
 }
