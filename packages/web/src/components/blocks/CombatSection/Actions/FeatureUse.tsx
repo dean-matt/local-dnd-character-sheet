@@ -21,7 +21,9 @@ import {
   type FeatureResource,
   featureResource,
 } from "../../../../lib/featureResource.ts";
+import { choiceBlocked, chosenValue, restoreChoice } from "../../../../lib/restoreChoice.ts";
 import { Announcer } from "../../../Announcer.tsx";
+import { RestoreChoiceSelect } from "../../../RestoreChoiceSelect.tsx";
 import { AmountInput } from "./AmountInput.tsx";
 import { ConvertDialog } from "./ConvertDialog.tsx";
 import { tradeWords } from "./tradeWords.ts";
@@ -68,6 +70,7 @@ export function FeatureUse({
   const restore = useFeatureRestore(character.id);
   const [converting, setConverting] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
+  const [picked, setPicked] = useState<number | null>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const mark = ACTION_TURN_MARK[type];
   if (!play.isSuccess) return null;
@@ -84,12 +87,15 @@ export function FeatureUse({
   if (!resource && !mark) return null;
 
   const amount = amountSpent(resource, chosen);
+  const choice = restoreChoice(derived, stored, { name, source });
+  const count = chosenValue(choice, picked);
 
   const addsAction = derived.turn.addsAction.some(
     (feature) => feature.name === name && feature.source === source,
   );
   const blocked =
     resource?.blocked ??
+    choiceBlocked(choice) ??
     (addsAction && actionAddedBy(stored, name) ? `${name} already used this turn` : null);
   const disabled = replace.writing || blocked !== null;
   const counted = resource?.total != null;
@@ -112,7 +118,7 @@ export function FeatureUse({
 
   async function use() {
     if (disabled) return;
-    const restored = restore(derived, { name, source }, spent());
+    const restored = restore(derived, { name, source }, spent(), count);
     const parts = [...usedWords(), ...restored.text];
     if (await replace.write(restored.state, `${parts.join(". ")}.`)) restored.log();
   }
@@ -138,6 +144,7 @@ export function FeatureUse({
         </span>
       )}
       <AmountInput name={name} resource={resource} amount={amount} onChange={setChosen} />
+      <RestoreChoiceSelect name={name} choice={choice} value={count} onChange={setPicked} />
       {conversion ? (
         <button
           ref={opener}

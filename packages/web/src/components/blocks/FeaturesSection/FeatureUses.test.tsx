@@ -205,6 +205,41 @@ describe("FeatureUses", () => {
     );
   });
 
+  it("gives the amount once for each creature the player picks, up to the most", async () => {
+    const derived: CharacterDerived = {
+      ...derivedRecord(),
+      featureRestores: [
+        {
+          feature: { name: "Relentless Endurance", source: "PHB" },
+          kind: "tempHp",
+          dice: null,
+          bonus: 5,
+          others: false,
+          per: { unit: "creature", most: 3 },
+        },
+      ],
+    };
+    const { writes, rolls } = renderFeatures({ hitPoints: { current: 5, temporary: 0 } }, derived);
+    await waitFor(() => expect(row("Relentless Endurance")).toHaveTextContent("2 / 2"));
+    const relentless = within(row("Relentless Endurance"));
+    const pick = relentless.getByRole("combobox", {
+      name: "Creatures that accept for Relentless Endurance",
+    });
+    expect(within(pick).getAllByRole("option")).toHaveLength(3);
+
+    fireEvent.change(pick, { target: { value: "2" } });
+    fireEvent.click(
+      relentless.getByRole("button", { name: "Spend a use of Relentless Endurance" }),
+    );
+
+    await waitFor(() => expect(rolls).toHaveLength(1));
+    expect(writes[0]?.hitPoints.temporary).toBe(10);
+    expect(rolls[0]).toMatchObject({ label: "Relentless Endurance", total: 10 });
+    expect(relentless.getByRole("status")).toHaveTextContent(
+      "Relentless Endurance: gained 10 temporary hit points for 2 creatures.",
+    );
+  });
+
   it("offers no spend until the derived block that holds what it restores loads", async () => {
     const { writes } = renderFeatures({}, null);
     await waitFor(() => expect(row("Second Wind")).toHaveTextContent("1 / 1"));

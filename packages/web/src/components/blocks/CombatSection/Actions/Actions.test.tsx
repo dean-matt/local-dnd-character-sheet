@@ -174,6 +174,7 @@ describe("Actions", () => {
         hitPoints = { current: null, temporary: 0 },
         turn = derivedRecord().turn,
         poolKey = "second_wind",
+        slots = [],
       }: {
         expended?: number;
         maximum?: number;
@@ -181,6 +182,7 @@ describe("Actions", () => {
         hitPoints?: CharacterState["hitPoints"];
         turn?: CharacterDerived["turn"];
         poolKey?: string;
+        slots?: CharacterState["spellSlots"];
       } = {},
     ) {
       let stored = stateRecord();
@@ -189,6 +191,7 @@ describe("Actions", () => {
         state: {
           ...stored.state,
           hitPoints,
+          spellSlots: slots,
           classResources: [{ class: FIGHTER, key: poolKey, maximum, expended }],
         },
       };
@@ -226,6 +229,10 @@ describe("Actions", () => {
         ...derivedRecord(),
         hitPointMaximum: { computed: 40, manual: null, terms: [] },
         featureRestores: restores,
+        spellSlots: slots.map(({ level, total }) => ({
+          level,
+          total: { computed: total, manual: null, terms: [] },
+        })),
         turn,
         classResources: [
           {
@@ -416,6 +423,62 @@ describe("Actions", () => {
       expect(within(use.closest("li") as HTMLElement).getByRole("status")).toHaveTextContent(
         "Mantle of Inspiration: 8 temporary hit points to give another creature.",
       );
+    });
+
+    it("expends the slot level the player picks and heals 1d8 for each of its levels", async () => {
+      const wildShape = { ...SECOND_WIND, name: "Combat Wild Shape", source: "PHB" };
+      const { card, writes, rolls } = renderUse(wildShape, {
+        hitPoints: { current: 10, temporary: 0 },
+        slots: [
+          { level: 1, total: 2, expended: 0 },
+          { level: 3, total: 1, expended: 0 },
+          { level: 4, total: 1, expended: 1 },
+        ],
+        restores: [
+          restore("Combat Wild Shape", "PHB", {
+            dice: "1d8",
+            bonus: 0,
+            per: { unit: "slotLevel", most: null },
+          }),
+        ],
+      });
+      const pick = await within(card).findByRole("combobox", {
+        name: "Spell slot level to expend for Combat Wild Shape",
+      });
+      expect(
+        within(pick)
+          .getAllByRole("option")
+          .map((option) => option.textContent),
+      ).toEqual(["Level 1", "Level 3"]);
+      fireEvent.change(pick, { target: { value: "3" } });
+      fireEvent.click(within(card).getByRole("button", { name: "Use Combat Wild Shape" }));
+
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      expect(rolls[0]).toMatchObject({ type: "healing", notation: "3d8" });
+      expect(writes[0]?.spellSlots).toEqual([
+        { level: 1, total: 2, expended: 0 },
+        { level: 3, total: 1, expended: 1 },
+        { level: 4, total: 1, expended: 1 },
+      ]);
+      expect(writes[0]?.hitPoints.current).toBe(10 + (rolls[0]?.total ?? 0));
+      expect(writes[0]?.turn.bonusAction).toBe(true);
+    });
+
+    it("refuses Combat Wild Shape with no slot left", async () => {
+      const wildShape = { ...SECOND_WIND, name: "Combat Wild Shape", source: "PHB" };
+      const { card } = renderUse(wildShape, {
+        slots: [{ level: 1, total: 2, expended: 2 }],
+        restores: [
+          restore("Combat Wild Shape", "PHB", {
+            dice: "1d8",
+            bonus: 0,
+            per: { unit: "slotLevel", most: null },
+          }),
+        ],
+      });
+      expect(
+        await within(card).findByRole("button", { name: "Use Combat Wild Shape" }),
+      ).toHaveAttribute("aria-disabled", "true");
     });
 
     it("grants temporary hit points", async () => {

@@ -137,7 +137,7 @@ export {
 } from "./featureConversions.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 export { type Mechanic, USES_PARTS, USES_RESTORED_BY } from "./featureMechanics.ts";
-export { restoredState } from "./featureRestores.ts";
+export { restoredState, restoreFor } from "./featureRestores.ts";
 export { featurePickOffers } from "./heldFeatures.ts";
 export {
   atHitPointMaximum,

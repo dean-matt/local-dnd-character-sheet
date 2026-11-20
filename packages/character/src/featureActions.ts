@@ -37,6 +37,7 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "bonus action",
     "PHB",
     "Bardic Inspiration",
+    "Combat Wild Shape",
     "Cunning Action",
     "Flurry of Blows",
     "Font of Magic",

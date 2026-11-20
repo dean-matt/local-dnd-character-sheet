@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterDefinition } from "./definition.ts";
-import { featureRestores, type RestoreSheet, restoredState } from "./featureRestores.ts";
+import {
+  featureRestores,
+  type RestoreSheet,
+  restoredState,
+  restoreFor,
+} from "./featureRestores.ts";
 import { defaultCharacterState } from "./state.ts";
 import { definition } from "./test/vex.ts";
 
@@ -26,10 +31,13 @@ const levelsOf = (
 
 const SHEET: RestoreSheet = {
   column: (key) => (key === "martial_arts" ? "1d8" : undefined),
+  die: () => undefined,
   modifier: (ability) => ({ str: 0, dex: 2, con: 1, int: 0, wis: 3, cha: 4 })[ability],
   proficiency: 3,
   hitPointMaximum: 61,
 };
+
+type Restore = Parameters<typeof restoreFor>[0];
 
 const restoresOf = (held: CharacterDefinition, name: string, sheet = SHEET) =>
   featureRestores(held, sheet).filter(({ feature }) => feature.name === name);
@@ -150,6 +158,59 @@ describe("featureRestores", () => {
     const orc = character({ race: { name: "Half-Orc", source: "PHB" }, subrace: undefined });
     expect(restoresOf(orc, "Relentless Endurance")).toMatchObject([
       { kind: "heal", dice: null, bonus: 1 },
+    ]);
+  });
+});
+
+describe("restores the player scales", () => {
+  const moon = levelsOf("Druid", "PHB", 2, { name: "Circle of the Moon", source: "PHB" });
+
+  it("heals 1d8 for each level of the slot Combat Wild Shape expends", () => {
+    const [restore] = restoresOf(moon, "Combat Wild Shape");
+    expect(restore).toMatchObject({
+      kind: "heal",
+      dice: "1d8",
+      bonus: 0,
+      per: { unit: "slotLevel" },
+    });
+    expect(restoreFor(restore as Restore, 3)).toEqual({ dice: "3d8", bonus: 0 });
+  });
+
+  it("gives Call the Hunt five temporary hit points for each creature, up to the Constitution modifier", () => {
+    const beast = levelsOf("Barbarian", "PHB", 14, { name: "Path of the Beast", source: "TCE" });
+    const [restore] = restoresOf(beast, "Call the Hunt");
+    expect(restore).toMatchObject({ kind: "tempHp", dice: null, bonus: 5 });
+    expect(restore?.per).toEqual({ unit: "creature", most: 1 });
+    expect(restoreFor(restore as Restore, 1)).toEqual({ dice: null, bonus: 5 });
+    const strong = restoresOf(beast, "Call the Hunt", {
+      ...SHEET,
+      modifier: () => 4,
+    });
+    expect(strong[0]?.per?.most).toBe(4);
+    expect(restoreFor(strong[0] as Restore, 3)).toEqual({ dice: null, bonus: 15 });
+  });
+
+  it("gives another creature Rally's superiority die plus the Charisma modifier", () => {
+    const rally = { ref: { name: "Rally", source: "PHB" }, featureType: "MV:B" } as never;
+    const adept = character({ optionalFeatures: [rally] });
+    expect(restoresOf(adept, "Rally")).toMatchObject([
+      { kind: "tempHp", dice: "1d6", bonus: 4, others: true },
+    ]);
+    const master = restoresOf(adept, "Rally", { ...SHEET, die: () => 10 });
+    expect(master).toMatchObject([{ dice: "1d10" }]);
+  });
+
+  it("gives ten temporary hit points for each warlock level from Tomb of Levistus, whatever the other classes", () => {
+    const tomb = { ref: { name: "Tomb of Levistus", source: "XGE" }, featureType: "EI" } as never;
+    const multi = character({
+      levels: [
+        ...Array.from({ length: 3 }, () => ({ class: { name: "Warlock", source: "PHB" } })),
+        ...Array.from({ length: 2 }, () => ({ class: { name: "Fighter", source: "PHB" } })),
+      ],
+      optionalFeatures: [tomb],
+    });
+    expect(restoresOf(multi, "Tomb of Levistus")).toMatchObject([
+      { kind: "tempHp", dice: null, bonus: 30, others: false },
     ]);
   });
 });
