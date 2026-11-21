@@ -242,6 +242,8 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
     },
   ]),
   subclassFeature(paladin, ["Conquest", "XGE"], ["Invincible Conqueror", "XGE"], 20, [
+    { kind: "active" },
+    { kind: "turn", more: 1, while: "active" },
     {
       kind: "attack",
       weapons: "melee",
@@ -452,7 +454,8 @@ const asBonusAction = (...bonusAction: BonusActionAction[]): Mechanic[] => [
 
 /**
  * What a feature changes about a turn: the attacks the Attack action allows, or the standard
- * actions it lets the character take as a bonus action. Action Surge adds its action from
+ * actions it lets the character take as a bonus action. Invincible Conqueror is recorded with
+ * its attack, where it is an effect the player starts. Action Surge adds its action from
  * `LIMITED_USES`, where its uses are recorded.
  */
 const TURN_ECONOMY: FeatureMechanics[] = [
@@ -496,6 +499,39 @@ const TURN_ECONOMY: FeatureMechanics[] = [
     3,
     asBonusAction("Help"),
   ),
+  {
+    ref: {
+      name: "Eagle",
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Totem Warrior", source: "PHB" },
+      level: 3,
+    },
+    offeredBy: {
+      name: "Totem Spirit",
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      subclass: { shortName: "Totem Warrior", source: "PHB" },
+      level: 3,
+    },
+    mechanics: [{ kind: "turn", bonusAction: ["Dash"], while: "raging" }],
+  },
+  subclassFeature(monk, ["Astral Self", "TCE"], ["Awakened Astral Self", "TCE"], 17, [
+    {
+      kind: "turn",
+      attacks: 3,
+      option: "when every attack is made with your astral arms",
+    },
+  ]),
+  subclassFeature(ranger, ["Horizon Walker", "XGE"], ["Distant Strike", "XGE"], 11, [
+    {
+      kind: "turn",
+      more: 1,
+      option: "against a third creature, after attacking two different ones",
+    },
+  ]),
   classFeature(ranger, ["Vanish", "PHB"], 14, asBonusAction("Hide")),
   classFeature(monk, ["Patient Defense", "PHB"], 2, asBonusAction("Dodge")),
   classFeature(monk, ["Step of the Wind", "PHB"], 2, asBonusAction("Disengage", "Dash")),

@@ -45,10 +45,23 @@ function usesOfFeature(groups: FeatureGroup[], name: string) {
   return undefined;
 }
 
-/** How many attacks the Attack action allows, where held features raise it past one. */
-function attackCount({ attacks, pactAttacks }: CharacterDerived["turn"]): string | null {
-  if (pactAttacks) return `${pactAttacks} attacks with the pact weapon`;
-  return attacks > 1 ? `${attacks} attacks` : null;
+/** How many attacks the Attack action allows, where held features raise it past one, then each higher count under its condition. */
+function attackCount({
+  attacks,
+  pactAttacks,
+  conditionalAttacks,
+}: CharacterDerived["turn"]): string | null {
+  const counts = [
+    pactAttacks
+      ? `${pactAttacks} attacks with the pact weapon`
+      : attacks > 1
+        ? `${attacks} attacks`
+        : null,
+    ...conditionalAttacks.map(
+      ({ attacks: count, option, feature }) => `${count} attacks ${option} (${feature})`,
+    ),
+  ].filter(Boolean);
+  return counts.length > 0 ? counts.join("; ") : null;
 }
 
 /**

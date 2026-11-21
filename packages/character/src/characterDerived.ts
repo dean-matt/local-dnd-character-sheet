@@ -462,13 +462,21 @@ export const characterDerivedSchema = z.strictObject({
   regains: z.array(regainSchema),
   /**
    * What held features change about a turn. `attacks`: the attacks the Attack action allows;
-   * `pactAttacks`: the count with the pact weapon where it is higher, else null; `addsAction`:
+   * `pactAttacks`: the count with the pact weapon where it is higher, else null;
+   * `conditionalAttacks`: the higher counts a feature allows under its condition; `addsAction`:
    * the features whose use adds an action to the turn; `bonusActions`: each standard action a
    * feature lets the character take as a bonus action, with the features that do.
    */
   turn: z.strictObject({
     attacks: z.int().min(1),
     pactAttacks: z.int().min(2).nullable(),
+    conditionalAttacks: z.array(
+      z.strictObject({
+        feature: z.string().min(1),
+        attacks: z.int().min(2),
+        option: z.string().min(1),
+      }),
+    ),
     addsAction: z.array(contentRefSchema),
     bonusActions: z.array(z.strictObject({ action: z.string().min(1), features: grantorsSchema })),
   }),

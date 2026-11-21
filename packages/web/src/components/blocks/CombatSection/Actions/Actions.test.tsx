@@ -82,6 +82,20 @@ describe("Actions", () => {
     );
     cleanup();
     expect(attack(renderActions("classic"))).toHaveTextContent(/^Attack$/);
+    cleanup();
+    const conditional = {
+      ...derivedRecord(),
+      turn: {
+        ...derivedRecord().turn,
+        attacks: 2,
+        conditionalAttacks: [
+          { feature: "Distant Strike", attacks: 3, option: "against a third creature" },
+        ],
+      },
+    };
+    expect(attack(renderActions("classic", conditional))).toHaveTextContent(
+      "2 attacks; 3 attacks against a third creature (Distant Strike)",
+    );
   });
 
   it("lists each action a feature lets the character take as a bonus action, and why", async () => {
