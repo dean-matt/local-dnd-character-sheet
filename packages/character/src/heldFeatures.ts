@@ -231,10 +231,7 @@ export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" |
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
   return [
     ...definition.feats.map(({ ref }) => ({ ref, origin: "feat" as const })),
-    ...definition.optionalFeatures.map(({ ref }) => ({
-      ref,
-      origin: "optionalFeature" as const,
-    })),
+    ...definition.optionalFeatures.map(({ ref }) => ({ ref, origin: "optionalFeature" as const })),
   ].flatMap(({ ref, origin }) => {
     const homebrew =
       "homebrewId" in ref ? definition.homebrewFeatures?.get(ref.homebrewId) : undefined;
@@ -323,8 +320,5 @@ export const startableFeatures = (
   definition: HoldsFeatures,
 ): (ContentRef & { endsOn: EffectEnd[] })[] =>
   heldFeatures(definition).flatMap(({ ref, entry }) =>
-    mechanicsOfKind(entry, "active").map(({ endsOn = [] }) => ({
-      ...ref,
-      endsOn,
-    })),
+    mechanicsOfKind(entry, "active").map(({ endsOn = [] }) => ({ ...ref, endsOn })),
   );

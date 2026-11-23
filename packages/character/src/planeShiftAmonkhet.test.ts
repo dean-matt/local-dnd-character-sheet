@@ -48,6 +48,19 @@ describe("a Plane Shift: Amonkhet cleric", () => {
     ]);
   });
 
+  it("records Preserve Life's healing and Feat of Strength's bonus", () => {
+    expect(held(cleric("Solidarity", 2)).get("Channel Divinity: Preserve Life")?.mechanics).toEqual(
+      [{ kind: "heal", bonus: ["level"], times: 5, others: true }],
+    );
+    expect(
+      held(cleric("Strength", 2)).get("Channel Divinity: Feat of Strength")?.mechanics,
+    ).toMatchObject([
+      { kind: "attack", attack: 10 },
+      { kind: "roll", roll: "save", bonus: 10 },
+      { kind: "roll", roll: "check", bonus: 10 },
+    ]);
+  });
+
   it("spends a Channel Divinity use on each domain's option", () => {
     for (const name of [
       "Channel Divinity: Cloak of Shadows",
@@ -79,6 +92,15 @@ describe("a Plane Shift: Amonkhet race", () => {
     };
     expect(featureDcs(naga, sheet)).toMatchObject([
       { feature: { name: "Natural Weapons" }, label: "Bite", saveDc: dc(12) },
+    ]);
+  });
+
+  it("limits a Minotaur's Relentless Endurance to once per long rest", () => {
+    expect(
+      held(raceOf(["Minotaur (Amonkhet)", "PSA"])).get("Relentless Endurance")?.mechanics,
+    ).toEqual([
+      { kind: "heal", bonus: [1] },
+      { kind: "uses", count: 1, reset: "long" },
     ]);
   });
 

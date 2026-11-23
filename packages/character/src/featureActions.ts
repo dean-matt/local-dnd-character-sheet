@@ -115,10 +115,7 @@ export type FeatureCost = (
   | { feature: string; pool?: undefined }
 ) & { min: number; max?: number | null };
 
-type Source = ({ pool: string } | { feature: string }) & {
-  min?: number;
-  max?: number | null;
-};
+type Source = ({ pool: string } | { feature: string }) & { min?: number; max?: number | null };
 
 /** Each row prices `names` of one `source` the same. */
 const COST_ROWS: [Source, string, string[]][] = [
@@ -324,15 +321,13 @@ const COST_NOTES: [string, string[]][] = [
 ];
 
 /** Every feature the curated table prices, beside its cost. */
-export const FEATURE_COST_ENTRIES: readonly {
-  ref: ContentRef;
-  cost: FeatureCost;
-}[] = COST_ROWS.flatMap(([cost, source, names]) =>
-  names.map((name) => ({
-    ref: { name, source },
-    cost: { ...cost, min: cost.min ?? 1 } as FeatureCost,
-  })),
-);
+export const FEATURE_COST_ENTRIES: readonly { ref: ContentRef; cost: FeatureCost }[] =
+  COST_ROWS.flatMap(([cost, source, names]) =>
+    names.map((name) => ({
+      ref: { name, source },
+      cost: { ...cost, min: cost.min ?? 1 } as FeatureCost,
+    })),
+  );
 
 const FEATURE_COSTS: ReadonlyMap<string, FeatureCost> = new Map(
   FEATURE_COST_ENTRIES.map(({ ref, cost }) => [refKey(ref), cost]),
