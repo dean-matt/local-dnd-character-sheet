@@ -76,6 +76,8 @@ const RUNE_USES: Mechanic = {
   scales: [{ level: 15, count: 2 }],
 };
 const SPELLS: Mechanic = { kind: "spells" };
+const SPELLS_BY_SLOT: Mechanic = { kind: "spells", casting: "slot" };
+const SPELLS_AT_WILL: Mechanic = { kind: "spells", casting: "atWill" };
 const barbarian: [string, string] = ["Barbarian", "PHB"];
 const barbarian24: [string, string] = ["Barbarian", "XPHB"];
 const fighter24: [string, string] = ["Fighter", "XPHB"];
@@ -891,23 +893,15 @@ const SPELLS_GRANTED: FeatureMechanics[] = [
     "Armor of Shadows",
     "Ascendant Step",
     "Beast Speech",
-    "Bewitching Whispers",
-    "Chains of Carceri",
-    "Dreadful Word",
     "Eldritch Sight",
     "Fiendish Vigor",
     "Mask of Many Faces",
     "Master of Myriad Forms",
-    "Minions of Chaos",
-    "Mire the Mind",
     "Misty Visions",
     "Otherworldly Leap",
     "Pact of the Chain",
     "Pact of the Tome",
     "Book of Ancient Secrets",
-    "Sculptor of Flesh",
-    "Sign of Ill Omen",
-    "Thief of Five Fates",
     "Visions of Distant Realms",
     "Whispers of the Grave",
     "Breath of Winter",
@@ -929,6 +923,30 @@ const SPELLS_GRANTED: FeatureMechanics[] = [
   { name: "Shroud of Shadow", source: "XGE" },
   { name: "Far Scribe", source: "TCE" },
 ].map((ref) => ({ ref, mechanics: [SPELLS] }));
+
+/**
+ * The PHB invocations whose spell the text has cast "using a warlock spell slot", once a long
+ * rest, and Chains of Carceri, which casts its spell at will and limits only its use on one
+ * creature, which the sheet leaves to the player.
+ */
+const SPELLS_BY_INVOCATION: FeatureMechanics[] = [
+  ...[
+    "Bewitching Whispers",
+    "Dreadful Word",
+    "Minions of Chaos",
+    "Mire the Mind",
+    "Sculptor of Flesh",
+    "Sign of Ill Omen",
+    "Thief of Five Fates",
+  ].map((name) => ({ ref: { name, source: "PHB" }, mechanics: [SPELLS_BY_SLOT] })),
+  {
+    ref: { name: "Chains of Carceri", source: "PHB" },
+    mechanics: [SPELLS_AT_WILL],
+  },
+];
+
+/** The one arcanum spell a PHB feature gives, cast once without a slot between long rests. */
+const ARCANUM_USES: Mechanic = { kind: "uses", count: 1, reset: "long" };
 
 const spellPicks = (...picks: { count: number; level?: number; from: string }[]): Mechanic[] => [
   { kind: "spells", picks },
@@ -952,12 +970,10 @@ const SPELLS_PICKED: FeatureMechanics[] = [
     [15, 8],
     [17, 9],
   ].map(([level, spell]) =>
-    classFeature(
-      warlock,
-      [`Mystic Arcanum (${spell}th level)`, "PHB"],
-      level as number,
-      spellPicks({ count: 1, level: spell as number, from: "Warlock" }),
-    ),
+    classFeature(warlock, [`Mystic Arcanum (${spell}th level)`, "PHB"], level as number, [
+      ...spellPicks({ count: 1, level: spell as number, from: "Warlock" }),
+      ARCANUM_USES,
+    ]),
   ),
   classFeature(
     wizard,
@@ -1075,7 +1091,19 @@ const SPELLS_FROM_CLASS_FEATURES_2024: FeatureMechanics[] = [
   classFeature(ranger24, ["Favored Enemy", "XPHB"], 1, [SPELLS]),
   classFeature(paladin24, ["Paladin's Smite", "XPHB"], 2, [SPELLS]),
   classFeature(["Bard", "XPHB"], ["Words of Creation", "XPHB"], 20, [SPELLS]),
-  classFeature(["Warlock", "XPHB"], ["Mystic Arcanum", "XPHB"], 11, [SPELLS]),
+  classFeature(["Warlock", "XPHB"], ["Mystic Arcanum", "XPHB"], 11, [
+    SPELLS,
+    {
+      kind: "uses",
+      count: 1,
+      reset: "long",
+      scales: [
+        { level: 13, count: 2 },
+        { level: 15, count: 3 },
+        { level: 17, count: 4 },
+      ],
+    },
+  ]),
   classFeature(["Wizard", "XPHB"], ["Spell Mastery", "XPHB"], 18, [SPELLS]),
   subclassFeature(sorcerer24, ["Draconic", "XPHB"], ["Draconic Spells", "XPHB"], 3, [SPELLS]),
   subclassFeature(["Warlock", "XPHB"], ["Fiend", "XPHB"], ["Fiend Spells", "XPHB"], 3, [SPELLS]),
@@ -3122,6 +3150,7 @@ const RECORDS: FeatureMechanics[] = [
   ...ONGOING_EFFECTS,
   ...TURN_ECONOMY,
   ...SPELLS_GRANTED,
+  ...SPELLS_BY_INVOCATION,
   ...SPELLS_PICKED,
   ...SPELLS_FROM_CLASS_FEATURES,
   ...SPELLS_GRANTED_2024,

@@ -168,6 +168,24 @@ export const featureSpellPickOffers = (feature: FeatureKey): SpellPick[] => {
   return entry ? mechanicsOfKind(entry, "spells").flatMap((mechanic) => mechanic.picks ?? []) : [];
 };
 
+/**
+ * What a feat or optional feature records of the spells it grants: how their cast is limited,
+ * and the one count of uses it keeps itself where that count is fixed, which a cast of its one
+ * spell then spends.
+ */
+export function spellGrantRecord(ref: ContentRef): {
+  casting?: "slot" | "atWill";
+  uses?: { count: number; reset: "short" | "long" };
+} {
+  const entry = BY_KEY.get(refKey(ref));
+  if (!entry) return {};
+  const { casting } = mechanicsOfKind(entry, "spells")[0] ?? {};
+  const [uses] = mechanicsOfKind(entry, "uses").flatMap(({ count, reset, part, scales }) =>
+    typeof count === "number" && reset !== "manual" && !part && !scales ? [{ count, reset }] : [],
+  );
+  return { ...(casting && { casting }), ...(uses && { uses }) };
+}
+
 const SUBCLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
   const { ref } = entry;
   if (!("className" in ref) || !ref.subclass) return [];

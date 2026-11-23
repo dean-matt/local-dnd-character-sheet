@@ -243,21 +243,29 @@ export const grantedSpellKey = (value: string): string => {
   return `${name.trim().toLowerCase()}|${(source.trim() || DEFAULT_SPELL_SOURCE).toLowerCase()}`;
 };
 
-/** Each spell a `resource` record names, by the amount it costs. */
-const resourceCosts = (byAmount: Record<string, unknown>): [number, string][] =>
-  Object.entries(byAmount).flatMap(([amount, names]) =>
-    /^[1-9]\d*$/.test(amount) && Array.isArray(names)
-      ? names.flatMap((name) => (typeof name === "string" ? [[Number(amount), name]] : []))
-      : [],
-  ) as [number, string][];
+/** Each spell a record names, by the amount its key counts: `1` and `1e` both count 1. */
+const spellsByAmount = (byAmount: Record<string, unknown>): [number, string][] =>
+  Object.entries(byAmount).flatMap(([amount, names]) => {
+    const count = /^([1-9]\d*)e?$/.exec(amount)?.[1];
+    return count && Array.isArray(names)
+      ? names.flatMap((name) => (typeof name === "string" ? [[Number(count), name]] : []))
+      : [];
+  }) as [number, string][];
 
-/** Every spell under a `resource` record in one grant, however deep, by the amount it costs. */
-function costsIn(value: unknown): [number, string][] {
-  if (Array.isArray(value)) return value.flatMap(costsIn);
+/** Every record held under a key called `name` in one grant, however deep. */
+function recordsUnder(value: unknown, name: string): Record<string, unknown>[] {
+  if (Array.isArray(value)) return value.flatMap((each) => recordsUnder(each, name));
   if (!isRecord(value)) return [];
   return Object.entries(value).flatMap(([key, inner]) =>
-    key === "resource" && isRecord(inner) ? resourceCosts(inner) : costsIn(inner),
+    key === name && isRecord(inner) ? [inner] : recordsUnder(inner, name),
   );
+}
+
+/** The blocks of a row a grant reads: all of them, or the chosen one of alternatives and none until one is chosen. */
+function readBlocks(json: unknown, block?: number): unknown[] {
+  const all = blocksOf(json);
+  const at = chosenBlock(json, block);
+  return all.length > 1 ? (at === undefined ? [] : [all[at]]) : all;
 }
 
 /**
@@ -267,16 +275,45 @@ function costsIn(value: unknown): [number, string][] {
  * no `resourceName` costs nothing it can name.
  */
 export function grantedSpellCosts(json: unknown, block?: number): Map<string, SpellCost> {
-  const all = blocksOf(json);
-  const at = chosenBlock(json, block);
-  const blocks = all.length > 1 ? (at === undefined ? [] : [all[at]]) : all;
   const costs = new Map<string, SpellCost>();
-  for (const each of blocks) {
+  for (const each of readBlocks(json, block)) {
     if (!isRecord(each) || typeof each.resourceName !== "string") continue;
     const resource = each.resourceName;
-    for (const [amount, name] of costsIn(each)) {
-      costs.set(grantedSpellKey(name), { amount, resource });
+    for (const record of recordsUnder(each, "resource")) {
+      for (const [amount, name] of spellsByAmount(record)) {
+        costs.set(grantedSpellKey(name), { amount, resource });
+      }
     }
   }
   return costs;
+}
+
+/** How often a granted spell is cast without a slot: `count` casts, restored by a `short` rest or a `long` one. */
+export type SpellUse = { count: number; reset: "short" | "long" };
+
+const USE_KEYS = [
+  ["daily", "long"],
+  ["rest", "short"],
+] as const;
+
+/**
+ * How many times each spell a row grants under a `daily` or `rest` key is cast without a
+ * slot, keyed as `grantedSpellKey` writes it: a `daily` use returns on a long rest and a
+ * `rest` use on a short or long one, as the traits that grant them print it. Each spell of a
+ * list counts its own, since every row that lists several prints a cast of each. A row
+ * offering alternative blocks reads the chosen one alone.
+ */
+export function grantedSpellUses(json: unknown, block?: number): Map<string, SpellUse> {
+  const uses = new Map<string, SpellUse>();
+  for (const each of readBlocks(json, block)) {
+    for (const [name, reset] of USE_KEYS) {
+      for (const record of recordsUnder(each, name)) {
+        for (const [count, spell] of spellsByAmount(record)) {
+          const key = grantedSpellKey(spell);
+          if (!uses.has(key)) uses.set(key, { count, reset });
+        }
+      }
+    }
+  }
+  return uses;
 }

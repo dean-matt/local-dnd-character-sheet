@@ -21,19 +21,31 @@ type CastChoice = {
 
 const NO_ENTRY = "none";
 
-const optionKey = (option: SpellCastOption) => `${option.via}:${option.level}`;
+const optionKey = (option: SpellCastOption) =>
+  `${option.via}:${option.level}${option.use && option.via !== "use" ? ":use" : ""}`;
 
 const spendsResource = (option: SpellCastOption) =>
-  option.via === "slot" || option.via === "pact" || option.via === "pool";
+  option.via === "slot" || option.via === "pact" || option.via === "pool" || option.via === "use";
 
-const affordable = ({ left, pool }: SpellCastOption) =>
-  left === null || left >= (pool?.amount ?? 1);
+const affordable = ({ left, pool, use }: SpellCastOption) =>
+  (left === null || left >= (pool?.amount ?? 1)) && (use === undefined || use.left >= 1);
 
-const spentLabel = ({ pool }: SpellCastOption) =>
-  pool ? `Spend the ${resourceLabel(pool.key).toLowerCase()}` : "Spend the slot";
+const spentLabel = ({ pool, use, via }: SpellCastOption) => {
+  if (pool) return `Spend the ${resourceLabel(pool.key).toLowerCase()}`;
+  if (!use) return "Spend the slot";
+  return via === "use" ? "Spend the use" : "Spend the slot and the use";
+};
 
 function optionLabel(option: SpellCastOption) {
+  const base = slotLabel(option);
+  return option.use && option.via !== "use"
+    ? `${base}, spending a use (${option.use.left} left)`
+    : base;
+}
+
+function slotLabel(option: SpellCastOption) {
   const left = option.left === 0 ? "none left" : `${option.left} left`;
+  if (option.via === "use") return `Cast without a slot, ${left}`;
   if (option.pool) {
     const { amount, key } = option.pool;
     return `${resourceLabel(key)}, ${amount} to cast, ${option.left === null ? "unlimited" : left}`;

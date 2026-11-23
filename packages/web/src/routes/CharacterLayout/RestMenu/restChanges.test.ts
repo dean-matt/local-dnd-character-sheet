@@ -1,4 +1,10 @@
-import type { CharacterFeatures, CharacterInventory, ItemRegains, LimitedUses } from "@dnd/catalog";
+import type {
+  CharacterFeatures,
+  CharacterInventory,
+  CharacterSpells,
+  ItemRegains,
+  LimitedUses,
+} from "@dnd/catalog";
 import type { USES_PARTS, USES_RESTORED_BY } from "@dnd/character";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { chargedItems, featureUses, rechargeOf } from "./restChanges.ts";
@@ -68,9 +74,26 @@ describe("featureUses", () => {
         },
       ],
     } as unknown as CharacterFeatures;
-    expect(featureUses(features).map(({ key, name }) => [key, name])).toEqual([
+    expect(featureUses(features, { spells: [] }).map(({ key, name }) => [key, name])).toEqual([
       ["a", "Manifest Mind"],
       ["a|conjuring", "Manifest Mind"],
+    ]);
+  });
+
+  it("lists a spell a grantor lets the character cast a limited number of times", () => {
+    const spells = {
+      spells: [
+        { resolved: false, name: "Faerie Fire", prepared: true },
+        {
+          resolved: false,
+          name: "Darkness",
+          prepared: true,
+          uses: { key: "spell|race|PHB|Drow|Darkness", count: 1, reset: "long" },
+        },
+      ],
+    } as unknown as CharacterSpells;
+    expect(featureUses({ groups: [] }, spells)).toEqual([
+      { name: "Darkness", key: "spell|race|PHB|Drow|Darkness", count: 1, reset: "long" },
     ]);
   });
 });

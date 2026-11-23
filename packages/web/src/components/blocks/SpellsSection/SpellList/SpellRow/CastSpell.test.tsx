@@ -436,6 +436,66 @@ describe("CastSpell", () => {
     });
   });
 
+  describe("a spell a feature casts by spending a use", () => {
+    const key = "spell|race|PHB|Drow|Faerie Fire";
+    const faerieFire = spell("Faerie Fire", 1, { uses: { key, count: 1, reset: "long" } });
+
+    it("offers the use's cast first and spends the use, not a slot", async () => {
+      const writes = renderCast(faerieFire, {
+        spellSlots: [{ level: 1, total: 4, expended: 0 }],
+      });
+      const dialog = await openDialog("Faerie Fire");
+      expect(dialog.getByRole("radio", { name: "Cast without a slot, 1 left" })).toBeChecked();
+      expect(dialog.getByRole("radio", { name: "Level 1 slot, 4 left" })).toBeInTheDocument();
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          "Cast Faerie Fire spending a use, 0 left",
+        ),
+      );
+      expect(writes[0]?.featureUses).toEqual([{ key, expended: 1 }]);
+      expect(writes[0]?.spellSlots?.every(({ expended }) => expended === 0)).toBe(true);
+    });
+
+    it("refuses the use's cast once spent, leaving the slots", async () => {
+      renderCast(faerieFire, { featureUses: [{ key, expended: 1 }] });
+      const dialog = await openDialog("Faerie Fire");
+      expect(dialog.getByRole("radio", { name: "Cast without a slot, none left" })).toBeDisabled();
+      expect(dialog.getByRole("radio", { name: "Level 1 slot, 4 left" })).toBeChecked();
+    });
+
+    it("spends the uses of the class feature a spell was picked for", async () => {
+      const arcanum = { name: "Mystic Arcanum (6th level)", source: "PHB" };
+      const arcanumKey = "feature|Warlock|PHB|||11|PHB|Mystic Arcanum (6th level)";
+      const sheet: CharacterDerived = {
+        ...derived,
+        limitedUses: [
+          {
+            feature: arcanum,
+            origin: "class",
+            level: 11,
+            key: arcanumKey,
+            count: 1,
+            reset: "long",
+          },
+        ],
+      };
+      const writes = renderCast(
+        spell("Mass Suggestion", 6, {
+          pickedFor: { kind: "classFeature", ref: arcanum },
+        }),
+        {},
+        sheet,
+      );
+      const dialog = await openDialog("Mass Suggestion");
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() => expect(writes).toHaveLength(1));
+      expect(writes[0]?.featureUses).toEqual([{ key: arcanumKey, expended: 1 }]);
+    });
+  });
+
   it("names the concentration it ends, then spends and concentrates in one write", async () => {
     const writes = renderCast(spell("Bless", 1, { concentration: true }), {
       concentration: { spell: HEX, level: 1 },

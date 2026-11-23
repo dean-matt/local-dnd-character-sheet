@@ -112,6 +112,10 @@ const GLOOM_TOUCHED = { name: "Gloom Touched", source: "PHB" };
 const ASMODEUS = { name: "Asmodeus", source: "MTF" };
 const HAUNTED_ONE = { name: "Haunted One", source: "CoS" };
 const MIST_STANCE = { name: "Mist Stance", source: "PHB" };
+const DROW = { name: "Drow", source: "PHB" };
+const OMEN = { name: "Sign of Ill Omen", source: "PHB" };
+const NIGHT_GIFT = { name: "Night Gift", source: "PHB" };
+const EACH_REST = { name: "Rest Gift", source: "PHB" };
 
 /** A spell row carrying only what the sheet's facts read. */
 const spellRow = (name: string, source: string, level: number) => ({
@@ -307,6 +311,48 @@ describe("characterSpellsRoutes", () => {
       ],
       items: ITEMS,
       lookups: DEITIES,
+      races: [
+        {
+          ...DROW,
+          edition: "classic",
+          json: JSON.stringify({
+            ...DROW,
+            additionalSpells: [
+              { innate: { 3: { daily: { 1: ["shield"] } }, 5: { daily: { 1: ["darkness"] } } } },
+            ],
+          }),
+        },
+      ],
+      optionalFeatures: [
+        {
+          ...OMEN,
+          edition: "classic",
+          uses: 1,
+          uses_reset: "long",
+          json: JSON.stringify({
+            ...OMEN,
+            additionalSpells: [{ innate: { _: { daily: { "1e": ["shield"] } } } }],
+          }),
+        },
+      ],
+      feats: [
+        {
+          ...NIGHT_GIFT,
+          edition: "classic",
+          json: JSON.stringify({
+            ...NIGHT_GIFT,
+            additionalSpells: [{ innate: { _: { daily: { 1: ["shield"] } } } }],
+          }),
+        },
+        {
+          ...EACH_REST,
+          edition: "classic",
+          json: JSON.stringify({
+            ...EACH_REST,
+            additionalSpells: [{ known: { 1: { rest: { 1: ["shield", "darkness"] } } } }],
+          }),
+        },
+      ],
       subclasses: SUBCLASSES.map(({ short_name, class: cls, additionalSpells, ...ref }) => ({
         ...ref,
         short_name,
@@ -343,6 +389,25 @@ describe("characterSpellsRoutes", () => {
           chosen: 0 as const,
           level: 3,
           block,
+        })),
+        ...(
+          [
+            ["races", DROW, 3, "Shield"],
+            ["races", DROW, 5, "Darkness"],
+            ["optional_features", OMEN, 0, "Shield"],
+            ["feats", NIGHT_GIFT, 0, "Shield"],
+            ["feats", EACH_REST, 0, "Shield"],
+            ["feats", EACH_REST, 0, "Darkness"],
+          ] as const
+        ).map(([granted_by, row, level, spell_name]) => ({
+          spell_name,
+          spell_source: "PHB",
+          granted_by,
+          ...row,
+          parent_name: "",
+          parent_source: "",
+          chosen: 0 as const,
+          level,
         })),
         ...(
           [
@@ -836,6 +901,82 @@ describe("characterSpellsRoutes", () => {
       expect(await listed()).toEqual([
         { name: "Darkness", fromGrantor: undefined, prepared: true, granted: true },
       ]);
+    });
+  });
+
+  describe("a spell a grantor lets the character cast a limited number of times", () => {
+    const wizard = (level: number, extra: object, spells: object[] = []) =>
+      store({
+        ...withSpells(spells),
+        ...extra,
+        levels: Array.from({ length: level }, () => ({ class: WIZARD })),
+      } as CharacterDefinition);
+    const usesOf = async () => (await spells()).map(({ name, uses }) => ({ name, uses }));
+
+    it("counts each spell of a race trait on its own, from the level that grants it", async () => {
+      wizard(5, { race: DROW });
+      expect(await usesOf()).toEqual([
+        {
+          name: "Darkness",
+          uses: { key: "spell|race|PHB|Drow|Darkness", count: 1, reset: "long" },
+        },
+        { name: "Shield", uses: { key: "spell|race|PHB|Drow|Shield", count: 1, reset: "long" } },
+      ]);
+    });
+
+    it("counts each spell of a rest-restored grant on its own, returning on either rest", async () => {
+      wizard(1, { feats: [{ ref: EACH_REST }] });
+      expect(await usesOf()).toEqual([
+        {
+          name: "Darkness",
+          uses: { key: "spell|feat|PHB|Rest Gift|Darkness", count: 1, reset: "short" },
+        },
+        {
+          name: "Shield",
+          uses: { key: "spell|feat|PHB|Rest Gift|Shield", count: 1, reset: "short" },
+        },
+      ]);
+    });
+
+    it("spends the feature's own uses where it counts them and gives one spell", async () => {
+      wizard(1, {
+        optionalFeatures: [
+          { ref: OMEN, featureType: "EI", grantedBy: { kind: "class", ref: MONK } },
+        ],
+      });
+      expect(await usesOf()).toEqual([
+        {
+          name: "Shield",
+          uses: {
+            key: "optionalFeature|PHB|Sign of Ill Omen",
+            count: 1,
+            reset: "long",
+            slot: true,
+          },
+        },
+      ]);
+    });
+
+    it("counts a spell on its own where the feature counts no uses", async () => {
+      wizard(1, { feats: [{ ref: NIGHT_GIFT }] });
+      expect(await usesOf()).toEqual([
+        {
+          name: "Shield",
+          uses: { key: "spell|feat|PHB|Night Gift|Shield", count: 1, reset: "long" },
+        },
+      ]);
+    });
+
+    it("counts the use of a spell the definition lists too, picked or granted", async () => {
+      const shield = { ref: SHIELD_REF, prepared: true };
+      wizard(1, { feats: [{ ref: NIGHT_GIFT }] }, [shield, { ...shield, granted: true }]);
+      const key = "spell|feat|PHB|Night Gift|Shield";
+      expect((await usesOf()).map(({ uses }) => uses?.key)).toEqual([key, key]);
+    });
+
+    it("counts none for a spell no grantor limits", async () => {
+      wizard(1, { race: DROW }, [{ ref: SHIELD_REF, prepared: true, origin: WIZARD }]);
+      expect((await spells())[0]).not.toHaveProperty("uses");
     });
   });
 

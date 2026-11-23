@@ -162,7 +162,9 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
  * equipped item that lets the character cast a spell the player did not pick, and
  * `fromGrantor` the subclass, race, subrace, background, feat or optional feature that grants
  * one the definition does not list. `cost` is what casting a
- * granted spell spends, such as 2 Ki.
+ * granted spell spends, such as 2 Ki. `uses` is the count of casts that a
+ * grantor limits the spell to, keyed in the state's `featureUses`, `short` uses returning on any
+ * rest; each cast is made without a slot, or with the pact slot where `slot` says so.
  */
 const sheetSpellFields = {
   name: z.string().min(1),
@@ -173,6 +175,14 @@ const sheetSpellFields = {
   fromItem: z.string().min(1).optional(),
   fromGrantor: z.string().min(1).optional(),
   cost: z.strictObject({ amount: z.int().min(1), resource: z.string().min(1) }).optional(),
+  uses: z
+    .strictObject({
+      key: z.string().min(1),
+      count: z.int().min(1),
+      reset: z.enum(["short", "long"]),
+      slot: z.literal(true).optional(),
+    })
+    .optional(),
   origin: contentRef.optional(),
   pickedFor: z
     .strictObject({ kind: z.string().min(1), ref: contentRef, race: contentRef.optional() })

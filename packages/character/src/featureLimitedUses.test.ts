@@ -51,6 +51,22 @@ describe("featureLimitedUses", () => {
     expect(usesOf(levelsOf("Bard", "PHB", 5), "Bardic Inspiration")?.reset).toBe("short");
   });
 
+  it("counts each PHB Mystic Arcanum once a long rest, a feature for each spell level", () => {
+    const counted = featureLimitedUses(levelsOf("Warlock", "PHB", 13), values(0)).filter(
+      ({ feature }) => feature.name.startsWith("Mystic Arcanum"),
+    );
+    expect(counted.map(({ feature, count, reset }) => [feature.name, count, reset])).toEqual([
+      ["Mystic Arcanum (6th level)", 1, "long"],
+      ["Mystic Arcanum (7th level)", 1, "long"],
+    ]);
+  });
+
+  it("counts the 2024 Mystic Arcanum one more for each arcanum spell the warlock has gained", () => {
+    const arcanum = (level: number) =>
+      usesOf(levelsOf("Warlock", "XPHB", level), "Mystic Arcanum")?.count;
+    expect([11, 13, 15, 17].map(arcanum)).toEqual([1, 2, 3, 4]);
+  });
+
   it("counts Divine Sense as 1 plus the Charisma modifier", () => {
     expect(usesOf(levelsOf("Paladin", "PHB", 1), "Divine Sense", 2)?.count).toBe(3);
   });

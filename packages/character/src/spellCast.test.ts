@@ -5,6 +5,7 @@ import {
   spellCast,
   spellCastOptions,
   spellDamageDice,
+  spellUses,
 } from "./index.ts";
 
 const total = (computed: number, manual: number | null = null) => ({ computed, manual, terms: [] });
@@ -163,6 +164,120 @@ describe("a spell a feature casts for a pool", () => {
         concentrate: false,
       }),
     ).toThrow(RangeError);
+  });
+});
+
+const FAERIE_FIRE = {
+  level: 1,
+  ritual: false,
+  uses: { key: "spell|race|PHB|Drow|Faerie Fire", count: 1 },
+};
+
+describe("a spell a feature casts by spending a use", () => {
+  const spent = (expended: number) => ({
+    ...defaultCharacterState(),
+    featureUses: [{ key: FAERIE_FIRE.uses.key, expended }],
+  });
+  const cast = (from: ReturnType<typeof spent>) => {
+    const [option] = spellCastOptions(FAERIE_FIRE, sheet, from);
+    return spellCast(sheet, from, {
+      spell: { name: "Faerie Fire", source: "PHB" },
+      option: option as NonNullable<typeof option>,
+      spend: true,
+      concentrate: false,
+    });
+  };
+
+  it("lists the use's cast first, with the uses left", () => {
+    expect(spellCastOptions(FAERIE_FIRE, sheet, spent(0))[0]).toEqual({
+      via: "use",
+      level: 1,
+      left: 1,
+      use: { ...FAERIE_FIRE.uses, left: 1 },
+    });
+    expect(spellCastOptions(FAERIE_FIRE, sheet, spent(1))[0]?.left).toBe(0);
+  });
+
+  it("spends the use and no slot", () => {
+    const after = cast(spent(0)).state;
+    expect(after.featureUses).toEqual([{ key: FAERIE_FIRE.uses.key, expended: 1 }]);
+    expect(after.spellSlots).toEqual([]);
+  });
+
+  it("refuses a cast with no use left", () => {
+    expect(() => cast(spent(1))).toThrow(RangeError);
+  });
+});
+
+describe("a spell a feature casts with the pact slot, once", () => {
+  const uses = { key: "optionalFeature|PHB|Sign of Ill Omen", count: 1, slot: true as const };
+  const bane = { level: 1, ritual: false, uses };
+  const held = (expended: number) => ({
+    ...defaultCharacterState(),
+    featureUses: [{ key: uses.key, expended }],
+  });
+
+  it("offers the pact slot cast carrying the use, after the plain casts of a spell picked", () => {
+    const options = spellCastOptions(bane, sheet, held(0));
+    expect(options.map(({ via, use }) => [via, use?.left])).toEqual([
+      ["slot", undefined],
+      ["slot", undefined],
+      ["pact", undefined],
+      ["pact", 1],
+    ]);
+  });
+
+  it("offers only the pact slot cast carrying the use for a spell it grants", () => {
+    const options = spellCastOptions({ ...bane, granted: true }, sheet, held(0));
+    expect(options.map(({ via }) => via)).toEqual(["pact"]);
+  });
+
+  it("spends the pact slot and the use together", () => {
+    const [option] = spellCastOptions({ ...bane, granted: true }, sheet, held(0));
+    const after = spellCast(sheet, held(0), {
+      spell: { name: "Bane", source: "PHB" },
+      option: option as NonNullable<typeof option>,
+      spend: true,
+      concentrate: false,
+    }).state;
+    expect(after.pactSlots).toEqual({ level: 2, total: 2, expended: 1 });
+    expect(after.featureUses).toEqual([{ key: uses.key, expended: 1 }]);
+  });
+});
+
+describe("spellUses", () => {
+  const arcanum = { name: "Mystic Arcanum (6th level)", source: "PHB" };
+  const limited = {
+    limitedUses: [
+      {
+        feature: arcanum,
+        origin: "class" as const,
+        level: 11,
+        key: "feature|Warlock|PHB|||11|PHB|Mystic Arcanum (6th level)",
+        count: 1,
+        reset: "long" as const,
+      },
+    ],
+  };
+
+  it("takes the uses a grantor gives the spell", () => {
+    const uses = { key: "k", count: 2 };
+    expect(spellUses({ uses }, limited)).toBe(uses);
+  });
+
+  it("takes the uses of the class feature a spell was picked for", () => {
+    expect(spellUses({ pickedFor: { kind: "classFeature", ref: arcanum } }, limited)).toEqual({
+      key: limited.limitedUses[0]?.key,
+      count: 1,
+    });
+  });
+
+  it("finds none for a feature that counts none, or a pick made for a race", () => {
+    const magical = { name: "Magical Secrets", source: "PHB" };
+    expect(
+      spellUses({ pickedFor: { kind: "classFeature", ref: magical } }, limited),
+    ).toBeUndefined();
+    expect(spellUses({ pickedFor: { kind: "race", ref: arcanum } }, limited)).toBeUndefined();
   });
 });
 
