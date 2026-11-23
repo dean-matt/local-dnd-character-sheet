@@ -65,7 +65,10 @@ const skillsOf = (count: number, from?: string[], expertise?: true): Mechanic =>
 const grants = (grant: Omit<Extract<Mechanic, { kind: "proficiency" }>, "kind">): Mechanic[] => [
   { kind: "proficiency", ...grant },
 ];
-const narrative = (ref: FeatureMechanics["ref"]): FeatureMechanics => ({ ref, narrative: true });
+const narrative = (ref: FeatureMechanics["ref"]): FeatureMechanics => ({
+  ref,
+  narrative: true,
+});
 
 /** Invoking a rune once, twice from Master of Runes, which only a fighter's own levels reach. */
 const RUNE_USES: Mechanic = {
@@ -84,11 +87,29 @@ const fighter24: [string, string] = ["Fighter", "XPHB"];
 const paladin: [string, string] = ["Paladin", "PHB"];
 const paladin24: [string, string] = ["Paladin", "XPHB"];
 const ranger: [string, string] = ["Ranger", "PHB"];
-const ALL_SAVES = grants({ savingThrows: ["str", "dex", "con", "int", "wis", "cha"] });
+const ALL_SAVES = grants({
+  savingThrows: ["str", "dex", "con", "int", "wis", "cha"],
+});
 const raging: Mechanic[] = [
-  { kind: "roll", roll: "check", abilities: ["str"], advantage: true, while: "raging" },
-  { kind: "roll", roll: "save", abilities: ["str"], advantage: true, while: "raging" },
-  { kind: "defense", resist: ["bludgeoning", "piercing", "slashing"], while: "raging" },
+  {
+    kind: "roll",
+    roll: "check",
+    abilities: ["str"],
+    advantage: true,
+    while: "raging",
+  },
+  {
+    kind: "roll",
+    roll: "save",
+    abilities: ["str"],
+    advantage: true,
+    while: "raging",
+  },
+  {
+    kind: "defense",
+    resist: ["bludgeoning", "piercing", "slashing"],
+    while: "raging",
+  },
 ];
 const saveAdvantage = (against?: string): Mechanic => ({
   kind: "roll",
@@ -126,7 +147,11 @@ const INDOMITABLE_USES: Mechanic = {
     { level: 17, count: 3 },
   ],
 };
-const PROFICIENCY_USES: Mechanic = { kind: "uses", count: "proficiency", reset: "long" };
+const PROFICIENCY_USES: Mechanic = {
+  kind: "uses",
+  count: "proficiency",
+  reset: "long",
+};
 const sneakAttack = (option: string): Mechanic[] => [
   {
     kind: "extraDamage",
@@ -141,7 +166,11 @@ const ALL_BUT_FORCE = [...DAMAGE_TYPES_BUT_PSYCHIC.filter((type) => type !== "fo
 const sorcerer24: [string, string] = ["Sorcerer", "XPHB"];
 const SACRED_WEAPON = "with the weapon Sacred Weapon imbues";
 
-const advantageOn = (option: string): Mechanic => ({ kind: "attack", advantage: true, option });
+const advantageOn = (option: string): Mechanic => ({
+  kind: "attack",
+  advantage: true,
+  option,
+});
 const KI_POINTS = [1, 2, 3].map((ki) => `${ki} ki point${ki === 1 ? "" : "s"}`);
 const INFUSED = "with the weapon you infused";
 
@@ -296,7 +325,14 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
   },
   {
     ref: { name: "Thrown Weapon Fighting", source: "TCE" },
-    mechanics: [{ kind: "attack", weapons: "thrown", damage: 2, option: "on a ranged attack" }],
+    mechanics: [
+      {
+        kind: "attack",
+        weapons: "thrown",
+        damage: 2,
+        option: "on a ranged attack",
+      },
+    ],
   },
   {
     ref: { name: "Mounted Combatant", source: "PHB" },
@@ -357,7 +393,15 @@ const ATTACK_CHANGES: FeatureMechanics[] = [
   ),
   {
     ref: { name: "Repeating Shot", source: "TCE" },
-    mechanics: [{ kind: "attack", weapons: "ranged", attack: 1, damage: 1, option: INFUSED }],
+    mechanics: [
+      {
+        kind: "attack",
+        weapons: "ranged",
+        attack: 1,
+        damage: 1,
+        option: INFUSED,
+      },
+    ],
   },
   // Its die is the one Combat Superiority and the feats that grant maneuvers record.
   narrative({ name: "Precision Attack", source: "PHB" }),
@@ -373,11 +417,23 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
   ]),
   subclassFeature(paladin, ["Devotion", "PHB"], ["Sacred Weapon", "PHB"], 3, [
     { kind: "active", endsOn: ["incapacitated"] },
-    { kind: "attack", weapons: "any", attack: "cha", option: SACRED_WEAPON, while: "active" },
+    {
+      kind: "attack",
+      weapons: "any",
+      attack: "cha",
+      option: SACRED_WEAPON,
+      while: "active",
+    },
   ]),
   subclassFeature(paladin24, ["Devotion", "XPHB"], ["Sacred Weapon", "XPHB"], 3, [
     { kind: "active" },
-    { kind: "attack", weapons: "any", attack: "cha", option: SACRED_WEAPON, while: "active" },
+    {
+      kind: "attack",
+      weapons: "any",
+      attack: "cha",
+      option: SACRED_WEAPON,
+      while: "active",
+    },
   ]),
   subclassFeature(paladin, ["Vengeance", "PHB"], ["Vow of Enmity", "PHB"], 3, [
     { kind: "active" },
@@ -407,10 +463,19 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
   ]),
   subclassFeature(["Wizard", "PHB"], ["Bladesinging", "TCE"], ["Bladesong", "TCE"], 2, [
     { kind: "uses", count: "proficiency", reset: "long" },
-    { kind: "active", endsOn: ["incapacitated", "medium", "heavy", "shield"] },
+    {
+      kind: "active",
+      endsOn: ["incapacitated", "medium", "heavy", "shield"],
+    },
     { kind: "armorClass", value: "int", while: "active" },
     { kind: "speed", bonus: 10, while: "active" },
-    { kind: "roll", roll: "check", skills: ["acrobatics"], advantage: true, while: "active" },
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["acrobatics"],
+      advantage: true,
+      while: "active",
+    },
     {
       kind: "roll",
       roll: "save",
@@ -554,14 +619,24 @@ const TURN_ECONOMY: FeatureMechanics[] = [
 const LIMITED_USES: FeatureMechanics[] = [
   ...(["PHB", "XPHB"] as const).map((source) =>
     classFeature(["Fighter", source], ["Action Surge", source], 2, [
-      { kind: "uses", count: 1, reset: "short", scales: [{ level: 17, count: 2 }] },
+      {
+        kind: "uses",
+        count: 1,
+        reset: "short",
+        scales: [{ level: 17, count: 2 }],
+      },
       { kind: "turn", action: true },
     ]),
   ),
   // Font of Inspiration is the short-rest reset scaled on Bardic Inspiration.
   ...(["PHB", "XPHB"] as const).flatMap((source) => [
     classFeature(["Bard", source], ["Bardic Inspiration", source], 1, [
-      { kind: "uses", count: "cha", reset: "long", scales: [{ level: 5, reset: "short" }] },
+      {
+        kind: "uses",
+        count: "cha",
+        reset: "long",
+        scales: [{ level: 5, reset: "short" }],
+      },
     ]),
     narrative({
       name: "Font of Inspiration",
@@ -588,9 +663,17 @@ const LIMITED_USES: FeatureMechanics[] = [
     { kind: "uses", count: "wis", reset: "long" },
   ]),
   subclassFeature(["Wizard", "PHB"], ["Divination", "PHB"], ["Portent", "PHB"], 2, [
-    { kind: "uses", count: 2, reset: "long", scales: [{ level: 14, count: 3 }] },
+    {
+      kind: "uses",
+      count: 2,
+      reset: "long",
+      scales: [{ level: 14, count: 3 }],
+    },
   ]),
-  { ref: { name: "Lucky", source: "PHB" }, mechanics: [{ kind: "uses", count: 3, reset: "long" }] },
+  {
+    ref: { name: "Lucky", source: "PHB" },
+    mechanics: [{ kind: "uses", count: 3, reset: "long" }],
+  },
   // Nature Magician is the part a long rest limits.
   classFeature(druid24, ["Archdruid", "XPHB"], 20, [{ kind: "uses", count: 1, reset: "long" }]),
   classFeature(["Warlock", "XPHB"], ["Contact Patron", "XPHB"], 9, [
@@ -767,7 +850,12 @@ const LIMITED_USES: FeatureMechanics[] = [
     ] as const
   ).map(([owner, level, twice, thrice]) => ({
     ...classFeature(owner, ["Channel Divinity: Harness Divine Power", "TCE"], level, [
-      { kind: "convert", pool: "channel_divinity", costs: [1, 1, 1], upTo: "halfProficiency" },
+      {
+        kind: "convert",
+        pool: "channel_divinity",
+        costs: [1, 1, 1],
+        upTo: "halfProficiency",
+      },
       {
         kind: "uses",
         count: 1,
@@ -818,7 +906,11 @@ const LIMITED_USES: FeatureMechanics[] = [
   },
   // Its free casts are a count per spell, left to the spells a feature grants.
   subclassFeature(artificer, ["Alchemist", "TCE"], ["Chemical Mastery", "TCE"], 15, [
-    { kind: "defense", resist: ["acid", "poison"], conditionImmune: ["poisoned"] },
+    {
+      kind: "defense",
+      resist: ["acid", "poison"],
+      conditionImmune: ["poisoned"],
+    },
   ]),
   // Each casts each of its spells free once a long rest, a count per spell, so it counts no uses.
   ...[
@@ -938,7 +1030,10 @@ const SPELLS_BY_INVOCATION: FeatureMechanics[] = [
     "Sculptor of Flesh",
     "Sign of Ill Omen",
     "Thief of Five Fates",
-  ].map((name) => ({ ref: { name, source: "PHB" }, mechanics: [SPELLS_BY_SLOT] })),
+  ].map((name) => ({
+    ref: { name, source: "PHB" },
+    mechanics: [SPELLS_BY_SLOT],
+  })),
   {
     ref: { name: "Chains of Carceri", source: "PHB" },
     mechanics: [SPELLS_AT_WILL],
@@ -1464,10 +1559,178 @@ function withSaveDcs(records: FeatureMechanics[], dcs: FeatureMechanics[]): Feat
     if (!dc) return entry;
     pending.delete(key);
     const { narrative: _narrative, ...rest } = entry;
-    return { ...rest, mechanics: [...(entry.mechanics ?? []), ...(dc.mechanics ?? [])] };
+    return {
+      ...rest,
+      mechanics: [...(entry.mechanics ?? []), ...(dc.mechanics ?? [])],
+    };
   });
   return [...merged, ...pending.values()];
 }
+
+const ambition: [string, string] = ["Ambition (PSA)", "PSA"];
+const knowledge: [string, string] = ["Knowledge (PSA)", "PSA"];
+const solidarity: [string, string] = ["Solidarity (PSA)", "PSA"];
+const strength: [string, string] = ["Strength (PSA)", "PSA"];
+const zeal: [string, string] = ["Zeal (PSA)", "PSA"];
+const domainFeature = (
+  owner: [string, string],
+  subclass: [string, string],
+  name: string,
+  level: number,
+  mechanics: Mechanic[],
+) => subclassFeature(owner, subclass, [name, "PSA"], level, mechanics);
+const domainNarrative = (
+  owner: [string, string],
+  subclass: [string, string],
+  name: string,
+  level: number,
+) =>
+  narrative({
+    name,
+    source: "PSA",
+    className: owner[0],
+    classSource: owner[1],
+    subclass: { shortName: subclass[0], source: subclass[1] },
+    level,
+  });
+const amonkhetTrait = (
+  name: string,
+  races: string[],
+  mechanics?: Mechanic[],
+): FeatureMechanics => ({
+  ref: { name, source: "PSA" },
+  races,
+  ...(mechanics ? { mechanics } : { narrative: true }),
+});
+
+/**
+ * The Amonkhet domains of the Cleric and the races and backgrounds of Plane Shift: Amonkhet.
+ * A race trait whose effect the race row already gives, such as a skill, a speed or an
+ * immunity, is the narrative mark. Avatar of Battle resists only nonmagical damage, which a
+ * defense cannot say, and Oketra's and Rhonas's Blessings lay their bonus on another creature.
+ */
+const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
+  ...(
+    [
+      [ambition, "Ambition Domain (PSA)"],
+      [knowledge, "Knowledge Domain (PSA)"],
+      [solidarity, "Solidarity Domain (PSA)"],
+      [strength, "Strength Domain (PSA)"],
+      [zeal, "Zeal Domain (PSA)"],
+    ] as const
+  ).flatMap(([domain, name]) => [
+    domainFeature(cleric, domain, name, 1, [SPELLS]),
+    domainFeature(cleric24, domain, name, 3, [SPELLS]),
+  ]),
+  ...(
+    [
+      [cleric, 2],
+      [cleric24, 3],
+    ] as const
+  ).flatMap(([owner, level]) => [
+    domainFeature(owner, ambition, "Channel Divinity: Invoke Duplicity", level, [
+      advantageOn("against a creature within 5 feet of both you and your illusion"),
+    ]),
+    domainFeature(owner, solidarity, "Channel Divinity: Preserve Life", level, [
+      { kind: "heal", bonus: ["level"], times: 5, others: true },
+    ]),
+    domainFeature(owner, strength, "Channel Divinity: Feat of Strength", level, [
+      {
+        kind: "attack",
+        attack: 10,
+        afterRoll: true,
+        option: "after a Strength attack roll, using Channel Divinity",
+      },
+      {
+        kind: "roll",
+        roll: "save",
+        abilities: ["str"],
+        bonus: 10,
+        against: "using Channel Divinity",
+      },
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["athletics"],
+        bonus: 10,
+        against: "using Channel Divinity",
+      },
+    ]),
+    domainNarrative(owner, zeal, "Channel Divinity: Consuming Fervor", level),
+  ]),
+  domainFeature(cleric, ambition, "Warding Flare", 1, [
+    { kind: "uses", count: "wis", reset: "long" },
+  ]),
+  domainNarrative(cleric, ambition, "Channel Divinity: Cloak of Shadows", 6),
+  domainNarrative(cleric, ambition, "Potent Spellcasting", 8),
+  domainNarrative(cleric, ambition, "Improved Duplicity", 17),
+  domainFeature(cleric, solidarity, "Bonus Proficiency", 1, grants({ armor: ["heavy"] })),
+  domainFeature(cleric, strength, "Bonus Proficiency", 1, grants({ armor: ["heavy"] })),
+  domainFeature(
+    cleric,
+    zeal,
+    "Bonus Proficiencies",
+    1,
+    grants({ armor: ["heavy"], weapons: ["martial"] }),
+  ),
+  domainFeature(cleric, solidarity, "Solidarity's Action", 1, [
+    { kind: "uses", count: "wis", reset: "long" },
+  ]),
+  domainFeature(cleric, zeal, "Priest of Zeal", 1, [{ kind: "uses", count: "wis", reset: "long" }]),
+  domainFeature(cleric, strength, "Acolyte of Strength", 1, [
+    skillsOf(1, ["animal handling", "athletics", "nature", "survival"]),
+    ...spellPicks({ count: 1, level: 0, from: "Druid" }),
+  ]),
+  domainNarrative(cleric, solidarity, "Oketra's Blessing", 6),
+  domainNarrative(cleric, strength, "Rhonas's Blessing", 6),
+  domainNarrative(cleric, zeal, "Resounding Strike", 6),
+  ...[solidarity, strength, zeal].map((domain) =>
+    domainFeature(cleric, domain, "Divine Strike", 8, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        scales: [{ level: 14, dice: "2d8" }],
+        unarmed: true,
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+  ),
+  domainNarrative(cleric, solidarity, "Supreme Healing", 17),
+  domainNarrative(cleric, strength, "Avatar of Battle", 17),
+  // Its one use is the catalog's.
+  domainNarrative(cleric, zeal, "Blaze of Glory", 17),
+  amonkhetTrait("Flight", ["Aven|PSA"]),
+  amonkhetTrait("Hawkeyed", ["Aven|PSA|Hawk-Headed|PSA"]),
+  amonkhetTrait(
+    "Kefnet's Blessing",
+    ["Aven|PSA|Ibis-Headed|PSA"],
+    [{ kind: "halfProficiency", abilities: ["int"], rounding: "down" }],
+  ),
+  amonkhetTrait("Khenra Weapon Training", ["Khenra|PSA"]),
+  amonkhetTrait("Khenra Twins", ["Khenra|PSA"]),
+  amonkhetTrait("Menacing", ["Minotaur (Amonkhet)|PSA"]),
+  amonkhetTrait("Natural Weapon", ["Minotaur (Amonkhet)|PSA"]),
+  amonkhetTrait(
+    "Relentless Endurance",
+    ["Minotaur (Amonkhet)|PSA"],
+    [{ kind: "heal", bonus: [1] }],
+  ),
+  amonkhetTrait("Savage Attacks", ["Minotaur (Amonkhet)|PSA"]),
+  amonkhetTrait("Natural Weapons", ["Naga|PSA"], [{ kind: "dc", ability: "con", label: "Bite" }]),
+  amonkhetTrait("Poison Affinity", ["Naga|PSA"]),
+  amonkhetTrait("Poison Immunity", ["Naga|PSA"]),
+  amonkhetTrait(
+    "Speed Burst",
+    ["Naga|PSA"],
+    [{ kind: "active" }, { kind: "speed", bonus: 5, while: "active" }],
+  ),
+  amonkhetTrait("Skills", ["Human|PHB|Amonkhet|PSA"]),
+  amonkhetTrait("Feat", ["Human|PHB|Amonkhet|PSA"]),
+  ...["Shelter of Dissenters", "Trials of the Five Gods", "Voice of Authority"].map((name) =>
+    narrative({ name, source: "PSA" }),
+  ),
+];
 
 const RECORDS: FeatureMechanics[] = [
   {
@@ -1592,7 +1855,12 @@ const RECORDS: FeatureMechanics[] = [
   ]),
   {
     ...classFeature(["Ranger", "PHB"], ["Deft Explorer Improvement", "TCE"], 6, [
-      { kind: "speed", bonus: 5, equalToWalk: ["climb", "swim"], label: "Roving" },
+      {
+        kind: "speed",
+        bonus: 5,
+        equalToWalk: ["climb", "swim"],
+        label: "Roving",
+      },
     ]),
     houseRule: "optionalClassFeatures",
   },
@@ -1607,7 +1875,13 @@ const RECORDS: FeatureMechanics[] = [
       classSource: "PHB",
       level: 10,
     },
-    mechanics: [{ kind: "defense", immune: ["poison"], conditionImmune: ["disease", "poisoned"] }],
+    mechanics: [
+      {
+        kind: "defense",
+        immune: ["poison"],
+        conditionImmune: ["disease", "poisoned"],
+      },
+    ],
   },
   {
     ref: {
@@ -1699,7 +1973,11 @@ const RECORDS: FeatureMechanics[] = [
     ],
   },
   subclassFeature(["Fighter", "PHB"], ["Champion", "PHB"], ["Remarkable Athlete", "PHB"], 7, [
-    { kind: "halfProficiency", abilities: ["str", "dex", "con"], rounding: "up" },
+    {
+      kind: "halfProficiency",
+      abilities: ["str", "dex", "con"],
+      rounding: "up",
+    },
   ]),
   subclassFeature(
     cleric,
@@ -1806,7 +2084,10 @@ const RECORDS: FeatureMechanics[] = [
     ["Scout", "XGE"],
     ["Survivalist", "XGE"],
     3,
-    grants({ skills: ["nature", "survival"], expertise: ["nature", "survival"] }),
+    grants({
+      skills: ["nature", "survival"],
+      expertise: ["nature", "survival"],
+    }),
   ),
   subclassFeature(
     ["Ranger", "PHB"],
@@ -1903,7 +2184,12 @@ const RECORDS: FeatureMechanics[] = [
     { kind: "roll", roll: "save", bonus: "cha" },
   ]),
   classFeature(fighter24, ["Indomitable", "XPHB"], 9, [
-    { kind: "roll", roll: "save", bonus: "level", against: "on the reroll of a failed save" },
+    {
+      kind: "roll",
+      roll: "save",
+      bonus: "level",
+      against: "on the reroll of a failed save",
+    },
     INDOMITABLE_USES,
   ]),
   classFeature(["Monk", "PHB"], ["Diamond Soul", "PHB"], 14, ALL_SAVES),
@@ -1984,7 +2270,12 @@ const RECORDS: FeatureMechanics[] = [
   ]),
   {
     ...classFeature(["Cleric", "XPHB"], ["Thaumaturge", "XPHB"], 1, [
-      { kind: "roll", roll: "check", skills: ["arcana", "religion"], bonus: "wis" },
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["arcana", "religion"],
+        bonus: "wis",
+      },
     ]),
     offeredBy: {
       name: "Divine Order",
@@ -1996,7 +2287,12 @@ const RECORDS: FeatureMechanics[] = [
   },
   {
     ...classFeature(["Druid", "XPHB"], ["Magician", "XPHB"], 1, [
-      { kind: "roll", roll: "check", skills: ["arcana", "nature"], bonus: "wis" },
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["arcana", "nature"],
+        bonus: "wis",
+      },
     ]),
     offeredBy: {
       name: "Primal Order",
@@ -2086,13 +2382,21 @@ const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Grappler", source: "PHB" },
     mechanics: [
-      { kind: "attack", advantage: true, option: "against a creature you are grappling" },
+      {
+        kind: "attack",
+        advantage: true,
+        option: "against a creature you are grappling",
+      },
     ],
   },
   {
     ref: { name: "Grappler", source: "XPHB" },
     mechanics: [
-      { kind: "attack", advantage: true, option: "against a creature you are grappling" },
+      {
+        kind: "attack",
+        advantage: true,
+        option: "against a creature you are grappling",
+      },
     ],
   },
   classFeature(barbarian, ["Reckless Attack", "PHB"], 2, [
@@ -2104,7 +2408,12 @@ const RECORDS: FeatureMechanics[] = [
     },
   ]),
   classFeature(barbarian24, ["Reckless Attack", "XPHB"], 2, [
-    { kind: "attack", advantage: true, ability: "str", option: "while attacking recklessly" },
+    {
+      kind: "attack",
+      advantage: true,
+      ability: "str",
+      option: "while attacking recklessly",
+    },
   ]),
   classFeature(["Ranger", "XPHB"], ["Precise Hunter", "XPHB"], 17, [
     {
@@ -2198,7 +2507,13 @@ const RECORDS: FeatureMechanics[] = [
     { kind: "extraDamage", dice: "1d8", type: "radiant", weapons: "melee" },
   ]),
   classFeature(paladin24, ["Radiant Strikes", "XPHB"], 11, [
-    { kind: "extraDamage", dice: "1d8", type: "radiant", weapons: "melee", unarmed: true },
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      type: "radiant",
+      weapons: "melee",
+      unarmed: true,
+    },
   ]),
   subclassFeature(cleric, ["Life", "PHB"], ["Divine Strike", "PHB"], 8, [
     {
@@ -2314,7 +2629,12 @@ const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Lifedrinker", source: "PHB" },
     mechanics: [
-      { kind: "extraDamage", dice: "cha", type: "necrotic", option: "with your pact weapon" },
+      {
+        kind: "extraDamage",
+        dice: "cha",
+        type: "necrotic",
+        option: "with your pact weapon",
+      },
     ],
   },
   {
@@ -2553,8 +2873,18 @@ const RECORDS: FeatureMechanics[] = [
     (ref): FeatureMechanics => ({
       ref,
       mechanics: [
-        { kind: "extraDamage", dice: "1d6", unarmed: true, option: SUPERIORITY_DIE },
-        { kind: "attack", dice: "1d6", afterRoll: true, option: PRECISION_ATTACK },
+        {
+          kind: "extraDamage",
+          dice: "1d6",
+          unarmed: true,
+          option: SUPERIORITY_DIE,
+        },
+        {
+          kind: "attack",
+          dice: "1d6",
+          afterRoll: true,
+          option: PRECISION_ATTACK,
+        },
       ],
     }),
   ),
@@ -2700,7 +3030,12 @@ const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Fire Rune", source: "TCE" },
     mechanics: [
-      { kind: "extraDamage", dice: "2d6", type: "fire", option: "invoking the fire rune" },
+      {
+        kind: "extraDamage",
+        dice: "2d6",
+        type: "fire",
+        option: "invoking the fire rune",
+      },
       RUNE_USES,
     ],
   },
@@ -2780,7 +3115,12 @@ const RECORDS: FeatureMechanics[] = [
   narrative({ name: "Orcish Fury", source: "XGE" }),
   narrative({ name: "Piercer", source: "TCE" }),
   classFeature(monk, ["Martial Arts", "PHB"], 1, [
-    { kind: "martialArts", monkWeapons: "classic", die: "martial_arts", dexterity: true },
+    {
+      kind: "martialArts",
+      monkWeapons: "classic",
+      die: "martial_arts",
+      dexterity: true,
+    },
   ]),
   classFeature(monk24, ["Martial Arts Die", "XPHB"], 1, [
     { kind: "martialArts", monkWeapons: "one", die: "martial_arts" },
@@ -2796,7 +3136,13 @@ const RECORDS: FeatureMechanics[] = [
       ["Brutal Critical (3 dice)", 17],
     ] as const
   ).map(([name, level]) =>
-    narrative({ name, source: "PHB", className: "Barbarian", classSource: "PHB", level }),
+    narrative({
+      name,
+      source: "PHB",
+      className: "Barbarian",
+      classSource: "PHB",
+      level,
+    }),
   ),
   // Each lands on another creature, or on a roll of 20 for an amount the boon's pick sets.
   narrative({
@@ -2826,7 +3172,11 @@ const RECORDS: FeatureMechanics[] = [
         { level: 15, bonus: 15 },
       ],
     },
-    { kind: "attack", advantage: true, option: "on the turn you use Fighting Spirit" },
+    {
+      kind: "attack",
+      advantage: true,
+      option: "on the turn you use Fighting Spirit",
+    },
   ]),
   classFeature(cleric, ["Channel Divinity", "PHB"], 2, [
     {
@@ -2850,7 +3200,12 @@ const RECORDS: FeatureMechanics[] = [
     ] as const
   ).map(([owner, name, source, level]) =>
     subclassFeature(owner, ["Life", source], [name, source], level, [
-      { kind: "heal", bonus: ["level"], times: 5, ...(source === "XPHB" ? {} : { others: true }) },
+      {
+        kind: "heal",
+        bonus: ["level"],
+        times: 5,
+        ...(source === "XPHB" ? {} : { others: true }),
+      },
     ]),
   ),
   classFeature(cleric24, ["Divine Spark", "XPHB"], 2, [
@@ -2983,7 +3338,11 @@ const RECORDS: FeatureMechanics[] = [
   ]),
   {
     ...classFeature(monk, ["Quickened Healing", "TCE"], 4, [
-      { kind: "heal", dice: { column: "martial_arts" }, bonus: ["proficiency"] },
+      {
+        kind: "heal",
+        dice: { column: "martial_arts" },
+        bonus: ["proficiency"],
+      },
     ]),
     houseRule: "optionalClassFeatures",
   },
@@ -3052,13 +3411,23 @@ const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Rally", source: "PHB" },
     mechanics: [
-      { kind: "tempHp", dice: { pool: "superiority_dice", die: 6 }, bonus: ["cha"], others: true },
+      {
+        kind: "tempHp",
+        dice: { pool: "superiority_dice", die: 6 },
+        bonus: ["cha"],
+        others: true,
+      },
     ],
   },
   {
     ref: { name: "Tomb of Levistus", source: "XGE" },
     mechanics: [
-      { kind: "tempHp", bonus: ["level"], times: 10, levelsIn: { name: "Warlock", source: "PHB" } },
+      {
+        kind: "tempHp",
+        bonus: ["level"],
+        times: 10,
+        levelsIn: { name: "Warlock", source: "PHB" },
+      },
       { kind: "uses", count: 1, reset: "short" },
     ],
   },
@@ -3123,7 +3492,12 @@ const RECORDS: FeatureMechanics[] = [
     { name: "Homunculus Servant", source: "TCE" },
   ].map(narrative),
   classFeature(sorcerer, ["Font of Magic", "PHB"], 2, [
-    { kind: "convert", pool: "sorcery_points", costs: [2, 3, 5, 6, 7], refund: true },
+    {
+      kind: "convert",
+      pool: "sorcery_points",
+      costs: [2, 3, 5, 6, 7],
+      refund: true,
+    },
   ]),
   classFeature(wizard, ["Arcane Recovery", "PHB"], 1, [
     { kind: "slotRecovery", maxLevel: 5 },
@@ -3160,6 +3534,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SPELLS_FROM_CLASS_FEATURES,
   ...SPELLS_GRANTED_2024,
   ...SPELLS_FROM_CLASS_FEATURES_2024,
+  ...PLANE_SHIFT_AMONKHET,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);

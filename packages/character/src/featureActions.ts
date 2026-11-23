@@ -73,6 +73,13 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "Quickened Healing",
     "Symbiotic Entity",
   ),
+  ...row(
+    "action",
+    "PSA",
+    "Channel Divinity: Cloak of Shadows",
+    "Channel Divinity: Invoke Duplicity",
+    "Channel Divinity: Preserve Life",
+  ),
   ...row("bonus action", "TCE", "Channel Divinity: Harness Divine Power"),
   ...row("bonus action", "XGE", "Fighting Spirit", "Mantle of Inspiration", "Unearthly Recovery"),
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
@@ -108,7 +115,10 @@ export type FeatureCost = (
   | { feature: string; pool?: undefined }
 ) & { min: number; max?: number | null };
 
-type Source = ({ pool: string } | { feature: string }) & { min?: number; max?: number | null };
+type Source = ({ pool: string } | { feature: string }) & {
+  min?: number;
+  max?: number | null;
+};
 
 /** Each row prices `names` of one `source` the same. */
 const COST_ROWS: [Source, string, string[]][] = [
@@ -144,6 +154,17 @@ const COST_ROWS: [Source, string, string[]][] = [
       "Turn the Unholy",
       "Abjure Enemy",
       "Vow of Enmity",
+    ],
+  ],
+  [
+    { pool: "channel_divinity" },
+    "PSA",
+    [
+      "Channel Divinity: Cloak of Shadows",
+      "Channel Divinity: Consuming Fervor",
+      "Channel Divinity: Feat of Strength",
+      "Channel Divinity: Invoke Duplicity",
+      "Channel Divinity: Preserve Life",
     ],
   ],
   [
@@ -303,13 +324,15 @@ const COST_NOTES: [string, string[]][] = [
 ];
 
 /** Every feature the curated table prices, beside its cost. */
-export const FEATURE_COST_ENTRIES: readonly { ref: ContentRef; cost: FeatureCost }[] =
-  COST_ROWS.flatMap(([cost, source, names]) =>
-    names.map((name) => ({
-      ref: { name, source },
-      cost: { ...cost, min: cost.min ?? 1 } as FeatureCost,
-    })),
-  );
+export const FEATURE_COST_ENTRIES: readonly {
+  ref: ContentRef;
+  cost: FeatureCost;
+}[] = COST_ROWS.flatMap(([cost, source, names]) =>
+  names.map((name) => ({
+    ref: { name, source },
+    cost: { ...cost, min: cost.min ?? 1 } as FeatureCost,
+  })),
+);
 
 const FEATURE_COSTS: ReadonlyMap<string, FeatureCost> = new Map(
   FEATURE_COST_ENTRIES.map(({ ref, cost }) => [refKey(ref), cost]),
