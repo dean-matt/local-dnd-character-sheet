@@ -1660,6 +1660,7 @@ const RECORDS: FeatureMechanics[] = [
   ]),
   {
     ref: { name: "Dwarven Toughness", source: "PHB" },
+    races: ["Dwarf|PHB|Hill|PHB"],
     mechanics: [{ kind: "bonus", target: "hitPointsPerLevel", value: 1 }],
   },
   {
@@ -2019,10 +2020,12 @@ const RECORDS: FeatureMechanics[] = [
   },
   {
     ref: { name: "Fey Ancestry", source: "PHB" },
+    races: ["Elf|PHB", "Half-Elf|PHB"],
     mechanics: [saveAdvantage("against being charmed")],
   },
   {
     ref: { name: "Gnome Cunning", source: "PHB" },
+    races: ["Gnome|PHB"],
     mechanics: [
       {
         kind: "roll",
@@ -2035,6 +2038,7 @@ const RECORDS: FeatureMechanics[] = [
   },
   {
     ref: { name: "Brave", source: "PHB" },
+    races: ["Halfling|PHB"],
     mechanics: [saveAdvantage("against being frightened")],
   },
   {
@@ -2893,6 +2897,7 @@ const RECORDS: FeatureMechanics[] = [
   ]),
   {
     ref: { name: "Relentless Endurance", source: "PHB" },
+    races: ["Half-Orc|PHB"],
     mechanics: [{ kind: "heal", bonus: [1] }],
   },
   // Each heals through another source, a spell, a rest's hit dice or a pool the player divides,

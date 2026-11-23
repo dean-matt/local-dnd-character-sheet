@@ -732,11 +732,16 @@ export const featureMechanicsSchema = z
     offeredBy: featureKeySchema.optional(),
     /** The house rule a table turns on for the feature to apply; absent, the rule as printed. */
     houseRule: z.literal("optionalClassFeatures").optional(),
+    /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */
+    races: z.array(z.string().min(1)).min(1).optional(),
     mechanics: mechanicListSchema.optional(),
     narrative: z.literal(true).optional(),
   })
   .refine((entry) => (entry.mechanics === undefined) !== (entry.narrative === undefined), {
     error: "a feature records its mechanics or the narrative mark, never both or neither",
+  })
+  .refine((entry) => !entry.races || !("className" in entry.ref), {
+    error: "only a trait with a `(name, source)` ref belongs to races",
   });
 
 export type FeatureMechanics = z.infer<typeof featureMechanicsSchema>;

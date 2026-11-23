@@ -1,8 +1,10 @@
 /**
  * The features in scope that record neither a mechanic nor the narrative mark, sorted by
- * the mechanic kinds their rules text suggests, and the committed count per kind that a
- * rise past fails. In scope is every SRD 5.1 or 5.2 class feature, subclass feature, feat and
- * optional feature; race, subrace and background traits are not read.
+ * the mechanic kinds their rules text suggests, and the committed count per source and kind
+ * that a rise past fails. In scope is every 2014 (`classic`) class feature, subclass feature,
+ * feat, optional feature, race and subrace trait and background feature, and the SRD 5.2 ones
+ * of the 2024 rules; a trait is one named entry of its race, subrace or background, and a
+ * subrace holds only the traits it adds or changes.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -73,8 +75,9 @@ type Bucket = Kind | "unclassified";
 const KINDS = Object.keys(KIND_PATTERNS) as Kind[];
 const BUCKETS: Bucket[] = [...KINDS, "unclassified"];
 
-type Gaps = Record<Bucket, string[]>;
+type Gaps = Record<string, Record<Bucket, string[]>>;
 export type Counts = Record<Bucket, number>;
+export type SourceCounts = Record<string, Counts>;
 
 type FeatureRow = {
   name: string;
@@ -89,8 +92,26 @@ type FeatureRow = {
   uses: number | null;
 };
 
+/** A feature, or a trait of a race, subrace or background, as the report reads it. */
+type Unit = {
+  name: string;
+  source: string;
+  edition: string;
+  json: string;
+  uses: number | null;
+  label: string;
+  recorded: boolean;
+  poolKey: string | undefined;
+};
+
 const RECORDED = new Set(
   FEATURE_MECHANICS.map(({ ref }) => ("className" in ref ? featureKey(ref) : refKey(ref))),
+);
+
+const RACE_RECORDED = new Set(
+  FEATURE_MECHANICS.flatMap(({ ref, races }) =>
+    (races ?? []).map((owner) => `${refKey(ref)}|${owner}`),
+  ),
 );
 
 function keyOf(row: FeatureRow): string {
@@ -124,63 +145,205 @@ const QUERIES = [
   "SELECT name, source, edition, json, uses FROM optional_features",
 ];
 
-function isGap(row: FeatureRow): boolean {
-  const feature = JSON.parse(row.json) as { srd?: unknown; srd52?: unknown };
-  return Boolean(feature.srd || feature.srd52) && !RECORDED.has(keyOf(row));
+const inScope = (edition: string, json: string) =>
+  edition === "classic" || Boolean((JSON.parse(json) as { srd52?: unknown }).srd52);
+
+/** Entries that describe a race without granting anything the sheet applies. */
+const DESCRIPTIVE_TRAITS = new Set([
+  "Age",
+  "Alignment",
+  "Creature Type",
+  "Language",
+  "Languages",
+  "Size",
+  "Speed",
+]);
+
+type Entry = { name?: unknown };
+type TraitRow = {
+  name: string;
+  source: string;
+  edition: string;
+  json: string;
+  trait_uses: string | null;
+  race_name?: string;
+  race_source?: string;
+};
+
+const namedEntries = (json: string): (Entry & { name: string })[] =>
+  ((JSON.parse(json) as { entries?: unknown[] }).entries ?? []).filter(
+    (entry): entry is Entry & { name: string } =>
+      typeof entry === "object" && entry !== null && typeof (entry as Entry).name === "string",
+  );
+
+function traitUnits(db: Database.Database): Unit[] {
+  const races = db
+    .prepare("SELECT name, source, edition, json, trait_uses FROM races")
+    .all() as TraitRow[];
+  const subraces = db
+    .prepare("SELECT name, source, edition, json, trait_uses, race_name, race_source FROM subraces")
+    .all() as TraitRow[];
+  const backgrounds = db
+    .prepare("SELECT name, source, edition, json FROM backgrounds")
+    .all() as TraitRow[];
+  const parentTraits = new Map(
+    races.map((race) => [
+      refKey(race),
+      new Map(namedEntries(race.json).map((entry) => [entry.name, JSON.stringify(entry)])),
+    ]),
+  );
+  const unit = (
+    row: TraitRow,
+    entry: Entry & { name: string },
+    owner: string,
+    whose: string,
+  ): Unit => ({
+    name: entry.name,
+    source: row.source,
+    edition: row.edition,
+    json: JSON.stringify(entry),
+    uses: row.trait_uses && entry.name in JSON.parse(row.trait_uses) ? 1 : null,
+    label: `${entry.name} (${row.source}), ${whose}`,
+    recorded: RACE_RECORDED.has(`${entry.name}|${row.source}|${owner}`),
+    poolKey: undefined,
+  });
+  const inherited = (row: TraitRow, entry: Entry & { name: string }) =>
+    parentTraits
+      .get(refKey({ name: row.race_name ?? "", source: row.race_source ?? "" }))
+      ?.get(entry.name) === JSON.stringify(entry);
+  return [
+    ...races.flatMap((row) =>
+      namedEntries(row.json)
+        .filter((entry) => !DESCRIPTIVE_TRAITS.has(entry.name))
+        .map((entry) => unit(row, entry, refKey(row), row.name)),
+    ),
+    ...subraces.flatMap((row) =>
+      namedEntries(row.json)
+        .filter((entry) => !DESCRIPTIVE_TRAITS.has(entry.name) && !inherited(row, entry))
+        .map((entry) =>
+          unit(
+            row,
+            entry,
+            `${row.race_name}|${row.race_source}|${refKey(row)}`,
+            `${row.race_name} (${row.name})`,
+          ),
+        ),
+    ),
+    ...backgrounds.flatMap((row) =>
+      namedEntries(row.json).flatMap((entry) => {
+        const feature = /Feature: (.+)$/.exec(entry.name)?.[1];
+        return feature
+          ? [
+              {
+                ...unit(row, entry, refKey(row), row.name),
+                name: feature,
+                label: `${feature} (${row.source}), ${row.name}`,
+                recorded: RECORDED.has(`${feature}|${row.source}`),
+              },
+            ]
+          : [];
+      }),
+    ),
+  ];
+}
+
+function featureUnits(db: Database.Database): Unit[] {
+  return QUERIES.flatMap((query) => db.prepare(query).all() as FeatureRow[]).map((row) => ({
+    name: row.name,
+    source: row.source,
+    edition: row.edition,
+    json: row.json,
+    uses: row.uses,
+    label: labelOf(row),
+    recorded: RECORDED.has(keyOf(row)),
+    poolKey: featurePoolKey(row),
+  }));
 }
 
 export function mechanicGaps(db: Database.Database): Gaps {
-  const rows = QUERIES.flatMap((query) => db.prepare(query).all() as FeatureRow[]).filter(isGap);
-  const suggests = (row: FeatureRow, kind: Kind) =>
+  const rows = [...featureUnits(db), ...traitUnits(db)].filter(
+    (row) => !row.recorded && inScope(row.edition, row.json),
+  );
+  const suggests = (row: Unit, kind: Kind) =>
     KIND_PATTERNS[kind].test(row.json) &&
-    (kind !== "uses" || (row.uses === null && featurePoolKey(row) === undefined)) &&
+    (kind !== "uses" || (row.uses === null && row.poolKey === undefined)) &&
     ((kind !== "convert" && kind !== "slotRecovery" && kind !== "regain" && kind !== "dc") ||
       row.edition === "classic") &&
     (kind !== "poolCost" || (row.edition === "classic" && !featureCostRecorded(row)));
-  const matches = (row: FeatureRow, bucket: Bucket) =>
+  const matches = (row: Unit, bucket: Bucket) =>
     bucket === "unclassified" ? KINDS.every((kind) => !suggests(row, kind)) : suggests(row, bucket);
+  const sources = [...new Set(rows.map((row) => row.source))].sort();
   return Object.fromEntries(
-    BUCKETS.map((bucket) => [
-      bucket,
-      rows
-        .filter((row) => matches(row, bucket))
-        .map(labelOf)
-        .sort(),
+    sources.map((source) => [
+      source,
+      Object.fromEntries(
+        BUCKETS.map((bucket) => [
+          bucket,
+          rows
+            .filter((row) => row.source === source && matches(row, bucket))
+            .map((row) => row.label)
+            .sort(),
+        ]),
+      ),
     ]),
   ) as Gaps;
 }
 
 const BASELINE_FILE = join(import.meta.dirname, "../mechanic-gaps.json");
 
-export function countGaps(gaps: Gaps): Counts {
-  return Object.fromEntries(BUCKETS.map((bucket) => [bucket, gaps[bucket].length])) as Counts;
+export function countGaps(gaps: Gaps): SourceCounts {
+  return Object.fromEntries(
+    Object.entries(gaps).map(([source, buckets]) => [
+      source,
+      Object.fromEntries(BUCKETS.map((bucket) => [bucket, buckets[bucket].length])) as Counts,
+    ]),
+  );
 }
 
-export function readBaseline(file = BASELINE_FILE): Partial<Counts> {
-  return JSON.parse(readFileSync(file, "utf8")) as Partial<Counts>;
+export function readBaseline(file = BASELINE_FILE): Record<string, Partial<Counts>> {
+  return JSON.parse(readFileSync(file, "utf8")) as Record<string, Partial<Counts>>;
 }
 
-/** The buckets whose count rose past the baseline; one the baseline lacks starts at zero. */
-export function risen(counts: Counts, baseline: Partial<Counts>): Bucket[] {
-  return BUCKETS.filter((bucket) => counts[bucket] > (baseline[bucket] ?? 0));
+const sourcesOf = (counts: SourceCounts, baseline: Record<string, Partial<Counts>>) =>
+  [...new Set([...Object.keys(counts), ...Object.keys(baseline)])].sort();
+
+/** The `source bucket` pairs whose count rose past the baseline; one the baseline lacks starts at zero. */
+export function risen(counts: SourceCounts, baseline: Record<string, Partial<Counts>>): string[] {
+  return sourcesOf(counts, baseline).flatMap((source) =>
+    BUCKETS.filter(
+      (bucket) => (counts[source]?.[bucket] ?? 0) > (baseline[source]?.[bucket] ?? 0),
+    ).map((bucket) => `${source} ${bucket}`),
+  );
 }
 
 /** Writes `counts` over the baseline where nothing rose and something fell. */
-export function lowerBaseline(counts: Counts, file = BASELINE_FILE): boolean {
+export function lowerBaseline(counts: SourceCounts, file = BASELINE_FILE): boolean {
   const baseline = readBaseline(file);
   if (risen(counts, baseline).length > 0) return false;
-  if (BUCKETS.every((bucket) => counts[bucket] === baseline[bucket])) return false;
-  writeFileSync(file, `${JSON.stringify(counts, null, 2)}\n`);
+  const same = sourcesOf(counts, baseline).every((source) =>
+    BUCKETS.every(
+      (bucket) => (counts[source]?.[bucket] ?? 0) === (baseline[source]?.[bucket] ?? 0),
+    ),
+  );
+  if (same) return false;
+  const kept = Object.entries(counts).filter(([, bySource]) =>
+    BUCKETS.some((bucket) => bySource[bucket] > 0),
+  );
+  writeFileSync(file, `${JSON.stringify(Object.fromEntries(kept), null, 2)}\n`);
   return true;
 }
 
-export function reportGaps(gaps: Gaps, baseline: Partial<Counts>): string[] {
-  const lines = ["Features in the SRD with no recorded mechanic or narrative mark, by kind:"];
-  for (const bucket of BUCKETS) {
-    const was = baseline[bucket] ?? 0;
-    const mark = gaps[bucket].length > was ? ` — up from ${was}` : "";
-    lines.push(`  ${bucket} ${gaps[bucket].length}${mark}`);
-    for (const label of gaps[bucket]) lines.push(`    ${label}`);
+export function reportGaps(gaps: Gaps, baseline: Record<string, Partial<Counts>>): string[] {
+  const lines = ["Features with no recorded mechanic or narrative mark, by source and kind:"];
+  for (const [source, buckets] of Object.entries(gaps)) {
+    lines.push(`${source}`);
+    for (const bucket of BUCKETS) {
+      if (buckets[bucket].length === 0) continue;
+      const was = baseline[source]?.[bucket] ?? 0;
+      const mark = buckets[bucket].length > was ? ` — up from ${was}` : "";
+      lines.push(`  ${bucket} ${buckets[bucket].length}${mark}`);
+      for (const label of buckets[bucket]) lines.push(`    ${label}`);
+    }
   }
   return lines;
 }

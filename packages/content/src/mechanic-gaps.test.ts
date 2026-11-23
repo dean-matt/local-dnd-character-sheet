@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildContent, resolveContentDb } from "./build-db.ts";
 import { characterOptions } from "./load/character-options.ts";
 import { classes } from "./load/classes.ts";
+import { races } from "./load/races.ts";
 import {
   type Counts,
   countGaps,
@@ -220,74 +221,163 @@ describe("mechanicGaps", () => {
     json({ srd: true }, "you can cast {@spell fly} once without expending a spell slot"),
   );
 
-  it("names an SRD feature with no record under each kind its text suggests", () => {
-    const gaps = mechanicGaps(db);
-    expect(gaps.defense).toEqual(["Hardy (PHB), Fighter level 3"]);
-    expect(gaps.sense).toEqual(["Hardy (PHB), Fighter level 3"]);
-    expect(gaps.bonus).toEqual(["Quick (XPHB)"]);
-    expect(gaps.unarmoredBase).toEqual(["Monk (PHB)"]);
-    expect(gaps.armorClass).toEqual(["Monk (PHB)"]);
-    expect(gaps.roll).toEqual(["Steady (PHB)"]);
-    expect(gaps.attack).toEqual(["Aimed (PHB)"]);
-    expect(gaps.extraDamage).toEqual(["Smiting (PHB)"]);
-    expect(gaps.martialArts).toEqual(["Fists (PHB)"]);
-    expect(gaps.heal).toEqual(["Mending (PHB)"]);
-    expect(gaps.tempHp).toEqual(["Shielding (PHB)"]);
-    expect(gaps.pool).toEqual(["Superior (PHB)"]);
-    expect(gaps.convert).toEqual(["Flexible (PHB)"]);
-    expect(gaps.slotRecovery).toEqual(["Recovering (PHB)"]);
-    expect(gaps.regain).toEqual(["Restoring (PHB)"]);
-    expect(gaps.uses).toEqual(["Surging (PHB)"]);
-    expect(gaps.poolCost).toEqual(["Spender (PHB)"]);
-    expect(gaps.dc).toEqual(["Frightening (PHB)"]);
-    expect(gaps.active).toEqual(["Winged (PHB)"]);
-    expect(gaps.turn).toEqual(["Nimble (PHB)", "Twice (PHB)"]);
-    expect(gaps.spells).toEqual(["Arcane (PHB)", "Gifted (PHB)"]);
-    expect(gaps.unclassified).toEqual([
+  it("names an in-scope feature with no record under each kind its text suggests, per source", () => {
+    const { PHB: phb, XPHB: xphb, XGE: xge } = mechanicGaps(db);
+    expect(phb?.defense).toEqual(["Hardy (PHB), Fighter level 3"]);
+    expect(phb?.sense).toEqual(["Hardy (PHB), Fighter level 3"]);
+    expect(phb?.unarmoredBase).toEqual(["Monk (PHB)"]);
+    expect(phb?.armorClass).toEqual(["Monk (PHB)"]);
+    expect(phb?.roll).toEqual(["Steady (PHB)"]);
+    expect(phb?.attack).toEqual(["Aimed (PHB)"]);
+    expect(phb?.extraDamage).toEqual(["Smiting (PHB)"]);
+    expect(phb?.martialArts).toEqual(["Fists (PHB)"]);
+    expect(phb?.heal).toEqual(["Mending (PHB)"]);
+    expect(phb?.tempHp).toEqual(["Shielding (PHB)"]);
+    expect(phb?.pool).toEqual(["Superior (PHB)"]);
+    expect(phb?.convert).toEqual(["Flexible (PHB)"]);
+    expect(phb?.slotRecovery).toEqual(["Recovering (PHB)"]);
+    expect(phb?.regain).toEqual(["Restoring (PHB)"]);
+    expect(phb?.uses).toEqual(["Surging (PHB)"]);
+    expect(phb?.poolCost).toEqual(["Spender (PHB)"]);
+    expect(phb?.dc).toEqual(["Frightening (PHB)"]);
+    expect(phb?.active).toEqual(["Winged (PHB)"]);
+    expect(phb?.turn).toEqual(["Nimble (PHB)", "Twice (PHB)"]);
+    expect(phb?.spells).toEqual(["Arcane (PHB)", "Gifted (PHB)"]);
+    expect(phb?.unclassified).toEqual([
       "Counted (PHB)",
       "Flurry of Blows (PHB), Monk level 2",
       "Fortunate (PHB)",
-      "Fountain (XPHB)",
-      "Recovered (XPHB)",
-      "Restored (XPHB)",
       "Strider (PHB)",
       "Stunning Strike (PHB)",
       "Turning (PHB)",
       "Venom (PHB)",
+    ]);
+    expect(xphb?.bonus).toEqual(["Quick (XPHB)"]);
+    expect(xphb?.unclassified).toEqual([
+      "Fountain (XPHB)",
+      "Recovered (XPHB)",
+      "Restored (XPHB)",
       "Withering (XPHB)",
     ]);
-    expect(countGaps(gaps)).toEqual({
-      ...zero,
-      defense: 1,
-      sense: 1,
-      bonus: 1,
-      armorClass: 1,
-      unarmoredBase: 1,
-      roll: 1,
-      attack: 1,
-      extraDamage: 1,
-      martialArts: 1,
-      heal: 1,
-      tempHp: 1,
-      pool: 1,
-      convert: 1,
-      slotRecovery: 1,
-      regain: 1,
-      poolCost: 1,
-      dc: 1,
-      uses: 1,
-      active: 1,
-      turn: 2,
-      spells: 2,
-      unclassified: 11,
-    });
+    expect(xge?.bonus).toEqual(["Wary (XGE)"]);
+    expect(xge?.sense).toEqual([]);
+  });
+
+  it("counts each source on its own", () => {
+    const counts = countGaps(mechanicGaps(db));
+    expect(Object.keys(counts)).toEqual(["PHB", "XGE", "XPHB"]);
+    expect(counts.PHB).toMatchObject({ defense: 1, turn: 2, spells: 2, unclassified: 7 });
+    expect(counts.XGE).toEqual({ ...zero, bonus: 1 });
+    expect(counts.XPHB).toEqual({ ...zero, bonus: 1, unclassified: 4 });
   });
 
   it("prints the count per kind, the features beneath it, and a rise past the baseline", () => {
-    const lines = reportGaps(mechanicGaps(db), { defense: 1 });
+    const lines = reportGaps(mechanicGaps(db), { PHB: { defense: 1 } });
     expect(lines).toContain("  defense 1");
     expect(lines).toContain("  sense 1 — up from 0");
     expect(lines).toContain("    Quick (XPHB)");
+    expect(lines).toContain("XGE");
+  });
+});
+
+describe("race, subrace and background traits", () => {
+  const db = new Database(":memory:");
+  db.exec(CONTENT_SCHEMA);
+  const trait = (name: string, text: string) => ({ name, type: "entries", entries: [text] });
+  const age = trait("Age", "You live long.");
+  const languages = trait("Languages", "You speak Common.");
+  const darkvision = trait("Darkvision", "You have darkvision out to 60 feet.");
+  const toughness = trait("Dwarven Toughness", "Your hit point maximum increases by 1.");
+  const sturdy = trait("Sturdy", "You have resistance to poison damage.");
+  const race = db.prepare(
+    "INSERT INTO races (name, source, edition, json, trait_uses) VALUES (?, ?, ?, ?, ?)",
+  );
+  race.run(
+    "Dwarf",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [age, languages, darkvision, sturdy] }),
+    null,
+  );
+  race.run(
+    "Gnome",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [trait("Gnome Cunning", "You have advantage on saves")] }),
+    null,
+  );
+  race.run(
+    "Kobold",
+    "MPMM",
+    "classic",
+    JSON.stringify({
+      entries: [
+        trait("Grovel", "You can do so a number of times equal to your proficiency bonus."),
+        trait("Wriggle", "You can do so a number of times equal to your proficiency bonus."),
+      ],
+    }),
+    '{"Grovel":{"uses":1,"reset":"long"}}',
+  );
+  race.run("Elf", "XPHB", "one", JSON.stringify({ entries: [darkvision] }), null);
+  const subrace = db.prepare(
+    "INSERT INTO subraces (name, full_name, source, race_name, race_source, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  );
+  subrace.run(
+    "Hill",
+    "Dwarf (Hill)",
+    "PHB",
+    "Dwarf",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [age, darkvision, sturdy, toughness] }),
+  );
+  subrace.run(
+    "Mountain",
+    "Dwarf (Mountain)",
+    "PHB",
+    "Dwarf",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [age, darkvision, trait("Sturdy", "Changed, with darkvision.")] }),
+  );
+  db.prepare("INSERT INTO backgrounds (name, source, edition, json) VALUES (?, ?, ?, ?)").run(
+    "Acolyte",
+    "PHB",
+    "classic",
+    JSON.stringify({
+      entries: [
+        trait("Suggested Characteristics", "You are devout."),
+        trait("Feature: Shelter", "You have advantage on darkvision."),
+      ],
+    }),
+  );
+
+  it("counts each trait of a race on its own, leaving out what only describes it", () => {
+    const gaps = mechanicGaps(db);
+    expect(gaps.PHB?.sense).toEqual([
+      "Darkvision (PHB), Dwarf",
+      "Shelter (PHB), Acolyte",
+      "Sturdy (PHB), Dwarf (Mountain)",
+    ]);
+    expect(gaps.PHB?.defense).toEqual(["Sturdy (PHB), Dwarf"]);
+    expect(gaps.PHB?.unclassified).not.toContain("Languages (PHB), Dwarf");
+    expect(gaps.XPHB).toBeUndefined();
+  });
+
+  it("counts a subrace's traits only where it adds or changes them", () => {
+    const labels = Object.values(mechanicGaps(db).PHB ?? {}).flat();
+    expect(labels.filter((label) => label.endsWith("Dwarf (Hill)"))).toEqual([]);
+    expect(labels).toContain("Sturdy (PHB), Dwarf (Mountain)");
+    expect(labels).not.toContain("Age (PHB), Dwarf (Mountain)");
+  });
+
+  it("leaves off a trait its race records, and a trait whose uses the build counted", () => {
+    const gaps = mechanicGaps(db);
+    expect(Object.values(gaps.PHB ?? {}).flat()).not.toContain("Gnome Cunning (PHB), Gnome");
+    expect(Object.values(gaps.PHB ?? {}).flat()).not.toContain(
+      "Dwarven Toughness (PHB), Dwarf (Hill)",
+    );
+    expect(gaps.MPMM?.uses).toEqual(["Wriggle (MPMM), Kobold"]);
   });
 });
 
@@ -298,23 +388,32 @@ describe("the baseline", () => {
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "mechanic-gaps-"));
     file = join(dir, "baseline.json");
-    writeFileSync(file, JSON.stringify({ defense: 2, sense: 1 }));
+    writeFileSync(file, JSON.stringify({ PHB: { defense: 2, sense: 1 }, TCE: { defense: 1 } }));
   });
 
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
-  it("fails a kind whose count rose, a kind it lacks counting from zero", () => {
-    expect(risen({ ...zero, defense: 3, sense: 1 }, readBaseline(file))).toEqual(["defense"]);
-    expect(risen({ ...zero, defense: 2, speed: 1 }, readBaseline(file))).toEqual(["speed"]);
-    expect(risen({ ...zero, defense: 1 }, readBaseline(file))).toEqual([]);
+  it("fails a kind whose count rose in a source, a kind or source it lacks counting from zero", () => {
+    const counts = (phb: Partial<Counts>, tce: Partial<Counts> = {}) => ({
+      PHB: { ...zero, ...phb },
+      TCE: { ...zero, defense: 1, ...tce },
+    });
+    expect(risen(counts({ defense: 3, sense: 1 }), readBaseline(file))).toEqual(["PHB defense"]);
+    expect(risen(counts({ defense: 2 }, { speed: 1 }), readBaseline(file))).toEqual(["TCE speed"]);
+    expect(
+      risen({ ...counts({ defense: 1 }), XGE: { ...zero, sense: 1 } }, readBaseline(file)),
+    ).toEqual(["XGE sense"]);
+    expect(risen(counts({ defense: 1 }), readBaseline(file))).toEqual([]);
   });
 
   it("is lowered where a count fell and none rose, and left alone otherwise", () => {
     const before = readFileSync(file, "utf8");
-    expect(lowerBaseline({ ...zero, defense: 3 }, file)).toBe(false);
+    const tce = { ...zero, defense: 1 };
+    expect(lowerBaseline({ PHB: { ...zero, defense: 3 }, TCE: tce }, file)).toBe(false);
     expect(readFileSync(file, "utf8")).toBe(before);
-    expect(lowerBaseline({ ...zero, defense: 1, sense: 1 }, file)).toBe(true);
-    expect(readBaseline(file)).toEqual({ ...zero, defense: 1, sense: 1 });
+    expect(lowerBaseline({ PHB: { ...zero, defense: 2, sense: 1 }, TCE: tce }, file)).toBe(false);
+    expect(lowerBaseline({ PHB: { ...zero, defense: 1, sense: 1 }, TCE: zero }, file)).toBe(true);
+    expect(readBaseline(file)).toEqual({ PHB: { ...zero, defense: 1, sense: 1 } });
   });
 });
 
@@ -327,9 +426,14 @@ describe.skipIf(!existsSync(join(VENDOR, "data/class")))("against vendor/", () =
 
   afterEach(() => rmSync(workspace, { recursive: true, force: true }));
 
-  it("holds every kind at or under the committed baseline, and lowers it on a fall", () => {
+  it("holds every source's every kind at or under the committed baseline, and lowers it on a fall", () => {
     const contentDir = join(workspace, "data", "content");
-    buildContent({ vendorDir: VENDOR, contentDir, loaders: [classes, characterOptions], meta: {} });
+    buildContent({
+      vendorDir: VENDOR,
+      contentDir,
+      loaders: [classes, characterOptions, races],
+      meta: {},
+    });
     const db = new Database(resolveContentDb(contentDir), { readonly: true });
     try {
       const counts = countGaps(mechanicGaps(db));
