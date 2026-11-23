@@ -24,7 +24,7 @@ export type SpellCastOption = {
 /** What casting a granted spell spends, such as 2 Ki. */
 type SpellCost = { amount: number; resource: string };
 
-/** The cast a granted spell's cost offers: spending that many points of the class pool it names, where the sheet counts one. */
+/** The cast a granted spell's cost offers: spending that many points of the class pool it names, where the sheet counts one. A sheet with two pools of the same name offers the first only. */
 function poolCast(
   spell: { level: number; cost?: SpellCost },
   sheet: CharacterState,
@@ -32,9 +32,9 @@ function poolCast(
 ): SpellCastOption[] {
   const { cost } = spell;
   if (!cost) return [];
-  const index = derived.classResources.findIndex((pool) => namesPool(cost.resource, pool.key));
-  const pool = derived.classResources[index];
-  const held = sheet.classResources[index];
+  const pool = derived.classResources.find((each) => namesPool(cost.resource, each.key));
+  const held =
+    pool && sheet.classResources.find((each) => classResourceKey(each) === classResourceKey(pool));
   if (!pool || !held) return [];
   return [
     {

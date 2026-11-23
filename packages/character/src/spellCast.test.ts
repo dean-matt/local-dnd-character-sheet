@@ -100,6 +100,24 @@ describe("a spell a feature casts for a pool", () => {
     }
   });
 
+  it("names the sorcery and focus pools by their own keys", () => {
+    for (const [resource, key] of [
+      ["Sorcery Point", "sorcery_points"],
+      ["Focus Points", "focus_points"],
+    ] as const) {
+      const held = ki(5, 1);
+      const pool = { ...(held.derived.classResources[0] as object), key };
+      const options = spellCastOptions(
+        { ...DARKNESS, cost: { amount: 2, resource } },
+        { ...held.derived, classResources: [pool as never] },
+        { ...held.state, classResources: [{ ...held.state.classResources[0], key } as never] },
+      );
+      expect(options).toEqual([
+        { via: "pool", level: 2, left: 4, pool: { class: MONK, key, amount: 2 } },
+      ]);
+    }
+  });
+
   it("lists the pool's cast before the slots and the ritual cast", () => {
     const held = ki(5, 0);
     const options = spellCastOptions(

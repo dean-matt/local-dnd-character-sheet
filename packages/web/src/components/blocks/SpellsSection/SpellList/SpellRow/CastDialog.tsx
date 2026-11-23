@@ -23,7 +23,7 @@ const NO_ENTRY = "none";
 
 const optionKey = (option: SpellCastOption) => `${option.via}:${option.level}`;
 
-const spendsSlot = (option: SpellCastOption) =>
+const spendsResource = (option: SpellCastOption) =>
   option.via === "slot" || option.via === "pact" || option.via === "pool";
 
 const affordable = ({ left, pool }: SpellCastOption) =>
@@ -88,7 +88,8 @@ export function CastDialog({
   const [concentrate, setConcentrate] = useState(concentration);
   const [roll, setRoll] = useState(true);
   const [paidBy, setPaidBy] = useState("");
-  const usable = (option: SpellCastOption) => !(spend && spendsSlot(option) && !affordable(option));
+  const usable = (option: SpellCastOption) =>
+    !(spend && spendsResource(option) && !affordable(option));
   const [picked, setPicked] = useState(() => {
     const first = options.find(affordable);
     return first && optionKey(first);
@@ -101,7 +102,7 @@ export function CastDialog({
     if (busy || !option || !ready) return;
     onCast({
       option,
-      spend: spend && spendsSlot(option),
+      spend: spend && spendsResource(option),
       concentrate,
       roll: rolls && roll,
       spendEntry: consumed && paidBy !== NO_ENTRY ? Number(paidBy) : undefined,
@@ -154,7 +155,7 @@ export function CastDialog({
             ))}
           </fieldset>
         )}
-        {options.some(spendsSlot) && (
+        {options.some(spendsResource) && (
           <label className="flex items-center gap-2 text-row">
             <input type="checkbox" checked={spend} onChange={() => setSpend(!spend)} />
             {option ? spentLabel(option) : "Spend the slot"}
