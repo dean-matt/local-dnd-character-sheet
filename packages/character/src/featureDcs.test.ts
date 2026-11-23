@@ -60,7 +60,7 @@ describe("featureDcs", () => {
     expect(featureDcs(levelsOf("Cleric", 6), { ...SHEET, spell: () => undefined })).toEqual([]);
   });
 
-  it("sets a DC for a held feature alone", () => {
+  it("sets no DC until the character reaches the level that holds the feature", () => {
     expect(dcsOf(levelsOf("Monk", 1), "Ki")).toEqual([]);
     expect(dcsOf(levelsOf("Fighter", 5), "Combat Superiority")).toEqual([]);
   });

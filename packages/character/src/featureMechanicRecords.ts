@@ -1114,11 +1114,8 @@ const SAVE_DCS: FeatureMechanics[] = [
     [
       ["Cleric", "PHB", "Knowledge", "PHB", "Channel Divinity: Read Thoughts", "PHB", 6],
       ["Cleric", "PHB", "Light", "PHB", "Channel Divinity: Radiance of the Dawn", "PHB", 2],
-      ["Cleric", "XPHB", "Light", "PHB", "Channel Divinity: Radiance of the Dawn", "PHB", 3],
       ["Cleric", "PHB", "Nature", "PHB", "Channel Divinity: Charm Animals and Plants", "PHB", 2],
-      ["Cleric", "XPHB", "Nature", "PHB", "Channel Divinity: Charm Animals and Plants", "PHB", 3],
       ["Cleric", "PHB", "Order", "TCE", "Channel Divinity: Order's Demand", "TCE", 2],
-      ["Cleric", "XPHB", "Order", "TCE", "Channel Divinity: Order's Demand", "TCE", 3],
     ] as const
   ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
     subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [

@@ -144,6 +144,19 @@ describe("featureMechanicsSchema", () => {
     expect(parse({ attack: 1, scales: [{ level: 5, dice: "1d8" }], option: "x" })).toBe(false);
   });
 
+  it("refuses a dc naming both or neither of an ability and a spell, a one-entry ability list, or a second dc", () => {
+    const ref = { name: "Ki", source: "PHB" };
+    const parse = (...mechanics: object[]) =>
+      featureMechanicsSchema.safeParse({ ref, mechanics }).success;
+    expect(parse({ kind: "dc", ability: "wis" })).toBe(true);
+    expect(parse({ kind: "dc", ability: ["str", "dex"] })).toBe(true);
+    expect(parse({ kind: "dc", spell: "Cleric" })).toBe(true);
+    expect(parse({ kind: "dc" })).toBe(false);
+    expect(parse({ kind: "dc", ability: "wis", spell: "Cleric" })).toBe(false);
+    expect(parse({ kind: "dc", ability: ["str"] })).toBe(false);
+    expect(parse({ kind: "dc", ability: "wis" }, { kind: "dc", spell: "Cleric" })).toBe(false);
+  });
+
   it("keeps every committed record valid and keyed once", () => {
     for (const entry of FEATURE_MECHANICS)
       expect(featureMechanicsSchema.parse(entry)).toEqual(entry);

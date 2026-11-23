@@ -204,7 +204,8 @@ describe("Actions", () => {
     const row = (await within(card).findByRole("button", { name: "Stunning Strike" })).closest(
       "li",
     );
-    expect(row).toHaveTextContent("Ki DC14");
+    expect(row).toHaveTextContent("Ki DC");
+    expect(within(row as HTMLElement).getByText("14")).toBeInTheDocument();
   });
 
   describe("Use", () => {
