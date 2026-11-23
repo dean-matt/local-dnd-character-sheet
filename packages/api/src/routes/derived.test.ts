@@ -19,7 +19,9 @@ import { publishDerivedFixture } from "../db/queries/contentFixture.ts";
 import {
   deleteHomebrewSubrace,
   insertHomebrewClass,
+  insertHomebrewFeat,
   insertHomebrewItem,
+  insertHomebrewOptionalFeature,
   insertHomebrewRace,
   insertHomebrewSkill,
   insertHomebrewSubrace,
@@ -805,6 +807,52 @@ describe("derivedRoutes", () => {
     expect(taken.savingThrows.wis.computed).toBe(bare.savingThrows.wis.computed + 2);
     updateCharacterDefinition(opened.charactersDb, "1", definitionWith());
     expect(await derived()).toEqual(bare);
+  });
+
+  it("applies the mechanics a homebrew feat or optional feature records, as a catalog one does", async () => {
+    insertHomebrewFeat(opened.homebrewDb, "alert", {
+      name: "Hawk Eyes",
+      edition: "classic",
+      mechanics: [{ kind: "bonus", target: "initiative", value: 5 }],
+    });
+    insertHomebrewOptionalFeature(opened.homebrewDb, "stride", {
+      name: "Wind Stride",
+      edition: "classic",
+      featureType: ["EI"],
+      mechanics: [{ kind: "bonus", target: "walk", value: 10 }],
+    });
+    store(definitionWith());
+    const bare = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({
+        feats: [{ ref: { homebrewId: "alert" } }],
+        optionalFeatures: [
+          {
+            ref: { homebrewId: "stride" },
+            featureType: "EI",
+            grantedBy: { kind: "class", ref: FIGHTER },
+          },
+        ],
+      }),
+    );
+    const held = await derived();
+    expect(held.initiative.computed).toBe(bare.initiative.computed + 5);
+    expect(held.initiative.terms.at(-1)).toMatchObject({ label: "Hawk Eyes", value: 5 });
+    expect(held.speed.computed.walk).toBe(bare.speed.computed.walk + 10);
+  });
+
+  it("applies nothing from a homebrew feat that records no mechanics", async () => {
+    insertHomebrewFeat(opened.homebrewDb, "plain", { name: "Plain", edition: "classic" });
+    store(definitionWith());
+    const bare = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({ feats: [{ ref: { homebrewId: "plain" } }] }),
+    );
+    expect((await derived()).initiative).toEqual(bare.initiative);
   });
 
   it("raises a score to an equipped item's, catalog or homebrew", async () => {

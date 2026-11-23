@@ -11,6 +11,7 @@ import type {
 } from "@dnd/rules";
 import type { AbilityGrant } from "./abilityScore.ts";
 import type { Speed } from "./characterDerived.ts";
+import type { Mechanic } from "./featureMechanics.ts";
 import type { Ability, ContentRef } from "./refs.ts";
 
 /** One catalog skill row a derived block iterates: its ability, since a character stores none. */
@@ -209,6 +210,9 @@ export type ContainerTrait = {
   items: Readonly<Record<string, number>>;
 };
 
+/** A homebrew feat's or optional feature's mechanics, read from its row's `json`. */
+export type HomebrewFeature = { ref: ContentRef; mechanics: Mechanic[] };
+
 /**
  * The catalog facts a derived block needs, each already resolved by the caller from
  * `content.db` or homebrew — never a raw 5etools shape, which is a catalog schema's job
@@ -264,6 +268,8 @@ export type CharacterCatalog = {
   armorBurdens: ReadonlyMap<string, ArmorBurdenTrait>;
   /** Keyed by `entryKey` of a `feats` entry's feat, and absent for a feat no row answers. */
   featGrants: ReadonlyMap<string, FeatGrantTrait>;
+  /** Keyed by `homebrewId`, for each homebrew feat or optional feature the character holds that records mechanics. */
+  homebrewFeatures: ReadonlyMap<string, HomebrewFeature>;
   /** Keyed like `weapons`, and absent for an entry that is not ammunition. */
   ammunition: ReadonlyMap<string, AmmunitionTrait>;
   /** Keyed like `weapons`, and absent for an item that holds nothing. */

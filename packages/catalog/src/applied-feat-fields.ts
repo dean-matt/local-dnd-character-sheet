@@ -21,6 +21,7 @@ const shape = {
   ...proficiencyGrantsSchema.in.shape,
   ...defenseTraitSchema.in.pick({ resist: true, immune: true, conditionImmune: true }).shape,
   ...senseGrantsSchema.in.shape,
+  mechanics: z.array(z.record(z.string(), z.unknown())).optional(),
   ...homebrewFeatInputSchema.omit({ edition: true }).shape,
 };
 
@@ -58,6 +59,8 @@ const DESCRIPTIONS: { [K in keyof Shape]: string } = {
   blindsight: range("Blindsight"),
   tremorsense: range("Tremorsense"),
   truesight: range("Truesight"),
+  mechanics:
+    'What the sheet applies, a list of recorded mechanics each with a "kind", such as [{"kind": "bonus", "target": "initiative", "value": 5}]; the kinds are those a catalog feat records. A list the API cannot read is refused.',
   senses:
     'Senses as a list, such as [{"darkvision": 60}]. A sense stated here and as a field of its own counts at the longer range.',
 };

@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { homebrewFeatInputSchema, homebrewFeatRecordSchema } from "@dnd/catalog";
+import {
+  homebrewFeatInputSchema as catalogFeatInputSchema,
+  homebrewFeatRecordSchema,
+} from "@dnd/catalog";
+import { mechanicListSchema } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { homebrewFeats } from "../db/homebrew.ts";
 import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
@@ -22,6 +26,11 @@ import {
   referencedError,
   toFeatRecord,
 } from "./homebrew.ts";
+
+/** The catalog's feat entry, with the `mechanics` it leaves loose held to what the sheet applies. */
+const homebrewFeatInputSchema = catalogFeatInputSchema.extend({
+  mechanics: mechanicListSchema.optional(),
+});
 
 const FEAT_NOT_FOUND = "No homebrew feat with that id";
 
