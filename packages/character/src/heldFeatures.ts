@@ -20,6 +20,11 @@ import { houseRule as houseRuleOf } from "./resolve.ts";
 import { classLevels, totalLevel } from "./summaries.ts";
 
 export const SUBCLASS_NAMES = new Map([
+  ["Ancestral Guardian|XGE", "Path of the Ancestral Guardian|XGE"],
+  ["Aberrant Mind|TCE", "Aberrant Mind|TCE"],
+  ["Archfey|PHB", "The Archfey|PHB"],
+  ["Illusion|PHB", "School of Illusion|PHB"],
+  ["Sun Soul|XGE", "Way of the Sun Soul|XGE"],
   ["Forge|XGE", "Forge Domain|XGE"],
   ["Draconic|PHB", "Draconic Bloodline|PHB"],
   ["Draconic|XPHB", "Draconic Sorcery|XPHB"],

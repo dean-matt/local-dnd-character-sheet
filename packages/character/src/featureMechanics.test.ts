@@ -151,6 +151,24 @@ describe("featureMechanicsSchema", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it("records the spells a domain, oath or circle grants, and Divine Domain and Sacred Oath", () => {
+    const spells = (name: string, source: string) =>
+      FEATURE_MECHANICS.some(
+        ({ ref, mechanics }) =>
+          ref.name === name &&
+          ref.source === source &&
+          mechanics?.some((mechanic) => mechanic.kind === "spells"),
+      );
+    for (const [name, source] of [
+      ["Life Domain", "PHB"],
+      ["Oath Spells", "XGE"],
+      ["Circle Spells", "TCE"],
+      ["Divine Domain", "PHB"],
+      ["Sacred Oath", "PHB"],
+    ] as const)
+      expect(spells(name, source)).toBe(true);
+  });
+
   it("resolves every subclass feature's short name to the full subclass name", () => {
     for (const { ref } of FEATURE_MECHANICS)
       if ("subclass" in ref && ref.subclass)
