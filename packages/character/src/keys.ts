@@ -22,6 +22,20 @@ export const featureKey = (key: FeatureKey): string =>
     key.level,
   ].join("|");
 
+/** The class feature a spell pick was made for, as the key its mechanics are recorded under. */
+export const classFeatureKeyOf = (by: {
+  ref: ContentRef;
+  class: ContentRef;
+  level: number;
+  subclass?: { shortName: string; source: string };
+}): FeatureKey => ({
+  ...by.ref,
+  className: by.class.name,
+  classSource: by.class.source,
+  level: by.level,
+  ...(by.subclass && { subclass: by.subclass }),
+});
+
 /**
  * A row's whole key for a spell block choice: its kind, its reference, and the class or
  * race a subclass or subrace belongs to, since a name and source alone collide across them.

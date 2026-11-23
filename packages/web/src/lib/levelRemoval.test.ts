@@ -23,6 +23,39 @@ const definition = (edit: Partial<CharacterDefinition>): CharacterDefinition => 
   ...edit,
 });
 
+describe("withoutNewestLevel, a spell picked for a class feature", () => {
+  const WARLOCK = PHB("Warlock");
+  const grantor = (name: string, cls: typeof WIZARD, level: number) => ({
+    kind: "classFeature" as const,
+    ref: PHB(name),
+    class: cls,
+    level,
+  });
+
+  it("goes with the level that brought the feature", () => {
+    const arcanum = grantor("Mystic Arcanum (6th level)", WARLOCK, 11);
+    const before = definition({
+      levels: Array.from({ length: 11 }, () => ({ class: WARLOCK })),
+      spells: [
+        { ref: PHB("Light"), prepared: true },
+        { ref: PHB("Eyebite"), prepared: true, pickedFor: arcanum },
+      ],
+    });
+
+    expect(withoutNewestLevel(before).spells).toEqual([{ ref: PHB("Light"), prepared: true }]);
+  });
+
+  it("stays a known spell, unmarked, where the feature picked from the spellbook", () => {
+    const mastery = grantor("Spell Mastery", WIZARD, 18);
+    const before = definition({
+      levels: Array.from({ length: 18 }, () => ({ class: WIZARD })),
+      spells: [{ ref: PHB("Shield"), prepared: true, pickedFor: mastery }],
+    });
+
+    expect(withoutNewestLevel(before).spells).toEqual([{ ref: PHB("Shield"), prepared: true }]);
+  });
+});
+
 describe("withoutNewestLevel", () => {
   it("takes the choices of every subclass level a level choosing the subclass brought", () => {
     const kept = [choice("Fighting Style", 1), choice("Action Surge", 2)];

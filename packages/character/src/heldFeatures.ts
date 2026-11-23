@@ -12,6 +12,7 @@ import {
   featureMechanicsKey,
   featureOffers,
   mechanicsOfKind,
+  type SpellPick,
 } from "./featureMechanics.ts";
 import { classFeatureUsesKey, entryKey, featureKey, featureUsesKey, refKey } from "./keys.ts";
 import { type ContentRef, catalogRef, type FeatureKey } from "./refs.ts";
@@ -150,6 +151,12 @@ const BY_KEY = new Map(FEATURE_MECHANICS.map((entry) => [featureMechanicsKey(ent
 export const featurePickOffers = (feature: FeatureKey) => {
   const entry = BY_KEY.get(featureKey(feature));
   return entry ? featureOffers(entry) : [];
+};
+
+/** The spell picks a class or subclass feature asks the player for, none where it records none. */
+export const featureSpellPickOffers = (feature: FeatureKey): SpellPick[] => {
+  const entry = BY_KEY.get(featureKey(feature));
+  return entry ? mechanicsOfKind(entry, "spells").flatMap((mechanic) => mechanic.picks ?? []) : [];
 };
 
 const SUBCLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {

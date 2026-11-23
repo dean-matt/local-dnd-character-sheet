@@ -1,22 +1,48 @@
 import type { SearchHit } from "@dnd/catalog";
-import type { CharacterRecord } from "@dnd/character";
+import type { CharacterDerived, CharacterRecord } from "@dnd/character";
 import { searchHitKey } from "../../../lib/searchHitKey.ts";
 import { Card } from "../../Card.tsx";
 import { RowPickFields } from "../../RowPickFields.tsx";
 import { SpellBlockChoices } from "../../SpellBlockChoices.tsx";
+import { FeatureSpellPickField } from "./FeatureSpellPickField.tsx";
 import { useOwedSpellPicks } from "./useOwedSpellPicks.ts";
 
+/** The highest level a slot or pact slot casts, an upper bound on one class's where several are held. */
+const ceilingOf = ({ spellSlots, pactSlots }: Pick<CharacterDerived, "spellSlots" | "pactSlots">) =>
+  Math.max(0, pactSlots?.level ?? 0, ...spellSlots.map(({ level }) => level));
+
 /**
- * The spells a feat or optional feature the character holds leaves to a pick, such as Magic
- * Initiate's cantrips or Pact of the Tome's, each chosen from the offer's own list and kept
- * under the feature that gave it. Its alternative blocks, as Magic Initiate's classes, are
- * chosen first. Nothing draws once every pick is made; they are then in Known Spells.
+ * The spells a feat, optional feature or class feature the character holds leaves to a
+ * pick, such as Magic Initiate's cantrips, Pact of the Tome's or Mystic Arcanum's, each
+ * chosen from the offer's own list and kept under the feature that gave it. Its alternative
+ * blocks, as Magic Initiate's classes, are chosen first. Nothing draws once every pick is
+ * made; they are then in Known Spells.
  */
-export function OwedSpellPicks({ character }: { character: CharacterRecord }) {
-  const { rows, choosing, held, ready, failed, chooseBlock, add, remove } =
-    useOwedSpellPicks(character);
+export function OwedSpellPicks({
+  character,
+  derived,
+}: {
+  character: CharacterRecord;
+  derived: Pick<CharacterDerived, "spellSlots" | "pactSlots">;
+}) {
+  const {
+    rows,
+    featureRows,
+    choosing,
+    held,
+    book,
+    ready,
+    failed,
+    chooseBlock,
+    add,
+    remove,
+    pickForFeature,
+    unpickForFeature,
+  } = useOwedSpellPicks(character);
   if (!failed && !ready) return null;
-  if (rows.length === 0 && choosing.length === 0 && !failed) return null;
+  if (rows.length === 0 && featureRows.length === 0 && choosing.length === 0 && !failed) {
+    return null;
+  }
   const unavailableReason = (hit: SearchHit) =>
     held.has(searchHitKey(hit)) ? "Known already" : undefined;
   return (
@@ -34,6 +60,18 @@ export function OwedSpellPicks({ character }: { character: CharacterRecord }) {
             }}
             offList={false}
             onPick={add}
+          />
+        ))}
+        {featureRows.map((row) => (
+          <FeatureSpellPickField
+            key={`${row.feature.name}|${row.feature.level}|${row.pick.level}|${row.pick.from}`}
+            row={row}
+            character={character}
+            ceiling={ceilingOf(derived)}
+            held={held}
+            book={book}
+            onPick={(ref, fromBook) => pickForFeature(ref, row.pickedFor, fromBook)}
+            onRemove={(ref, fromBook) => unpickForFeature(ref, row.pickedFor, fromBook)}
           />
         ))}
         {failed && <p className="text-error">Couldn't look up the spells these picks offer.</p>}

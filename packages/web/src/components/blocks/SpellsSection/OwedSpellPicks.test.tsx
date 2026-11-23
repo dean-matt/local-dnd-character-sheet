@@ -66,7 +66,7 @@ function renderOwed(
   client.setQueryData(characterKey(record.id), record);
   render(
     <QueryClientProvider client={client}>
-      <OwedSpellPicks character={record} />
+      <OwedSpellPicks character={record} derived={{ spellSlots: [], pactSlots: null }} />
     </QueryClientProvider>,
   );
   return fetchMock;
@@ -224,5 +224,78 @@ describe("OwedSpellPicks", () => {
   it("says so when the offered spells cannot be looked up", async () => {
     renderOwed(tomePick(), {}, { spells: [] });
     expect(await screen.findByText(/Couldn't look up the spells/)).toBeInTheDocument();
+  });
+
+  describe("a class feature that has the player pick spells", () => {
+    const ARCANUM = { name: "Mystic Arcanum (6th level)", source: "PHB" };
+
+    it("offers nothing before the class reaches the feature", async () => {
+      const record = holding({ levels: Array.from({ length: 10 }, () => ({ class: WARLOCK })) });
+      const fetchMock = renderOwed(record, {}, { spells: [] });
+
+      await waitFor(() =>
+        expect(fetchMock.mock.calls.some(([url]) => url === "/api/characters/1/spells")).toBe(true),
+      );
+      expect(screen.queryByText("Spell Picks")).toBeNull();
+    });
+
+    it("offers a level 6 pick from the class's list at level 11, and stores it under the feature", async () => {
+      const record = holding({ levels: Array.from({ length: 11 }, () => ({ class: WARLOCK })) });
+      const fetchMock = renderOwed(record, {}, { spells: [] });
+
+      expect(
+        await screen.findByText("Level 6 spells from Mystic Arcanum (6th level), level 11"),
+      ).toBeInTheDocument();
+      fireEvent.focus(screen.getByRole("combobox", { name: /spell/i }));
+      fireEvent.click(await screen.findByRole("option", { name: /Mage Hand/ }));
+
+      await waitFor(() => expect(written(fetchMock)).toBeDefined());
+      expect(written(fetchMock)?.spells).toEqual([
+        {
+          ref: { name: "Mage Hand", source: "PHB" },
+          prepared: true,
+          pickedFor: {
+            kind: "classFeature",
+            ref: ARCANUM,
+            class: WARLOCK,
+            level: 11,
+          },
+        },
+      ]);
+      const search = fetchMock.mock.calls
+        .map(([url]) => String(url))
+        .find((url) => url.startsWith("/api/search"));
+      expect(search).toContain("class=Warlock%7CPHB");
+      expect(search).toContain("minLevel=6");
+      expect(search).toContain("maxLevel=6");
+    });
+
+    it("marks a spell the wizard already knows where the feature picks from the spellbook", async () => {
+      const WIZARD = { name: "Wizard", source: "PHB" };
+      const hand = { name: "Mage Hand", source: "PHB" };
+      const record = holding({
+        levels: Array.from({ length: 18 }, () => ({ class: WIZARD })),
+        spells: [{ ref: hand, prepared: false }],
+      });
+      const fetchMock = renderOwed(record, {}, { spells: [] });
+
+      await screen.findByText("Level 1 spells from Spell Mastery, level 18");
+      fireEvent.focus(screen.getAllByRole("combobox", { name: /spell/i })[0] as HTMLElement);
+      fireEvent.click(await screen.findByRole("option", { name: /Mage Hand/ }));
+
+      await waitFor(() => expect(written(fetchMock)).toBeDefined());
+      expect(written(fetchMock)?.spells).toEqual([
+        {
+          ref: hand,
+          prepared: false,
+          pickedFor: {
+            kind: "classFeature",
+            ref: { name: "Spell Mastery", source: "PHB" },
+            class: WIZARD,
+            level: 18,
+          },
+        },
+      ]);
+    });
   });
 });

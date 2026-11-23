@@ -255,19 +255,33 @@ const featGrantorSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-/**
- * The row a spell pick was made for, where a race, subrace, background, feat or optional
- * feature offers it rather than the class, so the pick counts against that row's offer
- * and never the class's. A subrace names its race, as a feat's grantor does. Each branch
- * takes a catalog reference where `featGrantorSchema`'s takes an entry, since a homebrew
- * row offers no picks.
- */
-const spellPickGrantorSchema = z.discriminatedUnion("kind", [
+const spellRowGrantors = [
   z.strictObject({ kind: z.literal("race"), ref: contentRefSchema }),
   z.strictObject({ kind: z.literal("subrace"), ref: contentRefSchema, race: contentRefSchema }),
   z.strictObject({ kind: z.literal("background"), ref: contentRefSchema }),
   z.strictObject({ kind: z.literal("feat"), ref: contentRefSchema }),
   z.strictObject({ kind: z.literal("optionalFeature"), ref: contentRefSchema }),
+] as const;
+
+/**
+ * The row a spell pick was made for, where a race, subrace, background, feat or optional
+ * feature offers it rather than the class, so the pick counts against that row's offer
+ * and never the class's. A subrace names its race, as a feat's grantor does. Each branch
+ * takes a catalog reference where `featGrantorSchema`'s takes an entry, since a homebrew
+ * row offers no picks. A class or subclass feature names its class and level, since
+ * `Magical Secrets` (PHB) is one row at each of three.
+ */
+const spellPickGrantorSchema = z.discriminatedUnion("kind", [
+  ...spellRowGrantors,
+  z.strictObject({
+    kind: z.literal("classFeature"),
+    ref: contentRefSchema,
+    class: contentRefSchema,
+    level: z.int().min(1).max(MAX_LEVEL),
+    subclass: z
+      .strictObject({ shortName: z.string().min(1), source: z.string().min(1) })
+      .optional(),
+  }),
 ]);
 
 /**
@@ -275,7 +289,7 @@ const spellPickGrantorSchema = z.discriminatedUnion("kind", [
  * picks name no row but whose alternative blocks can still be chosen from.
  */
 const spellBlockGrantorSchema = z.discriminatedUnion("kind", [
-  ...spellPickGrantorSchema.options,
+  ...spellRowGrantors,
   subclassGrantor,
 ]);
 

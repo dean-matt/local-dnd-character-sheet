@@ -428,11 +428,19 @@ describe("characterSpellsRoutes", () => {
       background: { kind: "background", ref },
       feat: { kind: "feat", ref },
       optionalFeature: { kind: "optionalFeature", ref },
+      classFeature: {
+        kind: "classFeature",
+        ref: { name: "Mystic Arcanum (6th level)", source: "PHB" },
+        class: { name: "Warlock", source: "PHB" },
+        level: 11,
+      },
     } satisfies { [K in PickGrantor["kind"]]: Extract<PickGrantor, { kind: K }> };
     const grantors = Object.values(picks);
     store(withSpells(grantors.map((pickedFor) => ({ ref: SHIELD_REF, pickedFor }))));
 
-    expect((await spells()).map((spell) => spell.pickedFor)).toEqual(grantors);
+    expect((await spells()).map((spell) => spell.pickedFor)).toEqual(
+      grantors.map((by) => (by.kind === "classFeature" ? { kind: by.kind, ref: by.ref } : by)),
+    );
   });
 
   it("drops a casting fact that does not parse and keeps the rest", async () => {
