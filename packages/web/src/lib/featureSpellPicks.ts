@@ -5,6 +5,7 @@ import {
   featureSpellPicks,
   type SpellPick,
 } from "@dnd/character";
+import type { PickGrantor } from "./spellGrantors.ts";
 import { type PickedSpell, pickKey } from "./spellPicks.ts";
 
 /** One pick a held class or subclass feature leaves to the player, and the spells made for it. */
@@ -40,3 +41,20 @@ export function featurePickRows(
 
 /** Whether `row` still owes a pick. */
 export const owesPick = ({ pick, picked }: FeaturePickRow) => picked.length < pick.count;
+
+/**
+ * Whether a spell picked for `pickedFor` is one its feature grants, as Magical Secrets and
+ * Mystic Arcanum do, rather than a mark on a spell the character already holds, as Spell
+ * Mastery and Signature Spells do.
+ */
+export function grantedByFeature(
+  definition: Parameters<typeof featureSpellPicks>[0],
+  pickedFor: PickGrantor | undefined,
+): boolean {
+  if (pickedFor?.kind !== "classFeature") return false;
+  const key = pickKey(pickedFor);
+  return featureSpellPicks(definition).some(
+    ({ feature, picks }) =>
+      pickKey(classFeatureGrantor(feature)) === key && picks.some(({ from }) => from !== "book"),
+  );
+}

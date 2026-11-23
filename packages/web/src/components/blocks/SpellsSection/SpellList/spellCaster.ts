@@ -29,21 +29,24 @@ export type PreparedTally = { name: string; prepared: number; limit: number };
 
 /**
  * Each class that prepares, with how many leveled spells it has prepared against how many
- * it may. A granted spell is always prepared and counts against no limit.
+ * it may. A granted spell is always prepared and counts against no limit, and neither does
+ * one a class feature grants, whose place in `spells` is in `featureGranted`.
  */
 export function preparedTallies(
   spells: readonly SheetSpell[],
   casters: readonly Caster[],
   names: HomebrewNames,
+  featureGranted: ReadonlySet<number>,
 ): PreparedTally[] {
   return casters.flatMap((caster) => {
     if (!caster.preparedSpells) return [];
     const prepared = spells.filter(
-      (spell) =>
+      (spell, index) =>
         spell.resolved &&
         spell.level > 0 &&
         spell.prepared &&
         !spell.granted &&
+        !featureGranted.has(index) &&
         spellCaster(spell, casters) === caster,
     ).length;
     return [

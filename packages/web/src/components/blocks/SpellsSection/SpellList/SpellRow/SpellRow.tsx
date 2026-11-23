@@ -23,10 +23,15 @@ import { PreparedToggle } from "./PreparedToggle.tsx";
 import { SpellDamageChips } from "./SpellDamageChips.tsx";
 import { SpellFact } from "./SpellFact.tsx";
 
+/** The row or class feature a spell is always prepared for, if it is picked for one. */
+const preparedFor = (spell: SheetSpell, featureGranted: boolean) =>
+  rowPickedFor(spell) ?? (featureGranted ? spell.pickedFor : undefined);
+
 /**
  * `index` is the spell's place in the definition, which names its field in the report.
  * `className` names the class the spell belongs to, where more than one casts. A spell
- * `preparable` prepares through its toggle; any other carries a Prepared or Known mark. A
+ * `preparable` prepares through its toggle; one a class feature grants (`featureGranted`) is
+ * always prepared; any other carries a Prepared or Known mark. A
  * spell that resolved can be cast from the row.
  */
 export function SpellRow({
@@ -38,6 +43,7 @@ export function SpellRow({
   waiveComponents,
   className,
   preparable,
+  featureGranted,
   busy,
   onPrepare,
   onRemove,
@@ -50,6 +56,7 @@ export function SpellRow({
   waiveComponents: boolean;
   className: string | undefined;
   preparable: boolean;
+  featureGranted: boolean;
   busy: boolean;
   onPrepare: (prepared: boolean) => void;
   onRemove: () => void;
@@ -61,7 +68,10 @@ export function SpellRow({
     <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />
   );
   const alwaysPrepared =
-    spell.resolved && spell.level > 0 && !grantor && (spell.granted || rowPickedFor(spell));
+    spell.resolved &&
+    spell.level > 0 &&
+    !grantor &&
+    (spell.granted || !!preparedFor(spell, featureGranted));
   const mark = <Tag>{grantor ?? (spell.prepared ? "Prepared" : "Known")}</Tag>;
   if (!spell.resolved) {
     return (
@@ -103,7 +113,10 @@ export function SpellRow({
       controls={
         <>
           {alwaysPrepared ? (
-            <AlwaysPrepared name={spell.name} source={rowPickedFor(spell)?.ref.name} />
+            <AlwaysPrepared
+              name={spell.name}
+              source={preparedFor(spell, featureGranted)?.ref.name}
+            />
           ) : (
             preparable && (
               <PreparedToggle

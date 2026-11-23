@@ -246,6 +246,51 @@ describe("SpellList", () => {
     expect(screen.queryByRole("button", { name: "Prepared, Eldritch Blast" })).toBeNull();
   });
 
+  it("shows a spell a class feature grants always prepared, outside the prepared count", async () => {
+    const warlock = { name: "Warlock", source: "PHB" };
+    const mass = { name: "Mass Suggestion", source: "PHB" };
+    const pickedFor = {
+      kind: "classFeature" as const,
+      ref: { name: "Mystic Arcanum (6th level)", source: "PHB" },
+      class: warlock,
+      level: 11,
+    };
+    const base = vex();
+    const record = {
+      ...base,
+      definition: {
+        ...base.definition,
+        levels: Array.from({ length: 11 }, () => ({ class: warlock })),
+        spells: [
+          { ref: { name: "Hex", source: "XPHB" }, prepared: true, origin: warlock },
+          { ref: mass, prepared: true, origin: warlock, pickedFor },
+        ],
+      },
+    };
+    renderList(
+      record,
+      {
+        spells: [
+          { ...spell("Hex", 1, true), origin: warlock },
+          {
+            ...spell("Mass Suggestion", 6, true),
+            source: "PHB",
+            origin: warlock,
+            pickedFor: { kind: pickedFor.kind, ref: pickedFor.ref },
+          },
+        ],
+      },
+      derivedRecord(record.definition, warlock),
+    );
+
+    const row = (await screen.findByText("Mass Suggestion")).closest("li") as HTMLElement;
+    expect(within(row).queryByRole("button", { name: /^Prepared, / })).toBeNull();
+    expect(
+      within(row).getByRole("button", { name: "Why Mass Suggestion is always prepared" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Warlock: 1 of 2 prepared")).toBeInTheDocument();
+  });
+
   it("cites the item behind a spell it lets the character cast, with no × to forget it", async () => {
     renderList(vex(), {
       spells: [
