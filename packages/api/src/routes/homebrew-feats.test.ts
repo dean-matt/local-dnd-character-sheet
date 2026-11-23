@@ -45,6 +45,19 @@ describe("homebrewFeatsRoutes", () => {
       expect(issues).toContainEqual(expect.objectContaining({ path: ["name"] }));
     });
 
+    it("keeps the mechanics a feat records and refuses a kind the sheet cannot apply", async () => {
+      const mechanics = [{ kind: "bonus", target: "initiative", value: 5 }];
+      const res = await routes.request("/homebrew/feats", json(ironbound({ mechanics })));
+      expect(res.status).toBe(201);
+      expect((await res.json()).json.mechanics).toEqual(mechanics);
+
+      const bad = await routes.request(
+        "/homebrew/feats",
+        json(ironbound({ name: "Other", mechanics: [{ kind: "levitate" }] })),
+      );
+      expect(bad.status).toBe(400);
+    });
+
     it("reads a feat it just created", async () => {
       const created = await (await routes.request("/homebrew/feats", json(ironbound()))).json();
 

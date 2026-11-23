@@ -690,6 +690,34 @@ export const featureOffers = (
     ...(expertise && { expertise }),
   }));
 
+/** The mechanics a feature records: each target bonused once, one DC, and `while active` only on a feature that starts. */
+export const mechanicListSchema = z
+  .array(mechanicSchema)
+  .min(1)
+  .refine(
+    (all) => {
+      const targets = all.flatMap((m) => (m.kind === "bonus" ? [m.target] : []));
+      return new Set(targets).size === targets.length;
+    },
+    { error: "a feature bonuses each target once" },
+  )
+  .refine(
+    (all) => {
+      const parts = all.flatMap((m) => (m.kind === "uses" ? [m.part] : []));
+      return new Set(parts).size === parts.length;
+    },
+    { error: "a feature counts its uses once, and each part once" },
+  )
+  .refine((all) => all.filter((m) => m.kind === "dc").length <= 1, {
+    error: "a feature sets one save DC",
+  })
+  .refine(
+    (all) =>
+      all.some((m) => m.kind === "active") ||
+      all.every((m) => !("while" in m) || m.while !== "active"),
+    { error: "only a feature whose effect starts holds a mechanic while active" },
+  );
+
 /** A class or subclass feature carries its whole key; a feat, race trait or the like, its `(name, source)`. */
 const featureRefSchema = z.union([featureKeySchema, contentRefSchema]);
 
@@ -700,33 +728,7 @@ export const featureMechanicsSchema = z
     offeredBy: featureKeySchema.optional(),
     /** The house rule a table turns on for the feature to apply; absent, the rule as printed. */
     houseRule: z.literal("optionalClassFeatures").optional(),
-    mechanics: z
-      .array(mechanicSchema)
-      .min(1)
-      .refine(
-        (all) => {
-          const targets = all.flatMap((m) => (m.kind === "bonus" ? [m.target] : []));
-          return new Set(targets).size === targets.length;
-        },
-        { error: "a feature bonuses each target once" },
-      )
-      .refine(
-        (all) => {
-          const parts = all.flatMap((m) => (m.kind === "uses" ? [m.part] : []));
-          return new Set(parts).size === parts.length;
-        },
-        { error: "a feature counts its uses once, and each part once" },
-      )
-      .refine((all) => all.filter((m) => m.kind === "dc").length <= 1, {
-        error: "a feature sets one save DC",
-      })
-      .refine(
-        (all) =>
-          all.some((m) => m.kind === "active") ||
-          all.every((m) => !("while" in m) || m.while !== "active"),
-        { error: "only a feature whose effect starts holds a mechanic while active" },
-      )
-      .optional(),
+    mechanics: mechanicListSchema.optional(),
     narrative: z.literal(true).optional(),
   })
   .refine((entry) => (entry.mechanics === undefined) !== (entry.narrative === undefined), {

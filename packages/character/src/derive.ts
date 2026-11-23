@@ -1141,9 +1141,13 @@ export function deriveCharacter(
   names?: HomebrewNames,
 ): CharacterDerived {
   const started = new Set(state.activeEffects.map(({ name }) => name));
-  const stored = { ...input, started };
+  const stored = { ...input, started, homebrewFeatures: catalog.homebrewFeatures };
   const feats = featGrants(stored, catalog);
-  const definition = { ...withFeatGrants(stored, feats.granted, feats.itemSkills), started };
+  const definition = {
+    ...withFeatGrants(stored, feats.granted, feats.itemSkills),
+    started,
+    homebrewFeatures: catalog.homebrewFeatures,
+  };
   const level = totalLevel(definition);
   const armor = equippedArmor(definition, catalog.armor);
   const armorWorn = armor.worn?.category;

@@ -252,6 +252,7 @@ describe("deriveCharacter", () => {
     ammunition: new Map<string, AmmunitionTrait>(),
     containers: new Map<string, ContainerTrait>(),
     featGrants: new Map(),
+    homebrewFeatures: new Map(),
     weaponMasteryKinds: new Map<string, number>(),
     classResources: new Map(),
   };

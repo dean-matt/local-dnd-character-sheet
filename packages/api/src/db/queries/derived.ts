@@ -49,6 +49,7 @@ import {
   type EntryRef,
   entryKey,
   type FeatGrantTrait,
+  type HomebrewFeature,
   type ItemAbilityTrait,
   type ItemAdvantageTrait,
   type ItemBonusTrait,
@@ -56,6 +57,7 @@ import {
   type ItemSenseTrait,
   type ItemSkillTrait,
   itemKey,
+  mechanicListSchema,
   type Preparation,
   type SkillTrait,
   type WeaponTrait,
@@ -75,6 +77,7 @@ import {
   asHomebrewIdRef,
   getHomebrewClass,
   getHomebrewFeat,
+  getHomebrewOptionalFeature,
   getHomebrewRace,
   getHomebrewSubrace,
   type HomebrewDb,
@@ -533,6 +536,26 @@ function featGrants(
   return grants;
 }
 
+/** Each homebrew feat and optional feature the definition holds whose row records mechanics, keyed by `homebrewId`. */
+function homebrewFeatures(
+  homebrewDb: HomebrewDb,
+  definition: CharacterDefinition,
+): Map<string, HomebrewFeature> {
+  const features = new Map<string, HomebrewFeature>();
+  const held = [
+    ...definition.feats.map(({ ref }) => ({ ref, get: getHomebrewFeat })),
+    ...definition.optionalFeatures.map(({ ref }) => ({ ref, get: getHomebrewOptionalFeature })),
+  ];
+  for (const { ref, get } of held) {
+    if (!("homebrewId" in ref)) continue;
+    const row = get(homebrewDb, ref.homebrewId);
+    const mechanics = row && parseJson(mechanicListSchema, row.json.mechanics);
+    if (row && mechanics)
+      features.set(ref.homebrewId, { ref: { name: row.name, source: HOMEBREW_SOURCE }, mechanics });
+  }
+  return features;
+}
+
 /** Per catalog class, how many kinds of weapon its Weapon Mastery allows at the character's level in it. */
 function weaponMasteryKinds(dataDir: string, definition: CharacterDefinition): Map<string, number> {
   const kinds = new Map<string, number>();
@@ -653,6 +676,7 @@ export function resolveCharacterCatalog(
     itemAdvantages: itemAdvantages(definition, items),
     armorBurdens: armorBurdens(definition, items),
     featGrants: featGrants(dataDir, homebrewDb, definition),
+    homebrewFeatures: homebrewFeatures(homebrewDb, definition),
     ammunition: ammunition(definition, items),
     containers: containers(definition, items),
   };

@@ -4,7 +4,8 @@ A homebrew optional feature lives in `homebrew_optional_features`; its types sit
 `homebrew_optional_feature_types`, as `optional_feature_types` does in `content.db`. Its `json` is the
 5etools optional feature shape, `{name, source: "HB", featureType, prerequisite?, entries?}`, with
 `featureType` a list of the codes that offer it, such as `["EI"]`, and `prerequisite` upstream's raw
-list. The edition is a column.
+list. The edition is a column. An optional `mechanics` list, here and in a homebrew feat's `json`, records what the sheet
+applies as a catalog feature's recorded mechanics do; a write refuses a list `mechanicListSchema` rejects.
 
 This is the pool half of the join in `docs/optional-features.md`. The count half, a class's or
 subclass's `optionalfeatureProgression`, rides in a homebrew class's or subclass's own `json` in

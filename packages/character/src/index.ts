@@ -43,6 +43,7 @@ export type {
   ContainerTrait,
   DefenseTrait,
   FeatGrantTrait,
+  HomebrewFeature,
   ItemAbilityTrait,
   ItemAdvantageTrait,
   ItemBonusTrait,
@@ -136,7 +137,13 @@ export {
   convertedState,
 } from "./featureConversions.ts";
 export { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
-export { type Mechanic, type SpellPick, USES_PARTS, USES_RESTORED_BY } from "./featureMechanics.ts";
+export {
+  type Mechanic,
+  mechanicListSchema,
+  type SpellPick,
+  USES_PARTS,
+  USES_RESTORED_BY,
+} from "./featureMechanics.ts";
 export { restoredState, restoreFor } from "./featureRestores.ts";
 export {
   type ClassFeatureGrantor,

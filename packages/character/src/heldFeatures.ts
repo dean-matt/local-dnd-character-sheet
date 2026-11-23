@@ -4,6 +4,7 @@
  * feature is recorded under its subclass's short name, so `SUBCLASS_NAMES` maps it to the
  * full name a level stores.
  */
+import type { HomebrewFeature } from "./catalog.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { FEATURE_MECHANICS } from "./featureMechanicRecords.ts";
 import {
@@ -210,6 +211,8 @@ export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" |
   Pick<CharacterDefinition, "feats" | "optionalFeatures" | "race" | "subrace" | "levels"> & {
     /** The names of the features whose effect runs, as the state's `activeEffects` holds them; none where absent. */
     started?: ReadonlySet<string>;
+    /** The recorded mechanics of each homebrew feat and option the character holds, keyed by `homebrewId`. */
+    homebrewFeatures?: ReadonlyMap<string, HomebrewFeature>;
   };
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
@@ -217,8 +220,12 @@ function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
     ...definition.feats.map(({ ref }) => ({ ref, origin: "feat" as const })),
     ...definition.optionalFeatures.map(({ ref }) => ({ ref, origin: "optionalFeature" as const })),
   ].flatMap(({ ref, origin }) => {
-    const catalog = catalogRef(ref);
-    const entry = catalog && BY_KEY.get(refKey(catalog));
+    const homebrew =
+      "homebrewId" in ref ? definition.homebrewFeatures?.get(ref.homebrewId) : undefined;
+    const catalog = homebrew?.ref ?? catalogRef(ref);
+    const entry = homebrew
+      ? { ref: homebrew.ref, mechanics: homebrew.mechanics }
+      : catalog && BY_KEY.get(refKey(catalog));
     if (!catalog || !entry) return [];
     const usesKey = featureUsesKey([origin, catalog.source], catalog.name);
     return [{ ref: catalog, origin, entry, levels, usesKey }];

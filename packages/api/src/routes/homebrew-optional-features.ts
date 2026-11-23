@@ -1,9 +1,10 @@
 /** Homebrew optional features: the pool side, a feature type list. A name is unique within each of its types and its edition. */
 import { randomUUID } from "node:crypto";
 import {
-  homebrewOptionalFeatureInputSchema,
+  homebrewOptionalFeatureInputSchema as catalogOptionalFeatureInputSchema,
   homebrewOptionalFeatureRecordSchema,
 } from "@dnd/catalog";
+import { mechanicListSchema } from "@dnd/character";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { type CharactersDb, charactersReferencingHomebrew } from "../db/queries/characters.ts";
 import {
@@ -25,6 +26,11 @@ import {
   referencedError,
   toOptionalFeatureRecord,
 } from "./homebrew.ts";
+
+/** The catalog's entry, with the `mechanics` it leaves loose held to what the sheet applies. */
+const homebrewOptionalFeatureInputSchema = catalogOptionalFeatureInputSchema.extend({
+  mechanics: mechanicListSchema.optional(),
+});
 
 const OPTIONAL_FEATURE_NOT_FOUND = "No homebrew optional feature with that id";
 
