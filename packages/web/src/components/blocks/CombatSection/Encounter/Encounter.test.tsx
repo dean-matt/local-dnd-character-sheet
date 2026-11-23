@@ -41,7 +41,7 @@ function renderEncounter(
       <Encounter character={character} derived={{ ...derivedRecord(), limitedUses, ...extra }} />
     </QueryClientProvider>,
   );
-  return writes;
+  return Object.assign(writes, { client, play: () => play });
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -124,6 +124,38 @@ describe("Encounter", () => {
         /Initiative \d+\. Perfect Self regained/,
       ),
     );
+  });
+
+  it("announces only what the write's latest state regained, not the stale render's", async () => {
+    const monk = { name: "Monk", source: "PHB" };
+    const spent = { class: monk, key: "ki_points", maximum: 20, expended: 20 };
+    const writes = renderEncounter({ classResources: [spent] }, "classic", [], {
+      classResources: [
+        { class: monk, key: "ki_points", maximum: { computed: 20, manual: null, terms: [] } },
+      ] as CharacterDerived["classResources"],
+      regains: [
+        {
+          feature: { name: "Perfect Self", source: "PHB" },
+          class: monk,
+          target: "pool",
+          pool: "ki_points",
+          count: 4,
+          on: "initiative",
+        },
+      ],
+    });
+    const button = await screen.findByRole("button", { name: "Roll initiative" });
+    const play = writes.play();
+    writes.client.setQueryData(characterStateKey("1"), {
+      ...play,
+      state: { ...play.state, classResources: [{ ...spent, expended: 5 }] },
+    });
+
+    fireEvent.click(button);
+
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.body.state.classResources[0]?.expended).toBe(5);
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/^Initiative \d+$/));
   });
 
   it("rolls initiative with disadvantage at classic exhaustion 1, and normally in 2024", async () => {

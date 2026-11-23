@@ -82,13 +82,14 @@ export function Encounter({
     const net = netRollEffect(effects.filter(({ condition }) => condition === undefined));
     const mode = net && net.mode !== "cancel" ? net.mode : undefined;
     const rolled = rollDice(notation, { mode });
+    let regained: string[] = [];
     try {
       await both.mutateAsync({
-        state: (latest) =>
-          initiativeRolled(
-            initiativeRegained(derived, initiativeRestored(derived, latest)).state,
-            rolled.total,
-          ),
+        state: (latest) => {
+          const pass = initiativeRegained(derived, initiativeRestored(derived, latest));
+          regained = pass.features;
+          return initiativeRolled(pass.state, rolled.total);
+        },
         edit: (latest) => latest,
         roll: {
           label: "Initiative",
@@ -106,9 +107,8 @@ export function Encounter({
       replace.announce(`Initiative was not rolled: ${(error as Error).message}`);
       return;
     }
-    const { features } = initiativeRegained(derived, initiativeRestored(derived, state));
     replace.announce(
-      [`Initiative ${rolled.total}`, ...features.map((name) => `${name} regained`)].join(". "),
+      [`Initiative ${rolled.total}`, ...regained.map((name) => `${name} regained`)].join(". "),
     );
   }
 
