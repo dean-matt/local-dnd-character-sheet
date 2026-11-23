@@ -1,10 +1,11 @@
-import type { CharacterRecord, EntryRef } from "@dnd/character";
+import type { CharacterRecord, ClassFeatureGrantor, EntryRef } from "@dnd/character";
 import { entryKey } from "@dnd/character";
 import { characterSpellsKey } from "../../../hooks/characterKeys.ts";
 import { useCharacterSpells } from "../../../hooks/useCharacterSpells.ts";
 import { useGrantedSpells } from "../../../hooks/useGrantedSpells.ts";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { useRowWrites } from "../../../hooks/useRowWrites.ts";
+import { featurePickRows, owesPick } from "../../../lib/featureSpellPicks.ts";
 import {
   type BlockGrantor,
   heldSpellGrantors,
@@ -15,15 +16,21 @@ import {
   cantripsOf,
   type Offer,
   type PickedSpell,
+  pickKey,
   rowPicks,
   spellsOf,
 } from "../../../lib/spellPicks.ts";
 
+const sameGrantor = (a: PickGrantor | undefined, b: PickGrantor) =>
+  !!a && pickKey(a) === pickKey(b);
+
 /**
- * The spells the feats and optional features the character holds leave to a pick, and
- * which of them it has not made: each row owing a pick, and each row whose alternative
- * block, such as Magic Initiate's class, is still to choose. A row holding every pick it
- * owes appears in neither. The writes land in the definition, so each enters the undo log.
+ * The spells the feats, optional features and class features the character holds leave to a
+ * pick, and which of them it has not made: each row owing a pick, and each row whose
+ * alternative block, such as Magic Initiate's class, is still to choose. A row holding every
+ * pick it owes appears in none. A class feature that picks from the spellbook, as Spell
+ * Mastery does, marks a spell already known rather than adding one. The writes land in the
+ * definition, so each enters the undo log.
  */
 export function useOwedSpellPicks(character: CharacterRecord) {
   const { definition } = character;
@@ -56,6 +63,7 @@ export function useOwedSpellPicks(character: CharacterRecord) {
       cantripsOf(row.picked).length < row.owed.cantrips ||
       spellsOf(row.picked).length < row.owed.spells,
   );
+  const featureRows = featurePickRows(definition, picked).filter(owesPick);
   const owing = new Set(rows.map(({ row }) => `${row.grantor}|${entryKey(row.ref)}`));
   const choosing = offers.filter(
     ({ row, blocks }) =>
@@ -63,6 +71,12 @@ export function useOwedSpellPicks(character: CharacterRecord) {
       (row.block === undefined || owing.has(`${row.grantor}|${entryKey(row.ref)}`)),
   );
   const held = new Set(definition.spells.map(({ ref }) => entryKey(ref)));
+  // What a pick from the spellbook may name: a spell the character knows that no row claims.
+  const book = new Set(
+    definition.spells.flatMap((entry) =>
+      entry.pickedFor || entry.granted ? [] : [entryKey(entry.ref)],
+    ),
+  );
   const edit = (
     key: string,
     change: (latest: CharacterRecord["definition"]) => CharacterRecord["definition"],
@@ -70,8 +84,10 @@ export function useOwedSpellPicks(character: CharacterRecord) {
 
   return {
     rows,
+    featureRows,
     choosing,
     held,
+    book,
     ready: lists !== undefined && spells.data !== undefined,
     failed: failed || spells.isError,
     chooseBlock: (grantor: BlockGrantor, block: number) =>
@@ -87,15 +103,46 @@ export function useOwedSpellPicks(character: CharacterRecord) {
           ? latest.spells
           : [...latest.spells, { ref, prepared: true, pickedFor }],
       })),
+    pickForFeature: (ref: EntryRef, pickedFor: ClassFeatureGrantor, fromBook: boolean) =>
+      edit(`pick:${JSON.stringify([ref, pickedFor])}`, (latest) => {
+        const known = latest.spells.some((entry) => entryKey(entry.ref) === entryKey(ref));
+        if (!fromBook) {
+          return {
+            ...latest,
+            spells: known
+              ? latest.spells
+              : [...latest.spells, { ref, prepared: true, origin: pickedFor.class, pickedFor }],
+          };
+        }
+        return {
+          ...latest,
+          spells: latest.spells.map((entry) =>
+            entryKey(entry.ref) === entryKey(ref) && !entry.pickedFor && !entry.granted
+              ? { ...entry, pickedFor }
+              : entry,
+          ),
+        };
+      }),
+    unpickForFeature: (ref: EntryRef, pickedFor: ClassFeatureGrantor, fromBook: boolean) =>
+      edit(`drop:${JSON.stringify([ref, pickedFor])}`, (latest) => ({
+        ...latest,
+        spells: fromBook
+          ? latest.spells.map(({ pickedFor: by, ...entry }) =>
+              entryKey(entry.ref) === entryKey(ref) && sameGrantor(by, pickedFor)
+                ? entry
+                : { ...entry, ...(by && { pickedFor: by }) },
+            )
+          : latest.spells.filter(
+              (entry) =>
+                !(entryKey(entry.ref) === entryKey(ref) && sameGrantor(entry.pickedFor, pickedFor)),
+            ),
+      })),
     remove: (ref: EntryRef, pickedFor: PickGrantor) =>
       edit(`drop:${JSON.stringify([ref, pickedFor])}`, (latest) => ({
         ...latest,
         spells: latest.spells.filter(
           (entry) =>
-            !(
-              entryKey(entry.ref) === entryKey(ref) &&
-              JSON.stringify(entry.pickedFor) === JSON.stringify(pickedFor)
-            ),
+            !(entryKey(entry.ref) === entryKey(ref) && sameGrantor(entry.pickedFor, pickedFor)),
         ),
       })),
   };

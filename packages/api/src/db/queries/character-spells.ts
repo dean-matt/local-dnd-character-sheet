@@ -138,7 +138,12 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, grant: Grant =
     ...(granted && { granted }),
     ...grant,
     ...(origin && { origin }),
-    ...(pickedFor && { pickedFor }),
+    ...(pickedFor && {
+      pickedFor:
+        pickedFor.kind === "classFeature"
+          ? { kind: pickedFor.kind, ref: pickedFor.ref }
+          : pickedFor,
+    }),
   };
   if (!row) return { resolved: false as const, ...fields };
   return {

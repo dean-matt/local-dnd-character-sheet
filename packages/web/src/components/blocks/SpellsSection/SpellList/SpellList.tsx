@@ -16,6 +16,7 @@ import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
 import { withSpell } from "../../../../lib/addedEntries.ts";
+import { grantedByFeature } from "../../../../lib/featureSpellPicks.ts";
 import { levelLabel } from "../../../../lib/spellLevel.ts";
 import { SCHOOLS, schoolName } from "../../../../lib/spellSchool.ts";
 import { Card } from "../../../Card.tsx";
@@ -94,6 +95,11 @@ export function SpellList({
   const busy = writing || spells.isFetching;
   const casters = derived.spellcasting;
   const drawn = character.definition.spells;
+  const featureGranted = new Set(
+    drawn.flatMap(({ pickedFor }, index) =>
+      grantedByFeature(character.definition, pickedFor) ? [index] : [],
+    ),
+  );
   const edit = (index: number, change: Parameters<typeof editSpellEntry>[3]) => {
     const entry = drawn[index];
     if (!entry || !settled()) return;
@@ -113,19 +119,20 @@ export function SpellList({
   };
   // A cantrip is always ready, a granted spell always prepared, and a class that knows its
   // spells, as a classic Sorcerer does, prepares none.
-  const preparable = (spell: SheetSpell) =>
+  const preparable = (spell: SheetSpell, index: number) =>
     spell.resolved &&
     spell.level > 0 &&
     !spell.granted &&
+    !featureGranted.has(index) &&
     spellCaster(spell, casters)?.preparedSpells !== undefined;
   const active =
     schools.active + (levels.min !== "" || levels.max !== "" ? 1 : 0) + (only.length > 0 ? 1 : 0);
   const shown = list
     .map((spell, index) => ({ spell, index }))
     .filter(
-      ({ spell }) =>
+      ({ spell, index }) =>
         matchesFacets(spell, [SCHOOL_FACET, TIME_FACET], schools.picks) &&
-        holdsEvery(spell, only, preparable(spell)) &&
+        holdsEvery(spell, only, preparable(spell, index)) &&
         inRange(spell.resolved ? spell.level : undefined, levels),
     );
   return (
@@ -164,7 +171,7 @@ export function SpellList({
       }
     >
       <div className="flex flex-col gap-2">
-        <PreparedTallies tallies={preparedTallies(list, casters, names)} />
+        <PreparedTallies tallies={preparedTallies(list, casters, names, featureGranted)} />
         {list.length === 0 ? (
           <EmptyNote>{character.name} has no spells yet.</EmptyNote>
         ) : shown.length === 0 ? (
@@ -189,7 +196,8 @@ export function SpellList({
                     characterLevel={character.definition.levels.length}
                     waiveComponents={houseRule(character.definition, "waiveMaterialComponents")}
                     className={classOf(spell)}
-                    preparable={preparable(spell)}
+                    preparable={preparable(spell, index)}
+                    featureGranted={featureGranted.has(index)}
                     busy={busy}
                     onPrepare={(prepared) => edit(index, (entry) => ({ ...entry, prepared }))}
                     onRemove={() => edit(index, () => null)}

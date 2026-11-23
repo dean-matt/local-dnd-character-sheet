@@ -9,10 +9,12 @@ import { type FeatRecord, featTermsSchema, type OptionalFeaturePrerequisite } fr
 import {
   abilityScore,
   type CharacterDefinition,
+  classFeatureKeyOf,
   displayName,
   type EntryRef,
   entryKey,
   type FeatureKey,
+  featureSpellPickOffers,
   type HomebrewNames,
 } from "@dnd/character";
 import { candidateAt } from "./improvementFeats.ts";
@@ -57,7 +59,16 @@ export function withoutLevelChoices(
     feats: definition.feats.filter((feat) => feat.level !== level),
     abilityIncreases: definition.abilityIncreases.filter((increase) => increase.level !== level),
     featureChoices: definition.featureChoices.filter((choice) => !broughtBy(choice.feature)),
-    spells: definition.spells.filter((spell) => spell.pickedAt !== level),
+    spells: definition.spells.flatMap((spell) => {
+      if (spell.pickedAt === level) return [];
+      const by = spell.pickedFor;
+      if (by?.kind !== "classFeature") return [spell];
+      const feature = classFeatureKeyOf(by);
+      if (!broughtBy(feature)) return [spell];
+      // A pick from the spellbook marked a spell the class already knew, which stays.
+      const { pickedFor: _marked, ...known } = spell;
+      return featureSpellPickOffers(feature).some((pick) => pick.from === "book") ? [known] : [];
+    }),
     optionalFeatures: definition.optionalFeatures.filter((pick) => pick.level !== level),
   };
 }

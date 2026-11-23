@@ -635,15 +635,13 @@ const LIMITED_USES: FeatureMechanics[] = [
     level: 20,
   }),
   // Each spell is cast free once, a count per spell rather than one for the feature.
-  ...(["PHB", "XPHB"] as const).map((source) =>
-    narrative({
-      name: "Signature Spells",
-      source,
-      className: "Wizard",
-      classSource: source,
-      level: 20,
-    }),
-  ),
+  narrative({
+    name: "Signature Spells",
+    source: "XPHB",
+    className: "Wizard",
+    classSource: "XPHB",
+    level: 20,
+  }),
   // A later use costs damage rather than waiting on a rest.
   narrative({
     name: "Overchannel",
@@ -926,6 +924,49 @@ const SPELLS_GRANTED: FeatureMechanics[] = [
   { name: "Shroud of Shadow", source: "XGE" },
   { name: "Far Scribe", source: "TCE" },
 ].map((ref) => ({ ref, mechanics: [SPELLS] }));
+
+const spellPicks = (...picks: { count: number; level?: number; from: string }[]): Mechanic[] => [
+  { kind: "spells", picks },
+];
+
+/** The class and subclass features that have the player pick spells no `additionalSpells` lists. */
+const SPELLS_PICKED: FeatureMechanics[] = [
+  ...[10, 14, 18].map((level) =>
+    classFeature(bard, ["Magical Secrets", "PHB"], level, spellPicks({ count: 2, from: "any" })),
+  ),
+  subclassFeature(
+    bard,
+    ["Lore", "PHB"],
+    ["Additional Magical Secrets", "PHB"],
+    6,
+    spellPicks({ count: 2, from: "any" }),
+  ),
+  ...[
+    [11, 6],
+    [13, 7],
+    [15, 8],
+    [17, 9],
+  ].map(([level, spell]) =>
+    classFeature(
+      warlock,
+      [`Mystic Arcanum (${spell}th level)`, "PHB"],
+      level as number,
+      spellPicks({ count: 1, level: spell as number, from: "Warlock" }),
+    ),
+  ),
+  classFeature(
+    wizard,
+    ["Spell Mastery", "PHB"],
+    18,
+    spellPicks({ count: 1, level: 1, from: "book" }, { count: 1, level: 2, from: "book" }),
+  ),
+  classFeature(
+    wizard,
+    ["Signature Spells", "PHB"],
+    20,
+    spellPicks({ count: 2, level: 3, from: "book" }),
+  ),
+];
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
@@ -2607,4 +2648,5 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ...ONGOING_EFFECTS,
   ...TURN_ECONOMY,
   ...SPELLS_GRANTED,
+  ...SPELLS_PICKED,
 ];

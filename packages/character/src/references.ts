@@ -49,7 +49,7 @@ type Grantor =
   | NonNullable<CharacterDefinition["spells"][number]["pickedFor"]>
   | CharacterDefinition["spellBlocks"][number]["grantor"];
 
-const GRANTOR_KIND: Record<Grantor["kind"], CatalogKind> = {
+const GRANTOR_KIND: Record<Exclude<Grantor["kind"], "classFeature">, CatalogKind> = {
   class: "class",
   subclass: "subclass",
   background: "background",
@@ -87,7 +87,7 @@ export function catalogReferences(
     });
   };
   const grantor = (field: string, by: Grantor | undefined) => {
-    if (!by) return;
+    if (!by || by.kind === "classFeature") return;
     if (by.kind === "subclass") {
       add(`${field}.ref`, "subclass", by.ref, by.class);
       add(`${field}.class`, "class", by.class);

@@ -601,12 +601,28 @@ const turnMechanicSchema = z
   });
 
 /**
- * Spells the feature grants outright or leaves to the player's pick, which the sheet lists
- * from the `additionalSpells` of the row that gives them, at the level each arrives: the
- * feat's or optional feature's own, or a race trait's race or subrace. A pick is stored on the
- * character, under the feature it was made for.
+ * A spell pick a class or subclass feature leaves to the player: `count` spells of `level`,
+ * or cantrips and any level the class can cast where `level` is absent, from `from` —
+ * `any` for every class's list, `book` for the spells the character already holds, or the
+ * name of the class whose list it is.
  */
-const spellsMechanicSchema = z.strictObject({ kind: z.literal("spells") });
+const spellPickSchema = z.strictObject({
+  count: z.int().min(1),
+  level: z.int().min(0).max(9).optional(),
+  from: z.string().min(1),
+});
+
+/**
+ * Spells the feature grants outright or leaves to the player's pick. The sheet lists a grant
+ * from the `additionalSpells` of the row that gives it, at the level each arrives: the feat's
+ * or optional feature's own, or a race trait's race or subrace. `picks` is what a class or
+ * subclass feature has the player choose, which no `additionalSpells` states; a pick is stored
+ * on the character, under the feature it was made for.
+ */
+const spellsMechanicSchema = z.strictObject({
+  kind: z.literal("spells"),
+  picks: z.array(spellPickSchema).min(1).optional(),
+});
 
 const mechanicSchema = z.union([
   activeMechanicSchema,
@@ -636,6 +652,7 @@ const mechanicSchema = z.union([
 ]);
 
 export type Mechanic = z.infer<typeof mechanicSchema>;
+export type SpellPick = z.infer<typeof spellPickSchema>;
 
 /** The mechanics of one kind a feature records. */
 export const mechanicsOfKind = <K extends Mechanic["kind"]>(

@@ -1,4 +1,5 @@
 import type { SheetSpell } from "@dnd/catalog";
+import { rowPickedFor } from "../../../../lib/spellGrantors.ts";
 import type { Facet } from "../../../Filter/facets.ts";
 
 const TIMES = ["Action", "Bonus action", "Reaction", "Longer"] as const;
@@ -24,7 +25,7 @@ const ONLY = {
     label: "Prepared",
     // What the character does not prepare (a cantrip, a granted spell, a known spell) is always ready.
     holds: (spell: SheetSpell, preparable: boolean) =>
-      spell.resolved && (spell.prepared || !preparable || !!spell.pickedFor),
+      spell.resolved && (spell.prepared || !preparable || !!rowPickedFor(spell)),
   },
   concentration: {
     label: "Concentration",

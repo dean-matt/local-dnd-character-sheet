@@ -157,7 +157,7 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
  * same shape difference that tells a homebrew row from a catalog one everywhere else.
  * `origin` is the class the character learned it through, and `granted` marks a spell a
  * class, race, background or feat gives rather than one the player picked. `pickedFor`
- * names the race, subrace, background, feat or optional feature a pick was made for; its
+ * names the race, subrace, background, feat, optional feature or class feature a pick was made for; its
  * `kind` stays a string because `@dnd/character` owns that vocabulary. `fromItem` names the
  * equipped item that lets the character cast a spell the player did not pick, and
  * `fromGrantor` the subclass, race, subrace, background, feat or optional feature that grants

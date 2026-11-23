@@ -47,7 +47,7 @@ export function SpellsSection({
         <CasterNumbers character={character} derived={derived} />
         <SpellSlots character={character} derived={derived} />
       </div>
-      <OwedSpellPicks character={character} />
+      <OwedSpellPicks character={character} derived={derived} />
       <SpellList character={character} derived={derived} />
     </div>
   );

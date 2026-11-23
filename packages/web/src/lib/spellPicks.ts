@@ -1,4 +1,4 @@
-import { type EntryRef, refKey } from "@dnd/character";
+import { classFeatureKeyOf, type EntryRef, featureKey, refKey } from "@dnd/character";
 import type { SpellGrantorRef } from "../hooks/useGrantedSpells.ts";
 import type { CasterFacts } from "./casterFacts.ts";
 import { type PickGrantor, pickedForOf } from "./spellGrantors.ts";
@@ -55,7 +55,10 @@ export type Offer = {
 const grantorKey = (kind: string, ref: { name: string; source: string }) =>
   `${kind}|${refKey(ref)}`;
 
-const pickKey = (pickedFor: PickGrantor) => grantorKey(pickedFor.kind, pickedFor.ref);
+export const pickKey = (pickedFor: PickGrantor) =>
+  pickedFor.kind === "classFeature"
+    ? grantorKey(pickedFor.kind, { name: featureKey(classFeatureKeyOf(pickedFor)), source: "" })
+    : grantorKey(pickedFor.kind, pickedFor.ref);
 
 /**
  * The picks a race, subrace, background, feat or optional feature offers, apart from the
