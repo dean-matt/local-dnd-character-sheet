@@ -617,11 +617,15 @@ const spellPickSchema = z.strictObject({
  * from the `additionalSpells` of the row that gives it, at the level each arrives: the feat's
  * or optional feature's own, or a race trait's race or subrace. `picks` is what a class or
  * subclass feature has the player choose, which no `additionalSpells` states; a pick is stored
- * on the character, under the feature it was made for.
+ * on the character, under the feature it was made for. The row's daily and rest counts limit
+ * a feat's or optional feature's casts without a slot; `casting` says where the text differs:
+ * `slot` for a spell cast with a pact slot, which the count limits to one cast, and `atWill`
+ * for one the count does not limit.
  */
 const spellsMechanicSchema = z.strictObject({
   kind: z.literal("spells"),
   picks: z.array(spellPickSchema).min(1).optional(),
+  casting: z.enum(["slot", "atWill"]).optional(),
 });
 
 /**

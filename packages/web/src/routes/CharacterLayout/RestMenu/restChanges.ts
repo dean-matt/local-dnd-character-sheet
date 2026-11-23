@@ -1,6 +1,7 @@
 import {
   type CharacterFeatures,
   type CharacterInventory,
+  type CharacterSpells,
   type ItemRegains,
   type LimitedUses,
   rechargesOnLongRest,
@@ -38,9 +39,15 @@ const left = (slot: Slot) => `${slot.total - slot.expended}/${slot.total}`;
 /** A feature's limited uses, with the name a rest's list shows it by. */
 export type FeatureUse = LimitedUses & { name: string };
 
-/** Each feature with limited uses, once per key. */
-export function featureUses(features: CharacterFeatures): FeatureUse[] {
+/** Each feature with limited uses, and each spell a grantor lets the character cast a limited number of times, once per key. */
+export function featureUses(
+  features: CharacterFeatures,
+  { spells }: CharacterSpells,
+): FeatureUse[] {
   const byKey = new Map<string, FeatureUse>();
+  for (const spell of spells) {
+    if (spell.uses) byKey.set(spell.uses.key, { name: spell.name, ...spell.uses });
+  }
   for (const feature of features.groups.flatMap((group) => group.features)) {
     if (!feature.resolved) continue;
     for (const uses of [feature.uses, ...(feature.otherUses ?? [])]) {

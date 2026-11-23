@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { blockLabels, eitherPicks, grantedSpellCosts, offeredPicks } from "./index.ts";
+import {
+  blockLabels,
+  eitherPicks,
+  grantedSpellCosts,
+  grantedSpellUses,
+  offeredPicks,
+} from "./index.ts";
 
 const row = (...additionalSpells: unknown[]) => ({ additionalSpells });
 
@@ -141,6 +147,48 @@ describe("grantedSpellCosts", () => {
   it("costs nothing a block names no resource for", () => {
     expect(
       grantedSpellCosts(row({ innate: { "3": { resource: { "2": ["darkness"] } } } })).size,
+    ).toBe(0);
+  });
+});
+
+describe("grantedSpellUses", () => {
+  it("counts each spell under a daily or rest key, a daily use returning on a long rest", () => {
+    const drow = row({
+      innate: {
+        "3": { daily: { "1": ["faerie fire"] } },
+        "5": { daily: { "1": ["darkness"] } },
+      },
+      known: { "1": { rest: { "1": ["misty step", "disguise self|XPHB"] } } },
+    });
+    expect(Object.fromEntries(grantedSpellUses(drow))).toEqual({
+      "faerie fire|phb": { count: 1, reset: "long" },
+      "darkness|phb": { count: 1, reset: "long" },
+      "misty step|phb": { count: 1, reset: "short" },
+      "disguise self|xphb": { count: 1, reset: "short" },
+    });
+  });
+
+  it("reads the each-spell marker and the count from the key, and skips a spell left to a pick", () => {
+    const features = row({
+      innate: { _: { daily: { "2e": ["bestow curse"], "1": [{ choose: "level=1" }] } } },
+    });
+    expect(Object.fromEntries(grantedSpellUses(features))).toEqual({
+      "bestow curse|phb": { count: 2, reset: "long" },
+    });
+  });
+
+  it("reads the chosen block alone, and none until one is chosen", () => {
+    const choice = row(
+      { innate: { _: { daily: { "1": ["hex"] } } } },
+      { innate: { _: { daily: { "1": ["bane"] } } } },
+    );
+    expect(grantedSpellUses(choice).size).toBe(0);
+    expect([...grantedSpellUses(choice, 1).keys()]).toEqual(["bane|phb"]);
+  });
+
+  it("counts nothing for a spell cast at will or as a ritual", () => {
+    expect(
+      grantedSpellUses(row({ innate: { _: { will: ["light"], ritual: ["detect magic"] } } })).size,
     ).toBe(0);
   });
 });

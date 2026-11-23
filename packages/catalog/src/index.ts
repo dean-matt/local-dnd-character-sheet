@@ -270,6 +270,7 @@ export {
   grantedSpellCosts,
   grantedSpellKey,
   grantedSpellsSchema,
+  grantedSpellUses,
   offeredPicks,
   SPELL_GRANTORS,
   spellLookupRequestSchema,

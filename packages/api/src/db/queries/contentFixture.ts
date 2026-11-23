@@ -394,6 +394,8 @@ export function publishReferencesFixture(dataDir: string, fixture: ReferencesFix
 export type SpellListFixture = {
   spells?: SpellFixtureRow[];
   feats?: FeatFixtureRow[];
+  optionalFeatures?: FeatFixtureRow[];
+  races?: RaceFixtureRow[];
   subclasses?: SubclassFixtureRow[];
   items?: ItemFixtureRow[];
   lookups?: LookupFixtureRow[];

@@ -11,6 +11,7 @@ import {
   entriesSchema,
   grantedSpellCosts,
   grantedSpellKey,
+  grantedSpellUses,
   type SheetSpell,
   spellCastingFacts,
   spellEffectSchema,
@@ -23,10 +24,13 @@ import {
   displayName,
   type EntryRef,
   entryKey,
+  featureUsesKey,
   spellBlockKey,
+  spellGrantRecord,
 } from "@dnd/character";
 import type { ZodType } from "zod";
 import { getCatalogRow } from "./catalog-row.ts";
+import { getUses } from "./feats.ts";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
 import { resolveItemRows } from "./inventory.ts";
 import {
@@ -125,9 +129,10 @@ function rowFacts(
 }
 
 type Cost = NonNullable<SheetSpell["cost"]>;
+type Uses = NonNullable<SheetSpell["uses"]>;
 
 /** What the sheet says of a spell beyond its definition entry. */
-type Grant = { fromItem?: string; fromGrantor?: string; cost?: Cost };
+type Grant = { fromItem?: string; fromGrantor?: string; cost?: Cost; uses?: Uses };
 
 function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, grant: Grant = {}) {
   const { ref, prepared, granted, origin, pickedFor } = entry;
@@ -163,7 +168,7 @@ function sheetSpell(entry: SpellEntry, row: SpellRow | undefined, grant: Grant =
   };
 }
 
-type GrantedSpell = { row: CatalogSpellRow; grantor: string; cost?: Cost };
+type GrantedSpell = { row: CatalogSpellRow; grantor: string; cost?: Cost; uses?: Uses };
 
 /** A catalog row the definition holds as a grantor, with the block chosen for it; none for homebrew. */
 function grantorOf(
@@ -185,10 +190,49 @@ function grantorOf(
   };
 }
 
+const OWN_USES_TABLES = { feat: "feats", optionalFeature: "optional_features" } as const;
+
+/**
+ * The uses a feat or optional feature counts itself, which its feature card shows, so a cast of
+ * the one spell it gives spends them rather than a count beside them: the count the sheet
+ * records, else the one the build read from its text.
+ */
+function ownUses(
+  dataDir: string,
+  grantor: Grantor,
+  recorded: ReturnType<typeof spellGrantRecord>["uses"],
+): Uses | undefined {
+  if (grantor.kind !== "feat" && grantor.kind !== "optionalFeature") return undefined;
+  const key = featureUsesKey([grantor.kind, grantor.source], grantor.name);
+  if (recorded) return { key, ...recorded };
+  const row = getUses(dataDir, OWN_USES_TABLES[grantor.kind], grantor.name, grantor.source);
+  return row?.uses && row.uses_reset ? { key, count: row.uses, reset: row.uses_reset } : undefined;
+}
+
+/**
+ * The casts a grantor limits each spell to, by the spell's key and name: a count of its own, or
+ * the feature's where the feature counts uses and gives one spell. A feat or optional feature
+ * records a cast with the pact slot, or at will, which no count limits.
+ */
+function grantedUses(dataDir: string, grantor: Grantor, json: unknown) {
+  const record =
+    grantor.kind === "feat" || grantor.kind === "optionalFeature"
+      ? spellGrantRecord({ name: grantor.name, source: grantor.source })
+      : {};
+  const casts = record.casting === "atWill" ? new Map() : grantedSpellUses(json, grantor.block);
+  const own = casts.size === 1 ? ownUses(dataDir, grantor, record.uses) : undefined;
+  return (spellKey: string, name: string): Uses | undefined => {
+    const cast = casts.get(spellKey);
+    if (!cast) return undefined;
+    const key = featureUsesKey(["spell", grantor.kind, grantor.source, grantor.name], name);
+    return { ...(own ?? { key, ...cast }), ...(record.casting === "slot" && { slot: true }) };
+  };
+}
+
 /**
  * The spells each grantor gives outright by its level, by `entryKey`, each once under the
- * first grantor that gives it, named by its label, with what casting it costs. A grantor
- * offering alternative blocks gives its chosen block's.
+ * first grantor that gives it, named by its label, with what casting it costs and the casts
+ * without a slot it allows. A grantor offering alternative blocks gives its chosen block's.
  */
 function grantedSpells(
   dataDir: string,
@@ -196,12 +240,21 @@ function grantedSpells(
 ): Map<string, GrantedSpell> {
   const found = new Map<string, GrantedSpell>();
   for (const { grantor, level, label } of grantors) {
-    const costs = grantedSpellCosts(getGrantorJson(dataDir, grantor), grantor.block);
+    const json = getGrantorJson(dataDir, grantor);
+    const costs = grantedSpellCosts(json, grantor.block);
+    const usesOf = grantedUses(dataDir, grantor, json);
     const refs = getGrantedSpells(dataDir, grantor, level).spells;
     for (const row of getSpells(dataDir, refs)) {
       if (!row || found.has(entryKey(row))) continue;
-      const cost = costs.get(grantedSpellKey(`${row.name}|${row.source}`));
-      found.set(entryKey(row), { row, grantor: label, ...(cost && { cost }) });
+      const spellKey = grantedSpellKey(`${row.name}|${row.source}`);
+      const cost = costs.get(spellKey);
+      const uses = usesOf(spellKey, row.name);
+      found.set(entryKey(row), {
+        row,
+        grantor: label,
+        ...(cost && { cost }),
+        ...(uses && { uses }),
+      });
     }
   }
   return found;
@@ -333,16 +386,21 @@ export function resolveCharacterSpells(
     const subclassOwn = given && !elsewhere.has(key);
     if (!given || subclassOwn) listed.add(key);
     if (!entry.granted) picked.add(key);
-    return sheetSpell(entry, rows[index], subclassOwn && given.cost ? { cost: given.cost } : {});
+    const uses = (bySubclass.get(key) ?? byFeature.get(key))?.uses;
+    return sheetSpell(entry, rows[index], {
+      ...(subclassOwn && given.cost && { cost: given.cost }),
+      ...(uses && { uses }),
+    });
   });
   const unlisted = (found: Map<string, GrantedSpell>, skip: ReadonlySet<string>) =>
-    [...found].flatMap(([key, { row, grantor, cost }]) => {
+    [...found].flatMap(([key, { row, grantor, cost, uses }]) => {
       if (skip.has(key)) return [];
       const ref = { name: row.name, source: row.source };
       return [
         sheetSpell({ ref, prepared: true, granted: true }, catalogFacts(row), {
           fromGrantor: grantor,
           ...(cost && { cost }),
+          ...(uses && { uses }),
         }),
       ];
     });

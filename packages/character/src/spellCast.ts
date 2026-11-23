@@ -4,22 +4,60 @@ import { concentrationStarted } from "./concentration.ts";
 import { classResourceKey } from "./keys.ts";
 import type { EntryRef } from "./refs.ts";
 import { sheetState } from "./rest.ts";
-import type { CharacterState, Concentration } from "./state.ts";
+import {
+  type CharacterState,
+  type Concentration,
+  featureUsesSpent,
+  withFeatureUse,
+} from "./state.ts";
 
 type Sheet = Pick<CharacterDerived, "hitDice" | "spellSlots" | "pactSlots" | "classResources">;
 
 /**
  * How a spell is cast: with a slot of `level`, with the pact slot at its `level`, as a ritual
- * at the spell's own level, as a cantrip at 0, or by spending `pool.amount` from a class pool
- * at the spell's own level. `left` counts the slots, or the pool's points, left, and is null
- * where the cast spends none or the pool is unlimited.
+ * at the spell's own level, as a cantrip at 0, by spending `pool.amount` from a class pool at
+ * the spell's own level, or by spending one of the `use.count` casts a feature gives it, keyed
+ * `use.key` in the state's `featureUses`, with no slot or, where a pact slot option carries a
+ * `use`, with that slot too. `left` counts the slots, the pool's points or the uses left, and
+ * is null where the cast spends none or the pool is unlimited.
  */
 export type SpellCastOption = {
-  via: "slot" | "pact" | "ritual" | "cantrip" | "pool";
+  via: "slot" | "pact" | "ritual" | "cantrip" | "pool" | "use";
   level: number;
   left: number | null;
   pool?: { class: EntryRef; key: string; amount: number };
+  use?: { key: string; count: number; left: number };
 };
+
+/**
+ * The casts a grantor limits a spell to, by the key of its entry in the state's `featureUses`:
+ * each is made without a slot, or with the pact slot where `slot` says so.
+ */
+type SpellUses = { key: string; count: number; slot?: true };
+
+/**
+ * The casts without a slot a spell has: those its grantor gives it, or the uses a held class
+ * feature counts that the spell was picked for, such as one of a Warlock's Mystic Arcanum.
+ */
+export function spellUses(
+  spell: {
+    uses?: SpellUses;
+    pickedFor?: { kind: string; ref: { name: string; source: string } };
+  },
+  derived: Pick<CharacterDerived, "limitedUses">,
+): SpellUses | undefined {
+  if (spell.uses) return spell.uses;
+  const { pickedFor } = spell;
+  if (pickedFor?.kind !== "classFeature") return undefined;
+  const held = derived.limitedUses.find(
+    ({ feature, origin, part }) =>
+      (origin === "class" || origin === "subclass") &&
+      !part &&
+      feature.name === pickedFor.ref.name &&
+      feature.source === pickedFor.ref.source,
+  );
+  return held && { key: held.key, count: held.count };
+}
 
 /** What casting a granted spell spends, such as 2 Ki. */
 type SpellCost = { amount: number; resource: string };
@@ -48,13 +86,20 @@ function poolCast(
 
 /**
  * Every way `spell` can be cast on the sheet: a cantrip spends nothing; any other spell takes
- * the feature's own cast first where it has a `cost` in a pool the sheet counts, then each slot
+ * a cast by the feature's uses first where it has `uses`, the feature's own pool cast where it
+ * has a `cost` in a pool the sheet counts, then each slot
  * level the sheet shows from its own up, the pact slot where its level reaches the spell's, and
  * a ritual cast where the spell is a ritual, whatever the character's class. An option with
  * none left is listed, so the sheet can refuse it by name.
  */
 export function spellCastOptions(
-  spell: { level: number; ritual: boolean; cost?: SpellCost },
+  spell: {
+    level: number;
+    ritual: boolean;
+    granted?: boolean;
+    cost?: SpellCost;
+    uses?: SpellUses;
+  },
   derived: Sheet,
   state: CharacterState,
 ): SpellCastOption[] {
@@ -72,7 +117,19 @@ export function spellCastOptions(
   const ritual: SpellCastOption[] = spell.ritual
     ? [{ via: "ritual", level: spell.level, left: null }]
     : [];
-  return [...poolCast(spell, sheet, derived), ...slots, ...pactCast, ...ritual];
+  const { uses } = spell;
+  const use = uses && {
+    key: uses.key,
+    count: uses.count,
+    left: uses.count - featureUsesSpent(state, uses.key, uses.count),
+  };
+  if (!uses || !use) return [...poolCast(spell, sheet, derived), ...slots, ...pactCast, ...ritual];
+  if (!uses.slot) {
+    const free: SpellCastOption = { via: "use", level: spell.level, left: use.left, use };
+    return [free, ...poolCast(spell, sheet, derived), ...slots, ...pactCast, ...ritual];
+  }
+  const limited = pactCast.map((option) => ({ ...option, use }));
+  return spell.granted ? limited : [...slots, ...pactCast, ...ritual, ...limited];
 }
 
 /**
@@ -92,8 +149,14 @@ export function spellCast(
   return concentrationStarted(spent, { spell: cast.spell, level: option.level });
 }
 
-/** The state with one slot of `option`, or its pool's points, spent; a ritual or cantrip spends none. Throws a RangeError where too few are left. */
+/** The state with one slot of `option`, its pool's points or one of its feature's uses spent; a ritual or cantrip spends none. Throws a RangeError where too few are left. */
 export function slotSpent(derived: Sheet, state: CharacterState, option: SpellCastOption) {
+  if (option.via === "use") return useSpent(state, option);
+  const spent = resourceSpent(derived, state, option);
+  return option.use ? useSpent(spent, option) : spent;
+}
+
+function resourceSpent(derived: Sheet, state: CharacterState, option: SpellCastOption) {
   if (option.via === "ritual" || option.via === "cantrip") return state;
   const sheet = sheetState(derived, state);
   if (option.via === "pool") return poolSpent(sheet, option);
@@ -108,6 +171,13 @@ export function slotSpent(derived: Sheet, state: CharacterState, option: SpellCa
   if (option.via === "pact") return { ...state, pactSlots: used };
   const others = state.spellSlots.filter((held) => held.level !== used.level);
   return { ...state, spellSlots: [...others, used].sort((a, b) => a.level - b.level) };
+}
+
+function useSpent(state: CharacterState, { use }: SpellCastOption) {
+  if (!use) throw new RangeError("no use to cast from");
+  const spent = featureUsesSpent(state, use.key, use.count);
+  if (spent >= use.count) throw new RangeError("no use left to cast from");
+  return withFeatureUse(state, use.key, spent + 1);
 }
 
 function poolSpent(sheet: CharacterState, { pool }: SpellCastOption) {

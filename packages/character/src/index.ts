@@ -150,7 +150,7 @@ export {
   classFeatureGrantor,
   featureSpellPicks,
 } from "./featureSpellPicks.ts";
-export { featurePickOffers, featureSpellPickOffers } from "./heldFeatures.ts";
+export { featurePickOffers, featureSpellPickOffers, spellGrantRecord } from "./heldFeatures.ts";
 export {
   atHitPointMaximum,
   damagedState,
@@ -259,6 +259,7 @@ export {
   spellCast,
   spellCastOptions,
   spellDamageDice,
+  spellUses,
 } from "./spellCast.ts";
 export {
   BARDIC_INSPIRATION_DICE,

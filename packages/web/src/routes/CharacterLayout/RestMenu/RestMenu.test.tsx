@@ -92,6 +92,7 @@ function renderLive(
     character = characterRecord("1", "Vex") as CharacterRecord,
     derivedBlock = derived(),
     features = { groups: [] } as CharacterFeatures,
+    spells = { spells: [] },
     inventory = { items: [] } as CharacterInventory,
     failFeatures = false,
     fail = false,
@@ -109,7 +110,7 @@ function renderLive(
       : new Response(JSON.stringify(features), { status: 200 });
   const readReply = (endpoint: string) => {
     if (endpoint === "features") return featuresResponse();
-    const reads = { derived: derivedBlock, inventory } as Record<string, unknown>;
+    const reads = { derived: derivedBlock, inventory, spells } as Record<string, unknown>;
     return endpoint in reads
       ? new Response(JSON.stringify(reads[endpoint]), { status: 200 })
       : undefined;

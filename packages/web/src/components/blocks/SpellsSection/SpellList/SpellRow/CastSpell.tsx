@@ -11,6 +11,7 @@ import {
   spellCast,
   spellCastOptions,
   spellDamageDice,
+  spellUses,
 } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
@@ -37,6 +38,10 @@ type Rolled = { total: number; natural20: boolean; logged: boolean };
 function castWords(name: string, { option, spend }: Choice) {
   if (option.via === "cantrip") return `Cast ${name}`;
   if (option.via === "ritual") return `Cast ${name} as a ritual`;
+  if (option.via === "use") {
+    if (!spend) return `Cast ${name}, spending no use`;
+    return `Cast ${name} spending a use, ${(option.left ?? 1) - 1} left`;
+  }
   if (option.pool) {
     const { amount, key } = option.pool;
     const points = resourceLabel(key).toLowerCase();
@@ -45,7 +50,8 @@ function castWords(name: string, { option, spend }: Choice) {
   }
   const slot = option.via === "pact" ? "the pact slot" : `a level ${option.level} slot`;
   if (!spend) return `Cast ${name} at level ${option.level}, spending no slot`;
-  return `Cast ${name} with ${slot}, ${(option.left ?? 1) - 1} left`;
+  const used = option.use ? ", spending a use" : "";
+  return `Cast ${name} with ${slot}, ${(option.left ?? 1) - 1} left${used}`;
 }
 
 const spellRef = (spell: SheetSpell): EntryRef | undefined => {
@@ -103,7 +109,9 @@ export function CastSpell({
   const bonus = spell.attack ? attackBonus(derived, spell) : undefined;
   const rolls =
     bonus !== undefined || spellDamageDice(spell, spell.level, characterLevel) !== undefined;
-  const options: SpellCastOption[] = stored ? spellCastOptions(spell, derived, stored) : [];
+  const options: SpellCastOption[] = stored
+    ? spellCastOptions({ ...spell, uses: spellUses(spell, derived) }, derived, stored)
+    : [];
   const ref = spellRef(spell);
   const entries = (inventory.data?.items ?? []).map((item, index) => ({
     index,

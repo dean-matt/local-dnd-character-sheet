@@ -10,6 +10,7 @@ import { useId, useState } from "react";
 import { useCharacterDerived } from "../../../hooks/useCharacterDerived.ts";
 import { useCharacterFeatures } from "../../../hooks/useCharacterFeatures.ts";
 import { useCharacterInventory } from "../../../hooks/useCharacterInventory.ts";
+import { useCharacterSpells } from "../../../hooks/useCharacterSpells.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
 import { useReturnFocus } from "../../../hooks/useReturnFocus.ts";
 import { RestDialog } from "./RestDialog.tsx";
@@ -21,8 +22,8 @@ import { chargedItems, featureUses, LONG_REST_REFUSAL, restPreview } from "./res
  * a long rest. Escape, or focus leaving the menu, closes it; focus returns to the button when
  * the dialog closes, and a rest applied or hit dice spends cancelled are announced, since the
  * dialog closes on them. The short rest's line names what it would recover, from the same
- * changes its dialog lists. The button waits on the sheet's derived block, state and features,
- * and inventory, which the dialog reads, and names why where any failed to load. At 0 hit points the long
+ * changes its dialog lists. The button waits on the sheet's derived block, state, features,
+ * spells and inventory, which the dialog reads, and names why where any failed to load. At 0 hit points the long
  * rest is unavailable, its line saying why.
  */
 export function RestMenu({ character }: { character: CharacterRecord }) {
@@ -30,12 +31,13 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
   const state = useCharacterState(character.id);
   const features = useCharacterFeatures(character.id, derived.data);
   const inventory = useCharacterInventory(character.id);
+  const spells = useCharacterSpells(character.id);
   const [menuOpen, setMenuOpen] = useState(false);
   const [resting, setResting] = useState<RestLength>();
   const [applied, setApplied] = useState<string>();
   const button = useReturnFocus<HTMLButtonElement>(resting !== undefined);
   const menuId = useId();
-  const uses = features.data && featureUses(features.data);
+  const uses = features.data && spells.data && featureUses(features.data, spells.data);
   const items =
     inventory.data &&
     state.data &&
@@ -47,7 +49,7 @@ export function RestMenu({ character }: { character: CharacterRecord }) {
     state.data !== undefined &&
     uses !== undefined &&
     items !== undefined;
-  const failed = derived.error ?? state.error ?? features.error ?? inventory.error;
+  const failed = derived.error ?? state.error ?? features.error ?? spells.error ?? inventory.error;
   const refused = state.data && !benefitsFromLongRest(state.data.state.hitPoints.current);
   const rests: { length: RestLength; title: string; description: string; blocked?: boolean }[] = [
     {
