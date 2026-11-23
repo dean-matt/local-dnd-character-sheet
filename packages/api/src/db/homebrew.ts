@@ -22,6 +22,7 @@ import type {
   RaceEntry,
   SpellEntry,
 } from "@dnd/catalog";
+import type { Mechanic } from "@dnd/character";
 import { EDITIONS } from "@dnd/rules";
 import { sql } from "drizzle-orm";
 import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
@@ -266,4 +267,17 @@ export const homebrewMonsters = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
   },
   (t) => [uniqueIndex("homebrew_monsters_by_name").on(sql`${t.name} COLLATE NOCASE`, t.edition)],
+);
+
+/** The mechanics a table rules a catalog feature has, keyed by the feature's `(name, source)`. */
+export const homebrewFeatureEffects = sqliteTable(
+  "homebrew_feature_effects",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    source: text("source").notNull(),
+    mechanics: text("mechanics", { mode: "json" }).$type<Mechanic[]>().notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  },
+  (t) => [uniqueIndex("homebrew_feature_effects_by_feature").on(t.name, t.source)],
 );

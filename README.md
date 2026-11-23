@@ -132,6 +132,7 @@ data/               the three SQLite databases, gitignored
 | [`docs/homebrew-skills.md`](docs/homebrew-skills.md) | How a character and an item cite a homebrew skill, and why a rename or delete is refused |
 | [`docs/homebrew-subclasses.md`](docs/homebrew-subclasses.md) | How a homebrew subclass names its class, takes its edition, and merges into a class's subclass list |
 | [`docs/homebrew-deities.md`](docs/homebrew-deities.md) | How a homebrew deity is keyed by name and pantheon, held by a character, and merged into search |
+| [`docs/homebrew-feature-effects.md`](docs/homebrew-feature-effects.md) | How a table rules a catalog feature's mechanics, keyed `(name, source)`, and edits the ruling from the feature's detail |
 | [`docs/homebrew-optional-features.md`](docs/homebrew-optional-features.md) | How a homebrew optional feature lists its feature types, keeps a name unique within each, and merges into search |
 | [`docs/homebrew-monsters.md`](docs/homebrew-monsters.md) | How a homebrew monster takes its edition, keeps a name unique within it, and merges into search |
 | [`docs/homebrew-subraces.md`](docs/homebrew-subraces.md) | How a homebrew subrace names its race, takes its edition, and merges into a race's subrace list |

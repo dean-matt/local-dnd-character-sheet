@@ -11,6 +11,7 @@ import { FeatureDc } from "../FeatureDc.tsx";
 import { FeatPicks } from "./FeatPicks.tsx";
 import { FeatureChoiceField } from "./FeatureChoiceField.tsx";
 import { FeatureEffect } from "./FeatureEffect.tsx";
+import { FeatureHomebrewEffect } from "./FeatureHomebrewEffect.tsx";
 import { FeaturePicks } from "./FeaturePicks.tsx";
 import { FeatureUses } from "./FeatureUses.tsx";
 
@@ -155,7 +156,17 @@ export function FeatureRow({
         ]
           .filter((part) => part !== undefined)
           .join(" • "),
-        children: <RulesEntries entries={feature.entries} />,
+        children: (
+          <>
+            <RulesEntries entries={feature.entries} />
+            {source !== undefined && (
+              <FeatureHomebrewEffect
+                feature={{ name: feature.name, source }}
+                origin={group.origin}
+              />
+            )}
+          </>
+        ),
       }}
     />
   );

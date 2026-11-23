@@ -113,6 +113,13 @@
       "when": 1793801848013,
       "tag": "0015_homebrew_subclass_features",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1795465714412,
+      "tag": "0016_homebrew_feature_effects",
+      "breakpoints": true
     }
   ]
 }
