@@ -1044,6 +1044,44 @@ const SPELLS_FROM_CLASS_FEATURES: FeatureMechanics[] = FEATURES_GRANTING_SPELLS.
   },
 );
 
+/** The XPHB (2024) feats and invocations that grant spells, and so count no uses. */
+const SPELLS_GRANTED_2024: FeatureMechanics[] = [
+  "Armor of Shadows",
+  "Ascendant Step",
+  "Magic Initiate",
+  "Magic Initiate; Cleric",
+  "Magic Initiate; Druid",
+  "Magic Initiate; Wizard",
+  "Mask of Many Faces",
+  "Master of Myriad Forms",
+  "Misty Visions",
+  "One with Shadows",
+  "Otherworldly Leap",
+  "Pact of the Chain",
+  "Pact of the Tome",
+  "Visions of Distant Realms",
+  "Whispers of the Grave",
+].map((name) => ({ ref: { name, source: "XPHB" }, mechanics: [SPELLS] }));
+
+const SPELLS_FROM_CLASS_FEATURES_2024: FeatureMechanics[] = [
+  classFeature(cleric24, ["Divine Intervention", "XPHB"], 10, [SPELLS]),
+  classFeature(druid24, ["Druidic", "XPHB"], 1, [SPELLS]),
+  classFeature(paladin24, ["Faithful Steed", "XPHB"], 5, [SPELLS]),
+  classFeature(ranger24, ["Favored Enemy", "XPHB"], 1, [SPELLS]),
+  classFeature(paladin24, ["Paladin's Smite", "XPHB"], 2, [SPELLS]),
+  classFeature(["Bard", "XPHB"], ["Words of Creation", "XPHB"], 20, [SPELLS]),
+  classFeature(["Warlock", "XPHB"], ["Mystic Arcanum", "XPHB"], 11, [SPELLS]),
+  classFeature(["Wizard", "XPHB"], ["Spell Mastery", "XPHB"], 18, [SPELLS]),
+  subclassFeature(sorcerer24, ["Draconic", "XPHB"], ["Draconic Spells", "XPHB"], 3, [SPELLS]),
+  subclassFeature(["Warlock", "XPHB"], ["Fiend", "XPHB"], ["Fiend Spells", "XPHB"], 3, [SPELLS]),
+  subclassFeature(cleric24, ["Life", "XPHB"], ["Life Domain Spells", "XPHB"], 3, [SPELLS]),
+  subclassFeature(paladin24, ["Devotion", "XPHB"], ["Oath of Devotion Spells", "XPHB"], 3, [
+    SPELLS,
+  ]),
+  subclassFeature(["Bard", "XPHB"], ["Lore", "XPHB"], ["Magical Discoveries", "XPHB"], 6, [SPELLS]),
+  subclassFeature(druid24, ["Land", "XPHB"], ["Natural Recovery", "XPHB"], 6, [SPELLS]),
+];
+
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
   {
@@ -2728,4 +2766,6 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ...SPELLS_GRANTED,
   ...SPELLS_PICKED,
   ...SPELLS_FROM_CLASS_FEATURES,
+  ...SPELLS_GRANTED_2024,
+  ...SPELLS_FROM_CLASS_FEATURES_2024,
 ];
