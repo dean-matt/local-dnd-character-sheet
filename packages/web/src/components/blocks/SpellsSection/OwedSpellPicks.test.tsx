@@ -44,11 +44,15 @@ function renderOwed(
   record: CharacterRecord,
   granted: Record<string, unknown>,
   sheet: CharacterSpells,
+  sheetLoads = false,
 ) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url === "/api/characters/1/spells") return json(sheet);
+    if (url === "/api/characters/1/spells") {
+      return sheetLoads ? new Promise<Response>(() => {}) : json(sheet);
+    }
     if (url in granted) return json(granted[url]);
+    if (url.startsWith("/api/spells/granted")) return new Response("no", { status: 400 });
     if (url.startsWith("/api/search")) {
       const hit = { type: "spell", name: "Mage Hand", source: "PHB", edition: "classic" };
       return json({ items: [hit], total: 1, limit: 200, offset: 0 });
@@ -158,5 +162,67 @@ describe("OwedSpellPicks", () => {
       { grantor: { kind: "feat", ref: INITIATE }, block: 1 },
     ]);
     expect(screen.queryByText("Cantrips from Magic Initiate")).toBeNull();
+  });
+
+  it("draws nothing while the character's spells load, so picks made are not shown as owed", async () => {
+    const record = tomePick();
+    const fetchMock = renderOwed(record, TOME_GRANTS, { spells: [] }, true);
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/spells/granted"))).toBe(
+        true,
+      ),
+    );
+    expect(screen.queryByText("Spell Picks")).toBeNull();
+  });
+
+  it("removes a pick and keeps the others", async () => {
+    const pickedFor = { kind: "optionalFeature" as const, ref: TOME };
+    const record = tomePick();
+    record.definition.spells = ["Mage Hand", "Light"].map((name) => ({
+      ref: { name, source: "PHB" },
+      prepared: true,
+      pickedFor,
+    }));
+    const sheet = {
+      spells: ["Mage Hand", "Light"].map((name) => ({
+        resolved: true as const,
+        name,
+        source: "PHB",
+        prepared: true,
+        level: 0,
+        school: "V",
+        concentration: false,
+        ritual: false,
+        entries: [],
+        pickedFor,
+      })),
+    };
+    const fetchMock = renderOwed(record, TOME_GRANTS, sheet);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Remove Mage Hand" }));
+
+    await waitFor(() => expect(written(fetchMock)).toBeDefined());
+    expect(written(fetchMock)?.spells.map(({ ref }) => ("name" in ref ? ref.name : ""))).toEqual([
+      "Light",
+    ]);
+  });
+
+  it("refuses a spell the character knows already and writes nothing", async () => {
+    const record = tomePick();
+    record.definition.spells = [{ ref: { name: "Mage Hand", source: "PHB" }, prepared: true }];
+    const fetchMock = renderOwed(record, TOME_GRANTS, { spells: [] });
+
+    fireEvent.focus(await screen.findByRole("combobox", { name: /cantrip/i }));
+    const option = await screen.findByRole("option", { name: /Mage Hand/ });
+    expect(option).toHaveTextContent("Known already");
+    fireEvent.click(option);
+
+    expect(written(fetchMock)).toBeUndefined();
+  });
+
+  it("says so when the offered spells cannot be looked up", async () => {
+    renderOwed(tomePick(), {}, { spells: [] });
+    expect(await screen.findByText(/Couldn't look up the spells/)).toBeInTheDocument();
   });
 });

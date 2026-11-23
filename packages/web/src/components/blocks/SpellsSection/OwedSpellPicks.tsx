@@ -13,8 +13,10 @@ import { useOwedSpellPicks } from "./useOwedSpellPicks.ts";
  * chosen first. Nothing draws once every pick is made; they are then in Known Spells.
  */
 export function OwedSpellPicks({ character }: { character: CharacterRecord }) {
-  const { rows, choosing, held, failed, chooseBlock, add, remove } = useOwedSpellPicks(character);
-  if (rows.length === 0 && choosing.length === 0) return null;
+  const { rows, choosing, held, ready, failed, chooseBlock, add, remove } =
+    useOwedSpellPicks(character);
+  if (!failed && !ready) return null;
+  if (rows.length === 0 && choosing.length === 0 && !failed) return null;
   const unavailableReason = (hit: SearchHit) =>
     held.has(searchHitKey(hit)) ? "Known already" : undefined;
   return (

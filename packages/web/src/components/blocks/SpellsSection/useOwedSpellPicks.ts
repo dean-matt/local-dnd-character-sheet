@@ -5,8 +5,12 @@ import { useCharacterSpells } from "../../../hooks/useCharacterSpells.ts";
 import { useGrantedSpells } from "../../../hooks/useGrantedSpells.ts";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
 import { useRowWrites } from "../../../hooks/useRowWrites.ts";
-import type { BlockGrantor } from "../../../lib/spellGrantors.ts";
-import { heldSpellGrantors, type PickGrantor, withSpellBlock } from "../../../lib/spellGrantors.ts";
+import {
+  type BlockGrantor,
+  heldSpellGrantors,
+  type PickGrantor,
+  withSpellBlock,
+} from "../../../lib/spellGrantors.ts";
 import {
   cantripsOf,
   type Offer,
