@@ -160,7 +160,10 @@ export function FeatureRow({
           <>
             <RulesEntries entries={feature.entries} />
             {source !== undefined && (
-              <FeatureHomebrewEffect feature={{ name: feature.name, source }} />
+              <FeatureHomebrewEffect
+                feature={{ name: feature.name, source }}
+                origin={group.origin}
+              />
             )}
           </>
         ),

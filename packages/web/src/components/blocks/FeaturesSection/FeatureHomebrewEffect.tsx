@@ -1,3 +1,4 @@
+import type { FeatureOrigin } from "@dnd/catalog";
 import { type ContentRef, type Mechanic, mechanicListSchema } from "@dnd/character";
 import { useState } from "react";
 import { useHomebrewFeatureEffect } from "../../../hooks/useHomebrewFeatureEffect.ts";
@@ -21,7 +22,15 @@ function parseMechanics(text: string): { error: string } | { mechanics: Mechanic
 }
 
 /** Creates, edits and deletes the homebrew effect a table rules for a catalog feature, as JSON. */
-export function FeatureHomebrewEffect({ feature }: { feature: ContentRef }) {
+export function FeatureHomebrewEffect({
+  feature,
+  origin,
+}: {
+  feature: ContentRef;
+  /** A class or subclass feature is shared by every class granting that name and source. */
+  origin?: FeatureOrigin;
+}) {
+  const shared = origin === "class" || origin === "subclass";
   const { effect, loading, save, remove } = useHomebrewFeatureEffect(feature);
   const [draft, setDraft] = useState<string>();
   const [problem, setProblem] = useState<string>();
@@ -45,6 +54,11 @@ export function FeatureHomebrewEffect({ feature }: { feature: ContentRef }) {
       <h3 className="font-semibold text-label text-muted uppercase tracking-label">
         Homebrew effect
       </h3>
+      {shared && (
+        <p className="text-muted text-row">
+          Applies to every class and subclass feature with this name and source.
+        </p>
+      )}
       <FormField label="Mechanics (JSON)" error={failure}>
         {(control) => (
           <textarea

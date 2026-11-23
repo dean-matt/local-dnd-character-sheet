@@ -11,11 +11,12 @@ const PATH = "/homebrew/feature-effects";
 
 /**
  * The homebrew effect a table rules for the catalog feature `ref`, if one does, with the writes
- * that set and clear it. Every query refreshes after a write, since the sheet reads it too.
+ * that set and clear it. The effects list refreshes after a write.
  */
 export function useHomebrewFeatureEffect(ref: ContentRef) {
   const queryClient = useQueryClient();
-  const refresh = () => queryClient.invalidateQueries();
+  const refresh = () =>
+    queryClient.invalidateQueries({ queryKey: ["homebrew", "feature-effects"] });
   const list = useQuery({
     queryKey: ["homebrew", "feature-effects"],
     queryFn: () => apiGet(PATH, z.array(homebrewFeatureEffectRecordSchema)),

@@ -95,4 +95,14 @@ describe("FeatureHomebrewEffect", () => {
     expect((await screen.findByRole("alert")).textContent).toContain("Not valid JSON");
     expect(calls.every(({ method }) => method === "GET")).toBe(true);
   });
+
+  it("says a class feature's effect is shared only when it is", async () => {
+    serve();
+    const { rerender } = renderWithClient(
+      <FeatureHomebrewEffect feature={feature} origin="class" />,
+    );
+    expect(await screen.findByText(/every class and subclass feature/)).toBeTruthy();
+    rerender(<FeatureHomebrewEffect feature={feature} />);
+    expect(screen.queryByText(/every class and subclass feature/)).toBeNull();
+  });
 });
