@@ -132,15 +132,6 @@ export const SUBCLASS_NAMES = new Map([
   ["Berserker|PHB", "Path of the Berserker|PHB"],
 ]);
 
-/** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */
-const RACE_TRAITS = new Map([
-  ["Dwarven Toughness|PHB", ["Dwarf|PHB|Hill|PHB"]],
-  ["Fey Ancestry|PHB", ["Elf|PHB", "Half-Elf|PHB"]],
-  ["Gnome Cunning|PHB", ["Gnome|PHB"]],
-  ["Brave|PHB", ["Halfling|PHB"]],
-  ["Relentless Endurance|PHB", ["Half-Orc|PHB"]],
-]);
-
 /** The features section's group a held feature shows in. */
 type HeldOrigin = "class" | "subclass" | "race" | "feat" | "optionalFeature";
 
@@ -220,10 +211,9 @@ const CLASS_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
     : [];
 });
 
-const RACE_FEATURES = FEATURE_MECHANICS.flatMap((entry) => {
-  const owners = RACE_TRAITS.get(featureMechanicsKey(entry));
-  return owners ? [{ entry, ref: entry.ref as ContentRef, owners }] : [];
-});
+const RACE_FEATURES = FEATURE_MECHANICS.flatMap((entry) =>
+  entry.races ? [{ entry, ref: entry.ref as ContentRef, owners: entry.races }] : [],
+);
 
 export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" | "houseRules">> &
   Pick<CharacterDefinition, "feats" | "optionalFeatures" | "race" | "subrace" | "levels"> & {
