@@ -18,7 +18,7 @@ import {
 } from "@dnd/character";
 import type Database from "better-sqlite3";
 
-type Kind = Mechanic["kind"] | "poolCost";
+type Kind = Mechanic["kind"] | "poolCost" | "triggered";
 
 /**
  * A keyword match over a feature's JSON, so it misses a mechanic worded otherwise and flags
@@ -28,6 +28,7 @@ type Kind = Mechanic["kind"] | "poolCost";
  * `active` looks for a duration on the character's own benefit, so an effect the feature lays
  * on another creature is not one.
  * `convert`, `slotRecovery` and `regain` count only a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
+ * `triggered` looks for an effect that waits on rolling initiative or on reducing or killing a creature, in a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  * `dc` looks for a save DC the text states from the character, so a fixed one is not one, in a
  * 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  * `poolCost` counts a feature that names a cost from ki, sorcery points, Channel Divinity,
@@ -68,6 +69,8 @@ const KIND_PATTERNS: Record<Kind, RegExp> = {
     /"additionalSpells":|\byou (?:can|may) cast (?:the )?\{@spell [^}]+\}[^."]{0,40}\b(?:at will|once)\b|\bwithout expending a spell slot\b|\balways (?:have|has) (?!prepared)[^."]{1,80}\bprepared\b|\byou (?:learn|know) (?:the )?\{@spell [^}]+\} (?:cantrip|spell)\b|\bspells? of your choice from any\b/i,
   poolCost:
     /"consumes":\{"name":"(?:Ki|Sorcery Point|Channel Divinity|Superiority Die|Psionic Energy Die)"|\b(?:spend|expend)s? (?:up to )?(?:\d+|one|two|three|four|five|six) (?:ki|sorcery) points?/i,
+  triggered:
+    /\bwhen you (?:roll (?:for )?(?:\{@\w+ )?[Ii]nitiative|reduce [^."]{0,60}to 0 hit points|(?:kill|destroy) [^."]{0,60}with a spell)/i,
   uses: /\bnumber of times equal to\b|\bregain (?:all |one |any )?(?:of )?(?:its |your )?expended uses\b|\buse (?:it|this feature) (?:again|twice|three times)\b|\b(?:can't|cannot) (?:use|do so|cast)[^."]{0,40} again until\b/i,
 };
 
@@ -267,7 +270,11 @@ export function mechanicGaps(db: Database.Database): Gaps {
   const suggests = (row: Unit, kind: Kind) =>
     KIND_PATTERNS[kind].test(row.json) &&
     (kind !== "uses" || (row.uses === null && row.poolKey === undefined)) &&
-    ((kind !== "convert" && kind !== "slotRecovery" && kind !== "regain" && kind !== "dc") ||
+    ((kind !== "convert" &&
+      kind !== "slotRecovery" &&
+      kind !== "regain" &&
+      kind !== "dc" &&
+      kind !== "triggered") ||
       row.edition === "classic") &&
     (kind !== "poolCost" || (row.edition === "classic" && !featureCostRecorded(row)));
   const matches = (row: Unit, bucket: Bucket) =>

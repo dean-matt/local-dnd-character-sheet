@@ -31,7 +31,7 @@ export function RegainButton({
   onRegain: (state: CharacterState, announcement: string) => Promise<boolean>;
 }) {
   const regain = derived.regains.find(
-    (each) => each.feature.name === name && each.feature.source === source,
+    (each) => each.feature.name === name && each.feature.source === source && !each.on,
   );
   const hasRecoveryCount = derived.limitedUses.some(
     (each) =>

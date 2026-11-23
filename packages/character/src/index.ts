@@ -239,7 +239,7 @@ export {
   entryRefSchema,
   type FeatureKey,
 } from "./refs.ts";
-export { regainedState } from "./regain.ts";
+export { initiativeRegained, regainedState } from "./regain.ts";
 export { derivedValue, houseRule } from "./resolve.ts";
 export { longRestHitDicePick, type RestLength, restedState, sheetState } from "./rest.ts";
 export {

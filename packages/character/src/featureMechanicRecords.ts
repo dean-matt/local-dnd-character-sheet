@@ -3050,11 +3050,40 @@ const RECORDS: FeatureMechanics[] = [
     { kind: "tempHp", dice: "1d8", bonus: ["wis"] },
   ]),
   subclassFeature(["Warlock", "PHB"], ["Fiend", "PHB"], ["Dark One's Blessing", "PHB"], 1, [
-    { kind: "tempHp", bonus: ["cha", "level"] },
+    { kind: "tempHp", bonus: ["cha", "level"], on: "zeroHp" },
   ]),
   subclassFeature(["Warlock", "XPHB"], ["Fiend", "XPHB"], ["Dark One's Blessing", "XPHB"], 3, [
     { kind: "tempHp", bonus: ["cha", "level"] },
   ]),
+  // Heals twice the level of the killing spell, three times for a necromancy spell. The sheet
+  // records neither the spell nor its school.
+  narrative({
+    name: "Grim Harvest",
+    source: "PHB",
+    className: "Wizard",
+    classSource: "PHB",
+    subclass: { shortName: "Necromancy", source: "PHB" },
+    level: 2,
+  }),
+  // Each regains on rolling initiative where none is left, as printed. Tireless Spirit regains a
+  // use of Fighting Spirit, whose count is the catalog's, which a roll of initiative does not read.
+  classFeature(monk, ["Perfect Self", "PHB"], 20, [
+    { kind: "regain", target: "pool", pool: "ki_points", count: 4, on: "initiative" },
+  ]),
+  subclassFeature(fighter, ["Battle Master", "PHB"], ["Relentless", "PHB"], 15, [
+    { kind: "regain", target: "pool", pool: "superiority_dice", count: 1, on: "initiative" },
+  ]),
+  classFeature(bard, ["Superior Inspiration", "PHB"], 20, [
+    { kind: "regain", target: "uses", of: "Bardic Inspiration", count: 1, on: "initiative" },
+  ]),
+  narrative({
+    name: "Tireless Spirit",
+    source: "XGE",
+    className: "Fighter",
+    classSource: "PHB",
+    subclass: { shortName: "Samurai", source: "XGE" },
+    level: 10,
+  }),
   {
     ref: { name: "Relentless Endurance", source: "PHB" },
     races: ["Half-Orc|PHB"],
@@ -3243,7 +3272,6 @@ const RECORDS: FeatureMechanics[] = [
       [["Sorcerer", "PHB"], "Hound of Ill Omen", ["Shadow", "XGE"], "XGE", 6],
       [["Sorcerer", "PHB"], "Clockwork Cavalcade", ["Clockwork Soul", "TCE"], "TCE", 18],
       [["Wizard", "PHB"], "Arcane Ward", ["Abjuration", "PHB"], "PHB", 2],
-      [["Wizard", "PHB"], "Grim Harvest", ["Necromancy", "PHB"], "PHB", 2],
       [["Wizard", "PHB"], "Master Transmuter", ["Transmutation", "PHB"], "PHB", 14],
       [["Wizard", "PHB"], "Durable Summons", ["Conjuration", "PHB"], "PHB", 14],
       [barbarian, "Form of the Beast", ["Beast", "TCE"], "TCE", 3],

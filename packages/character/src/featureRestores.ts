@@ -70,6 +70,7 @@ export function featureRestores(definition: HoldsFeatures, sheet: RestoreSheet):
             kind: mechanic.kind,
             ...restored,
             others: mechanic.others === true,
+            on: mechanic.on,
             ...(per && {
               per: { unit: per, most: most ? Math.max(1, sheet.modifier(most)) : null },
             }),

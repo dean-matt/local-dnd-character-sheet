@@ -22,15 +22,26 @@ export function regains(definition: HoldsFeatures): Regain[] {
   return heldFeatures(definition).flatMap(({ entry, ref }) => {
     if (!("className" in entry.ref)) return [];
     const owner = { name: entry.ref.className, source: entry.ref.classSource };
-    return mechanicsOfKind(entry, "regain").map(({ target, pool, count }) => ({
+    return mechanicsOfKind(entry, "regain").map(({ target, pool, count, of, on }) => ({
       feature: ref,
       class: owner,
       target,
       ...(pool && { pool }),
       ...(count && { count }),
+      ...(of && { of }),
+      ...(on && { on }),
     }));
   });
 }
+
+/** The main uses of the feature a regain of uses names: its own, or the one of its source `of` names. */
+const mainUses = (derived: Pick<CharacterDerived, "limitedUses">, regain: Regain) =>
+  derived.limitedUses.find(
+    (uses) =>
+      uses.part === undefined &&
+      uses.feature.name === (regain.of ?? regain.feature.name) &&
+      uses.feature.source === regain.feature.source,
+  );
 
 /**
  * The state after `regain` lands, or null where nothing it names is expended: the pool's
@@ -58,12 +69,44 @@ export function regainedState(
       ? withClassResource(state, { ...held, expended: Math.max(0, held.expended - count) })
       : null;
   }
-  const main = derived.limitedUses.find(
-    (uses) =>
-      uses.part === undefined &&
-      uses.feature.name === regain.feature.name &&
-      uses.feature.source === regain.feature.source,
-  );
+  const main = mainUses(derived, regain);
   const spent = main ? featureUsesSpent(state, main.key, main.count) : 0;
   return main && spent > 0 ? withFeatureUse(state, main.key, Math.max(0, spent - count)) : null;
+}
+
+/**
+ * The state after each regain made on rolling initiative lands where the pool or uses it names
+ * hold none, and the features that regained.
+ */
+export function initiativeRegained(
+  derived: Sheet & Pick<CharacterDerived, "regains">,
+  state: CharacterState,
+): { state: CharacterState; features: string[] } {
+  return derived.regains
+    .filter(({ on }) => on === "initiative")
+    .reduce<{ state: CharacterState; features: string[] }>(
+      (into, regain) => {
+        const sheet = sheetState(derived, into.state);
+        const held =
+          regain.target === "pool"
+            ? sheet.classResources[
+                derived.classResources.findIndex(
+                  (pool) =>
+                    pool.key === regain.pool && entryKey(pool.class) === entryKey(regain.class),
+                )
+              ]
+            : undefined;
+        const main = mainUses(derived, regain);
+        const none =
+          regain.target === "pool"
+            ? held !== undefined && held.maximum !== null && held.expended >= held.maximum
+            : main !== undefined &&
+              featureUsesSpent(into.state, main.key, main.count) >= main.count;
+        const regained = none ? regainedState(derived, into.state, regain) : null;
+        return regained
+          ? { state: regained, features: [...into.features, regain.feature.name] }
+          : into;
+      },
+      { state, features: [] },
+    );
 }

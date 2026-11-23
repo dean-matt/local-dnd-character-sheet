@@ -179,7 +179,8 @@ const featureDamageSchema = z.strictObject({
  * `tempHp`, of `dice` rolled plus `bonus`, at least 1. `others` falls on another creature, so
  * the sheet shows the amount and restores nothing to the character. Under `per`, the dice and
  * bonus land once for each level of the spell slot the player expends or each creature that
- * accepts, at most `most` creatures where it is not null.
+ * accepts, at most `most` creatures where it is not null. `on` is the event it waits on in
+ * place of a use.
  */
 const featureRestoreSchema = z.strictObject({
   feature: contentRefSchema,
@@ -193,6 +194,7 @@ const featureRestoreSchema = z.strictObject({
       most: z.int().min(1).nullable(),
     })
     .optional(),
+  on: z.literal("zeroHp").optional(),
 });
 
 /**
@@ -230,7 +232,8 @@ const slotRecoverySchema = z.strictObject({
 
 /**
  * What a use of a held class or subclass feature regains: the pool `pool` of `class`, the pact
- * slots, or its own main uses, `count` of them or, absent, all.
+ * slots, or the main uses of itself or of the feature `of` names, `count` of them or, absent,
+ * all. `on` regains them without a use, as rolling initiative finds none left.
  */
 const regainSchema = z.strictObject({
   feature: contentRefSchema,
@@ -238,6 +241,8 @@ const regainSchema = z.strictObject({
   target: z.enum(["pool", "pactSlots", "uses"]),
   pool: z.string().min(1).optional(),
   count: z.int().min(1).optional(),
+  of: z.string().min(1).optional(),
+  on: z.literal("initiative").optional(),
 });
 
 /**

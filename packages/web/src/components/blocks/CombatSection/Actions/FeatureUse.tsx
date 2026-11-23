@@ -6,6 +6,7 @@ import {
   actionAddedBy,
   type CharacterDerived,
   type CharacterRecord,
+  type CharacterState,
   type ConversionOption,
   conversionOptions,
   convertedState,
@@ -38,8 +39,21 @@ function countLeft(resource: FeatureResource | null, amount: number, used: strin
     : used;
 }
 
+const addedBlocked = (state: CharacterState | null, name: string) =>
+  state && actionAddedBy(state, name) ? `${name} already used this turn` : null;
+
+const waitsOnEvent = (derived: CharacterDerived, feature: { name: string; source: string }) =>
+  derived.featureRestores.some(
+    (restore) =>
+      restore.on !== undefined &&
+      restore.feature.name === feature.name &&
+      restore.feature.source === feature.source,
+  );
+
 /**
- * A held feature's resource and its Use control. A Use spends the resource, if any, marks
+ * A held feature's resource and its Use control; a feature whose effect waits on an event, such
+ * as reducing a creature to 0 hit points, offers Apply, which lands the effect without a spend.
+ * A Use spends the resource, if any, marks
  * the feature's action type spent on the Turn Economy, adds an action to the turn where the
  * feature does, as Action Surge does, and lands what the feature restores,
  * as one announced state write, then logs what it rolled. A feature that trades between a
@@ -84,7 +98,8 @@ export function FeatureUse({
     group,
     usesOf,
   );
-  if (!resource && !mark) return null;
+  const triggered = waitsOnEvent(derived, { name, source });
+  if (!resource && !mark && !triggered) return null;
 
   const amount = amountSpent(resource, chosen);
   const choice = restoreChoice(derived, stored, { name, source });
@@ -94,11 +109,10 @@ export function FeatureUse({
     (feature) => feature.name === name && feature.source === source,
   );
   const blocked =
-    resource?.blocked ??
-    choiceBlocked(choice) ??
-    (addsAction && actionAddedBy(stored, name) ? `${name} already used this turn` : null);
+    resource?.blocked ?? choiceBlocked(choice) ?? addedBlocked(addsAction ? stored : null, name);
   const disabled = replace.writing || blocked !== null;
   const counted = resource?.total != null;
+  const verb = triggered ? "Apply" : "Use";
   const conversion = derived.featureConversions.find(
     ({ feature }) => feature.name === name && feature.source === source,
   );
@@ -119,7 +133,7 @@ export function FeatureUse({
   async function use() {
     if (disabled) return;
     const restored = restore(derived, { name, source }, spent(), count);
-    const parts = [...usedWords(), ...restored.text];
+    const parts = [...(triggered ? [] : usedWords()), ...restored.text];
     if (await replace.write(restored.state, `${parts.join(". ")}.`)) restored.log();
   }
 
@@ -160,13 +174,13 @@ export function FeatureUse({
       ) : (
         <button
           type="button"
-          aria-label={`Use ${name}`}
-          title={blocked ?? "Use"}
+          aria-label={`${verb} ${name}`}
+          title={blocked ?? verb}
           aria-disabled={disabled}
           onClick={use}
           className={BUTTON}
         >
-          Use
+          {verb}
         </button>
       )}
       {conversion && converting && (

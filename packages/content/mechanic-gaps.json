@@ -25,6 +25,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 4,
     "unclassified": 12
   },
@@ -54,6 +55,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 7
   },
@@ -83,6 +85,7 @@
     "turn": 1,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 1
   },
@@ -112,6 +115,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 27
   },
@@ -141,6 +145,7 @@
     "turn": 0,
     "spells": 1,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 7,
     "unclassified": 4
   },
@@ -170,6 +175,7 @@
     "turn": 0,
     "spells": 1,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 2
   },
@@ -199,6 +205,7 @@
     "turn": 1,
     "spells": 2,
     "poolCost": 2,
+    "triggered": 1,
     "uses": 1,
     "unclassified": 27
   },
@@ -228,6 +235,7 @@
     "turn": 0,
     "spells": 8,
     "poolCost": 2,
+    "triggered": 0,
     "uses": 8,
     "unclassified": 4
   },
@@ -257,6 +265,7 @@
     "turn": 0,
     "spells": 4,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 4
   },
@@ -286,6 +295,7 @@
     "turn": 0,
     "spells": 2,
     "poolCost": 0,
+    "triggered": 1,
     "uses": 24,
     "unclassified": 43
   },
@@ -315,6 +325,7 @@
     "turn": 1,
     "spells": 8,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 7,
     "unclassified": 27
   },
@@ -344,6 +355,7 @@
     "turn": 0,
     "spells": 2,
     "poolCost": 3,
+    "triggered": 0,
     "uses": 24,
     "unclassified": 17
   },
@@ -373,6 +385,7 @@
     "turn": 1,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 1,
     "unclassified": 20
   },
@@ -402,6 +415,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 2
   },
@@ -431,6 +445,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 1
   },
@@ -460,6 +475,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 1,
     "unclassified": 15
   },
@@ -489,6 +505,7 @@
     "turn": 3,
     "spells": 12,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 33,
     "unclassified": 34
   },
@@ -518,6 +535,7 @@
     "turn": 0,
     "spells": 12,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 4
   },
@@ -547,6 +565,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 4
   },
@@ -576,6 +595,7 @@
     "turn": 1,
     "spells": 4,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 15,
     "unclassified": 393
   },
@@ -605,6 +625,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 1
   },
@@ -634,6 +655,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 4
   },
@@ -663,6 +685,7 @@
     "turn": 0,
     "spells": 2,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 9
   },
@@ -692,6 +715,7 @@
     "turn": 0,
     "spells": 1,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 4
   },
@@ -721,6 +745,7 @@
     "turn": 0,
     "spells": 1,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 7
   },
@@ -750,6 +775,7 @@
     "turn": 1,
     "spells": 5,
     "poolCost": 6,
+    "triggered": 1,
     "uses": 0,
     "unclassified": 44
   },
@@ -779,6 +805,7 @@
     "turn": 0,
     "spells": 2,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 5
   },
@@ -808,6 +835,7 @@
     "turn": 0,
     "spells": 2,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 4,
     "unclassified": 2
   },
@@ -837,6 +865,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 10,
     "unclassified": 143
   },
@@ -866,6 +895,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 2
   },
@@ -895,6 +925,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 2
   },
@@ -924,6 +955,7 @@
     "turn": 1,
     "spells": 1,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 39
   },
@@ -953,6 +985,7 @@
     "turn": 1,
     "spells": 2,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 2,
     "unclassified": 20
   },
@@ -982,6 +1015,7 @@
     "turn": 0,
     "spells": 2,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 6,
     "unclassified": 9
   },
@@ -1011,6 +1045,7 @@
     "turn": 0,
     "spells": 1,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 2,
     "unclassified": 3
   },
@@ -1040,6 +1075,7 @@
     "turn": 1,
     "spells": 2,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 104
   },
@@ -1069,6 +1105,7 @@
     "turn": 0,
     "spells": 0,
     "poolCost": 0,
+    "triggered": 0,
     "uses": 0,
     "unclassified": 261
   }

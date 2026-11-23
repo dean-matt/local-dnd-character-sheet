@@ -442,6 +442,28 @@ describe("Actions", () => {
       );
     });
 
+    it("applies a feature that waits on an event in one write, spending nothing", async () => {
+      const blessing = { ...SECOND_WIND, name: "Dark One's Blessing", source: "PHB" };
+      const { card, writes, rolls } = renderUse(blessing, {
+        hitPoints: { current: 10, temporary: 3 },
+        restores: [
+          restore("Dark One's Blessing", "PHB", { kind: "tempHp", bonus: 7, on: "zeroHp" }),
+        ],
+      });
+      expect(within(card).queryByRole("button", { name: "Use Dark One's Blessing" })).toBeNull();
+      const apply = await within(card).findByRole("button", { name: "Apply Dark One's Blessing" });
+      fireEvent.click(apply);
+
+      await waitFor(() => expect(rolls).toHaveLength(1));
+      expect(writes).toHaveLength(1);
+      expect(writes[0]?.hitPoints).toEqual({ current: 10, temporary: 7 });
+      expect(writes[0]?.classResources[0]?.expended).toBe(0);
+      expect(rolls[0]).toMatchObject({ type: "temporary-hp", label: "Dark One's Blessing" });
+      expect(within(apply.closest("li") as HTMLElement).getByRole("status")).toHaveTextContent(
+        "Dark One's Blessing: gained 7 temporary hit points.",
+      );
+    });
+
     it("shows a heal on another creature without healing the character", async () => {
       const spark = { ...SECOND_WIND, name: "Divine Spark" };
       const { card, writes, rolls } = renderUse(spark, {

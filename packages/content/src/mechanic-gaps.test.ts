@@ -46,6 +46,7 @@ const zero: Counts = {
   poolCost: 0,
   turn: 0,
   spells: 0,
+  triggered: 0,
   uses: 0,
   unclassified: 0,
 };
@@ -114,6 +115,18 @@ describe("mechanicGaps", () => {
     "PHB",
     "classic",
     json({ srd: true }, "roll a d4 in place of the normal damage of your unarmed strike"),
+  );
+  feat.run(
+    "Relentlessly",
+    "PHB",
+    "classic",
+    json({ srd: true }, "when you roll initiative and have none left, you regain one"),
+  );
+  feat.run(
+    "Relentlessly",
+    "XPHB",
+    "one",
+    json({ srd52: true }, "when you roll initiative and have none left, you regain one"),
   );
   feat.run("Mending", "PHB", "classic", json({ srd: true }, "regain {@dice 1d10} hit points"));
   feat.run("Shielding", "PHB", "classic", json({ srd: true }, "gain 5 temporary hit points"));
@@ -237,6 +250,8 @@ describe("mechanicGaps", () => {
     expect(phb?.convert).toEqual(["Flexible (PHB)"]);
     expect(phb?.slotRecovery).toEqual(["Recovering (PHB)"]);
     expect(phb?.regain).toEqual(["Restoring (PHB)"]);
+    expect(phb?.triggered).toEqual(["Relentlessly (PHB)"]);
+    expect(xphb?.triggered).toEqual([]);
     expect(phb?.uses).toEqual(["Surging (PHB)"]);
     expect(phb?.poolCost).toEqual(["Spender (PHB)"]);
     expect(phb?.dc).toEqual(["Frightening (PHB)"]);
@@ -252,7 +267,7 @@ describe("mechanicGaps", () => {
       "Turning (PHB)",
       "Venom (PHB)",
     ]);
-    expect(xphb?.bonus).toEqual(["Quick (XPHB)"]);
+    expect(xphb?.bonus).toEqual(["Quick (XPHB)", "Relentlessly (XPHB)"]);
     expect(xphb?.unclassified).toEqual([
       "Fountain (XPHB)",
       "Recovered (XPHB)",
@@ -266,9 +281,15 @@ describe("mechanicGaps", () => {
   it("counts each source on its own", () => {
     const counts = countGaps(mechanicGaps(db));
     expect(Object.keys(counts)).toEqual(["PHB", "XGE", "XPHB"]);
-    expect(counts.PHB).toMatchObject({ defense: 1, turn: 2, spells: 2, unclassified: 7 });
+    expect(counts.PHB).toMatchObject({
+      defense: 1,
+      triggered: 1,
+      turn: 2,
+      spells: 2,
+      unclassified: 7,
+    });
     expect(counts.XGE).toEqual({ ...zero, bonus: 1 });
-    expect(counts.XPHB).toEqual({ ...zero, bonus: 1, unclassified: 4 });
+    expect(counts.XPHB).toEqual({ ...zero, bonus: 2, unclassified: 4 });
   });
 
   it("prints the count per kind, the features beneath it, and a rise past the baseline", () => {
