@@ -1469,6 +1469,166 @@ function withSaveDcs(records: FeatureMechanics[], dcs: FeatureMechanics[]): Feat
   return [...merged, ...pending.values()];
 }
 
+const ambition: [string, string] = ["Ambition (PSA)", "PSA"];
+const knowledge: [string, string] = ["Knowledge (PSA)", "PSA"];
+const solidarity: [string, string] = ["Solidarity (PSA)", "PSA"];
+const strength: [string, string] = ["Strength (PSA)", "PSA"];
+const zeal: [string, string] = ["Zeal (PSA)", "PSA"];
+const domainFeature = (
+  owner: [string, string],
+  subclass: [string, string],
+  name: string,
+  level: number,
+  mechanics: Mechanic[],
+) => subclassFeature(owner, subclass, [name, "PSA"], level, mechanics);
+const domainNarrative = (
+  owner: [string, string],
+  subclass: [string, string],
+  name: string,
+  level: number,
+) =>
+  narrative({
+    name,
+    source: "PSA",
+    className: owner[0],
+    classSource: owner[1],
+    subclass: { shortName: subclass[0], source: subclass[1] },
+    level,
+  });
+const amonkhetTrait = (
+  name: string,
+  races: string[],
+  mechanics?: Mechanic[],
+): FeatureMechanics => ({
+  ref: { name, source: "PSA" },
+  races,
+  ...(mechanics ? { mechanics } : { narrative: true }),
+});
+
+/**
+ * The Amonkhet domains of the Cleric and the races and backgrounds of Plane Shift: Amonkhet.
+ * A race trait whose effect the race row already gives, such as a skill, a speed or an
+ * immunity, is the narrative mark. Avatar of Battle resists only nonmagical damage, which a
+ * defense cannot say, and Oketra's and Rhonas's Blessings lay their bonus on another creature.
+ */
+const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
+  ...(
+    [
+      [ambition, "Ambition Domain (PSA)"],
+      [knowledge, "Knowledge Domain (PSA)"],
+      [solidarity, "Solidarity Domain (PSA)"],
+      [strength, "Strength Domain (PSA)"],
+      [zeal, "Zeal Domain (PSA)"],
+    ] as const
+  ).map(([domain, name]) => domainFeature(cleric, domain, name, 1, [SPELLS])),
+  ...[
+    domainFeature(cleric, ambition, "Channel Divinity: Invoke Duplicity", 2, [
+      advantageOn("against a creature within 5 feet of both you and your illusion"),
+    ]),
+    domainFeature(cleric, solidarity, "Channel Divinity: Preserve Life", 2, [
+      { kind: "heal", bonus: ["level"], times: 5, others: true },
+    ]),
+    domainFeature(cleric, strength, "Channel Divinity: Feat of Strength", 2, [
+      {
+        kind: "attack",
+        attack: 10,
+        afterRoll: true,
+        option: "after a Strength attack roll, using Channel Divinity",
+      },
+      {
+        kind: "roll",
+        roll: "save",
+        abilities: ["str"],
+        bonus: 10,
+        against: "using Channel Divinity",
+      },
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["athletics"],
+        bonus: 10,
+        against: "using Channel Divinity",
+      },
+    ]),
+    domainNarrative(cleric, zeal, "Channel Divinity: Consuming Fervor", 2),
+  ],
+  domainFeature(cleric, ambition, "Warding Flare", 1, [
+    { kind: "uses", count: "wis", reset: "long" },
+  ]),
+  domainNarrative(cleric, ambition, "Channel Divinity: Cloak of Shadows", 6),
+  domainNarrative(cleric, ambition, "Potent Spellcasting", 8),
+  domainNarrative(cleric, ambition, "Improved Duplicity", 17),
+  domainFeature(cleric, solidarity, "Bonus Proficiency", 1, grants({ armor: ["heavy"] })),
+  domainFeature(cleric, strength, "Bonus Proficiency", 1, grants({ armor: ["heavy"] })),
+  domainFeature(
+    cleric,
+    zeal,
+    "Bonus Proficiencies",
+    1,
+    grants({ armor: ["heavy"], weapons: ["martial"] }),
+  ),
+  domainFeature(cleric, solidarity, "Solidarity's Action", 1, [
+    { kind: "uses", count: "wis", reset: "long" },
+  ]),
+  domainFeature(cleric, zeal, "Priest of Zeal", 1, [{ kind: "uses", count: "wis", reset: "long" }]),
+  domainFeature(cleric, strength, "Acolyte of Strength", 1, [
+    skillsOf(1, ["animal handling", "athletics", "nature", "survival"]),
+    ...spellPicks({ count: 1, level: 0, from: "Druid" }),
+  ]),
+  domainNarrative(cleric, solidarity, "Oketra's Blessing", 6),
+  domainNarrative(cleric, strength, "Rhonas's Blessing", 6),
+  domainNarrative(cleric, zeal, "Resounding Strike", 6),
+  ...[solidarity, strength, zeal].map((domain) =>
+    domainFeature(cleric, domain, "Divine Strike", 8, [
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        scales: [{ level: 14, dice: "2d8" }],
+        unarmed: true,
+        oncePerTurn: true,
+        option: ON_A_HIT,
+      },
+    ]),
+  ),
+  domainNarrative(cleric, solidarity, "Supreme Healing", 17),
+  domainNarrative(cleric, strength, "Avatar of Battle", 17),
+  // Its one use is the catalog's.
+  domainNarrative(cleric, zeal, "Blaze of Glory", 17),
+  amonkhetTrait("Flight", ["Aven|PSA"]),
+  amonkhetTrait("Hawkeyed", ["Aven|PSA|Hawk-Headed|PSA"]),
+  amonkhetTrait(
+    "Kefnet's Blessing",
+    ["Aven|PSA|Ibis-Headed|PSA"],
+    [{ kind: "halfProficiency", abilities: ["int"], rounding: "down" }],
+  ),
+  amonkhetTrait("Khenra Weapon Training", ["Khenra|PSA"]),
+  amonkhetTrait("Khenra Twins", ["Khenra|PSA"]),
+  amonkhetTrait("Menacing", ["Minotaur (Amonkhet)|PSA"]),
+  amonkhetTrait("Natural Weapon", ["Minotaur (Amonkhet)|PSA"]),
+  amonkhetTrait(
+    "Relentless Endurance",
+    ["Minotaur (Amonkhet)|PSA"],
+    [
+      { kind: "heal", bonus: [1] },
+      { kind: "uses", count: 1, reset: "long" },
+    ],
+  ),
+  amonkhetTrait("Savage Attacks", ["Minotaur (Amonkhet)|PSA"]),
+  amonkhetTrait("Natural Weapons", ["Naga|PSA"], [{ kind: "dc", ability: "con", label: "Bite" }]),
+  amonkhetTrait("Poison Affinity", ["Naga|PSA"]),
+  amonkhetTrait("Poison Immunity", ["Naga|PSA"]),
+  amonkhetTrait(
+    "Speed Burst",
+    ["Naga|PSA"],
+    [{ kind: "active" }, { kind: "speed", bonus: 5, while: "active" }],
+  ),
+  amonkhetTrait("Skills", ["Human|PHB|Amonkhet|PSA"]),
+  amonkhetTrait("Feat", ["Human|PHB|Amonkhet|PSA"]),
+  ...["Shelter of Dissenters", "Trials of the Five Gods", "Voice of Authority"].map((name) =>
+    narrative({ name, source: "PSA" }),
+  ),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -3160,6 +3320,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SPELLS_FROM_CLASS_FEATURES,
   ...SPELLS_GRANTED_2024,
   ...SPELLS_FROM_CLASS_FEATURES_2024,
+  ...PLANE_SHIFT_AMONKHET,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);

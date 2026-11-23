@@ -130,6 +130,11 @@ export const SUBCLASS_NAMES = new Map([
   ["Great Old One|PHB", "The Great Old One|PHB"],
   ["Enchantment|PHB", "School of Enchantment|PHB"],
   ["Berserker|PHB", "Path of the Berserker|PHB"],
+  ["Ambition (PSA)|PSA", "Ambition Domain (PSA)|PSA"],
+  ["Knowledge (PSA)|PSA", "Knowledge Domain (PSA)|PSA"],
+  ["Solidarity (PSA)|PSA", "Solidarity Domain (PSA)|PSA"],
+  ["Strength (PSA)|PSA", "Strength Domain (PSA)|PSA"],
+  ["Zeal (PSA)|PSA", "Zeal Domain (PSA)|PSA"],
 ]);
 
 /** The features section's group a held feature shows in. */
