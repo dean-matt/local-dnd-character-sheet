@@ -102,7 +102,7 @@ describe("featureRestores", () => {
   it("adds the Charisma modifier to the warlock level for Dark One's Blessing", () => {
     const fiend = levelsOf("Warlock", "PHB", 3, { name: "The Fiend", source: "PHB" });
     expect(restoresOf(fiend, "Dark One's Blessing")).toMatchObject([
-      { kind: "tempHp", dice: null, bonus: 7 },
+      { kind: "tempHp", dice: null, bonus: 7, on: "zeroHp" },
     ]);
   });
 

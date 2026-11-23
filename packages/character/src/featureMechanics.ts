@@ -363,6 +363,8 @@ const restoreTermSchema = z.union([
  * holds, `die` where the character holds none. On `others`, it lands on another creature, so
  * the sheet restores no one. A `per` amount lands once for each level of the spell slot the
  * player expends, or each creature that accepts, at most `most`'s modifier and at least one.
+ * `on` names the event a feature waits on instead of a use: `zeroHp`, a creature reduced to 0
+ * hit points, which the player says happened by applying the effect from the feature's card.
  */
 const restoreFields = {
   dice: z
@@ -388,6 +390,7 @@ const restoreFields = {
   others: z.literal(true).optional(),
   per: z.enum(["slotLevel", "creature"]).optional(),
   most: abilitySchema.optional(),
+  on: z.literal("zeroHp").optional(),
 };
 
 type RestoreFields = z.infer<z.ZodObject<typeof restoreFields>>;
@@ -539,7 +542,9 @@ const slotRecoveryMechanicSchema = z.strictObject({
 
 /**
  * What a use of the feature regains: `count` expended uses of the class pool keyed `pool`, all
- * the expended pact slots, or `count` expended uses of the feature's own main count.
+ * the expended pact slots, or `count` expended uses of the main count of the feature itself or,
+ * where `of` names one of the same source, of that feature. `on` regains them without a use,
+ * as rolling initiative finds none left, which is how each feature that prints it reads.
  */
 const regainMechanicSchema = z
   .strictObject({
@@ -547,12 +552,20 @@ const regainMechanicSchema = z
     target: z.enum(["pool", "pactSlots", "uses"]),
     pool: poolKeySchema.optional(),
     count: z.int().min(1).optional(),
+    of: z.string().min(1).optional(),
+    on: z.literal("initiative").optional(),
   })
   .refine(({ target, pool }) => (target === "pool") === (pool !== undefined), {
     error: "only a pool regain names its pool, and it must",
   })
   .refine(({ target, count }) => (target === "pactSlots") === (count === undefined), {
     error: "pact slots regain all of them, any other target a count",
+  })
+  .refine(({ target, of }) => of === undefined || target === "uses", {
+    error: "only a regain of uses names the feature whose uses it regains",
+  })
+  .refine(({ target, on }) => on === undefined || target !== "pactSlots", {
+    error: "a regain on an event restores a count",
   });
 
 /** The standard actions a feature lets the character take as a bonus action, as each edition names them. */

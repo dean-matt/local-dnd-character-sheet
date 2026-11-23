@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterDerived } from "./characterDerived.ts";
 import type { CharacterDefinition } from "./definition.ts";
-import { regainedState, regains } from "./regain.ts";
+import { initiativeRegained, regainedState, regains } from "./regain.ts";
 import { type CharacterState, defaultCharacterState } from "./state.ts";
 import { definition } from "./test/vex.ts";
 
@@ -10,6 +10,8 @@ type Regain = CharacterDerived["regains"][number];
 const SORCERER = { name: "Sorcerer", source: "PHB" };
 const WARLOCK = { name: "Warlock", source: "PHB" };
 const FIGHTER = { name: "Fighter", source: "PHB" };
+const MONK = { name: "Monk", source: "PHB" };
+const BARD = { name: "Bard", source: "PHB" };
 
 const levelsOf = (
   owner: { name: string; source: string },
@@ -112,5 +114,87 @@ describe("regainedState", () => {
       expended: 3,
     });
     expect(regainedState(sheet, state({}), psionic)).toBeNull();
+  });
+});
+
+describe("initiativeRegained", () => {
+  const perfect = regains(levelsOf(MONK, 20));
+  const relentless = regains(levelsOf(FIGHTER, 15, { name: "Battle Master", source: "PHB" }));
+  const superior = regains(levelsOf(BARD, 20));
+  const initiative = (held: Regain[], patch: Partial<CharacterDerived>) =>
+    ({
+      ...sheet,
+      regains: held,
+      classResources: [
+        { class: MONK, key: "ki_points", maximum: total(20), resets: "short" },
+        { class: FIGHTER, key: "superiority_dice", maximum: total(6), resets: "short" },
+      ] as CharacterDerived["classResources"],
+      limitedUses: [
+        {
+          feature: { name: "Bardic Inspiration", source: "PHB" },
+          origin: "class",
+          level: 1,
+          key: "bardic",
+          count: 4,
+          reset: "long",
+        },
+      ],
+      ...patch,
+    }) as Parameters<typeof initiativeRegained>[0];
+
+  it("records each as a regain on initiative", () => {
+    expect(perfect).toEqual([
+      {
+        feature: { name: "Perfect Self", source: "PHB" },
+        class: MONK,
+        target: "pool",
+        pool: "ki_points",
+        count: 4,
+        on: "initiative",
+      },
+    ]);
+    expect(relentless[0]).toMatchObject({ pool: "superiority_dice", count: 1, on: "initiative" });
+    expect(superior[0]).toMatchObject({ target: "uses", of: "Bardic Inspiration", count: 1 });
+  });
+
+  it("regains 4 ki points when none remain, and nothing while any remain", () => {
+    const none = state({
+      classResources: [{ class: MONK, key: "ki_points", maximum: 20, expended: 20 }],
+    });
+    const some = state({
+      classResources: [{ class: MONK, key: "ki_points", maximum: 20, expended: 19 }],
+    });
+    const derived = initiative(perfect, {});
+    const regained = initiativeRegained(derived, none);
+    expect(regained.features).toEqual(["Perfect Self"]);
+    expect(regained.state.classResources[0]?.expended).toBe(16);
+    expect(initiativeRegained(derived, some)).toEqual({ state: some, features: [] });
+  });
+
+  it("regains 1 superiority die when none remain", () => {
+    const none = state({
+      classResources: [{ class: FIGHTER, key: "superiority_dice", maximum: 6, expended: 6 }],
+    });
+    expect(
+      initiativeRegained(initiative(relentless, {}), none).state.classResources[0]?.expended,
+    ).toBe(5);
+  });
+
+  it("regains 1 use of Bardic Inspiration when none are left, and nothing while any are", () => {
+    const derived = initiative(superior, {});
+    const none = state({ featureUses: [{ key: "bardic", expended: 4 }] });
+    expect(initiativeRegained(derived, none).state.featureUses).toContainEqual({
+      key: "bardic",
+      expended: 3,
+    });
+    const some = state({ featureUses: [{ key: "bardic", expended: 3 }] });
+    expect(initiativeRegained(derived, some).features).toEqual([]);
+  });
+
+  it("leaves a regain made on a use to the feature's button", () => {
+    const spent = state({
+      classResources: [{ class: SORCERER, key: "sorcery_points", maximum: 20, expended: 20 }],
+    });
+    expect(initiativeRegained({ ...sheet, regains: [restoration] }, spent).features).toEqual([]);
   });
 });

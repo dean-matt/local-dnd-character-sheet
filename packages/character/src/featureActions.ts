@@ -85,7 +85,7 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
   ...row("reaction", "TCE", "Soul of Artifice"),
   ...row("reaction", "XPHB", "Deflect Attacks", "Uncanny Dodge"),
-  ...row("free", "PHB", "Action Surge"),
+  ...row("free", "PHB", "Action Surge", "Dark One's Blessing"),
   ...row("free", "XPHB", "Action Surge", "Sacred Weapon"),
 ]);
 
