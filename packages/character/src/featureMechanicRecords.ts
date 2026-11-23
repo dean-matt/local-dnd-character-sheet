@@ -798,7 +798,10 @@ const LIMITED_USES: FeatureMechanics[] = [
     { name: "Magic Initiate", source: "PHB" },
     { name: "Artificer Initiate", source: "TCE" },
   ].map(
-    (ref): FeatureMechanics => ({ ref, mechanics: [{ kind: "uses", count: 1, reset: "long" }] }),
+    (ref): FeatureMechanics => ({
+      ref,
+      mechanics: [{ kind: "uses", count: 1, reset: "long" }, SPELLS],
+    }),
   ),
   {
     ref: { name: "Fey Teleportation", source: "XGE" },
@@ -871,9 +874,16 @@ const RUNES_INVOKED: FeatureMechanics[] = [
   "Stone Rune",
 ].map((name) => ({ ref: { name, source: "TCE" }, mechanics: [RUNE_USES] }));
 
-/** The feats, optional features and race traits that grant spells outright and count no uses. */
+/**
+ * The feats, optional features and race traits that grant spells outright or leave them to
+ * the player's pick, and count no uses.
+ */
 const SPELLS_GRANTED: FeatureMechanics[] = [
   { name: "Telekinetic", source: "TCE" },
+  { name: "Ritual Caster", source: "PHB" },
+  { name: "Spell Sniper", source: "PHB" },
+  { name: "Blessed Warrior", source: "TCE" },
+  { name: "Druidic Warrior", source: "TCE" },
   ...[
     "Armor of Shadows",
     "Ascendant Step",
@@ -890,6 +900,8 @@ const SPELLS_GRANTED: FeatureMechanics[] = [
     "Misty Visions",
     "Otherworldly Leap",
     "Pact of the Chain",
+    "Pact of the Tome",
+    "Book of Ancient Secrets",
     "Sculptor of Flesh",
     "Sign of Ill Omen",
     "Thief of Five Fates",

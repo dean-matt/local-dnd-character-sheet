@@ -12,6 +12,7 @@ import { useCharacterSpells } from "../../../hooks/useCharacterSpells.ts";
 import { LoadingState } from "../../../LoadingState.tsx";
 import { CastingBlockedNote } from "../CastingBlockedNote.tsx";
 import { CasterNumbers } from "./CasterNumbers.tsx";
+import { OwedSpellPicks } from "./OwedSpellPicks.tsx";
 import { RagingNote } from "./RagingNote.tsx";
 import { SpellList } from "./SpellList/SpellList.tsx";
 import { SpellSlots } from "./SpellSlots/SpellSlots.tsx";
@@ -46,6 +47,7 @@ export function SpellsSection({
         <CasterNumbers character={character} derived={derived} />
         <SpellSlots character={character} derived={derived} />
       </div>
+      <OwedSpellPicks character={character} />
       <SpellList character={character} derived={derived} />
     </div>
   );

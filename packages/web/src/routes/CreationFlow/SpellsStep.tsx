@@ -5,6 +5,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { CatalogUnavailable } from "../../CatalogUnavailable.tsx";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
 import { PickField } from "../../components/PickField.tsx";
+import { RowPickList } from "../../components/RowPickList.tsx";
 import { SpellBlockChoices } from "../../components/SpellBlockChoices.tsx";
 import { ErrorState } from "../../ErrorState.tsx";
 import { useCatalogOutOfDate } from "../../hooks/useCatalogOutOfDate.ts";
@@ -13,12 +14,6 @@ import type { CasterFacts } from "../../lib/casterFacts.ts";
 import { searchHitKey } from "../../lib/searchHitKey.ts";
 import { type BlockGrantor, type PickGrantor, withSpellBlock } from "../../lib/spellGrantors.ts";
 import { spellListFilters } from "../../lib/spellListFilters.ts";
-import { DepartureMark } from "./DepartureMark.tsx";
-import { GrantedSpells } from "./GrantedSpells.tsx";
-import { NoCastingNote } from "./NoCastingNote.tsx";
-import { OwnSpells } from "./OwnSpells.tsx";
-import { RowPickList } from "./RowPickList.tsx";
-import { StrayPicks } from "./StrayPicks.tsx";
 import {
   cantripsOf,
   classPicksOf,
@@ -26,7 +21,12 @@ import {
   type SubclassPicks,
   spellsOf,
   strayPicks,
-} from "./spellPicks.ts";
+} from "../../lib/spellPicks.ts";
+import { DepartureMark } from "./DepartureMark.tsx";
+import { GrantedSpells } from "./GrantedSpells.tsx";
+import { NoCastingNote } from "./NoCastingNote.tsx";
+import { OwnSpells } from "./OwnSpells.tsx";
+import { StrayPicks } from "./StrayPicks.tsx";
 import { useSpellChoices } from "./useSpellChoices.ts";
 
 /**

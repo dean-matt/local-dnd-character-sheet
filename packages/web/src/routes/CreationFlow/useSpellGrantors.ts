@@ -1,18 +1,12 @@
-import { type CharacterDefinition, type ContentRef, spellBlockKey } from "@dnd/character";
+import type { CharacterDefinition, ContentRef } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import type { SpellGrantorRef } from "../../hooks/useGrantedSpells.ts";
 import { CUSTOM_RACE_SOURCE } from "../../lib/customRace.ts";
-import { blockGrantorOf } from "../../lib/spellGrantors.ts";
+import { heldSpellGrantors, withChosenBlock } from "../../lib/spellGrantors.ts";
 import { useClassEntries } from "./useClassEntries.ts";
 
 const catalogRef = (ref: CharacterDefinition["race"] | undefined): ContentRef | undefined =>
   ref && "name" in ref && ref.source !== CUSTOM_RACE_SOURCE ? ref : undefined;
-
-const catalogRefs = (entries: readonly { ref: CharacterDefinition["race"] }[] | undefined) =>
-  (entries ?? []).flatMap(({ ref }) => {
-    const found = catalogRef(ref);
-    return found ? [found] : [];
-  });
 
 const WATCHED = [
   "levels",
@@ -45,13 +39,8 @@ export function useSpellGrantors(): SpellGrantorRef[] {
     ref: ContentRef,
     parent?: ContentRef,
     atLevel = level,
-  ): SpellGrantorRef => {
-    const row = { grantor, ref, level: atLevel, ...(parent && { parent }) };
-    const key = blockGrantorOf(row);
-    const block =
-      key && spellBlocks.find((choice) => spellBlockKey(choice.grantor) === spellBlockKey(key));
-    return { ...row, ...(block && { block: block.block }) };
-  };
+  ): SpellGrantorRef =>
+    withChosenBlock({ grantor, ref, level: atLevel, ...(parent && { parent }) }, spellBlocks);
   return [
     ...(cls ? [at("class", cls, undefined, classLevel)] : []),
     ...(cls && subclass ? [at("subclass", subclass, cls, classLevel)] : []),
@@ -60,7 +49,9 @@ export function useSpellGrantors(): SpellGrantorRef[] {
       ? [catalogSubrace ? at("subrace", catalogSubrace, catalogRace) : at("race", catalogRace)]
       : []),
     ...(catalogBackground ? [at("background", catalogBackground)] : []),
-    ...catalogRefs(feats).map((ref) => at("feat", ref)),
-    ...catalogRefs(optionalFeatures).map((ref) => at("optionalFeature", ref)),
+    ...heldSpellGrantors(
+      { feats: feats ?? [], optionalFeatures: optionalFeatures ?? [], spellBlocks },
+      level,
+    ),
   ];
 }

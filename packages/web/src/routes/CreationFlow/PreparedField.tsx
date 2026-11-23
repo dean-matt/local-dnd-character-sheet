@@ -2,7 +2,7 @@ import { type EntryRef, entryKey } from "@dnd/character";
 import { useId } from "react";
 import { EmptyNote } from "../../components/EmptyNote.tsx";
 import { PICK_HEADING, PRESS_PILL } from "../../lib/chipStyles.ts";
-import type { PickedSpell } from "./spellPicks.ts";
+import type { PickedSpell } from "../../lib/spellPicks.ts";
 
 export interface PreparedFieldProps {
   /** How many the class prepares, `undefined` where nothing states a number. */

@@ -1,6 +1,6 @@
 import type { SpellGrantor } from "@dnd/catalog";
 import { describe, expect, it } from "vitest";
-import type { PickGrantor } from "../../lib/spellGrantors.ts";
+import type { PickGrantor } from "./spellGrantors.ts";
 import {
   type PickedSpell,
   rowPicks,

@@ -601,9 +601,10 @@ const turnMechanicSchema = z
   });
 
 /**
- * Spells the feature grants outright, which the sheet lists from the `additionalSpells` of the
- * row that gives them, at the level each arrives: the feat's or optional feature's own, or a
- * race trait's race or subrace. A spell the player picks is not recorded here.
+ * Spells the feature grants outright or leaves to the player's pick, which the sheet lists
+ * from the `additionalSpells` of the row that gives them, at the level each arrives: the
+ * feat's or optional feature's own, or a race trait's race or subrace. A pick is stored on the
+ * character, under the feature it was made for.
  */
 const spellsMechanicSchema = z.strictObject({ kind: z.literal("spells") });
 

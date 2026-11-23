@@ -1,7 +1,7 @@
 import { type CharacterDefinition, characterDefinitionSchema } from "@dnd/character";
 import { useWatch } from "react-hook-form";
+import { spellsFilled } from "../../lib/spellPicks.ts";
 import { stepOf } from "./creationSteps.ts";
-import { spellsFilled } from "./spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
 
 /**
