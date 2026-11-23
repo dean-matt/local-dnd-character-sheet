@@ -26,11 +26,14 @@ type Kind = Mechanic["kind"] | "poolCost";
  * `active` looks for a duration on the character's own benefit, so an effect the feature lays
  * on another creature is not one.
  * `convert`, `slotRecovery` and `regain` count only a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
+ * `dc` looks for a save DC the text states from the character, so a fixed one is not one, in a
+ * 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  * `poolCost` counts a feature that names a cost from ki, sorcery points, Channel Divinity,
  * superiority dice or psionic energy dice and neither the cost table nor its notes list, in
  * a 2014 (`classic`) feature, since the 2024 ones wait on their own records.
  */
 const KIND_PATTERNS: Record<Kind, RegExp> = {
+  dc: /\{@dc 8\}(?:\|XPHB)? \+|\bagainst your (?:\w+ )?spell save DC|\bDC equals your (?:\w+ )?spell save DC|\bDC (?:equals|is) 8 \+|\bsave DC (?:is|equals) /i,
   active:
     /\b(?:for|lasts? for) (?:the next )?(?:1|10|one) (?:minute|hour)s?\b[^.]{0,120}?\byou (?:have|gain|add|know|can sense)\b|\byou (?:have|gain|add|become|can sense)\b[^.]{0,60}?\bfor (?:1|10|one) (?:minute|hour)s?\b|\blasts? (?:for 10 minutes|until you dismiss)|\b(?:during that time|for the duration|until the end of your next turn), you (?:also )?(?:have|gain|know)\b|\bfor (?:1|10) (?:minute|hour)s?, you add\b|\bto gain [^.]{0,40}\bfor (?:1|10) (?:minute|hour)s?\b/i,
   heal: /\b(?:regain|restore)(?:s|ing)? [^."]{0,60}?\bhit points?\b/i,
@@ -131,7 +134,7 @@ export function mechanicGaps(db: Database.Database): Gaps {
   const suggests = (row: FeatureRow, kind: Kind) =>
     KIND_PATTERNS[kind].test(row.json) &&
     (kind !== "uses" || (row.uses === null && featurePoolKey(row) === undefined)) &&
-    ((kind !== "convert" && kind !== "slotRecovery" && kind !== "regain") ||
+    ((kind !== "convert" && kind !== "slotRecovery" && kind !== "regain" && kind !== "dc") ||
       row.edition === "classic") &&
     (kind !== "poolCost" || (row.edition === "classic" && !featureCostRecorded(row)));
   const matches = (row: FeatureRow, bucket: Bucket) =>

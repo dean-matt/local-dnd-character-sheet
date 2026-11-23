@@ -7,6 +7,7 @@ import { ListRow } from "../../ListRow/ListRow.tsx";
 import { NotFoundTag } from "../../NotFoundTag.tsx";
 import { RulesEntries } from "../../RulesEntries/RulesEntries.tsx";
 import { Tag } from "../../Tag.tsx";
+import { FeatureDc } from "../FeatureDc.tsx";
 import { FeatPicks } from "./FeatPicks.tsx";
 import { FeatureChoiceField } from "./FeatureChoiceField.tsx";
 import { FeatureEffect } from "./FeatureEffect.tsx";
@@ -102,6 +103,9 @@ export function FeatureRow({
       : derived?.startableFeatures.find(
           (ref) => ref.name === feature.name && ref.source === source,
         );
+  const hasDc = derived?.featureDcs.some(
+    ({ feature: held }) => held.name === feature.name && held.source === source,
+  );
   return (
     <ListRow
       name={feature.name}
@@ -109,8 +113,14 @@ export function FeatureRow({
       chips={chips}
       preview={firstLine(feature.entries)}
       controls={
-        (feature.uses || controls || startable) && (
+        (feature.uses || controls || startable || hasDc) && (
           <>
+            <FeatureDc
+              character={character}
+              derived={derived}
+              name={feature.name}
+              source={feature.source}
+            />
             {[feature.uses, ...(feature.otherUses ?? [])].map(
               (uses) =>
                 uses && (

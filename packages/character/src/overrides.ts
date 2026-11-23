@@ -16,7 +16,7 @@ type Lists = {
  *
  * A container, an unproficient item, an armor that stops casting, a feature's restore, its uses,
  * its conversion, its slot recovery and its regain hold no overridable field, so a name or an index stands in for a key
- * nothing reads.
+ * nothing reads. A feature's save DC is overridable, keyed by the feature.
  *
  * An inventory entry carries an id only once it holds something, so a weapon is named by
  * its item and which copy of that item it is. Removing another item leaves the override on
@@ -35,6 +35,7 @@ const ELEMENT_KEY: {
   unproficientItems: (item) => String(item.entry),
   pendingAbilityPicks: (pick) => String(pick.entry),
   castingBlockedBy: (name) => name,
+  featureDcs: (dc) => refKey(dc.feature),
   featureRestores: (restore) => `${refKey(restore.feature)}|${restore.kind}`,
   limitedUses: (uses) => uses.key,
   startableFeatures: refKey,

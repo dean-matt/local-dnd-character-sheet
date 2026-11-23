@@ -196,6 +196,16 @@ const featureRestoreSchema = z.strictObject({
 });
 
 /**
+ * The save DC a held feature sets, named `label`: 8 plus the proficiency bonus plus an ability
+ * modifier, or the spell save DC of a class.
+ */
+const featureDcSchema = z.strictObject({
+  feature: contentRefSchema,
+  label: z.string().min(1),
+  saveDc: derivedSchema(z.int()),
+});
+
+/**
  * A held feature's trade between its class's pool keyed `pool` and spell slots: `costs` from
  * the pool for one expended slot, the first a level 1 slot's, and no slot above the last at the
  * character's level; `refund` lets a slot be expended for as many uses as its level.
@@ -454,6 +464,8 @@ export const characterDerivedSchema = z.strictObject({
   rollOptions: derivedSchema(z.array(rollOptionSchema)),
   /** What a use of each held feature restores, in the order the features are held. */
   featureRestores: z.array(featureRestoreSchema),
+  /** The save DC each held feature sets, in the order the features are held. */
+  featureDcs: z.array(featureDcSchema),
   /** The pool and slot trades held features make, in the order the features are held. */
   featureConversions: z.array(featureConversionSchema),
   /** The slot recoveries held features make, in the order the features are held. */

@@ -3750,6 +3750,51 @@ describe("deriveCharacter", () => {
     });
   });
 
+  describe("save DCs from class features", () => {
+    const MONK = { name: "Monk", source: "PHB" };
+    const CLERIC = { name: "Cleric", source: "PHB" };
+    const levelled = (ref: { name: string; source: string }, count: number) => ({
+      ...equipped,
+      edition: "classic" as const,
+      levels: Array.from({ length: count }, () => ({ class: ref })),
+    });
+    const catalogOf = (...refs: { name: string; source: string }[]) => ({
+      ...catalog,
+      hitDice: new Map(refs.map((ref) => [entryKey(ref), 8 as const])),
+      spellcastingAbilities: new Map([[entryKey(CLERIC), "wis" as const]]),
+    });
+    const dcOf = (block: CharacterDerived, name: string) =>
+      block.featureDcs.find(({ feature }) => feature.name === name);
+
+    it("adds the proficiency bonus and Wisdom to 8 for the Ki DC, with its terms", () => {
+      const ki = dcOf(deriveCharacter(levelled(MONK, 5), catalogOf(MONK)), "Ki");
+      expect(ki?.label).toBe("Ki");
+      expect(ki?.saveDc.computed).toBe(12);
+      expect(ki?.saveDc.terms.map(({ label, value }) => [label, value])).toEqual([
+        ["Base", 8],
+        ["Wisdom", 1],
+        ["Proficiency", 3],
+      ]);
+    });
+
+    it("gives Channel Divinity the cleric's spell save DC, and lets an override replace it", () => {
+      const cleric = levelled(CLERIC, 5);
+      const block = deriveCharacter(cleric, catalogOf(CLERIC));
+      expect(dcOf(block, "Channel Divinity")?.saveDc.computed).toBe(
+        block.spellcasting[0]?.saveDc.computed,
+      );
+      const entry = dcOf(block, "Channel Divinity");
+      if (!entry) throw new Error("Channel Divinity sets no DC");
+      const key = `${overrideKey("featureDcs", entry, cleric)}.saveDc`;
+      expect(key).toBe("featureDcs.Channel Divinity|PHB.saveDc");
+      const typed = deriveCharacter({ ...cleric, overrides: { [key]: 18 } }, catalogOf(CLERIC));
+      expect(dcOf(typed, "Channel Divinity")?.saveDc).toMatchObject({
+        computed: entry.saveDc.computed,
+        manual: 18,
+      });
+    });
+  });
+
   describe("spell slots", () => {
     const WIZARD = { name: "Wizard", source: "PHB" };
     const SORCERER = { name: "Sorcerer", source: "PHB" };

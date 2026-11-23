@@ -71,6 +71,7 @@ import {
   featureStrike,
 } from "./featureAttacks.ts";
 import { featureConversions } from "./featureConversions.ts";
+import { featureDcs } from "./featureDcs.ts";
 import { featureLimitedUses } from "./featureLimitedUses.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
@@ -1203,6 +1204,7 @@ export function deriveCharacter(
     }),
   ) as Record<Ability, ComputedField<number>>;
 
+  const spellcasting = spellcastingEntries(definition, catalog, level, bonuses, attackModifiers);
   const concentrationTaken = new Map<string, number>();
   // Seeds the caps with the Con save terms that this roll already includes.
   itemTerms(bonuses, (item) => item.save, concentrationTaken);
@@ -1322,7 +1324,7 @@ export function deriveCharacter(
         ),
       ]),
     ),
-    spellcasting: spellcastingEntries(definition, catalog, level, bonuses, attackModifiers),
+    spellcasting,
     spellDamageBonus,
     spellSlots: slotTotals(casters),
     pactSlots: pactSlots(casters),
@@ -1347,6 +1349,17 @@ export function deriveCharacter(
       ...featureAttackEffects(definition),
     ]),
     rollOptions: computed(rolls.options),
+    featureDcs: featureDcs(definition, {
+      modifier: (ability) => abilityModifier(scores[ability].total),
+      ability: (ability) =>
+        fromBreakdown(
+          spellSaveDc(ability, abilityModifier(scores[ability].total), level, [
+            ...itemTerms(bonuses, (item) => item.proficiencyBonus),
+          ]),
+        ),
+      spell: (className) =>
+        spellcasting.find(({ class: held }) => "name" in held && held.name === className)?.saveDc,
+    }),
     featureRestores: featureRestores(definition, {
       column: tableColumn(definition, catalog),
       die: (key) => pools.find((pool) => pool.key === key)?.die,

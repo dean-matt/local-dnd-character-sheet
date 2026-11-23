@@ -20,6 +20,7 @@ import { CONTENT_SCHEMA } from "./schema.ts";
 const VENDOR = join(import.meta.dirname, "../../../vendor/5etools");
 
 const zero: Counts = {
+  dc: 0,
   active: 0,
   heal: 0,
   tempHp: 0,
@@ -163,6 +164,24 @@ describe("mechanicGaps", () => {
   ).run("Flurry of Blows", "PHB", "Monk", "PHB", 2, "classic", surging);
   feat.run("Spender", "PHB", "classic", json({ srd: true }, "you can spend 2 ki points to strike"));
   feat.run(
+    "Frightening",
+    "PHB",
+    "classic",
+    json(
+      { srd: true },
+      "a Wisdom saving throw ({@dc 8} + your proficiency bonus + your Charisma modifier)",
+    ),
+  );
+  feat.run(
+    "Withering",
+    "XPHB",
+    "one",
+    json(
+      { srd52: true },
+      "a Wisdom saving throw ({@dc 8} + your proficiency bonus + your Charisma modifier)",
+    ),
+  );
+  feat.run(
     "Stunning Strike",
     "PHB",
     "classic",
@@ -220,6 +239,7 @@ describe("mechanicGaps", () => {
     expect(gaps.regain).toEqual(["Restoring (PHB)"]);
     expect(gaps.uses).toEqual(["Surging (PHB)"]);
     expect(gaps.poolCost).toEqual(["Spender (PHB)"]);
+    expect(gaps.dc).toEqual(["Frightening (PHB)"]);
     expect(gaps.active).toEqual(["Winged (PHB)"]);
     expect(gaps.turn).toEqual(["Nimble (PHB)", "Twice (PHB)"]);
     expect(gaps.spells).toEqual(["Arcane (PHB)", "Gifted (PHB)"]);
@@ -234,6 +254,7 @@ describe("mechanicGaps", () => {
       "Stunning Strike (PHB)",
       "Turning (PHB)",
       "Venom (PHB)",
+      "Withering (XPHB)",
     ]);
     expect(countGaps(gaps)).toEqual({
       ...zero,
@@ -253,11 +274,12 @@ describe("mechanicGaps", () => {
       slotRecovery: 1,
       regain: 1,
       poolCost: 1,
+      dc: 1,
       uses: 1,
       active: 1,
       turn: 2,
       spells: 2,
-      unclassified: 10,
+      unclassified: 11,
     });
   });
 

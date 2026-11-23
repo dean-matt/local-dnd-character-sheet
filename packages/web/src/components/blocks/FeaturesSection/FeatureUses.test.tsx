@@ -105,6 +105,28 @@ const row = (name: string) => screen.getByText(name).closest("li") as HTMLElemen
 
 afterEach(() => vi.unstubAllGlobals());
 
+describe("a feature's save DC", () => {
+  it("shows the DC the feature sets beside its name, and nothing on a feature that sets none", async () => {
+    const derived = derivedRecord();
+    renderFeatures(
+      {},
+      {
+        ...derived,
+        featureDcs: [
+          {
+            feature: { name: "Second Wind", source: "PHB" },
+            label: "Maneuver",
+            saveDc: { computed: 15, manual: 17, terms: [] },
+          },
+        ],
+      },
+    );
+
+    await waitFor(() => expect(row("Second Wind")).toHaveTextContent("Maneuver DC17"));
+    expect(row("Fighting Style")).not.toHaveTextContent("DC");
+  });
+});
+
 describe("FeatureUses", () => {
   it("shows a class, race and chosen feature's uses left, out of its count, and its rest", async () => {
     renderFeatures({ featureUses: [{ key: RELENTLESS, expended: 1 }] });
