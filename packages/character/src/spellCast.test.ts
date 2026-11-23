@@ -63,6 +63,91 @@ describe("spellCastOptions", () => {
   });
 });
 
+const MONK = { name: "Monk", source: "PHB" };
+const ki = (maximum: number | null, expended: number) => ({
+  derived: {
+    ...sheet,
+    spellSlots: [],
+    pactSlots: null,
+    classResources: [
+      { class: MONK, key: "ki_points", maximum: maximum === null ? null : total(maximum) },
+    ],
+  },
+  state: {
+    ...defaultCharacterState(),
+    classResources: [{ class: MONK, key: "ki_points", maximum, expended }],
+  },
+});
+const DARKNESS = { level: 2, ritual: false, cost: { amount: 2, resource: "Ki" } };
+
+describe("a spell a feature casts for a pool", () => {
+  it("offers the pool's cast at the spell's own level, with the points left", () => {
+    const held = ki(5, 1);
+    expect(spellCastOptions(DARKNESS, held.derived, held.state)).toEqual([
+      { via: "pool", level: 2, left: 4, pool: { class: MONK, key: "ki_points", amount: 2 } },
+    ]);
+  });
+
+  it("names the pool by its singular or plural, bare or with Points", () => {
+    for (const resource of ["Ki", "Ki Points", "ki point"]) {
+      const held = ki(5, 0);
+      const options = spellCastOptions(
+        { ...DARKNESS, cost: { amount: 2, resource } },
+        held.derived,
+        held.state,
+      );
+      expect(options.map(({ via }) => via)).toEqual(["pool"]);
+    }
+  });
+
+  it("lists the pool's cast before the slots and the ritual cast", () => {
+    const held = ki(5, 0);
+    const options = spellCastOptions(
+      { level: 2, ritual: true, cost: DARKNESS.cost },
+      { ...sheet, pactSlots: null, classResources: held.derived.classResources },
+      { ...state, classResources: held.state.classResources },
+    );
+    expect(options.map(({ via }) => via)).toEqual(["pool", "slot", "ritual"]);
+  });
+
+  it("offers none where the sheet counts no such pool", () => {
+    expect(
+      spellCastOptions(
+        { level: 2, ritual: false, cost: { amount: 1, resource: "Sorcery Point" } },
+        ki(5, 0).derived,
+        ki(5, 0).state,
+      ),
+    ).toEqual([]);
+  });
+
+  it("spends the cost from the pool and no slot", () => {
+    const held = ki(5, 1);
+    const [option] = spellCastOptions(DARKNESS, held.derived, held.state);
+    const cast = spellCast(held.derived, held.state, {
+      spell: { name: "Darkness", source: "PHB" },
+      option: option as NonNullable<typeof option>,
+      spend: true,
+      concentrate: false,
+    });
+    expect(cast.state.classResources).toEqual([
+      { class: MONK, key: "ki_points", maximum: 5, expended: 3 },
+    ]);
+  });
+
+  it("refuses a cast the pool cannot pay for", () => {
+    const held = ki(5, 4);
+    const [option] = spellCastOptions(DARKNESS, held.derived, held.state);
+    expect(() =>
+      spellCast(held.derived, held.state, {
+        spell: { name: "Darkness", source: "PHB" },
+        option: option as NonNullable<typeof option>,
+        spend: true,
+        concentrate: false,
+      }),
+    ).toThrow(RangeError);
+  });
+});
+
 describe("spellCast", () => {
   it("spends the chosen slot and nothing else", () => {
     const option = { via: "slot" as const, level: 1, left: 4 };

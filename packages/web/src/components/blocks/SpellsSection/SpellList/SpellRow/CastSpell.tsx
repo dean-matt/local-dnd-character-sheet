@@ -6,6 +6,7 @@ import {
   derivedValue,
   type EntryRef,
   entryKey,
+  resourceLabel,
   type SpellCastOption,
   spellCast,
   spellCastOptions,
@@ -36,6 +37,12 @@ type Rolled = { total: number; natural20: boolean; logged: boolean };
 function castWords(name: string, { option, spend }: Choice) {
   if (option.via === "cantrip") return `Cast ${name}`;
   if (option.via === "ritual") return `Cast ${name} as a ritual`;
+  if (option.pool) {
+    const { amount, key } = option.pool;
+    const points = resourceLabel(key).toLowerCase();
+    if (!spend) return `Cast ${name}, spending no ${points}`;
+    return `Cast ${name} spending ${amount} ${points}${option.left === null ? "" : `, ${option.left - amount} left`}`;
+  }
   const slot = option.via === "pact" ? "the pact slot" : `a level ${option.level} slot`;
   if (!spend) return `Cast ${name} at level ${option.level}, spending no slot`;
   return `Cast ${name} with ${slot}, ${(option.left ?? 1) - 1} left`;

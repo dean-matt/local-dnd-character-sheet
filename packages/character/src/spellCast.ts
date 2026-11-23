@@ -1,5 +1,7 @@
 import type { CharacterDerived } from "./characterDerived.ts";
+import { namesPool, resourceLabel, withClassResource } from "./classResources.ts";
 import { concentrationStarted } from "./concentration.ts";
+import { classResourceKey } from "./keys.ts";
 import type { EntryRef } from "./refs.ts";
 import { sheetState } from "./rest.ts";
 import type { CharacterState, Concentration } from "./state.ts";
@@ -8,23 +10,51 @@ type Sheet = Pick<CharacterDerived, "hitDice" | "spellSlots" | "pactSlots" | "cl
 
 /**
  * How a spell is cast: with a slot of `level`, with the pact slot at its `level`, as a ritual
- * at the spell's own level, or as a cantrip at 0. `left` counts the slots of that kind left,
- * and is null where the cast spends none.
+ * at the spell's own level, as a cantrip at 0, or by spending `pool.amount` from a class pool
+ * at the spell's own level. `left` counts the slots, or the pool's points, left, and is null
+ * where the cast spends none or the pool is unlimited.
  */
 export type SpellCastOption = {
-  via: "slot" | "pact" | "ritual" | "cantrip";
+  via: "slot" | "pact" | "ritual" | "cantrip" | "pool";
   level: number;
   left: number | null;
+  pool?: { class: EntryRef; key: string; amount: number };
 };
+
+/** What casting a granted spell spends, such as 2 Ki. */
+type SpellCost = { amount: number; resource: string };
+
+/** The cast a granted spell's cost offers: spending that many points of the class pool it names, where the sheet counts one. */
+function poolCast(
+  spell: { level: number; cost?: SpellCost },
+  sheet: CharacterState,
+  derived: Sheet,
+): SpellCastOption[] {
+  const { cost } = spell;
+  if (!cost) return [];
+  const index = derived.classResources.findIndex((pool) => namesPool(cost.resource, pool.key));
+  const pool = derived.classResources[index];
+  const held = sheet.classResources[index];
+  if (!pool || !held) return [];
+  return [
+    {
+      via: "pool",
+      level: spell.level,
+      left: held.maximum === null ? null : held.maximum - held.expended,
+      pool: { class: pool.class, key: pool.key, amount: cost.amount },
+    },
+  ];
+}
 
 /**
  * Every way `spell` can be cast on the sheet: a cantrip spends nothing; any other spell takes
- * each slot level the sheet shows from its own up, the pact slot where its level reaches the
- * spell's, and a ritual cast where the spell is a ritual, whatever the character's class. An
- * option with none left is listed, so the sheet can refuse it by name.
+ * the feature's own cast first where it has a `cost` in a pool the sheet counts, then each slot
+ * level the sheet shows from its own up, the pact slot where its level reaches the spell's, and
+ * a ritual cast where the spell is a ritual, whatever the character's class. An option with
+ * none left is listed, so the sheet can refuse it by name.
  */
 export function spellCastOptions(
-  spell: { level: number; ritual: boolean },
+  spell: { level: number; ritual: boolean; cost?: SpellCost },
   derived: Sheet,
   state: CharacterState,
 ): SpellCastOption[] {
@@ -42,7 +72,7 @@ export function spellCastOptions(
   const ritual: SpellCastOption[] = spell.ritual
     ? [{ via: "ritual", level: spell.level, left: null }]
     : [];
-  return [...slots, ...pactCast, ...ritual];
+  return [...poolCast(spell, sheet, derived), ...slots, ...pactCast, ...ritual];
 }
 
 /**
@@ -62,10 +92,11 @@ export function spellCast(
   return concentrationStarted(spent, { spell: cast.spell, level: option.level });
 }
 
-/** The state with one slot of `option` spent; a ritual or cantrip spends none. Throws a RangeError where none is left. */
+/** The state with one slot of `option`, or its pool's points, spent; a ritual or cantrip spends none. Throws a RangeError where too few are left. */
 export function slotSpent(derived: Sheet, state: CharacterState, option: SpellCastOption) {
   if (option.via === "ritual" || option.via === "cantrip") return state;
   const sheet = sheetState(derived, state);
+  if (option.via === "pool") return poolSpent(sheet, option);
   const slot =
     option.via === "pact"
       ? sheet.pactSlots
@@ -77,6 +108,16 @@ export function slotSpent(derived: Sheet, state: CharacterState, option: SpellCa
   if (option.via === "pact") return { ...state, pactSlots: used };
   const others = state.spellSlots.filter((held) => held.level !== used.level);
   return { ...state, spellSlots: [...others, used].sort((a, b) => a.level - b.level) };
+}
+
+function poolSpent(sheet: CharacterState, { pool }: SpellCastOption) {
+  const held =
+    pool && sheet.classResources.find((each) => classResourceKey(each) === classResourceKey(pool));
+  if (!pool || !held) throw new RangeError("no pool to cast from");
+  if (held.maximum !== null && held.expended + pool.amount > held.maximum) {
+    throw new RangeError(`${resourceLabel(pool.key)}: ${pool.amount} needed`);
+  }
+  return withClassResource(sheet, { ...held, expended: held.expended + pool.amount });
 }
 
 /** What a spell prints of its damage: its dice, a cantrip's tiers by character level, and the dice each slot level above its own adds. */

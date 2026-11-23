@@ -60,9 +60,10 @@ const words = (text: string) =>
     .replaceAll(/[\s_]+/g, " ")
     .trim();
 
-/** Whether an item's `resource` names a class table column: `Ki` and `Ki Points` both name `ki_points`. */
-const namesPool = (resource: string, key: string) =>
-  [words(key), words(key).replace(/ points$/, "")].includes(words(resource));
+const bare = (text: string) => words(text).replace(/ points?$/, "");
+
+/** Whether a `resource` names a class table column: `Ki`, `Ki Points` and `Focus Point` name `ki_points` and `focus_points`. */
+export const namesPool = (resource: string, key: string) => bare(resource) === bare(key);
 
 /** The pools the held features give a class, as the cells a table would print at its level, with each die size. */
 function featurePoolCells(

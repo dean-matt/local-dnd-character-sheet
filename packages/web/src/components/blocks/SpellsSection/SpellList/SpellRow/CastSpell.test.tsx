@@ -388,6 +388,54 @@ describe("CastSpell", () => {
     expect(writes[0]?.pactSlots).toEqual({ level: 3, total: 2, expended: 1 });
   });
 
+  describe("a spell a feature casts for ki", () => {
+    const monk = { name: "Monk", source: "PHB" };
+    const sheet: CharacterDerived = {
+      ...derived,
+      classResources: [{ class: monk, key: "ki_points", maximum: computed(5) }],
+    };
+    const darkness = spell("Darkness", 2, {
+      source: "PHB",
+      cost: { amount: 2, resource: "Ki" },
+    });
+
+    it("offers the ki cast beside the slots and spends the ki, not a slot", async () => {
+      const writes = renderCast(
+        darkness,
+        {
+          spellSlots: [{ level: 2, total: 2, expended: 0 }],
+          classResources: [{ class: monk, key: "ki_points", maximum: 5, expended: 1 }],
+        },
+        sheet,
+      );
+      const dialog = await openDialog("Darkness");
+      expect(dialog.getByRole("radio", { name: "Ki points, 2 to cast, 4 left" })).toBeChecked();
+      expect(dialog.getByRole("radio", { name: "Level 2 slot, 2 left" })).toBeInTheDocument();
+      fireEvent.click(castButton(dialog));
+
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent(
+          "Cast Darkness spending 2 ki points, 2 left",
+        ),
+      );
+      expect(writes[0]?.classResources).toEqual([
+        { class: monk, key: "ki_points", maximum: 5, expended: 3 },
+      ]);
+      expect(writes[0]?.spellSlots?.every(({ expended }) => expended === 0)).toBe(true);
+    });
+
+    it("refuses the ki cast with too little ki left", async () => {
+      renderCast(
+        darkness,
+        { classResources: [{ class: monk, key: "ki_points", maximum: 5, expended: 4 }] },
+        { ...sheet, spellSlots: [] },
+      );
+      const dialog = await openDialog("Darkness");
+      expect(dialog.getByRole("radio", { name: "Ki points, 2 to cast, 1 left" })).toBeDisabled();
+      expect(castButton(dialog)).toHaveAttribute("aria-disabled", "true");
+    });
+  });
+
   it("names the concentration it ends, then spends and concentrates in one write", async () => {
     const writes = renderCast(spell("Bless", 1, { concentration: true }), {
       concentration: { spell: HEX, level: 1 },

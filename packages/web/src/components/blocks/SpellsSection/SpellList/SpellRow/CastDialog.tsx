@@ -1,4 +1,4 @@
-import type { SpellCastOption } from "@dnd/character";
+import { resourceLabel, type SpellCastOption } from "@dnd/character";
 import { useId, useState } from "react";
 import { levelLabel } from "../../../../../lib/spellLevel.ts";
 import { Modal } from "../../../../Modal.tsx";
@@ -23,10 +23,21 @@ const NO_ENTRY = "none";
 
 const optionKey = (option: SpellCastOption) => `${option.via}:${option.level}`;
 
-const spendsSlot = (option: SpellCastOption) => option.via === "slot" || option.via === "pact";
+const spendsSlot = (option: SpellCastOption) =>
+  option.via === "slot" || option.via === "pact" || option.via === "pool";
+
+const affordable = ({ left, pool }: SpellCastOption) =>
+  left === null || left >= (pool?.amount ?? 1);
+
+const spentLabel = ({ pool }: SpellCastOption) =>
+  pool ? `Spend the ${resourceLabel(pool.key).toLowerCase()}` : "Spend the slot";
 
 function optionLabel(option: SpellCastOption) {
   const left = option.left === 0 ? "none left" : `${option.left} left`;
+  if (option.pool) {
+    const { amount, key } = option.pool;
+    return `${resourceLabel(key)}, ${amount} to cast, ${option.left === null ? "unlimited" : left}`;
+  }
   if (option.via === "pact") return `Pact slot, level ${option.level}, ${left}`;
   if (option.via === "ritual") return "As a ritual, spending no slot";
   return `Level ${option.level} slot, ${left}`;
@@ -34,7 +45,7 @@ function optionLabel(option: SpellCastOption) {
 
 /**
  * The choices a cast takes before it is applied: the slot level, pact slot or ritual cast it
- * goes by, refusing a slot with none left while the spend is on; whether it spends that slot;
+ * goes by, refusing a slot or pool with too few left while the spend is on; whether it spends that slot;
  * and, for a spell that needs concentration, whether it concentrates, naming the held spell it
  * ends; and, for a spell that makes an attack or deals damage, whether to roll them. A cast
  * that consumes a costly component asks which inventory entry pays for it, or to cast
@@ -77,9 +88,9 @@ export function CastDialog({
   const [concentrate, setConcentrate] = useState(concentration);
   const [roll, setRoll] = useState(true);
   const [paidBy, setPaidBy] = useState("");
-  const usable = (option: SpellCastOption) => !(spend && spendsSlot(option) && option.left === 0);
+  const usable = (option: SpellCastOption) => !(spend && spendsSlot(option) && !affordable(option));
   const [picked, setPicked] = useState(() => {
-    const first = options.find((option) => option.left !== 0);
+    const first = options.find(affordable);
     return first && optionKey(first);
   });
   const option = options.find((each) => optionKey(each) === picked);
@@ -146,7 +157,7 @@ export function CastDialog({
         {options.some(spendsSlot) && (
           <label className="flex items-center gap-2 text-row">
             <input type="checkbox" checked={spend} onChange={() => setSpend(!spend)} />
-            Spend the slot
+            {option ? spentLabel(option) : "Spend the slot"}
           </label>
         )}
         {concentration && (
