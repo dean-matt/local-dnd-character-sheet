@@ -16,11 +16,13 @@ import {
   cantripsOf,
   type Offer,
   type PickedSpell,
+  pickKey,
   rowPicks,
   spellsOf,
 } from "../../../lib/spellPicks.ts";
 
-const sameGrantor = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const sameGrantor = (a: PickGrantor | undefined, b: PickGrantor) =>
+  !!a && pickKey(a) === pickKey(b);
 
 /**
  * The spells the feats, optional features and class features the character holds leave to a
@@ -107,7 +109,9 @@ export function useOwedSpellPicks(character: CharacterRecord) {
         if (!fromBook) {
           return {
             ...latest,
-            spells: known ? latest.spells : [...latest.spells, { ref, prepared: true, pickedFor }],
+            spells: known
+              ? latest.spells
+              : [...latest.spells, { ref, prepared: true, origin: pickedFor.class, pickedFor }],
           };
         }
         return {
@@ -138,10 +142,7 @@ export function useOwedSpellPicks(character: CharacterRecord) {
         ...latest,
         spells: latest.spells.filter(
           (entry) =>
-            !(
-              entryKey(entry.ref) === entryKey(ref) &&
-              JSON.stringify(entry.pickedFor) === JSON.stringify(pickedFor)
-            ),
+            !(entryKey(entry.ref) === entryKey(ref) && sameGrantor(entry.pickedFor, pickedFor)),
         ),
       })),
   };

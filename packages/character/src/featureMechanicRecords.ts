@@ -925,7 +925,6 @@ const SPELLS_GRANTED: FeatureMechanics[] = [
   { name: "Far Scribe", source: "TCE" },
 ].map((ref) => ({ ref, mechanics: [SPELLS] }));
 
-/** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 const spellPicks = (...picks: { count: number; level?: number; from: string }[]): Mechanic[] => [
   { kind: "spells", picks },
 ];
@@ -969,6 +968,7 @@ const SPELLS_PICKED: FeatureMechanics[] = [
   ),
 ];
 
+/** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },

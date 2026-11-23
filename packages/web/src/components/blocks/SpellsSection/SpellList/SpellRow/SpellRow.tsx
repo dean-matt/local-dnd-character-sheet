@@ -8,6 +8,7 @@ import {
   spellDuration,
   spellRange,
 } from "../../../../../lib/spellFacts.ts";
+import { rowPickedFor } from "../../../../../lib/spellGrantors.ts";
 import { schoolName } from "../../../../../lib/spellSchool.ts";
 import { EditHomebrewButton } from "../../../../EditHomebrewButton.tsx";
 import { ListRow } from "../../../../ListRow/ListRow.tsx";
@@ -60,7 +61,7 @@ export function SpellRow({
     <RemoveButton name={spell.name} onRemove={onRemove} busy={busy} />
   );
   const alwaysPrepared =
-    spell.resolved && spell.level > 0 && !grantor && (spell.granted || spell.pickedFor);
+    spell.resolved && spell.level > 0 && !grantor && (spell.granted || rowPickedFor(spell));
   const mark = <Tag>{grantor ?? (spell.prepared ? "Prepared" : "Known")}</Tag>;
   if (!spell.resolved) {
     return (
@@ -102,7 +103,7 @@ export function SpellRow({
       controls={
         <>
           {alwaysPrepared ? (
-            <AlwaysPrepared name={spell.name} source={spell.pickedFor?.ref.name} />
+            <AlwaysPrepared name={spell.name} source={rowPickedFor(spell)?.ref.name} />
           ) : (
             preparable && (
               <PreparedToggle

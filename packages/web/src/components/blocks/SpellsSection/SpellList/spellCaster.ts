@@ -6,6 +6,7 @@ import {
   entryKey,
   type HomebrewNames,
 } from "@dnd/character";
+import { rowPickedFor } from "../../../../lib/spellGrantors.ts";
 
 type Caster = CharacterDerived["spellcasting"][number];
 
@@ -13,7 +14,7 @@ type Caster = CharacterDerived["spellcasting"][number];
  * The casting class a spell belongs to: the class its `origin` names. A class pick with no
  * origin, such as one made at creation, goes to the first class that casts. A granted spell
  * with no origin, such as a race's, and a spell picked for a race, subrace, background,
- * feat or optional feature belong to none.
+ * feat or optional feature belong to none. A pick for a class feature is the class's own.
  */
 export function spellCaster(
   spell: Pick<SheetSpell, "origin" | "granted" | "pickedFor">,
@@ -21,7 +22,7 @@ export function spellCaster(
 ): Caster | undefined {
   const { origin } = spell;
   if (origin) return casters.find((caster) => entryKey(caster.class) === entryKey(origin));
-  return spell.granted || spell.pickedFor ? undefined : casters[0];
+  return spell.granted || rowPickedFor(spell) ? undefined : casters[0];
 }
 
 export type PreparedTally = { name: string; prepared: number; limit: number };

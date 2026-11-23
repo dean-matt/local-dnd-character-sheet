@@ -1,5 +1,5 @@
 import type { CharacterSpells } from "@dnd/catalog";
-import type { CharacterDefinition, CharacterRecord } from "@dnd/character";
+import type { CharacterDefinition, CharacterDerived, CharacterRecord } from "@dnd/character";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -45,6 +45,7 @@ function renderOwed(
   granted: Record<string, unknown>,
   sheet: CharacterSpells,
   sheetLoads = false,
+  derived: Pick<CharacterDerived, "spellSlots" | "pactSlots"> = { spellSlots: [], pactSlots: null },
 ) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -66,7 +67,7 @@ function renderOwed(
   client.setQueryData(characterKey(record.id), record);
   render(
     <QueryClientProvider client={client}>
-      <OwedSpellPicks character={record} derived={{ spellSlots: [], pactSlots: null }} />
+      <OwedSpellPicks character={record} derived={derived} />
     </QueryClientProvider>,
   );
   return fetchMock;
@@ -254,6 +255,7 @@ describe("OwedSpellPicks", () => {
         {
           ref: { name: "Mage Hand", source: "PHB" },
           prepared: true,
+          origin: WARLOCK,
           pickedFor: {
             kind: "classFeature",
             ref: ARCANUM,
@@ -296,6 +298,107 @@ describe("OwedSpellPicks", () => {
           },
         },
       ]);
+    });
+
+    it("offers a pick with no level any spell up to the highest slot level, and stores it under the feature", async () => {
+      const BARD = { name: "Bard", source: "PHB" };
+      const record = holding({ levels: Array.from({ length: 10 }, () => ({ class: BARD })) });
+      const fetchMock = renderOwed(record, {}, { spells: [] }, false, {
+        spellSlots: [
+          { level: 1, total: 4, used: 0 },
+          { level: 5, total: 2, used: 0 },
+        ],
+        pactSlots: null,
+      } as unknown as Pick<CharacterDerived, "spellSlots" | "pactSlots">);
+
+      expect(await screen.findByText("Spells from Magical Secrets, level 10")).toBeInTheDocument();
+      fireEvent.focus(screen.getAllByRole("combobox", { name: /spell/i })[0] as HTMLElement);
+      fireEvent.click(await screen.findByRole("option", { name: /Mage Hand/ }));
+
+      await waitFor(() => expect(written(fetchMock)).toBeDefined());
+      expect(written(fetchMock)?.spells[0]).toMatchObject({
+        origin: BARD,
+        pickedFor: { kind: "classFeature", class: BARD, level: 10 },
+      });
+      const search = fetchMock.mock.calls
+        .map(([url]) => String(url))
+        .find((url) => url.startsWith("/api/search"));
+      expect(search).toContain("minLevel=0");
+      expect(search).toContain("maxLevel=5");
+      expect(search).not.toContain("class=");
+    });
+
+    it("removes a Magical Secrets pick, which leaves the other owed", async () => {
+      const hand = { name: "Mage Hand", source: "PHB" };
+      const BARD = { name: "Bard", source: "PHB" };
+      const pickedFor = {
+        kind: "classFeature" as const,
+        ref: { name: "Magical Secrets", source: "PHB" },
+        class: BARD,
+        level: 10,
+      };
+      const record = holding({
+        levels: Array.from({ length: 10 }, () => ({ class: BARD })),
+        spells: [{ ref: hand, prepared: true, origin: BARD, pickedFor }],
+      });
+      const sheet = {
+        spells: [
+          {
+            resolved: true as const,
+            name: "Mage Hand",
+            source: "PHB",
+            prepared: true,
+            level: 0,
+            school: "V",
+            concentration: false,
+            ritual: false,
+            entries: [],
+            pickedFor: { kind: pickedFor.kind, ref: pickedFor.ref },
+          },
+        ],
+      };
+      const fetchMock = renderOwed(record, {}, sheet);
+      fireEvent.click(await screen.findByRole("button", { name: "Remove Mage Hand" }));
+
+      await waitFor(() => expect(written(fetchMock)).toBeDefined());
+      expect(written(fetchMock)?.spells).toEqual([]);
+    });
+
+    it("unmarks a spellbook spell and keeps it known", async () => {
+      const WIZARD = { name: "Wizard", source: "PHB" };
+      const hand = { name: "Mage Hand", source: "PHB" };
+      const pickedFor = {
+        kind: "classFeature" as const,
+        ref: { name: "Signature Spells", source: "PHB" },
+        class: WIZARD,
+        level: 20,
+      };
+      const record = holding({
+        levels: Array.from({ length: 20 }, () => ({ class: WIZARD })),
+        spells: [{ ref: hand, prepared: false, pickedFor }],
+      });
+      const sheet = {
+        spells: [
+          {
+            resolved: true as const,
+            name: "Mage Hand",
+            source: "PHB",
+            prepared: false,
+            level: 3,
+            school: "V",
+            concentration: false,
+            ritual: false,
+            entries: [],
+            pickedFor: { kind: pickedFor.kind, ref: pickedFor.ref },
+          },
+        ],
+      };
+      const fetchMock = renderOwed(record, {}, sheet);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Remove Mage Hand" }));
+
+      await waitFor(() => expect(written(fetchMock)).toBeDefined());
+      expect(written(fetchMock)?.spells).toEqual([{ ref: hand, prepared: false }]);
     });
   });
 });
