@@ -285,13 +285,20 @@ describe("race, subrace and background traits", () => {
   db.exec(CONTENT_SCHEMA);
   const trait = (name: string, text: string) => ({ name, type: "entries", entries: [text] });
   const age = trait("Age", "You live long.");
+  const languages = trait("Languages", "You speak Common.");
   const darkvision = trait("Darkvision", "You have darkvision out to 60 feet.");
   const toughness = trait("Dwarven Toughness", "Your hit point maximum increases by 1.");
   const sturdy = trait("Sturdy", "You have resistance to poison damage.");
   const race = db.prepare(
     "INSERT INTO races (name, source, edition, json, trait_uses) VALUES (?, ?, ?, ?, ?)",
   );
-  race.run("Dwarf", "PHB", "classic", JSON.stringify({ entries: [age, darkvision, sturdy] }), null);
+  race.run(
+    "Dwarf",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [age, languages, darkvision, sturdy] }),
+    null,
+  );
   race.run(
     "Gnome",
     "PHB",
@@ -353,6 +360,7 @@ describe("race, subrace and background traits", () => {
       "Sturdy (PHB), Dwarf (Mountain)",
     ]);
     expect(gaps.PHB?.defense).toEqual(["Sturdy (PHB), Dwarf"]);
+    expect(gaps.PHB?.unclassified).not.toContain("Languages (PHB), Dwarf");
     expect(gaps.XPHB).toBeUndefined();
   });
 

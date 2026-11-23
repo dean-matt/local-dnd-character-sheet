@@ -26,7 +26,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 4,
-    "unclassified": 16
+    "unclassified": 12
   },
   "AI": {
     "dc": 0,
@@ -38,7 +38,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 1,
-    "pick": 1,
+    "pick": 0,
     "halfProficiency": 0,
     "sense": 0,
     "defense": 0,
@@ -84,7 +84,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 2
+    "unclassified": 1
   },
   "BGDIA": {
     "dc": 0,
@@ -200,7 +200,7 @@
     "spells": 2,
     "poolCost": 2,
     "uses": 1,
-    "unclassified": 45
+    "unclassified": 27
   },
   "DSotDQ": {
     "dc": 3,
@@ -258,7 +258,7 @@
     "spells": 4,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 6
+    "unclassified": 4
   },
   "EGW": {
     "dc": 2,
@@ -287,7 +287,7 @@
     "spells": 2,
     "poolCost": 0,
     "uses": 24,
-    "unclassified": 44
+    "unclassified": 43
   },
   "ERLW": {
     "dc": 0,
@@ -299,7 +299,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 7,
-    "pick": 5,
+    "pick": 2,
     "halfProficiency": 0,
     "sense": 7,
     "defense": 4,
@@ -316,7 +316,7 @@
     "spells": 8,
     "poolCost": 0,
     "uses": 7,
-    "unclassified": 35
+    "unclassified": 27
   },
   "FTD": {
     "dc": 2,
@@ -357,7 +357,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 2,
-    "pick": 4,
+    "pick": 3,
     "halfProficiency": 0,
     "sense": 2,
     "defense": 0,
@@ -374,7 +374,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 1,
-    "unclassified": 25
+    "unclassified": 20
   },
   "GoS": {
     "dc": 0,
@@ -432,7 +432,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 2
+    "unclassified": 1
   },
   "MOT": {
     "dc": 0,
@@ -461,7 +461,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 1,
-    "unclassified": 20
+    "unclassified": 15
   },
   "MPMM": {
     "dc": 3,
@@ -477,7 +477,7 @@
     "halfProficiency": 0,
     "sense": 26,
     "defense": 16,
-    "speed": 11,
+    "speed": 6,
     "roll": 23,
     "attack": 4,
     "extraDamage": 6,
@@ -490,7 +490,7 @@
     "spells": 12,
     "poolCost": 0,
     "uses": 33,
-    "unclassified": 46
+    "unclassified": 34
   },
   "MTF": {
     "dc": 1,
@@ -519,7 +519,7 @@
     "spells": 12,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 7
+    "unclassified": 4
   },
   "OGA": {
     "dc": 0,
@@ -548,7 +548,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 5
+    "unclassified": 4
   },
   "PHB": {
     "dc": 0,
@@ -560,7 +560,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 25,
-    "pick": 6,
+    "pick": 4,
     "halfProficiency": 0,
     "sense": 9,
     "defense": 28,
@@ -577,7 +577,7 @@
     "spells": 4,
     "poolCost": 0,
     "uses": 15,
-    "unclassified": 401
+    "unclassified": 393
   },
   "PSA": {
     "dc": 1,
@@ -589,7 +589,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 9,
-    "pick": 3,
+    "pick": 2,
     "halfProficiency": 1,
     "sense": 0,
     "defense": 3,
@@ -606,7 +606,7 @@
     "spells": 0,
     "poolCost": 9,
     "uses": 3,
-    "unclassified": 27
+    "unclassified": 23
   },
   "PSD": {
     "dc": 0,
@@ -635,7 +635,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 3
+    "unclassified": 1
   },
   "PSI": {
     "dc": 0,
@@ -647,7 +647,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 3,
-    "pick": 1,
+    "pick": 0,
     "halfProficiency": 0,
     "sense": 0,
     "defense": 0,
@@ -676,7 +676,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 6,
-    "pick": 3,
+    "pick": 0,
     "halfProficiency": 0,
     "sense": 4,
     "defense": 5,
@@ -693,7 +693,7 @@
     "spells": 2,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 14
+    "unclassified": 9
   },
   "PSX": {
     "dc": 0,
@@ -705,7 +705,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 2,
-    "pick": 3,
+    "pick": 0,
     "halfProficiency": 0,
     "sense": 1,
     "defense": 0,
@@ -722,7 +722,7 @@
     "spells": 1,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 9
+    "unclassified": 4
   },
   "PSZ": {
     "dc": 0,
@@ -734,7 +734,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 10,
-    "pick": 2,
+    "pick": 0,
     "halfProficiency": 0,
     "sense": 4,
     "defense": 2,
@@ -751,7 +751,7 @@
     "spells": 1,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 11
+    "unclassified": 7
   },
   "SCAG": {
     "dc": 2,
@@ -780,7 +780,7 @@
     "spells": 5,
     "poolCost": 6,
     "uses": 0,
-    "unclassified": 45
+    "unclassified": 44
   },
   "SCC": {
     "dc": 0,
@@ -867,7 +867,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 10,
-    "unclassified": 149
+    "unclassified": 143
   },
   "TTP": {
     "dc": 0,
@@ -896,7 +896,7 @@
     "spells": 0,
     "poolCost": 0,
     "uses": 0,
-    "unclassified": 3
+    "unclassified": 2
   },
   "ToA": {
     "dc": 0,
@@ -966,7 +966,7 @@
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
     "proficiency": 4,
-    "pick": 3,
+    "pick": 2,
     "halfProficiency": 0,
     "sense": 9,
     "defense": 4,
@@ -983,7 +983,7 @@
     "spells": 2,
     "poolCost": 0,
     "uses": 2,
-    "unclassified": 32
+    "unclassified": 20
   },
   "VRGR": {
     "dc": 1,
@@ -1012,7 +1012,7 @@
     "spells": 2,
     "poolCost": 0,
     "uses": 6,
-    "unclassified": 10
+    "unclassified": 9
   },
   "WBtW": {
     "dc": 0,
@@ -1041,7 +1041,7 @@
     "spells": 1,
     "poolCost": 0,
     "uses": 2,
-    "unclassified": 4
+    "unclassified": 3
   },
   "XGE": {
     "dc": 0,

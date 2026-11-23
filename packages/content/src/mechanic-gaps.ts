@@ -149,7 +149,15 @@ const inScope = (edition: string, json: string) =>
   edition === "classic" || Boolean((JSON.parse(json) as { srd52?: unknown }).srd52);
 
 /** Entries that describe a race without granting anything the sheet applies. */
-const DESCRIPTIVE_TRAITS = new Set(["Age", "Alignment", "Size"]);
+const DESCRIPTIVE_TRAITS = new Set([
+  "Age",
+  "Alignment",
+  "Creature Type",
+  "Language",
+  "Languages",
+  "Size",
+  "Speed",
+]);
 
 type Entry = { name?: unknown };
 type TraitRow = {
