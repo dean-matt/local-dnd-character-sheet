@@ -163,8 +163,8 @@ const contentRef = z.strictObject({ name: z.string().min(1), source: z.string().
  * `fromGrantor` the subclass, race, subrace, background, feat or optional feature that grants
  * one the definition does not list. `cost` is what casting a
  * granted spell spends, such as 2 Ki. `uses` is the count of casts that a
- * grantor limits the spell to, keyed in the state's `featureUses`, `short` uses returning on any
- * rest; each cast is made without a slot, or with the pact slot where `slot` says so.
+ * grantor limits the spell to, keyed in the state's `featureUses`; a `short` use returns on any
+ * rest. Each cast is made without a slot, or with the pact slot where `slot` says so.
  */
 const sheetSpellFields = {
   name: z.string().min(1),

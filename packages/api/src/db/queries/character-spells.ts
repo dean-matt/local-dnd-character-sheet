@@ -232,8 +232,7 @@ function grantedUses(dataDir: string, grantor: Grantor, json: unknown) {
 /**
  * The spells each grantor gives outright by its level, by `entryKey`, each once under the
  * first grantor that gives it, named by its label, with what casting it costs and the casts
- * without a slot it allows. A grantor
- * offering alternative blocks gives its chosen block's.
+ * without a slot it allows. A grantor offering alternative blocks gives its chosen block's.
  */
 function grantedSpells(
   dataDir: string,
