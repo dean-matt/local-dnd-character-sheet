@@ -1,7 +1,7 @@
 import { type EntryRef, refKey } from "@dnd/character";
-import type { SpellGrantorRef } from "../../hooks/useGrantedSpells.ts";
-import type { CasterFacts } from "../../lib/casterFacts.ts";
-import { type PickGrantor, pickedForOf } from "../../lib/spellGrantors.ts";
+import type { SpellGrantorRef } from "../hooks/useGrantedSpells.ts";
+import type { CasterFacts } from "./casterFacts.ts";
+import { type PickGrantor, pickedForOf } from "./spellGrantors.ts";
 
 /** Where `departures` notes the spells picked against the class's list and counts. */
 export const SPELLS_FIELD = "spells";

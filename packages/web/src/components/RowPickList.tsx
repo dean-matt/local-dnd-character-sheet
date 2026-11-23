@@ -1,6 +1,6 @@
 import { refKey } from "@dnd/character";
+import type { RowPicks } from "../lib/spellPicks.ts";
 import { RowPickFields } from "./RowPickFields.tsx";
-import type { RowPicks } from "./spellPicks.ts";
 
 const rowKey = ({ row }: RowPicks) => `${row.grantor}|${refKey(row.ref)}`;
 

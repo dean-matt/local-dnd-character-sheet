@@ -2,7 +2,7 @@ import { type CharacterDefinition, entryKey } from "@dnd/character";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { withDeparture } from "../../lib/departures.ts";
-import { SPELLS_FIELD, spellsOf } from "./spellPicks.ts";
+import { SPELLS_FIELD, spellsOf } from "../../lib/spellPicks.ts";
 import { useSpellChoices } from "./useSpellChoices.ts";
 
 type SpellEntry = CharacterDefinition["spells"][number];

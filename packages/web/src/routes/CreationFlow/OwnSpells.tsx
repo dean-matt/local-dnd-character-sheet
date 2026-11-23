@@ -1,8 +1,8 @@
 import type { EntryRef } from "@dnd/character";
 import { PickField, type PickFieldProps } from "../../components/PickField.tsx";
 import type { CasterFacts } from "../../lib/casterFacts.ts";
+import type { PickedSpell } from "../../lib/spellPicks.ts";
 import { PreparedField } from "./PreparedField.tsx";
-import type { PickedSpell } from "./spellPicks.ts";
 
 export interface OwnSpellsProps {
   field: Pick<PickFieldProps, "edition" | "unavailableReason" | "onRemove">;

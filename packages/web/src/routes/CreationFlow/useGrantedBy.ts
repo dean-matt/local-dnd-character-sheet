@@ -1,6 +1,6 @@
 import { type ContentRef, refKey } from "@dnd/character";
 import { useGrantedSpells } from "../../hooks/useGrantedSpells.ts";
-import type { Offer } from "./spellPicks.ts";
+import type { Offer } from "../../lib/spellPicks.ts";
 import { useSpellGrantors } from "./useSpellGrantors.ts";
 
 export type GrantedSpell = { ref: ContentRef; by: string };

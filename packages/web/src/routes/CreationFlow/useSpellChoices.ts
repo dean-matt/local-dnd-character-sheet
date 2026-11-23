@@ -1,4 +1,4 @@
-import { rowPicks, spellDeparture, subclassPicks } from "./spellPicks.ts";
+import { rowPicks, spellDeparture, subclassPicks } from "../../lib/spellPicks.ts";
 import { useCasterFacts } from "./useCasterFacts.ts";
 import { useGrantedBy } from "./useGrantedBy.ts";
 import { usePickedSpells } from "./usePickedSpells.ts";

@@ -1,7 +1,7 @@
 import type { EntryRef } from "@dnd/character";
 import { PickChips } from "../../components/PickChips.tsx";
 import { PICK_HEADING } from "../../lib/chipStyles.ts";
-import type { strayPicks } from "./spellPicks.ts";
+import type { strayPicks } from "../../lib/spellPicks.ts";
 
 /**
  * The picks made for a row that offers none now, as a changed race or a removed feat

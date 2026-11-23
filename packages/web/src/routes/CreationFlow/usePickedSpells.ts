@@ -1,7 +1,7 @@
 import { type CharacterDefinition, displayName } from "@dnd/character";
 import { useWatch } from "react-hook-form";
 import { useSpellLookup } from "../../hooks/useSpellLookup.ts";
-import { type Offer, type PickedSpell, rowFor, rowPicks } from "./spellPicks.ts";
+import { type Offer, type PickedSpell, rowFor, rowPicks } from "../../lib/spellPicks.ts";
 import type { useCasterFacts } from "./useCasterFacts.ts";
 
 /**
