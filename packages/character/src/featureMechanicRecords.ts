@@ -968,6 +968,82 @@ const SPELLS_PICKED: FeatureMechanics[] = [
   ),
 ];
 
+type GrantingFeature = [
+  className: string,
+  subclass: [shortName: string, source: string] | undefined,
+  name: string,
+  source: string,
+  level: number,
+];
+
+/** The classic class and subclass features that grant spells outright, domain and oath lists included. */
+const FEATURES_GRANTING_SPELLS: GrantingFeature[] = [
+  ["Cleric", undefined, "Divine Domain", "PHB", 1],
+  ["Paladin", undefined, "Sacred Oath", "PHB", 3],
+  ["Artificer", ["Alchemist", "TCE"], "Alchemist Spells", "TCE", 3],
+  ["Artificer", ["Armorer", "TCE"], "Armorer Spells", "TCE", 3],
+  ["Artificer", ["Artillerist", "TCE"], "Artillerist Spells", "TCE", 3],
+  ["Artificer", ["Battle Smith", "TCE"], "Battle Smith Spells", "TCE", 3],
+  ["Barbarian", ["Ancestral Guardian", "XGE"], "Consult the Spirits", "XGE", 10],
+  ["Barbarian", ["Totem Warrior", "PHB"], "Spirit Seeker", "PHB", 3],
+  ["Barbarian", ["Totem Warrior", "PHB"], "Spirit Walker", "PHB", 10],
+  ["Bard", ["Glamour", "XGE"], "Mantle of Majesty", "XGE", 6],
+  ["Cleric", ["Forge", "XGE"], "Forge Domain", "XGE", 1],
+  ["Cleric", ["Grave", "XGE"], "Grave Domain", "XGE", 1],
+  ["Cleric", ["Knowledge", "PHB"], "Knowledge Domain", "PHB", 1],
+  ["Cleric", ["Life", "PHB"], "Life Domain", "PHB", 1],
+  ["Cleric", ["Light", "PHB"], "Bonus Cantrip", "PHB", 1],
+  ["Cleric", ["Light", "PHB"], "Light Domain", "PHB", 1],
+  ["Cleric", ["Nature", "PHB"], "Nature Domain", "PHB", 1],
+  ["Cleric", ["Order", "TCE"], "Order Domain", "TCE", 1],
+  ["Cleric", ["Peace", "TCE"], "Peace Domain", "TCE", 1],
+  ["Cleric", ["Tempest", "PHB"], "Tempest Domain", "PHB", 1],
+  ["Cleric", ["Trickery", "PHB"], "Trickery Domain", "PHB", 1],
+  ["Cleric", ["Twilight", "TCE"], "Twilight Domain", "TCE", 1],
+  ["Cleric", ["War", "PHB"], "War Domain", "PHB", 1],
+  ["Druid", ["Land", "PHB"], "Circle Spells", "PHB", 2],
+  ["Druid", ["Moon", "PHB"], "Thousand Forms", "PHB", 14],
+  ["Druid", ["Spores", "TCE"], "Circle Spells", "TCE", 2],
+  ["Druid", ["Wildfire", "TCE"], "Circle Spells", "TCE", 2],
+  ["Fighter", ["Psi Warrior", "TCE"], "Telekinetic Master", "TCE", 18],
+  ["Monk", ["Open Hand", "PHB"], "Tranquility", "PHB", 11],
+  ["Monk", ["Shadow", "PHB"], "Shadow Arts", "PHB", 3],
+  ["Monk", ["Sun Soul", "XGE"], "Searing Arc Strike", "XGE", 6],
+  ["Paladin", ["Ancients", "PHB"], "Oath Spells", "PHB", 3],
+  ["Paladin", ["Conquest", "XGE"], "Oath Spells", "XGE", 3],
+  ["Paladin", ["Devotion", "PHB"], "Oath Spells", "PHB", 3],
+  ["Paladin", ["Glory", "TCE"], "Oath Spells", "TCE", 3],
+  ["Paladin", ["Redemption", "XGE"], "Oath Spells", "XGE", 3],
+  ["Paladin", ["Vengeance", "PHB"], "Oath Spells", "PHB", 3],
+  ["Paladin", ["Watchers", "TCE"], "Oath Spells", "TCE", 3],
+  ["Ranger", ["Fey Wanderer", "TCE"], "Fey Wanderer Magic", "TCE", 3],
+  ["Ranger", ["Gloom Stalker", "XGE"], "Gloom Stalker Magic", "XGE", 3],
+  ["Ranger", ["Horizon Walker", "XGE"], "Horizon Walker Magic", "XGE", 3],
+  ["Ranger", ["Monster Slayer", "XGE"], "Monster Slayer Magic", "XGE", 3],
+  ["Ranger", ["Swarmkeeper", "TCE"], "Swarmkeeper Magic", "TCE", 3],
+  ["Sorcerer", ["Aberrant Mind", "TCE"], "Psionic Spells", "TCE", 1],
+  ["Sorcerer", ["Clockwork Soul", "TCE"], "Clockwork Magic", "TCE", 1],
+  ["Sorcerer", ["Divine Soul", "XGE"], "Divine Magic", "XGE", 1],
+  ["Warlock", ["Archfey", "PHB"], "The Archfey", "PHB", 1],
+  ["Warlock", ["Celestial", "XGE"], "Bonus Cantrips", "XGE", 1],
+  ["Warlock", ["Celestial", "XGE"], "The Celestial", "XGE", 1],
+  ["Warlock", ["Fathomless", "TCE"], "The Fathomless", "TCE", 1],
+  ["Warlock", ["Fiend", "PHB"], "The Fiend", "PHB", 1],
+  ["Warlock", ["Genie", "TCE"], "The Genie", "TCE", 1],
+  ["Warlock", ["Great Old One", "PHB"], "The Great Old One", "PHB", 1],
+  ["Warlock", ["Hexblade", "XGE"], "The Hexblade", "XGE", 1],
+  ["Wizard", ["Illusion", "PHB"], "Improved Minor Illusion", "PHB", 2],
+];
+
+const SPELLS_FROM_CLASS_FEATURES: FeatureMechanics[] = FEATURES_GRANTING_SPELLS.map(
+  ([className, subclass, name, source, level]) => {
+    const owner: [string, string] = [className, className === "Artificer" ? "TCE" : "PHB"];
+    return subclass
+      ? subclassFeature(owner, subclass, [name, source], level, [SPELLS])
+      : classFeature(owner, [name, source], level, [SPELLS]);
+  },
+);
+
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
 export const FEATURE_MECHANICS: FeatureMechanics[] = [
   {
@@ -1064,6 +1140,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ]),
   subclassFeature(["Sorcerer", "PHB"], ["Shadow", "XGE"], ["Eyes of the Dark", "XGE"], 1, [
     { kind: "sense", name: "darkvision", range: 120 },
+    SPELLS,
   ]),
   subclassFeature(["Ranger", "PHB"], ["Gloom Stalker", "XGE"], ["Umbral Sight", "XGE"], 3, [
     { kind: "sense", name: "darkvision", range: 60, raceBonus: 30 },
@@ -2523,6 +2600,7 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   // The use is the free cast of Evard's black tentacles.
   subclassFeature(warlock, ["Fathomless", "TCE"], ["Grasping Tentacles", "TCE"], 10, [
     { kind: "tempHp", bonus: ["level"] },
+    SPELLS,
     { kind: "uses", count: 1, reset: "long" },
   ]),
   // A creature gains these once between rests, so the use counts the character's own.
@@ -2649,4 +2727,5 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ...TURN_ECONOMY,
   ...SPELLS_GRANTED,
   ...SPELLS_PICKED,
+  ...SPELLS_FROM_CLASS_FEATURES,
 ];
