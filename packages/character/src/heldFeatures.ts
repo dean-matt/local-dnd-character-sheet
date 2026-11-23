@@ -29,6 +29,7 @@ export const SUBCLASS_NAMES = new Map([
   ["Draconic|PHB", "Draconic Bloodline|PHB"],
   ["Draconic|XPHB", "Draconic Sorcery|XPHB"],
   ["Dance|XPHB", "College of Dance|XPHB"],
+  ["Lore|XPHB", "College of Lore|XPHB"],
   ["Hunter|PHB", "Hunter|PHB"],
   ["Life|PHB", "Life Domain|PHB"],
   ["Nature|PHB", "Nature Domain|PHB"],
