@@ -1,4 +1,9 @@
-import type { BonusActionAction, FeatureMechanics, Mechanic } from "./featureMechanics.ts";
+import {
+  type BonusActionAction,
+  type FeatureMechanics,
+  featureMechanicsKey,
+  type Mechanic,
+} from "./featureMechanics.ts";
 import type { FeatureKey } from "./refs.ts";
 
 const subclassFeature = (
@@ -1083,7 +1088,360 @@ const SPELLS_FROM_CLASS_FEATURES_2024: FeatureMechanics[] = [
 ];
 
 /** Mechanics only, never rules text; the SRD credit that covers the drafting is in `NOTICE`. */
-export const FEATURE_MECHANICS: FeatureMechanics[] = [
+/**
+ * Each feature that forces a save and prints its DC, or the feature it is an option of does:
+ * an ability's modifier, the higher of two, or a class's spell save DC. A feature that does
+ * not state its DC, or states a fixed one, is not here.
+ */
+const SAVE_DCS: FeatureMechanics[] = [
+  ...(
+    [
+      ["Cleric", "PHB", "Channel Divinity", "PHB", 2],
+      ["Cleric", "PHB", "Channel Divinity: Turn Undead", "PHB", 2],
+    ] as const
+  ).map(([className, classSource, name, source, level]) =>
+    classFeature([className, classSource], [name, source], level, [
+      { kind: "dc", spell: "Cleric" },
+    ]),
+  ),
+  ...([["Paladin", "PHB", "Channel Divinity", "PHB", 3]] as const).map(
+    ([className, classSource, name, source, level]) =>
+      classFeature([className, classSource], [name, source], level, [
+        { kind: "dc", spell: "Paladin" },
+      ]),
+  ),
+  ...(
+    [
+      ["Cleric", "PHB", "Knowledge", "PHB", "Channel Divinity: Read Thoughts", "PHB", 6],
+      ["Cleric", "PHB", "Light", "PHB", "Channel Divinity: Radiance of the Dawn", "PHB", 2],
+      ["Cleric", "PHB", "Nature", "PHB", "Channel Divinity: Charm Animals and Plants", "PHB", 2],
+      ["Cleric", "PHB", "Order", "TCE", "Channel Divinity: Order's Demand", "TCE", 2],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Cleric" },
+    ]),
+  ),
+  ...(
+    [
+      ["Paladin", "PHB", "Ancients", "PHB", "Turn the Faithless", "PHB", 3],
+      ["Paladin", "PHB", "Ancients", "PHB", "Nature's Wrath", "PHB", 3],
+      ["Paladin", "PHB", "Devotion", "PHB", "Turn the Unholy", "PHB", 3],
+      ["Paladin", "PHB", "Vengeance", "PHB", "Abjure Enemy", "PHB", 3],
+      ["Paladin", "PHB", "Watchers", "TCE", "Abjure the Extraplanar", "TCE", 3],
+      ["Paladin", "PHB", "Watchers", "TCE", "Mortal Bulwark", "TCE", 20],
+      ["Paladin", "PHB", "Conquest", "XGE", "Conquering Presence", "XGE", 3],
+      ["Paladin", "PHB", "Redemption", "XGE", "Rebuke the Violent", "XGE", 3],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Paladin" },
+    ]),
+  ),
+  ...(
+    [
+      ["Artificer", "TCE", "Armorer", "TCE", "Guardian", "TCE", 3],
+      ["Artificer", "TCE", "Armorer", "TCE", "Guardian", "TCE", 15],
+      ["Artificer", "TCE", "Artillerist", "TCE", "Eldritch Cannon", "TCE", 3],
+      ["Artificer", "TCE", "Artillerist", "TCE", "Explosive Cannon", "TCE", 9],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Artificer" },
+    ]),
+  ),
+  ...(
+    [
+      ["Bard", "PHB", "Creation", "TCE", "Mote of Potential", "TCE", 3],
+      ["Bard", "PHB", "Glamour", "XGE", "Enthralling Performance", "XGE", 3],
+      ["Bard", "PHB", "Glamour", "XGE", "Unbreakable Majesty", "XGE", 14],
+      ["Bard", "PHB", "Whispers", "XGE", "Words of Terror", "XGE", 3],
+      ["Bard", "PHB", "Whispers", "XGE", "Shadow Lore", "XGE", 14],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Bard" },
+    ]),
+  ),
+  ...(
+    [
+      ["Druid", "PHB", "Land", "PHB", "Nature's Sanctuary", "PHB", 14],
+      ["Druid", "PHB", "Spores", "TCE", "Halo of Spores", "TCE", 2],
+      ["Druid", "PHB", "Spores", "TCE", "Spreading Spores", "TCE", 10],
+      ["Druid", "PHB", "Wildfire", "TCE", "Summon Wildfire Spirit", "TCE", 2],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Druid" },
+    ]),
+  ),
+  ...(
+    [
+      ["Ranger", "PHB", "Fey Wanderer", "TCE", "Beguiling Twist", "TCE", 7],
+      ["Ranger", "PHB", "Swarmkeeper", "TCE", "Gathered Swarm", "TCE", 3],
+      ["Ranger", "PHB", "Monster Slayer", "XGE", "Magic-User's Nemesis", "XGE", 11],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Ranger" },
+    ]),
+  ),
+  ...([["Rogue", "PHB", "Arcane Trickster", "PHB", "Spell Thief", "PHB", 17]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", spell: "Rogue" }],
+      ),
+  ),
+  ...(
+    [
+      ["Sorcerer", "PHB", "Aberrant Mind", "TCE", "Warping Implosion", "TCE", 18],
+      ["Sorcerer", "PHB", "Storm", "XGE", "Storm's Fury", "XGE", 14],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Sorcerer" },
+    ]),
+  ),
+  ...(
+    [
+      ["Warlock", "PHB", "Archfey", "PHB", "Fey Presence", "PHB", 1],
+      ["Warlock", "PHB", "Archfey", "PHB", "Beguiling Defenses", "PHB", 10],
+      ["Warlock", "PHB", "Archfey", "PHB", "Dark Delirium", "PHB", 14],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Warlock" },
+    ]),
+  ),
+  ...(
+    [
+      ["Wizard", "PHB", "Enchantment", "PHB", "Hypnotic Gaze", "PHB", 2],
+      ["Wizard", "PHB", "Enchantment", "PHB", "Instinctive Charm", "PHB", 6],
+      ["Wizard", "PHB", "Enchantment", "PHB", "Alter Memories", "PHB", 14],
+      ["Wizard", "PHB", "Necromancy", "PHB", "Command Undead", "PHB", 14],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", spell: "Wizard" },
+    ]),
+  ),
+  ...([["Investment of the Chain Master", "TCE"]] as const).map(
+    ([name, source]): FeatureMechanics => ({
+      ref: { name, source },
+      mechanics: [{ kind: "dc", spell: "Warlock" }],
+    }),
+  ),
+  ...([["Radiant Weapon", "TCE"]] as const).map(
+    ([name, source]): FeatureMechanics => ({
+      ref: { name, source },
+      mechanics: [{ kind: "dc", spell: "Artificer" }],
+    }),
+  ),
+  ...(
+    [
+      ["Monk", "PHB", "Ki", "PHB", 2],
+      ["Monk", "PHB", "Stunning Strike", "PHB", 5],
+    ] as const
+  ).map(([className, classSource, name, source, level]) =>
+    classFeature([className, classSource], [name, source], level, [
+      { kind: "dc", ability: "wis", label: "Ki" },
+    ]),
+  ),
+  ...(
+    [
+      ["Monk", "PHB", "Open Hand", "PHB", "Open Hand Technique", "PHB", 3],
+      ["Monk", "PHB", "Open Hand", "PHB", "Quivering Palm", "PHB", 17],
+      ["Monk", "PHB", "Sun Soul", "XGE", "Searing Sunburst", "XGE", 11],
+      ["Monk", "PHB", "Astral Self", "TCE", "Arms of the Astral Self", "TCE", 3],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", ability: "wis", label: "Ki" },
+    ]),
+  ),
+  ...([["Monk", "PHB", "Open Hand", "PHB", "Tranquility", "PHB", 11]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", ability: "wis" }],
+      ),
+  ),
+  ...([["Barbarian", "PHB", "Berserker", "PHB", "Intimidating Presence", "PHB", 10]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", ability: "cha" }],
+      ),
+  ),
+  ...(
+    [
+      ["Barbarian", "PHB", "Beast", "TCE", "Infectious Fury", "TCE", 10],
+      ["Barbarian", "PHB", "Wild Magic", "TCE", "Wild Surge", "TCE", 3],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Storm Aura", "XGE", 3],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", ability: "con" },
+    ]),
+  ),
+  ...(
+    [
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Sea", "XGE", 3],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Sea", "XGE", 6],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Sea", "XGE", 14],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Desert", "XGE", 3],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Desert", "XGE", 6],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Desert", "XGE", 14],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Tundra", "XGE", 3],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Tundra", "XGE", 6],
+      ["Barbarian", "PHB", "Storm Herald", "XGE", "Tundra", "XGE", 14],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", ability: "con", label: "Storm Aura" },
+    ]),
+  ),
+  ...([["Fighter", "PHB", "Battle Master", "PHB", "Combat Superiority", "PHB", 3]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", ability: ["str", "dex"], label: "Maneuver" }],
+      ),
+  ),
+  ...(
+    [
+      ["Disarming Attack", "PHB"],
+      ["Goading Attack", "PHB"],
+      ["Menacing Attack", "PHB"],
+      ["Pushing Attack", "PHB"],
+      ["Trip Attack", "PHB"],
+      ["Superior Technique", "TCE"],
+    ] as const
+  ).map(
+    ([name, source]): FeatureMechanics => ({
+      ref: { name, source },
+      mechanics: [{ kind: "dc", ability: ["str", "dex"], label: "Maneuver" }],
+    }),
+  ),
+  ...([["Martial Adept", "PHB"]] as const).map(
+    ([name, source]): FeatureMechanics => ({
+      ref: { name, source },
+      mechanics: [{ kind: "dc", ability: ["str", "dex"], label: "Maneuver" }],
+    }),
+  ),
+  ...([["Fighter", "PHB", "Psi Warrior", "TCE", "Telekinetic Thrust", "TCE", 7]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", ability: "int" }],
+      ),
+  ),
+  ...([["Fighter", "PHB", "Rune Knight", "TCE", "Rune Carver", "TCE", 3]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", ability: "con", label: "Rune Magic" }],
+      ),
+  ),
+  ...(
+    [
+      ["Fire Rune", "TCE"],
+      ["Stone Rune", "TCE"],
+    ] as const
+  ).map(
+    ([name, source]): FeatureMechanics => ({
+      ref: { name, source },
+      mechanics: [{ kind: "dc", ability: "con", label: "Rune Magic" }],
+    }),
+  ),
+  ...([["Fighter", "PHB", "Arcane Archer", "XGE", "Arcane Shot Options", "XGE", 3]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", ability: "int", label: "Arcane Shot" }],
+      ),
+  ),
+  ...(
+    [
+      ["Banishing Arrow", "XGE"],
+      ["Beguiling Arrow", "XGE"],
+      ["Enfeebling Arrow", "XGE"],
+      ["Grasping Arrow", "XGE"],
+      ["Piercing Arrow", "XGE"],
+      ["Seeking Arrow", "XGE"],
+      ["Shadow Arrow", "XGE"],
+    ] as const
+  ).map(
+    ([name, source]): FeatureMechanics => ({
+      ref: { name, source },
+      mechanics: [{ kind: "dc", ability: "int", label: "Arcane Shot" }],
+    }),
+  ),
+  ...(
+    [
+      ["Rogue", "PHB", "Assassin", "PHB", "Death Strike", "PHB", 17],
+      ["Rogue", "PHB", "Soulknife", "TCE", "Rend Mind", "TCE", 17],
+    ] as const
+  ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
+    subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
+      { kind: "dc", ability: "dex" },
+    ]),
+  ),
+  ...([["Fighter", "PHB", "Cavalier", "XGE", "Ferocious Charger", "XGE", 15]] as const).map(
+    ([className, classSource, shortName, subclassSource, name, source, level]) =>
+      subclassFeature(
+        [className, classSource],
+        [shortName, subclassSource],
+        [name, source],
+        level,
+        [{ kind: "dc", ability: "str" }],
+      ),
+  ),
+  ...([["Dragon Fear", "XGE"]] as const).map(
+    ([name, source]): FeatureMechanics => ({
+      ref: { name, source },
+      mechanics: [{ kind: "dc", ability: "cha" }],
+    }),
+  ),
+];
+
+/** A save DC joins the record its feature already holds, which it takes off the narrative mark, or opens one. */
+function withSaveDcs(records: FeatureMechanics[], dcs: FeatureMechanics[]): FeatureMechanics[] {
+  const pending = new Map(dcs.map((entry) => [featureMechanicsKey(entry), entry]));
+  const merged = records.map((entry) => {
+    const key = featureMechanicsKey(entry);
+    const dc = pending.get(key);
+    if (!dc) return entry;
+    pending.delete(key);
+    const { narrative: _narrative, ...rest } = entry;
+    return { ...rest, mechanics: [...(entry.mechanics ?? []), ...(dc.mechanics ?? [])] };
+  });
+  return [...merged, ...pending.values()];
+}
+
+const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
     mechanics: [{ kind: "bonus", target: "initiative", value: 5 }],
@@ -2769,3 +3127,5 @@ export const FEATURE_MECHANICS: FeatureMechanics[] = [
   ...SPELLS_GRANTED_2024,
   ...SPELLS_FROM_CLASS_FEATURES_2024,
 ];
+
+export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);

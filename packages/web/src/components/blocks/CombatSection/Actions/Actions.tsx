@@ -10,6 +10,7 @@ import { useCharacterFeatures } from "../../../../hooks/useCharacterFeatures.ts"
 import { Card } from "../../../Card.tsx";
 import { DetailTrigger } from "../../../DetailTrigger.tsx";
 import { RulesEntries } from "../../../RulesEntries/RulesEntries.tsx";
+import { FeatureDc } from "../../FeatureDc.tsx";
 import { ActionRules } from "./ActionRules.tsx";
 import { FeatureUse } from "./FeatureUse.tsx";
 import { STANDARD_ACTIONS } from "./standardActions.ts";
@@ -135,6 +136,12 @@ export function Actions({
                     >
                       {name}
                     </DetailTrigger>
+                    <FeatureDc
+                      character={character}
+                      derived={derived}
+                      name={name}
+                      source={source}
+                    />
                     <FeatureUse
                       character={character}
                       derived={derived}

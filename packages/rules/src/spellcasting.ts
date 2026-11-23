@@ -20,7 +20,8 @@ import { type Breakdown, breakdown, type Term } from "./term.ts";
  * Both take the total character level, never a caster level: proficiency comes from
  * the character, so passing `multiclassCasterLevel` here reads as if it works and is
  * wrong by the difference. The ability names the modifier's term, and each of `bonuses`
- * follows as a term of its own.
+ * follows as a term of its own. A feature that prints "8 + your proficiency bonus + your
+ * ability modifier" sets the same DC.
  */
 export function spellSaveDc<Ref = unknown>(
   ability: Ability,

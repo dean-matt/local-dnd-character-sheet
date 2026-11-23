@@ -624,7 +624,24 @@ const spellsMechanicSchema = z.strictObject({
   picks: z.array(spellPickSchema).min(1).optional(),
 });
 
+/**
+ * The save DC the feature sets, as the table calls it by `label`, the feature's own name where
+ * absent: 8 plus the proficiency bonus plus the modifier of `ability`, the higher modifier of
+ * those a list names, or the spell save DC of the class `spell` names.
+ */
+const dcMechanicSchema = z
+  .strictObject({
+    kind: z.literal("dc"),
+    ability: z.union([abilitySchema, z.array(abilitySchema).min(2)]).optional(),
+    spell: z.string().min(1).optional(),
+    label: z.string().min(1).optional(),
+  })
+  .refine(({ ability, spell }) => (ability === undefined) !== (spell === undefined), {
+    error: "a dc mechanic names an ability or a class's spell save DC, one of them",
+  });
+
 const mechanicSchema = z.union([
+  dcMechanicSchema,
   activeMechanicSchema,
   spellsMechanicSchema,
   turnMechanicSchema,
@@ -700,6 +717,9 @@ export const featureMechanicsSchema = z
         },
         { error: "a feature counts its uses once, and each part once" },
       )
+      .refine((all) => all.filter((m) => m.kind === "dc").length <= 1, {
+        error: "a feature sets one save DC",
+      })
       .refine(
         (all) =>
           all.some((m) => m.kind === "active") ||

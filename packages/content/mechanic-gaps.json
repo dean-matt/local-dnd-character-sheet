@@ -1,4 +1,5 @@
 {
+  "dc": 0,
   "active": 0,
   "heal": 0,
   "tempHp": 0,
@@ -10,7 +11,7 @@
   "pick": 4,
   "halfProficiency": 0,
   "sense": 5,
-  "defense": 8,
+  "defense": 7,
   "speed": 3,
   "roll": 0,
   "attack": 0,
@@ -24,5 +25,5 @@
   "spells": 0,
   "poolCost": 0,
   "uses": 1,
-  "unclassified": 507
+  "unclassified": 500
 }

@@ -169,6 +169,45 @@ describe("Actions", () => {
     expect(await screen.findByText("Regain hit points.")).toBeInTheDocument();
   });
 
+  it("shows the save DC a held feature sets beside its name", async () => {
+    stubFetchByUrl({
+      "/api/characters/1/features": {
+        groups: [
+          {
+            origin: "class",
+            name: "Monk",
+            features: [
+              {
+                resolved: true,
+                name: "Stunning Strike",
+                source: "PHB",
+                level: 5,
+                entries: ["Stun the target."],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const derived = derivedRecord();
+    const card = renderActions("classic", {
+      ...derived,
+      featureDcs: [
+        {
+          feature: { name: "Stunning Strike", source: "PHB" },
+          label: "Ki",
+          saveDc: { computed: 14, manual: null, terms: [] },
+        },
+      ],
+    });
+
+    const row = (await within(card).findByRole("button", { name: "Stunning Strike" })).closest(
+      "li",
+    );
+    expect(row).toHaveTextContent("Ki DC");
+    expect(within(row as HTMLElement).getByText("14")).toBeInTheDocument();
+  });
+
   describe("Use", () => {
     const SECOND_WIND = {
       resolved: true,
