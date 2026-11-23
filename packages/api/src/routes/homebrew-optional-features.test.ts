@@ -52,6 +52,25 @@ describe("homebrewOptionalFeaturesRoutes", () => {
     }
   });
 
+  it("keeps the mechanics a feature records, on create and update, and refuses a kind the sheet cannot apply", async () => {
+    const mechanics = [{ kind: "bonus", target: "initiative", value: 5 }];
+    const created = await create(ember({ mechanics }));
+    expect(created.json.mechanics).toEqual(mechanics);
+
+    const path = `/homebrew/optional-features/${created.id}`;
+    const bad = [{ kind: "levitate" }];
+    expect((await routes.request(path, put(ember({ mechanics: bad })))).status).toBe(400);
+    const next = [{ kind: "bonus", target: "walk", value: 10 }];
+    const updated = await routes.request(path, put(ember({ mechanics: next })));
+    expect((await updated.json()).json.mechanics).toEqual(next);
+
+    const refused = await routes.request(
+      "/homebrew/optional-features",
+      json(ember({ name: "Other", mechanics: bad })),
+    );
+    expect(refused.status).toBe(400);
+  });
+
   it("keeps a name unique within each of its types and its edition, ignoring case", async () => {
     const first = await create();
     const clash = await routes.request(
