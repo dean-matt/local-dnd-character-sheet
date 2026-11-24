@@ -1889,7 +1889,7 @@ const SHIFTERS = ["Beasthide", "Longtooth", "Swiftstride", "Wildhunt"].map(shift
  * check, extra damage equal to the character's level, a bonus counted from allies in sight,
  * reach, carrying capacity, and an Armor Class bonus that holds only while a double-bladed
  * scimitar is held in two hands. A trait that grants spells records them; the race row lists
- * which, and counts their casts.
+ * which.
  */
 const EBERRON: FeatureMechanics[] = [
   erlwTrait("Darkvision", [
@@ -1916,6 +1916,7 @@ const EBERRON: FeatureMechanics[] = [
   erlwTrait("Fury of the Small", [erlwRace("Goblin")]),
   erlwTrait("Nimble Escape", [erlwRace("Goblin")], asBonusAction("Disengage", "Hide")),
   erlwTrait("Martial Training", [erlwRace("Hobgoblin")]),
+  // Its one use is the catalog's.
   erlwTrait("Saving Face", [erlwRace("Hobgoblin")]),
   erlwTrait(
     "Dual Mind",
@@ -1928,11 +1929,7 @@ const EBERRON: FeatureMechanics[] = [
   erlwTrait("Aggressive", [erlwRace("Orc")]),
   erlwTrait("Primal Intuition", [erlwRace("Orc")]),
   // The minimum of 1 temporary hit point is left to the player; its one use is the catalog's.
-  erlwTrait(
-    "Shifting",
-    [erlwRace("Shifter")],
-    [{ kind: "active" }, { kind: "tempHp", bonus: ["level", "con"] }],
-  ),
+  erlwTrait("Shifting", [erlwRace("Shifter")], [{ kind: "tempHp", bonus: ["level", "con"] }]),
   // One record holds a `(name, source)`, and each shifter subrace's benefit while shifted differs.
   erlwTrait("Shifting Feature", SHIFTERS),
   erlwTrait("Natural Athlete", [shifter("Beasthide")]),
@@ -1973,6 +1970,7 @@ const EBERRON: FeatureMechanics[] = [
       ["Healing Touch", "Halfling", "Mark of Healing"],
       ["Innkeeper's Magic", "Halfling", "Mark of Hospitality"],
       ["Primal Connection", "Human", "Mark of Handling"],
+      // Its one use is the catalog's.
       ["Spellsmith", "Human", "Mark of Making"],
       ["Magical Passage", "Human", "Mark of Passage"],
       ["Guardian's Shield", "Human", "Mark of Sentinel"],

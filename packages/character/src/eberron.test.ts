@@ -72,7 +72,9 @@ describe("an Eberron race", () => {
       expect.objectContaining({ kind: "tempHp", dice: null, bonus: 7 }),
     );
     const features = held(shifter);
-    expect(features.get("Shifting")?.mechanics).toContainEqual({ kind: "active" });
+    expect(features.get("Shifting")?.mechanics).toEqual([
+      { kind: "tempHp", bonus: ["level", "con"] },
+    ]);
     expect(features.get("Shifting Feature")?.narrative).toBe(true);
   });
 
