@@ -1645,11 +1645,11 @@ const hideIn = (terrain?: string): Mechanic => ({
 const NEAR_AN_ALLY = "against a creature within 5 feet of an ally that isn't incapacitated";
 
 /**
- * The Death domain, the Oathbreaker, the monster races and the Eladrin of the Dungeon Master's Guide. A race
- * trait whose effect the race row already gives, such as a sense, a defense, a weapon or a
- * speed, is the narrative mark. So is an effect no vocabulary term holds: Touch of Death's
- * 5 plus twice the cleric level, resistance to nonmagical
- * damage alone, a natural weapon's die, disadvantage, and an effect on another creature.
+ * The Death domain, the Oathbreaker, the monster races and the Eladrin of the Dungeon Master's
+ * Guide. A race trait whose effect the race row already gives, such as a sense, a defense, a
+ * weapon or a speed, is the narrative mark. So is an effect no vocabulary term holds: Touch of
+ * Death's 5 plus twice the cleric level, resistance to nonmagical damage alone, a natural
+ * weapon's die, disadvantage, and an effect on another creature.
  */
 const DUNGEON_MASTERS_GUIDE: FeatureMechanics[] = [
   dmgFeature(cleric24, death, "Death Domain", 3, [SPELLS]),
