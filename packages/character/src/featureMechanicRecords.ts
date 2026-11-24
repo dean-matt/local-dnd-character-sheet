@@ -1629,6 +1629,182 @@ const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
   ),
 ];
 
+const death: [string, string] = ["Death", "DMG"];
+const oathbreaker: [string, string] = ["Oathbreaker", "DMG"];
+const dmgFeature = (
+  owner: [string, string],
+  subclass: [string, string],
+  name: string,
+  level: number,
+  mechanics?: Mechanic[],
+) =>
+  mechanics
+    ? subclassFeature(owner, subclass, [name, "DMG"], level, mechanics)
+    : narrative({
+        name,
+        source: "DMG",
+        className: owner[0],
+        classSource: owner[1],
+        subclass: { shortName: subclass[0], source: subclass[1] },
+        level,
+      });
+const dmgTrait = (name: string, races: string[], mechanics?: Mechanic[]): FeatureMechanics => ({
+  ref: { name, source: "DMG" },
+  races,
+  ...(mechanics ? { mechanics } : { narrative: true }),
+});
+const hideIn = (terrain: string): Mechanic => ({
+  kind: "roll",
+  roll: "check",
+  skills: ["stealth"],
+  advantage: true,
+  against: `to hide${terrain}`,
+});
+const NEAR_AN_ALLY = "against a creature within 5 feet of an ally that isn't incapacitated";
+
+/**
+ * The Death domain, the Oathbreaker and the monster races of the Dungeon Master's Guide. A race
+ * trait whose effect the race row already gives, such as a sense, a defense, a weapon or a
+ * speed, is the narrative mark. So is an effect no vocabulary term holds: Touch of Death's
+ * 5 plus twice the cleric level, Reaper's cantrip of one school, resistance to nonmagical
+ * damage alone, a natural weapon's die, disadvantage, and an effect on another creature.
+ */
+const DUNGEON_MASTERS_GUIDE: FeatureMechanics[] = [
+  dmgFeature(cleric, death, "Death Domain", 1, [SPELLS]),
+  dmgFeature(cleric24, death, "Death Domain", 3, [SPELLS]),
+  dmgFeature(cleric, death, "Bonus Proficiency", 1, grants({ weapons: ["martial"] })),
+  dmgFeature(cleric, death, "Reaper", 1),
+  dmgFeature(cleric, death, "Channel Divinity: Touch of Death", 2),
+  dmgFeature(cleric24, death, "Channel Divinity: Touch of Death", 3),
+  dmgFeature(cleric, death, "Inescapable Destruction", 6),
+  dmgFeature(cleric, death, "Divine Strike", 8, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      scales: [{ level: 14, dice: "2d8" }],
+      type: "necrotic",
+      unarmed: true,
+      oncePerTurn: true,
+      option: ON_A_HIT,
+    },
+  ]),
+  dmgFeature(cleric, death, "Improved Reaper", 17),
+  dmgFeature(paladin, oathbreaker, "Oathbreaker", 3),
+  dmgFeature(paladin, oathbreaker, "Oathbreaker Spells", 3, [SPELLS]),
+  dmgFeature(paladin, oathbreaker, "Channel Divinity", 3),
+  dmgFeature(paladin, oathbreaker, "Control Undead", 3, [{ kind: "dc", spell: "Paladin" }]),
+  dmgFeature(paladin, oathbreaker, "Dreadful Aspect", 3, [{ kind: "dc", spell: "Paladin" }]),
+  dmgFeature(paladin, oathbreaker, "Aura of Hate", 7, [
+    { kind: "extraDamage", dice: "cha", weapons: "melee" },
+  ]),
+  dmgFeature(paladin, oathbreaker, "Supernatural Resistance", 15),
+  dmgFeature(paladin, oathbreaker, "Dread Lord", 20, [
+    { kind: "active" },
+    { kind: "uses", count: 1, reset: "long" },
+  ]),
+  dmgTrait(
+    "Darkvision",
+    [
+      "Aasimar",
+      "Gnoll",
+      "Goblin",
+      "Hobgoblin",
+      "Kobold",
+      "Orc",
+      "Skeleton",
+      "Troglodyte",
+      "Zombie",
+    ].map((race) => `${race}|DMG`),
+  ),
+  dmgTrait("Superior Darkvision", ["Gnome (Deep)|DMG", "Kuo-Toa|DMG"]),
+  dmgTrait("Amphibious", ["Bullywug|DMG", "Kuo-Toa|DMG", "Merfolk|DMG"]),
+  dmgTrait("Sunlight Sensitivity", ["Kobold|DMG", "Kuo-Toa|DMG", "Troglodyte|DMG"]),
+  dmgTrait("Undead Nature", ["Skeleton|DMG", "Zombie|DMG"]),
+  dmgTrait("Stone Camouflage", ["Gnome (Deep)|DMG", "Grimlock|DMG"], [hideIn(" in rocky terrain")]),
+  // One record holds a `(name, source)`, and the lizardfolk's +3 and the troglodyte's +1 share one.
+  dmgTrait("Natural Armor", ["Lizardfolk|DMG", "Troglodyte|DMG"]),
+  dmgTrait(
+    "Dive Attack",
+    ["Aarakocra|DMG"],
+    [
+      {
+        kind: "extraDamage",
+        dice: "1d6",
+        weapons: "melee",
+        option: "after flying at least 30 feet straight toward the target",
+      },
+    ],
+  ),
+  dmgTrait("Talons", ["Aarakocra|DMG"]),
+  dmgTrait("Celestial Resistance", ["Aasimar|DMG"]),
+  dmgTrait("Celestial Legacy", ["Aasimar|DMG"], [SPELLS]),
+  dmgTrait("Speak with Frogs and Toads", ["Bullywug|DMG"]),
+  dmgTrait("Swamp Camouflage", ["Bullywug|DMG"], [hideIn(" in swampy terrain")]),
+  dmgTrait("Standing Leap", ["Bullywug|DMG"]),
+  dmgTrait("Bite", ["Gnoll|DMG"]),
+  dmgTrait("Rampage", ["Gnoll|DMG"]),
+  dmgTrait("Innate Spellcasting", ["Gnome (Deep)|DMG"], [SPELLS]),
+  dmgTrait(
+    "Gnome Cunning",
+    ["Gnome (Deep)|DMG"],
+    [
+      {
+        kind: "roll",
+        roll: "save",
+        abilities: ["int", "wis", "cha"],
+        advantage: true,
+        against: "against magic",
+      },
+    ],
+  ),
+  dmgTrait("Nimble Escape", ["Goblin|DMG"], asBonusAction("Disengage", "Hide")),
+  dmgTrait("Blindsight", ["Grimlock|DMG"], [{ kind: "defense", conditionImmune: ["blinded"] }]),
+  dmgTrait(
+    "Keen Hearing and Smell",
+    ["Grimlock|DMG"],
+    [
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["perception"],
+        advantage: true,
+        against: "that rely on hearing or smell",
+      },
+    ],
+  ),
+  dmgTrait(
+    "Martial Advantage",
+    ["Hobgoblin|DMG"],
+    [{ kind: "extraDamage", dice: "2d6", oncePerTurn: true, option: NEAR_AN_ALLY }],
+  ),
+  dmgTrait(
+    "Ambusher",
+    ["Kenku|DMG"],
+    [advantageOn("in the first round, against a surprised creature")],
+  ),
+  dmgTrait("Mimicry", ["Kenku|DMG"]),
+  dmgTrait("Pack Tactics", ["Kobold|DMG"], [advantageOn(NEAR_AN_ALLY)]),
+  dmgTrait("Otherworldly Perception", ["Kuo-Toa|DMG"]),
+  dmgTrait(
+    "Slippery",
+    ["Kuo-Toa|DMG"],
+    (["check", "save"] as const).map((roll) => ({
+      kind: "roll",
+      roll,
+      advantage: true,
+      against: "to escape a grapple",
+    })),
+  ),
+  dmgTrait("Hold Breath", ["Lizardfolk|DMG"]),
+  dmgTrait("Aggressive", ["Orc|DMG"]),
+  dmgTrait("Brittle Bones", ["Skeleton|DMG"]),
+  dmgTrait("Chameleon Skin", ["Troglodyte|DMG"], [hideIn("")]),
+  dmgTrait("Stench", ["Troglodyte|DMG"]),
+  dmgTrait("Undead Fortitude", ["Zombie|DMG"]),
+  dmgTrait("Elf Weapon Training", ["Elf|PHB|Eladrin|DMG"]),
+  dmgTrait("Fey Step", ["Elf|PHB|Eladrin|DMG"], [SPELLS]),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -3349,6 +3525,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SPELLS_GRANTED_2024,
   ...SPELLS_FROM_CLASS_FEATURES_2024,
   ...PLANE_SHIFT_AMONKHET,
+  ...DUNGEON_MASTERS_GUIDE,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);
