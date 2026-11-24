@@ -1990,6 +1990,288 @@ const EBERRON: FeatureMechanics[] = [
   narrative({ name: "House Connections", source: "ERLW" }),
 ];
 
+const mpmmTrait = bookTrait("MPMM");
+const mpmm = (...races: string[]) => races.map((race) => `${race}|MPMM`);
+const variants = (race: string, ...kinds: string[]) =>
+  mpmm(race, ...kinds.map((kind) => `${race}; ${kind}`));
+const genasi = (element: string) => `Genasi|MPMM|${element}|MPMM`;
+const AASIMARS = variants("Aasimar", "Necrotic Shroud", "Radiant Consumption", "Radiant Soul");
+const KOBOLDS = variants("Kobold", "Craftiness", "Defiance", "Draconic Sorcery");
+const MPMM_SHIFTERS = variants("Shifter", "Beasthide", "Longtooth", "Swiftstride", "Wildhunt");
+const ELVES = mpmm("Eladrin", "Sea Elf", "Shadar-Kai");
+const SHIFTED: Mechanic = { kind: "tempHp", bonus: ["proficiency"], times: 2 };
+const REVELATION: Mechanic = { kind: "active" };
+const revelationDamage = (type: string): Mechanic => ({
+  kind: "extraDamage",
+  dice: "proficiency",
+  type,
+  oncePerTurn: true,
+  option: "to one target of an attack or a spell, while transformed",
+  while: "active",
+});
+const BY_A_USE = "by spending a use of the trait";
+
+/**
+ * The races of Mordenkainen Presents: Monsters of the Multiverse. A trait whose effect the race
+ * row already gives, such as a sense, a skill, a tool, a defense, a speed or a cantrip, is the
+ * narrative mark. So is an effect no vocabulary term holds: a natural weapon's die, reach,
+ * carrying capacity, damage reduced, a die added to a jump or a save, a bonus counted from
+ * allies in sight, and an effect on another creature beyond its DC. A trait whose effect starts
+ * at 3rd or 5th level is held from the first, as its catalog uses already are. A DC whose
+ * ability the player chose for the race reads the highest of the three.
+ */
+const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
+  mpmmTrait("Darkvision", [
+    ...AASIMARS,
+    ...KOBOLDS,
+    ...MPMM_SHIFTERS,
+    ...ELVES,
+    ...mpmm(
+      "Bugbear",
+      "Deep Gnome",
+      "Duergar",
+      "Genasi",
+      "Goblin",
+      "Hobgoblin",
+      "Orc",
+      "Tabaxi",
+      "Triton",
+      "Yuan-Ti",
+    ),
+  ]),
+  mpmmTrait(
+    "Fey Ancestry",
+    [...ELVES, ...mpmm("Bugbear", "Goblin", "Hobgoblin")],
+    [saveAdvantage("against being charmed")],
+  ),
+  mpmmTrait("Keen Senses", ELVES),
+  mpmmTrait("Trance", ELVES),
+  mpmmTrait("Powerful Build", mpmm("Bugbear", "Firbolg", "Orc")),
+  mpmmTrait("Magic Resistance", mpmm("Satyr", "Yuan-Ti"), [saveAdvantage("against spells")]),
+  mpmmTrait("Psychic Resilience", mpmm("Githyanki", "Githzerai")),
+  mpmmTrait("Amphibious", [genasi("Water"), ...mpmm("Triton")]),
+  mpmmTrait("Hold Breath", mpmm("Lizardfolk", "Tortle")),
+  // One record holds a `(name, source)`, and the lizardfolk's 13 plus Dexterity and the
+  // tortle's flat 17 share one.
+  mpmmTrait("Natural Armor", mpmm("Lizardfolk", "Tortle")),
+  mpmmTrait("Nature's Intuition", mpmm("Lizardfolk", "Tortle")),
+  mpmmTrait("Flight", mpmm("Aarakocra", "Fairy")),
+  mpmmTrait("Talons", mpmm("Aarakocra")),
+  // Its one use is the catalog's.
+  mpmmTrait("Wind Caller", mpmm("Aarakocra"), [SPELLS]),
+  mpmmTrait("Celestial Resistance", AASIMARS),
+  // Its one use is the catalog's; the d4s, one per point of proficiency bonus, scale with it.
+  mpmmTrait("Healing Hands", AASIMARS, [
+    {
+      kind: "heal",
+      dice: "2d4",
+      scales: [
+        { level: 5, dice: "3d4" },
+        { level: 9, dice: "4d4" },
+        { level: 13, dice: "5d4" },
+        { level: 17, dice: "6d4" },
+      ],
+      others: true,
+    },
+  ]),
+  mpmmTrait("Light Bearer", AASIMARS, [SPELLS]),
+  // Its one use is the catalog's. The DC and the flight belong to one revelation each, which
+  // its own race row records.
+  mpmmTrait("Celestial Revelation", mpmm("Aasimar"), [
+    REVELATION,
+    revelationDamage("necrotic or radiant"),
+  ]),
+  mpmmTrait("Celestial Revelation (Necrotic Shroud)", mpmm("Aasimar; Necrotic Shroud"), [
+    REVELATION,
+    { kind: "dc", ability: "cha" },
+    revelationDamage("necrotic"),
+  ]),
+  mpmmTrait("Celestial Revelation (Radiant Consumption)", mpmm("Aasimar; Radiant Consumption"), [
+    REVELATION,
+    revelationDamage("radiant"),
+  ]),
+  mpmmTrait("Celestial Revelation (Radiant Soul)", mpmm("Aasimar; Radiant Soul"), [
+    REVELATION,
+    { kind: "speed", equalToWalk: ["fly"], while: "active" },
+    revelationDamage("radiant"),
+  ]),
+  mpmmTrait("Long-Limbed", mpmm("Bugbear")),
+  mpmmTrait("Sneaky", mpmm("Bugbear")),
+  mpmmTrait("Surprise Attack", mpmm("Bugbear"), [
+    {
+      kind: "extraDamage",
+      dice: "2d6",
+      option: "on a hit against a creature that hasn't taken a turn yet this combat",
+    },
+  ]),
+  mpmmTrait("Charge", mpmm("Centaur")),
+  mpmmTrait("Equine Build", mpmm("Centaur")),
+  mpmmTrait("Hooves", mpmm("Centaur")),
+  mpmmTrait("Natural Affinity", mpmm("Centaur")),
+  mpmmTrait("Changeling Instincts", mpmm("Changeling")),
+  mpmmTrait("Shapechanger", mpmm("Changeling")),
+  mpmmTrait("Gift of the Svirfneblin", mpmm("Deep Gnome"), [SPELLS]),
+  mpmmTrait("Gnomish Magic Resistance", mpmm("Deep Gnome"), [
+    {
+      kind: "roll",
+      roll: "save",
+      abilities: ["int", "wis", "cha"],
+      advantage: true,
+      against: "against spells",
+    },
+  ]),
+  mpmmTrait("Svirfneblin Camouflage", mpmm("Deep Gnome"), [
+    PROFICIENCY_USES,
+    { kind: "roll", roll: "check", skills: ["stealth"], advantage: true, against: BY_A_USE },
+  ]),
+  mpmmTrait("Duergar Magic", mpmm("Duergar"), [SPELLS]),
+  mpmmTrait("Dwarven Resilience", mpmm("Duergar"), [saveAdvantage("against being poisoned")]),
+  mpmmTrait("Psionic Fortitude", mpmm("Duergar"), [
+    saveAdvantage("against being charmed or stunned"),
+  ]),
+  mpmmTrait("Fey Step", mpmm("Eladrin"), [
+    PROFICIENCY_USES,
+    { kind: "dc", ability: ["int", "wis", "cha"] },
+  ]),
+  mpmmTrait("Fairy Magic", mpmm("Fairy"), [SPELLS]),
+  mpmmTrait("Firbolg Magic", mpmm("Firbolg"), [SPELLS]),
+  mpmmTrait("Hidden Step", mpmm("Firbolg"), [PROFICIENCY_USES]),
+  mpmmTrait("Speech of Beast and Leaf", mpmm("Firbolg"), [
+    {
+      kind: "roll",
+      roll: "check",
+      abilities: ["cha"],
+      advantage: true,
+      against: "to influence Beasts and Plants",
+    },
+  ]),
+  mpmmTrait("Unending Breath", [genasi("Air")]),
+  mpmmTrait("Lightning Resistance", [genasi("Air")]),
+  mpmmTrait("Mingle with the Wind", [genasi("Air")], [SPELLS]),
+  mpmmTrait("Earth Walk", [genasi("Earth")]),
+  // The uses count casting blade ward as a bonus action.
+  mpmmTrait("Merge with Stone", [genasi("Earth")], [SPELLS, PROFICIENCY_USES]),
+  mpmmTrait("Fire Resistance", [genasi("Fire")]),
+  mpmmTrait("Reach to the Blaze", [genasi("Fire")], [SPELLS]),
+  mpmmTrait("Acid Resistance", [genasi("Water")]),
+  mpmmTrait("Call to the Wave", [genasi("Water")], [SPELLS]),
+  mpmmTrait("Astral Knowledge", mpmm("Githyanki")),
+  mpmmTrait("Githyanki Psionics", mpmm("Githyanki"), [SPELLS]),
+  mpmmTrait("Githzerai Psionics", mpmm("Githzerai"), [SPELLS]),
+  mpmmTrait("Mental Discipline", mpmm("Githzerai"), [saveAdvantage(CHARMED_OR_FRIGHTENED)]),
+  mpmmTrait("Fury of the Small", mpmm("Goblin"), [
+    PROFICIENCY_USES,
+    {
+      kind: "extraDamage",
+      dice: "proficiency",
+      oncePerTurn: true,
+      option: "against a creature larger than you",
+    },
+  ]),
+  mpmmTrait("Nimble Escape", mpmm("Goblin"), asBonusAction("Disengage", "Hide")),
+  mpmmTrait("Little Giant", mpmm("Goliath")),
+  mpmmTrait("Mountain Born", mpmm("Goliath")),
+  mpmmTrait("Stone's Endurance", mpmm("Goliath"), [PROFICIENCY_USES]),
+  mpmmTrait("Hare-Trigger", mpmm("Harengon"), [
+    { kind: "bonus", target: "initiative", value: "proficiency" },
+  ]),
+  mpmmTrait("Leporine Senses", mpmm("Harengon")),
+  mpmmTrait("Lucky Footwork", mpmm("Harengon")),
+  mpmmTrait("Rabbit Hop", mpmm("Harengon"), [PROFICIENCY_USES]),
+  // The temporary hit points come with one of three options the player picks on each use, so
+  // a use never lands them.
+  mpmmTrait("Fey Gift", mpmm("Hobgoblin"), [PROFICIENCY_USES, ...asBonusAction("Help")]),
+  mpmmTrait("Fortune from the Many", mpmm("Hobgoblin"), [PROFICIENCY_USES]),
+  mpmmTrait("Expert Duplication", mpmm("Kenku"), [
+    {
+      kind: "roll",
+      roll: "check",
+      advantage: true,
+      against: "to duplicate writing or craftwork exactly",
+    },
+  ]),
+  mpmmTrait("Kenku Recall", mpmm("Kenku"), [
+    PROFICIENCY_USES,
+    {
+      kind: "roll",
+      roll: "check",
+      advantage: true,
+      against: `with a skill you're proficient in, ${BY_A_USE}`,
+    },
+  ]),
+  mpmmTrait("Mimicry", mpmm("Kenku"), [{ kind: "dc", ability: "cha" }]),
+  mpmmTrait("Draconic Cry", KOBOLDS, [
+    PROFICIENCY_USES,
+    advantageOn("against an enemy within 10 feet that heard the cry, until your next turn"),
+  ]),
+  // Each legacy is a race row of its own, which records it.
+  mpmmTrait("Kobold Legacy", mpmm("Kobold")),
+  mpmmTrait("Kobold Legacy (Craftiness)", mpmm("Kobold; Craftiness")),
+  mpmmTrait("Kobold Legacy (Defiance)", mpmm("Kobold; Defiance"), [
+    saveAdvantage("against being frightened"),
+  ]),
+  mpmmTrait("Kobold Legacy (Draconic Sorcery)", mpmm("Kobold; Draconic Sorcery"), [SPELLS]),
+  mpmmTrait("Bite", mpmm("Lizardfolk")),
+  mpmmTrait("Hungry Jaws", mpmm("Lizardfolk"), [
+    PROFICIENCY_USES,
+    { kind: "tempHp", bonus: ["proficiency"] },
+  ]),
+  mpmmTrait("Horns", mpmm("Minotaur")),
+  mpmmTrait("Goring Rush", mpmm("Minotaur")),
+  mpmmTrait("Hammering Horns", mpmm("Minotaur"), [{ kind: "dc", ability: "str" }]),
+  mpmmTrait("Labyrinthine Recall", mpmm("Minotaur"), [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["survival"],
+      advantage: true,
+      against: "to navigate or track",
+    },
+  ]),
+  mpmmTrait("Adrenaline Rush", mpmm("Orc"), [
+    PROFICIENCY_USES,
+    { kind: "tempHp", bonus: ["proficiency"] },
+    ...asBonusAction("Dash"),
+  ]),
+  // Its one use is the catalog's.
+  mpmmTrait("Relentless Endurance", mpmm("Orc"), [{ kind: "heal", bonus: [1] }]),
+  mpmmTrait("Ram", mpmm("Satyr")),
+  mpmmTrait("Mirthful Leaps", mpmm("Satyr")),
+  mpmmTrait("Reveler", mpmm("Satyr")),
+  mpmmTrait("Child of the Sea", mpmm("Sea Elf")),
+  mpmmTrait("Friend of the Sea", mpmm("Sea Elf")),
+  // The resistance from 3rd level holds only until the start of the next turn after a teleport.
+  mpmmTrait("Blessing of the Raven Queen", mpmm("Shadar-Kai"), [PROFICIENCY_USES]),
+  mpmmTrait("Necrotic Resistance", mpmm("Shadar-Kai")),
+  mpmmTrait("Bestial Instincts", MPMM_SHIFTERS),
+  // Shifting starts no effect, since a start spends a use apart from the one that lands the
+  // temporary hit points, so what each shifter gains while shifted is left to the player.
+  mpmmTrait("Shifting", mpmm("Shifter"), [PROFICIENCY_USES, SHIFTED]),
+  mpmmTrait("Shifting (Beasthide)", mpmm("Shifter; Beasthide"), [
+    PROFICIENCY_USES,
+    { ...SHIFTED, dice: "1d6" },
+  ]),
+  ...["Longtooth", "Swiftstride", "Wildhunt"].map((kind) =>
+    mpmmTrait(`Shifting (${kind})`, mpmm(`Shifter; ${kind}`), [PROFICIENCY_USES, SHIFTED]),
+  ),
+  mpmmTrait("Cat's Claws", mpmm("Tabaxi")),
+  mpmmTrait("Cat's Talent", mpmm("Tabaxi")),
+  // Moving 0 feet on a turn restores its use.
+  mpmmTrait("Feline Agility", mpmm("Tabaxi"), [{ kind: "uses", count: 1, reset: "manual" }]),
+  mpmmTrait("Claws", mpmm("Tortle")),
+  mpmmTrait("Shell Defense", mpmm("Tortle"), [
+    { kind: "active" },
+    { kind: "armorClass", value: 4, while: "active" },
+    { kind: "roll", roll: "save", abilities: ["str", "con"], advantage: true, while: "active" },
+  ]),
+  mpmmTrait("Control Air and Water", mpmm("Triton"), [SPELLS]),
+  mpmmTrait("Emissary of the Sea", mpmm("Triton")),
+  mpmmTrait("Guardian of the Depths", mpmm("Triton")),
+  mpmmTrait("Poison Resilience", mpmm("Yuan-Ti"), [saveAdvantage("against being poisoned")]),
+  // Its one use is the catalog's.
+  mpmmTrait("Serpentine Spellcasting", mpmm("Yuan-Ti"), [SPELLS]),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -3713,6 +3995,7 @@ const RECORDS: FeatureMechanics[] = [
   ...DUNGEON_MASTERS_GUIDE,
   ...FIZBANS_TREASURY,
   ...EBERRON,
+  ...MONSTERS_OF_THE_MULTIVERSE,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);
