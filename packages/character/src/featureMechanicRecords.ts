@@ -2006,7 +2006,7 @@ const revelationDamage = (type: string): Mechanic => ({
   dice: "proficiency",
   type,
   oncePerTurn: true,
-  option: "to one target of an attack, while transformed",
+  option: "to one target of an attack or a spell, while transformed",
   while: "active",
 });
 const BY_A_USE = "by spending a use of the trait";
