@@ -6,17 +6,22 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
+import { charactersKey } from "./characterKeys.ts";
 
 const PATH = "/homebrew/feature-effects";
 
 /**
  * The homebrew effect a table rules for the catalog feature `ref`, if one does, with the writes
- * that set and clear it. The effects list refreshes after a write.
+ * that set and clear it. The effects list and every character refresh after a write, since any
+ * of them may hold the feature.
  */
 export function useHomebrewFeatureEffect(ref: ContentRef) {
   const queryClient = useQueryClient();
   const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: ["homebrew", "feature-effects"] });
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["homebrew", "feature-effects"] }),
+      queryClient.invalidateQueries({ queryKey: charactersKey }),
+    ]);
   const list = useQuery({
     queryKey: ["homebrew", "feature-effects"],
     queryFn: () => apiGet(PATH, z.array(homebrewFeatureEffectRecordSchema)),

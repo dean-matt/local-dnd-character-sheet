@@ -25,10 +25,13 @@ function parseMechanics(text: string): { error: string } | { mechanics: Mechanic
 export function FeatureHomebrewEffect({
   feature,
   origin,
+  applied,
 }: {
   feature: ContentRef;
   /** A class or subclass feature is shared by every class granting that name and source. */
   origin?: FeatureOrigin;
+  /** Whether the character's derived block applies the effect in place of the recorded mechanics. */
+  applied?: boolean;
 }) {
   const shared = origin === "class" || origin === "subclass";
   const { effect, loading, save, remove } = useHomebrewFeatureEffect(feature);
@@ -54,6 +57,9 @@ export function FeatureHomebrewEffect({
       <h3 className="font-semibold text-label text-muted uppercase tracking-label">
         Homebrew effect
       </h3>
+      {applied && (
+        <p className="text-row">Replaces the mechanics recorded for this feature on this sheet.</p>
+      )}
       {shared && (
         <p className="text-muted text-row">
           Applies to every class and subclass feature with this name and source.

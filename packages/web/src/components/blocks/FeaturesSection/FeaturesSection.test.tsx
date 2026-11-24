@@ -131,6 +131,26 @@ function renderWithPool(features: CharacterFeatures | undefined) {
 }
 
 describe("FeaturesSection", () => {
+  it("marks a feature whose recorded mechanics a homebrew effect replaces", async () => {
+    stubFetchByUrl({ "/api/characters/1/features": FEATURES });
+    const derived = {
+      ...derivedRecord(),
+      homebrewEffects: [{ name: "Second Wind", source: "PHB" }],
+    };
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <FeaturesSection character={characterRecord("1", "Vex")} derived={derived} />
+      </QueryClientProvider>,
+    );
+
+    const secondWind = (await screen.findByText("Second Wind")).closest("li") as HTMLElement;
+    expect(within(secondWind).getByText("Homebrew effect")).toBeInTheDocument();
+    const darkvision = screen.getByText("Darkvision").closest("li") as HTMLElement;
+    expect(within(darkvision).queryByText("Homebrew effect")).toBeNull();
+  });
+
   it("gathers features into Class, Race, Background and Chosen cards", async () => {
     renderSection(WITH_BACKGROUND);
 

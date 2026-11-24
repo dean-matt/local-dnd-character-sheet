@@ -1,5 +1,5 @@
 import type { FeatureGroup, FeatureOrigin, SheetFeature } from "@dnd/catalog";
-import type { CatalogKind, CharacterDerived, CharacterRecord } from "@dnd/character";
+import type { CatalogKind, CharacterDerived, CharacterRecord, ContentRef } from "@dnd/character";
 import { featureTypeLabel } from "../../../lib/featureTypeLabel.ts";
 import { renamedRef } from "../../../lib/renamed.ts";
 import { firstLine } from "../../../lib/rulesProse.ts";
@@ -50,6 +50,13 @@ function featureControls(
   return featIndex !== undefined && <FeatPicks character={character} index={featIndex} />;
 }
 
+/** The element of a derived list naming the feature `name` from `source`, if one does. */
+const findHeld = <T extends ContentRef>(
+  list: readonly T[] | undefined,
+  name: string,
+  source: string | undefined,
+) => list?.find((ref) => ref.name === name && ref.source === source);
+
 /**
  * An unresolved feature with no source is a homebrew reference, which names no source. A
  * feature that offers a choice of features carries the control that changes it, and a feat
@@ -98,12 +105,8 @@ export function FeatureRow({
   }
   const controls = featureControls(feature, character, featIndex);
   const { source } = feature;
-  const startable =
-    source === undefined
-      ? undefined
-      : derived?.startableFeatures.find(
-          (ref) => ref.name === feature.name && ref.source === source,
-        );
+  const startable = findHeld(derived?.startableFeatures, feature.name, source);
+  const homebrew = findHeld(derived?.homebrewEffects, feature.name, source) !== undefined;
   const hasDc = derived?.featureDcs.some(
     ({ feature: held }) => held.name === feature.name && held.source === source,
   );
@@ -111,7 +114,12 @@ export function FeatureRow({
     <ListRow
       name={feature.name}
       source={feature.source}
-      chips={chips}
+      chips={
+        <>
+          {chips}
+          {homebrew && <Tag>Homebrew effect</Tag>}
+        </>
+      }
       preview={firstLine(feature.entries)}
       controls={
         (feature.uses || controls || startable || hasDc) && (
@@ -163,6 +171,7 @@ export function FeatureRow({
               <FeatureHomebrewEffect
                 feature={{ name: feature.name, source }}
                 origin={group.origin}
+                applied={homebrew}
               />
             )}
           </>

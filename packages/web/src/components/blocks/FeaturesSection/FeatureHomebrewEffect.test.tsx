@@ -105,4 +105,12 @@ describe("FeatureHomebrewEffect", () => {
     rerender(<FeatureHomebrewEffect feature={feature} />);
     expect(screen.queryByText(/every class and subclass feature/)).toBeNull();
   });
+
+  it("says the effect replaces the recorded mechanics only where the sheet applies it", async () => {
+    serve();
+    const { rerender } = renderWithClient(<FeatureHomebrewEffect feature={feature} applied />);
+    expect(await screen.findByText(/Replaces the mechanics recorded/)).toBeTruthy();
+    rerender(<FeatureHomebrewEffect feature={feature} />);
+    expect(screen.queryByText(/Replaces the mechanics recorded/)).toBeNull();
+  });
 });
