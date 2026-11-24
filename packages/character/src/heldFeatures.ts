@@ -140,6 +140,11 @@ export const SUBCLASS_NAMES = new Map([
   ["Oathbreaker|DMG", "Oathbreaker|DMG"],
   ["Ascendant Dragon|FTD", "Way of the Ascendant Dragon|FTD"],
   ["Drakewarden|FTD", "Drakewarden|FTD"],
+  ["Giant|BGG", "Path of the Giant|BGG"],
+  ["Lunar|DSotDQ", "Lunar Sorcery|DSotDQ"],
+  ["Pyromancer (PSK)|PSK", "Pyromancer (PSK)|PSK"],
+  ["Spirits|VRGR", "College of Spirits|VRGR"],
+  ["Undead|VRGR", "The Undead|VRGR"],
 ]);
 
 /** The features section's group a held feature shows in. */

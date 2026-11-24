@@ -2272,6 +2272,708 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   mpmmTrait("Serpentine Spellcasting", mpmm("Yuan-Ti"), [SPELLS]),
 ];
 
+const giant: [string, string] = ["Giant", "BGG"];
+const lunar: [string, string] = ["Lunar", "DSotDQ"];
+const pyromancer: [string, string] = ["Pyromancer (PSK)", "PSK"];
+const spirits: [string, string] = ["Spirits", "VRGR"];
+const undead: [string, string] = ["Undead", "VRGR"];
+const warlock24: [string, string] = ["Warlock", "XPHB"];
+const dsotdqTrait = bookTrait("DSotDQ");
+const mtfTrait = bookTrait("MTF");
+const pskTrait = bookTrait("PSK");
+const vgmTrait = bookTrait("VGM");
+const pszTrait = bookTrait("PSZ");
+const vrgrTrait = bookTrait("VRGR");
+const psxTrait = bookTrait("PSX");
+const eepcTrait = bookTrait("EEPC");
+const aagTrait = bookTrait("AAG");
+const ggrTrait = bookTrait("GGR");
+const motTrait = bookTrait("MOT");
+const psiTrait = bookTrait("PSI");
+const sccTrait = bookTrait("SCC");
+const psdTrait = bookTrait("PSD");
+const wbtwTrait = bookTrait("WBtW");
+const awmTrait = bookTrait("AWM");
+const ogaTrait = bookTrait("OGA");
+const lrTrait = bookTrait("LR");
+const ttpTrait = bookTrait("TTP");
+const aiTrait = bookTrait("AI");
+const MAGIC_SAVES: Mechanic = {
+  kind: "roll",
+  roll: "save",
+  abilities: ["int", "wis", "cha"],
+  advantage: true,
+  against: "against magic",
+};
+const BEAST_AND_LEAF: Mechanic = {
+  kind: "roll",
+  roll: "check",
+  abilities: ["cha"],
+  advantage: true,
+  against: "to influence Beasts and Plants",
+};
+const bggFeature = bookFeature("BGG");
+const dsotdqFeature = bookFeature("DSotDQ");
+const pskFeature = bookFeature("PSK");
+const vrgrFeature = bookFeature("VRGR");
+/** Each of `names` as a race or subrace key of `source`. */
+const rowsOf =
+  (source: string) =>
+  (...names: string[]) =>
+    names.map((name) => `${name}|${source}`);
+const vgm = rowsOf("VGM");
+const ggr = rowsOf("GGR");
+const mot = rowsOf("MOT");
+const aag = rowsOf("AAG");
+const psk = rowsOf("PSK");
+const psz = rowsOf("PSZ");
+const vrgr = rowsOf("VRGR");
+const TIEFLING_LEGACIES = [
+  ["Legacy of Avernus", "Zariel"],
+  ["Legacy of Cania", "Mephistopheles"],
+  ["Legacy of Dis", "Dispater"],
+  ["Legacy of Maladomini", "Baalzebul"],
+  ["Legacy of Malbolge", "Glasya"],
+  ["Legacy of Minauros", "Mammon"],
+  ["Legacy of Phlegethos", "Fierna"],
+  ["Legacy of Stygia", "Levistus"],
+] as const;
+const STRIKE_DC: Mechanic = { kind: "dc", ability: ["str", "con"] };
+const STRIKE_OF_THE_GIANTS = "on a hit with a melee or thrown weapon attack";
+const strikeOfTheGiants = (
+  kind: string,
+  dice: string,
+  type: string | undefined,
+  dc: boolean,
+): FeatureMechanics => ({
+  ref: { name: `Strike of the Giants; ${kind}`, source: "BGG" },
+  mechanics: [
+    PROFICIENCY_USES,
+    ...(dc ? [STRIKE_DC] : []),
+    {
+      kind: "extraDamage",
+      dice,
+      ...(type && { type }),
+      oncePerTurn: true,
+      option: STRIKE_OF_THE_GIANTS,
+    },
+  ],
+});
+const SCION_DC: Mechanic = { kind: "dc", ability: ["int", "wis", "cha"] };
+const MAGIC_RESISTANCE = saveAdvantage("against spells and other magical effects");
+const NATURAL_ARMOR_13: Mechanic = { kind: "unarmoredBase", value: 3 };
+
+/**
+ * The Path of the Giant and the giant feats of Bigby Presents: Glory of the Giants. A feat's
+ * DC set by the ability the feat increased has no `dc` mechanic to name it, as Gift of the Gem
+ * Dragon's has none. Giant's Havoc adds the Rage Damage bonus, which a column's cell prints as
+ * a bonus rather than dice, and a reach no term holds. A background feature that grants one of
+ * these feats shares its `(name, source)` and so its record.
+ */
+const GLORY_OF_THE_GIANTS: FeatureMechanics[] = [
+  bggFeature(barbarian, giant, "Path of the Giant", 3),
+  bggFeature(barbarian, giant, "Giant Power", 3, [
+    SPELLS,
+    { kind: "pick", fields: ["languages"], count: 1 },
+  ]),
+  bggFeature(barbarian, giant, "Giant's Havoc", 3),
+  bggFeature(barbarian, giant, "Elemental Cleaver", 6, [
+    {
+      kind: "extraDamage",
+      dice: "1d6",
+      scales: [{ level: 14, dice: "2d6" }],
+      type: "acid, cold, fire, thunder or lightning",
+      option: "with the weapon you infused",
+      while: "raging",
+    },
+  ]),
+  bggFeature(barbarian, giant, "Mighty Impel", 10, [{ kind: "dc", ability: "str" }]),
+  // Its larger Elemental Cleaver die is recorded on Elemental Cleaver's scale.
+  bggFeature(barbarian, giant, "Demiurgic Colossus", 14),
+  { ref: { name: "Ember of the Fire Giant", source: "BGG" }, mechanics: [PROFICIENCY_USES] },
+  { ref: { name: "Fury of the Frost Giant", source: "BGG" }, mechanics: [PROFICIENCY_USES] },
+  { ref: { name: "Guile of the Cloud Giant", source: "BGG" }, mechanics: [PROFICIENCY_USES] },
+  {
+    ref: { name: "Keenness of the Stone Giant", source: "BGG" },
+    mechanics: [{ kind: "sense", name: "darkvision", range: 60, raceBonus: 60 }, PROFICIENCY_USES],
+  },
+  // Its one use is the catalog's.
+  { ref: { name: "Rune Shaper", source: "BGG" }, mechanics: [SPELLS] },
+  {
+    ref: { name: "Soul of the Storm Giant", source: "BGG" },
+    mechanics: [
+      PROFICIENCY_USES,
+      { kind: "active", endsOn: ["incapacitated"] },
+      { kind: "defense", resist: ["lightning", "thunder"], while: "active" },
+    ],
+  },
+  // Its damage is the benefit chosen, which each version's own row records.
+  {
+    ref: { name: "Strike of the Giants", source: "BGG" },
+    mechanics: [PROFICIENCY_USES, STRIKE_DC],
+  },
+  strikeOfTheGiants("Cloud", "1d4", "thunder", true),
+  strikeOfTheGiants("Fire", "1d10", "fire", false),
+  strikeOfTheGiants("Frost", "1d6", "cold", true),
+  strikeOfTheGiants("Hill", "1d6", undefined, true),
+  strikeOfTheGiants("Stone", "1d6", "force", true),
+  strikeOfTheGiants("Storm", "1d6", "lightning", true),
+  // Its hit points come with the Hit Dice a short rest spends, not on a use of its own.
+  narrative({ name: "Vigor of the Hill Giant", source: "BGG" }),
+];
+
+/**
+ * The Lunar Sorcery, the kender and the Krynn feats of Dragonlance: Shadow of the Dragon Queen.
+ * A Knight of Solamnia feat's DC and temporary hit points read the ability the feat increased,
+ * which no term names. Lunar Empowerment's benefit is its phase's, which the sheet does not
+ * store.
+ */
+const SHADOW_OF_THE_DRAGON_QUEEN: FeatureMechanics[] = [
+  dsotdqFeature(sorcerer, lunar, "Lunar Sorcery", 1),
+  dsotdqFeature(sorcerer24, lunar, "Lunar Sorcery", 3),
+  // Its one use is the catalog's.
+  dsotdqFeature(sorcerer, lunar, "Lunar Embodiment", 1, [SPELLS]),
+  dsotdqFeature(sorcerer, lunar, "Moon Fire", 1, [SPELLS]),
+  dsotdqFeature(sorcerer, lunar, "Lunar Boons", 6, [PROFICIENCY_USES]),
+  // Its one use is the catalog's.
+  dsotdqFeature(sorcerer, lunar, "Waxing and Waning", 6, [SPELLS]),
+  dsotdqFeature(sorcerer, lunar, "Lunar Empowerment", 14),
+  dsotdqFeature(sorcerer, lunar, "Lunar Phenomenon", 18, [{ kind: "dc", spell: "Sorcerer" }]),
+  // Its one use is the catalog's.
+  dsotdqTrait("Fearless", ["Kender|DSotDQ"], [saveAdvantage("against being frightened")]),
+  dsotdqTrait("Kender Curiosity", ["Kender|DSotDQ"]),
+  dsotdqTrait("Taunt", ["Kender|DSotDQ"], [PROFICIENCY_USES, SCION_DC]),
+  ...["Adept of the Black Robes", "Adept of the White Robes", "Divinely Favored"].map((name) => ({
+    ref: { name, source: "DSotDQ" },
+    mechanics: [SPELLS],
+  })),
+  {
+    ref: { name: "Adept of the Red Robes", source: "DSotDQ" },
+    mechanics: [SPELLS, PROFICIENCY_USES],
+  },
+  { ref: { name: "Initiate of High Sorcery", source: "DSotDQ" }, mechanics: [SPELLS] },
+  ...["Knight of the Crown", "Knight of the Rose", "Knight of the Sword"].map((name) => ({
+    ref: { name, source: "DSotDQ" },
+    mechanics: [PROFICIENCY_USES],
+  })),
+  {
+    ref: { name: "Squire of Solamnia", source: "DSotDQ" },
+    mechanics: [
+      PROFICIENCY_USES,
+      advantageOn("once a turn, with Precise Strike; a use is spent only on a hit"),
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        oncePerTurn: true,
+        option: "on a hit with Precise Strike",
+      },
+    ],
+  },
+];
+
+/**
+ * The College of Spirits, the Undead patron, the lineages and the backgrounds of Van Richten's
+ * Guide to Ravenloft. A lineage trait whose effect the row already gives, such as a sense or a
+ * climbing speed, is the narrative mark. One record holds a `(name, source)`, so Deathless
+ * Nature, the reborn's saves and the dhampir's breath alone, and Ancestral Legacy, whose two
+ * skills upstream's row gives the hexblood alone, are the narrative mark. A die added to a
+ * check, and hit points equal to the damage a bite or a spirit dealt, have no term.
+ */
+const VAN_RICHTENS_GUIDE: FeatureMechanics[] = [
+  vrgrFeature(bard, spirits, "College of Spirits", 3),
+  vrgrFeature(bard, spirits, "Guiding Whispers", 3, [SPELLS]),
+  vrgrFeature(bard, spirits, "Spiritual Focus", 3),
+  vrgrFeature(bard, spirits, "Tales from Beyond", 3, [{ kind: "dc", spell: "Bard" }]),
+  // The spell it teaches lasts until the next long rest, so no pick is stored.
+  vrgrFeature(bard, spirits, "Spirit Session", 6, [{ kind: "uses", count: 1, reset: "long" }]),
+  vrgrFeature(bard, spirits, "Mystical Connection", 14),
+  vrgrFeature(warlock, undead, "The Undead", 1, [SPELLS]),
+  vrgrFeature(warlock24, undead, "The Undead", 3, [SPELLS]),
+  vrgrFeature(warlock, undead, "Form of Dread", 1, [
+    PROFICIENCY_USES,
+    { kind: "active" },
+    { kind: "tempHp", dice: "1d10", bonus: ["level"] },
+    { kind: "defense", conditionImmune: ["frightened"], while: "active" },
+  ]),
+  vrgrFeature(warlock, undead, "Grave Touched", 6),
+  // Its immunity while in Form of Dread is that feature's effect, which this one cannot read.
+  vrgrFeature(warlock, undead, "Necrotic Husk", 10, [
+    { kind: "defense", resist: ["necrotic"] },
+    { kind: "uses", count: 1, reset: "manual" },
+  ]),
+  // Its one use is the catalog's.
+  vrgrFeature(warlock, undead, "Spirit Projection", 14, [
+    { kind: "active" },
+    { kind: "defense", resist: ["bludgeoning", "piercing", "slashing"], while: "active" },
+    { kind: "speed", equalToWalk: ["fly"], while: "active" },
+  ]),
+  vrgrTrait("Ancestral Legacy", vrgr("Dhampir", "Hexblood", "Reborn")),
+  vrgrTrait("Darkvision", vrgr("Dhampir", "Hexblood")),
+  vrgrTrait("Deathless Nature", vrgr("Dhampir", "Reborn")),
+  vrgrTrait("Spider Climb", vrgr("Dhampir")),
+  vrgrTrait("Vampiric Bite", vrgr("Dhampir"), [
+    PROFICIENCY_USES,
+    advantageOn("with the bite, while missing half or more of your hit points"),
+  ]),
+  // Its one use is the catalog's.
+  vrgrTrait("Eerie Token", vrgr("Hexblood")),
+  vrgrTrait("Hex Magic", vrgr("Hexblood"), [SPELLS]),
+  vrgrTrait("Knowledge from a Past Life", vrgr("Reborn"), [PROFICIENCY_USES]),
+  ...["Heart of Darkness", "Official Inquiry"].map((name) => narrative({ name, source: "VRGR" })),
+];
+
+/**
+ * The races, subraces, feats, backgrounds and the Pyromancer of the other classic setting
+ * books. A trait whose effect the race row already gives, such as a sense, a skill, a tool, a
+ * defense, a speed or a weapon, is the narrative mark, as is a background feature. So is an
+ * effect no vocabulary term holds: a natural weapon's die, reach, carrying capacity, damage
+ * reduced, a die added to a roll, extra damage equal to the character's level, a bonus
+ * counted from allies in sight, double proficiency with a tool, and an effect on another
+ * creature beyond its DC. A natural armor that ignores Dexterity has no term. A trait that
+ * starts at 3rd or 5th level is held from the first.
+ */
+const SETTING_BOOKS: FeatureMechanics[] = [
+  mtfTrait("Superior Darkvision", ["Dwarf|PHB|Duergar|MTF", "Gnome|PHB|Deep|MTF"]),
+  mtfTrait(
+    "Duergar Resilience",
+    ["Dwarf|PHB|Duergar|MTF"],
+    [saveAdvantage("against poison, illusions, and being charmed or paralyzed")],
+  ),
+  mtfTrait("Duergar Magic", ["Dwarf|PHB|Duergar|MTF"], [SPELLS]),
+  mtfTrait("Sunlight Sensitivity", ["Dwarf|PHB|Duergar|MTF"]),
+  // Its one use is the catalog's.
+  mtfTrait("Fey Step", ["Elf|PHB|Eladrin|MTF"], [{ kind: "dc", ability: "cha" }]),
+  ...["Sea Elf Training", "Child of the Sea", "Friend of the Sea", "Extra Language"].map((name) =>
+    mtfTrait(name, ["Elf|PHB|Sea|MTF"]),
+  ),
+  mtfTrait("Necrotic Resistance", ["Elf|PHB|Shadar-kai|MTF"]),
+  // Its one use is the catalog's; the resistance from 3rd level holds only until the next turn.
+  mtfTrait("Blessing of the Raven Queen", ["Elf|PHB|Shadar-kai|MTF"]),
+  mtfTrait("Decadent Mastery", ["Gith|MTF|Githyanki|MTF"]),
+  mtfTrait("Martial Prodigy", ["Gith|MTF|Githyanki|MTF"]),
+  mtfTrait("Githyanki Psionics", ["Gith|MTF|Githyanki|MTF"], [SPELLS]),
+  mtfTrait("Mental Discipline", ["Gith|MTF|Githzerai|MTF"], [saveAdvantage(CHARMED_OR_FRIGHTENED)]),
+  mtfTrait("Githzerai Psionics", ["Gith|MTF|Githzerai|MTF"], [SPELLS]),
+  mtfTrait("Stone Camouflage", ["Gnome|PHB|Deep|MTF"], [hideIn("rocky terrain")]),
+  ...TIEFLING_LEGACIES.map(([name, subrace]) =>
+    mtfTrait(name, [`Tiefling|PHB|${subrace}|MTF`], [SPELLS]),
+  ),
+  { ref: { name: "Svirfneblin Magic", source: "MTF" }, mechanics: [SPELLS] },
+  pskFeature(sorcerer, pyromancer, "Pyromancer (PSK)", 1),
+  pskFeature(sorcerer24, pyromancer, "Pyromancer (PSK)", 3),
+  pskFeature(sorcerer, pyromancer, "Heart of Fire", 1),
+  pskFeature(sorcerer, pyromancer, "Fire in the Veins", 6, [{ kind: "defense", resist: ["fire"] }]),
+  pskFeature(sorcerer, pyromancer, "Pyromancer's Fury", 14),
+  pskFeature(sorcerer, pyromancer, "Fiery Soul", 18, [{ kind: "defense", immune: ["fire"] }]),
+  pskTrait(
+    "Darkvision",
+    psk("Aetherborn", "Variant; Gifted Aetherborn", "Dwarf (Kaladesh)", "Elf (Kaladesh)"),
+  ),
+  ...["Born of Aether", "Menacing", "Gift of the Aetherborn"].map((name) =>
+    pskTrait(name, psk("Aetherborn", "Variant; Gifted Aetherborn")),
+  ),
+  pskTrait("Drain Life", psk("Variant; Gifted Aetherborn")),
+  pskTrait("Dwarven Resilience", psk("Dwarf (Kaladesh)"), [saveAdvantage("against poison")]),
+  pskTrait("Dwarven Toughness", psk("Dwarf (Kaladesh)"), [
+    { kind: "bonus", target: "hitPointsPerLevel", value: 1 },
+  ]),
+  pskTrait("Artisan's Expertise", psk("Dwarf (Kaladesh)")),
+  ...["Keen Senses", "Elf Weapon Training", "Trance", "Elf Culture"].map((name) =>
+    pskTrait(name, psk("Elf (Kaladesh)")),
+  ),
+  pskTrait("Fey Ancestry", psk("Elf (Kaladesh)"), [saveAdvantage("against being charmed")]),
+  pskTrait("Vedalken Cunning", psk("Vedalken"), [MAGIC_SAVES]),
+  pskTrait("Aether Lore", psk("Vedalken")),
+  ...["Fleet of Foot", "Mask of the Wild"].map((name) =>
+    pskTrait(name, ["Elf (Kaladesh)|PSK|Bishatar and Tirahar|PSK"]),
+  ),
+  pskTrait("Cantrip", ["Elf (Kaladesh)|PSK|Vahadar|PSK"], [SPELLS]),
+  pskTrait("Extra Language", ["Elf (Kaladesh)|PSK|Vahadar|PSK"]),
+  { ref: { name: "Quicksmithing", source: "PSK" }, mechanics: [SPELLS] },
+  { ref: { name: "Servo Crafting", source: "PSK" }, mechanics: [SPELLS] },
+  vgmTrait(
+    "Darkvision",
+    vgm(
+      "Aasimar",
+      "Bugbear",
+      "Goblin",
+      "Hobgoblin",
+      "Kobold",
+      "Orc",
+      "Tabaxi",
+      "Triton",
+      "Yuan-ti Pureblood",
+    ),
+  ),
+  vgmTrait("Celestial Resistance", vgm("Aasimar")),
+  // Its one use is the catalog's.
+  vgmTrait("Healing Hands", vgm("Aasimar"), [{ kind: "heal", bonus: ["level"], others: true }]),
+  vgmTrait("Light Bearer", vgm("Aasimar"), [SPELLS]),
+  // Each transformation's one use is the catalog's; its extra damage equals the level.
+  vgmTrait(
+    "Necrotic Shroud",
+    ["Aasimar|VGM|Fallen|VGM"],
+    [REVELATION, { kind: "dc", ability: "cha" }],
+  ),
+  vgmTrait("Radiant Consumption", ["Aasimar|VGM|Scourge|VGM"], [REVELATION]),
+  vgmTrait(
+    "Radiant Soul",
+    ["Aasimar|VGM|Protector|VGM"],
+    [REVELATION, { kind: "speed", fly: 30, while: "active" }],
+  ),
+  vgmTrait("Long-Limbed", vgm("Bugbear")),
+  vgmTrait("Powerful Build", vgm("Bugbear", "Firbolg", "Goliath", "Orc")),
+  vgmTrait("Sneaky", vgm("Bugbear")),
+  vgmTrait("Surprise Attack", vgm("Bugbear"), [
+    {
+      kind: "extraDamage",
+      dice: "2d6",
+      option: "once a combat, on a hit against a creature you surprised, on your first turn",
+    },
+  ]),
+  vgmTrait("Firbolg Magic", vgm("Firbolg"), [SPELLS]),
+  // Its one use is the catalog's.
+  vgmTrait("Hidden Step", vgm("Firbolg")),
+  vgmTrait("Speech of Beast and Leaf", vgm("Firbolg"), [BEAST_AND_LEAF]),
+  // Its one use is the catalog's.
+  vgmTrait("Fury of the Small", vgm("Goblin")),
+  vgmTrait("Nimble Escape", vgm("Goblin"), asBonusAction("Disengage", "Hide")),
+  vgmTrait("Natural Athlete", vgm("Goliath")),
+  vgmTrait("Stone's Endurance", vgm("Goliath")),
+  vgmTrait("Mountain Born", vgm("Goliath")),
+  vgmTrait("Martial Training", vgm("Hobgoblin")),
+  vgmTrait("Saving Face", vgm("Hobgoblin")),
+  vgmTrait("Expert Forgery", vgm("Kenku"), [
+    {
+      kind: "roll",
+      roll: "check",
+      advantage: true,
+      against: "to produce forgeries or duplicates of existing objects",
+    },
+  ]),
+  vgmTrait("Kenku Training", vgm("Kenku")),
+  vgmTrait("Mimicry", vgm("Kenku")),
+  vgmTrait("Grovel, Cower, and Beg", vgm("Kobold")),
+  vgmTrait("Pack Tactics", vgm("Kobold"), [advantageOn(NEAR_AN_ALLY)]),
+  vgmTrait("Sunlight Sensitivity", vgm("Kobold")),
+  vgmTrait("Swim Speed", vgm("Lizardfolk", "Triton")),
+  ...["Bite", "Cunning Artisan", "Hold Breath", "Hunter's Lore"].map((name) =>
+    vgmTrait(name, vgm("Lizardfolk")),
+  ),
+  vgmTrait("Natural Armor", vgm("Lizardfolk"), [NATURAL_ARMOR_13]),
+  // Its one use is the catalog's.
+  vgmTrait("Hungry Jaws", vgm("Lizardfolk"), [{ kind: "tempHp", bonus: ["con"] }]),
+  vgmTrait("Aggressive", vgm("Orc")),
+  vgmTrait("Primal Intuition", vgm("Orc")),
+  // Moving 0 feet on a turn restores its use.
+  vgmTrait("Feline Agility", vgm("Tabaxi"), [{ kind: "uses", count: 1, reset: "manual" }]),
+  vgmTrait("Cat's Claws", vgm("Tabaxi")),
+  vgmTrait("Cat's Talents", vgm("Tabaxi")),
+  vgmTrait("Amphibious", vgm("Triton")),
+  vgmTrait("Control Air and Water", vgm("Triton"), [SPELLS]),
+  vgmTrait("Emissary of the Sea", vgm("Triton")),
+  vgmTrait("Guardians of the Depths", vgm("Triton")),
+  // Its one use is the catalog's.
+  vgmTrait("Innate Spellcasting", vgm("Yuan-ti Pureblood"), [SPELLS]),
+  vgmTrait("Magic Resistance", vgm("Yuan-ti Pureblood"), [MAGIC_RESISTANCE]),
+  vgmTrait("Poison Immunity", vgm("Yuan-ti Pureblood")),
+  pszTrait("Darkvision", psz("Elf (Zendikar)", "Goblin", "Vampire")),
+  pszTrait("Keen Senses", psz("Elf (Zendikar)")),
+  pszTrait("Fey Ancestry", psz("Elf (Zendikar)"), [saveAdvantage("against being charmed")]),
+  // The resistances are the race row's.
+  pszTrait("Grit", psz("Goblin"), [{ kind: "unarmoredBase", value: 1 }]),
+  pszTrait("Brave", psz("Kor"), [saveAdvantage("against being frightened")]),
+  ...["Climbing", "Kor Climbing", "Lucky"].map((name) => pszTrait(name, psz("Kor"))),
+  pszTrait("Amphibious", psz("Merfolk")),
+  pszTrait("Swimming", psz("Merfolk")),
+  ...["Blood Thirst", "Vampiric Resistance"].map((name) => pszTrait(name, psz("Vampire"))),
+  pszTrait("Mask of the Wild", ["Elf (Zendikar)|PSZ|Joraga Nation|PSZ"]),
+  pszTrait("Fleet of Foot", ["Elf (Zendikar)|PSZ|Joraga Nation|PSZ"]),
+  pszTrait("Elf Weapon Training", [
+    "Elf (Zendikar)|PSZ|Joraga Nation|PSZ",
+    "Elf (Zendikar)|PSZ|Mul Daya Nation|PSZ",
+  ]),
+  pszTrait("Superior Darkvision", ["Elf (Zendikar)|PSZ|Mul Daya Nation|PSZ"]),
+  pszTrait("Mul Daya Magic", ["Elf (Zendikar)|PSZ|Mul Daya Nation|PSZ"], [SPELLS]),
+  pszTrait("Sunlight Sensitivity", ["Elf (Zendikar)|PSZ|Mul Daya Nation|PSZ"]),
+  pszTrait("Skill Versatility", ["Elf (Zendikar)|PSZ|Tajuru Nation|PSZ"]),
+  pszTrait("Grotag Tamer", ["Goblin|PSZ|Zendikar; Grotag Tribe|PSZ"]),
+  pszTrait(
+    "Lavastep Grit",
+    ["Goblin|PSZ|Zendikar; Lavastep Tribe|PSZ"],
+    [hideIn("rocky or subterranean environments")],
+  ),
+  pszTrait("Tuktuk Cunning", ["Goblin|PSZ|Zendikar; Tuktuk Tribe|PSZ"]),
+  pszTrait(
+    "Cantrip",
+    ["Cosi", "Emeria", "Ula"].map((creed) => `Merfolk|PSZ|Zendikar; ${creed} Creed|PSZ`),
+    [SPELLS],
+  ),
+  pszTrait("Creed of the Trickster", ["Merfolk|PSZ|Zendikar; Cosi Creed|PSZ"]),
+  pszTrait("Wind Creed Manipulation", ["Merfolk|PSZ|Zendikar; Emeria Creed|PSZ"]),
+  pszTrait("Water Creed Navigation", ["Merfolk|PSZ|Zendikar; Ula Creed|PSZ"]),
+  pszTrait("Null Transformation", ["Vampire|PSZ|Zendikar|PSZ"]),
+  ...["Menacing", "Savage Attacks", "Darkvision"].map((name) =>
+    psxTrait(name, ["Orc (Ixalan)|PSX"]),
+  ),
+  // Its one use is the catalog's.
+  psxTrait("Relentless Endurance", ["Orc (Ixalan)|PSX"], [{ kind: "heal", bonus: [1] }]),
+  psxTrait("Siren's Song", ["Siren|PSX"], [SPELLS]),
+  psxTrait("Flight", ["Siren|PSX"]),
+  // The climbing speed is 25 feet, which the goblin's walking speed matches until a bonus raises it.
+  psxTrait("Agile Climber", ["Goblin|PSZ|Ixalan|PSX"], [{ kind: "speed", equalToWalk: ["climb"] }]),
+  psxTrait("Cantrip", ["Merfolk|PSZ|Ixalan; Blue|PSX", "Merfolk|PSZ|Ixalan; Green|PSX"], [SPELLS]),
+  psxTrait("Lore of the Waters", ["Merfolk|PSZ|Ixalan; Blue|PSX"]),
+  psxTrait("Mask of the Wild", ["Merfolk|PSZ|Ixalan; Green|PSX"]),
+  psxTrait(
+    "Feast of Blood",
+    ["Vampire|PSZ|Ixalan|PSX"],
+    [
+      { kind: "active" },
+      { kind: "speed", bonus: 10, while: "active" },
+      { kind: "roll", roll: "check", abilities: ["str", "dex"], advantage: true, while: "active" },
+      { kind: "roll", roll: "save", abilities: ["str", "dex"], advantage: true, while: "active" },
+    ],
+  ),
+  // Its one use is the catalog's.
+  {
+    ref: { name: "Vampiric Exultation", source: "PSX" },
+    mechanics: [{ kind: "active" }, { kind: "speed", fly: 30, while: "active" }],
+  },
+  {
+    ref: { name: "Agent of Order", source: "SatO" },
+    mechanics: [
+      PROFICIENCY_USES,
+      SCION_DC,
+      {
+        kind: "extraDamage",
+        dice: "1d8",
+        type: "force",
+        oncePerTurn: true,
+        option: "on damage to a creature you can see within 60 feet",
+      },
+    ],
+  },
+  // Its damage adds the proficiency bonus to a die, which no `plus` term holds.
+  { ref: { name: "Baleful Scion", source: "SatO" }, mechanics: [PROFICIENCY_USES] },
+  narrative({ name: "Cohort of Chaos", source: "SatO" }),
+  { ref: { name: "Outlands Envoy", source: "SatO" }, mechanics: [SPELLS] },
+  // Its resistance is picked at each long rest.
+  narrative({ name: "Planar Wanderer", source: "SatO" }),
+  { ref: { name: "Righteous Heritor", source: "SatO" }, mechanics: [PROFICIENCY_USES] },
+  { ref: { name: "Scion of the Outer Planes", source: "SatO" }, mechanics: [SPELLS] },
+  ...["Conviction", "Planar Infusion"].map((name) => narrative({ name, source: "SatO" })),
+  ...["Flight", "Talons"].map((name) => eepcTrait(name, ["Aarakocra|EEPC"])),
+  eepcTrait("Unending Breath", ["Genasi|EEPC|Air|EEPC"]),
+  eepcTrait("Mingle with the Wind", ["Genasi|EEPC|Air|EEPC"], [SPELLS]),
+  eepcTrait("Earth Walk", ["Genasi|EEPC|Earth|EEPC"]),
+  eepcTrait("Merge with Stone", ["Genasi|EEPC|Earth|EEPC"], [SPELLS]),
+  ...["Darkvision", "Fire Resistance"].map((name) => eepcTrait(name, ["Genasi|EEPC|Fire|EEPC"])),
+  eepcTrait("Reach to the Blaze", ["Genasi|EEPC|Fire|EEPC"], [SPELLS]),
+  ...["Acid Resistance", "Amphibious", "Swim"].map((name) =>
+    eepcTrait(name, ["Genasi|EEPC|Water|EEPC"]),
+  ),
+  eepcTrait("Call to the Wave", ["Genasi|EEPC|Water|EEPC"], [SPELLS]),
+  aagTrait("Astral Fire", aag("Astral Elf"), [SPELLS]),
+  aagTrait("Darkvision", aag("Astral Elf", "Plasmoid", "Thri-kreen")),
+  aagTrait("Fey Ancestry", aag("Astral Elf"), [saveAdvantage("against being charmed")]),
+  aagTrait("Keen Senses", aag("Astral Elf")),
+  aagTrait("Starlight Step", aag("Astral Elf"), [PROFICIENCY_USES]),
+  aagTrait("Astral Trance", aag("Astral Elf")),
+  aagTrait("Armored Casing", aag("Autognome"), [NATURAL_ARMOR_13]),
+  aagTrait("Built for Success", aag("Autognome"), [
+    PROFICIENCY_USES,
+    {
+      kind: "attack",
+      dice: "1d4",
+      afterRoll: true,
+      option: "after seeing the d20, by spending a use of the trait",
+    },
+  ]),
+  aagTrait("Healing Machine", aag("Autognome")),
+  aagTrait("Mechanical Nature", aag("Autognome"), [
+    saveAdvantage("against being paralyzed or poisoned"),
+  ]),
+  aagTrait("Sentry's Rest", aag("Autognome")),
+  aagTrait("Specialized Design", aag("Autognome")),
+  aagTrait("Astral Spark", aag("Giff"), [
+    PROFICIENCY_USES,
+    {
+      kind: "extraDamage",
+      dice: "proficiency",
+      type: "force",
+      oncePerTurn: true,
+      option: "on a hit with a simple or martial weapon",
+    },
+  ]),
+  aagTrait("Firearms Mastery", aag("Giff")),
+  aagTrait("Hippo Build", aag("Giff"), [
+    { kind: "roll", roll: "check", abilities: ["str"], advantage: true },
+    { kind: "roll", roll: "save", abilities: ["str"], advantage: true },
+  ]),
+  aagTrait("Dexterous Feet", aag("Hadozee")),
+  aagTrait("Glide", aag("Hadozee")),
+  aagTrait("Hadozee Dodge", aag("Hadozee"), [PROFICIENCY_USES]),
+  aagTrait("Amorphous", aag("Plasmoid"), [
+    { kind: "roll", roll: "check", advantage: true, against: "to initiate or escape a grapple" },
+  ]),
+  aagTrait("Hold Breath", aag("Plasmoid")),
+  aagTrait("Natural Resilience", aag("Plasmoid"), [saveAdvantage("against being poisoned")]),
+  aagTrait("Shape Self", aag("Plasmoid")),
+  aagTrait("Chameleon Carapace", aag("Thri-kreen"), [
+    NATURAL_ARMOR_13,
+    hideIn("in surroundings your carapace matches"),
+  ]),
+  ...["Secondary Arms", "Sleepless", "Thri-kreen Telepathy"].map((name) =>
+    aagTrait(name, aag("Thri-kreen")),
+  ),
+  ...["Divine Contact", "Wildspace Adaptation"].map((name) => narrative({ name, source: "AAG" })),
+  ggrTrait("Fey", ggr("Centaur")),
+  ...["Charge", "Hooves", "Equine Build", "Survivor"].map((name) => ggrTrait(name, ggr("Centaur"))),
+  ggrTrait("Darkvision", ggr("Goblin", "Simic Hybrid")),
+  // Its one use is the catalog's.
+  ggrTrait("Fury of the Small", ggr("Goblin")),
+  ggrTrait("Nimble Escape", ggr("Goblin"), asBonusAction("Disengage", "Hide")),
+  ggrTrait("Powerful Build", ggr("Loxodon")),
+  ggrTrait("Loxodon Serenity", ggr("Loxodon"), [saveAdvantage(CHARMED_OR_FRIGHTENED)]),
+  // Its 12 plus the Constitution modifier leaves Dexterity out, which an unarmored base adds.
+  ggrTrait("Natural Armor", ggr("Loxodon")),
+  ggrTrait("Trunk", ggr("Loxodon")),
+  ggrTrait("Keen Smell", ggr("Loxodon"), [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["perception", "survival", "investigation"],
+      advantage: true,
+      against: "that involve smell",
+    },
+  ]),
+  ...["Horns", "Goring Rush", "Imposing Presence"].map((name) => ggrTrait(name, ggr("Minotaur"))),
+  ggrTrait("Hammering Horns", ggr("Minotaur"), [{ kind: "dc", ability: "str" }]),
+  // Its benefit is the enhancement picked, which the sheet does not store.
+  ggrTrait("Animal Enhancement", ggr("Simic Hybrid")),
+  ggrTrait("Vedalken Dispassion", ggr("Vedalken"), [
+    { kind: "roll", roll: "save", abilities: ["int", "wis", "cha"], advantage: true },
+  ]),
+  ggrTrait("Tireless Precision", ggr("Vedalken")),
+  // Its one use is the catalog's.
+  ggrTrait("Partially Amphibious", ggr("Vedalken")),
+  ...[
+    "Conclave's Shelter",
+    "False Identity",
+    "Fearsome Reputation",
+    "Legal Authority",
+    "Legion Station",
+    "Leverage",
+    "Researcher",
+    "Rubblebelt Refuge",
+    "Undercity Paths",
+    "Urban Infrastructure",
+  ].map((name) => narrative({ name, source: "GGR" })),
+  ...["Charge", "Hooves", "Equine Build", "Survivor"].map((name) => motTrait(name, mot("Centaur"))),
+  motTrait("Fey", mot("Centaur", "Satyr")),
+  motTrait("Darkvision", mot("Leonin", "Triton")),
+  motTrait("Claws", mot("Leonin")),
+  motTrait("Hunter's Instincts", mot("Leonin")),
+  // Its one use is the catalog's.
+  motTrait("Daunting Roar", mot("Leonin"), [{ kind: "dc", ability: "con" }]),
+  ...["Horns", "Goring Rush", "Imposing Presence"].map((name) => motTrait(name, mot("Minotaur"))),
+  motTrait("Hammering Horns", mot("Minotaur"), [{ kind: "dc", ability: "str" }]),
+  ...["Ram", "Mirthful Leaps", "Reveler"].map((name) => motTrait(name, mot("Satyr"))),
+  motTrait("Magic Resistance", mot("Satyr"), [MAGIC_RESISTANCE]),
+  ...["Swim Speed", "Amphibious", "Emissary of the Sea", "Guardians of the Depths"].map((name) =>
+    motTrait(name, mot("Triton")),
+  ),
+  motTrait("Control Air and Water", mot("Triton"), [SPELLS]),
+  narrative({ name: "Echoes of Victory", source: "MOT" }),
+  ...["Forest Folk", "Fleet of Foot", "Sure-footed", "Spring Attack"].map((name) =>
+    psiTrait(name, ["Human (Innistrad)|PSI|Kessig|PSI"]),
+  ),
+  psiTrait("Breadth of Knowledge", ["Human (Innistrad)|PSI|Nephalia|PSI"]),
+  psiTrait("Daunting", ["Human (Innistrad)|PSI|Stensia|PSI"]),
+  psiTrait(
+    "Tough",
+    ["Human (Innistrad)|PSI|Stensia|PSI"],
+    [{ kind: "bonus", target: "hitPointsPerLevel", value: 2 }],
+  ),
+  narrative({ name: "Legal Authority", source: "PSI" }),
+  ...["Darkvision", "Flight", "Silent Feathers"].map((name) => sccTrait(name, ["Owlin|SCC"])),
+  { ref: { name: "Strixhaven Initiate", source: "SCC" }, mechanics: [SPELLS] },
+  // Its one use is the catalog's.
+  { ref: { name: "Strixhaven Mascot", source: "SCC" }, mechanics: [SPELLS] },
+  ...["Lorehold", "Prismari", "Quandrix", "Silverquill", "Witherbloom"].map((college) =>
+    narrative({ name: `${college} Initiate`, source: "SCC" }),
+  ),
+  ...["Flight", "Hawkeyed"].map((name) => psdTrait(name, ["Aven|PSD"])),
+  psdTrait("Natural Athlete", ["Human|PHB|Keldon|PSD"]),
+  psdTrait("Keldon Resilience", ["Human|PHB|Keldon|PSD"], grants({ savingThrows: ["str"] })),
+  psdTrait("Icehaven Born", ["Human|PHB|Keldon|PSD"]),
+  wbtwTrait("Flight", ["Fairy|WBtW"]),
+  wbtwTrait("Fairy Magic", ["Fairy|WBtW"], [SPELLS]),
+  wbtwTrait(
+    "Hare-Trigger",
+    ["Harengon|WBtW"],
+    [{ kind: "bonus", target: "initiative", value: "proficiency" }],
+  ),
+  wbtwTrait("Leporine Senses", ["Harengon|WBtW"]),
+  wbtwTrait("Lucky Footwork", ["Harengon|WBtW"]),
+  wbtwTrait("Rabbit Hop", ["Harengon|WBtW"], [PROFICIENCY_USES]),
+  ...["Carnival Fixture", "Feywild Connection"].map((name) => narrative({ name, source: "WBtW" })),
+  { ref: { name: "Cartomancer", source: "BMT" }, mechanics: [SPELLS] },
+  ...["Fortune's Favor", "Still Standing"].map((name) => narrative({ name, source: "BMT" })),
+  ...["Darkvision", "Speak with Small Beasts"].map((name) =>
+    awmTrait(name, ["Goblin (Dankwood)|AWM"]),
+  ),
+  awmTrait("Nimble Escape", ["Goblin (Dankwood)|AWM"], asBonusAction("Disengage", "Hide")),
+  ...[
+    "Arboreal Alertness",
+    "Amphibious",
+    "Poison Immunity",
+    "Poisonous Skin",
+    "Standing Leap",
+    "Water Dependency",
+  ].map((name) => ogaTrait(name, ["Grung|OGA"])),
+  lrTrait("Natural Armor", ["Locathah|LR"], [{ kind: "unarmoredBase", value: 2 }]),
+  lrTrait("Observant & Athletic", ["Locathah|LR"]),
+  lrTrait(
+    "Leviathan Will",
+    ["Locathah|LR"],
+    [
+      saveAdvantage(
+        "against being charmed, frightened, paralyzed, poisoned, stunned, or put to sleep",
+      ),
+    ],
+  ),
+  lrTrait("Limited Amphibiousness", ["Locathah|LR"]),
+  ...["Claws", "Hold Breath", "Survival Instinct"].map((name) => ttpTrait(name, ["Tortle|TTP"])),
+  // Its base AC of 17 ignores Dexterity, which an unarmored base adds.
+  ttpTrait("Natural Armor", ["Tortle|TTP"]),
+  ttpTrait(
+    "Shell Defense",
+    ["Tortle|TTP"],
+    [
+      { kind: "active" },
+      { kind: "armorClass", value: 4, while: "active" },
+      { kind: "roll", roll: "save", abilities: ["str", "con"], advantage: true, while: "active" },
+    ],
+  ),
+  ...["Black Blood Healing", "Limited Telepathy", "Persuasive"].map((name) =>
+    aiTrait(name, ["Verdan|AI"]),
+  ),
+  aiTrait(
+    "Telepathic Insight",
+    ["Verdan|AI"],
+    [{ kind: "roll", roll: "save", abilities: ["wis", "cha"], advantage: true }],
+  ),
+  ...[
+    "Inside Informant",
+    "Legalese",
+    "Name Dropping",
+    "Never Tell Me the Odds",
+    "Supply Chain",
+  ].map((name) => narrative({ name, source: "AI" })),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -3996,6 +4698,10 @@ const RECORDS: FeatureMechanics[] = [
   ...FIZBANS_TREASURY,
   ...EBERRON,
   ...MONSTERS_OF_THE_MULTIVERSE,
+  ...GLORY_OF_THE_GIANTS,
+  ...SHADOW_OF_THE_DRAGON_QUEEN,
+  ...VAN_RICHTENS_GUIDE,
+  ...SETTING_BOOKS,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);
