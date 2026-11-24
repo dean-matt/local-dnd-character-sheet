@@ -1858,6 +1858,140 @@ const FIZBANS_TREASURY: FeatureMechanics[] = [
   },
 ];
 
+const erlwTrait = bookTrait("ERLW");
+const erlwRace = (name: string) => `${name}|ERLW`;
+const dragonmark = (race: string, mark: string) => `${race}|PHB|${mark}|ERLW`;
+const MARK_OF_FINDING = [
+  dragonmark("Half-Orc", "Variant; Mark of Finding"),
+  dragonmark("Human", "Variant; Mark of Finding"),
+];
+const DRAGONMARKS = [
+  dragonmark("Dwarf", "Mark of Warding"),
+  dragonmark("Elf", "Mark of Shadow"),
+  dragonmark("Gnome", "Mark of Scribing"),
+  dragonmark("Half-Elf", "Variant; Mark of Detection"),
+  dragonmark("Half-Elf", "Variant; Mark of Storm"),
+  dragonmark("Halfling", "Mark of Healing"),
+  dragonmark("Halfling", "Mark of Hospitality"),
+  dragonmark("Human", "Mark of Handling"),
+  dragonmark("Human", "Mark of Making"),
+  dragonmark("Human", "Mark of Passage"),
+  dragonmark("Human", "Mark of Sentinel"),
+  ...MARK_OF_FINDING,
+];
+const shifter = (subrace: string) => `Shifter|ERLW|${subrace}|ERLW`;
+const SHIFTERS = ["Beasthide", "Longtooth", "Swiftstride", "Wildhunt"].map(shifter);
+
+/**
+ * The races, dragonmarks, feats and background of Eberron: Rising from the Last War. A trait
+ * whose effect the race row already gives, such as a sense, a skill, a tool, a defense or a
+ * speed, is the narrative mark. So is an effect no vocabulary term holds: a d4 added to a
+ * check, extra damage equal to the character's level, a bonus counted from allies in sight,
+ * reach, carrying capacity, and an Armor Class bonus that holds only while a double-bladed
+ * scimitar is held in two hands. A trait that grants spells records them; the race row lists
+ * which, and counts their casts.
+ */
+const EBERRON: FeatureMechanics[] = [
+  erlwTrait("Darkvision", [
+    ...["Bugbear", "Goblin", "Hobgoblin", "Orc", "Shifter"].map(erlwRace),
+    ...MARK_OF_FINDING,
+  ]),
+  erlwTrait("Long-Limbed", [erlwRace("Bugbear")]),
+  erlwTrait("Powerful Build", [erlwRace("Bugbear"), erlwRace("Orc")]),
+  erlwTrait("Sneaky", [erlwRace("Bugbear")]),
+  erlwTrait(
+    "Surprise Attack",
+    [erlwRace("Bugbear")],
+    [
+      {
+        kind: "extraDamage",
+        dice: "2d6",
+        option: "once a combat, on a hit against a creature you surprised, on your first turn",
+      },
+    ],
+  ),
+  erlwTrait("Shapechanger", [erlwRace("Changeling")]),
+  erlwTrait("Changeling Instincts", [erlwRace("Changeling")]),
+  // Its one use is the catalog's.
+  erlwTrait("Fury of the Small", [erlwRace("Goblin")]),
+  erlwTrait("Nimble Escape", [erlwRace("Goblin")], asBonusAction("Disengage", "Hide")),
+  erlwTrait("Martial Training", [erlwRace("Hobgoblin")]),
+  erlwTrait("Saving Face", [erlwRace("Hobgoblin")]),
+  erlwTrait(
+    "Dual Mind",
+    [erlwRace("Kalashtar")],
+    [{ kind: "roll", roll: "save", abilities: ["wis"], advantage: true }],
+  ),
+  erlwTrait("Mental Discipline", [erlwRace("Kalashtar")]),
+  erlwTrait("Mind Link", [erlwRace("Kalashtar")]),
+  erlwTrait("Severed from Dreams", [erlwRace("Kalashtar")]),
+  erlwTrait("Aggressive", [erlwRace("Orc")]),
+  erlwTrait("Primal Intuition", [erlwRace("Orc")]),
+  // The minimum of 1 temporary hit point is left to the player; its one use is the catalog's.
+  erlwTrait(
+    "Shifting",
+    [erlwRace("Shifter")],
+    [{ kind: "active" }, { kind: "tempHp", bonus: ["level", "con"] }],
+  ),
+  // One record holds a `(name, source)`, and each shifter subrace's benefit while shifted differs.
+  erlwTrait("Shifting Feature", SHIFTERS),
+  erlwTrait("Natural Athlete", [shifter("Beasthide")]),
+  erlwTrait("Fierce", [shifter("Longtooth")]),
+  erlwTrait("Graceful", [shifter("Swiftstride")]),
+  erlwTrait("Natural Tracker", [shifter("Wildhunt")]),
+  erlwTrait(
+    "Constructed Resilience",
+    [erlwRace("Warforged")],
+    [saveAdvantage("against being poisoned")],
+  ),
+  erlwTrait("Sentry's Rest", [erlwRace("Warforged")]),
+  erlwTrait("Integrated Protection", [erlwRace("Warforged")], [{ kind: "armorClass", value: 1 }]),
+  erlwTrait("Specialized Design", [erlwRace("Warforged")]),
+  ...(
+    [
+      ["Warder's Intuition", "Dwarf", "Mark of Warding"],
+      ["Cunning Intuition", "Elf", "Mark of Shadow"],
+      ["Gifted Scribe", "Gnome", "Mark of Scribing"],
+      ["Deductive Intuition", "Half-Elf", "Variant; Mark of Detection"],
+      ["Windwright's Intuition", "Half-Elf", "Variant; Mark of Storm"],
+      ["Medical Intuition", "Halfling", "Mark of Healing"],
+      ["Ever Hospitable", "Halfling", "Mark of Hospitality"],
+      ["Wild Intuition", "Human", "Mark of Handling"],
+      ["Artisan's Intuition", "Human", "Mark of Making"],
+      ["Intuitive Motion", "Human", "Mark of Passage"],
+      ["Sentinel's Intuition", "Human", "Mark of Sentinel"],
+    ] as const
+  ).map(([name, race, mark]) => erlwTrait(name, [dragonmark(race, mark)])),
+  erlwTrait("Hunter's Intuition", MARK_OF_FINDING),
+  ...(
+    [
+      ["Wards and Seals", "Dwarf", "Mark of Warding"],
+      ["Shape Shadows", "Elf", "Mark of Shadow"],
+      ["Scribe's Insight", "Gnome", "Mark of Scribing"],
+      ["Magical Detection", "Half-Elf", "Variant; Mark of Detection"],
+      ["Headwinds", "Half-Elf", "Variant; Mark of Storm"],
+      ["Healing Touch", "Halfling", "Mark of Healing"],
+      ["Innkeeper's Magic", "Halfling", "Mark of Hospitality"],
+      ["Primal Connection", "Human", "Mark of Handling"],
+      ["Spellsmith", "Human", "Mark of Making"],
+      ["Magical Passage", "Human", "Mark of Passage"],
+      ["Guardian's Shield", "Human", "Mark of Sentinel"],
+    ] as const
+  ).map(([name, race, mark]) => erlwTrait(name, [dragonmark(race, mark)], [SPELLS])),
+  erlwTrait("Finder's Magic", MARK_OF_FINDING, [SPELLS]),
+  erlwTrait("Spells of the Mark", DRAGONMARKS, [SPELLS]),
+  erlwTrait("Storm's Boon", [dragonmark("Half-Elf", "Variant; Mark of Storm")]),
+  erlwTrait("Maker's Gift", [dragonmark("Human", "Mark of Making")]),
+  erlwTrait("Courier's Speed", [dragonmark("Human", "Mark of Passage")]),
+  erlwTrait("The Bigger They Are", [dragonmark("Human", "Mark of Handling")]),
+  // Its one use is the catalog's.
+  erlwTrait("Vigilant Guardian", [dragonmark("Human", "Mark of Sentinel")]),
+  // Its one use is the catalog's; the Hit Die it rolls for temporary hit points is left to the player.
+  { ref: { name: "Aberrant Dragonmark", source: "ERLW" }, mechanics: [SPELLS] },
+  narrative({ name: "Revenant Blade", source: "ERLW" }),
+  narrative({ name: "House Connections", source: "ERLW" }),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -3580,6 +3714,7 @@ const RECORDS: FeatureMechanics[] = [
   ...PLANE_SHIFT_AMONKHET,
   ...DUNGEON_MASTERS_GUIDE,
   ...FIZBANS_TREASURY,
+  ...EBERRON,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);
