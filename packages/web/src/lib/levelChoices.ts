@@ -16,6 +16,7 @@ import {
   type FeatureKey,
   featureSpellPickOffers,
   type HomebrewNames,
+  type Mechanic,
 } from "@dnd/character";
 import { candidateAt } from "./improvementFeats.ts";
 import {
@@ -37,6 +38,7 @@ const grantor = (each: Grantor) => `${each.kind}|${entryKey(each.ref)}`;
 export function withoutLevelChoices(
   definition: CharacterDefinition,
   level: number,
+  effects?: ReadonlyMap<string, readonly Mechanic[]>,
 ): CharacterDefinition {
   const { levels } = definition;
   const taken = levels[level - 1];
@@ -67,7 +69,9 @@ export function withoutLevelChoices(
       if (!broughtBy(feature)) return [spell];
       // A pick from the spellbook marked a spell the class already knew, which stays.
       const { pickedFor: _marked, ...known } = spell;
-      return featureSpellPickOffers(feature).some((pick) => pick.from === "book") ? [known] : [];
+      return featureSpellPickOffers(feature, effects).some((pick) => pick.from === "book")
+        ? [known]
+        : [];
     }),
     optionalFeatures: definition.optionalFeatures.filter((pick) => pick.level !== level),
   };

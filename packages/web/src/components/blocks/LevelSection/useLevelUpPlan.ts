@@ -10,6 +10,7 @@ import {
 } from "@dnd/character";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useFeatRows } from "../../../hooks/useFeatRows.ts";
+import { useHomebrewEffects } from "../../../hooks/useHomebrewEffects.ts";
 import { useImprovementGrants } from "../../../hooks/useImprovementGrants.ts";
 import {
   type FeaturePicks,
@@ -99,13 +100,14 @@ export function useLevelUpPlan(
   const featList = useFeatRows(definition.edition);
   const die = HIT_DICE.find((each) => each === target.hitDie);
   const improvements = useImprovementGrants(levels);
+  const effects = useHomebrewEffects();
   const grant = improvements.grants.find((each) => each.level === levels.length);
   const draft = { ...definition, levels, feats, abilityIncreases };
   const candidate = grant && candidateAt(draft, grant);
   const improvement = grant && improvementAt(draft, grant.level);
   const featRows = featList.rows;
   const offerings = offeringsAt(target);
-  const pickings = pickingsAt(target);
+  const pickings = pickingsAt(target, effects);
   const chosen = (offering: FeatureOffering) =>
     takenOption(featureChoices, offering.feature, offering.options);
 
@@ -245,19 +247,23 @@ export function useLevelUpPlan(
 }
 
 /** The features at the level being taken, class and subclass as `offeringsAt` reads them, that ask for picks. */
-function pickingsAt(target: ReturnType<typeof useLevelUpClass>) {
+function pickingsAt(
+  target: ReturnType<typeof useLevelUpClass>,
+  effects: ReturnType<typeof useHomebrewEffects>,
+) {
   const cls = target.catalog;
   if (!cls) return [];
   const owner = { className: cls.name, classSource: cls.source };
   const row = target.subclassRow;
-  const own = featurePickings(target.after?.features ?? [], owner).filter(
+  const own = featurePickings(target.after?.features ?? [], owner, effects).filter(
     ({ feature }) => feature.level === target.next,
   );
   if (!row) return own;
-  const subclass = featurePickings(target.subclassAfter?.features ?? [], {
-    ...owner,
-    subclass: { shortName: row.shortName, source: row.source },
-  }).filter(({ feature }) => feature.level >= target.subclassFrom && feature.level <= target.next);
+  const subclass = featurePickings(
+    target.subclassAfter?.features ?? [],
+    { ...owner, subclass: { shortName: row.shortName, source: row.source } },
+    effects,
+  ).filter(({ feature }) => feature.level >= target.subclassFrom && feature.level <= target.next);
   return [...own, ...subclass];
 }
 

@@ -12,6 +12,7 @@ import { ErrorState } from "../../../../ErrorState.tsx";
 import { characterSpellsKey } from "../../../../hooks/characterKeys.ts";
 import { useCharacterSpells } from "../../../../hooks/useCharacterSpells.ts";
 import { useHeldSave } from "../../../../hooks/useHeldSave.ts";
+import { useHomebrewEffects } from "../../../../hooks/useHomebrewEffects.ts";
 import { useHomebrewNames } from "../../../../hooks/useHomebrewNames.ts";
 import { useRowWrites } from "../../../../hooks/useRowWrites.ts";
 import { LoadingState } from "../../../../LoadingState.tsx";
@@ -90,15 +91,15 @@ export function SpellList({
   const [levels, setLevels] = useState(NO_RANGE);
   const [only, setOnly] = useState<string[]>([]);
   const spells = useCharacterSpells(character.id);
+  const homebrewEffects = useHomebrewEffects();
   const write = useHeldSave(character.id, "Spells");
   const { settled, hold, writing } = useRowWrites(characterSpellsKey(character.id));
   const busy = writing || spells.isFetching;
   const casters = derived.spellcasting;
   const drawn = character.definition.spells;
+  const ruled = { ...character.definition, homebrewEffects };
   const featureGranted = new Set(
-    drawn.flatMap(({ pickedFor }, index) =>
-      grantedByFeature(character.definition, pickedFor) ? [index] : [],
-    ),
+    drawn.flatMap(({ pickedFor }, index) => (grantedByFeature(ruled, pickedFor) ? [index] : [])),
   );
   const edit = (index: number, change: Parameters<typeof editSpellEntry>[3]) => {
     const entry = drawn[index];

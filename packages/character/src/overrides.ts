@@ -15,8 +15,9 @@ type Lists = {
  * added to the block fails to compile until it names one here.
  *
  * A container, an unproficient item, an armor that stops casting, a feature's restore, its uses,
- * its conversion, its slot recovery and its regain hold no overridable field, so a name or an index stands in for a key
- * nothing reads. A feature's save DC is overridable, keyed by the feature.
+ * its conversion, its slot recovery, its regain and a feature a homebrew effect replaces hold no
+ * overridable field, so a name or an index stands in for a key nothing reads. A feature's save
+ * DC is overridable, keyed by the feature.
  *
  * An inventory entry carries an id only once it holds something, so a weapon is named by
  * its item and which copy of that item it is. Removing another item leaves the override on
@@ -39,6 +40,7 @@ const ELEMENT_KEY: {
   featureRestores: (restore) => `${refKey(restore.feature)}|${restore.kind}`,
   limitedUses: (uses) => uses.key,
   startableFeatures: refKey,
+  homebrewEffects: refKey,
   featureConversions: (conversion) => refKey(conversion.feature),
   slotRecoveries: (recovery) => refKey(recovery.feature),
   regains: (regain) => refKey(regain.feature),

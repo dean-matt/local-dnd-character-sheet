@@ -4,23 +4,23 @@ import {
   homebrewFeatureEffectRecordSchema,
 } from "@dnd/character";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
-
-const PATH = "/homebrew/feature-effects";
+import { apiDelete, apiMutate } from "../lib/api.ts";
+import { charactersKey } from "./characterKeys.ts";
+import { homebrewEffectsQuery, HOMEBREW_EFFECTS_PATH as PATH } from "./useHomebrewEffects.ts";
 
 /**
  * The homebrew effect a table rules for the catalog feature `ref`, if one does, with the writes
- * that set and clear it. The effects list refreshes after a write.
+ * that set and clear it. The effects list and every character refresh after a write, since any
+ * of them may hold the feature.
  */
 export function useHomebrewFeatureEffect(ref: ContentRef) {
   const queryClient = useQueryClient();
   const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: ["homebrew", "feature-effects"] });
-  const list = useQuery({
-    queryKey: ["homebrew", "feature-effects"],
-    queryFn: () => apiGet(PATH, z.array(homebrewFeatureEffectRecordSchema)),
-  });
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: homebrewEffectsQuery.queryKey }),
+      queryClient.invalidateQueries({ queryKey: charactersKey }),
+    ]);
+  const list = useQuery(homebrewEffectsQuery);
   const effect = list.data?.find(({ name, source }) => name === ref.name && source === ref.source);
   const save = useMutation({
     mutationFn: (input: HomebrewFeatureEffectInput) =>

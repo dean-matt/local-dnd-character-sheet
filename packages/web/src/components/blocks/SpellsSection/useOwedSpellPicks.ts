@@ -4,6 +4,7 @@ import { characterSpellsKey } from "../../../hooks/characterKeys.ts";
 import { useCharacterSpells } from "../../../hooks/useCharacterSpells.ts";
 import { useGrantedSpells } from "../../../hooks/useGrantedSpells.ts";
 import { useHeldSave } from "../../../hooks/useHeldSave.ts";
+import { useHomebrewEffects } from "../../../hooks/useHomebrewEffects.ts";
 import { useRowWrites } from "../../../hooks/useRowWrites.ts";
 import { featurePickRows, owesPick } from "../../../lib/featureSpellPicks.ts";
 import {
@@ -35,6 +36,7 @@ const sameGrantor = (a: PickGrantor | undefined, b: PickGrantor) =>
 export function useOwedSpellPicks(character: CharacterRecord) {
   const { definition } = character;
   const spells = useCharacterSpells(character.id);
+  const homebrewEffects = useHomebrewEffects();
   const grantors = heldSpellGrantors(definition, Math.max(1, definition.levels.length));
   const { lists, failed } = useGrantedSpells(grantors);
   const write = useHeldSave(character.id, "Spells");
@@ -63,7 +65,7 @@ export function useOwedSpellPicks(character: CharacterRecord) {
       cantripsOf(row.picked).length < row.owed.cantrips ||
       spellsOf(row.picked).length < row.owed.spells,
   );
-  const featureRows = featurePickRows(definition, picked).filter(owesPick);
+  const featureRows = featurePickRows({ ...definition, homebrewEffects }, picked).filter(owesPick);
   const owing = new Set(rows.map(({ row }) => `${row.grantor}|${entryKey(row.ref)}`));
   const choosing = offers.filter(
     ({ row, blocks }) =>

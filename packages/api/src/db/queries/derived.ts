@@ -57,8 +57,10 @@ import {
   type ItemSenseTrait,
   type ItemSkillTrait,
   itemKey,
+  type Mechanic,
   mechanicListSchema,
   type Preparation,
+  refKey,
   type SkillTrait,
   type WeaponTrait,
 } from "@dnd/character";
@@ -84,6 +86,7 @@ import {
   listHomebrewClassResources,
   listHomebrewSkills,
 } from "./homebrew.ts";
+import { listHomebrewFeatureEffects } from "./homebrew-feature-effects.ts";
 import { type ItemFacts, itemWeights, resolveItemRows } from "./inventory.ts";
 import { getBaseItemMasteries } from "./items.ts";
 import { getRace, getSubrace } from "./races.ts";
@@ -556,6 +559,16 @@ function homebrewFeatures(
   return features;
 }
 
+/** Each homebrew effect's mechanics, keyed by `refKey` of the catalog feature it rules for; a row the schema no longer reads is left out. */
+export function homebrewEffects(homebrewDb: HomebrewDb): Map<string, Mechanic[]> {
+  return new Map(
+    listHomebrewFeatureEffects(homebrewDb).flatMap((row) => {
+      const mechanics = parseJson(mechanicListSchema, row.mechanics);
+      return mechanics ? [[refKey(row), mechanics] as const] : [];
+    }),
+  );
+}
+
 /** Per catalog class, how many kinds of weapon its Weapon Mastery allows at the character's level in it. */
 function weaponMasteryKinds(dataDir: string, definition: CharacterDefinition): Map<string, number> {
   const kinds = new Map<string, number>();
@@ -677,6 +690,7 @@ export function resolveCharacterCatalog(
     armorBurdens: armorBurdens(definition, items),
     featGrants: featGrants(dataDir, homebrewDb, definition),
     homebrewFeatures: homebrewFeatures(homebrewDb, definition),
+    homebrewEffects: homebrewEffects(homebrewDb),
     ammunition: ammunition(definition, items),
     containers: containers(definition, items),
   };

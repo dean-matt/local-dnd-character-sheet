@@ -54,6 +54,19 @@ describe("withoutNewestLevel, a spell picked for a class feature", () => {
 
     expect(withoutNewestLevel(before).spells).toEqual([{ ref: PHB("Shield"), prepared: true }]);
   });
+
+  it("goes with the level where a homebrew effect has the feature pick from elsewhere", () => {
+    const mastery = grantor("Spell Mastery", WIZARD, 18);
+    const before = definition({
+      levels: Array.from({ length: 18 }, () => ({ class: WIZARD })),
+      spells: [{ ref: PHB("Shield"), prepared: true, pickedFor: mastery }],
+    });
+    const effects = new Map([
+      ["Spell Mastery|PHB", [{ kind: "spells" as const, picks: [{ count: 2, from: "Wizard" }] }]],
+    ]);
+
+    expect(withoutNewestLevel(before, effects).spells).toEqual([]);
+  });
 });
 
 describe("withoutNewestLevel", () => {

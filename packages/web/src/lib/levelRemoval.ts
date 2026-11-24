@@ -1,4 +1,4 @@
-import { type CharacterDefinition, entryKey } from "@dnd/character";
+import { type CharacterDefinition, entryKey, type Mechanic } from "@dnd/character";
 import { lostGrantors, withoutLevelChoices } from "./levelChoices.ts";
 import { isPrerequisiteField } from "./multiclassPrerequisites.ts";
 
@@ -16,10 +16,13 @@ import { isPrerequisiteField } from "./multiclassPrerequisites.ts";
  * subclass, since a key names the subclass by a short name no level records. Reading the
  * subclass row's short name before removing is the way out.
  */
-export function withoutNewestLevel(definition: CharacterDefinition): CharacterDefinition {
+export function withoutNewestLevel(
+  definition: CharacterDefinition,
+  effects?: ReadonlyMap<string, readonly Mechanic[]>,
+): CharacterDefinition {
   const level = definition.levels.length;
   if (level < 2) return definition;
-  const without = withoutLevelChoices(definition, level);
+  const without = withoutLevelChoices(definition, level, effects);
   const orphaned = lostGrantors(definition, without);
   const own = `levels.${level - 1}.`;
   const departures = definition.departures.filter(({ field }) => !field.startsWith(own));
@@ -41,8 +44,9 @@ export function withoutNewestLevel(definition: CharacterDefinition): CharacterDe
 export function withoutLevelsFrom(
   definition: CharacterDefinition,
   level: number,
+  effects?: ReadonlyMap<string, readonly Mechanic[]>,
 ): CharacterDefinition {
   let left = definition;
-  while (left.levels.length >= Math.max(level, 2)) left = withoutNewestLevel(left);
+  while (left.levels.length >= Math.max(level, 2)) left = withoutNewestLevel(left, effects);
   return left;
 }

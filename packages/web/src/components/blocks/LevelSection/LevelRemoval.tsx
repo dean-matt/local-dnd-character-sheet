@@ -1,4 +1,5 @@
 import { type CharacterRecord, displayName, entryKey, type HomebrewNames } from "@dnd/character";
+import { useHomebrewEffects } from "../../../hooks/useHomebrewEffects.ts";
 import { useHomebrewNames } from "../../../hooks/useHomebrewNames.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import type { LevelHistoryRow } from "../../../lib/levelHistory.ts";
@@ -31,6 +32,7 @@ export function LevelRemoval({
 }) {
   const update = useUpdateCharacterDefinition(character.id);
   const homebrewNames = useHomebrewNames();
+  const effects = useHomebrewEffects();
   const first = rows[0];
   const from = first.level;
   const last = from + rows.length - 1;
@@ -50,7 +52,7 @@ export function LevelRemoval({
               return held !== undefined && entryKey(held.class) === entryKey(row.cls);
             });
           if (!same) throw new Error(`the levels changed before ${names} could be removed.`);
-          return withoutLevelsFrom(latest, from);
+          return withoutLevelsFrom(latest, from, effects);
         },
         readAt: character.updatedAt,
         ownUndoEntry: true,

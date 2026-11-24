@@ -1,5 +1,7 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { characterDerivedKey } from "../../../hooks/characterKeys.ts";
 import { renderWithClient } from "../../../test/renderWithClient.tsx";
 import { FeatureHomebrewEffect } from "./FeatureHomebrewEffect.tsx";
 
@@ -75,6 +77,30 @@ describe("FeatureHomebrewEffect", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Delete effect" })).toBeNull());
   });
 
+  it("marks every character's cached reads stale after a save and after a delete", async () => {
+    serve();
+    const client = new QueryClient();
+    const derived = characterDerivedKey("c1");
+    const stale = () => client.getQueryState(derived)?.isInvalidated;
+    client.setQueryData(derived, {});
+    render(
+      <QueryClientProvider client={client}>
+        <FeatureHomebrewEffect feature={feature} />
+      </QueryClientProvider>,
+    );
+
+    fireEvent.change(await screen.findByLabelText("Mechanics (JSON)"), {
+      target: { value: JSON.stringify(MECHANICS) },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save effect" }));
+    await waitFor(() => expect(stale()).toBe(true));
+
+    client.setQueryData(derived, {});
+    expect(stale()).toBe(false);
+    fireEvent.click(await screen.findByRole("button", { name: "Delete effect" }));
+    await waitFor(() => expect(stale()).toBe(true));
+  });
+
   it("shows the stored effect and writes nothing for mechanics that do not validate", async () => {
     const calls = serve([
       { id: "e1", createdAt: "2026-01-01T00:00:00.000Z", ...feature, mechanics: MECHANICS },
@@ -104,5 +130,17 @@ describe("FeatureHomebrewEffect", () => {
     expect(await screen.findByText(/every class and subclass feature/)).toBeTruthy();
     rerender(<FeatureHomebrewEffect feature={feature} />);
     expect(screen.queryByText(/every class and subclass feature/)).toBeNull();
+  });
+
+  it("says whether the sheet applies the stored effect", async () => {
+    serve([{ id: "e1", createdAt: "2026-01-01T00:00:00.000Z", ...feature, mechanics: MECHANICS }]);
+    const { rerender } = renderWithClient(<FeatureHomebrewEffect feature={feature} applied />);
+    expect(await screen.findByText(/Takes the place of any mechanics recorded/)).toBeTruthy();
+    expect(screen.queryByText(/does not apply the effect/)).toBeNull();
+    rerender(<FeatureHomebrewEffect feature={feature} applied={false} />);
+    expect(screen.getByText(/does not apply the effect/)).toBeTruthy();
+    expect(screen.queryByText(/Takes the place of any mechanics recorded/)).toBeNull();
+    rerender(<FeatureHomebrewEffect feature={feature} />);
+    expect(screen.queryByText(/does not apply the effect|Takes the place/)).toBeNull();
   });
 });

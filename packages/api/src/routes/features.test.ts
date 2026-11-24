@@ -23,6 +23,7 @@ import {
   replaceHomebrewClassFeatures,
   replaceHomebrewSubclassFeatures,
 } from "../db/queries/homebrew.ts";
+import { insertHomebrewFeatureEffect } from "../db/queries/homebrew-feature-effects.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { featuresRoutes } from "./features.ts";
 
@@ -420,6 +421,21 @@ describe("featuresRoutes", () => {
         },
         offers: [{ fields: ["expertise"], count: 2, from: null }],
       },
+    });
+  });
+
+  it("carries the picks a homebrew effect on a class feature rules in place of the recorded", async () => {
+    insertHomebrewFeatureEffect(opened.homebrewDb, "ruling", {
+      name: "Expertise",
+      source: "PHB",
+      mechanics: [{ kind: "pick", fields: ["expertise"], count: 4 }],
+    });
+    store(definitionWith({ levels: [{ class: BARD }, { class: BARD }, { class: BARD }] }));
+    const [bard] = (await features()).groups;
+    const expertise = bard?.features.find(({ name }) => name === "Expertise");
+
+    expect(expertise).toMatchObject({
+      picks: { offers: [{ fields: ["expertise"], count: 4, from: null }] },
     });
   });
 

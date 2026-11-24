@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { characterRecord } from "../test/records.ts";
-import { grantedByFeature } from "./featureSpellPicks.ts";
+import { featurePickRows, grantedByFeature } from "./featureSpellPicks.ts";
 
 const levelled = (name: string, count: number) => {
   const class_ = { name, source: "PHB" };
@@ -36,5 +36,34 @@ describe("grantedByFeature", () => {
       false,
     );
     expect(grantedByFeature(bard.definition, undefined)).toBe(false);
+  });
+});
+
+describe("a homebrew effect on a feature that picks spells", () => {
+  const bard = levelled("Bard", 10);
+  const ruled = {
+    ...bard.definition,
+    homebrewEffects: new Map([
+      ["Magical Secrets|PHB", [{ kind: "spells" as const, picks: [{ count: 3, from: "Bard" }] }]],
+    ]),
+  };
+  const secrets = (definition: typeof bard.definition) =>
+    featurePickRows(definition, [])
+      .filter(({ feature }) => feature.name === "Magical Secrets")
+      .map(({ pick }) => pick);
+
+  it("owes the picks the effect rules in place of the recorded ones", () => {
+    expect(secrets(bard.definition)).toEqual([{ count: 2, from: "any" }]);
+    expect(secrets(ruled)).toEqual([{ count: 3, from: "Bard" }]);
+  });
+
+  it("marks a spell held where the effect has the feature pick from the spellbook", () => {
+    const book = {
+      ...bard.definition,
+      homebrewEffects: new Map([
+        ["Magical Secrets|PHB", [{ kind: "spells" as const, picks: [{ count: 2, from: "book" }] }]],
+      ]),
+    };
+    expect(grantedByFeature(book, pickedFor("Magical Secrets", bard.class_, 10))).toBe(false);
   });
 });

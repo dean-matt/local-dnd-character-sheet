@@ -27,6 +27,10 @@ import {
   insertHomebrewSubrace,
   replaceHomebrewClassResources,
 } from "../db/queries/homebrew.ts";
+import {
+  deleteHomebrewFeatureEffect,
+  insertHomebrewFeatureEffect,
+} from "../db/queries/homebrew-feature-effects.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { derivedRoutes } from "./derived.ts";
 
@@ -841,6 +845,31 @@ describe("derivedRoutes", () => {
     expect(held.initiative.computed).toBe(bare.initiative.computed + 5);
     expect(held.initiative.terms.at(-1)).toMatchObject({ label: "Hawk Eyes", value: 5 });
     expect(held.speed.computed.walk).toBe(bare.speed.computed.walk + 10);
+  });
+
+  it("applies a homebrew effect on a catalog feature in place of its recorded mechanics until it is deleted", async () => {
+    const alert = { name: "Alert", source: "PHB" };
+    store(definitionWith());
+    const bare = await derived();
+    updateCharacterDefinition(
+      opened.charactersDb,
+      "1",
+      definitionWith({ feats: [{ ref: alert }] }),
+    );
+    const recorded = await derived();
+    expect(recorded.initiative.computed).toBe(bare.initiative.computed + 5);
+    expect(recorded.homebrewEffects).toEqual([]);
+
+    insertHomebrewFeatureEffect(opened.homebrewDb, "ruling", {
+      ...alert,
+      mechanics: [{ kind: "bonus", target: "initiative", value: 2 }],
+    });
+    const ruled = await derived();
+    expect(ruled.initiative.computed).toBe(bare.initiative.computed + 2);
+    expect(ruled.homebrewEffects).toEqual([alert]);
+
+    deleteHomebrewFeatureEffect(opened.homebrewDb, "ruling");
+    expect(await derived()).toEqual(recorded);
   });
 
   it("applies nothing from a homebrew feat that records no mechanics", async () => {
