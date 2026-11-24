@@ -81,6 +81,8 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "Channel Divinity: Preserve Life",
   ),
   ...row("action", "DMG", "Control Undead", "Dreadful Aspect", "Dread Lord"),
+  ...row("action", "FTD", "Chromatic Warding", "Drake Companion", "Drake's Breath"),
+  ...row("bonus action", "FTD", "Aspect of the Wyrm", "Gem Flight"),
   ...row("bonus action", "TCE", "Channel Divinity: Harness Divine Power"),
   ...row("bonus action", "XGE", "Fighting Spirit", "Mantle of Inspiration", "Unearthly Recovery"),
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
@@ -324,6 +326,7 @@ const COST_NOTES: [string, string[]][] = [
     ],
   ],
   ["XGE", ["One with the Blade", "Searing Sunburst"]],
+  ["FTD", ["Breath of the Dragon", "Aspect of the Wyrm", "Ascendant Aspect"]],
 ];
 
 /** Every feature the curated table prices, beside its cost. */

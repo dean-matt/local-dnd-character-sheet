@@ -1786,6 +1786,83 @@ const DUNGEON_MASTERS_GUIDE: FeatureMechanics[] = [
   dmgTrait("Fey Step", ["Elf|PHB|Eladrin|DMG"], [SPELLS]),
 ];
 
+const ascendantDragon: [string, string] = ["Ascendant Dragon", "FTD"];
+const drakewarden: [string, string] = ["Drakewarden", "FTD"];
+const ftdFeature = bookFeature("FTD");
+const ftdTrait = bookTrait("FTD");
+const dragonborn = (ancestry: string, colors: string[]) =>
+  [ancestry, ...colors.map((color) => `${ancestry}; ${color}`)].map(
+    (kind) => `Dragonborn (${kind})|FTD`,
+  );
+const CHROMATIC = dragonborn("Chromatic", ["Black", "Blue", "Green", "Red", "White"]);
+const GEM = dragonborn("Gem", ["Amethyst", "Crystal", "Emerald", "Sapphire", "Topaz"]);
+const METALLIC = dragonborn("Metallic", ["Brass", "Bronze", "Copper", "Gold", "Silver"]);
+const KI_DC: Mechanic = { kind: "dc", ability: "wis", label: "Ki" };
+const TONGUE_OF_DRAGONS: Mechanic = { kind: "pick", fields: ["languages"], count: 1 };
+const WINGS: Mechanic[] = [
+  { kind: "active" },
+  { kind: "speed", equalToWalk: ["fly"], while: "active" },
+];
+
+/**
+ * The Way of the Ascendant Dragon, the Drakewarden, the dragonborn and the dragon gift feats of
+ * Fizban's Treasury of Dragons. A resistance whose damage type the player picks on each use or
+ * for the drake, the drake's own statistics, and an effect on another creature beyond its DC
+ * are the narrative mark. A race trait that starts at 5th level is held from the first, as
+ * its catalog uses already are.
+ */
+const FIZBANS_TREASURY: FeatureMechanics[] = [
+  ftdFeature(monk, ascendantDragon, "Way of the Ascendant Dragon", 3),
+  ftdFeature(monk, ascendantDragon, "Draconic Disciple", 3, [TONGUE_OF_DRAGONS]),
+  ftdFeature(monk, ascendantDragon, "Breath of the Dragon", 3, [KI_DC, PROFICIENCY_USES]),
+  ftdFeature(monk, ascendantDragon, "Wings Unfurled", 6, [PROFICIENCY_USES, ...WINGS]),
+  ftdFeature(monk, ascendantDragon, "Aspect of the Wyrm", 11, [{ kind: "active" }, KI_DC]),
+  ftdFeature(monk, ascendantDragon, "Ascendant Aspect", 17, [
+    { kind: "sense", name: "blindsight", range: 10 },
+    KI_DC,
+  ]),
+  ftdFeature(ranger, drakewarden, "Drakewarden", 3),
+  ftdFeature(ranger, drakewarden, "Draconic Gift", 3, [SPELLS, TONGUE_OF_DRAGONS]),
+  ftdFeature(ranger, drakewarden, "Drake Companion", 3),
+  ftdFeature(ranger, drakewarden, "Bond of Fang and Scale", 7),
+  ftdFeature(ranger, drakewarden, "Drake's Breath", 11, [{ kind: "dc", spell: "Ranger" }]),
+  ftdFeature(ranger, drakewarden, "Perfected Bond", 15, [PROFICIENCY_USES]),
+  ftdTrait("Chromatic Ancestry", ["Dragonborn (Chromatic)|FTD"]),
+  ftdTrait("Gem Ancestry", ["Dragonborn (Gem)|FTD"]),
+  ftdTrait("Metallic Ancestry", ["Dragonborn (Metallic)|FTD"]),
+  ftdTrait(
+    "Breath Weapon",
+    [...CHROMATIC, ...GEM, ...METALLIC],
+    [{ kind: "dc", ability: "con" }, PROFICIENCY_USES],
+  ),
+  ftdTrait("Draconic Resistance", [...CHROMATIC, ...GEM, ...METALLIC]),
+  // One record holds a `(name, source)`, so the immunity, whose type is each ancestry's, waits on
+  // a per-race mechanic.
+  ftdTrait("Chromatic Warding", CHROMATIC, [{ kind: "active" }]),
+  ftdTrait("Psionic Mind", GEM),
+  ftdTrait("Gem Flight", GEM, WINGS),
+  ftdTrait("Metallic Breath Weapon", METALLIC, [{ kind: "dc", ability: "con" }]),
+  {
+    ref: { name: "Gift of the Chromatic Dragon", source: "FTD" },
+    mechanics: [
+      PROFICIENCY_USES,
+      { kind: "uses", count: 1, reset: "long", part: "infusion" },
+      {
+        kind: "extraDamage",
+        dice: "1d4",
+        type: "acid, cold, fire, lightning or poison",
+        option: "with the weapon Chromatic Infusion touched, for 1 minute",
+      },
+    ],
+  },
+  // Its DC uses the ability the feat increased, which no `dc` mechanic names.
+  { ref: { name: "Gift of the Gem Dragon", source: "FTD" }, mechanics: [PROFICIENCY_USES] },
+  {
+    ref: { name: "Gift of the Metallic Dragon", source: "FTD" },
+    mechanics: [SPELLS, PROFICIENCY_USES],
+  },
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -3507,6 +3584,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SPELLS_FROM_CLASS_FEATURES_2024,
   ...PLANE_SHIFT_AMONKHET,
   ...DUNGEON_MASTERS_GUIDE,
+  ...FIZBANS_TREASURY,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);

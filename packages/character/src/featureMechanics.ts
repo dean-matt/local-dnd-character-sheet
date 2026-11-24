@@ -439,7 +439,7 @@ const resetSchema = z.enum(["short", "long", "manual"]);
 export const USES_RESTORED_BY = ["initiative", "soulTrinket"] as const;
 
 /** The count a feature keeps beside its main one, when it limits two things apart. */
-export const USES_PARTS = ["conjuring", "recovery"] as const;
+export const USES_PARTS = ["conjuring", "recovery", "infusion"] as const;
 
 /**
  * The uses a feature counts, restored by a `reset` rest, where `short` means either rest and
