@@ -145,6 +145,7 @@ const advantageOn = (option: string): Mechanic => ({ kind: "attack", advantage: 
 const KI_POINTS = [1, 2, 3].map((ki) => `${ki} ki point${ki === 1 ? "" : "s"}`);
 const INFUSED = "with the weapon you infused";
 const KI_DC: Mechanic = { kind: "dc", ability: "wis", label: "Ki" };
+const CHOSEN_CASTING_DC: Mechanic = { kind: "dc", ability: ["int", "wis", "cha"] };
 const WINGS: Mechanic[] = [
   { kind: "active" },
   { kind: "speed", equalToWalk: ["fly"], while: "active" },
@@ -2129,10 +2130,7 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   mpmmTrait("Psionic Fortitude", mpmm("Duergar"), [
     saveAdvantage("against being charmed or stunned"),
   ]),
-  mpmmTrait("Fey Step", mpmm("Eladrin"), [
-    PROFICIENCY_USES,
-    { kind: "dc", ability: ["int", "wis", "cha"] },
-  ]),
+  mpmmTrait("Fey Step", mpmm("Eladrin"), [PROFICIENCY_USES, CHOSEN_CASTING_DC]),
   mpmmTrait("Fairy Magic", mpmm("Fairy"), [SPELLS]),
   mpmmTrait("Firbolg Magic", mpmm("Firbolg"), [SPELLS]),
   mpmmTrait("Hidden Step", mpmm("Firbolg"), [PROFICIENCY_USES]),
@@ -2359,7 +2357,6 @@ const strikeOfTheGiants = (
     },
   ],
 });
-const SCION_DC: Mechanic = { kind: "dc", ability: ["int", "wis", "cha"] };
 const MAGIC_RESISTANCE = saveAdvantage("against spells and other magical effects");
 const NATURAL_ARMOR_13: Mechanic = { kind: "unarmoredBase", value: 3 };
 
@@ -2383,7 +2380,7 @@ const GLORY_OF_THE_GIANTS: FeatureMechanics[] = [
       dice: "1d6",
       scales: [{ level: 14, dice: "2d6" }],
       type: "acid, cold, fire, thunder or lightning",
-      option: "with the weapon you infused",
+      option: INFUSED,
       while: "raging",
     },
   ]),
@@ -2442,7 +2439,7 @@ const SHADOW_OF_THE_DRAGON_QUEEN: FeatureMechanics[] = [
   // Its one use is the catalog's.
   dsotdqTrait("Fearless", ["Kender|DSotDQ"], [saveAdvantage("against being frightened")]),
   dsotdqTrait("Kender Curiosity", ["Kender|DSotDQ"]),
-  dsotdqTrait("Taunt", ["Kender|DSotDQ"], [PROFICIENCY_USES, SCION_DC]),
+  dsotdqTrait("Taunt", ["Kender|DSotDQ"], [PROFICIENCY_USES, CHOSEN_CASTING_DC]),
   ...["Adept of the Black Robes", "Adept of the White Robes", "Divinely Favored"].map((name) => ({
     ref: { name, source: "DSotDQ" },
     mechanics: [SPELLS],
@@ -2474,9 +2471,10 @@ const SHADOW_OF_THE_DRAGON_QUEEN: FeatureMechanics[] = [
 /**
  * The College of Spirits, the Undead patron, the lineages and the backgrounds of Van Richten's
  * Guide to Ravenloft. A lineage trait whose effect the row already gives, such as a sense or a
- * climbing speed, is the narrative mark. One record holds a `(name, source)`, so Deathless
- * Nature, the reborn's saves and the dhampir's breath alone, and Ancestral Legacy, whose two
- * skills upstream's row gives the hexblood alone, are the narrative mark. A die added to a
+ * climbing speed, is the narrative mark. One record holds a `(name, source)`, so a trait that
+ * differs per lineage is the narrative mark: Deathless Nature, whose saves are the reborn's and
+ * whose breathing is the dhampir's, and Ancestral Legacy, whose two skills only the hexblood's
+ * row gives. A die added to a
  * check, and hit points equal to the damage a bite or a spirit dealt, have no term.
  */
 const VAN_RICHTENS_GUIDE: FeatureMechanics[] = [
@@ -2681,7 +2679,11 @@ const SETTING_BOOKS: FeatureMechanics[] = [
   pszTrait("Keen Senses", psz("Elf (Zendikar)")),
   pszTrait("Fey Ancestry", psz("Elf (Zendikar)"), [saveAdvantage("against being charmed")]),
   // The resistances are the race row's.
-  pszTrait("Grit", psz("Goblin"), [{ kind: "unarmoredBase", value: 1 }]),
+  pszTrait(
+    "Grit",
+    ["Grotag", "Lavastep", "Tuktuk"].map((tribe) => `Goblin|PSZ|Zendikar; ${tribe} Tribe|PSZ`),
+    [{ kind: "unarmoredBase", value: 1 }],
+  ),
   pszTrait("Brave", psz("Kor"), [saveAdvantage("against being frightened")]),
   ...["Climbing", "Kor Climbing", "Lucky"].map((name) => pszTrait(name, psz("Kor"))),
   pszTrait("Amphibious", psz("Merfolk")),
@@ -2744,7 +2746,7 @@ const SETTING_BOOKS: FeatureMechanics[] = [
     ref: { name: "Agent of Order", source: "SatO" },
     mechanics: [
       PROFICIENCY_USES,
-      SCION_DC,
+      CHOSEN_CASTING_DC,
       {
         kind: "extraDamage",
         dice: "1d8",
@@ -2822,7 +2824,7 @@ const SETTING_BOOKS: FeatureMechanics[] = [
   aagTrait("Shape Self", aag("Plasmoid")),
   aagTrait("Chameleon Carapace", aag("Thri-kreen"), [
     NATURAL_ARMOR_13,
-    hideIn("in surroundings your carapace matches"),
+    hideIn("surroundings your carapace matches"),
   ]),
   ...["Secondary Arms", "Sleepless", "Thri-kreen Telepathy"].map((name) =>
     aagTrait(name, aag("Thri-kreen")),

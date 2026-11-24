@@ -113,12 +113,13 @@ describe("a giant feat", () => {
 });
 
 describe("a setting book race", () => {
-  it("bases an unarmored lizardfolk's, autognome's and goblin's Armor Class on Natural Armor", () => {
+  it("bases an unarmored lizardfolk's, autognome's, locathah's and Zendikar goblin's Armor Class on Natural Armor", () => {
     const base = (of: CharacterDefinition) => armorClassEffects(of, stance).unarmoredBase?.value;
     expect(base(raceOf("Lizardfolk", "VGM"))).toBe(3);
     expect(base(raceOf("Autognome", "AAG"))).toBe(3);
     expect(base(raceOf("Locathah", "LR"))).toBe(2);
-    expect(base(raceOf("Goblin", "PSZ"))).toBe(1);
+    expect(base(raceOf("Goblin", "PSZ", ["Zendikar; Tuktuk Tribe", "PSZ"]))).toBe(1);
+    expect(base(raceOf("Goblin", "PSZ", ["Ixalan", "PSX"]))).toBeUndefined();
   });
 
   it("adds 4 to a tortle's Armor Class only in its shell", () => {
@@ -153,7 +154,7 @@ describe("a setting book race", () => {
     ).toEqual([{ kind: "bonus", target: "hitPointsPerLevel", value: 2 }]);
   });
 
-  it("leaves a trait one record shares across races that differ to the player", () => {
+  it("leaves to the player a trait that differs per lineage or that no term holds", () => {
     expect(held(raceOf("Reborn", "VRGR")).get("Deathless Nature")?.narrative).toBe(true);
     expect(held(raceOf("Loxodon", "GGR")).get("Natural Armor")?.narrative).toBe(true);
   });
