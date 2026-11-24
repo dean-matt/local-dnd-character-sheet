@@ -78,6 +78,7 @@ function derivedFor(
     containers: new Map(),
     featGrants: new Map(),
     homebrewFeatures: new Map(),
+    homebrewEffects: new Map(),
     weaponMasteryKinds: new Map(),
     classResources: new Map(),
   });

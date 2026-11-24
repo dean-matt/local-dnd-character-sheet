@@ -12,6 +12,7 @@ import {
   type FeatureMechanics,
   featureMechanicsKey,
   featureOffers,
+  type Mechanic,
   mechanicsOfKind,
   type SpellPick,
 } from "./featureMechanics.ts";
@@ -148,6 +149,8 @@ export type Held = {
   levels: number;
   /** Its entry in the state's `featureUses`, as the features the API resolves key it. */
   usesKey: string;
+  /** Set where a homebrew effect replaces the mechanics recorded for the feature. */
+  homebrew?: true;
 };
 
 const BY_KEY = new Map(FEATURE_MECHANICS.map((entry) => [featureMechanicsKey(entry), entry]));
@@ -226,6 +229,8 @@ export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" |
     started?: ReadonlySet<string>;
     /** The recorded mechanics of each homebrew feat and option the character holds, keyed by `homebrewId`. */
     homebrewFeatures?: ReadonlyMap<string, HomebrewFeature>;
+    /** The mechanics a homebrew effect rules for a catalog feature, keyed by its `refKey`, in place of the recorded ones. */
+    homebrewEffects?: ReadonlyMap<string, readonly Mechanic[]>;
   };
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
@@ -238,7 +243,11 @@ function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
     const catalog = homebrew?.ref ?? catalogRef(ref);
     const entry = homebrew
       ? { ref: homebrew.ref, mechanics: homebrew.mechanics }
-      : catalog && BY_KEY.get(refKey(catalog));
+      : catalog &&
+        (BY_KEY.get(refKey(catalog)) ??
+          (definition.homebrewEffects?.has(refKey(catalog))
+            ? { ref: catalog, mechanics: [] }
+            : undefined));
     if (!catalog || !entry) return [];
     const usesKey = featureUsesKey([origin, catalog.source], catalog.name);
     return [{ ref: catalog, origin, entry, levels, usesKey }];
@@ -291,6 +300,17 @@ function classFeatures(definition: HoldsFeatures): Held[] {
   });
 }
 
+/** `held` with the mechanics a homebrew effect rules for it in place of its recorded ones. */
+function withHomebrewEffect(
+  held: Held,
+  effects: HoldsFeatures["homebrewEffects"] = new Map(),
+): Held {
+  const mechanics = effects.get(refKey(held.ref));
+  if (!mechanics) return held;
+  const { narrative: _, ...entry } = held.entry;
+  return { ...held, entry: { ...entry, mechanics: [...mechanics] }, homebrew: true };
+}
+
 /** `held` without the mechanics that hold only while its effect runs, unless it runs. */
 function asStarted(held: Held, started: ReadonlySet<string>): Held {
   const { mechanics } = held.entry;
@@ -310,7 +330,10 @@ export function heldFeatures(definition: HoldsFeatures): Held[] {
     ...raceTraits(definition, levels),
     ...classFeatures(definition),
   ])
-    held.set(featureMechanicsKey(feature.entry), feature);
+    held.set(
+      featureMechanicsKey(feature.entry),
+      withHomebrewEffect(feature, definition.homebrewEffects),
+    );
   const started = definition.started ?? new Set();
   return [...held.values()].map((feature) => asStarted(feature, started));
 }

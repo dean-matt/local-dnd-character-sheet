@@ -270,6 +270,8 @@ export type CharacterCatalog = {
   featGrants: ReadonlyMap<string, FeatGrantTrait>;
   /** Keyed by `homebrewId`, for each homebrew feat or optional feature the character holds that records mechanics. */
   homebrewFeatures: ReadonlyMap<string, HomebrewFeature>;
+  /** Keyed by `refKey` of a catalog feature, the mechanics a homebrew effect rules for it in place of its recorded ones. */
+  homebrewEffects: ReadonlyMap<string, readonly Mechanic[]>;
   /** Keyed like `weapons`, and absent for an entry that is not ammunition. */
   ammunition: ReadonlyMap<string, AmmunitionTrait>;
   /** Keyed like `weapons`, and absent for an item that holds nothing. */

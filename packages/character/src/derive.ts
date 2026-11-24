@@ -77,7 +77,7 @@ import { featureRestores } from "./featureRestores.ts";
 import { featureRolls, rollBonusTerms } from "./featureRolls.ts";
 import { featureTurn } from "./featureTurn.ts";
 import { halfProficiencyTerm } from "./halfProficiency.ts";
-import { startableFeatures } from "./heldFeatures.ts";
+import { heldFeatures, startableFeatures } from "./heldFeatures.ts";
 import {
   type ProficiencyItem,
   proficiencyItemTerms,
@@ -1141,12 +1141,18 @@ export function deriveCharacter(
   names?: HomebrewNames,
 ): CharacterDerived {
   const started = new Set(state.activeEffects.map(({ name }) => name));
-  const stored = { ...input, started, homebrewFeatures: catalog.homebrewFeatures };
+  const stored = {
+    ...input,
+    started,
+    homebrewFeatures: catalog.homebrewFeatures,
+    homebrewEffects: catalog.homebrewEffects,
+  };
   const feats = featGrants(stored, catalog);
   const definition = {
     ...withFeatGrants(stored, feats.granted, feats.itemSkills),
     started,
     homebrewFeatures: catalog.homebrewFeatures,
+    homebrewEffects: catalog.homebrewEffects,
   };
   const level = totalLevel(definition);
   const armor = equippedArmor(definition, catalog.armor);
@@ -1386,6 +1392,9 @@ export function deriveCharacter(
       ...feature,
       blockedBy: effectBlockedBy(feature.endsOn, [armorWorn, armor.shield && "shield"]),
     })),
+    homebrewEffects: heldFeatures(definition).flatMap(({ ref, homebrew }) =>
+      homebrew ? [ref] : [],
+    ),
     unproficientItems: derivedUnproficientItems(definition, catalog),
     pendingAbilityPicks: derivedPendingAbilityPicks(definition, catalog),
     castingBlockedBy: unproficientArmorWorn(definition, catalog),

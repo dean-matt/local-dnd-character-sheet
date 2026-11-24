@@ -93,6 +93,7 @@ export const derivedInput = (traits: object = {}) => ({
   turn: { attacks: 1, pactAttacks: null, conditionalAttacks: [], addsAction: [], bonusActions: [] },
   limitedUses: [],
   startableFeatures: [],
+  homebrewEffects: [],
   unproficientItems: [],
   pendingAbilityPicks: [],
   castingBlockedBy: [],

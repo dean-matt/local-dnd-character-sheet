@@ -30,6 +30,7 @@ import {
   itemKey,
   overrideKey,
   passiveSkill,
+  refKey,
   type SenseGrant,
   type TemporaryModifier,
   type WeaponTrait,
@@ -253,6 +254,7 @@ describe("deriveCharacter", () => {
     containers: new Map<string, ContainerTrait>(),
     featGrants: new Map(),
     homebrewFeatures: new Map(),
+    homebrewEffects: new Map(),
     weaponMasteryKinds: new Map<string, number>(),
     classResources: new Map(),
   };
@@ -275,6 +277,55 @@ describe("deriveCharacter", () => {
       label: "Dwarven Toughness",
       value: totalLevel(dwarf),
       reference: { name: "Dwarven Toughness", source: "PHB" },
+    });
+  });
+
+  describe("a homebrew effect on a catalog feature", () => {
+    const dwarf = {
+      ...equipped,
+      race: { name: "Dwarf", source: "PHB" },
+      subrace: { name: "Hill", source: "PHB" },
+    };
+    const toughness = { name: "Dwarven Toughness", source: "PHB" };
+    const ruled = {
+      ...catalog,
+      homebrewEffects: new Map([
+        [
+          refKey(toughness),
+          [{ kind: "bonus" as const, target: "hitPointsPerLevel" as const, value: 2 }],
+        ],
+      ]),
+    };
+
+    it("replaces the recorded mechanics and names the feature", () => {
+      const field = deriveCharacter(dwarf, ruled);
+      expect(field.hitPointMaximum.computed).toBe(
+        derived.hitPointMaximum.computed + 2 * totalLevel(dwarf),
+      );
+      expect(field.homebrewEffects).toEqual([toughness]);
+    });
+
+    it("gives way to the recorded mechanics once removed", () => {
+      const field = deriveCharacter(dwarf, catalog);
+      expect(field.hitPointMaximum.computed).toBe(
+        derived.hitPointMaximum.computed + totalLevel(dwarf),
+      );
+      expect(field.homebrewEffects).toEqual([]);
+    });
+
+    it("applies to a held catalog feat that records no mechanics", () => {
+      const actor = { name: "Actor", source: "PHB" };
+      const field = deriveCharacter(
+        { ...equipped, feats: [...equipped.feats, { ref: actor }] },
+        {
+          ...catalog,
+          homebrewEffects: new Map([
+            [refKey(actor), [{ kind: "bonus" as const, target: "initiative" as const, value: 2 }]],
+          ]),
+        },
+      );
+      expect(field.initiative.terms).toContainEqual({ label: "Actor", value: 2, reference: actor });
+      expect(field.homebrewEffects).toEqual([actor]);
     });
   });
 

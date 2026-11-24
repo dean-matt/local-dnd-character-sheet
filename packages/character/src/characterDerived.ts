@@ -509,6 +509,8 @@ export const characterDerivedSchema = z.strictObject({
       blockedBy: z.string().min(1).nullable(),
     }),
   ),
+  /** The held catalog features whose recorded mechanics a homebrew effect replaces, in the order the features are held. */
+  homebrewEffects: z.array(contentRefSchema),
   /**
    * One per inventory entry holding a weapon or armor the character lacks proficiency
    * with, equipped or not, in inventory order. `entry` is the index in the definition's

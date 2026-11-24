@@ -39,6 +39,7 @@ const ELEMENT_KEY: {
   featureRestores: (restore) => `${refKey(restore.feature)}|${restore.kind}`,
   limitedUses: (uses) => uses.key,
   startableFeatures: refKey,
+  homebrewEffects: refKey,
   featureConversions: (conversion) => refKey(conversion.feature),
   slotRecoveries: (recovery) => refKey(recovery.feature),
   regains: (regain) => refKey(regain.feature),
