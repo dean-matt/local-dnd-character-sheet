@@ -41,7 +41,9 @@ describe("a Death domain cleric", () => {
       { kind: "proficiency", weapons: ["martial"] },
     ]);
     expect(first.get("Death Domain")?.mechanics).toEqual([{ kind: "spells" }]);
-    expect(first.get("Reaper")?.narrative).toBe(true);
+    expect(first.get("Reaper")?.mechanics).toEqual([
+      { kind: "spells", picks: [{ count: 1, level: 0, from: "any" }] },
+    ]);
     expect(held(classOf(["Cleric", "PHB"], "Death Domain", 7)).has("Divine Strike")).toBe(false);
     expect(
       held(classOf(["Cleric", "PHB"], "Death Domain", 8)).get("Divine Strike")?.mechanics,
@@ -112,9 +114,12 @@ describe("a Dungeon Master's Guide race", () => {
     ]);
   });
 
-  it("gives an eladrin Fey Step's spell, and leaves darkvision to the race row", () => {
+  it("gives an eladrin Fey Step's spell", () => {
     const eladrin = held(raceOf(["Elf", "PHB"], ["Eladrin", "DMG"]));
     expect(eladrin.get("Fey Step")?.mechanics).toEqual([{ kind: "spells" }]);
+  });
+
+  it("leaves an orc's darkvision to the race row", () => {
     expect(held(raceOf(["Orc", "DMG"])).get("Darkvision")?.narrative).toBe(true);
   });
 });
