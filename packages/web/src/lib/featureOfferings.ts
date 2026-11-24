@@ -1,5 +1,5 @@
 import type { ClassGrants, SheetFeature } from "@dnd/catalog";
-import { type ContentRef, type FeatureKey, featurePickOffers } from "@dnd/character";
+import { type ContentRef, type FeatureKey, featurePickOffers, type Mechanic } from "@dnd/character";
 
 /** A feature that offers a choice of the features beside it, and every option it offers. */
 export type FeatureOffering = { feature: FeatureKey; options: ContentRef[] };
@@ -35,10 +35,11 @@ export type FeaturePicking = {
 export function featurePickings(
   features: readonly ClassGrants["features"][number][],
   owner: Owner,
+  effects?: ReadonlyMap<string, readonly Mechanic[]>,
 ): FeaturePicking[] {
   return features.flatMap(({ name, source, level }) => {
     const feature = { ...owner, name, source, level };
-    const offers = featurePickOffers(feature);
+    const offers = featurePickOffers(feature, effects);
     return offers.length > 0 ? [{ feature, offers }] : [];
   });
 }

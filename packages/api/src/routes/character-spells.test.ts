@@ -7,6 +7,10 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { insertCharacter } from "../db/queries/characters.ts";
 import { type ItemFixtureRow, publishSpellLists } from "../db/queries/contentFixture.ts";
 import { insertHomebrewSpell, updateHomebrewSpell } from "../db/queries/homebrew.ts";
+import {
+  deleteHomebrewFeatureEffect,
+  insertHomebrewFeatureEffect,
+} from "../db/queries/homebrew-feature-effects.ts";
 import { openTestDatabases } from "../db/testDatabases.ts";
 import { characterSpellsRoutes } from "./character-spells.ts";
 
@@ -955,6 +959,22 @@ describe("characterSpellsRoutes", () => {
           },
         },
       ]);
+    });
+
+    it("casts as a homebrew effect on the feature rules, until the effect is deleted", async () => {
+      wizard(1, {
+        optionalFeatures: [
+          { ref: OMEN, featureType: "EI", grantedBy: { kind: "class", ref: MONK } },
+        ],
+      });
+      const recorded = await usesOf();
+      insertHomebrewFeatureEffect(opened.homebrewDb, "ruling", {
+        ...OMEN,
+        mechanics: [{ kind: "spells", casting: "atWill" }],
+      });
+      expect(await usesOf()).toEqual([{ name: "Shield", uses: undefined }]);
+      deleteHomebrewFeatureEffect(opened.homebrewDb, "ruling");
+      expect(await usesOf()).toEqual(recorded);
     });
 
     it("counts a spell on its own where the feature counts no uses", async () => {

@@ -4,11 +4,9 @@ import {
   homebrewFeatureEffectRecordSchema,
 } from "@dnd/character";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { apiDelete, apiGet, apiMutate } from "../lib/api.ts";
+import { apiDelete, apiMutate } from "../lib/api.ts";
 import { charactersKey } from "./characterKeys.ts";
-
-const PATH = "/homebrew/feature-effects";
+import { homebrewEffectsQuery, HOMEBREW_EFFECTS_PATH as PATH } from "./useHomebrewEffects.ts";
 
 /**
  * The homebrew effect a table rules for the catalog feature `ref`, if one does, with the writes
@@ -19,13 +17,10 @@ export function useHomebrewFeatureEffect(ref: ContentRef) {
   const queryClient = useQueryClient();
   const refresh = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["homebrew", "feature-effects"] }),
+      queryClient.invalidateQueries({ queryKey: homebrewEffectsQuery.queryKey }),
       queryClient.invalidateQueries({ queryKey: charactersKey }),
     ]);
-  const list = useQuery({
-    queryKey: ["homebrew", "feature-effects"],
-    queryFn: () => apiGet(PATH, z.array(homebrewFeatureEffectRecordSchema)),
-  });
+  const list = useQuery(homebrewEffectsQuery);
   const effect = list.data?.find(({ name, source }) => name === ref.name && source === ref.source);
   const save = useMutation({
     mutationFn: (input: HomebrewFeatureEffectInput) =>

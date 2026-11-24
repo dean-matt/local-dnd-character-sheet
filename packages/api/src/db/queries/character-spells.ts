@@ -30,6 +30,7 @@ import {
 } from "@dnd/character";
 import type { ZodType } from "zod";
 import { getCatalogRow } from "./catalog-row.ts";
+import { homebrewEffects } from "./derived.ts";
 import { getUses } from "./feats.ts";
 import { getHomebrewSpell, type HomebrewDb } from "./homebrew.ts";
 import { resolveItemRows } from "./inventory.ts";
@@ -43,6 +44,7 @@ import {
 } from "./spells.ts";
 
 type SpellEntry = CharacterDefinition["spells"][number];
+type Effects = ReturnType<typeof homebrewEffects>;
 
 type SpellRowFacts = {
   level: number;
@@ -214,10 +216,10 @@ function ownUses(
  * the feature's where the feature counts uses and gives one spell. A feat or optional feature
  * records a cast with the pact slot, or at will, which no count limits.
  */
-function grantedUses(dataDir: string, grantor: Grantor, json: unknown) {
+function grantedUses(dataDir: string, effects: Effects, grantor: Grantor, json: unknown) {
   const record =
     grantor.kind === "feat" || grantor.kind === "optionalFeature"
-      ? spellGrantRecord({ name: grantor.name, source: grantor.source })
+      ? spellGrantRecord({ name: grantor.name, source: grantor.source }, effects)
       : {};
   const casts = record.casting === "atWill" ? new Map() : grantedSpellUses(json, grantor.block);
   const own = casts.size === 1 ? ownUses(dataDir, grantor, record.uses) : undefined;
@@ -236,13 +238,14 @@ function grantedUses(dataDir: string, grantor: Grantor, json: unknown) {
  */
 function grantedSpells(
   dataDir: string,
+  effects: Effects,
   grantors: readonly { grantor: Grantor; level: number; label: string }[],
 ): Map<string, GrantedSpell> {
   const found = new Map<string, GrantedSpell>();
   for (const { grantor, level, label } of grantors) {
     const json = getGrantorJson(dataDir, grantor);
     const costs = grantedSpellCosts(json, grantor.block);
-    const usesOf = grantedUses(dataDir, grantor, json);
+    const usesOf = grantedUses(dataDir, effects, grantor, json);
     const refs = getGrantedSpells(dataDir, grantor, level).spells;
     for (const row of getSpells(dataDir, refs)) {
       if (!row || found.has(entryKey(row))) continue;
@@ -369,8 +372,9 @@ export function resolveCharacterSpells(
   definition: CharacterDefinition,
 ): CharacterSpells {
   const rows = rowFacts(dataDir, homebrewDb, definition.spells);
-  const bySubclass = grantedSpells(dataDir, subclassGrantors(definition));
-  const byFeature = grantedSpells(dataDir, featureGrantors(definition));
+  const effects = homebrewEffects(homebrewDb);
+  const bySubclass = grantedSpells(dataDir, effects, subclassGrantors(definition));
+  const byFeature = grantedSpells(dataDir, effects, featureGrantors(definition));
   const elsewhere =
     bySubclass.size > 0
       ? new Set([...classSpellKeys(dataDir, definition), ...byFeature.keys()])

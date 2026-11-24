@@ -31,6 +31,7 @@ import {
   featurePickOffers,
   featureUsesKey,
   houseRule,
+  type Mechanic,
 } from "@dnd/character";
 import { z } from "zod";
 import { getBackground } from "./backgrounds.ts";
@@ -41,7 +42,7 @@ import {
   getSubclass,
   getSubclassFeatures,
 } from "./classes.ts";
-import { parseJson, raceJson } from "./derived.ts";
+import { homebrewEffects, parseJson, raceJson } from "./derived.ts";
 import { getFeat, getOptionalFeature, getUses, type UsesColumns } from "./feats.ts";
 import {
   asHomebrewIdRef,
@@ -155,6 +156,7 @@ function withChoices(
   rows: ClassFeatureRow[],
   owner: FeatureOwner,
   definition: CharacterDefinition,
+  effects: ReadonlyMap<string, readonly Mechanic[]>,
 ): SheetFeature[] {
   const offerOf = (row: ClassFeatureRow): FeatureKey => ({
     ...owner,
@@ -182,7 +184,7 @@ function withChoices(
       { level: row.level },
       usesOf(row, classFeatureUsesKey(key)),
     );
-    const offers = featurePickOffers(key);
+    const offers = featurePickOffers(key, effects);
     return offers.length > 0 && feature.resolved
       ? { ...feature, picks: { feature: key, offers } }
       : feature;
@@ -222,6 +224,7 @@ function classGroups(
   homebrewDb: HomebrewDb,
   definition: CharacterDefinition,
 ): FeatureGroup[] {
+  const effects = homebrewEffects(homebrewDb);
   return classLevels(definition).flatMap(({ class: ref, level, subclass }): FeatureGroup[] => {
     const name = displayName(ref);
     const cited = asHomebrewIdRef(homebrewDb, ref, definition.edition);
@@ -241,11 +244,12 @@ function classGroups(
       getClassFeatures(dataDir, cited.name, cited.source, level).filter(inPlay(definition)),
       { className: cited.name, classSource: cited.source },
       definition,
+      effects,
     );
     const groups: FeatureGroup[] = [{ origin: "class", name, class: ref, features }];
     const catalogSubclass = catalogRef(subclass);
     if (catalogSubclass) {
-      groups.push(subclassGroup(dataDir, definition, cited, catalogSubclass, level));
+      groups.push(subclassGroup(dataDir, definition, effects, cited, catalogSubclass, level));
     } else if (subclass && "homebrewId" in subclass) {
       groups.push(homebrewSubclassGroup(homebrewDb, cited, subclass, level));
     }
@@ -256,6 +260,7 @@ function classGroups(
 function subclassGroup(
   dataDir: string,
   definition: CharacterDefinition,
+  effects: ReadonlyMap<string, readonly Mechanic[]>,
   classRef: ContentRef,
   subclass: ContentRef,
   level: number,
@@ -277,6 +282,7 @@ function subclassGroup(
           subclass: { shortName: row.short_name, source: row.source },
         },
         definition,
+        effects,
       )
     : [unresolved(subclass)];
   return { origin: "subclass", name: subclass.name, class: classRef, features };

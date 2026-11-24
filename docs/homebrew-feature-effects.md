@@ -11,8 +11,9 @@ feature, keyed `(name, source)` and written through `/homebrew/feature-effects`.
   the row that holds it. A class or subclass feature is keyed by its name and source alone, so one
   that several classes share, such as `Ability Score Improvement`, takes one effect for all of them.
 - Deleting the effect removes its row; nothing else references it.
-- The effect replaces the feature's recorded mechanics wherever a character holds the feature, and
-  deleting it restores them. A catalog feat or optional feature with no recorded mechanics takes the
+- The effect replaces the feature's recorded mechanics wherever the sheet reads them: the held
+  features, the derived block, the spell list and the picks a level-up offers. Deleting it
+  restores them. A catalog feat or optional feature with no recorded mechanics takes the
   effect too; a class feature or racial trait with none does not, since the sheet knows it is held
   only through its record.
 - The derived block's `homebrewEffects` lists each held feature the effect replaces, and the

@@ -106,7 +106,9 @@ export function FeatureRow({
   const controls = featureControls(feature, character, featIndex);
   const { source } = feature;
   const startable = findHeld(derived?.startableFeatures, feature.name, source);
-  const homebrew = findHeld(derived?.homebrewEffects, feature.name, source) !== undefined;
+  const homebrew = derived?.homebrewEffects.some(
+    (ref) => ref.name === feature.name && ref.source === source,
+  );
   const hasDc = derived?.featureDcs.some(
     ({ feature: held }) => held.name === feature.name && held.source === source,
   );

@@ -4,7 +4,7 @@
  */
 import type { CharacterDefinition } from "./definition.ts";
 import type { SpellPick } from "./featureMechanics.ts";
-import { featureSpellPickOffers, type HoldsFeatures, heldFeatures } from "./heldFeatures.ts";
+import { type HoldsFeatures, heldFeatures, spellPicks } from "./heldFeatures.ts";
 import type { FeatureKey } from "./refs.ts";
 
 type SpellPickedFor = NonNullable<CharacterDefinition["spells"][number]["pickedFor"]>;
@@ -33,7 +33,7 @@ export function featureSpellPicks(
   return heldFeatures(definition).flatMap(({ entry }) => {
     const { ref } = entry;
     if (!("className" in ref)) return [];
-    const picks = featureSpellPickOffers(ref);
+    const picks = spellPicks(entry);
     return picks.length > 0 ? [{ feature: ref, picks }] : [];
   });
 }

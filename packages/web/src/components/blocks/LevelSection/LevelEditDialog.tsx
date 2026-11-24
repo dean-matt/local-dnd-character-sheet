@@ -2,6 +2,7 @@ import { type CharacterRecord, entryKey, type HitDie } from "@dnd/character";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { characterQuery } from "../../../hooks/useCharacter.ts";
+import { useHomebrewEffects } from "../../../hooks/useHomebrewEffects.ts";
 import { useLevelDice } from "../../../hooks/useLevelDice.ts";
 import { useUpdateCharacterDefinition } from "../../../hooks/useUpdateCharacterDefinition.ts";
 import { ApiError } from "../../../lib/api.ts";
@@ -50,6 +51,7 @@ export function LevelEditDialog({
   const [removing, setRemoving] = useState(false);
   const queryClient = useQueryClient();
   const update = useUpdateCharacterDefinition(character.id);
+  const effects = useHomebrewEffects();
   const dice = useLevelDice(character.definition.levels, character.definition.edition);
   const { definition } = opened;
   const stale = update.error instanceof ApiError && update.error.status === 412;
@@ -99,7 +101,7 @@ export function LevelEditDialog({
         ) : (
           <LevelEditForm
             characterId={character.id}
-            before={withoutLevelChoices(definition, level)}
+            before={withoutLevelChoices(definition, level, effects)}
             definition={definition}
             level={level}
             saving={update.isPending}

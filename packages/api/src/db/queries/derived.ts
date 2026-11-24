@@ -560,7 +560,7 @@ function homebrewFeatures(
 }
 
 /** Each homebrew effect's mechanics, keyed by `refKey` of the catalog feature it rules for; a row the schema no longer reads is left out. */
-function homebrewEffects(homebrewDb: HomebrewDb): Map<string, Mechanic[]> {
+export function homebrewEffects(homebrewDb: HomebrewDb): Map<string, Mechanic[]> {
   return new Map(
     listHomebrewFeatureEffects(homebrewDb).flatMap((row) => {
       const mechanics = parseJson(mechanicListSchema, row.mechanics);

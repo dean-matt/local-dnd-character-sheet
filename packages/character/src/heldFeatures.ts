@@ -155,16 +155,38 @@ export type Held = {
 
 const BY_KEY = new Map(FEATURE_MECHANICS.map((entry) => [featureMechanicsKey(entry), entry]));
 
+/** The mechanics a table's homebrew effect rules for each catalog feature, keyed by its `refKey`. */
+type HomebrewEffects = ReadonlyMap<string, readonly Mechanic[]>;
+
+/** `entry` with the mechanics a homebrew effect rules for `ref` in place of its recorded ones. */
+function ruled(entry: FeatureMechanics, ref: ContentRef, effects?: HomebrewEffects) {
+  const mechanics = effects?.get(refKey(ref));
+  if (!mechanics) return entry;
+  const { narrative: _, ...rest } = entry;
+  return { ...rest, mechanics: [...mechanics] };
+}
+
+/** What a catalog feat or optional feature records, or an empty record where only a homebrew effect rules for it. */
+const pickedEntry = (ref: ContentRef, effects?: HomebrewEffects): FeatureMechanics | undefined =>
+  BY_KEY.get(refKey(ref)) ?? (effects?.has(refKey(ref)) ? { ref, mechanics: [] } : undefined);
+
+/** The spells a feature's mechanics have the player pick. */
+export const spellPicks = (entry: FeatureMechanics): SpellPick[] =>
+  mechanicsOfKind(entry, "spells").flatMap((mechanic) => mechanic.picks ?? []);
+
 /** The picks a class or subclass feature asks the player for, none where it records none. */
-export const featurePickOffers = (feature: FeatureKey) => {
+export const featurePickOffers = (feature: FeatureKey, effects?: HomebrewEffects) => {
   const entry = BY_KEY.get(featureKey(feature));
-  return entry ? featureOffers(entry) : [];
+  return entry ? featureOffers(ruled(entry, feature, effects)) : [];
 };
 
 /** The spell picks a class or subclass feature asks the player for, none where it records none. */
-export const featureSpellPickOffers = (feature: FeatureKey): SpellPick[] => {
+export const featureSpellPickOffers = (
+  feature: FeatureKey,
+  effects?: HomebrewEffects,
+): SpellPick[] => {
   const entry = BY_KEY.get(featureKey(feature));
-  return entry ? mechanicsOfKind(entry, "spells").flatMap((mechanic) => mechanic.picks ?? []) : [];
+  return entry ? spellPicks(ruled(entry, feature, effects)) : [];
 };
 
 /**
@@ -172,12 +194,16 @@ export const featureSpellPickOffers = (feature: FeatureKey): SpellPick[] => {
  * and the one count of uses it keeps itself where that count is fixed, which a cast of its one
  * spell then spends.
  */
-export function spellGrantRecord(ref: ContentRef): {
+export function spellGrantRecord(
+  ref: ContentRef,
+  effects?: HomebrewEffects,
+): {
   casting?: "slot" | "atWill";
   uses?: { count: number; reset: "short" | "long" };
 } {
-  const entry = BY_KEY.get(refKey(ref));
-  if (!entry) return {};
+  const recorded = pickedEntry(ref, effects);
+  if (!recorded) return {};
+  const entry = ruled(recorded, ref, effects);
   const { casting } = mechanicsOfKind(entry, "spells")[0] ?? {};
   const [uses] = mechanicsOfKind(entry, "uses").flatMap(({ count, reset, part, scales }) =>
     typeof count === "number" && reset !== "manual" && !part && !scales ? [{ count, reset }] : [],
@@ -230,7 +256,7 @@ export type HoldsFeatures = Partial<Pick<CharacterDefinition, "featureChoices" |
     /** The recorded mechanics of each homebrew feat and option the character holds, keyed by `homebrewId`. */
     homebrewFeatures?: ReadonlyMap<string, HomebrewFeature>;
     /** The mechanics a homebrew effect rules for a catalog feature, keyed by its `refKey`, in place of the recorded ones. */
-    homebrewEffects?: ReadonlyMap<string, readonly Mechanic[]>;
+    homebrewEffects?: HomebrewEffects;
   };
 
 function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
@@ -243,11 +269,7 @@ function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
     const catalog = homebrew?.ref ?? catalogRef(ref);
     const entry = homebrew
       ? { ref: homebrew.ref, mechanics: homebrew.mechanics }
-      : catalog &&
-        (BY_KEY.get(refKey(catalog)) ??
-          (definition.homebrewEffects?.has(refKey(catalog))
-            ? { ref: catalog, mechanics: [] }
-            : undefined));
+      : catalog && pickedEntry(catalog, definition.homebrewEffects);
     if (!catalog || !entry) return [];
     const usesKey = featureUsesKey([origin, catalog.source], catalog.name);
     return [{ ref: catalog, origin, entry, levels, usesKey }];
@@ -301,14 +323,9 @@ function classFeatures(definition: HoldsFeatures): Held[] {
 }
 
 /** `held` with the mechanics a homebrew effect rules for it in place of its recorded ones. */
-function withHomebrewEffect(
-  held: Held,
-  effects: HoldsFeatures["homebrewEffects"] = new Map(),
-): Held {
-  const mechanics = effects.get(refKey(held.ref));
-  if (!mechanics) return held;
-  const { narrative: _, ...entry } = held.entry;
-  return { ...held, entry: { ...entry, mechanics: [...mechanics] }, homebrew: true };
+function withHomebrewEffect(held: Held, effects?: HomebrewEffects): Held {
+  const entry = ruled(held.entry, held.ref, effects);
+  return entry === held.entry ? held : { ...held, entry, homebrew: true };
 }
 
 /** `held` without the mechanics that hold only while its effect runs, unless it runs. */

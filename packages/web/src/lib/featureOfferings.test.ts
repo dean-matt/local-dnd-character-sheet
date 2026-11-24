@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { featureOfferings } from "./featureOfferings.ts";
+import { featureOfferings, featurePickings } from "./featureOfferings.ts";
 
 const feature = (name: string, offeredBy?: string, choose?: number) =>
   ({
@@ -34,6 +34,23 @@ describe("featureOfferings", () => {
           { name: "Infiltrator", source: "TCE" },
         ],
       },
+    ]);
+  });
+});
+
+describe("featurePickings", () => {
+  const owner = { className: "Bard", classSource: "PHB" };
+  const expertise = { name: "Expertise", source: "PHB", level: 3 } as never;
+
+  it("offers the picks a homebrew effect rules in place of the recorded ones", () => {
+    const effects = new Map([
+      ["Expertise|PHB", [{ kind: "pick" as const, fields: ["expertise" as const], count: 4 }]],
+    ]);
+    expect(featurePickings([expertise], owner)[0]?.offers).toEqual([
+      { fields: ["expertise"], count: 2, from: null },
+    ]);
+    expect(featurePickings([expertise], owner, effects)[0]?.offers).toEqual([
+      { fields: ["expertise"], count: 4, from: null },
     ]);
   });
 });
