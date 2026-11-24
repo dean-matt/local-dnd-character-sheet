@@ -136,6 +136,8 @@ export const SUBCLASS_NAMES = new Map([
   ["Solidarity (PSA)|PSA", "Solidarity Domain (PSA)|PSA"],
   ["Strength (PSA)|PSA", "Strength Domain (PSA)|PSA"],
   ["Zeal (PSA)|PSA", "Zeal Domain (PSA)|PSA"],
+  ["Death|DMG", "Death Domain|DMG"],
+  ["Oathbreaker|DMG", "Oathbreaker|DMG"],
 ]);
 
 /** The features section's group a held feature shows in. */

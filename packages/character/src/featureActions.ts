@@ -80,6 +80,7 @@ const FEATURE_ACTIONS: ReadonlyMap<string, ActionType> = new Map([
     "Channel Divinity: Invoke Duplicity",
     "Channel Divinity: Preserve Life",
   ),
+  ...row("action", "DMG", "Control Undead", "Dreadful Aspect", "Dread Lord"),
   ...row("bonus action", "TCE", "Channel Divinity: Harness Divine Power"),
   ...row("bonus action", "XGE", "Fighting Spirit", "Mantle of Inspiration", "Unearthly Recovery"),
   ...row("reaction", "PHB", "Deflect Missiles", "Uncanny Dodge"),
@@ -163,6 +164,11 @@ const COST_ROWS: [Source, string, string[]][] = [
       "Channel Divinity: Invoke Duplicity",
       "Channel Divinity: Preserve Life",
     ],
+  ],
+  [
+    { pool: "channel_divinity" },
+    "DMG",
+    ["Channel Divinity: Touch of Death", "Control Undead", "Dreadful Aspect"],
   ],
   [
     { pool: "channel_divinity" },

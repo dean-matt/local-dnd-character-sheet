@@ -1009,6 +1009,7 @@ const FEATURES_GRANTING_SPELLS: GrantingFeature[] = [
   ["Barbarian", ["Totem Warrior", "PHB"], "Spirit Seeker", "PHB", 3],
   ["Barbarian", ["Totem Warrior", "PHB"], "Spirit Walker", "PHB", 10],
   ["Bard", ["Glamour", "XGE"], "Mantle of Majesty", "XGE", 6],
+  ["Cleric", ["Death", "DMG"], "Death Domain", "DMG", 1],
   ["Cleric", ["Forge", "XGE"], "Forge Domain", "XGE", 1],
   ["Cleric", ["Grave", "XGE"], "Grave Domain", "XGE", 1],
   ["Cleric", ["Knowledge", "PHB"], "Knowledge Domain", "PHB", 1],
@@ -1034,6 +1035,7 @@ const FEATURES_GRANTING_SPELLS: GrantingFeature[] = [
   ["Paladin", ["Conquest", "XGE"], "Oath Spells", "XGE", 3],
   ["Paladin", ["Devotion", "PHB"], "Oath Spells", "PHB", 3],
   ["Paladin", ["Glory", "TCE"], "Oath Spells", "TCE", 3],
+  ["Paladin", ["Oathbreaker", "DMG"], "Oathbreaker Spells", "DMG", 3],
   ["Paladin", ["Redemption", "XGE"], "Oath Spells", "XGE", 3],
   ["Paladin", ["Vengeance", "PHB"], "Oath Spells", "PHB", 3],
   ["Paladin", ["Watchers", "TCE"], "Oath Spells", "TCE", 3],
@@ -1474,36 +1476,36 @@ const knowledge: [string, string] = ["Knowledge (PSA)", "PSA"];
 const solidarity: [string, string] = ["Solidarity (PSA)", "PSA"];
 const strength: [string, string] = ["Strength (PSA)", "PSA"];
 const zeal: [string, string] = ["Zeal (PSA)", "PSA"];
-const domainFeature = (
-  owner: [string, string],
-  subclass: [string, string],
-  name: string,
-  level: number,
-  mechanics: Mechanic[],
-) => subclassFeature(owner, subclass, [name, "PSA"], level, mechanics);
-const domainNarrative = (
-  owner: [string, string],
-  subclass: [string, string],
-  name: string,
-  level: number,
-) =>
-  narrative({
-    name,
-    source: "PSA",
-    className: owner[0],
-    classSource: owner[1],
-    subclass: { shortName: subclass[0], source: subclass[1] },
-    level,
+/** A subclass feature of a classic class from `source`, narrative where it carries no mechanics. */
+const bookFeature =
+  (source: string) =>
+  (
+    owner: [string, string],
+    subclass: [string, string],
+    name: string,
+    level: number,
+    mechanics?: Mechanic[],
+  ) =>
+    mechanics
+      ? subclassFeature(owner, subclass, [name, source], level, mechanics)
+      : narrative({
+          name,
+          source,
+          className: owner[0],
+          classSource: owner[1],
+          subclass: { shortName: subclass[0], source: subclass[1] },
+          level,
+        });
+/** A race trait from `source`, narrative where it carries no mechanics. */
+const bookTrait =
+  (source: string) =>
+  (name: string, races: string[], mechanics?: Mechanic[]): FeatureMechanics => ({
+    ref: { name, source },
+    races,
+    ...(mechanics ? { mechanics } : { narrative: true }),
   });
-const amonkhetTrait = (
-  name: string,
-  races: string[],
-  mechanics?: Mechanic[],
-): FeatureMechanics => ({
-  ref: { name, source: "PSA" },
-  races,
-  ...(mechanics ? { mechanics } : { narrative: true }),
-});
+const domainFeature = bookFeature("PSA");
+const amonkhetTrait = bookTrait("PSA");
 
 /**
  * The Amonkhet domains of the Cleric and the races and backgrounds of Plane Shift: Amonkhet.
@@ -1550,14 +1552,14 @@ const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
         against: "using Channel Divinity",
       },
     ]),
-    domainNarrative(cleric, zeal, "Channel Divinity: Consuming Fervor", 2),
+    domainFeature(cleric, zeal, "Channel Divinity: Consuming Fervor", 2),
   ],
   domainFeature(cleric, ambition, "Warding Flare", 1, [
     { kind: "uses", count: "wis", reset: "long" },
   ]),
-  domainNarrative(cleric, ambition, "Channel Divinity: Cloak of Shadows", 6),
-  domainNarrative(cleric, ambition, "Potent Spellcasting", 8),
-  domainNarrative(cleric, ambition, "Improved Duplicity", 17),
+  domainFeature(cleric, ambition, "Channel Divinity: Cloak of Shadows", 6),
+  domainFeature(cleric, ambition, "Potent Spellcasting", 8),
+  domainFeature(cleric, ambition, "Improved Duplicity", 17),
   domainFeature(cleric, solidarity, "Bonus Proficiency", 1, grants({ armor: ["heavy"] })),
   domainFeature(cleric, strength, "Bonus Proficiency", 1, grants({ armor: ["heavy"] })),
   domainFeature(
@@ -1575,9 +1577,9 @@ const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
     skillsOf(1, ["animal handling", "athletics", "nature", "survival"]),
     ...spellPicks({ count: 1, level: 0, from: "Druid" }),
   ]),
-  domainNarrative(cleric, solidarity, "Oketra's Blessing", 6),
-  domainNarrative(cleric, strength, "Rhonas's Blessing", 6),
-  domainNarrative(cleric, zeal, "Resounding Strike", 6),
+  domainFeature(cleric, solidarity, "Oketra's Blessing", 6),
+  domainFeature(cleric, strength, "Rhonas's Blessing", 6),
+  domainFeature(cleric, zeal, "Resounding Strike", 6),
   ...[solidarity, strength, zeal].map((domain) =>
     domainFeature(cleric, domain, "Divine Strike", 8, [
       {
@@ -1590,10 +1592,10 @@ const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
       },
     ]),
   ),
-  domainNarrative(cleric, solidarity, "Supreme Healing", 17),
-  domainNarrative(cleric, strength, "Avatar of Battle", 17),
+  domainFeature(cleric, solidarity, "Supreme Healing", 17),
+  domainFeature(cleric, strength, "Avatar of Battle", 17),
   // Its one use is the catalog's.
-  domainNarrative(cleric, zeal, "Blaze of Glory", 17),
+  domainFeature(cleric, zeal, "Blaze of Glory", 17),
   amonkhetTrait("Flight", ["Aven|PSA"]),
   amonkhetTrait("Hawkeyed", ["Aven|PSA|Hawk-Headed|PSA"]),
   amonkhetTrait(
@@ -1627,6 +1629,161 @@ const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
   ...["Shelter of Dissenters", "Trials of the Five Gods", "Voice of Authority"].map((name) =>
     narrative({ name, source: "PSA" }),
   ),
+];
+
+const death: [string, string] = ["Death", "DMG"];
+const oathbreaker: [string, string] = ["Oathbreaker", "DMG"];
+const dmgFeature = bookFeature("DMG");
+const dmgTrait = bookTrait("DMG");
+const hideIn = (terrain?: string): Mechanic => ({
+  kind: "roll",
+  roll: "check",
+  skills: ["stealth"],
+  advantage: true,
+  against: terrain ? `to hide in ${terrain}` : "to hide",
+});
+const NEAR_AN_ALLY = "against a creature within 5 feet of an ally that isn't incapacitated";
+
+/**
+ * The Death domain, the Oathbreaker, the monster races and the Eladrin of the Dungeon Master's
+ * Guide. A race trait whose effect the race row already gives, such as a sense, a defense, a
+ * weapon or a speed, is the narrative mark. So is an effect no vocabulary term holds: Touch of
+ * Death's 5 plus twice the cleric level, resistance to nonmagical damage alone, a natural
+ * weapon's die, disadvantage, and an effect on another creature.
+ */
+const DUNGEON_MASTERS_GUIDE: FeatureMechanics[] = [
+  dmgFeature(cleric24, death, "Death Domain", 3, [SPELLS]),
+  dmgFeature(cleric, death, "Bonus Proficiency", 1, grants({ weapons: ["martial"] })),
+  // Reaper's cantrip is necromancy; a pick holds no school, so the sheet does not enforce it.
+  dmgFeature(cleric, death, "Reaper", 1, spellPicks({ count: 1, level: 0, from: "any" })),
+  dmgFeature(cleric, death, "Channel Divinity: Touch of Death", 2),
+  dmgFeature(cleric24, death, "Channel Divinity: Touch of Death", 3),
+  dmgFeature(cleric, death, "Inescapable Destruction", 6),
+  dmgFeature(cleric, death, "Divine Strike", 8, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      scales: [{ level: 14, dice: "2d8" }],
+      type: "necrotic",
+      unarmed: true,
+      oncePerTurn: true,
+      option: ON_A_HIT,
+    },
+  ]),
+  dmgFeature(cleric, death, "Improved Reaper", 17),
+  dmgFeature(paladin, oathbreaker, "Oathbreaker", 3),
+  dmgFeature(paladin, oathbreaker, "Channel Divinity", 3),
+  dmgFeature(paladin, oathbreaker, "Control Undead", 3, [{ kind: "dc", spell: "Paladin" }]),
+  dmgFeature(paladin, oathbreaker, "Dreadful Aspect", 3, [{ kind: "dc", spell: "Paladin" }]),
+  dmgFeature(paladin, oathbreaker, "Aura of Hate", 7, [
+    { kind: "extraDamage", dice: "cha", weapons: "melee" },
+  ]),
+  dmgFeature(paladin, oathbreaker, "Supernatural Resistance", 15),
+  dmgFeature(paladin, oathbreaker, "Dread Lord", 20, [
+    { kind: "active" },
+    { kind: "uses", count: 1, reset: "long" },
+  ]),
+  dmgTrait(
+    "Darkvision",
+    [
+      "Aasimar",
+      "Gnoll",
+      "Goblin",
+      "Hobgoblin",
+      "Kobold",
+      "Orc",
+      "Skeleton",
+      "Troglodyte",
+      "Zombie",
+    ].map((race) => `${race}|DMG`),
+  ),
+  dmgTrait("Superior Darkvision", ["Gnome (Deep)|DMG", "Kuo-Toa|DMG"]),
+  dmgTrait("Amphibious", ["Bullywug|DMG", "Kuo-Toa|DMG", "Merfolk|DMG"]),
+  dmgTrait("Sunlight Sensitivity", ["Kobold|DMG", "Kuo-Toa|DMG", "Troglodyte|DMG"]),
+  dmgTrait("Undead Nature", ["Skeleton|DMG", "Zombie|DMG"]),
+  dmgTrait("Stone Camouflage", ["Gnome (Deep)|DMG", "Grimlock|DMG"], [hideIn("rocky terrain")]),
+  // One record holds a `(name, source)`, and the lizardfolk's +3 and the troglodyte's +1 share one.
+  dmgTrait("Natural Armor", ["Lizardfolk|DMG", "Troglodyte|DMG"]),
+  dmgTrait(
+    "Dive Attack",
+    ["Aarakocra|DMG"],
+    [
+      {
+        kind: "extraDamage",
+        dice: "1d6",
+        weapons: "melee",
+        option: "after flying at least 30 feet straight toward the target",
+      },
+    ],
+  ),
+  dmgTrait("Talons", ["Aarakocra|DMG"]),
+  dmgTrait("Celestial Resistance", ["Aasimar|DMG"]),
+  dmgTrait("Celestial Legacy", ["Aasimar|DMG"], [SPELLS]),
+  dmgTrait("Speak with Frogs and Toads", ["Bullywug|DMG"]),
+  dmgTrait("Swamp Camouflage", ["Bullywug|DMG"], [hideIn("swampy terrain")]),
+  dmgTrait("Standing Leap", ["Bullywug|DMG"]),
+  dmgTrait("Bite", ["Gnoll|DMG"]),
+  dmgTrait("Rampage", ["Gnoll|DMG"]),
+  dmgTrait("Innate Spellcasting", ["Gnome (Deep)|DMG"], [SPELLS]),
+  dmgTrait(
+    "Gnome Cunning",
+    ["Gnome (Deep)|DMG"],
+    [
+      {
+        kind: "roll",
+        roll: "save",
+        abilities: ["int", "wis", "cha"],
+        advantage: true,
+        against: "against magic",
+      },
+    ],
+  ),
+  dmgTrait("Nimble Escape", ["Goblin|DMG"], asBonusAction("Disengage", "Hide")),
+  dmgTrait("Blindsight", ["Grimlock|DMG"], [{ kind: "defense", conditionImmune: ["blinded"] }]),
+  dmgTrait(
+    "Keen Hearing and Smell",
+    ["Grimlock|DMG"],
+    [
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["perception"],
+        advantage: true,
+        against: "that rely on hearing or smell",
+      },
+    ],
+  ),
+  dmgTrait(
+    "Martial Advantage",
+    ["Hobgoblin|DMG"],
+    [{ kind: "extraDamage", dice: "2d6", oncePerTurn: true, option: NEAR_AN_ALLY }],
+  ),
+  dmgTrait(
+    "Ambusher",
+    ["Kenku|DMG"],
+    [advantageOn("in the first round, against a surprised creature")],
+  ),
+  dmgTrait("Mimicry", ["Kenku|DMG"]),
+  dmgTrait("Pack Tactics", ["Kobold|DMG"], [advantageOn(NEAR_AN_ALLY)]),
+  dmgTrait("Otherworldly Perception", ["Kuo-Toa|DMG"]),
+  dmgTrait(
+    "Slippery",
+    ["Kuo-Toa|DMG"],
+    (["check", "save"] as const).map((roll) => ({
+      kind: "roll",
+      roll,
+      advantage: true,
+      against: "to escape a grapple",
+    })),
+  ),
+  dmgTrait("Hold Breath", ["Lizardfolk|DMG"]),
+  dmgTrait("Aggressive", ["Orc|DMG"]),
+  dmgTrait("Brittle Bones", ["Skeleton|DMG"]),
+  dmgTrait("Chameleon Skin", ["Troglodyte|DMG"], [hideIn()]),
+  dmgTrait("Stench", ["Troglodyte|DMG"]),
+  dmgTrait("Undead Fortitude", ["Zombie|DMG"]),
+  dmgTrait("Elf Weapon Training", ["Elf|PHB|Eladrin|DMG"]),
+  dmgTrait("Fey Step", ["Elf|PHB|Eladrin|DMG"], [SPELLS]),
 ];
 
 const RECORDS: FeatureMechanics[] = [
@@ -3349,6 +3506,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SPELLS_GRANTED_2024,
   ...SPELLS_FROM_CLASS_FEATURES_2024,
   ...PLANE_SHIFT_AMONKHET,
+  ...DUNGEON_MASTERS_GUIDE,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);
