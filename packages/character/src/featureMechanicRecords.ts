@@ -2976,6 +2976,498 @@ const SETTING_BOOKS: FeatureMechanics[] = [
   ].map((name) => narrative({ name, source: "AI" })),
 ];
 
+const wizard24: [string, string] = ["Wizard", "XPHB"];
+const mystic: [string, string] = ["Mystic", "UATheMysticClass"];
+const totemWarrior: [string, string] = ["Totem Warrior", "PHB"];
+const battlerager: [string, string] = ["Battlerager", "SCAG"];
+const arcana: [string, string] = ["Arcana", "SCAG"];
+const echoKnight: [string, string] = ["Echo Knight", "EGW"];
+const purpleDragonKnight: [string, string] = ["Purple Dragon Knight (Banneret)", "SCAG"];
+const longDeath: [string, string] = ["Long Death", "SCAG"];
+const crown: [string, string] = ["Crown", "SCAG"];
+const undying: [string, string] = ["Undying", "SCAG"];
+const chronurgy: [string, string] = ["Chronurgy", "EGW"];
+const graviturgy: [string, string] = ["Graviturgy", "EGW"];
+const order = (name: string): [string, string] => [name, "UATheMysticClass"];
+const scagFeature = bookFeature("SCAG");
+const egwFeature = bookFeature("EGW");
+const orderFeature = bookFeature("UATheMysticClass");
+const scagTrait = bookTrait("SCAG");
+const egwTrait = bookTrait("EGW");
+/** A Mystic class feature, narrative where it carries no mechanics. */
+const mysticFeature = (name: string, level: number, mechanics?: Mechanic[]): FeatureMechanics =>
+  mechanics
+    ? classFeature(mystic, [name, "UATheMysticClass"], level, mechanics)
+    : narrative({
+        name,
+        source: "UATheMysticClass",
+        className: mystic[0],
+        classSource: mystic[1],
+        level,
+      });
+/** A SCAG totem a Path of the Totem Warrior feature of `level` offers, narrative where it carries no mechanics. */
+const totem = (
+  name: string,
+  level: number,
+  offeredBy: string,
+  mechanics?: Mechanic[],
+): FeatureMechanics => {
+  const key = (feature: string, source: string) => ({
+    name: feature,
+    source,
+    className: barbarian[0],
+    classSource: barbarian[1],
+    subclass: { shortName: totemWarrior[0], source: totemWarrior[1] },
+    level,
+  });
+  return {
+    ref: key(name, "SCAG"),
+    offeredBy: key(offeredBy, "PHB"),
+    ...(mechanics ? { mechanics } : { narrative: true }),
+  };
+};
+const DRAGONS = [
+  "Black",
+  "Blue",
+  "Brass",
+  "Bronze",
+  "Copper",
+  "Gold",
+  "Green",
+  "Red",
+  "Silver",
+  "White",
+];
+/** The EGW dragonborn subrace of `lineage`, and each of its ten draconic ancestries where `colors` says so. */
+const egwDragonborn = (lineage: string, colors: "only" | "also" | "none") =>
+  [
+    ...(colors === "only" ? [] : [lineage]),
+    ...(colors === "none" ? [] : DRAGONS.map((color) => `Dragonborn (${lineage}; ${color})`)),
+  ].map((subrace) => `Dragonborn|PHB|${subrace}|EGW`);
+const halfElf = (...descents: string[]) =>
+  descents.map((descent) => `Half-Elf|PHB|Variant; ${descent}|SCAG`);
+const SKILL_VERSATILITY = ["Aquatic Elf", "Drow", "Moon Elf or Sun Elf", "Wood Elf"].map(
+  (elf) => `${elf} Descent; Skill Versatility`,
+);
+const tiefling = (...variants: string[]) =>
+  variants.map((variant) => `Tiefling|PHB|Variant; ${variant}|SCAG`);
+const SOUL_KNIFE = "with your soul knives, for 10 minutes after spending";
+
+/**
+ * The subclasses, races and backgrounds of the Sword Coast Adventurer's Guide, the Explorer's
+ * Guide to Wildemount and the Mystic of Unearthed Arcana. A trait whose effect the race row
+ * already gives, such as a sense, a skill, a speed or a weapon, is the narrative mark, as is a
+ * background feature. So is an effect no vocabulary term holds: a speed or a jump held only
+ * while raging, an ability's modifier added to initiative, a weapon the feature makes, damage
+ * dealt back or redirected, resistance to nonmagical damage alone, a proficiency swapped until
+ * the next rest, hit points equal to psi points spent, and an effect on another creature beyond
+ * its DC or amount. A Totem Warrior's SCAG totem holds only where the feature offering it was
+ * given that totem.
+ */
+const SWORD_COAST_AND_WILDEMOUNT: FeatureMechanics[] = [
+  totem("Elk", 3, "Totem Spirit"),
+  totem("Tiger", 3, "Totem Spirit"),
+  totem("Elk", 6, "Aspect of the Beast"),
+  totem("Tiger", 6, "Aspect of the Beast", [
+    skillsOf(2, ["athletics", "acrobatics", "stealth", "survival"]),
+  ]),
+  totem("Elk", 14, "Totemic Attunement", [{ kind: "dc", ability: "str" }]),
+  totem("Tiger", 14, "Totemic Attunement"),
+  scagFeature(barbarian, battlerager, "Path of the Battlerager", 3),
+  scagFeature(barbarian, battlerager, "Battlerager Armor", 3),
+  scagFeature(barbarian, battlerager, "Restriction—Dwarves Only", 3),
+  scagFeature(barbarian, battlerager, "Reckless Abandon", 6, [{ kind: "tempHp", bonus: ["con"] }]),
+  scagFeature(barbarian, battlerager, "Battlerager Charge", 10, [
+    { kind: "turn", bonusAction: ["Dash"], while: "raging" },
+  ]),
+  scagFeature(barbarian, battlerager, "Spiked Retribution", 14),
+  ...(
+    [
+      [cleric, 1, 2],
+      [cleric24, 3, 3],
+    ] as const
+  ).flatMap(([owner, domainLevel, channelLevel]) => [
+    scagFeature(owner, arcana, "Arcana Domain", domainLevel, [SPELLS]),
+    scagFeature(owner, arcana, "Channel Divinity: Arcane Abjuration", channelLevel, [
+      { kind: "dc", spell: "Cleric" },
+    ]),
+  ]),
+  scagFeature(cleric, arcana, "Arcane Initiate", 1, [
+    ...grants({ skills: ["arcana"] }),
+    ...spellPicks({ count: 2, level: 0, from: "Wizard" }),
+  ]),
+  scagFeature(cleric, arcana, "Spell Breaker", 6),
+  scagFeature(cleric, arcana, "Potent Spellcasting", 8),
+  scagFeature(
+    cleric,
+    arcana,
+    "Arcane Mastery",
+    17,
+    spellPicks(...[6, 7, 8, 9].map((level) => ({ count: 1, level, from: "Wizard" }))),
+  ),
+  egwFeature(fighter, echoKnight, "Echo Knight", 3),
+  egwFeature(fighter, echoKnight, "Manifest Echo", 3),
+  egwFeature(fighter, echoKnight, "Unleash Incarnation", 3, [
+    { kind: "uses", count: "con", reset: "long" },
+  ]),
+  egwFeature(fighter, echoKnight, "Echo Avatar", 7),
+  // Its one use is the catalog's.
+  egwFeature(fighter, echoKnight, "Shadow Martyr", 10),
+  egwFeature(fighter, echoKnight, "Reclaim Potential", 15, [
+    { kind: "uses", count: "con", reset: "long" },
+    { kind: "tempHp", dice: "2d6", bonus: ["con"] },
+  ]),
+  egwFeature(fighter, echoKnight, "Legion of One", 18, [
+    { kind: "regain", target: "uses", of: "Unleash Incarnation", count: 1, on: "initiative" },
+  ]),
+  scagFeature(fighter, purpleDragonKnight, "Purple Dragon Knight (Banneret)", 3),
+  scagFeature(fighter, purpleDragonKnight, "Rallying Cry", 3, [
+    { kind: "heal", bonus: ["level"], others: true },
+  ]),
+  scagFeature(fighter, purpleDragonKnight, "Restriction: Knighthood", 3),
+  // The other skill it gives where Persuasion is already held is the player's to add.
+  scagFeature(
+    fighter,
+    purpleDragonKnight,
+    "Royal Envoy",
+    7,
+    grants({ skills: ["persuasion"], expertise: ["persuasion"] }),
+  ),
+  scagFeature(fighter, purpleDragonKnight, "Inspiring Surge", 10),
+  scagFeature(fighter, purpleDragonKnight, "Bulwark", 15),
+  scagFeature(fighter, purpleDragonKnight, "Inspiring Surge", 18),
+  scagFeature(monk, longDeath, "Way of the Long Death", 3),
+  scagFeature(monk, longDeath, "Touch of Death", 3, [
+    { kind: "tempHp", bonus: ["wis", "level"], on: "zeroHp" },
+  ]),
+  scagFeature(monk, longDeath, "Hour of Reaping", 6),
+  scagFeature(monk, longDeath, "Mastery of Death", 11),
+  scagFeature(monk, longDeath, "Touch of the Long Death", 17, [KI_DC]),
+  scagFeature(paladin, crown, "Oath of the Crown", 3),
+  scagFeature(paladin, crown, "Champion Challenge", 3, [{ kind: "dc", spell: "Paladin" }]),
+  scagFeature(paladin, crown, "Channel Divinity", 3),
+  scagFeature(paladin, crown, "Oath Spells", 3, [SPELLS]),
+  scagFeature(paladin, crown, "Tenets of the Crown", 3),
+  scagFeature(paladin, crown, "Turn the Tide", 3, [
+    { kind: "heal", dice: "1d6", bonus: ["cha"], others: true },
+  ]),
+  scagFeature(paladin, crown, "Divine Allegiance", 7),
+  scagFeature(paladin, crown, "Unyielding Spirit", 15, [
+    saveAdvantage("against being paralyzed or stunned"),
+  ]),
+  // Its one use is the catalog's.
+  scagFeature(paladin, crown, "Exalted Champion", 20, [
+    { kind: "active", endsOn: ["incapacitated"] },
+    { kind: "roll", roll: "save", abilities: ["wis"], advantage: true, while: "active" },
+  ]),
+  scagFeature(warlock, undying, "The Undying", 1, [SPELLS]),
+  scagFeature(warlock24, undying, "The Undying", 3, [SPELLS]),
+  scagFeature(warlock, undying, "Among the Dead", 1, [
+    SPELLS,
+    saveAdvantage("against disease"),
+    { kind: "dc", spell: "Warlock" },
+  ]),
+  // Its one use is the catalog's.
+  scagFeature(warlock, undying, "Defy Death", 6, [{ kind: "heal", dice: "1d8", bonus: ["con"] }]),
+  scagFeature(warlock, undying, "Undying Nature", 10),
+  // Its one use is the catalog's.
+  scagFeature(warlock, undying, "Indestructible Life", 14, [
+    { kind: "heal", dice: "1d8", bonus: ["level"] },
+  ]),
+  ...(
+    [
+      [wizard, 2],
+      [wizard24, 3],
+    ] as const
+  ).flatMap(([owner, level]) => [
+    egwFeature(owner, chronurgy, "Chronurgy Magic", level, [SPELLS]),
+    egwFeature(owner, graviturgy, "Graviturgy Magic", level, [SPELLS]),
+  ]),
+  // Its two uses are the catalog's.
+  egwFeature(wizard, chronurgy, "Chronal Shift", 2),
+  egwFeature(wizard, chronurgy, "Temporal Awareness", 2),
+  egwFeature(wizard, chronurgy, "Momentary Stasis", 6, [
+    { kind: "uses", count: "int", reset: "long" },
+    { kind: "dc", spell: "Wizard" },
+  ]),
+  // Its one use is the catalog's.
+  egwFeature(wizard, chronurgy, "Arcane Abeyance", 10),
+  egwFeature(wizard, chronurgy, "Convergent Future", 14),
+  egwFeature(wizard, graviturgy, "Adjust Density", 2),
+  egwFeature(wizard, graviturgy, "Gravity Well", 6),
+  egwFeature(wizard, graviturgy, "Violent Attraction", 10, [
+    { kind: "uses", count: "int", reset: "long" },
+  ]),
+  // Its one use is the catalog's.
+  egwFeature(wizard, graviturgy, "Event Horizon", 14, [{ kind: "dc", spell: "Wizard" }]),
+  ...["Mystic Order", "Psionic Disciplines and Talents", "Using a Discipline"].map((name) =>
+    mysticFeature(name, 1),
+  ),
+  mysticFeature("Psionics", 1, [{ kind: "dc", ability: "int" }]),
+  mysticFeature("Mystical Recovery", 2),
+  mysticFeature("Telepathy", 2),
+  ...[3, 6, 14].map((level) => mysticFeature("Mystic Order feature", level)),
+  ...[4, 8, 12, 16, 19].map((level) => mysticFeature("Ability Score Improvement", level)),
+  mysticFeature("Strength of Mind", 4),
+  mysticFeature("Potent Psionics (1d8)", 8, [
+    {
+      kind: "extraDamage",
+      dice: "1d8",
+      scales: [{ level: 14, dice: "2d8" }],
+      type: "psychic",
+      oncePerTurn: true,
+      option: ON_A_HIT,
+    },
+  ]),
+  // Its larger die is recorded on Potent Psionics (1d8)'s scale.
+  mysticFeature("Potent Psionics (2d8)", 14),
+  // Its one use is the catalog's.
+  mysticFeature("Consumptive Power", 10),
+  mysticFeature("Psionic Mastery (1/Day)", 11, [
+    {
+      kind: "uses",
+      count: 1,
+      reset: "long",
+      scales: [
+        { level: 13, count: 2 },
+        { level: 15, count: 3 },
+        { level: 17, count: 4 },
+      ],
+    },
+  ]),
+  // Each further use is recorded on Psionic Mastery (1/Day)'s scale.
+  ...(
+    [
+      ["2/Day", 13],
+      ["3/Day", 15],
+      ["4/Day", 17],
+    ] as const
+  ).map(([uses, level]) => mysticFeature(`Psionic Mastery (${uses})`, level)),
+  mysticFeature("Psionic Body", 20, [
+    {
+      kind: "defense",
+      resist: ["bludgeoning", "piercing", "slashing"],
+      immune: ["poison"],
+      conditionImmune: ["disease", "poisoned"],
+    },
+  ]),
+  ...["Avatar", "Awakened", "Immortal", "Nomad", "Wu Jen"].map((name) =>
+    orderFeature(mystic, order(name), "Bonus Disciplines", 1),
+  ),
+  ...(
+    [
+      ["Avatar", "Order of the Avatar"],
+      ["Awakened", "Order of the Awakened"],
+      ["Immortal", "Order of the Immortal"],
+      ["Nomad", "Order of the Nomad"],
+      ["Soul Knife", "Order of the Soul Knife"],
+      ["Wu Jen", "Order of the Wu Jen"],
+    ] as const
+  ).map(([name, intro]) => orderFeature(mystic, order(name), intro, 1)),
+  orderFeature(
+    mystic,
+    order("Avatar"),
+    "Armor Training",
+    1,
+    grants({ armor: ["medium", "shield"] }),
+  ),
+  ...(
+    [
+      ["Avatar of Battle", 3],
+      ["Avatar of Healing", 6],
+      ["Avatar of Speed", 14],
+    ] as const
+  ).map(([name, level]) => orderFeature(mystic, order("Avatar"), name, level)),
+  orderFeature(mystic, order("Awakened"), "Awakened Talent", 1, [
+    skillsOf(2, [
+      "animal handling",
+      "deception",
+      "insight",
+      "intimidation",
+      "investigation",
+      "perception",
+      "persuasion",
+    ]),
+  ]),
+  // Its one use is the catalog's.
+  orderFeature(mystic, order("Awakened"), "Psionic Investigation", 3),
+  orderFeature(mystic, order("Awakened"), "Psionic Surge", 6),
+  // Its one use is the catalog's.
+  orderFeature(mystic, order("Awakened"), "Spectral Form", 14, [
+    { kind: "active" },
+    { kind: "defense", resist: [...DAMAGE_TYPES_BUT_PSYCHIC, "psychic"], while: "active" },
+  ]),
+  orderFeature(mystic, order("Immortal"), "Immortal Durability", 1, [
+    { kind: "bonus", target: "hitPointsPerLevel", value: 1 },
+    { kind: "unarmoredBase", value: "con", unlessShield: true },
+  ]),
+  orderFeature(mystic, order("Immortal"), "Psionic Resilience", 3, [
+    { kind: "tempHp", bonus: ["int"] },
+  ]),
+  orderFeature(mystic, order("Immortal"), "Surge of Health", 6),
+  orderFeature(mystic, order("Immortal"), "Immortal Will", 14, [
+    { kind: "heal", bonus: ["level", "con"] },
+  ]),
+  orderFeature(mystic, order("Nomad"), "Breadth of Knowledge", 1),
+  // Its one use is the catalog's.
+  orderFeature(mystic, order("Nomad"), "Memory of One Thousand Steps", 3),
+  orderFeature(mystic, order("Nomad"), "Superior Teleportation", 6),
+  orderFeature(mystic, order("Nomad"), "Effortless Journey", 14),
+  orderFeature(
+    mystic,
+    order("Soul Knife"),
+    "Martial Training",
+    1,
+    grants({ armor: ["medium"], weapons: ["martial"] }),
+  ),
+  // The blade itself is no catalog weapon; its parry is the effect it starts.
+  orderFeature(mystic, order("Soul Knife"), "Soul Knife", 1, [
+    { kind: "active", endsOn: ["incapacitated"] },
+    { kind: "armorClass", value: 2, while: "active" },
+  ]),
+  orderFeature(
+    mystic,
+    order("Soul Knife"),
+    "Hone the Blade",
+    3,
+    (
+      [
+        [2, 1],
+        [5, 2],
+        [7, 4],
+      ] as const
+    ).map(
+      ([psi, bonus]): Mechanic => ({
+        kind: "attack",
+        weapons: "melee",
+        attack: bonus,
+        damage: bonus,
+        option: `${SOUL_KNIFE} ${psi} psi points`,
+      }),
+    ),
+  ),
+  orderFeature(mystic, order("Soul Knife"), "Consumptive Knife", 6, [
+    { kind: "regain", target: "pool", pool: "psi_points", count: 2 },
+  ]),
+  orderFeature(mystic, order("Soul Knife"), "Phantom Knife", 14),
+  orderFeature(mystic, order("Wu Jen"), "Hermit's Study", 1, [
+    skillsOf(2, [
+      "animal handling",
+      "arcana",
+      "history",
+      "insight",
+      "medicine",
+      "nature",
+      "perception",
+      "religion",
+      "survival",
+    ]),
+  ]),
+  orderFeature(mystic, order("Wu Jen"), "Elemental Attunement", 3),
+  // A pick holds no level range, so the sheet does not hold it to 1st through 3rd level, and the
+  // slots psi points create are not ones the sheet regains.
+  orderFeature(
+    mystic,
+    order("Wu Jen"),
+    "Arcane Dabbler",
+    6,
+    spellPicks({ count: 3, from: "Wizard" }),
+  ),
+  orderFeature(mystic, order("Wu Jen"), "Elemental Mastery", 14),
+  egwTrait("Darkvision", [
+    "Orc|EGW",
+    ...egwDragonborn("Draconblood", "also"),
+    ...egwDragonborn("Ravenite", "also"),
+  ]),
+  ...["Aggressive", "Primal Intuition", "Powerful Build"].map((name) =>
+    egwTrait(name, ["Orc|EGW"]),
+  ),
+  egwTrait("Draconic Ancestry", [
+    ...egwDragonborn("Draconblood", "none"),
+    ...egwDragonborn("Ravenite", "none"),
+  ]),
+  egwTrait(
+    "Breath Weapon",
+    [...egwDragonborn("Draconblood", "only"), ...egwDragonborn("Ravenite", "only")],
+    [
+      { kind: "dc", ability: "con" },
+      { kind: "uses", count: 1, reset: "short" },
+    ],
+  ),
+  // Its one use is the catalog's.
+  egwTrait("Forceful Presence", egwDragonborn("Draconblood", "also"), [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["intimidation", "persuasion"],
+      advantage: true,
+      against: "once a short rest, with Forceful Presence",
+    },
+  ]),
+  // Its one use is the catalog's.
+  egwTrait("Vengeful Assault", egwDragonborn("Ravenite", "also")),
+  egwTrait(
+    "Incisive Sense",
+    ["Elf|PHB|Pallid|EGW"],
+    [{ kind: "roll", roll: "check", skills: ["investigation", "insight"], advantage: true }],
+  ),
+  egwTrait("Blessing of the Moon Weaver", ["Elf|PHB|Pallid|EGW"], [SPELLS]),
+  egwTrait("Child of the Wood", ["Halfling|PHB|Lotusden|EGW"], [SPELLS]),
+  egwTrait("Timberwalk", ["Halfling|PHB|Lotusden|EGW"]),
+  scagTrait("Superior Darkvision", ["Gnome|PHB|Deep/Svirfneblin|SCAG"]),
+  scagTrait("Stone Camouflage", ["Gnome|PHB|Deep/Svirfneblin|SCAG"], [hideIn("rocky terrain")]),
+  scagTrait(
+    "Variant Feature (Choose 1)",
+    halfElf(
+      "Aquatic Elf Descent",
+      "Drow Descent",
+      "Moon Elf or Sun Elf Descent",
+      "Wood Elf Descent",
+    ),
+  ),
+  scagTrait("Variant Feature; Skill Versatility", halfElf(...SKILL_VERSATILITY)),
+  scagTrait("Variant Feature; Swim Speed", halfElf("Aquatic Elf Descent; Swim Speed")),
+  scagTrait("Variant Feature; Drow Magic", halfElf("Drow Descent; Drow Magic"), [SPELLS]),
+  scagTrait("Variant Feature; Cantrip", halfElf("Moon Elf or Sun Elf Descent; Cantrip"), [SPELLS]),
+  scagTrait(
+    "Variant Feature; Elf Weapon Training",
+    halfElf(
+      "Moon Elf or Sun Elf Descent; Elf Weapon Training",
+      "Wood Elf Descent; Elf Weapon Training",
+    ),
+  ),
+  scagTrait("Variant Feature; Fleet of Foot", halfElf("Wood Elf Descent; Fleet of Foot")),
+  scagTrait("Variant Feature; Mask of the Wild", halfElf("Wood Elf Descent; Mask of the Wild")),
+  scagTrait("Silent Speech", ["Halfling|PHB|Ghostwise|SCAG"]),
+  scagTrait("Devil's Tongue", tiefling("Devil's Tongue"), [SPELLS]),
+  scagTrait("Hellfire", tiefling("Hellfire"), [SPELLS]),
+  scagTrait("Winged", tiefling("Winged")),
+  scagTrait("Appearance", tiefling("Devil's Tongue", "Hellfire", "Infernal Legacy", "Winged")),
+  ...[
+    "All Eyes on You",
+    "Court Functionary",
+    "Ear to the Ground",
+    "Inheritance",
+    "Kept in Style",
+    "Knightly Regard",
+    "Library Access",
+    "Mercenary Life",
+    "Respect of the Stout Folk",
+    "Safe Haven",
+    "Uthgardt Heritage",
+    "Watcher's Eye",
+  ].map((name) => narrative({ name, source: "SCAG" })),
+  ...[
+    "Ballad of the Grinning Fool",
+    "Criminal Contact",
+    "Researcher",
+    "Shadow Network",
+    "Shelter of the Faithful",
+    "Ship's Passage",
+    "Spy Contact",
+  ].map((name) => narrative({ name, source: "EGW" })),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -4704,6 +5196,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SHADOW_OF_THE_DRAGON_QUEEN,
   ...VAN_RICHTENS_GUIDE,
   ...SETTING_BOOKS,
+  ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
 export const FEATURE_MECHANICS = withSaveDcs(RECORDS, SAVE_DCS);
