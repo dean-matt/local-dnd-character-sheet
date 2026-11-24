@@ -138,6 +138,8 @@ export const SUBCLASS_NAMES = new Map([
   ["Zeal (PSA)|PSA", "Zeal Domain (PSA)|PSA"],
   ["Death|DMG", "Death Domain|DMG"],
   ["Oathbreaker|DMG", "Oathbreaker|DMG"],
+  ["Ascendant Dragon|FTD", "Way of the Ascendant Dragon|FTD"],
+  ["Drakewarden|FTD", "Drakewarden|FTD"],
 ]);
 
 /** The features section's group a held feature shows in. */

@@ -34,6 +34,7 @@ const RESTORED_BY: Record<NonNullable<LimitedUses["restoredBy"]>, string> = {
 const PART: Record<NonNullable<LimitedUses["part"]>, string> = {
   conjuring: "Conjuring",
   recovery: "Regaining",
+  infusion: "Infusing",
 };
 
 /**
