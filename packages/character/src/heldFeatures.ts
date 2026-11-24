@@ -145,6 +145,21 @@ export const SUBCLASS_NAMES = new Map([
   ["Pyromancer (PSK)|PSK", "Pyromancer (PSK)|PSK"],
   ["Spirits|VRGR", "College of Spirits|VRGR"],
   ["Undead|VRGR", "The Undead|VRGR"],
+  ["Battlerager|SCAG", "Path of the Battlerager|SCAG"],
+  ["Arcana|SCAG", "Arcana Domain|SCAG"],
+  ["Purple Dragon Knight (Banneret)|SCAG", "Purple Dragon Knight (Banneret)|SCAG"],
+  ["Long Death|SCAG", "Way of the Long Death|SCAG"],
+  ["Crown|SCAG", "Oath of the Crown|SCAG"],
+  ["Undying|SCAG", "The Undying|SCAG"],
+  ["Echo Knight|EGW", "Echo Knight|EGW"],
+  ["Chronurgy|EGW", "Chronurgy Magic|EGW"],
+  ["Graviturgy|EGW", "Graviturgy Magic|EGW"],
+  ["Avatar|UATheMysticClass", "Order of the Avatar|UATheMysticClass"],
+  ["Awakened|UATheMysticClass", "Order of the Awakened|UATheMysticClass"],
+  ["Immortal|UATheMysticClass", "Order of the Immortal|UATheMysticClass"],
+  ["Nomad|UATheMysticClass", "Order of the Nomad|UATheMysticClass"],
+  ["Soul Knife|UATheMysticClass", "Order of the Soul Knife|UATheMysticClass"],
+  ["Wu Jen|UATheMysticClass", "Order of the Wu Jen|UATheMysticClass"],
 ]);
 
 /** The features section's group a held feature shows in. */
