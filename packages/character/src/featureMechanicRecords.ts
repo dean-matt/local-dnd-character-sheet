@@ -144,6 +144,11 @@ const SACRED_WEAPON = "with the weapon Sacred Weapon imbues";
 const advantageOn = (option: string): Mechanic => ({ kind: "attack", advantage: true, option });
 const KI_POINTS = [1, 2, 3].map((ki) => `${ki} ki point${ki === 1 ? "" : "s"}`);
 const INFUSED = "with the weapon you infused";
+const KI_DC: Mechanic = { kind: "dc", ability: "wis", label: "Ki" };
+const WINGS: Mechanic[] = [
+  { kind: "active" },
+  { kind: "speed", equalToWalk: ["fly"], while: "active" },
+];
 
 /**
  * What PHB, XGE and TCE features outside the SRD change about the character's own attacks. A
@@ -397,10 +402,7 @@ const ONGOING_EFFECTS: FeatureMechanics[] = [
     { kind: "defense", resist: ALL_BUT_FORCE, while: "active" },
   ]),
   classFeature(sorcerer24, ["Innate Sorcery", "XPHB"], 1, [{ kind: "active" }]),
-  subclassFeature(sorcerer, ["Draconic", "PHB"], ["Dragon Wings", "PHB"], 14, [
-    { kind: "active" },
-    { kind: "speed", equalToWalk: ["fly"], while: "active" },
-  ]),
+  subclassFeature(sorcerer, ["Draconic", "PHB"], ["Dragon Wings", "PHB"], 14, WINGS),
   subclassFeature(sorcerer24, ["Draconic", "XPHB"], ["Dragon Wings", "XPHB"], 14, [
     { kind: "active" },
     { kind: "speed", fly: 60, while: "active" },
@@ -1277,9 +1279,7 @@ const SAVE_DCS: FeatureMechanics[] = [
       ["Monk", "PHB", "Stunning Strike", "PHB", 5],
     ] as const
   ).map(([className, classSource, name, source, level]) =>
-    classFeature([className, classSource], [name, source], level, [
-      { kind: "dc", ability: "wis", label: "Ki" },
-    ]),
+    classFeature([className, classSource], [name, source], level, [KI_DC]),
   ),
   ...(
     [
@@ -1290,7 +1290,7 @@ const SAVE_DCS: FeatureMechanics[] = [
     ] as const
   ).map(([className, classSource, shortName, subclassSource, name, source, level]) =>
     subclassFeature([className, classSource], [shortName, subclassSource], [name, source], level, [
-      { kind: "dc", ability: "wis", label: "Ki" },
+      KI_DC,
     ]),
   ),
   ...([["Monk", "PHB", "Open Hand", "PHB", "Tranquility", "PHB", 11]] as const).map(
@@ -1797,12 +1797,7 @@ const dragonborn = (ancestry: string, colors: string[]) =>
 const CHROMATIC = dragonborn("Chromatic", ["Black", "Blue", "Green", "Red", "White"]);
 const GEM = dragonborn("Gem", ["Amethyst", "Crystal", "Emerald", "Sapphire", "Topaz"]);
 const METALLIC = dragonborn("Metallic", ["Brass", "Bronze", "Copper", "Gold", "Silver"]);
-const KI_DC: Mechanic = { kind: "dc", ability: "wis", label: "Ki" };
 const TONGUE_OF_DRAGONS: Mechanic = { kind: "pick", fields: ["languages"], count: 1 };
-const WINGS: Mechanic[] = [
-  { kind: "active" },
-  { kind: "speed", equalToWalk: ["fly"], while: "active" },
-];
 
 /**
  * The Way of the Ascendant Dragon, the Drakewarden, the dragonborn and the dragon gift feats of

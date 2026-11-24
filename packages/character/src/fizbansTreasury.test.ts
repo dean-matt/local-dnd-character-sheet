@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CharacterDefinition } from "./definition.ts";
+import { speedMatchingWalk, speedWithFeats } from "./featEffects.ts";
 import { featureActionType, featureCostRecorded } from "./featureActions.ts";
 import { featureDcs } from "./featureDcs.ts";
 import { featureLimitedUses } from "./featureLimitedUses.ts";
@@ -38,6 +39,11 @@ const dragonborn = (kind: string): CharacterDefinition => ({
   levels: [{ class: { name: "Fighter", source: "PHB" } }],
 });
 
+const flyOf = (of: HoldsFeatures) => {
+  const { speed, matches } = speedWithFeats({ walk: 30 }, of, undefined);
+  return speedMatchingWalk(speed, matches).speed.fly;
+};
+
 const withFeat = (name: string): CharacterDefinition => ({
   ...definition,
   feats: [{ ref: { name, source: "FTD" } }],
@@ -57,16 +63,11 @@ describe("a Way of the Ascendant Dragon monk", () => {
   const monk = classOf(["Monk", "PHB"], "Way of the Ascendant Dragon", 17);
 
   it("sets Breath of the Dragon and the aura's DCs from the ki save DC", () => {
-    const labels = featureDcs(monk, sheet)
-      .filter(({ saveDc }) => saveDc.computed === 15)
-      .map(({ label }) => label);
-    expect(labels).toEqual(expect.arrayContaining(["Ki"]));
+    const dcs = featureDcs(monk, sheet);
     for (const name of ["Breath of the Dragon", "Aspect of the Wyrm", "Ascendant Aspect"])
-      expect(held(monk).get(name)?.mechanics).toContainEqual({
-        kind: "dc",
-        ability: "wis",
-        label: "Ki",
-      });
+      expect(dcs).toContainEqual(
+        expect.objectContaining({ feature: { name, source: "FTD" }, label: "Ki", saveDc: dc(15) }),
+      );
   });
 
   it("counts Breath of the Dragon and Wings Unfurled by the proficiency bonus", () => {
@@ -75,12 +76,9 @@ describe("a Way of the Ascendant Dragon monk", () => {
   });
 
   it("flies at its walking speed while the wings are unfurled, and gains blindsight at 17th level", () => {
-    const features = held({ ...monk, started: new Set(["Wings Unfurled"]) });
-    expect(features.get("Wings Unfurled")?.mechanics).toContainEqual({
-      kind: "speed",
-      equalToWalk: ["fly"],
-      while: "active",
-    });
+    expect(flyOf(monk)).toBeUndefined();
+    expect(flyOf({ ...monk, started: new Set(["Wings Unfurled"]) })).toBe(30);
+    const features = held(monk);
     expect(features.get("Ascendant Aspect")?.mechanics).toContainEqual({
       kind: "sense",
       name: "blindsight",
@@ -132,11 +130,9 @@ describe("a Fizban's dragonborn", () => {
   });
 
   it("flies at its walking speed while Gem Flight runs", () => {
-    const gem = { ...dragonborn("Gem; Topaz"), started: new Set(["Gem Flight"]) };
-    expect(held(gem).get("Gem Flight")?.mechanics).toEqual([
-      { kind: "active" },
-      { kind: "speed", equalToWalk: ["fly"], while: "active" },
-    ]);
+    const gem = dragonborn("Gem; Topaz");
+    expect(flyOf(gem)).toBeUndefined();
+    expect(flyOf({ ...gem, started: new Set(["Gem Flight"]) })).toBe(30);
   });
 
   it("starts Chromatic Warding and sets the metallic breath's DC", () => {
