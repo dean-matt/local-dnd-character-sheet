@@ -92,6 +92,28 @@ describe("a Monsters of the Multiverse race", () => {
     expect(saves(inShell).map((effect) => effect.target)).toEqual(["str", "con"]);
   });
 
+  it("gives each shifter its own benefit only while Shifting runs", () => {
+    const shifter = (kind: string, running: boolean) => {
+      const of = raceOf(`Shifter; ${kind}`);
+      return running ? { ...of, started: new Set([`Shifting (${kind})`]) } : of;
+    };
+    const armor = (kind: string, running: boolean) =>
+      armorClassEffects(shifter(kind, running), stance).bonus.length;
+    const walk = (kind: string, running: boolean) =>
+      speedWithFeats({ walk: 30 }, shifter(kind, running), undefined).speed.walk;
+    const wisdom = (kind: string, running: boolean) =>
+      featureRolls(shifter(kind, running), () => 0, false).effects.filter(
+        ({ source }) => source === `Shifting (${kind})`,
+      ).length;
+    expect([armor("Beasthide", false), armor("Beasthide", true)]).toEqual([0, 1]);
+    expect([walk("Swiftstride", false), walk("Swiftstride", true)]).toEqual([30, 40]);
+    expect([wisdom("Wildhunt", false), wisdom("Wildhunt", true)]).toEqual([0, 1]);
+    for (const kind of ["Longtooth", "Swiftstride", "Wildhunt"]) expect(armor(kind, true)).toBe(0);
+    for (const kind of ["Beasthide", "Longtooth", "Wildhunt"]) expect(walk(kind, true)).toBe(30);
+    for (const kind of ["Beasthide", "Longtooth", "Swiftstride"])
+      expect(wisdom(kind, true)).toBe(0);
+  });
+
   it("flies at the walking speed only while a Radiant Soul aasimar is transformed", () => {
     const aasimar = raceOf("Aasimar; Radiant Soul", 3);
     const flyOf = (of: HoldsFeatures) => {
