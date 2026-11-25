@@ -4586,6 +4586,111 @@ const PLAYERS_HANDBOOK_MONK_SORCERER: FeatureMechanics[] = [
   phbFeature(sorcerer, ["Wild", "PHB"], "Spell Bombardment", 18),
 ];
 
+/**
+ * The classic feats and optional features of the Player's Handbook that carried no record. A
+ * feat or invocation that grants proficiencies, a pick, advantage on a roll or a ki save DC
+ * records it. The rest is the narrative mark: a reaction, a choice made on each use, a superiority
+ * die or metamagic spent on one roll, an effect on another creature, a reduction of damage, a
+ * bonus to a passive score, which a check bonus cannot say, or a benefit of the senses or of
+ * movement that no term holds. Resilient and Weapon Master leave a choice no pick holds.
+ */
+const PLAYERS_HANDBOOK_FEATS: FeatureMechanics[] = [
+  {
+    ref: { name: "Actor", source: "PHB" },
+    mechanics: [
+      {
+        kind: "roll",
+        roll: "check",
+        skills: ["deception", "performance"],
+        advantage: true,
+        against: "when trying to pass yourself off as a different person",
+      },
+    ],
+  },
+  {
+    ref: { name: "Beguiling Influence", source: "PHB" },
+    mechanics: grants({ skills: ["deception", "persuasion"] }),
+  },
+  {
+    ref: { name: "Heavily Armored", source: "PHB" },
+    mechanics: grants({ armor: ["heavy"] }),
+  },
+  {
+    ref: { name: "Lightly Armored", source: "PHB" },
+    mechanics: grants({ armor: ["light"] }),
+  },
+  {
+    ref: { name: "Moderately Armored", source: "PHB" },
+    mechanics: grants({ armor: ["medium", "shield"] }),
+  },
+  {
+    ref: { name: "Linguist", source: "PHB" },
+    mechanics: [{ kind: "pick", fields: ["languages"], count: 3 }],
+  },
+  {
+    ref: { name: "Skilled", source: "PHB" },
+    mechanics: [{ kind: "pick", fields: ["skills", "tools"], count: 3 }],
+  },
+  {
+    ref: { name: "Mage Slayer", source: "PHB" },
+    mechanics: [saveAdvantage("against spells cast by creatures within 5 feet of you")],
+  },
+  {
+    ref: { name: "War Caster", source: "PHB" },
+    mechanics: [
+      {
+        kind: "roll",
+        roll: "save",
+        abilities: ["con"],
+        advantage: true,
+        against: "to maintain concentration on a spell when you take damage",
+      },
+    ],
+  },
+  { ref: { name: "Unbroken Air", source: "PHB" }, mechanics: [KI_DC] },
+  { ref: { name: "Water Whip", source: "PHB" }, mechanics: [KI_DC] },
+  ...[
+    "Athlete",
+    "Commander's Strike",
+    "Crossbow Expert",
+    "Defensive Duelist",
+    "Elemental Adept",
+    "Evasive Footwork",
+    "Heavy Armor Master",
+    "Keen Mind",
+    "Observant",
+    "Parry",
+    "Polearm Master",
+    "Protection",
+    "Resilient",
+    "Savage Attacker",
+    "Sentinel",
+    "Shield Master",
+    "Skulker",
+    "Sweeping Attack",
+    "Tavern Brawler",
+    "Two-Weapon Fighting",
+    "Weapon Master",
+    "Agonizing Blast",
+    "Eldritch Spear",
+    "Eyes of the Rune Keeper",
+    "Gaze of Two Minds",
+    "One with Shadows",
+    "Repelling Blast",
+    "Voice of the Chain Master",
+    "Witch Sight",
+    "Elemental Attunement",
+    "Shape the Flowing River",
+    "Careful Spell",
+    "Distant Spell",
+    "Empowered Spell",
+    "Extended Spell",
+    "Quickened Spell",
+    "Subtle Spell",
+    "Twinned Spell",
+  ].map((name) => narrative({ name, source: "PHB" })),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -6322,6 +6427,7 @@ const RECORDS: FeatureMechanics[] = [
   ...PLAYERS_HANDBOOK_MARTIAL,
   ...PLAYERS_HANDBOOK_PALADIN_ROGUE,
   ...PLAYERS_HANDBOOK_MONK_SORCERER,
+  ...PLAYERS_HANDBOOK_FEATS,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
