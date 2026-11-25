@@ -2437,7 +2437,7 @@ const SHADOW_OF_THE_DRAGON_QUEEN: FeatureMechanics[] = [
   dsotdqFeature(sorcerer24, lunar, "Lunar Sorcery", 3),
   // Its one use is the catalog's.
   dsotdqFeature(sorcerer, lunar, "Lunar Embodiment", 1, [SPELLS]),
-  dsotdqFeature(sorcerer, lunar, "Moon Fire", 1, [SPELLS]),
+  dsotdqFeature(sorcerer, lunar, "Moon Fire", 1, [{ kind: "spells", learns: ["sacred flame"] }]),
   dsotdqFeature(sorcerer, lunar, "Lunar Boons", 6, [PROFICIENCY_USES]),
   // Its one use is the catalog's.
   dsotdqFeature(sorcerer, lunar, "Waxing and Waning", 6, [SPELLS]),

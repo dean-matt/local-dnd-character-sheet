@@ -111,6 +111,8 @@ const WARRIOR_OF_SHADOW = { name: "Warrior of Shadow", source: "XPHB" };
 const SUN_SOUL = { name: "Way of the Sun Soul", source: "XGE" };
 const DRUID = { name: "Druid", source: "PHB" };
 const LAND = { name: "Circle of the Land", source: "PHB" };
+const SORCERER = { name: "Sorcerer", source: "PHB" };
+const LUNAR = { name: "Lunar Sorcery", source: "DSotDQ" };
 const TIEFLING = { name: "Tiefling", source: "PHB" };
 const GLOOM_TOUCHED = { name: "Gloom Touched", source: "PHB" };
 const ASMODEUS = { name: "Asmodeus", source: "MTF" };
@@ -313,6 +315,7 @@ describe("characterSpellsRoutes", () => {
         spellRow("Pass without Trace", "PHB", 2),
         spellRow("Silence", "PHB", 2),
         spellRow("Burning Hands", "PHB", 1),
+        spellRow("Sacred Flame", "PHB", 0),
         spellRow("Minor Illusion", "XPHB", 0),
         spellRow("Darkness", "XPHB", 2),
       ],
@@ -673,6 +676,21 @@ describe("characterSpellsRoutes", () => {
           granted: true,
         },
       ]);
+    });
+
+    it("lists sacred flame, granted by Moon Fire, for a Lunar Sorcery sorcerer", async () => {
+      store({
+        ...withSpells([]),
+        levels: [{ class: SORCERER, subclass: LUNAR }],
+      } as CharacterDefinition);
+      expect(await listed()).toEqual([
+        { name: "Sacred Flame", source: "PHB", fromGrantor: "Moon Fire", granted: true },
+      ]);
+    });
+
+    it("lists no sacred flame for a sorcerer of no subclass", async () => {
+      store({ ...withSpells([]), levels: [{ class: SORCERER }] } as CharacterDefinition);
+      expect(await spells()).toEqual([]);
     });
 
     it("leaves out a spell the subclass grants at a later class level", async () => {

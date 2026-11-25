@@ -25,6 +25,7 @@ import {
   type EntryRef,
   entryKey,
   featureUsesKey,
+  learnedSpells,
   raceSpellCasts,
   spellBlockKey,
   spellGrantRecord,
@@ -300,6 +301,22 @@ function featureGrantors(definition: CharacterDefinition) {
   return grantors.flatMap((grantor) => (grantor ? [{ grantor, level, label: grantor.name }] : []));
 }
 
+/** The spells a held feature teaches by name, which no grantor's `additionalSpells` lists. */
+function learnedBy(dataDir: string, definition: CharacterDefinition): Map<string, GrantedSpell> {
+  const learned = learnedSpells(definition);
+  const rows = findSpells(
+    dataDir,
+    definition.edition,
+    learned.map(({ spell }) => ({ name: spell })),
+  );
+  const found = new Map<string, GrantedSpell>();
+  learned.forEach(({ feature }, index) => {
+    const row = rows[index];
+    if (row && !found.has(entryKey(row))) found.set(entryKey(row), { row, grantor: feature });
+  });
+  return found;
+}
+
 /** The spells each catalog class gives outright by its level, by `entryKey`. */
 function classSpellKeys(dataDir: string, definition: CharacterDefinition): Set<string> {
   return new Set(
@@ -384,7 +401,10 @@ export function resolveCharacterSpells(
   const rows = rowFacts(dataDir, homebrewDb, definition.spells);
   const effects = homebrewEffects(homebrewDb);
   const bySubclass = grantedSpells(dataDir, effects, subclassGrantors(definition));
-  const byFeature = grantedSpells(dataDir, effects, featureGrantors(definition));
+  const byFeature = new Map([
+    ...learnedBy(dataDir, definition),
+    ...grantedSpells(dataDir, effects, featureGrantors(definition)),
+  ]);
   const elsewhere =
     bySubclass.size > 0
       ? new Set([...classSpellKeys(dataDir, definition), ...byFeature.keys()])

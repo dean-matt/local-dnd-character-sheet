@@ -644,13 +644,16 @@ const spellPickSchema = z.strictObject({
  * `slot` for a spell cast with a pact slot, which the count limits to one cast, and `atWill`
  * for one the count does not limit. A race trait whose spells upstream lists as known, with no
  * `daily` or `rest` key, records `casts`: each spell is cast that many times without a slot
- * between `reset` rests, the count the trait prints.
+ * between `reset` rests, the count the trait prints. A class or subclass feature that teaches
+ * a spell by name, which no `additionalSpells` lists, records it in `learns`: the sheet lists it
+ * as granted, so it counts against no spells known.
  */
 const spellsMechanicSchema = z.strictObject({
   kind: z.literal("spells"),
   picks: z.array(spellPickSchema).min(1).optional(),
   casting: z.enum(["slot", "atWill"]).optional(),
   casts: z.strictObject({ count: z.int().min(1), reset: z.enum(["short", "long"]) }).optional(),
+  learns: z.array(z.string().min(1)).min(1).optional(),
 });
 
 /**
