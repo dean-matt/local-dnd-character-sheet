@@ -3509,6 +3509,41 @@ const SWORD_COAST_AND_WILDEMOUNT: FeatureMechanics[] = [
     "Ship's Passage",
     "Spy Contact",
   ].map((name) => narrative({ name, source: "EGW" })),
+  ...[
+    "Backstage Pass",
+    "By Popular Demand",
+    "City Guard",
+    "City Secrets",
+    "Criminal Connections",
+    "Criminal Contact",
+    "Discovery",
+    "Dual Personalities",
+    "False Identity",
+    "Gateguide Connection",
+    "Guild Membership",
+    "Immigrant Experience",
+    "Long-Lost Heir",
+    "Loyalty Test",
+    "Military Rank",
+    "Patriar",
+    "Professional Courtesy",
+    "Religious Community",
+    "Researcher",
+    "Rumor Monger",
+    "Rustic Hospitality",
+    "Shelter of the Faithful",
+    "Ship's Passage",
+    "Smuggler's Sense",
+    "Social Vengeance",
+    "The Real City",
+    "Wanderer",
+  ].map((name) => narrative({ name, source: "BGDIA" })),
+  // Harvest the Water's advantage is on checks with a tool, which no roll term holds; I'll
+  // Patch It! restores a vehicle's hull points, not the character's.
+  ...["Down Low", "Harvest the Water", "I'll Patch It!", "Steady"].map((name) =>
+    narrative({ name, source: "GoS" }),
+  ),
+  ...["Adept Linguist", "Historical Knowledge"].map((name) => narrative({ name, source: "ToA" })),
 ];
 
 const RECORDS: FeatureMechanics[] = [
