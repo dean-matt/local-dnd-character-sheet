@@ -4534,7 +4534,7 @@ const PLAYERS_HANDBOOK_PALADIN_ROGUE: FeatureMechanics[] = [
  * The classic Monk and Sorcerer features of the Player's Handbook that carried no record. Each is
  * the narrative mark: a reaction, a choice, a spell list, a pool or a cost the class table holds,
  * an effect on another creature, or a bonus that grows with the level, which a speed mechanic
- * cannot say, as Unarmored Movement's does.
+ * cannot say, as Unarmored Movement's does. The 2024 Sorcerer holds the two origin rows at level 3.
  */
 const PLAYERS_HANDBOOK_MONK_SORCERER: FeatureMechanics[] = [
   // Monk
@@ -4576,9 +4576,11 @@ const PLAYERS_HANDBOOK_MONK_SORCERER: FeatureMechanics[] = [
   // Sorcerer, Draconic
   phbFeature(sorcerer, ["Draconic", "PHB"], "Dragon Ancestor", 1),
   phbFeature(sorcerer, ["Draconic", "PHB"], "Draconic Bloodline", 1),
+  phbFeature(sorcerer24, ["Draconic", "PHB"], "Draconic Bloodline", 3),
   phbFeature(sorcerer, ["Draconic", "PHB"], "Draconic Presence", 18),
   // Sorcerer, Wild
   phbFeature(sorcerer, ["Wild", "PHB"], "Wild Magic", 1),
+  phbFeature(sorcerer24, ["Wild", "PHB"], "Wild Magic", 3),
   phbFeature(sorcerer, ["Wild", "PHB"], "Bend Luck", 6),
   phbFeature(sorcerer, ["Wild", "PHB"], "Controlled Chaos", 14),
   phbFeature(sorcerer, ["Wild", "PHB"], "Spell Bombardment", 18),
