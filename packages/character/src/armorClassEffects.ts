@@ -48,9 +48,11 @@ function valueTerm(
 function unarmoredTerm(
   stance: ArmorStance,
   ref: Held["ref"],
-  { value, unlessShield }: UnarmoredBase,
+  { value, plus = 0, unlessShield }: UnarmoredBase,
 ): Term<TermReference> | undefined {
-  return unlessShield && stance.shield ? undefined : valueTerm(stance, ref, value);
+  if (unlessShield && stance.shield) return undefined;
+  const term = valueTerm(stance, ref, value);
+  return { ...term, value: term.value + plus };
 }
 
 /** What an unarmored base adds to the 10, Dexterity included unless it is fixed. */

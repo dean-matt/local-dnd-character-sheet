@@ -2853,8 +2853,9 @@ const SETTING_BOOKS: FeatureMechanics[] = [
   ggrTrait("Nimble Escape", ggr("Goblin"), asBonusAction("Disengage", "Hide")),
   ggrTrait("Powerful Build", ggr("Loxodon")),
   ggrTrait("Loxodon Serenity", ggr("Loxodon"), [saveAdvantage(CHARMED_OR_FRIGHTENED)]),
-  // Its 12 plus the Constitution modifier leaves Dexterity out, which an unarmored base adds.
-  ggrTrait("Natural Armor", ggr("Loxodon")),
+  ggrTrait("Natural Armor", ggr("Loxodon"), [
+    { kind: "unarmoredBase", value: "con", plus: 2, fixed: true },
+  ]),
   ggrTrait("Trunk", ggr("Loxodon")),
   ggrTrait("Keen Smell", ggr("Loxodon"), [
     {
@@ -2963,8 +2964,7 @@ const SETTING_BOOKS: FeatureMechanics[] = [
   ),
   lrTrait("Limited Amphibiousness", ["Locathah|LR"]),
   ...["Claws", "Hold Breath", "Survival Instinct"].map((name) => ttpTrait(name, ["Tortle|TTP"])),
-  // Its base AC of 17 ignores Dexterity, which an unarmored base adds.
-  ttpTrait("Natural Armor", ["Tortle|TTP"]),
+  ttpTrait("Natural Armor", ["Tortle|TTP"], [{ kind: "unarmoredBase", value: 7, fixed: true }]),
   ttpTrait(
     "Shell Defense",
     ["Tortle|TTP"],

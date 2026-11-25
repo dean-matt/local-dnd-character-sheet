@@ -153,10 +153,6 @@ describe("a setting book race", () => {
       held(raceOf("Human (Innistrad)", "PSI", ["Stensia", "PSI"])).get("Tough")?.mechanics,
     ).toEqual([{ kind: "bonus", target: "hitPointsPerLevel", value: 2 }]);
   });
-
-  it("leaves to the player a trait that no term holds", () => {
-    expect(held(raceOf("Loxodon", "GGR")).get("Natural Armor")?.narrative).toBe(true);
-  });
 });
 
 describe("the VRGR lineages", () => {
