@@ -1231,11 +1231,16 @@ describe("AbilitiesSection", () => {
       const roll = screen.getByRole("button", { name: "Roll Stealth check" });
       fireEvent.click(roll);
       await waitFor(() => expect(posts[0]?.notation).toBe("1d20+7"));
-      fireEvent.click(
-        screen.getByRole("checkbox", {
-          name: "Sentinel's Intuition: +1d4 roll a d4 and add it to the check",
-        }),
-      );
+      expect(
+        screen.queryByRole("checkbox", { name: /Sentinel's Intuition/ }),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Athletics check dice options" })).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Stealth check dice options" }));
+      const box = screen.getByRole("checkbox", {
+        name: "Sentinel's Intuition: +1d4 roll a d4 and add it to the check",
+      });
+      expect(box).not.toBeChecked();
+      fireEvent.click(box);
       fireEvent.click(roll);
       await waitFor(() => expect(posts[1]?.notation).toBe("1d20+1d4+7"));
     });

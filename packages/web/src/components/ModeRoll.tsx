@@ -3,7 +3,10 @@ import { type ComponentProps, type ReactNode, useContext, useId, useState } from
 import { useCharacterState } from "../hooks/useCharacterState.ts";
 import { useReplaceCharacterState } from "../hooks/useReplaceCharacterState.ts";
 import { parseExtraDie } from "../lib/extraDie.ts";
+import { optionKey } from "../lib/rollOption.ts";
+import { DiceOptions } from "./DiceOptions.tsx";
 import { ExtraDieInput } from "./ExtraDieInput.tsx";
+import { OptionBox } from "./OptionBox.tsx";
 import { RollBonusButton } from "./RollBonusButton.tsx";
 import { RollingFor } from "./rollerContext.ts";
 
@@ -20,13 +23,6 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
   const net = netRollEffect(effects);
   return net && net.mode !== "cancel" ? net.mode : "normal";
 }
-
-/** What a conditional entry does to the roll, as its checkbox reads. */
-const doing = (entry: RollEffectEntry | RollOption) =>
-  "mode" in entry ? (entry.mode === "advantage" ? "Adv" : "Dis") : `+${entry.dice ?? entry.value}`;
-
-const optionKey = (entry: RollEffectEntry | RollOption) =>
-  `${entry.source}|${doing(entry)}|${entry.condition}`;
 
 /**
  * A roll button with the mode it rolls in: the net of the advantage and disadvantage on it to
@@ -83,8 +79,17 @@ export function ModeRoll({
     ({ source, mode: effect, condition }) =>
       `${source}: ${effect}${condition ? ` ${condition}` : ""}`,
   );
+  const isDie = (entry: RollEffectEntry | RollOption) =>
+    "dice" in entry && entry.dice !== undefined;
+  const riders = conditional.filter(isDie);
+  const toggle = (key: string, on: boolean) => {
+    const next = new Set(ticked);
+    if (on) next.add(key);
+    else next.delete(key);
+    setTicked(next);
+  };
   return (
-    <span className="flex max-w-full flex-wrap items-center gap-x-0.5 gap-y-1">
+    <span className="flex items-center gap-0.5">
       <select
         aria-label={`${modeLabel ?? roll.label} mode`}
         aria-describedby={names.length > 0 ? sources : undefined}
@@ -122,35 +127,21 @@ export function ModeRoll({
           Bardic Inspiration d{held}
         </label>
       )}
-      {conditional.map((entry) => {
-        const key = optionKey(entry);
-        return (
-          <label key={key} className="flex items-center gap-1 text-label">
-            <input
-              type="checkbox"
-              checked={ticked.has(key)}
-              aria-label={`${entry.source}: ${doing(entry)} ${entry.condition}`}
-              onChange={(event) => {
-                const next = new Set(ticked);
-                if (event.target.checked) next.add(key);
-                else next.delete(key);
-                setTicked(next);
-              }}
-            />
-            <span title={entry.condition}>
-              {entry.source} {doing(entry)}
-            </span>
-          </label>
-        );
-      })}
+      {conditional
+        .filter((entry) => !isDie(entry))
+        .map((entry) => (
+          <OptionBox key={optionKey(entry)} entry={entry} ticked={ticked} toggle={toggle} />
+        ))}
+      <DiceOptions
+        riders={riders}
+        ticked={ticked}
+        toggle={toggle}
+        label={`${modeLabel ?? roll.label} dice options`}
+      />
       <RollBonusButton
         {...roll}
         bonus={flat.reduce((sum, { value }) => sum + value, roll.bonus)}
-        terms={
-          flat.length === 0
-            ? roll.terms
-            : roll.terms && [...roll.terms, ...flat.map(({ source, value }) => ({ source, value }))]
-        }
+        terms={roll.terms && [...roll.terms, ...flat]}
         rider={`${roll.rider ?? ""}${dice.map(({ dice: each }) => `+${each}`).join("")}`}
         mode={mode}
         extra={extra}
