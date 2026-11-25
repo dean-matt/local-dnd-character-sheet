@@ -235,6 +235,32 @@ describe("a dragon gift feat", () => {
     }
   });
 
+  it("reads the highest of Intelligence, Wisdom and Charisma where the feat raised none of them", () => {
+    const base = withFeat("Gift of the Gem Dragon");
+    const gem = { ref: { name: "Gift of the Gem Dragon", source: "FTD" } };
+    const modifiers: Record<string, number> = { int: 1, wis: 0, cha: 3 };
+    const dcsOf = (of: CharacterDefinition) =>
+      featureDcs(of, {
+        ...sheet,
+        modifier: (ability) => modifiers[ability] ?? -5,
+        ability: (ability) => dc(8 + (modifiers[ability] ?? -5)),
+      }).map(({ saveDc }) => saveDc.computed);
+    const atFour = { ...gem, level: 4, grantedBy: { kind: "class" as const, ref: fighter } };
+    const increase = (amount: number, level: number) => ({
+      ability: "int" as const,
+      amount,
+      grantedBy: "feat" as const,
+      level,
+    });
+    expect(dcsOf(base)).toEqual([11]);
+    expect(
+      dcsOf({ ...base, feats: [{ ...gem, picks: { ability: [{ ability: "str", amount: 1 }] } }] }),
+    ).toEqual([11]);
+    expect(dcsOf({ ...base, feats: [atFour], abilityIncreases: [increase(1, 8)] })).toEqual([11]);
+    expect(dcsOf({ ...base, feats: [atFour], abilityIncreases: [increase(0, 4)] })).toEqual([11]);
+    expect(dcsOf({ ...base, feats: [atFour], abilityIncreases: [increase(1, 4)] })).toEqual([9]);
+  });
+
   it("counts the gem and metallic gifts' reactions by the proficiency bonus", () => {
     for (const name of ["Gift of the Gem Dragon", "Gift of the Metallic Dragon"])
       expect(usesOf(withFeat(name), name)).toEqual([{ count: 3, reset: "long", part: undefined }]);

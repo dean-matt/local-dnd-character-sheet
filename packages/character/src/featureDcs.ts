@@ -7,7 +7,7 @@ import { type HoldsFeatures, heldFeatures } from "./heldFeatures.ts";
 import { refKey } from "./keys.ts";
 import { type Ability, type ContentRef, catalogRef } from "./refs.ts";
 
-type Increases = HoldsFeatures & Partial<Pick<CharacterDefinition, "abilityIncreases">>;
+type Increases = HoldsFeatures & Pick<CharacterDefinition, "abilityIncreases">;
 
 type FeatureDc = CharacterDerived["featureDcs"][number];
 type Dc = FeatureDc["saveDc"];
@@ -29,7 +29,7 @@ function raisedBy(definition: Increases, ref: ContentRef): Ability[] {
     return catalog && refKey(catalog) === refKey(ref);
   });
   if (!feat) return [];
-  const placed = (definition.abilityIncreases ?? []).filter(
+  const placed = definition.abilityIncreases.filter(
     (increase) =>
       increase.grantedBy === "feat" && feat.level !== undefined && increase.level === feat.level,
   );
