@@ -117,7 +117,7 @@ const RACE_RECORDED = new Set(
   ),
 );
 
-/** A feat's or option's record, which a trait of the same `(name, source)` shares, as Lucky is a halfling's trait and a feat. */
+/** A record without a class or races, which a trait shares only where a feat has the same `(name, source)`, as Lucky is a halfling's trait and a feat. */
 const SHARED_RECORDED = new Set(
   FEATURE_MECHANICS.flatMap(({ ref, races }) => ("className" in ref || races ? [] : [refKey(ref)])),
 );
@@ -185,6 +185,11 @@ const namedEntries = (json: string): (Entry & { name: string })[] =>
   );
 
 function traitUnits(db: Database.Database): Unit[] {
+  const feats = new Set(
+    (db.prepare("SELECT name, source FROM feats").all() as { name: string; source: string }[]).map(
+      refKey,
+    ),
+  );
   const races = db
     .prepare("SELECT name, source, edition, json, trait_uses FROM races")
     .all() as TraitRow[];
@@ -214,7 +219,8 @@ function traitUnits(db: Database.Database): Unit[] {
     label: `${entry.name} (${row.source}), ${whose}`,
     recorded:
       RACE_RECORDED.has(`${entry.name}|${row.source}|${owner}`) ||
-      SHARED_RECORDED.has(`${entry.name}|${row.source}`),
+      (feats.has(refKey({ name: entry.name, source: row.source })) &&
+        SHARED_RECORDED.has(`${entry.name}|${row.source}`)),
     poolKey: undefined,
   });
   const inherited = (row: TraitRow, entry: Entry & { name: string }) =>

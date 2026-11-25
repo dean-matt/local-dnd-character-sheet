@@ -346,6 +346,19 @@ describe("race, subrace and background traits", () => {
     JSON.stringify({ entries: [trait("Lucky", "You reroll a die that shows a 1")] }),
     null,
   );
+  race.run(
+    "Orc",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [trait("Archery", "You reroll a die that shows a 1")] }),
+    null,
+  );
+  db.prepare("INSERT INTO feats (name, source, edition, json) VALUES (?, ?, ?, ?)").run(
+    "Lucky",
+    "PHB",
+    "classic",
+    "{}",
+  );
   race.run("Elf", "XPHB", "one", JSON.stringify({ entries: [darkvision] }), null);
   const subrace = db.prepare(
     "INSERT INTO subraces (name, full_name, source, race_name, race_source, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -403,6 +416,10 @@ describe("race, subrace and background traits", () => {
     );
     expect(Object.values(gaps.PHB ?? {}).flat()).not.toContain("Lucky (PHB), Halfling");
     expect(gaps.MPMM?.uses).toEqual(["Wriggle (MPMM), Kobold"]);
+  });
+
+  it("counts a trait as recorded by a feat only, not by another record of the same key", () => {
+    expect(Object.values(mechanicGaps(db).PHB ?? {}).flat()).toContain("Archery (PHB), Orc");
   });
 });
 
