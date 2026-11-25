@@ -308,9 +308,7 @@ function ownedBy(entry: FeatureMechanics, owners: string[]): FeatureMechanics {
       !("races" in mechanic && mechanic.races) ||
       mechanic.races.some((owner) => owners.includes(owner)),
   );
-  return mine?.length === mechanics?.length || !mine?.length
-    ? entry
-    : { ...entry, mechanics: mine };
+  return mine?.length === mechanics?.length ? entry : { ...entry, mechanics: mine };
 }
 
 function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
