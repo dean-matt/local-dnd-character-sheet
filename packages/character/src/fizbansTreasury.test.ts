@@ -63,6 +63,8 @@ const withFeat = (name: string): CharacterDefinition => ({
   levels: [{ class: { name: "Fighter", source: "PHB" } }],
 });
 
+const fighter = { name: "Fighter", source: "PHB" };
+
 const held = (of: HoldsFeatures) =>
   new Map(heldFeatures(of).map(({ ref, entry }) => [ref.name, entry]));
 
@@ -207,20 +209,30 @@ describe("a dragon gift feat", () => {
     );
   });
 
-  it("sets Telekinetic Reprisal's DC from the Intelligence, Wisdom or Charisma the feat raised", () => {
-    const modifiers = { int: 1, wis: 0, cha: 3 } as Record<string, number>;
-    const gem = featureDcs(withFeat("Gift of the Gem Dragon"), {
-      ...sheet,
-      modifier: (ability) => modifiers[ability] ?? -5,
-      ability: (ability) => dc(8 + (modifiers[ability] ?? -5)),
-    });
-    expect(gem).toEqual([
-      {
-        feature: { name: "Gift of the Gem Dragon", source: "FTD" },
-        label: "Telekinetic Reprisal",
-        saveDc: dc(11),
-      },
-    ]);
+  it("sets Telekinetic Reprisal's DC from the ability the feat raised", () => {
+    const modifiers: Record<string, number> = { int: 1, wis: 0, cha: 3 };
+    const gemDc = (raised: "int" | "wis" | "cha", placed: "picks" | "improvement") => {
+      const base = withFeat("Gift of the Gem Dragon");
+      const gem = { ref: { name: "Gift of the Gem Dragon", source: "FTD" } };
+      const of: CharacterDefinition =
+        placed === "picks"
+          ? { ...base, feats: [{ ...gem, picks: { ability: [{ ability: raised, amount: 1 }] } }] }
+          : {
+              ...base,
+              feats: [{ ...gem, level: 4, grantedBy: { kind: "class", ref: fighter } }],
+              abilityIncreases: [{ ability: raised, amount: 1, grantedBy: "feat", level: 4 }],
+            };
+      return featureDcs(of, {
+        ...sheet,
+        modifier: (ability) => modifiers[ability] ?? -5,
+        ability: (ability) => dc(8 + (modifiers[ability] ?? -5)),
+      }).map(({ label, saveDc }) => [label, saveDc.computed]);
+    };
+    for (const placed of ["picks", "improvement"] as const) {
+      expect(gemDc("int", placed)).toEqual([["Telekinetic Reprisal", 9]]);
+      expect(gemDc("wis", placed)).toEqual([["Telekinetic Reprisal", 8]]);
+      expect(gemDc("cha", placed)).toEqual([["Telekinetic Reprisal", 11]]);
+    }
   });
 
   it("counts the gem and metallic gifts' reactions by the proficiency bonus", () => {
