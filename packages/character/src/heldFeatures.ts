@@ -90,6 +90,7 @@ export const SUBCLASS_NAMES = new Map([
   ["Whispers|XGE", "College of Whispers|XGE"],
   ["Spores|TCE", "Circle of Spores|TCE"],
   ["Battle Master|PHB", "Battle Master|PHB"],
+  ["Eldritch Knight|PHB", "Eldritch Knight|PHB"],
   ["Beast Master|PHB", "Beast Master|PHB"],
   ["Psi Warrior|TCE", "Psi Warrior|TCE"],
   ["Kensei|XGE", "Way of the Kensei|XGE"],
