@@ -4143,7 +4143,9 @@ const PLAYERS_HANDBOOK_ARCANE: FeatureMechanics[] = [
   phbFeature(wizard24, ["Abjuration", "PHB"], "School of Abjuration", 3),
   phbFeature(wizard, ["Abjuration", "PHB"], "Projected Ward", 6),
   phbFeature(wizard, ["Abjuration", "PHB"], "Improved Abjuration", 10),
-  phbFeature(wizard, ["Abjuration", "PHB"], "Spell Resistance", 14, [saveAdvantage("spells")]),
+  phbFeature(wizard, ["Abjuration", "PHB"], "Spell Resistance", 14, [
+    saveAdvantage("against spells"),
+  ]),
   // Warlock, Great Old One
   phbFeature(warlock, ["Great Old One", "PHB"], "Awakened Mind", 1),
   phbFeature(warlock24, ["Great Old One", "PHB"], "The Great Old One", 3),
