@@ -2356,6 +2356,9 @@ const aag = rowsOf("AAG");
 const psk = rowsOf("PSK");
 const psz = rowsOf("PSZ");
 const vrgr = rowsOf("VRGR");
+const ZENDIKAR_TRIBES = ["Grotag", "Lavastep", "Tuktuk"].map(
+  (tribe) => `Goblin|PSZ|Zendikar; ${tribe} Tribe|PSZ`,
+);
 const TIEFLING_LEGACIES = [
   ["Legacy of Avernus", "Zariel"],
   ["Legacy of Cania", "Mephistopheles"],
@@ -2721,12 +2724,11 @@ const SETTING_BOOKS: FeatureMechanics[] = [
   pszTrait("Darkvision", psz("Elf (Zendikar)", "Goblin", "Vampire")),
   pszTrait("Keen Senses", psz("Elf (Zendikar)")),
   pszTrait("Fey Ancestry", psz("Elf (Zendikar)"), [saveAdvantage("against being charmed")]),
-  // The resistances are the race row's.
-  pszTrait(
-    "Grit",
-    ["Grotag", "Lavastep", "Tuktuk"].map((tribe) => `Goblin|PSZ|Zendikar; ${tribe} Tribe|PSZ`),
-    [{ kind: "unarmoredBase", value: 1 }],
-  ),
+  // The resistances are the race row's. The base row owns the trait so its scan finds it, and the
+  // Ixalan goblin, which holds the base row too, gets no armor class from it.
+  pszTrait("Grit", psz("Goblin").concat(ZENDIKAR_TRIBES), [
+    { kind: "unarmoredBase", value: 1, races: ZENDIKAR_TRIBES },
+  ]),
   pszTrait("Brave", psz("Kor"), [saveAdvantage("against being frightened")]),
   ...["Climbing", "Kor Climbing", "Lucky"].map((name) => pszTrait(name, psz("Kor"))),
   pszTrait("Amphibious", psz("Merfolk")),
