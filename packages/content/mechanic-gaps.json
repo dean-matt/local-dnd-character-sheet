@@ -1,20 +1,20 @@
 {
   "PHB": {
     "dc": 0,
-    "active": 3,
+    "active": 1,
     "heal": 0,
     "tempHp": 0,
     "bonus": 3,
-    "armorClass": 7,
+    "armorClass": 6,
     "unarmoredBase": 0,
     "mediumArmorDexterity": 0,
-    "proficiency": 24,
-    "pick": 4,
+    "proficiency": 21,
+    "pick": 3,
     "halfProficiency": 0,
     "sense": 8,
-    "defense": 25,
-    "speed": 5,
-    "roll": 13,
+    "defense": 22,
+    "speed": 4,
+    "roll": 12,
     "attack": 0,
     "extraDamage": 3,
     "martialArts": 0,
@@ -26,8 +26,8 @@
     "spells": 3,
     "poolCost": 0,
     "triggered": 0,
-    "uses": 13,
-    "unclassified": 329
+    "uses": 12,
+    "unclassified": 272
   },
   "XPHB": {
     "dc": 0,
