@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import type { CharacterCatalog } from "./catalog.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { speedMatchingWalk, speedWithFeats } from "./featEffects.ts";
+import { featGrants } from "./featGrants.ts";
 import { featureActionType, featureCostRecorded } from "./featureActions.ts";
 import { featureDcs } from "./featureDcs.ts";
 import { featureLimitedUses } from "./featureLimitedUses.ts";
@@ -30,14 +32,24 @@ const classOf = (
   })),
 });
 
-const dragonborn = (kind: string): CharacterDefinition => ({
+const dragonborn = (kind: string, level = 5): CharacterDefinition => ({
   ...definition,
   feats: [],
   optionalFeatures: [],
   race: { name: `Dragonborn (${kind})`, source: "FTD" },
   subrace: undefined,
-  levels: [{ class: { name: "Fighter", source: "PHB" } }],
+  levels: Array.from({ length: level }, () => ({ class: { name: "Fighter", source: "PHB" } })),
 });
+
+const immunities = (of: CharacterDefinition & HoldsFeatures, raceResistance?: string) => {
+  const catalog = {
+    featGrants: new Map(),
+    itemSkills: new Map(),
+    skills: [],
+    raceDefenses: { resistChoice: ["acid", "cold", "fire", "lightning", "poison"] },
+  } as unknown as CharacterCatalog;
+  return featGrants({ ...of, raceResistance }, catalog).defenses.flatMap(({ immune }) => immune);
+};
 
 const flyOf = (of: HoldsFeatures) => {
   const { speed, matches } = speedWithFeats({ walk: 30 }, of, undefined);
@@ -136,12 +148,46 @@ describe("a Fizban's dragonborn", () => {
   });
 
   it("starts Chromatic Warding and sets the metallic breath's DC", () => {
-    expect(held(dragonborn("Chromatic; Black")).get("Chromatic Warding")?.mechanics).toEqual([
-      { kind: "active" },
-    ]);
+    expect(held(dragonborn("Chromatic; Black")).get("Chromatic Warding")?.mechanics).toContainEqual(
+      {
+        kind: "active",
+      },
+    );
     expect(featureDcs(dragonborn("Metallic; Gold"), sheet)).toContainEqual(
       expect.objectContaining({ label: "Metallic Breath Weapon", saveDc: dc(13) }),
     );
+  });
+
+  it("makes each chromatic color immune to its damage type while Chromatic Warding runs", () => {
+    const types = { Black: "acid", Blue: "lightning", Green: "poison", Red: "fire", White: "cold" };
+    for (const [color, type] of Object.entries(types)) {
+      const warded = {
+        ...dragonborn(`Chromatic; ${color}`),
+        started: new Set(["Chromatic Warding"]),
+      };
+      expect(immunities(warded)).toEqual([type]);
+      expect(immunities(dragonborn(`Chromatic; ${color}`))).toEqual([]);
+    }
+  });
+
+  it("makes the unspecified chromatic dragonborn immune to the type its race resistance picked", () => {
+    const warded = {
+      ...dragonborn("Chromatic"),
+      started: new Set(["Chromatic Warding"]),
+    };
+    expect(immunities(warded, "fire")).toEqual(["fire"]);
+    expect(immunities(warded, "force")).toEqual([]);
+  });
+
+  it("holds Chromatic Warding, Gem Flight and Metallic Breath Weapon from 5th level", () => {
+    for (const [kind, name] of [
+      ["Chromatic; Red", "Chromatic Warding"],
+      ["Gem; Topaz", "Gem Flight"],
+      ["Metallic; Gold", "Metallic Breath Weapon"],
+    ] as const) {
+      expect(held(dragonborn(kind, 4)).has(name)).toBe(false);
+      expect(held(dragonborn(kind, 5)).has(name)).toBe(true);
+    }
   });
 
   it("leaves the resistance to the race row", () => {

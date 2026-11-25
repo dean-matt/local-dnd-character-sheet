@@ -352,8 +352,10 @@ function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
   const race = catalogRef(definition.race);
   if (!race) return [];
   const owners = ownersOf(race, catalogRef(definition.subrace));
-  return RACE_FEATURES.filter((feature) =>
-    feature.owners.some((owner) => owners.includes(owner)),
+  return RACE_FEATURES.filter(
+    (feature) =>
+      feature.owners.some((owner) => owners.includes(owner)) &&
+      levels >= (feature.entry.level ?? 1),
   ).map(({ ref, entry }) => ({
     ref,
     origin: "race" as const,

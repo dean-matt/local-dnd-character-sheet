@@ -1502,9 +1502,10 @@ const bookFeature =
 /** A race trait from `source`, narrative where it carries no mechanics. */
 const bookTrait =
   (source: string) =>
-  (name: string, races: string[], mechanics?: Mechanic[]): FeatureMechanics => ({
+  (name: string, races: string[], mechanics?: Mechanic[], level?: number): FeatureMechanics => ({
     ref: { name, source },
     races,
+    ...(level && { level }),
     ...(mechanics ? { mechanics } : { narrative: true }),
   });
 const domainFeature = bookFeature("PSA");
@@ -1817,8 +1818,7 @@ const TONGUE_OF_DRAGONS: Mechanic = { kind: "pick", fields: ["languages"], count
  * The Way of the Ascendant Dragon, the Drakewarden, the dragonborn and the dragon gift feats of
  * Fizban's Treasury of Dragons. A resistance whose damage type the player picks on each use or
  * for the drake, the drake's own statistics, and an effect on another creature beyond its DC
- * are the narrative mark. A race trait that starts at 5th level is held from the first, as
- * its catalog uses already are.
+ * are the narrative mark.
  */
 const FIZBANS_TREASURY: FeatureMechanics[] = [
   ftdFeature(monk, ascendantDragon, "Way of the Ascendant Dragon", 3),
@@ -1845,12 +1845,37 @@ const FIZBANS_TREASURY: FeatureMechanics[] = [
     [{ kind: "dc", ability: "con" }, PROFICIENCY_USES],
   ),
   ftdTrait("Draconic Resistance", [...CHROMATIC, ...GEM, ...METALLIC]),
-  // One record holds a `(name, source)`, so the immunity, whose type is each ancestry's, waits on
-  // a per-race mechanic.
-  ftdTrait("Chromatic Warding", CHROMATIC, [{ kind: "active" }]),
+  ftdTrait(
+    "Chromatic Warding",
+    CHROMATIC,
+    [
+      { kind: "active" },
+      {
+        kind: "defense",
+        raceResistance: true,
+        while: "active",
+        races: ["Dragonborn (Chromatic)|FTD"],
+      },
+      ...(
+        [
+          ["Black", "acid"],
+          ["Blue", "lightning"],
+          ["Green", "poison"],
+          ["Red", "fire"],
+          ["White", "cold"],
+        ] as const
+      ).map(([color, type]) => ({
+        kind: "defense" as const,
+        immune: [type],
+        while: "active" as const,
+        races: [`Dragonborn (Chromatic; ${color})|FTD`],
+      })),
+    ],
+    5,
+  ),
   ftdTrait("Psionic Mind", GEM),
-  ftdTrait("Gem Flight", GEM, WINGS),
-  ftdTrait("Metallic Breath Weapon", METALLIC, [{ kind: "dc", ability: "con" }]),
+  ftdTrait("Gem Flight", GEM, WINGS, 5),
+  ftdTrait("Metallic Breath Weapon", METALLIC, [{ kind: "dc", ability: "con" }], 5),
   {
     ref: { name: "Gift of the Chromatic Dragon", source: "FTD" },
     mechanics: [
