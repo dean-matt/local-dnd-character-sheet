@@ -16,8 +16,9 @@ import { PoolButton } from "../../PoolButton.tsx";
 
 /**
  * Starts and ends a feature's effect, each one announced state write. A start spends what a
- * Use of the feature spends and gives what a use restores, and refuses where that is spent out or the armor worn ends the
- * effect; an end restores nothing.
+ * Use of the feature spends and gives what a use restores, and refuses where that is spent out
+ * or the armor worn ends the effect; an end restores nothing. A restore per choice is left to
+ * the spend, which holds the choice.
  */
 export function FeatureEffect({
   character,
@@ -63,7 +64,7 @@ export function FeatureEffect({
             return;
           }
           const restored = restore(
-            derived,
+            { ...derived, featureRestores: derived.featureRestores.filter(({ per }) => !per) },
             { name, source },
             resource ? resource.spend(stored) : stored,
           );

@@ -117,6 +117,27 @@ describe("FeatureEffect", () => {
     ).toBeInTheDocument();
   });
 
+  it("gives a heal when it starts and offers no spend that gives it again", async () => {
+    const heal = {
+      feature: { name: "Bladesong", source: "TCE" },
+      kind: "heal" as const,
+      dice: null,
+      bonus: 3,
+      others: false,
+    };
+    const { writes } = renderFeatures(
+      { hitPoints: { ...stateRecord().state.hitPoints, current: 1 } },
+      null,
+      [heal],
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Start Bladesong" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.hitPoints.current).toBeGreaterThan(1);
+    expect(
+      within(row("Bladesong")).queryByRole("button", { name: "Spend a use of Bladesong" }),
+    ).toBeNull();
+  });
+
   it("refuses a start with no use left, and starts a feature that spends nothing", async () => {
     const { writes } = renderFeatures({ featureUses: [{ key: BLADESONG_USES, expended: 2 }] });
 
