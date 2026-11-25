@@ -78,6 +78,11 @@ const RUNE_USES: Mechanic = {
 const SPELLS: Mechanic = { kind: "spells" };
 const SPELLS_BY_SLOT: Mechanic = { kind: "spells", casting: "slot" };
 const SPELLS_AT_WILL: Mechanic = { kind: "spells", casting: "atWill" };
+/** Each spell cast once without a slot between long rests, which upstream's `known` list omits. */
+const SPELLS_ONCE_PER_LONG_REST: Mechanic = {
+  kind: "spells",
+  casts: { count: 1, reset: "long" },
+};
 const barbarian: [string, string] = ["Barbarian", "PHB"];
 const barbarian24: [string, string] = ["Barbarian", "XPHB"];
 const fighter24: [string, string] = ["Fighter", "XPHB"];
@@ -2530,7 +2535,7 @@ const VAN_RICHTENS_GUIDE: FeatureMechanics[] = [
   ]),
   // Its one use is the catalog's.
   vrgrTrait("Eerie Token", vrgr("Hexblood")),
-  vrgrTrait("Hex Magic", vrgr("Hexblood"), [SPELLS]),
+  vrgrTrait("Hex Magic", vrgr("Hexblood"), [SPELLS_ONCE_PER_LONG_REST]),
   vrgrTrait("Knowledge from a Past Life", vrgr("Reborn"), [PROFICIENCY_USES]),
   ...["Heart of Darkness", "Official Inquiry"].map((name) => narrative({ name, source: "VRGR" })),
 ];
@@ -2782,9 +2787,9 @@ const SETTING_BOOKS: FeatureMechanics[] = [
   ...["Conviction", "Planar Infusion"].map((name) => narrative({ name, source: "SatO" })),
   ...["Flight", "Talons"].map((name) => eepcTrait(name, ["Aarakocra|EEPC"])),
   eepcTrait("Unending Breath", ["Genasi|EEPC|Air|EEPC"]),
-  eepcTrait("Mingle with the Wind", ["Genasi|EEPC|Air|EEPC"], [SPELLS]),
+  eepcTrait("Mingle with the Wind", ["Genasi|EEPC|Air|EEPC"], [SPELLS_ONCE_PER_LONG_REST]),
   eepcTrait("Earth Walk", ["Genasi|EEPC|Earth|EEPC"]),
-  eepcTrait("Merge with Stone", ["Genasi|EEPC|Earth|EEPC"], [SPELLS]),
+  eepcTrait("Merge with Stone", ["Genasi|EEPC|Earth|EEPC"], [SPELLS_ONCE_PER_LONG_REST]),
   ...["Darkvision", "Fire Resistance"].map((name) => eepcTrait(name, ["Genasi|EEPC|Fire|EEPC"])),
   eepcTrait("Reach to the Blaze", ["Genasi|EEPC|Fire|EEPC"], [SPELLS]),
   ...["Acid Resistance", "Amphibious", "Swim"].map((name) =>

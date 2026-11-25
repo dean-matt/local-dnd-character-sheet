@@ -117,6 +117,9 @@ const ASMODEUS = { name: "Asmodeus", source: "MTF" };
 const HAUNTED_ONE = { name: "Haunted One", source: "CoS" };
 const MIST_STANCE = { name: "Mist Stance", source: "PHB" };
 const DROW = { name: "Drow", source: "PHB" };
+const HEXBLOOD = { name: "Hexblood", source: "VRGR" };
+const GENASI = { name: "Genasi", source: "EEPC" };
+const EARTH = { name: "Earth", source: "EEPC" };
 const OMEN = { name: "Sign of Ill Omen", source: "PHB" };
 const NIGHT_GIFT = { name: "Night Gift", source: "PHB" };
 const EACH_REST = { name: "Rest Gift", source: "PHB" };
@@ -415,6 +418,8 @@ describe("characterSpellsRoutes", () => {
         })),
         ...(
           [
+            ["races", HEXBLOOD, 0, undefined],
+            ["subraces", EARTH, 0, GENASI],
             ["races", TIEFLING, 5, undefined],
             ["subraces", ASMODEUS, 0, TIEFLING],
             ["backgrounds", HAUNTED_ONE, 0, undefined],
@@ -422,7 +427,7 @@ describe("characterSpellsRoutes", () => {
             ["optional_features", MIST_STANCE, 0, undefined],
           ] as const
         ).map(([granted_by, row, level, parent]) => ({
-          spell_name: "Darkness",
+          spell_name: row === EARTH ? "Pass without Trace" : "Darkness",
           spell_source: "PHB",
           granted_by,
           ...row,
@@ -993,6 +998,21 @@ describe("characterSpellsRoutes", () => {
       const key = "spell|feat|PHB|Night Gift|Shield";
       expect((await usesOf()).map(({ uses }) => uses?.key)).toEqual([key, key]);
     });
+
+    it.each([
+      [{ race: HEXBLOOD }, "Darkness", "spell|race|VRGR|Hexblood|Darkness"],
+      [
+        { race: GENASI, subrace: EARTH },
+        "Pass without Trace",
+        "spell|subrace|EEPC|Earth|Pass without Trace",
+      ],
+    ])(
+      "counts one cast a long rest of a known spell a race trait records, for %o",
+      async (extra, name, key) => {
+        wizard(1, extra);
+        expect(await usesOf()).toContainEqual({ name, uses: { key, count: 1, reset: "long" } });
+      },
+    );
 
     it("counts none for a spell no grantor limits", async () => {
       wizard(1, { race: DROW }, [{ ref: SHIELD_REF, prepared: true, origin: WIZARD }]);
