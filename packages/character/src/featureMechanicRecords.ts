@@ -1889,8 +1889,10 @@ const FIZBANS_TREASURY: FeatureMechanics[] = [
       },
     ],
   },
-  // Its DC uses the ability the feat increased, which no `dc` mechanic names.
-  { ref: { name: "Gift of the Gem Dragon", source: "FTD" }, mechanics: [PROFICIENCY_USES] },
+  {
+    ref: { name: "Gift of the Gem Dragon", source: "FTD" },
+    mechanics: [PROFICIENCY_USES, { ...CHOSEN_CASTING_DC, label: "Telekinetic Reprisal" }],
+  },
   {
     ref: { name: "Gift of the Metallic Dragon", source: "FTD" },
     mechanics: [SPELLS, PROFICIENCY_USES],
@@ -2423,8 +2425,7 @@ const NATURAL_ARMOR_13: Mechanic = { kind: "unarmoredBase", value: 3 };
 
 /**
  * The Path of the Giant and the giant feats of Bigby Presents: Glory of the Giants. A feat's
- * DC set by the ability the feat increased has no `dc` mechanic to name it, as Gift of the Gem
- * Dragon's has none. Giant's Havoc adds the Rage Damage bonus, which a column's cell prints as
+ * DC set by the ability the feat increased has no `dc` mechanic to name it. Giant's Havoc adds the Rage Damage bonus, which a column's cell prints as
  * a bonus rather than dice, and a reach no term holds. A background feature that grants one of
  * these feats shares its `(name, source)` and so its record.
  */

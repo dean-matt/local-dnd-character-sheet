@@ -207,6 +207,22 @@ describe("a dragon gift feat", () => {
     );
   });
 
+  it("sets Telekinetic Reprisal's DC from the Intelligence, Wisdom or Charisma the feat raised", () => {
+    const modifiers = { int: 1, wis: 0, cha: 3 } as Record<string, number>;
+    const gem = featureDcs(withFeat("Gift of the Gem Dragon"), {
+      ...sheet,
+      modifier: (ability) => modifiers[ability] ?? -5,
+      ability: (ability) => dc(8 + (modifiers[ability] ?? -5)),
+    });
+    expect(gem).toEqual([
+      {
+        feature: { name: "Gift of the Gem Dragon", source: "FTD" },
+        label: "Telekinetic Reprisal",
+        saveDc: dc(11),
+      },
+    ]);
+  });
+
   it("counts the gem and metallic gifts' reactions by the proficiency bonus", () => {
     for (const name of ["Gift of the Gem Dragon", "Gift of the Metallic Dragon"])
       expect(usesOf(withFeat(name), name)).toEqual([{ count: 3, reset: "long", part: undefined }]);
