@@ -7,13 +7,13 @@ import { definition } from "./test/vex.ts";
 
 const dc = (computed: number) => ({ computed, manual: null, terms: [] });
 
-const cleric = (domain: string, count: number): CharacterDefinition => ({
+const cleric = (domain: string, count: number, source = "PHB"): CharacterDefinition => ({
   ...definition,
-  edition: "classic",
+  edition: source === "XPHB" ? "one" : "classic",
   feats: [],
   optionalFeatures: [],
   levels: Array.from({ length: count }, (_, index) => ({
-    class: { name: "Cleric", source: "PHB" },
+    class: { name: "Cleric", source },
     ...(index === 0 ? { subclass: { name: `${domain} Domain (PSA)`, source: "PSA" } } : {}),
   })),
 });
@@ -59,6 +59,31 @@ describe("a Plane Shift: Amonkhet cleric", () => {
       { kind: "roll", roll: "save", bonus: 10 },
       { kind: "roll", roll: "check", bonus: 10 },
     ]);
+  });
+
+  it("holds the same domain and Channel Divinity records on the XPHB Cleric at level 3", () => {
+    for (const domain of ["Ambition", "Knowledge", "Solidarity", "Strength", "Zeal"]) {
+      const phb = held(cleric(domain, 2));
+      const xphb = held(cleric(domain, 3, "XPHB"));
+      const marks = (entry?: { mechanics?: unknown; narrative?: boolean }) => ({
+        mechanics: entry?.mechanics,
+        narrative: entry?.narrative,
+      });
+      const domainName = `${domain} Domain (PSA)`;
+      expect(marks(xphb.get(domainName))).toEqual(marks(phb.get(domainName)));
+      expect(xphb.has(domainName)).toBe(true);
+      const option =
+        { Ambition: "Invoke Duplicity", Knowledge: "", Solidarity: "Preserve Life" }[domain] ??
+        (domain === "Strength" ? "Feat of Strength" : "Consuming Fervor");
+      const name = `Channel Divinity: ${option}`;
+      if (option) expect(marks(xphb.get(name))).toEqual(marks(phb.get(name)));
+    }
+    expect(
+      held(cleric("Strength", 3, "XPHB")).get("Channel Divinity: Feat of Strength"),
+    ).toBeDefined();
+    expect(held(cleric("Strength", 2, "XPHB")).has("Channel Divinity: Feat of Strength")).toBe(
+      false,
+    );
   });
 
   it("spends a Channel Divinity use on each domain's option", () => {
