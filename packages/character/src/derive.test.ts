@@ -782,6 +782,28 @@ describe("deriveCharacter", () => {
     expect(acOf("Lizardfolk", 8)).toBe(13 - 1 + 2);
   });
 
+  it("sets an unarmored GGR loxodon's Armor Class to 12 plus Constitution and a TTP tortle's to 17, each plus a shield", () => {
+    const shielded = {
+      ...equipped,
+      inventory: equipped.inventory.filter(
+        (item) => !("name" in item.ref) || item.ref.name !== STUDDED_LEATHER.name,
+      ),
+    };
+    const acOf = (race: string, source: string, dex: number, con: number) =>
+      deriveCharacter(
+        {
+          ...shielded,
+          race: { name: race, source },
+          abilityScores: { ...shielded.abilityScores, dex, con },
+        },
+        catalog,
+      ).armorClass.computed;
+    expect(acOf("Loxodon", "GGR", 16, 16)).toBe(12 + 3 + 2);
+    expect(acOf("Loxodon", "GGR", 8, 16)).toBe(12 + 3 + 2);
+    expect(acOf("Tortle", "TTP", 16, 10)).toBe(17 + 2);
+    expect(acOf("Tortle", "TTP", 8, 10)).toBe(17 + 2);
+  });
+
   it("lets a tortle's fixed base and a Barbarian's Dexterity-adding base compete, the higher winning", () => {
     const BARBARIAN = { name: "Barbarian", source: "XPHB" };
     const withBarbarian = {
