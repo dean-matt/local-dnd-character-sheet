@@ -1935,7 +1935,11 @@ const EBERRON: FeatureMechanics[] = [
   erlwTrait("Aggressive", [erlwRace("Orc")]),
   erlwTrait("Primal Intuition", [erlwRace("Orc")]),
   // The minimum of 1 temporary hit point is left to the player; its one use is the catalog's.
-  erlwTrait("Shifting", [erlwRace("Shifter")], [{ kind: "tempHp", bonus: ["level", "con"] }]),
+  erlwTrait(
+    "Shifting",
+    [erlwRace("Shifter")],
+    [{ kind: "active" }, { kind: "tempHp", bonus: ["level", "con"] }],
+  ),
   // One record holds a `(name, source)`, and each shifter subrace's benefit while shifted differs.
   erlwTrait("Shifting Feature", SHIFTERS),
   erlwTrait("Natural Athlete", [shifter("Beasthide")]),
@@ -2249,15 +2253,19 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   mpmmTrait("Blessing of the Raven Queen", mpmm("Shadar-Kai"), [PROFICIENCY_USES]),
   mpmmTrait("Necrotic Resistance", mpmm("Shadar-Kai")),
   mpmmTrait("Bestial Instincts", MPMM_SHIFTERS),
-  // Shifting starts no effect, since a start spends a use apart from the one that lands the
-  // temporary hit points, so what each shifter gains while shifted is left to the player.
-  mpmmTrait("Shifting", mpmm("Shifter"), [PROFICIENCY_USES, SHIFTED]),
+  // What each shifter gains while shifted is left to the player.
+  mpmmTrait("Shifting", mpmm("Shifter"), [PROFICIENCY_USES, { kind: "active" }, SHIFTED]),
   mpmmTrait("Shifting (Beasthide)", mpmm("Shifter; Beasthide"), [
     PROFICIENCY_USES,
+    { kind: "active" },
     { ...SHIFTED, dice: "1d6" },
   ]),
   ...["Longtooth", "Swiftstride", "Wildhunt"].map((kind) =>
-    mpmmTrait(`Shifting (${kind})`, mpmm(`Shifter; ${kind}`), [PROFICIENCY_USES, SHIFTED]),
+    mpmmTrait(`Shifting (${kind})`, mpmm(`Shifter; ${kind}`), [
+      PROFICIENCY_USES,
+      { kind: "active" },
+      SHIFTED,
+    ]),
   ),
   mpmmTrait("Cat's Claws", mpmm("Tabaxi")),
   mpmmTrait("Cat's Talent", mpmm("Tabaxi")),

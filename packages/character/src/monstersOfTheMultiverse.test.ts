@@ -63,6 +63,19 @@ describe("a Monsters of the Multiverse race", () => {
     ]);
   });
 
+  it("starts the shifted effect of every shifter", () => {
+    for (const race of [
+      "Shifter",
+      "Shifter; Beasthide",
+      "Shifter; Longtooth",
+      "Shifter; Swiftstride",
+      "Shifter; Wildhunt",
+    ]) {
+      const shifting = [...held(raceOf(race))].find(([name]) => name.startsWith("Shifting"));
+      expect(shifting?.[1].mechanics).toContainEqual({ kind: "active" });
+    }
+  });
+
   it("counts a trait used as often as the proficiency bonus, and Feline Agility once until the player restores it", () => {
     const uses = (race: string, name: string) =>
       featureLimitedUses(raceOf(race), (term) => (term === "proficiency" ? 3 : 0))
