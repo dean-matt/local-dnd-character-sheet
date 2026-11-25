@@ -57,6 +57,18 @@ const findHeld = <T extends ContentRef>(
   source: string | undefined,
 ) => list?.find((ref) => ref.name === name && ref.source === source);
 
+/** Whether starting the feature's effect gives temporary hit points, which its spend then must not. */
+const givesTempHp = (
+  derived: CharacterDerived | undefined,
+  name: string,
+  source: string | undefined,
+  startable: ContentRef | undefined,
+) =>
+  startable !== undefined &&
+  derived?.featureRestores.some(
+    ({ feature, kind }) => kind === "tempHp" && feature.name === name && feature.source === source,
+  ) === true;
+
 /**
  * An unresolved feature with no source is a homebrew reference, which names no source. A
  * feature that offers a choice of features carries the control that changes it, and a feat
@@ -106,6 +118,7 @@ export function FeatureRow({
   const controls = featureControls(feature, character, featIndex);
   const { source } = feature;
   const startable = findHeld(derived?.startableFeatures, feature.name, source);
+  const startsRestore = givesTempHp(derived, feature.name, source, startable);
   const homebrew = derived?.homebrewEffects.some(
     (ref) => ref.name === feature.name && ref.source === source,
   );
@@ -142,6 +155,7 @@ export function FeatureRow({
                     name={feature.name}
                     source={feature.source}
                     uses={uses}
+                    startsRestore={startsRestore}
                   />
                 ),
             )}

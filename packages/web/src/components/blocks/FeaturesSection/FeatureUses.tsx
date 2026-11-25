@@ -42,7 +42,8 @@ const PART: Record<NonNullable<LimitedUses["part"]>, string> = {
  * a restore, each one state write announced once it lands. A spend also lands what the
  * feature restores, in the same write, then logs what it rolled. Nothing shows until state
  * loads, since the count left is read from it, and the spend waits on `derived`, which holds
- * what the feature restores.
+ * what the feature restores. Where starting the feature's effect gives that, `startsRestore`
+ * leaves the spend to the start.
  */
 export function FeatureUses({
   characterId,
@@ -50,12 +51,14 @@ export function FeatureUses({
   name,
   source,
   uses,
+  startsRestore = false,
 }: {
   characterId: string;
   derived: CharacterDerived | undefined;
   name: string;
   source: string | undefined;
   uses: LimitedUses;
+  startsRestore?: boolean;
 }) {
   const state = useCharacterState(characterId);
   const replace = useAnnouncedStateWrite(characterId);
@@ -105,24 +108,26 @@ export function FeatureUses({
         {uses.count - expended} / {uses.count} <span className="text-muted">{reset}</span>
       </span>
       <RestoreChoiceSelect name={name} choice={choice} value={count} onChange={setPicked} />
-      <PoolButton
-        icon={Minus}
-        label={`Spend a use of ${name}`}
-        tooltip="Spend a use"
-        disabled={
-          replace.writing || !derived || expended >= uses.count || choice?.values.length === 0
-        }
-        onPress={async () => {
-          if (!derived) return;
-          const restored = source
-            ? restore(derived, { name, source }, stored, count)
-            : { state: stored, text: [], log: () => {} };
-          const left = `${name}: ${uses.count - expended - 1} of ${uses.count} left.`;
-          const text = [left, ...restored.text.map((part) => `${part}.`)].join(" ");
-          const after = withFeatureUse(restored.state, uses.key, expended + 1);
-          if (await replace.write(after, text)) restored.log();
-        }}
-      />
+      {!startsRestore && (
+        <PoolButton
+          icon={Minus}
+          label={`Spend a use of ${name}`}
+          tooltip="Spend a use"
+          disabled={
+            replace.writing || !derived || expended >= uses.count || choice?.values.length === 0
+          }
+          onPress={async () => {
+            if (!derived) return;
+            const restored = source
+              ? restore(derived, { name, source }, stored, count)
+              : { state: stored, text: [], log: () => {} };
+            const left = `${name}: ${uses.count - expended - 1} of ${uses.count} left.`;
+            const text = [left, ...restored.text.map((part) => `${part}.`)].join(" ");
+            const after = withFeatureUse(restored.state, uses.key, expended + 1);
+            if (await replace.write(after, text)) restored.log();
+          }}
+        />
+      )}
       <PoolButton
         icon={Plus}
         label={`Restore a use of ${name}`}

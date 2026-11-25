@@ -1,5 +1,5 @@
 import type { CharacterFeatures } from "@dnd/catalog";
-import type { CharacterState } from "@dnd/character";
+import type { CharacterDerived, CharacterState } from "@dnd/character";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { characterRecord, derivedRecord, stateRecord } from "../../../test/records.ts";
@@ -37,6 +37,7 @@ const FEATURES: CharacterFeatures = {
 function renderFeatures(
   state: Partial<CharacterState> = {},
   bladesongBlockedBy: string | null = null,
+  featureRestores: CharacterDerived["featureRestores"] = [],
 ) {
   let stored = { ...stateRecord(), state: { ...stateRecord().state, ...state } };
   const writes: CharacterState[] = [];
@@ -56,6 +57,7 @@ function renderFeatures(
   );
   const derived = {
     ...derivedRecord(),
+    featureRestores,
     startableFeatures: [
       {
         name: "Bladesong",
@@ -89,6 +91,30 @@ describe("FeatureEffect", () => {
     await waitFor(() => expect(writes).toHaveLength(2));
     expect(writes[1]?.activeEffects).toEqual([]);
     expect(writes[1]?.featureUses).toEqual([{ key: BLADESONG_USES, expended: 1 }]);
+  });
+
+  it("gives the temporary hit points a use gives when it starts, and offers no spend that gives them alone", async () => {
+    const { writes } = renderFeatures({}, null, [
+      {
+        feature: { name: "Bladesong", source: "TCE" },
+        kind: "tempHp",
+        dice: null,
+        bonus: 7,
+        others: false,
+      },
+    ]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Start Bladesong" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]?.activeEffects).toEqual([{ name: "Bladesong" }]);
+    expect(writes[0]?.featureUses).toEqual([{ key: BLADESONG_USES, expended: 1 }]);
+    expect(writes[0]?.hitPoints.temporary).toBe(7);
+    expect(
+      within(row("Bladesong")).queryByRole("button", { name: "Spend a use of Bladesong" }),
+    ).toBeNull();
+    expect(
+      within(row("Bladesong")).getByRole("button", { name: "Restore a use of Bladesong" }),
+    ).toBeInTheDocument();
   });
 
   it("refuses a start with no use left, and starts a feature that spends nothing", async () => {
