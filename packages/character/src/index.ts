@@ -153,6 +153,7 @@ export {
 export {
   featurePickOffers,
   featureSpellPickOffers,
+  learnedSpells,
   raceSpellCasts,
   spellGrantRecord,
 } from "./heldFeatures.ts";

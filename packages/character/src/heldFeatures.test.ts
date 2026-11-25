@@ -5,6 +5,7 @@ import {
   featurePickOffers,
   featureSpellPickOffers,
   heldFeatures,
+  learnedSpells,
   raceSpellCasts,
   spellGrantRecord,
 } from "./heldFeatures.ts";
@@ -98,5 +99,28 @@ describe("the casts a race trait records for its known spells", () => {
     expect(
       raceSpellCasts({ name: "Genasi", source: "EEPC" }, { name: "Fire", source: "EEPC" }),
     ).toBeUndefined();
+  });
+});
+
+describe("the spells a feature teaches by name", () => {
+  const sorcerer = (level: number, subclass?: ContentRef) =>
+    learnedSpells({
+      ...definition,
+      feats: [],
+      optionalFeatures: [],
+      levels: Array.from({ length: level }, () => ({
+        class: { name: "Sorcerer", source: "PHB" },
+        ...(subclass && { subclass }),
+      })),
+    });
+
+  it("teaches a Lunar Sorcery sorcerer sacred flame from Moon Fire", () => {
+    expect(sorcerer(1, { name: "Lunar Sorcery", source: "DSotDQ" })).toEqual([
+      { feature: "Moon Fire", spell: "sacred flame" },
+    ]);
+  });
+
+  it("teaches a sorcerer of another subclass nothing", () => {
+    expect(sorcerer(1)).toEqual([]);
   });
 });
