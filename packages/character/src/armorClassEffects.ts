@@ -20,6 +20,8 @@ export type ArmorClassEffects = {
   bonus: Term<TermReference>[];
   /** The best unarmored base, read only while no armor is worn. */
   unarmoredBase: Term<TermReference> | undefined;
+  /** Whether the best unarmored base leaves Dexterity out. */
+  unarmoredBaseFixed: boolean;
   mediumDexterityCap: number | undefined;
 };
 
@@ -51,6 +53,15 @@ function unarmoredTerm(
   return unlessShield && stance.shield ? undefined : valueTerm(stance, ref, value);
 }
 
+/** What an unarmored base adds to the 10, Dexterity included unless it is fixed. */
+const total = (stance: ArmorStance, base: Term<TermReference>, fixed: boolean | undefined) =>
+  base.value + (fixed ? 0 : stance.modifierOf("dex"));
+
+const best = (effects: ArmorClassEffects, stance: ArmorStance) =>
+  effects.unarmoredBase
+    ? total(stance, effects.unarmoredBase, effects.unarmoredBaseFixed)
+    : Number.NEGATIVE_INFINITY;
+
 /**
  * Unarmored bases compete rather than sum, as the rule's "only one at a time" says, and one
  * adding nothing yields none, so a negative modifier never lowers the plain 10.
@@ -60,7 +71,10 @@ function apply(effects: ArmorClassEffects, stance: ArmorStance, { ref, entry }: 
     if (!when || holds[when](stance)) effects.bonus.push(valueTerm(stance, ref, value, 1));
   for (const mechanic of mechanicsOfKind(entry, "unarmoredBase")) {
     const term = unarmoredTerm(stance, ref, mechanic);
-    if (term && term.value > (effects.unarmoredBase?.value ?? 0)) effects.unarmoredBase = term;
+    if (term && term.value > 0 && total(stance, term, mechanic.fixed) > best(effects, stance)) {
+      effects.unarmoredBase = term;
+      effects.unarmoredBaseFixed = mechanic.fixed === true;
+    }
   }
   for (const { cap, minimum } of mechanicsOfKind(entry, "mediumArmorDexterity"))
     if (stance.armor === "medium" && stance.dexterityScore >= minimum)
@@ -74,6 +88,7 @@ export function armorClassEffects(
   const effects: ArmorClassEffects = {
     bonus: [],
     unarmoredBase: undefined,
+    unarmoredBaseFixed: false,
     mediumDexterityCap: undefined,
   };
   for (const held of heldFeatures(definition)) apply(effects, stance, held);

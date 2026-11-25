@@ -50,12 +50,15 @@ const armorClassMechanicSchema = z.strictObject({
 
 /**
  * An unarmored base of 10 plus `value`, a flat number or an ability's modifier, which a shield
- * ends only where `unlessShield` says so.
+ * ends only where `unlessShield` says so. `fixed` leaves Dexterity out of the Armor Class, and
+ * `races` keeps it to those of a shared trait's races that name it, keyed as the entry's.
  */
 const unarmoredBaseMechanicSchema = z.strictObject({
   kind: z.literal("unarmoredBase"),
   value: z.union([z.int().min(1), abilitySchema]),
   unlessShield: z.literal(true).optional(),
+  fixed: z.literal(true).optional(),
+  races: z.array(z.string().min(1)).min(1).optional(),
 });
 
 /** Medium armor admits `cap` of Dexterity, at a Dexterity score of `minimum` or more. */

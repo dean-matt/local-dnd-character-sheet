@@ -760,6 +760,28 @@ describe("deriveCharacter", () => {
     });
   });
 
+  it("sets an unarmored MPMM lizardfolk's Armor Class to 13 plus Dexterity and a tortle's to 17, each plus a shield", () => {
+    const shielded = {
+      ...equipped,
+      inventory: equipped.inventory.filter(
+        (item) => !("name" in item.ref) || item.ref.name !== STUDDED_LEATHER.name,
+      ),
+    };
+    const acOf = (race: string, dex: number, def = shielded) =>
+      deriveCharacter(
+        {
+          ...def,
+          race: { name: race, source: "MPMM" },
+          abilityScores: { ...def.abilityScores, dex },
+        },
+        catalog,
+      ).armorClass.computed;
+    expect(acOf("Lizardfolk", 16)).toBe(13 + 3 + 2);
+    expect(acOf("Tortle", 16)).toBe(17 + 2);
+    expect(acOf("Tortle", 8)).toBe(17 + 2);
+    expect(acOf("Lizardfolk", 8)).toBe(13 - 1 + 2);
+  });
+
   it("falls back to the unarmored base rather than throwing when nothing resolves", () => {
     const unarmored = deriveCharacter(definition, { ...catalog, armor: new Map() });
     expect(unarmored.armorClass.computed).toBe(13);

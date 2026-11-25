@@ -2052,9 +2052,11 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   mpmmTrait("Psychic Resilience", mpmm("Githyanki", "Githzerai")),
   mpmmTrait("Amphibious", [genasi("Water"), ...mpmm("Triton")]),
   mpmmTrait("Hold Breath", mpmm("Lizardfolk", "Tortle")),
-  // One record holds a `(name, source)`, and the lizardfolk's 13 plus Dexterity and the
-  // tortle's flat 17 share one.
-  mpmmTrait("Natural Armor", mpmm("Lizardfolk", "Tortle")),
+  // One record holds a `(name, source)`, so each base names the race it belongs to.
+  mpmmTrait("Natural Armor", mpmm("Lizardfolk", "Tortle"), [
+    { kind: "unarmoredBase", value: 3, races: mpmm("Lizardfolk") },
+    { kind: "unarmoredBase", value: 7, fixed: true, races: mpmm("Tortle") },
+  ]),
   mpmmTrait("Nature's Intuition", mpmm("Lizardfolk", "Tortle")),
   mpmmTrait("Flight", mpmm("Aarakocra", "Fairy")),
   mpmmTrait("Talons", mpmm("Aarakocra")),

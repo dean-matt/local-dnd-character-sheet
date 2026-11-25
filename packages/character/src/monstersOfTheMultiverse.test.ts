@@ -116,11 +116,20 @@ describe("a Monsters of the Multiverse race", () => {
     );
   });
 
-  it("leaves a genasi's subrace traits to its subrace and its shared Natural Armor to the player", () => {
+  it("keeps the lizardfolk's and tortle's Natural Armor to their own races", () => {
+    const base = (race: string) => armorClassEffects(raceOf(race), stance);
+    expect(base("Lizardfolk")).toMatchObject({
+      unarmoredBase: { value: 3 },
+      unarmoredBaseFixed: false,
+    });
+    expect(base("Tortle")).toMatchObject({ unarmoredBase: { value: 7 }, unarmoredBaseFixed: true });
+    expect(base("Aarakocra").unarmoredBase).toBeUndefined();
+  });
+
+  it("leaves a genasi's subrace traits to its subrace", () => {
     const water = held(raceOf("Genasi", 1, "Water"));
     expect(water.get("Call to the Wave")?.mechanics).toEqual([{ kind: "spells" }]);
     expect(water.get("Darkvision")?.narrative).toBe(true);
     expect(water.has("Reach to the Blaze")).toBe(false);
-    expect(held(raceOf("Lizardfolk")).get("Natural Armor")?.narrative).toBe(true);
   });
 });
