@@ -4374,6 +4374,89 @@ const PLAYERS_HANDBOOK_NATURE: FeatureMechanics[] = [
   phbFeature(ranger, ["Hunter", "PHB"], "Uncanny Dodge", 15),
 ];
 
+/**
+ * The classic Fighter and Barbarian features of the Player's Handbook that carried no record. A
+ * feature that works on another creature, grants a reaction, a bonus action attack or a choice
+ * among options, replaces a roll's total, or repeats one the class table counts, is the
+ * narrative mark. Eagle's flight holds only while raging, which a speed mechanic cannot say.
+ */
+const PLAYERS_HANDBOOK_MARTIAL: FeatureMechanics[] = [
+  // Barbarian
+  ...[4, 8, 12, 16, 19].map((level) =>
+    phbClassFeature(barbarian, "Ability Score Improvement", level),
+  ),
+  phbClassFeature(barbarian, "Primal Path", 3),
+  phbClassFeature(barbarian, "Path Feature", 6),
+  ...[10, 14].map((level) => phbClassFeature(barbarian, "Path feature", level)),
+  phbClassFeature(barbarian, "Feral Instinct", 7, [
+    { kind: "roll", roll: "initiative", advantage: true },
+  ]),
+  phbClassFeature(barbarian, "Relentless Rage", 11),
+  phbClassFeature(barbarian, "Persistent Rage", 15),
+  phbClassFeature(barbarian, "Indomitable Might", 18),
+  phbClassFeature(barbarian, "Primal Champion", 20),
+  // Barbarian, Berserker
+  phbFeature(barbarian, ["Berserker", "PHB"], "Path of the Berserker", 3),
+  phbFeature(barbarian, ["Berserker", "PHB"], "Frenzy", 3),
+  phbFeature(barbarian, ["Berserker", "PHB"], "Mindless Rage", 6, [
+    { kind: "defense", conditionImmune: ["charmed", "frightened"], while: "raging" },
+  ]),
+  phbFeature(barbarian, ["Berserker", "PHB"], "Retaliation", 14),
+  // Barbarian, Totem Warrior
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Path of the Totem Warrior", 3),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Wolf", 3),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Aspect of the Beast", 6),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Bear", 6, [
+    {
+      kind: "roll",
+      roll: "check",
+      abilities: ["str"],
+      advantage: true,
+      against: "made to push, pull, lift, or break objects",
+    },
+  ]),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Eagle", 6),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Wolf", 6),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Totemic Attunement", 14),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Bear", 14),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Eagle", 14),
+  phbFeature(barbarian, ["Totem Warrior", "PHB"], "Wolf", 14),
+  // Fighter
+  ...[4, 6, 8, 12, 14, 16, 19].map((level) =>
+    phbClassFeature(fighter, "Ability Score Improvement", level),
+  ),
+  phbClassFeature(fighter, "Fighting Style", 1),
+  phbClassFeature(fighter, "Martial Archetype", 3),
+  ...[7, 10, 15, 18].map((level) => phbClassFeature(fighter, "Martial Archetype feature", level)),
+  phbClassFeature(fighter, "Indomitable (two uses)", 13),
+  phbClassFeature(fighter, "Action Surge (two uses)", 17),
+  phbClassFeature(fighter, "Indomitable (three uses)", 17),
+  // Fighter, Battle Master; the superiority dice come from the class table
+  phbFeature(fighter, ["Battle Master", "PHB"], "Battle Master", 3),
+  phbFeature(fighter, ["Battle Master", "PHB"], "Maneuvers", 3),
+  phbFeature(fighter, ["Battle Master", "PHB"], "Student of War", 3, [
+    { kind: "pick", fields: ["tools"], count: 1, types: ["artisan"] },
+  ]),
+  ...[7, 10, 15].map((level) =>
+    phbFeature(fighter, ["Battle Master", "PHB"], "Additional Maneuvers", level),
+  ),
+  ...[7, 15].map((level) =>
+    phbFeature(fighter, ["Battle Master", "PHB"], "Additional Superiority Die", level),
+  ),
+  phbFeature(fighter, ["Battle Master", "PHB"], "Know Your Enemy", 7),
+  // Fighter, Champion
+  phbFeature(fighter, ["Champion", "PHB"], "Champion", 3),
+  phbFeature(fighter, ["Champion", "PHB"], "Additional Fighting Style", 10),
+  // Fighter, Eldritch Knight
+  phbFeature(fighter, ["Eldritch Knight", "PHB"], "Eldritch Knight", 3),
+  phbFeature(fighter, ["Eldritch Knight", "PHB"], "Spellcasting", 3),
+  phbFeature(fighter, ["Eldritch Knight", "PHB"], "Weapon Bond", 3),
+  phbFeature(fighter, ["Eldritch Knight", "PHB"], "War Magic", 7),
+  phbFeature(fighter, ["Eldritch Knight", "PHB"], "Eldritch Strike", 10),
+  phbFeature(fighter, ["Eldritch Knight", "PHB"], "Arcane Charge", 15),
+  phbFeature(fighter, ["Eldritch Knight", "PHB"], "Improved War Magic", 18),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -6107,6 +6190,7 @@ const RECORDS: FeatureMechanics[] = [
   ...PLAYERS_HANDBOOK_ARCANE,
   ...PLAYERS_HANDBOOK_DIVINE,
   ...PLAYERS_HANDBOOK_NATURE,
+  ...PLAYERS_HANDBOOK_MARTIAL,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
