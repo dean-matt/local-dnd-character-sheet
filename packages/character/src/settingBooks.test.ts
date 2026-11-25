@@ -154,8 +154,29 @@ describe("a setting book race", () => {
     ).toEqual([{ kind: "bonus", target: "hitPointsPerLevel", value: 2 }]);
   });
 
-  it("leaves to the player a trait that differs per lineage or that no term holds", () => {
-    expect(held(raceOf("Reborn", "VRGR")).get("Deathless Nature")?.narrative).toBe(true);
+  it("leaves to the player a trait that no term holds", () => {
     expect(held(raceOf("Loxodon", "GGR")).get("Natural Armor")?.narrative).toBe(true);
+  });
+});
+
+describe("the VRGR lineages", () => {
+  const rollsOf = (race: string) =>
+    (held(raceOf(race, "VRGR")).get("Deathless Nature")?.mechanics ?? []).map((mechanic) =>
+      mechanic.kind === "roll" ? mechanic.roll : mechanic.kind,
+    );
+  const picksOf = (race: string) =>
+    (held(raceOf(race, "VRGR")).get("Ancestral Legacy")?.mechanics ?? []).flatMap((mechanic) =>
+      mechanic.kind === "pick" ? [mechanic.count] : [],
+    );
+
+  it("gives advantage on saves against disease and poison and on death saves to the reborn alone", () => {
+    expect(rollsOf("Reborn")).toEqual(["save", "save", "deathSave"]);
+    expect(rollsOf("Dhampir")).toEqual([]);
+  });
+
+  it("gives the dhampir and the reborn a pick of two skills, and the hexblood only its row's", () => {
+    expect(picksOf("Dhampir")).toEqual([2]);
+    expect(picksOf("Reborn")).toEqual([2]);
+    expect(picksOf("Hexblood")).toEqual([]);
   });
 });

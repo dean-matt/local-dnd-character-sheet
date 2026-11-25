@@ -2474,9 +2474,7 @@ const SHADOW_OF_THE_DRAGON_QUEEN: FeatureMechanics[] = [
  * The College of Spirits, the Undead patron, the lineages and the backgrounds of Van Richten's
  * Guide to Ravenloft. A lineage trait whose effect the row already gives, such as a sense or a
  * climbing speed, is the narrative mark. One record holds a `(name, source)`, so a trait that
- * differs per lineage is the narrative mark: Deathless Nature, whose saves are the reborn's and
- * whose breathing is the dhampir's, and Ancestral Legacy, whose two skills only the hexblood's
- * row gives. A die added to a
+ * differs per lineage is scoped to its lineages. A die added to a
  * check, and hit points equal to the damage a bite or a spirit dealt, have no term.
  */
 const VAN_RICHTENS_GUIDE: FeatureMechanics[] = [
@@ -2507,9 +2505,24 @@ const VAN_RICHTENS_GUIDE: FeatureMechanics[] = [
     { kind: "defense", resist: ["bludgeoning", "piercing", "slashing"], while: "active" },
     { kind: "speed", equalToWalk: ["fly"], while: "active" },
   ]),
-  vrgrTrait("Ancestral Legacy", vrgr("Dhampir", "Hexblood", "Reborn")),
+  // The hexblood's pick is its row's.
+  vrgrTrait("Ancestral Legacy", vrgr("Dhampir", "Hexblood", "Reborn"), [
+    { kind: "pick", fields: ["skills"], count: 2, races: vrgr("Dhampir", "Reborn") },
+  ]),
   vrgrTrait("Darkvision", vrgr("Dhampir", "Hexblood")),
-  vrgrTrait("Deathless Nature", vrgr("Dhampir", "Reborn")),
+  // The dhampir's no need to breathe is left to the player.
+  vrgrTrait("Deathless Nature", vrgr("Dhampir", "Reborn"), [
+    ...["against disease", "against being poisoned"].map(
+      (against): Mechanic => ({
+        kind: "roll",
+        roll: "save",
+        advantage: true,
+        against,
+        races: vrgr("Reborn"),
+      }),
+    ),
+    { kind: "roll", roll: "deathSave", advantage: true, races: vrgr("Reborn") },
+  ]),
   vrgrTrait("Spider Climb", vrgr("Dhampir")),
   vrgrTrait("Vampiric Bite", vrgr("Dhampir"), [
     PROFICIENCY_USES,

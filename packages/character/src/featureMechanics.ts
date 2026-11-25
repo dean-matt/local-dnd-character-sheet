@@ -48,6 +48,9 @@ const armorClassMechanicSchema = z.strictObject({
   while: whileActive,
 });
 
+/** Keeps a mechanic of a trait shared across races to those it names, keyed as the entry's `races`. */
+const sharedRaces = z.array(z.string().min(1)).min(1).optional();
+
 /**
  * An unarmored base of 10 plus `value`, a flat number or an ability's modifier, which a shield
  * ends only where `unlessShield` says so. `fixed` leaves Dexterity out of the Armor Class, and
@@ -58,7 +61,7 @@ const unarmoredBaseMechanicSchema = z.strictObject({
   value: z.union([z.int().min(1), abilitySchema]),
   unlessShield: z.literal(true).optional(),
   fixed: z.literal(true).optional(),
-  races: z.array(z.string().min(1)).min(1).optional(),
+  races: sharedRaces,
 });
 
 /** Medium armor admits `cap` of Dexterity, at a Dexterity score of `minimum` or more. */
@@ -110,6 +113,7 @@ const pickMechanicSchema = z
       .min(1)
       .optional(),
     expertise: z.literal(true).optional(),
+    races: sharedRaces,
   })
   .refine((pick) => !pick.expertise || (pick.fields.length === 1 && pick.fields[0] === "skills"), {
     error: "only a pick of skills can carry expertise",
@@ -183,7 +187,7 @@ const speedMechanicSchema = z
  * `abilities` named, or of every one, and for a check of the `skills` named alone. A bonus is
  * a number, an ability's modifier of at least +1, or the levels in the feature's class, and
  * falls on saves or named skills. `against` says when it holds, and the roll offers it rather
- * than applying it.
+ * than applying it. `races` keeps it to those of a shared trait's races that name it.
  */
 const rollMechanicSchema = z
   .strictObject({
@@ -195,6 +199,7 @@ const rollMechanicSchema = z
     bonus: z.union([z.int().min(1), abilitySchema, z.literal("level")]).optional(),
     against: z.string().min(1).optional(),
     while: whileSchema,
+    races: sharedRaces,
   })
   .refine(({ advantage, bonus }) => (advantage === undefined) !== (bonus === undefined), {
     error: "a roll mechanic gives advantage or a bonus, never both or neither",
