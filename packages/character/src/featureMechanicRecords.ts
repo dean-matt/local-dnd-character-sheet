@@ -4284,6 +4284,96 @@ const PLAYERS_HANDBOOK_DIVINE: FeatureMechanics[] = [
   phbFeature(cleric, ["War", "PHB"], "Avatar of Battle", 17),
 ];
 
+/**
+ * The classic Ranger and Druid features of the Player's Handbook that carried no record. A
+ * feature that works on a companion or another creature, grants a reaction, a choice among
+ * options or a movement rule, or turns on terrain or an enemy type, is the narrative mark.
+ * Wild Shape's uses show 2 at level 20, where Archdruid makes them unlimited. The 2024 Druid
+ * holds the subclass rows at level 3.
+ */
+const PLAYERS_HANDBOOK_NATURE: FeatureMechanics[] = [
+  // Druid
+  ...[4, 8, 12, 16, 19].map((level) => phbClassFeature(druid, "Ability Score Improvement", level)),
+  phbClassFeature(druid, "Druidic", 1),
+  phbClassFeature(druid, "Spellcasting", 1),
+  phbClassFeature(druid, "Druid Circle", 2),
+  ...[6, 10, 14].map((level) => phbClassFeature(druid, "Druid Circle feature", level)),
+  phbClassFeature(druid, "Wild Shape", 2, [{ kind: "uses", count: 2, reset: "short" }]),
+  ...[4, 8].map((level) => phbClassFeature(druid, "Wild Shape Improvement", level)),
+  phbClassFeature(druid, "Beast Spells", 18),
+  phbClassFeature(druid, "Timeless Body", 18),
+  phbClassFeature(druid, "Archdruid", 20),
+  // Druid, Land
+  phbFeature(druid, ["Land", "PHB"], "Circle of the Land", 2),
+  phbFeature(druid24, ["Land", "PHB"], "Circle of the Land", 3),
+  phbFeature(
+    druid,
+    ["Land", "PHB"],
+    "Bonus Cantrip",
+    2,
+    spellPicks({ count: 1, level: 0, from: "Druid" }),
+  ),
+  phbFeature(druid, ["Land", "PHB"], "Nature's Ward", 10, [
+    { kind: "defense", immune: ["poison"], conditionImmune: ["disease"] },
+  ]),
+  // Druid, Moon
+  phbFeature(druid, ["Moon", "PHB"], "Circle of the Moon", 2),
+  phbFeature(druid24, ["Moon", "PHB"], "Circle of the Moon", 3),
+  phbFeature(druid, ["Moon", "PHB"], "Circle Forms", 2),
+  phbFeature(druid, ["Moon", "PHB"], "Primal Strike", 6),
+  phbFeature(druid, ["Moon", "PHB"], "Elemental Wild Shape", 10),
+  // Ranger
+  ...[4, 8, 12, 16, 19].map((level) => phbClassFeature(ranger, "Ability Score Improvement", level)),
+  phbClassFeature(ranger, "Natural Explorer", 1),
+  phbClassFeature(ranger, "Fighting Style", 2),
+  phbClassFeature(ranger, "Spellcasting", 2),
+  phbClassFeature(ranger, "Ranger Archetype", 3),
+  ...[7, 11, 15].map((level) => phbClassFeature(ranger, "Ranger Archetype feature", level)),
+  phbClassFeature(ranger, "Favored Enemy and Natural Explorer improvements", 6, [
+    { kind: "pick", fields: ["languages"], count: 1 },
+  ]),
+  phbClassFeature(ranger, "Natural Explorer improvement", 10),
+  phbClassFeature(ranger, "Favored Enemy improvement", 14, [
+    { kind: "pick", fields: ["languages"], count: 1 },
+  ]),
+  phbClassFeature(ranger, "Feral Senses", 18),
+  phbClassFeature(ranger, "Foe Slayer", 20, [
+    {
+      kind: "attack",
+      weapons: "any",
+      attack: "wis",
+      oncePerTurn: true,
+      option: "against a favored enemy, instead of adding it to the damage roll",
+    },
+    {
+      kind: "extraDamage",
+      dice: "wis",
+      oncePerTurn: true,
+      option: "against a favored enemy, instead of adding it to the attack roll",
+    },
+  ]),
+  // Ranger, Beast Master
+  phbFeature(ranger, ["Beast Master", "PHB"], "Beast Master", 3),
+  phbFeature(ranger, ["Beast Master", "PHB"], "Ranger's Companion", 3),
+  phbFeature(ranger, ["Beast Master", "PHB"], "Exceptional Training", 7),
+  phbFeature(ranger, ["Beast Master", "PHB"], "Bestial Fury", 11),
+  phbFeature(ranger, ["Beast Master", "PHB"], "Share Spells", 15),
+  // Ranger, Hunter
+  phbFeature(ranger, ["Hunter", "PHB"], "Hunter", 3),
+  phbFeature(ranger, ["Hunter", "PHB"], "Hunter's Prey", 3),
+  phbFeature(ranger, ["Hunter", "PHB"], "Giant Killer", 3),
+  phbFeature(ranger, ["Hunter", "PHB"], "Horde Breaker", 3),
+  phbFeature(ranger, ["Hunter", "PHB"], "Defensive Tactics", 7),
+  phbFeature(ranger, ["Hunter", "PHB"], "Escape the Horde", 7),
+  phbFeature(ranger, ["Hunter", "PHB"], "Multiattack", 11),
+  phbFeature(ranger, ["Hunter", "PHB"], "Volley", 11),
+  phbFeature(ranger, ["Hunter", "PHB"], "Whirlwind Attack", 11),
+  phbFeature(ranger, ["Hunter", "PHB"], "Superior Hunter's Defense", 15),
+  phbFeature(ranger, ["Hunter", "PHB"], "Evasion", 15),
+  phbFeature(ranger, ["Hunter", "PHB"], "Stand Against the Tide", 15),
+  phbFeature(ranger, ["Hunter", "PHB"], "Uncanny Dodge", 15),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -6016,6 +6106,7 @@ const RECORDS: FeatureMechanics[] = [
   ...TASHAS_CAULDRON,
   ...PLAYERS_HANDBOOK_ARCANE,
   ...PLAYERS_HANDBOOK_DIVINE,
+  ...PLAYERS_HANDBOOK_NATURE,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
