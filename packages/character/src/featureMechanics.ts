@@ -173,7 +173,7 @@ const SPEED_MODES = z
  * `whileArmored` while no armor is. `alsoOn` gives the same increase to those speeds where the
  * character already has them; `equalToWalk` gives the character those speeds at the final
  * walking speed, after every later bonus, where it has less, and `fly` a flying speed of that
- * many feet where it has less.
+ * many feet where it has less. `races` keeps it to those of a shared trait's races that name it.
  */
 const speedMechanicSchema = z
   .strictObject({
@@ -186,6 +186,7 @@ const speedMechanicSchema = z
     fly: z.int().min(1).optional(),
     label: z.string().min(1).optional(),
     while: whileActive,
+    races: sharedRaces,
   })
   .refine(({ bonus, equalToWalk, fly }) => bonus !== undefined || equalToWalk || fly, {
     error: "a speed mechanic raises a speed",
@@ -450,7 +451,7 @@ const healMechanicSchema = restoreRefinements(
 
 /** Temporary hit points a use of the feature gives. */
 const tempHpMechanicSchema = restoreRefinements(
-  z.strictObject({ kind: z.literal("tempHp"), ...restoreFields }),
+  z.strictObject({ kind: z.literal("tempHp"), ...restoreFields, races: sharedRaces }),
 );
 
 const resetSchema = z.enum(["short", "long", "manual"]);
