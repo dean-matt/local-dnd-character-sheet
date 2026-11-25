@@ -117,6 +117,11 @@ const RACE_RECORDED = new Set(
   ),
 );
 
+/** A feat's or option's record, which a trait of the same `(name, source)` shares, as Lucky is a halfling's trait and a feat. */
+const SHARED_RECORDED = new Set(
+  FEATURE_MECHANICS.flatMap(({ ref, races }) => ("className" in ref || races ? [] : [refKey(ref)])),
+);
+
 function keyOf(row: FeatureRow): string {
   if (row.class_name === undefined || row.class_source === undefined || row.level === undefined)
     return refKey(row);
@@ -207,7 +212,9 @@ function traitUnits(db: Database.Database): Unit[] {
     json: JSON.stringify(entry),
     uses: row.trait_uses && entry.name in JSON.parse(row.trait_uses) ? 1 : null,
     label: `${entry.name} (${row.source}), ${whose}`,
-    recorded: RACE_RECORDED.has(`${entry.name}|${row.source}|${owner}`),
+    recorded:
+      RACE_RECORDED.has(`${entry.name}|${row.source}|${owner}`) ||
+      SHARED_RECORDED.has(`${entry.name}|${row.source}`),
     poolKey: undefined,
   });
   const inherited = (row: TraitRow, entry: Entry & { name: string }) =>

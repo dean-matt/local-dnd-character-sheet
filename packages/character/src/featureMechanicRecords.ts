@@ -924,9 +924,6 @@ const SPELLS_GRANTED: FeatureMechanics[] = [
     "Rush of the Gale Spirits",
     "Sweeping Cinder Strike",
     "Wave of Rolling Earth",
-    "Infernal Legacy",
-    "Drow Magic",
-    "Natural Illusionist",
   ].map((name) => ({ name, source: "PHB" })),
   { name: "Shroud of Shadow", source: "XGE" },
   { name: "Far Scribe", source: "TCE" },
@@ -3431,14 +3428,11 @@ const SWORD_COAST_AND_WILDEMOUNT: FeatureMechanics[] = [
     ...egwDragonborn("Draconblood", "none"),
     ...egwDragonborn("Ravenite", "none"),
   ]),
-  egwTrait(
-    "Breath Weapon",
-    [...egwDragonborn("Draconblood", "only"), ...egwDragonborn("Ravenite", "only")],
-    [
-      { kind: "dc", ability: "con" },
-      { kind: "uses", count: 1, reset: "short" },
-    ],
-  ),
+  // The PHB Breath Weapon's record applies to every lineage of the race, these included.
+  egwTrait("Breath Weapon", [
+    ...egwDragonborn("Draconblood", "only"),
+    ...egwDragonborn("Ravenite", "only"),
+  ]),
   // Its one use is the catalog's.
   egwTrait("Forceful Presence", egwDragonborn("Draconblood", "also"), [
     {
@@ -4114,6 +4108,7 @@ const TASHAS_CAULDRON: FeatureMechanics[] = [
 
 const phbFeature = bookFeature("PHB");
 const phbClassFeature = bookClassFeature("PHB");
+const phbTrait = bookTrait("PHB");
 
 /**
  * The classic Wizard and Warlock features of the Player's Handbook that carried no record. A
@@ -4688,6 +4683,83 @@ const PLAYERS_HANDBOOK_FEATS: FeatureMechanics[] = [
     "Quickened Spell",
     "Subtle Spell",
     "Twinned Spell",
+  ].map((name) => narrative({ name, source: "PHB" })),
+];
+
+const phb = (...owners: string[]) => owners.map((owner) => `${owner}|PHB`);
+const phbSubrace = (race: string, ...subraces: string[]) =>
+  subraces.map((subrace) => `${race}|PHB|${subrace}|PHB`);
+const PHB_DRAGONBORN = [
+  "Dragonborn|PHB",
+  ...DRAGONS.map((color) => `Dragonborn|PHB|Dragonborn (${color})|PHB`),
+];
+
+/**
+ * The races, subraces and backgrounds of the Player's Handbook that carried no record. A trait
+ * whose effect the race row already gives, such as a sense, a skill, a tool, a weapon, an armor,
+ * a resistance, a speed, a language or a feat, is the narrative mark, as is a background feature.
+ * So is an effect no vocabulary term holds: a reroll, double proficiency on a check about
+ * stonework, a die rolled again on a critical hit, moving through a larger creature's space, a
+ * device built in an hour, and a penalty in sunlight. Breath Weapon's damage and area differ by
+ * ancestry and its DC is the same. The halfling's Lucky shares its `(name, source)` with the feat,
+ * whose record the report reads for the trait.
+ */
+const PLAYERS_HANDBOOK_RACES: FeatureMechanics[] = [
+  phbTrait("Darkvision", phb("Dwarf", "Elf", "Gnome", "Half-Elf", "Half-Orc", "Tiefling")),
+  phbTrait("Superior Darkvision", phbSubrace("Elf", "Drow")),
+  phbTrait("Keen Senses", [...phb("Elf"), ...phbSubrace("Elf", "Drow")]),
+  phbTrait("Elf Weapon Training", phbSubrace("Elf", "High", "Wood")),
+  phbTrait("Drow Weapon Training", phbSubrace("Elf", "Drow")),
+  phbTrait("Fleet of Foot", phbSubrace("Elf", "Wood")),
+  phbTrait("Mask of the Wild", phbSubrace("Elf", "Wood")),
+  phbTrait("Trance", phb("Elf")),
+  phbTrait("Sunlight Sensitivity", phbSubrace("Elf", "Drow")),
+  phbTrait("Extra Language", phbSubrace("Elf", "High")),
+  phbTrait("Cantrip", phbSubrace("Elf", "High"), [SPELLS]),
+  phbTrait("Drow Magic", phbSubrace("Elf", "Drow"), [SPELLS]),
+  phbTrait("Dwarven Resilience", phb("Dwarf"), [saveAdvantage("against poison")]),
+  phbTrait("Stout Resilience", phbSubrace("Halfling", "Stout"), [saveAdvantage("against poison")]),
+  phbTrait("Dwarven Combat Training", phb("Dwarf")),
+  phbTrait("Dwarven Armor Training", phbSubrace("Dwarf", "Mountain")),
+  phbTrait("Tool Proficiency", phb("Dwarf")),
+  phbTrait("Stonecunning", phb("Dwarf")),
+  phbTrait("Halfling Nimbleness", phb("Halfling")),
+  phbTrait("Naturally Stealthy", phbSubrace("Halfling", "Lightfoot")),
+  phbTrait("Artificer's Lore", phbSubrace("Gnome", "Rock")),
+  phbTrait("Tinker", phbSubrace("Gnome", "Rock")),
+  phbTrait("Natural Illusionist", phbSubrace("Gnome", "Forest"), [SPELLS]),
+  phbTrait("Speak with Small Beasts", phbSubrace("Gnome", "Forest")),
+  phbTrait("Skill Versatility", phb("Half-Elf")),
+  phbTrait("Menacing", phb("Half-Orc")),
+  phbTrait("Savage Attacks", phb("Half-Orc")),
+  phbTrait("Skills", phbSubrace("Human", "Variant")),
+  phbTrait("Feat", phbSubrace("Human", "Variant")),
+  phbTrait("Draconic Ancestry", phb("Dragonborn")),
+  phbTrait("Damage Resistance", PHB_DRAGONBORN),
+  phbTrait("Breath Weapon", PHB_DRAGONBORN, [
+    { kind: "dc", ability: "con" },
+    { kind: "uses", count: 1, reset: "short" },
+  ]),
+  phbTrait("Hellish Resistance", phb("Tiefling")),
+  phbTrait("Infernal Legacy", phb("Tiefling"), [SPELLS]),
+  ...[
+    "Bad Reputation",
+    "By Popular Demand",
+    "Choose a Feature",
+    "City Secrets",
+    "Criminal Contact",
+    "Discovery",
+    "False Identity",
+    "Guild Membership",
+    "Military Rank",
+    "Position of Privilege",
+    "Researcher",
+    "Retainers",
+    "Rustic Hospitality",
+    "Shelter of the Faithful",
+    "Ship's Passage",
+    "Spy Contact",
+    "Wanderer",
   ].map((name) => narrative({ name, source: "PHB" })),
 ];
 
@@ -6428,6 +6500,7 @@ const RECORDS: FeatureMechanics[] = [
   ...PLAYERS_HANDBOOK_PALADIN_ROGUE,
   ...PLAYERS_HANDBOOK_MONK_SORCERER,
   ...PLAYERS_HANDBOOK_FEATS,
+  ...PLAYERS_HANDBOOK_RACES,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
