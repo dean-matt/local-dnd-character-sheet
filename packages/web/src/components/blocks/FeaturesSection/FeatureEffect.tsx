@@ -9,14 +9,16 @@ import {
 import { Play, X } from "lucide-react";
 import { useAnnouncedStateWrite } from "../../../hooks/useAnnouncedStateWrite.ts";
 import { useCharacterState } from "../../../hooks/useCharacterState.ts";
+import { useFeatureRestore } from "../../../hooks/useFeatureRestore.ts";
 import { featureResource } from "../../../lib/featureResource.ts";
 import { Announcer } from "../../Announcer.tsx";
 import { PoolButton } from "../../PoolButton.tsx";
 
 /**
  * Starts and ends a feature's effect, each one announced state write. A start spends what a
- * Use of the feature spends, and refuses where that is spent out or the armor worn ends the
- * effect; an end restores nothing.
+ * Use of the feature spends and gives what a use restores, and refuses where that is spent out
+ * or the armor worn ends the effect; an end restores nothing. A restore per choice is left to
+ * the spend, which holds the choice.
  */
 export function FeatureEffect({
   character,
@@ -33,6 +35,7 @@ export function FeatureEffect({
 }) {
   const state = useCharacterState(character.id);
   const replace = useAnnouncedStateWrite(character.id);
+  const restore = useFeatureRestore(character.id);
   if (!state.isSuccess) return null;
 
   const { name, source } = startable;
@@ -55,14 +58,19 @@ export function FeatureEffect({
         tooltip={running ? "End" : (blocked ?? "Start")}
         disabled={replace.writing || blocked !== null}
         on={running}
-        onPress={() =>
-          replace.write(
-            running
-              ? effectEnded(stored, name)
-              : effectStarted(resource ? resource.spend(stored) : stored, name),
-            running ? `${name} ended.` : `${name} started.`,
-          )
-        }
+        onPress={async () => {
+          if (running) {
+            await replace.write(effectEnded(stored, name), `${name} ended.`);
+            return;
+          }
+          const restored = restore(
+            { ...derived, featureRestores: derived.featureRestores.filter(({ per }) => !per) },
+            { name, source },
+            resource ? resource.spend(stored) : stored,
+          );
+          const text = [`${name} started.`, ...restored.text.map((part) => `${part}.`)].join(" ");
+          if (await replace.write(effectStarted(restored.state, name), text)) restored.log();
+        }}
       />
       {replace.error && (
         <span role="alert" className="text-error text-row">

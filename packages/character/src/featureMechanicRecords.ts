@@ -1935,7 +1935,11 @@ const EBERRON: FeatureMechanics[] = [
   erlwTrait("Aggressive", [erlwRace("Orc")]),
   erlwTrait("Primal Intuition", [erlwRace("Orc")]),
   // The minimum of 1 temporary hit point is left to the player; its one use is the catalog's.
-  erlwTrait("Shifting", [erlwRace("Shifter")], [{ kind: "tempHp", bonus: ["level", "con"] }]),
+  erlwTrait(
+    "Shifting",
+    [erlwRace("Shifter")],
+    [{ kind: "active" }, { kind: "tempHp", bonus: ["level", "con"] }],
+  ),
   // One record holds a `(name, source)`, and each shifter subrace's benefit while shifted differs.
   erlwTrait("Shifting Feature", SHIFTERS),
   erlwTrait("Natural Athlete", [shifter("Beasthide")]),
@@ -2249,24 +2253,28 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   mpmmTrait("Blessing of the Raven Queen", mpmm("Shadar-Kai"), [PROFICIENCY_USES]),
   mpmmTrait("Necrotic Resistance", mpmm("Shadar-Kai")),
   mpmmTrait("Bestial Instincts", MPMM_SHIFTERS),
-  mpmmTrait("Shifting", mpmm("Shifter"), [PROFICIENCY_USES, SHIFTED]),
+  mpmmTrait("Shifting", mpmm("Shifter"), [PROFICIENCY_USES, { kind: "active" }, SHIFTED]),
   mpmmTrait("Shifting (Beasthide)", mpmm("Shifter; Beasthide"), [
     PROFICIENCY_USES,
-    { ...SHIFTED, dice: "1d6" },
     { kind: "active" },
+    { ...SHIFTED, dice: "1d6" },
     { kind: "armorClass", value: 1, while: "active" },
   ]),
-  mpmmTrait("Shifting (Longtooth)", mpmm("Shifter; Longtooth"), [PROFICIENCY_USES, SHIFTED]),
+  mpmmTrait("Shifting (Longtooth)", mpmm("Shifter; Longtooth"), [
+    PROFICIENCY_USES,
+    { kind: "active" },
+    SHIFTED,
+  ]),
   mpmmTrait("Shifting (Swiftstride)", mpmm("Shifter; Swiftstride"), [
     PROFICIENCY_USES,
-    SHIFTED,
     { kind: "active" },
+    SHIFTED,
     { kind: "speed", bonus: 10, while: "active" },
   ]),
   mpmmTrait("Shifting (Wildhunt)", mpmm("Shifter; Wildhunt"), [
     PROFICIENCY_USES,
-    SHIFTED,
     { kind: "active" },
+    SHIFTED,
     { kind: "roll", roll: "check", abilities: ["wis"], advantage: true, while: "active" },
   ]),
   mpmmTrait("Cat's Claws", mpmm("Tabaxi")),
