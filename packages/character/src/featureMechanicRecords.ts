@@ -4530,6 +4530,62 @@ const PLAYERS_HANDBOOK_PALADIN_ROGUE: FeatureMechanics[] = [
   phbFeature(rogue, ["Thief", "PHB"], "Thief's Reflexes", 17),
 ];
 
+/**
+ * The classic Monk and Sorcerer features of the Player's Handbook that carried no record. Each is
+ * the narrative mark: a reaction, a choice, a spell list, a pool or a cost the class table holds,
+ * an effect on another creature, or a bonus that grows with the level, which a speed mechanic
+ * cannot say, as Unarmored Movement's does. The 2024 Sorcerer holds the two origin rows at level 3.
+ */
+const PLAYERS_HANDBOOK_MONK_SORCERER: FeatureMechanics[] = [
+  // Monk
+  ...[4, 8, 12, 16, 19].map((level) => phbClassFeature(monk, "Ability Score Improvement", level)),
+  phbClassFeature(monk, "Unarmored Movement", 2),
+  phbClassFeature(monk, "Flurry of Blows", 2),
+  phbClassFeature(monk, "Monastic Tradition", 3),
+  ...[6, 11, 17].map((level) => phbClassFeature(monk, "Monastic Tradition feature", level)),
+  phbClassFeature(monk, "Deflect Missiles", 3),
+  phbClassFeature(monk, "Slow Fall", 4),
+  phbClassFeature(monk, "Ki-Empowered Strikes", 6),
+  phbClassFeature(monk, "Evasion", 7),
+  phbClassFeature(monk, "Stillness of Mind", 7),
+  phbClassFeature(monk, "Unarmored Movement improvement", 9),
+  phbClassFeature(monk, "Tongue of the Sun and Moon", 13),
+  phbClassFeature(monk, "Timeless Body", 15),
+  // Monk, Four Elements
+  phbFeature(monk, ["Four Elements", "PHB"], "Way of the Four Elements", 3),
+  phbFeature(monk, ["Four Elements", "PHB"], "Disciple of the Elements", 3),
+  phbFeature(monk, ["Four Elements", "PHB"], "Elemental Disciplines", 3),
+  ...[6, 11, 17].map((level) =>
+    phbFeature(monk, ["Four Elements", "PHB"], "Extra Elemental Discipline", level),
+  ),
+  // Monk, Open Hand
+  phbFeature(monk, ["Open Hand", "PHB"], "Way of the Open Hand", 3),
+  // Monk, Shadow
+  phbFeature(monk, ["Shadow", "PHB"], "Way of Shadow", 3),
+  phbFeature(monk, ["Shadow", "PHB"], "Cloak of Shadows", 11),
+  phbFeature(monk, ["Shadow", "PHB"], "Opportunist", 17),
+  // Sorcerer
+  ...[4, 8, 12, 16, 19].map((level) =>
+    phbClassFeature(sorcerer, "Ability Score Improvement", level),
+  ),
+  phbClassFeature(sorcerer, "Spellcasting", 1),
+  phbClassFeature(sorcerer, "Sorcerous Origin", 1),
+  ...[6, 14, 18].map((level) => phbClassFeature(sorcerer, "Sorcerous Origin feature", level)),
+  phbClassFeature(sorcerer, "Sorcery Points", 2),
+  ...[3, 10, 17].map((level) => phbClassFeature(sorcerer, "Metamagic", level)),
+  // Sorcerer, Draconic
+  phbFeature(sorcerer, ["Draconic", "PHB"], "Dragon Ancestor", 1),
+  phbFeature(sorcerer, ["Draconic", "PHB"], "Draconic Bloodline", 1),
+  phbFeature(sorcerer24, ["Draconic", "PHB"], "Draconic Bloodline", 3),
+  phbFeature(sorcerer, ["Draconic", "PHB"], "Draconic Presence", 18),
+  // Sorcerer, Wild
+  phbFeature(sorcerer, ["Wild", "PHB"], "Wild Magic", 1),
+  phbFeature(sorcerer24, ["Wild", "PHB"], "Wild Magic", 3),
+  phbFeature(sorcerer, ["Wild", "PHB"], "Bend Luck", 6),
+  phbFeature(sorcerer, ["Wild", "PHB"], "Controlled Chaos", 14),
+  phbFeature(sorcerer, ["Wild", "PHB"], "Spell Bombardment", 18),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -6265,6 +6321,7 @@ const RECORDS: FeatureMechanics[] = [
   ...PLAYERS_HANDBOOK_NATURE,
   ...PLAYERS_HANDBOOK_MARTIAL,
   ...PLAYERS_HANDBOOK_PALADIN_ROGUE,
+  ...PLAYERS_HANDBOOK_MONK_SORCERER,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 

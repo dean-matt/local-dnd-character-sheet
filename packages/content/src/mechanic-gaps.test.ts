@@ -175,7 +175,7 @@ describe("mechanicGaps", () => {
   ).run("Counted", "PHB", "classic", surging, 2, "long");
   db.prepare(
     "INSERT INTO class_features (name, source, class_name, class_source, level, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
-  ).run("Flurry of Blows", "PHB", "Monk", "PHB", 2, "classic", surging);
+  ).run("Flurry of Blows", "PHB", "Monk", "PHB", 1, "classic", surging);
   feat.run("Spender", "PHB", "classic", json({ srd: true }, "you can spend 2 ki points to strike"));
   feat.run(
     "Frightening",
@@ -260,7 +260,7 @@ describe("mechanicGaps", () => {
     expect(phb?.spells).toEqual(["Arcane (PHB)", "Gifted (PHB)"]);
     expect(phb?.unclassified).toEqual([
       "Counted (PHB)",
-      "Flurry of Blows (PHB), Monk level 2",
+      "Flurry of Blows (PHB), Monk level 1",
       "Fortunate (PHB)",
       "Strider (PHB)",
       "Stunning Strike (PHB)",

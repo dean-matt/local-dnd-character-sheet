@@ -12,8 +12,8 @@
     "pick": 3,
     "halfProficiency": 0,
     "sense": 7,
-    "defense": 15,
-    "speed": 2,
+    "defense": 13,
+    "speed": 1,
     "roll": 9,
     "attack": 0,
     "extraDamage": 3,
@@ -27,7 +27,7 @@
     "poolCost": 0,
     "triggered": 0,
     "uses": 11,
-    "unclassified": 111
+    "unclassified": 62
   },
   "XPHB": {
     "dc": 0,
