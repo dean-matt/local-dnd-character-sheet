@@ -4457,6 +4457,79 @@ const PLAYERS_HANDBOOK_MARTIAL: FeatureMechanics[] = [
   phbFeature(fighter, ["Eldritch Knight", "PHB"], "Improved War Magic", 18),
 ];
 
+/**
+ * The classic Paladin and Rogue features of the Player's Handbook that carried no record. A
+ * feature that works on another creature, grants a reaction, a choice or a spell list, replaces
+ * a roll, or repeats the class table is the narrative mark. The two auras record the immunity
+ * the paladin holds in them; Aura of Warding resists the damage of spells alone, which a
+ * resistance cannot say, and Avenging Angel's aura works on enemies.
+ */
+const PLAYERS_HANDBOOK_PALADIN_ROGUE: FeatureMechanics[] = [
+  // Paladin
+  ...[4, 8, 12, 16, 19].map((level) =>
+    phbClassFeature(paladin, "Ability Score Improvement", level),
+  ),
+  phbClassFeature(paladin, "Fighting Style", 2),
+  phbClassFeature(paladin, "Spellcasting", 2),
+  phbClassFeature(paladin, "Divine Health", 3, [{ kind: "defense", conditionImmune: ["disease"] }]),
+  phbClassFeature(paladin, "Aura of Courage", 10, [
+    { kind: "defense", conditionImmune: ["frightened"] },
+  ]),
+  phbClassFeature(paladin, "Aura improvements", 18),
+  ...[7, 15, 20].map((level) => phbClassFeature(paladin, "Sacred Oath feature", level)),
+  // Paladin, Ancients
+  phbFeature(paladin, ["Ancients", "PHB"], "Oath of the Ancients", 3),
+  phbFeature(paladin, ["Ancients", "PHB"], "Tenets of the Ancients", 3),
+  phbFeature(paladin, ["Ancients", "PHB"], "Channel Divinity", 3),
+  phbFeature(paladin, ["Ancients", "PHB"], "Aura of Warding", 7),
+  // Paladin, Devotion
+  phbFeature(paladin, ["Devotion", "PHB"], "Oath of Devotion", 3),
+  phbFeature(paladin, ["Devotion", "PHB"], "Tenets of Devotion", 3),
+  phbFeature(paladin, ["Devotion", "PHB"], "Channel Divinity", 3),
+  phbFeature(paladin, ["Devotion", "PHB"], "Aura of Devotion", 7, [
+    { kind: "defense", conditionImmune: ["charmed"] },
+  ]),
+  phbFeature(paladin, ["Devotion", "PHB"], "Purity of Spirit", 15),
+  // Paladin, Vengeance
+  phbFeature(paladin, ["Vengeance", "PHB"], "Oath of Vengeance", 3),
+  phbFeature(paladin, ["Vengeance", "PHB"], "Tenets of Vengeance", 3),
+  phbFeature(paladin, ["Vengeance", "PHB"], "Channel Divinity", 3),
+  phbFeature(paladin, ["Vengeance", "PHB"], "Relentless Avenger", 7),
+  phbFeature(paladin, ["Vengeance", "PHB"], "Soul of Vengeance", 15),
+  phbFeature(paladin, ["Vengeance", "PHB"], "Avenging Angel", 20, [
+    { kind: "active" },
+    { kind: "speed", fly: 60, while: "active" },
+  ]),
+  // Rogue
+  ...[4, 8, 10, 12, 16, 19].map((level) =>
+    phbClassFeature(rogue, "Ability Score Improvement", level),
+  ),
+  phbClassFeature(rogue, "Thieves' Cant", 1),
+  phbClassFeature(rogue, "Roguish Archetype", 3),
+  phbClassFeature(rogue, "Uncanny Dodge", 5),
+  phbClassFeature(rogue, "Evasion", 7),
+  ...[9, 13, 17].map((level) => phbClassFeature(rogue, "Roguish Archetype feature", level)),
+  phbClassFeature(rogue, "Reliable Talent", 11),
+  phbClassFeature(rogue, "Blindsense", 14),
+  phbClassFeature(rogue, "Slippery Mind", 15, [{ kind: "proficiency", savingThrows: ["wis"] }]),
+  phbClassFeature(rogue, "Elusive", 18),
+  phbClassFeature(rogue, "Stroke of Luck", 20),
+  // Rogue, Arcane Trickster
+  phbFeature(rogue, ["Arcane Trickster", "PHB"], "Arcane Trickster", 3),
+  phbFeature(rogue, ["Arcane Trickster", "PHB"], "Spellcasting", 3),
+  phbFeature(rogue, ["Arcane Trickster", "PHB"], "Mage Hand Legerdemain", 3),
+  phbFeature(rogue, ["Arcane Trickster", "PHB"], "Magical Ambush", 9),
+  // Rogue, Assassin
+  phbFeature(rogue, ["Assassin", "PHB"], "Assassin", 3),
+  phbFeature(rogue, ["Assassin", "PHB"], "Infiltration Expertise", 9),
+  phbFeature(rogue, ["Assassin", "PHB"], "Impostor", 13),
+  // Rogue, Thief
+  phbFeature(rogue, ["Thief", "PHB"], "Thief", 3),
+  phbFeature(rogue, ["Thief", "PHB"], "Second-Story Work", 3),
+  phbFeature(rogue, ["Thief", "PHB"], "Use Magic Device", 13),
+  phbFeature(rogue, ["Thief", "PHB"], "Thief's Reflexes", 17),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -6191,6 +6264,7 @@ const RECORDS: FeatureMechanics[] = [
   ...PLAYERS_HANDBOOK_DIVINE,
   ...PLAYERS_HANDBOOK_NATURE,
   ...PLAYERS_HANDBOOK_MARTIAL,
+  ...PLAYERS_HANDBOOK_PALADIN_ROGUE,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
