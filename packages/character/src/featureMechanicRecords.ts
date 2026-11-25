@@ -3870,7 +3870,10 @@ const TASHAS_CAULDRON: FeatureMechanics[] = [
       [zeal, 8],
       [arcana, 8],
     ] as const
-  ).map(([domain, level]) => tceFeature(cleric, domain, "Blessed Strikes", level, BLESSED_STRIKES)),
+  ).map(([domain, level]) => ({
+    ...tceFeature(cleric, domain, "Blessed Strikes", level, BLESSED_STRIKES),
+    houseRule: "optionalClassFeatures" as const,
+  })),
   tceFeature(fighter, ["Battle Master", "PHB"], "Maneuver Options", 3),
   // Subclasses
   ...(
@@ -4027,6 +4030,7 @@ const TASHAS_CAULDRON: FeatureMechanics[] = [
       count: 1,
       from: ["deception", "performance", "persuasion"],
     },
+    // A bonus falls on named skills only, so a Charisma check outside these four goes without.
     {
       kind: "roll",
       roll: "check",
