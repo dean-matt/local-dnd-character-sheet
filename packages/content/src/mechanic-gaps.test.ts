@@ -339,6 +339,26 @@ describe("race, subrace and background traits", () => {
     }),
     '{"Grovel":{"uses":1,"reset":"long"}}',
   );
+  race.run(
+    "Halfling",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [trait("Lucky", "You reroll a die that shows a 1")] }),
+    null,
+  );
+  race.run(
+    "Orc",
+    "PHB",
+    "classic",
+    JSON.stringify({ entries: [trait("Archery", "You reroll a die that shows a 1")] }),
+    null,
+  );
+  db.prepare("INSERT INTO feats (name, source, edition, json) VALUES (?, ?, ?, ?)").run(
+    "Lucky",
+    "PHB",
+    "classic",
+    "{}",
+  );
   race.run("Elf", "XPHB", "one", JSON.stringify({ entries: [darkvision] }), null);
   const subrace = db.prepare(
     "INSERT INTO subraces (name, full_name, source, race_name, race_source, edition, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -375,11 +395,7 @@ describe("race, subrace and background traits", () => {
 
   it("counts each trait of a race on its own, leaving out what only describes it", () => {
     const gaps = mechanicGaps(db);
-    expect(gaps.PHB?.sense).toEqual([
-      "Darkvision (PHB), Dwarf",
-      "Shelter (PHB), Acolyte",
-      "Sturdy (PHB), Dwarf (Mountain)",
-    ]);
+    expect(gaps.PHB?.sense).toEqual(["Shelter (PHB), Acolyte", "Sturdy (PHB), Dwarf (Mountain)"]);
     expect(gaps.PHB?.defense).toEqual(["Sturdy (PHB), Dwarf"]);
     expect(gaps.PHB?.unclassified).not.toContain("Languages (PHB), Dwarf");
     expect(gaps.XPHB).toBeUndefined();
@@ -398,7 +414,12 @@ describe("race, subrace and background traits", () => {
     expect(Object.values(gaps.PHB ?? {}).flat()).not.toContain(
       "Dwarven Toughness (PHB), Dwarf (Hill)",
     );
+    expect(Object.values(gaps.PHB ?? {}).flat()).not.toContain("Lucky (PHB), Halfling");
     expect(gaps.MPMM?.uses).toEqual(["Wriggle (MPMM), Kobold"]);
+  });
+
+  it("counts a trait as recorded by a feat only, not by another record of the same key", () => {
+    expect(Object.values(mechanicGaps(db).PHB ?? {}).flat()).toContain("Archery (PHB), Orc");
   });
 });
 
