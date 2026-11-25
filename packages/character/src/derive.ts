@@ -359,7 +359,9 @@ function derivedArmorClass(
       ? worn.category === "medium"
         ? mediumCap
         : DEXTERITY_CAP[worn.category]
-      : "all",
+      : unarmored && effects.unarmoredBaseFixed
+        ? "none"
+        : "all",
     shield:
       shield && !untrainedShield
         ? { value: shield.armorClass, reference: catalogRef(shield.ref) }

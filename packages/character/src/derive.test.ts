@@ -760,6 +760,55 @@ describe("deriveCharacter", () => {
     });
   });
 
+  it("sets an unarmored MPMM lizardfolk's Armor Class to 13 plus Dexterity and a tortle's to 17, each plus a shield", () => {
+    const shielded = {
+      ...equipped,
+      inventory: equipped.inventory.filter(
+        (item) => !("name" in item.ref) || item.ref.name !== STUDDED_LEATHER.name,
+      ),
+    };
+    const acOf = (race: string, dex: number, def = shielded) =>
+      deriveCharacter(
+        {
+          ...def,
+          race: { name: race, source: "MPMM" },
+          abilityScores: { ...def.abilityScores, dex },
+        },
+        catalog,
+      ).armorClass.computed;
+    expect(acOf("Lizardfolk", 16)).toBe(13 + 3 + 2);
+    expect(acOf("Tortle", 16)).toBe(17 + 2);
+    expect(acOf("Tortle", 8)).toBe(17 + 2);
+    expect(acOf("Lizardfolk", 8)).toBe(13 - 1 + 2);
+  });
+
+  it("lets a tortle's fixed base and a Barbarian's Dexterity-adding base compete, the higher winning", () => {
+    const BARBARIAN = { name: "Barbarian", source: "XPHB" };
+    const withBarbarian = {
+      ...catalog,
+      hitDice: new Map([...hitDice, [entryKey(BARBARIAN), 12 as const]]),
+    };
+    const acOf = (dex: number, con: number) =>
+      deriveCharacter(
+        {
+          ...definition,
+          inventory: [],
+          race: { name: "Tortle", source: "MPMM" },
+          levels: [{ class: BARBARIAN }],
+          abilityScores: { ...definition.abilityScores, dex, con },
+        },
+        withBarbarian,
+      ).armorClass;
+    expect(acOf(8, 10).computed).toBe(17);
+    expect(acOf(8, 10).terms).toContainEqual(
+      expect.objectContaining({ label: "Dexterity", value: 0 }),
+    );
+    expect(acOf(16, 20).computed).toBe(10 + 3 + 5);
+    expect(acOf(16, 20).terms).toContainEqual(
+      expect.objectContaining({ label: "Dexterity", value: 3 }),
+    );
+  });
+
   it("falls back to the unarmored base rather than throwing when nothing resolves", () => {
     const unarmored = deriveCharacter(definition, { ...catalog, armor: new Map() });
     expect(unarmored.armorClass.computed).toBe(13);

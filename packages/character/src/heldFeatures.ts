@@ -300,6 +300,17 @@ function pickedFeatures(definition: HoldsFeatures, levels: number): Held[] {
   });
 }
 
+/** `entry` without the mechanics a shared trait scopes to races the character is not. */
+function ownedBy(entry: FeatureMechanics, owners: string[]): FeatureMechanics {
+  const { mechanics } = entry;
+  const mine = mechanics?.filter(
+    (mechanic) =>
+      !("races" in mechanic && mechanic.races) ||
+      mechanic.races.some((owner) => owners.includes(owner)),
+  );
+  return mine?.length === mechanics?.length ? entry : { ...entry, mechanics: mine };
+}
+
 function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
   const race = catalogRef(definition.race);
   if (!race) return [];
@@ -310,7 +321,7 @@ function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
   ).map(({ ref, entry }) => ({
     ref,
     origin: "race" as const,
-    entry,
+    entry: ownedBy(entry, owners),
     levels,
     usesKey: featureUsesKey(["trait", entryKey(definition.race)], ref.name),
   }));
