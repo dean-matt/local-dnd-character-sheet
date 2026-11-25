@@ -1241,6 +1241,13 @@ describe("AbilitiesSection", () => {
       });
       expect(box).not.toBeChecked();
       fireEvent.click(box);
+      const trigger = screen.getByRole("button", {
+        name: "Stealth check dice options, Sentinel's Intuition +1d4 ticked",
+      });
+      expect(trigger).toHaveTextContent("+1d4");
+      fireEvent.keyDown(box, { key: "Escape" });
+      expect(screen.queryByRole("checkbox", { name: /Sentinel's Intuition/ })).toBeNull();
+      expect(trigger).toHaveFocus();
       fireEvent.click(roll);
       await waitFor(() => expect(posts[1]?.notation).toBe("1d20+1d4+7"));
     });

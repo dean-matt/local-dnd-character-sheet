@@ -6,3 +6,7 @@ export const doing = (entry: RollEffectEntry | RollOption) =>
 
 export const optionKey = (entry: RollEffectEntry | RollOption) =>
   `${entry.source}|${doing(entry)}|${entry.condition}`;
+
+/** `terms` with the ticked options' flat terms after them; the same array where there are none. */
+export const withTerms = <T>(terms: T[] | undefined, flat: readonly T[]) =>
+  flat.length === 0 ? terms : terms && [...terms, ...flat];

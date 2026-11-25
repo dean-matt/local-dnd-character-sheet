@@ -3,7 +3,7 @@ import { type ComponentProps, type ReactNode, useContext, useId, useState } from
 import { useCharacterState } from "../hooks/useCharacterState.ts";
 import { useReplaceCharacterState } from "../hooks/useReplaceCharacterState.ts";
 import { parseExtraDie } from "../lib/extraDie.ts";
-import { optionKey } from "../lib/rollOption.ts";
+import { optionKey, withTerms } from "../lib/rollOption.ts";
 import { DiceOptions } from "./DiceOptions.tsx";
 import { ExtraDieInput } from "./ExtraDieInput.tsx";
 import { OptionBox } from "./OptionBox.tsx";
@@ -141,7 +141,7 @@ export function ModeRoll({
       <RollBonusButton
         {...roll}
         bonus={flat.reduce((sum, { value }) => sum + value, roll.bonus)}
-        terms={roll.terms && [...roll.terms, ...flat]}
+        terms={withTerms(roll.terms, flat)}
         rider={`${roll.rider ?? ""}${dice.map(({ dice: each }) => `+${each}`).join("")}`}
         mode={mode}
         extra={extra}

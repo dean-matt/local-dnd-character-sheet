@@ -1,6 +1,6 @@
 import type { RollEffectEntry, RollOption } from "@dnd/character";
 import { Dice4 } from "lucide-react";
-import { optionKey } from "../lib/rollOption.ts";
+import { doing, optionKey } from "../lib/rollOption.ts";
 import { OptionBox } from "./OptionBox.tsx";
 import { Popover } from "./Popover.tsx";
 
@@ -17,13 +17,20 @@ export function DiceOptions({
   label: string;
 }) {
   if (riders.length === 0) return null;
-  const on = riders.some((entry) => ticked.has(optionKey(entry)));
+  const on = riders.filter((entry) => ticked.has(optionKey(entry)));
+  const named = on.map((entry) => `${entry.source} ${doing(entry)}`).join(", ");
   return (
     <Popover
       trigger={
-        <Dice4 aria-hidden="true" size={14} className={on ? "text-accent-text" : "text-muted"} />
+        <span
+          aria-hidden="true"
+          className={`flex h-5 min-w-5 items-center justify-center gap-0.5 text-label ${on.length > 0 ? "text-accent-text" : "text-muted"}`}
+        >
+          <Dice4 size={14} />
+          {on.length > 0 && on.map((entry) => doing(entry)).join(" ")}
+        </span>
       }
-      triggerLabel={label}
+      triggerLabel={on.length > 0 ? `${label}, ${named} ticked` : label}
       label={label}
     >
       <span className="flex flex-col gap-1">
