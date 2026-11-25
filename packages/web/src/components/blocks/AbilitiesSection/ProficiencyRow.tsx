@@ -130,7 +130,7 @@ export function ProficiencyRow({
           <DerivedValue named name={roll} value={modifier} overrideKey={overrideKey} />
         </span>
       </span>
-      <span className="flex shrink-0 justify-center empty:hidden">
+      <span className="flex max-w-full shrink-0 justify-center empty:hidden">
         <ModeRoll
           effects={effects}
           options={options}

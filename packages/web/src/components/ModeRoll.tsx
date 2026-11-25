@@ -33,7 +33,8 @@ const optionKey = (entry: RollEffectEntry | RollOption) =>
  * start, changed by the player, and a die the player names to add or subtract, such as +1d4 for
  * Bless or -1d4 for Bane. An effect with a condition, and each of `options`, is a checkbox the
  * player ticks where the condition holds: a ticked effect joins the net, and a ticked option
- * adds its bonus as a term, or its dice as a rider die. A logged roll unticks them, since a condition holds roll by roll.
+ * adds its bonus as a term, or its dice as a rider die. A logged roll unticks them, since a
+ * condition holds roll by roll.
  * A held Bardic Inspiration die is offered as a checkbox, unticked again when the held die
  * changes. A logged roll that adds it clears it in one state write.
  * The sources of every effect, a conditional one included, are spoken with the control.
@@ -83,7 +84,7 @@ export function ModeRoll({
       `${source}: ${effect}${condition ? ` ${condition}` : ""}`,
   );
   return (
-    <span className="flex items-center gap-0.5">
+    <span className="flex max-w-full flex-wrap items-center gap-x-0.5 gap-y-1">
       <select
         aria-label={`${modeLabel ?? roll.label} mode`}
         aria-describedby={names.length > 0 ? sources : undefined}
