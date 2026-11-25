@@ -3554,8 +3554,11 @@ const LONG_REST_USE: Mechanic = { kind: "uses", count: 1, reset: "long" };
 const UMBRAL_RESISTANCES = DAMAGE_TYPES_BUT_PSYCHIC.filter(
   (type) => type !== "force" && type !== "radiant",
 ).concat("psychic");
-const xgeOptional = (name: string, mechanics?: Mechanic[]): FeatureMechanics =>
-  mechanics ? { ref: { name, source: "XGE" }, mechanics } : narrative({ name, source: "XGE" });
+const bookOptional =
+  (source: string) =>
+  (name: string, mechanics?: Mechanic[]): FeatureMechanics =>
+    mechanics ? { ref: { name, source }, mechanics } : narrative({ name, source });
+const xgeOptional = bookOptional("XGE");
 
 /**
  * The classic subclass features, racial feats and optional features of Xanathar's Guide to
@@ -3787,6 +3790,323 @@ const XANATHARS_GUIDE: FeatureMechanics[] = [
   xgeOptional("Lance of Lethargy"),
   xgeOptional("Maddening Hex"),
   xgeOptional("Relentless Hex"),
+];
+
+const tceFeature = bookFeature("TCE");
+const tceOptional = bookOptional("TCE");
+const tceTrait = bookTrait("TCE");
+const tceClassFeature = (
+  owner: [string, string],
+  name: string,
+  level: number,
+  mechanics?: Mechanic[],
+): FeatureMechanics =>
+  mechanics
+    ? classFeature(owner, [name, "TCE"], level, mechanics)
+    : narrative({ name, source: "TCE", className: owner[0], classSource: owner[1], level });
+const BLESSED_STRIKES: Mechanic[] = [
+  {
+    kind: "extraDamage",
+    dice: "1d8",
+    type: "radiant",
+    oncePerTurn: true,
+    option: "when a creature takes damage from one of your cantrips or weapon attacks",
+  },
+];
+const PSYCHIC_RESISTANCE: Mechanic = { kind: "defense", resist: ["psychic"] };
+
+/**
+ * The classic class features, subclass features, feats, optional features and Custom Lineage
+ * traits of Tasha's Cauldron of Everything. An overview of a subclass, the optional features that
+ * only let a choice be swapped, an effect laid on another creature, a reroll or a roll treated as
+ * a 10, an infused item's benefit and a choice made on each rest are the narrative mark. A
+ * feature whose benefit the sheet applies in part records that part.
+ */
+const TASHAS_CAULDRON: FeatureMechanics[] = [
+  // Artificer
+  tceClassFeature(artificer, "Magical Tinkering", 1),
+  tceClassFeature(artificer, "Optional Rule: Firearm Proficiency", 1),
+  tceClassFeature(artificer, "Spellcasting", 1),
+  tceClassFeature(artificer, "Infuse Item", 2),
+  tceClassFeature(artificer, "Infusions Known", 2),
+  tceClassFeature(artificer, "Artificer Specialist", 3),
+  tceClassFeature(artificer, "The Right Tool for the Job", 3),
+  ...[4, 8, 12, 16, 19].map((level) =>
+    tceClassFeature(artificer, "Ability Score Improvement", level),
+  ),
+  ...[5, 9, 15].map((level) => tceClassFeature(artificer, "Artificer Specialist Feature", level)),
+  tceClassFeature(artificer, "Tool Expertise", 6),
+  tceClassFeature(artificer, "Magic Item Adept", 10),
+  tceClassFeature(artificer, "Magic Item Savant", 14),
+  tceClassFeature(artificer, "Magic Item Master", 18),
+  // Optional class features
+  tceClassFeature(barbarian, "Primal Knowledge", 3),
+  tceClassFeature(barbarian, "Instinctive Pounce", 7),
+  tceClassFeature(bard, "Bardic Versatility", 4),
+  tceClassFeature(cleric, "Cantrip Versatility", 4),
+  tceClassFeature(druid, "Wild Companion", 2),
+  tceClassFeature(druid, "Cantrip Versatility", 4),
+  tceClassFeature(fighter, "Martial Versatility", 4),
+  tceClassFeature(monk, "Dedicated Weapon", 2),
+  tceClassFeature(monk, "Ki-Fueled Attack", 3),
+  tceClassFeature(paladin, "Martial Versatility", 4),
+  tceClassFeature(ranger, "Deft Explorer", 1, [
+    ...expertiseIn(1),
+    { kind: "pick", fields: ["languages"], count: 2 },
+  ]),
+  tceClassFeature(ranger, "Spellcasting Focus", 2),
+  tceClassFeature(ranger, "Martial Versatility", 4),
+  tceClassFeature(sorcerer, "Metamagic Options", 3),
+  tceClassFeature(sorcerer, "Sorcerous Versatility", 4),
+  tceClassFeature(sorcerer, "Magical Guidance", 5),
+  tceClassFeature(warlock, "Eldritch Versatility", 4),
+  tceClassFeature(wizard, "Cantrip Formulas", 3),
+  ...(
+    [
+      [death, 8],
+      [ambition, 8],
+      [solidarity, 8],
+      [strength, 8],
+      [zeal, 8],
+      [arcana, 8],
+    ] as const
+  ).map(([domain, level]) => ({
+    ...tceFeature(cleric, domain, "Blessed Strikes", level, BLESSED_STRIKES),
+    houseRule: "optionalClassFeatures" as const,
+  })),
+  tceFeature(fighter, ["Battle Master", "PHB"], "Maneuver Options", 3),
+  // Subclasses
+  ...(
+    [
+      [artificer, ["Alchemist", "TCE"], "Alchemist", 3],
+      [artificer, ["Armorer", "TCE"], "Armorer", 3],
+      [artificer, ["Armorer", "TCE"], "Arcane Armor", 3],
+      [artificer, ["Armorer", "TCE"], "Armor Model", 3],
+      [artificer, ["Armorer", "TCE"], "Dampening Field", 3],
+      [artificer, ["Armorer", "TCE"], "Powered Steps", 3],
+      [artificer, ["Armorer", "TCE"], "Thunder Gauntlets", 3],
+      [artificer, ["Armorer", "TCE"], "Armor Modifications", 9],
+      [artificer, ["Armorer", "TCE"], "Perfected Armor", 15],
+      [artificer, ["Artillerist", "TCE"], "Artillerist", 3],
+      [artificer, ["Artillerist", "TCE"], "Arcane Firearm", 5],
+      [artificer, ["Artillerist", "TCE"], "Fortified Position", 15],
+      [artificer, ["Battle Smith", "TCE"], "Battle Smith", 3],
+      [barbarian, ["Beast", "TCE"], "Path of the Beast", 3],
+      [barbarian, ["Beast", "TCE"], "Bestial Soul", 6],
+      [barbarian, ["Wild Magic", "TCE"], "Path of Wild Magic", 3],
+      [barbarian, ["Wild Magic", "TCE"], "Unstable Backlash", 10],
+      [barbarian, ["Wild Magic", "TCE"], "Controlled Surge", 14],
+      [bard, ["Creation", "TCE"], "College of Creation", 3],
+      [bard, ["Creation", "TCE"], "Animating Performance", 6],
+      [bard, ["Creation", "TCE"], "Creative Crescendo", 14],
+      [bard, ["Eloquence", "TCE"], "College of Eloquence", 3],
+      [bard, ["Eloquence", "TCE"], "Silver Tongue", 3],
+      [bard, ["Eloquence", "TCE"], "Unsettling Words", 3],
+      [bard, ["Eloquence", "TCE"], "Unfailing Inspiration", 6],
+      [cleric, ["Order", "TCE"], "Voice of Authority", 1],
+      [cleric, ["Order", "TCE"], "Order's Wrath", 17],
+      [cleric24, ["Order", "TCE"], "Order Domain", 3],
+      [cleric24, ["Order", "TCE"], "Channel Divinity: Order's Demand", 3],
+      [cleric, ["Peace", "TCE"], "Protective Bond", 6],
+      [cleric, ["Peace", "TCE"], "Potent Spellcasting", 8],
+      [cleric, ["Peace", "TCE"], "Expansive Bond", 17],
+      [cleric24, ["Peace", "TCE"], "Peace Domain", 3],
+      [cleric, ["Twilight", "TCE"], "Vigilant Blessing", 1],
+      [cleric, ["Twilight", "TCE"], "Twilight Shroud", 17],
+      [cleric24, ["Twilight", "TCE"], "Twilight Domain", 3],
+      [druid, ["Spores", "TCE"], "Circle of Spores", 2],
+      [druid24, ["Spores", "TCE"], "Circle of Spores", 3],
+      [druid, ["Stars", "TCE"], "Circle of Stars", 2],
+      [druid24, ["Stars", "TCE"], "Circle of Stars", 3],
+      [druid, ["Stars", "TCE"], "Starry Form", 2],
+      [druid, ["Stars", "TCE"], "Archer", 2],
+      [druid, ["Stars", "TCE"], "Dragon", 2],
+      [druid, ["Stars", "TCE"], "Twinkling Constellations", 10],
+      [druid, ["Stars", "TCE"], "Full of Stars", 14],
+      [druid, ["Wildfire", "TCE"], "Circle of Wildfire", 2],
+      [druid24, ["Wildfire", "TCE"], "Circle of Wildfire", 3],
+      [fighter, ["Psi Warrior", "TCE"], "Psi Warrior", 3],
+      [fighter, ["Psi Warrior", "TCE"], "Protective Field", 3],
+      [fighter, ["Psi Warrior", "TCE"], "Telekinetic Adept", 7],
+      [fighter, ["Rune Knight", "TCE"], "Rune Knight", 3],
+      ...[7, 10, 15].map(
+        (level) => [fighter, ["Rune Knight", "TCE"], "Additional Rune Known", level] as const,
+      ),
+      [monk, ["Astral Self", "TCE"], "Way of the Astral Self", 3],
+      [monk, ["Astral Self", "TCE"], "Forms of Your Astral Self", 3],
+      [monk, ["Astral Self", "TCE"], "Visage of the Astral Self", 6],
+      [monk, ["Mercy", "TCE"], "Way of Mercy", 3],
+      [monk, ["Mercy", "TCE"], "Physician's Touch", 6],
+      [monk, ["Mercy", "TCE"], "Flurry of Healing and Harm", 11],
+      [paladin, ["Glory", "TCE"], "Oath of Glory", 3],
+      [paladin, ["Glory", "TCE"], "Channel Divinity", 3],
+      [paladin, ["Glory", "TCE"], "Tenets of Glory", 3],
+      [paladin, ["Watchers", "TCE"], "Oath of the Watchers", 3],
+      [paladin, ["Watchers", "TCE"], "Channel Divinity", 3],
+      [paladin, ["Watchers", "TCE"], "Tenets of the Watchers", 3],
+      [paladin, ["Watchers", "TCE"], "Vigilant Rebuke", 15],
+      [ranger, ["Beast Master", "PHB"], "Primal Companion", 3],
+      [ranger, ["Fey Wanderer", "TCE"], "Fey Wanderer", 3],
+      [ranger, ["Swarmkeeper", "TCE"], "Swarmkeeper", 3],
+      [rogue, ["Phantom", "TCE"], "Phantom", 3],
+      [rogue, ["Phantom", "TCE"], "Whispers of the Dead", 3],
+      [rogue, ["Phantom", "TCE"], "Tokens of the Departed", 9],
+      [rogue, ["Phantom", "TCE"], "Death's Friend", 17],
+      [rogue, ["Soulknife", "TCE"], "Soulknife", 3],
+      [rogue, ["Soulknife", "TCE"], "Psi-Bolstered Knack", 3],
+      [rogue, ["Soulknife", "TCE"], "Psychic Whispers", 3],
+      [rogue, ["Soulknife", "TCE"], "Psychic Blades", 3],
+      [rogue, ["Soulknife", "TCE"], "Soul Blades", 9],
+      [rogue, ["Soulknife", "TCE"], "Psychic Teleportation", 9],
+      [sorcerer, ["Aberrant Mind", "TCE"], "Aberrant Mind", 1],
+      [sorcerer24, ["Aberrant Mind", "TCE"], "Aberrant Mind", 3],
+      [sorcerer, ["Aberrant Mind", "TCE"], "Telepathic Speech", 1],
+      [sorcerer, ["Aberrant Mind", "TCE"], "Psionic Sorcery", 6],
+      [sorcerer, ["Aberrant Mind", "TCE"], "Revelation in Flesh", 14],
+      [sorcerer, ["Clockwork Soul", "TCE"], "Clockwork Soul", 1],
+      [sorcerer24, ["Clockwork Soul", "TCE"], "Clockwork Soul", 3],
+      [sorcerer, ["Clockwork Soul", "TCE"], "Bastion of Law", 6],
+      [warlock, ["Fathomless", "TCE"], "Gift of the Sea", 1],
+      [warlock, ["Fathomless", "TCE"], "Guardian Coil", 6],
+      [warlock24, ["Fathomless", "TCE"], "The Fathomless", 3],
+      [warlock, ["Genie", "TCE"], "Genie's Vessel", 1],
+      [warlock24, ["Genie", "TCE"], "The Genie", 3],
+      [wizard, ["Bladesinging", "TCE"], "Bladesinging", 2],
+      [wizard24, ["Bladesinging", "TCE"], "Bladesinging", 3],
+      [wizard, ["Bladesinging", "TCE"], "Bladesinger Styles", 2],
+      [wizard, ["Bladesinging", "TCE"], "Song of Defense", 10],
+      [wizard, ["Scribes", "TCE"], "Order of Scribes", 2],
+      [wizard24, ["Scribes", "TCE"], "Order of Scribes", 3],
+      [wizard, ["Scribes", "TCE"], "Awakened Spellbook", 2],
+      [wizard, ["Scribes", "TCE"], "Wizardly Quill", 2],
+      [wizard, ["Scribes", "TCE"], "Master Scrivener", 10],
+    ] as const
+  ).map(([owner, subclass, name, level]) => tceFeature(owner, [...subclass], name, level)),
+  // Subclass features that carry mechanics
+  tceFeature(bard, ["Creation", "TCE"], "Performance of Creation", 3, [LONG_REST_USE]),
+  tceFeature(bard, ["Eloquence", "TCE"], "Universal Speech", 6, [LONG_REST_USE]),
+  tceFeature(cleric, ["Peace", "TCE"], "Implement of Peace", 1, [
+    { kind: "pick", fields: ["skills"], count: 1, from: ["insight", "performance", "persuasion"] },
+  ]),
+  tceFeature(druid, ["Spores", "TCE"], "Fungal Body", 14, [
+    { kind: "defense", conditionImmune: ["blinded", "deafened", "frightened", "poisoned"] },
+  ]),
+  tceFeature(fighter, ["Psi Warrior", "TCE"], "Telekinetic Movement", 3, [SHORT_REST_USE]),
+  tceFeature(fighter, ["Psi Warrior", "TCE"], "Psi-Powered Leap", 7, [SHORT_REST_USE]),
+  tceFeature(fighter, ["Psi Warrior", "TCE"], "Guarded Mind", 10, [PSYCHIC_RESISTANCE]),
+  tceFeature(fighter, ["Psi Warrior", "TCE"], "Bulwark of Force", 15, [LONG_REST_USE]),
+  tceFeature(paladin, ["Glory", "TCE"], "Peerless Athlete", 3, [
+    { kind: "active" },
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["athletics", "acrobatics"],
+      advantage: true,
+      while: "active",
+    },
+  ]),
+  tceFeature(paladin, ["Glory", "TCE"], "Living Legend", 20, [
+    LONG_REST_USE,
+    { kind: "active" },
+    { kind: "roll", roll: "check", abilities: ["cha"], advantage: true, while: "active" },
+  ]),
+  tceFeature(paladin, ["Watchers", "TCE"], "Watcher's Will", 3, [
+    { kind: "active" },
+    {
+      kind: "roll",
+      roll: "save",
+      abilities: ["int", "wis", "cha"],
+      advantage: true,
+      while: "active",
+    },
+  ]),
+  tceFeature(paladin, ["Watchers", "TCE"], "Aura of the Sentinel", 7, [
+    { kind: "bonus", target: "initiative", value: "proficiency" },
+  ]),
+  tceFeature(ranger, ["Fey Wanderer", "TCE"], "Otherworldly Glamour", 3, [
+    {
+      kind: "pick",
+      fields: ["skills"],
+      count: 1,
+      from: ["deception", "performance", "persuasion"],
+    },
+    // A bonus falls on named skills only, so a Charisma check outside these four goes without.
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["deception", "intimidation", "performance", "persuasion"],
+      bonus: "wis",
+    },
+  ]),
+  tceFeature(rogue, ["Soulknife", "TCE"], "Psychic Veil", 13, [LONG_REST_USE]),
+  tceFeature(sorcerer, ["Aberrant Mind", "TCE"], "Psychic Defenses", 6, [
+    PSYCHIC_RESISTANCE,
+    saveAdvantage(CHARMED_OR_FRIGHTENED),
+  ]),
+  tceFeature(sorcerer, ["Clockwork Soul", "TCE"], "Trance of Order", 14, [LONG_REST_USE]),
+  tceFeature(warlock, ["Fathomless", "TCE"], "Oceanic Soul", 6, [
+    { kind: "defense", resist: ["cold"] },
+  ]),
+  tceFeature(warlock, ["Fathomless", "TCE"], "Fathomless Plunge", 14, [SHORT_REST_USE]),
+  tceFeature(wizard, ["Scribes", "TCE"], "One with the Word", 14, [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["arcana"],
+      advantage: true,
+      against: "while your Awakened Spellbook is on your person",
+    },
+  ]),
+  // Feats
+  tceOptional("Eldritch Adept"),
+  tceOptional("Fighting Initiate"),
+  tceOptional("Gunner", grants({ weapons: ["firearms"] })),
+  tceOptional("Metamagic Adept"),
+  tceOptional("Poisoner", grants({ tools: ["poisoner's kit"] })),
+  tceOptional("Skill Expert", [skillsOf(1), ...expertiseIn(1)]),
+  tceOptional("Slasher"),
+  // Optional features: maneuvers, infusions and metamagic
+  ...[
+    "Ambush",
+    "Bait and Switch",
+    "Commanding Presence",
+    "Grappling Strike",
+    "Interception",
+    "Tactical Assessment",
+    "Armor of Magical Strength",
+    "Arcane Propulsion Armor",
+    "Boots of the Winding Path",
+    "Enhanced Arcane Focus",
+    "Enhanced Defense",
+    "Helm of Awareness",
+    "Mind Sharpener",
+    "Rebuke of the Talisman",
+    "Replicate Magic Item",
+    "Repulsion Shield",
+    "Resistant Armor",
+    "Spell-Refueling Ring",
+    "Seeking Spell",
+    "Transmuted Spell",
+    "Unarmed Fighting",
+  ].map((name) => tceOptional(name)),
+  tceOptional("Eldritch Mind", [saveAdvantage("to maintain your concentration on a spell")]),
+  // Custom Lineage
+  tceTrait("Feat", [
+    "Custom Lineage|TCE",
+    "Custom Lineage; Darkvision|TCE",
+    "Custom Lineage; Skill Proficiency|TCE",
+  ]),
+  tceTrait("Variable Trait", ["Custom Lineage|TCE"]),
+  tceTrait(
+    "Variable Trait; Darkvision",
+    ["Custom Lineage; Darkvision|TCE"],
+    [{ kind: "sense", name: "darkvision", range: 60 }],
+  ),
+  tceTrait(
+    "Variable Trait; Skill Proficiency",
+    ["Custom Lineage; Skill Proficiency|TCE"],
+    [skillsOf(1)],
+  ),
 ];
 
 const RECORDS: FeatureMechanics[] = [
@@ -5518,6 +5838,7 @@ const RECORDS: FeatureMechanics[] = [
   ...VAN_RICHTENS_GUIDE,
   ...SETTING_BOOKS,
   ...XANATHARS_GUIDE,
+  ...TASHAS_CAULDRON,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
