@@ -1522,21 +1522,26 @@ const amonkhetTrait = bookTrait("PSA");
 const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
   ...(
     [
-      [ambition, "Ambition Domain (PSA)"],
-      [knowledge, "Knowledge Domain (PSA)"],
-      [solidarity, "Solidarity Domain (PSA)"],
-      [strength, "Strength Domain (PSA)"],
-      [zeal, "Zeal Domain (PSA)"],
+      [cleric, 1, 2],
+      [cleric24, 3, 3],
     ] as const
-  ).map(([domain, name]) => domainFeature(cleric, domain, name, 1, [SPELLS])),
-  ...[
-    domainFeature(cleric, ambition, "Channel Divinity: Invoke Duplicity", 2, [
+  ).flatMap(([owner, domainLevel, divinityLevel]) => [
+    ...(
+      [
+        [ambition, "Ambition Domain (PSA)"],
+        [knowledge, "Knowledge Domain (PSA)"],
+        [solidarity, "Solidarity Domain (PSA)"],
+        [strength, "Strength Domain (PSA)"],
+        [zeal, "Zeal Domain (PSA)"],
+      ] as const
+    ).map(([domain, name]) => domainFeature(owner, domain, name, domainLevel, [SPELLS])),
+    domainFeature(owner, ambition, "Channel Divinity: Invoke Duplicity", divinityLevel, [
       advantageOn("against a creature within 5 feet of both you and your illusion"),
     ]),
-    domainFeature(cleric, solidarity, "Channel Divinity: Preserve Life", 2, [
+    domainFeature(owner, solidarity, "Channel Divinity: Preserve Life", divinityLevel, [
       { kind: "heal", bonus: ["level"], times: 5, others: true },
     ]),
-    domainFeature(cleric, strength, "Channel Divinity: Feat of Strength", 2, [
+    domainFeature(owner, strength, "Channel Divinity: Feat of Strength", divinityLevel, [
       {
         kind: "attack",
         attack: 10,
@@ -1558,8 +1563,8 @@ const PLANE_SHIFT_AMONKHET: FeatureMechanics[] = [
         against: "using Channel Divinity",
       },
     ]),
-    domainFeature(cleric, zeal, "Channel Divinity: Consuming Fervor", 2),
-  ],
+    domainFeature(owner, zeal, "Channel Divinity: Consuming Fervor", divinityLevel),
+  ]),
   domainFeature(cleric, ambition, "Warding Flare", 1, [
     { kind: "uses", count: "wis", reset: "long" },
   ]),
