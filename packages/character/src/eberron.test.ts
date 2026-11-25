@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { armorClassEffects } from "./armorClassEffects.ts";
 import type { CharacterDefinition } from "./definition.ts";
+import { speedWithFeats } from "./featEffects.ts";
 import { featureRestores } from "./featureRestores.ts";
 import { featureRolls } from "./featureRolls.ts";
 import { featureTurn } from "./featureTurn.ts";
@@ -66,17 +67,67 @@ describe("an Eberron race", () => {
     ]);
   });
 
-  it("gives a shifter temporary hit points of its level plus its Constitution modifier", () => {
-    const shifter = raceOf(["Shifter", "ERLW"], ["Wildhunt", "ERLW"], 5);
-    expect(featureRestores(shifter, sheet)).toContainEqual(
-      expect.objectContaining({ kind: "tempHp", dice: null, bonus: 7 }),
+  describe("a shifter", () => {
+    const SUBRACES = ["Beasthide", "Longtooth", "Swiftstride", "Wildhunt"];
+    const shifter = (subrace: string, shifting: boolean) => ({
+      ...raceOf(["Shifter", "ERLW"], [subrace, "ERLW"], 5),
+      ...(shifting && { started: new Set(["Shifting"]) }),
+    });
+    const stance = {
+      armor: "heavy" as const,
+      shield: false,
+      meleeWeapons: 0,
+      dexterityScore: 10,
+      modifierOf: () => 0,
+    };
+    const benefits = (subrace: string, shifting: boolean) => {
+      const of = shifter(subrace, shifting);
+      return {
+        tempHp: featureRestores(of, sheet)
+          .filter(({ kind }) => kind === "tempHp")
+          .map(({ dice, bonus }) => ({ dice, bonus })),
+        armorClass: armorClassEffects(of, stance).bonus.length,
+        walk: speedWithFeats({ walk: 30 }, of, undefined).speed.walk,
+        wisdomChecks: featureRolls(of, () => 0, false).effects.filter(
+          ({ roll, target }) => roll === "check" && target === "wis",
+        ).length,
+      };
+    };
+    type Benefits = {
+      tempHp: { dice: string | null; bonus: number }[];
+      armorClass: number;
+      walk: number;
+      wisdomChecks: number;
+    };
+    const plain: Benefits = {
+      tempHp: [{ dice: null, bonus: 7 }],
+      armorClass: 0,
+      walk: 30,
+      wisdomChecks: 0,
+    };
+    const shifted: Record<string, Benefits> = {
+      Beasthide: { ...plain, tempHp: [{ dice: "1d6", bonus: 7 }], armorClass: 1 },
+      Longtooth: plain,
+      Swiftstride: { ...plain, walk: 40 },
+      Wildhunt: { ...plain, wisdomChecks: 1 },
+    };
+
+    it.each(SUBRACES)("gives the %s only its own benefit while shifting", (subrace) => {
+      expect(benefits(subrace, true)).toEqual(shifted[subrace]);
+    });
+
+    it.each(SUBRACES)(
+      "gives the %s no benefit beyond the temporary hit points while not shifting",
+      (subrace) => {
+        const { tempHp, ...rest } = benefits(subrace, false);
+        expect(rest).toEqual({ armorClass: 0, walk: 30, wisdomChecks: 0 });
+        expect(tempHp).toHaveLength(1);
+      },
     );
-    const features = held(shifter);
-    expect(features.get("Shifting")?.mechanics).toEqual([
-      { kind: "active" },
-      { kind: "tempHp", bonus: ["level", "con"] },
-    ]);
-    expect(features.get("Shifting Feature")?.narrative).toBe(true);
+
+    it("records Shifting Feature as narrative", () => {
+      expect(held(shifter("Wildhunt", false)).get("Shifting Feature")?.narrative).toBe(true);
+    });
   });
 
   it("offers the bugbear's surprise damage and leaves its darkvision and Stealth to the race row", () => {

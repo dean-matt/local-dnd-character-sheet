@@ -1970,12 +1970,31 @@ const EBERRON: FeatureMechanics[] = [
   erlwTrait("Aggressive", [erlwRace("Orc")]),
   erlwTrait("Primal Intuition", [erlwRace("Orc")]),
   // The minimum of 1 temporary hit point is left to the player; its one use is the catalog's.
+  // One record holds a `(name, source)`, so each subrace's benefit while shifted lives here, not
+  // on the shared Shifting Feature.
   erlwTrait(
     "Shifting",
     [erlwRace("Shifter")],
-    [{ kind: "active" }, { kind: "tempHp", bonus: ["level", "con"] }],
+    [
+      { kind: "active" },
+      {
+        kind: "tempHp",
+        bonus: ["level", "con"],
+        races: ["Longtooth", "Swiftstride", "Wildhunt"].map(shifter),
+      },
+      { kind: "tempHp", dice: "1d6", bonus: ["level", "con"], races: [shifter("Beasthide")] },
+      { kind: "armorClass", value: 1, while: "active", races: [shifter("Beasthide")] },
+      { kind: "speed", bonus: 10, while: "active", races: [shifter("Swiftstride")] },
+      {
+        kind: "roll",
+        roll: "check",
+        abilities: ["wis"],
+        advantage: true,
+        while: "active",
+        races: [shifter("Wildhunt")],
+      },
+    ],
   ),
-  // One record holds a `(name, source)`, and each shifter subrace's benefit while shifted differs.
   erlwTrait("Shifting Feature", SHIFTERS),
   erlwTrait("Natural Athlete", [shifter("Beasthide")]),
   erlwTrait("Fierce", [shifter("Longtooth")]),
