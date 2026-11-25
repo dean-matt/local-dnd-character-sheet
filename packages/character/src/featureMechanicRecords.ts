@@ -2253,20 +2253,30 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   mpmmTrait("Blessing of the Raven Queen", mpmm("Shadar-Kai"), [PROFICIENCY_USES]),
   mpmmTrait("Necrotic Resistance", mpmm("Shadar-Kai")),
   mpmmTrait("Bestial Instincts", MPMM_SHIFTERS),
-  // What each shifter gains while shifted is left to the player.
   mpmmTrait("Shifting", mpmm("Shifter"), [PROFICIENCY_USES, { kind: "active" }, SHIFTED]),
   mpmmTrait("Shifting (Beasthide)", mpmm("Shifter; Beasthide"), [
     PROFICIENCY_USES,
     { kind: "active" },
     { ...SHIFTED, dice: "1d6" },
+    { kind: "armorClass", value: 1, while: "active" },
   ]),
-  ...["Longtooth", "Swiftstride", "Wildhunt"].map((kind) =>
-    mpmmTrait(`Shifting (${kind})`, mpmm(`Shifter; ${kind}`), [
-      PROFICIENCY_USES,
-      { kind: "active" },
-      SHIFTED,
-    ]),
-  ),
+  mpmmTrait("Shifting (Longtooth)", mpmm("Shifter; Longtooth"), [
+    PROFICIENCY_USES,
+    { kind: "active" },
+    SHIFTED,
+  ]),
+  mpmmTrait("Shifting (Swiftstride)", mpmm("Shifter; Swiftstride"), [
+    PROFICIENCY_USES,
+    { kind: "active" },
+    SHIFTED,
+    { kind: "speed", bonus: 10, while: "active" },
+  ]),
+  mpmmTrait("Shifting (Wildhunt)", mpmm("Shifter; Wildhunt"), [
+    PROFICIENCY_USES,
+    { kind: "active" },
+    SHIFTED,
+    { kind: "roll", roll: "check", abilities: ["wis"], advantage: true, while: "active" },
+  ]),
   mpmmTrait("Cat's Claws", mpmm("Tabaxi")),
   mpmmTrait("Cat's Talent", mpmm("Tabaxi")),
   // Moving 0 feet on a turn restores its use.
