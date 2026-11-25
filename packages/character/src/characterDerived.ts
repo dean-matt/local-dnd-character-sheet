@@ -108,14 +108,22 @@ const rollEffectSchema = z.strictObject({
   condition: z.string().min(1).optional(),
 });
 
-/** A bonus a feature gives one roll while `condition` holds, which the roll adds only where the player says it does. */
-const rollOptionSchema = z.strictObject({
-  source: z.string().min(1),
-  value: z.int().min(1),
-  roll: z.enum(["save", "skill"]),
-  target: z.string().min(1).optional(),
-  condition: z.string().min(1),
-});
+/**
+ * A bonus, or `dice` such as `1d4`, a feature gives one roll while `condition` holds, which the
+ * roll adds only where the player says it does.
+ */
+const rollOptionSchema = z
+  .strictObject({
+    source: z.string().min(1),
+    value: z.int().min(1).optional(),
+    dice: z.string().min(1).optional(),
+    roll: z.enum(["save", "skill"]),
+    target: z.string().min(1).optional(),
+    condition: z.string().min(1),
+  })
+  .refine(({ value, dice }) => (value === undefined) !== (dice === undefined), {
+    error: "a roll option gives a value or dice, never both or neither",
+  });
 
 /** Dice an equipped item adds to a damage roll against a target of one alignment, by that alignment's code. */
 const extraDamageSchema = z

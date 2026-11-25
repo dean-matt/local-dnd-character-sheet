@@ -141,15 +141,70 @@ describe("an Eberron race", () => {
 });
 
 describe("a dragonmark", () => {
-  it("records the spells of each mark and leaves its d4 on a check to the player", () => {
+  it("records the spells of each mark", () => {
     const finding = held(raceOf(["Half-Orc", "PHB"], ["Variant; Mark of Finding", "ERLW"]));
     for (const name of ["Finder's Magic", "Spells of the Mark"])
       expect(finding.get(name)?.mechanics).toEqual([{ kind: "spells" }]);
-    expect(finding.get("Hunter's Intuition")?.narrative).toBe(true);
     expect(finding.get("Darkvision")?.narrative).toBe(true);
     const sentinel = held(raceOf(["Human", "PHB"], ["Mark of Sentinel", "ERLW"]));
     expect(sentinel.get("Guardian's Shield")?.mechanics).toEqual([{ kind: "spells" }]);
-    expect(sentinel.get("Sentinel's Intuition")?.narrative).toBe(true);
     expect(sentinel.has("Finder's Magic")).toBe(false);
+  });
+
+  const options = (of: CharacterDefinition) => featureRolls(of, () => 0, false).options;
+  const d4 = (source: string, target: string) =>
+    expect.objectContaining({ source, dice: "1d4", roll: "skill", target });
+  const SKILLS: [string, [string, string], [string, string], string[]][] = [
+    ["Warder's Intuition", ["Dwarf", "PHB"], ["Mark of Warding", "ERLW"], ["investigation"]],
+    ["Cunning Intuition", ["Elf", "PHB"], ["Mark of Shadow", "ERLW"], ["performance", "stealth"]],
+    ["Gifted Scribe", ["Gnome", "PHB"], ["Mark of Scribing", "ERLW"], ["history"]],
+    [
+      "Deductive Intuition",
+      ["Half-Elf", "PHB"],
+      ["Variant; Mark of Detection", "ERLW"],
+      ["investigation", "insight"],
+    ],
+    [
+      "Windwright's Intuition",
+      ["Half-Elf", "PHB"],
+      ["Variant; Mark of Storm", "ERLW"],
+      ["acrobatics"],
+    ],
+    ["Medical Intuition", ["Halfling", "PHB"], ["Mark of Healing", "ERLW"], ["medicine"]],
+    ["Ever Hospitable", ["Halfling", "PHB"], ["Mark of Hospitality", "ERLW"], ["persuasion"]],
+    [
+      "Wild Intuition",
+      ["Human", "PHB"],
+      ["Mark of Handling", "ERLW"],
+      ["animal handling", "nature"],
+    ],
+    ["Artisan's Intuition", ["Human", "PHB"], ["Mark of Making", "ERLW"], ["arcana"]],
+    ["Intuitive Motion", ["Human", "PHB"], ["Mark of Passage", "ERLW"], ["acrobatics"]],
+    [
+      "Sentinel's Intuition",
+      ["Human", "PHB"],
+      ["Mark of Sentinel", "ERLW"],
+      ["insight", "perception"],
+    ],
+    [
+      "Hunter's Intuition",
+      ["Human", "PHB"],
+      ["Variant; Mark of Finding", "ERLW"],
+      ["perception", "survival"],
+    ],
+  ];
+
+  it.each(SKILLS)(
+    "offers the %s d4 on each skill it names and no other",
+    (name, race, mark, skills) => {
+      const offered = options(raceOf(race, mark));
+      expect(offered).toHaveLength(skills.length);
+      for (const skill of skills) expect(offered).toContainEqual(d4(name, skill));
+      expect(offered.every(({ source }) => source === name)).toBe(true);
+    },
+  );
+
+  it("offers no d4 to a character with no dragonmark", () => {
+    expect(options(raceOf(["Human", "PHB"]))).toEqual([]);
   });
 });

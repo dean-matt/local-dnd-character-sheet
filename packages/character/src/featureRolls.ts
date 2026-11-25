@@ -41,6 +41,14 @@ const bonusValue = (
   return typeof bonus === "number" ? bonus : Math.max(1, modifier(bonus));
 };
 
+/** Adds the die a mechanic gives, as an option on each skill it names. */
+function addDice(into: FeatureRolls, source: string, dice: string, mechanic: RollMechanic) {
+  const { against: condition } = mechanic;
+  if (condition === undefined) return;
+  for (const { target } of targetsOf(mechanic))
+    into.options.push({ source, dice, roll: "skill", ...(target && { target }), condition });
+}
+
 /** Adds what one mechanic of the held feature `held` gives to `into`. */
 function addMechanic(
   into: FeatureRolls,
@@ -50,6 +58,7 @@ function addMechanic(
 ) {
   const condition = mechanic.against && { condition: mechanic.against };
   const { bonus } = mechanic;
+  if (mechanic.dice !== undefined) return addDice(into, ref.name, mechanic.dice, mechanic);
   for (const { roll, target } of targetsOf(mechanic)) {
     const on = { roll, ...(target && { target }) };
     if (bonus === undefined) {

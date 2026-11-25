@@ -23,7 +23,7 @@ function offered(effects: readonly RollEffectEntry[]): Mode {
 
 /** What a conditional entry does to the roll, as its checkbox reads. */
 const doing = (entry: RollEffectEntry | RollOption) =>
-  "mode" in entry ? (entry.mode === "advantage" ? "Adv" : "Dis") : `+${entry.value}`;
+  "mode" in entry ? (entry.mode === "advantage" ? "Adv" : "Dis") : `+${entry.dice ?? entry.value}`;
 
 const optionKey = (entry: RollEffectEntry | RollOption) =>
   `${entry.source}|${doing(entry)}|${entry.condition}`;
@@ -33,7 +33,7 @@ const optionKey = (entry: RollEffectEntry | RollOption) =>
  * start, changed by the player, and a die the player names to add or subtract, such as +1d4 for
  * Bless or -1d4 for Bane. An effect with a condition, and each of `options`, is a checkbox the
  * player ticks where the condition holds: a ticked effect joins the net, and a ticked option
- * adds its bonus as a term. A logged roll unticks them, since a condition holds roll by roll.
+ * adds its bonus as a term, or its dice as a rider die. A logged roll unticks them, since a condition holds roll by roll.
  * A held Bardic Inspiration die is offered as a checkbox, unticked again when the held die
  * changes. A logged roll that adds it clears it in one state write.
  * The sources of every effect, a conditional one included, are spoken with the control.
@@ -61,6 +61,10 @@ export function ModeRoll({
     entry.condition === undefined || ticked.has(optionKey(entry));
   const start = offered(effects.filter(holds));
   const added = options.filter(holds);
+  const flat = added.flatMap(({ source, value }) =>
+    value === undefined ? [] : [{ source, value }],
+  );
+  const dice = added.filter((option) => option.dice !== undefined);
   const [extra, setExtra] = useState("");
   const held = useCharacterState(characterId ?? "").data?.state.bardicInspiration ?? null;
   const replace = useReplaceCharacterState(characterId ?? "");
@@ -140,15 +144,13 @@ export function ModeRoll({
       })}
       <RollBonusButton
         {...roll}
-        bonus={added.reduce((sum, { value }) => sum + value, roll.bonus)}
+        bonus={flat.reduce((sum, { value }) => sum + value, roll.bonus)}
         terms={
-          added.length === 0
+          flat.length === 0
             ? roll.terms
-            : roll.terms && [
-                ...roll.terms,
-                ...added.map(({ source, value }) => ({ source, value })),
-              ]
+            : roll.terms && [...roll.terms, ...flat.map(({ source, value }) => ({ source, value }))]
         }
+        rider={`${roll.rider ?? ""}${dice.map(({ dice: each }) => `+${each}`).join("")}`}
         mode={mode}
         extra={extra}
         inspiration={inspiration}

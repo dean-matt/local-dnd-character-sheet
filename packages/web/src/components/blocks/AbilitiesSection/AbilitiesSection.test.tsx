@@ -1209,6 +1209,37 @@ describe("AbilitiesSection", () => {
       expect(posts[0]?.terms).toContainEqual({ source: "Hide in Plain Sight", value: 10 });
     });
 
+    it("rolls a ticked option's die with the d20 and leaves it off unticked", async () => {
+      const record = warlock();
+      const derived = derivedFor(record);
+      const { posts } = renderRolling(201, record, {
+        ...derived,
+        rollOptions: {
+          computed: [
+            {
+              source: "Sentinel's Intuition",
+              dice: "1d4",
+              roll: "skill",
+              target: "stealth",
+              condition: "roll a d4 and add it to the check",
+            },
+          ],
+          manual: null,
+          terms: [],
+        },
+      });
+      const roll = screen.getByRole("button", { name: "Roll Stealth check" });
+      fireEvent.click(roll);
+      await waitFor(() => expect(posts[0]?.notation).toBe("1d20+7"));
+      fireEvent.click(
+        screen.getByRole("checkbox", {
+          name: "Sentinel's Intuition: +1d4 roll a d4 and add it to the check",
+        }),
+      );
+      fireEvent.click(roll);
+      await waitFor(() => expect(posts[1]?.notation).toBe("1d20+1d4+7"));
+    });
+
     it("rolls with an override in place of the computed bonus", async () => {
       const record = warlock();
       const derived = derivedFor(record);
