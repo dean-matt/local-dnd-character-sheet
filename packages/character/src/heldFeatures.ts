@@ -111,6 +111,7 @@ export const SUBCLASS_NAMES = new Map([
   ["Glamour|XGE", "College of Glamour|XGE"],
   ["Moon|PHB", "Circle of the Moon|PHB"],
   ["Redemption|XGE", "Oath of Redemption|XGE"],
+  ["War|XGE", "War Magic|XGE"],
   ["Shepherd|XGE", "Circle of the Shepherd|XGE"],
   ["Stars|TCE", "Circle of Stars|TCE"],
   ["Storm Herald|XGE", "Path of the Storm Herald|XGE"],
