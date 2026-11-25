@@ -3548,6 +3548,247 @@ const SWORD_COAST_AND_WILDEMOUNT: FeatureMechanics[] = [
   ...["Adept Linguist", "Historical Knowledge"].map((name) => narrative({ name, source: "ToA" })),
 ];
 
+const xgeFeature = bookFeature("XGE");
+const SHORT_REST_USE: Mechanic = { kind: "uses", count: 1, reset: "short" };
+const LONG_REST_USE: Mechanic = { kind: "uses", count: 1, reset: "long" };
+const UMBRAL_RESISTANCES = DAMAGE_TYPES_BUT_PSYCHIC.filter(
+  (type) => type !== "force" && type !== "radiant",
+).concat("psychic");
+const xgeOptional = (name: string, mechanics?: Mechanic[]): FeatureMechanics =>
+  mechanics ? { ref: { name, source: "XGE" }, mechanics } : narrative({ name, source: "XGE" });
+
+/**
+ * The classic subclass features, racial feats and optional features of Xanathar's Guide to
+ * Everything. A subclass's opening entry, which only describes it, is the narrative mark. So is
+ * an effect no vocabulary term holds: a reaction that changes one roll, an effect laid on another
+ * creature, an ability modifier added to initiative or to a spell's damage, a language, an
+ * effect that holds only on the turn it is made or only while concentrating, and a choice made
+ * on each use. A feature whose benefit the sheet applies in part records that part.
+ */
+const XANATHARS_GUIDE: FeatureMechanics[] = [
+  ...(
+    [
+      [barbarian, ["Ancestral Guardian", "Path of the Ancestral Guardian"], 3],
+      [barbarian, ["Storm Herald", "Path of the Storm Herald"], 3],
+      [barbarian, ["Zealot", "Path of the Zealot"], 3],
+      [bard, ["Glamour", "College of Glamour"], 3],
+      [bard, ["Swords", "College of Swords"], 3],
+      [bard, ["Whispers", "College of Whispers"], 3],
+      [cleric24, ["Forge", "Forge Domain"], 3],
+      [cleric24, ["Grave", "Grave Domain"], 3],
+      [druid, ["Dreams", "Circle of Dreams"], 2],
+      [druid24, ["Dreams", "Circle of Dreams"], 3],
+      [druid, ["Shepherd", "Circle of the Shepherd"], 2],
+      [druid24, ["Shepherd", "Circle of the Shepherd"], 3],
+      [fighter, ["Arcane Archer", "Arcane Archer"], 3],
+      [fighter, ["Cavalier", "Cavalier"], 3],
+      [fighter, ["Samurai", "Samurai"], 3],
+      [monk, ["Drunken Master", "Way of the Drunken Master"], 3],
+      [monk, ["Kensei", "Way of the Kensei"], 3],
+      [monk, ["Sun Soul", "Way of the Sun Soul"], 3],
+      [paladin, ["Conquest", "Oath of Conquest"], 3],
+      [paladin, ["Redemption", "Oath of Redemption"], 3],
+      [ranger, ["Gloom Stalker", "Gloom Stalker"], 3],
+      [ranger, ["Horizon Walker", "Horizon Walker"], 3],
+      [ranger, ["Monster Slayer", "Monster Slayer"], 3],
+      [rogue, ["Inquisitive", "Inquisitive"], 3],
+      [rogue, ["Mastermind", "Mastermind"], 3],
+      [rogue, ["Scout", "Scout"], 3],
+      [rogue, ["Swashbuckler", "Swashbuckler"], 3],
+      [sorcerer, ["Divine Soul", "Divine Soul"], 1],
+      [sorcerer24, ["Divine Soul", "Divine Soul"], 3],
+      [sorcerer, ["Shadow", "Shadow Magic"], 1],
+      [sorcerer24, ["Shadow", "Shadow Magic"], 3],
+      [sorcerer, ["Storm", "Storm Sorcery"], 1],
+      [sorcerer24, ["Storm", "Storm Sorcery"], 3],
+      [warlock24, ["Celestial", "The Celestial"], 3],
+      [warlock24, ["Hexblade", "The Hexblade"], 3],
+      [wizard, ["War", "War Magic"], 2],
+      [wizard24, ["War", "War Magic"], 3],
+    ] as const
+  ).map(([owner, [subclass, name], level]) => xgeFeature(owner, [subclass, "XGE"], name, level)),
+  // The oath's own tenets and its Channel Divinity options, which are other features.
+  xgeFeature(paladin, ["Conquest", "XGE"], "Tenets of Conquest", 3),
+  xgeFeature(paladin, ["Redemption", "XGE"], "Tenets of Redemption", 3),
+  xgeFeature(paladin, ["Conquest", "XGE"], "Channel Divinity", 3),
+  xgeFeature(paladin, ["Redemption", "XGE"], "Channel Divinity", 3),
+  xgeFeature(bard, ["Swords", "XGE"], "Fighting Style", 3),
+  xgeFeature(fighter, ["Arcane Archer", "XGE"], "Additional Arcane Shot Option", 7),
+  xgeFeature(fighter, ["Arcane Archer", "XGE"], "Additional Arcane Shot Option", 10),
+  xgeFeature(fighter, ["Arcane Archer", "XGE"], "Additional Arcane Shot Option", 15),
+  xgeFeature(fighter, ["Arcane Archer", "XGE"], "Additional Arcane Shot Option", 18),
+  // Barbarian
+  xgeFeature(barbarian, ["Ancestral Guardian", "XGE"], "Ancestral Protectors", 3),
+  xgeFeature(barbarian, ["Ancestral Guardian", "XGE"], "Spirit Shield", 6),
+  xgeFeature(barbarian, ["Ancestral Guardian", "XGE"], "Vengeful Ancestors", 14),
+  xgeFeature(barbarian, ["Storm Herald", "XGE"], "Storm Soul", 6),
+  xgeFeature(barbarian, ["Storm Herald", "XGE"], "Shielding Storm", 10),
+  xgeFeature(barbarian, ["Storm Herald", "XGE"], "Raging Storm", 14),
+  xgeFeature(barbarian, ["Zealot", "XGE"], "Warrior of the Gods", 3),
+  xgeFeature(barbarian, ["Zealot", "XGE"], "Fanatical Focus", 6),
+  xgeFeature(barbarian, ["Zealot", "XGE"], "Zealous Presence", 10, [LONG_REST_USE]),
+  xgeFeature(barbarian, ["Zealot", "XGE"], "Rage beyond Death", 14),
+  // Cleric
+  xgeFeature(cleric, ["Forge", "XGE"], "Channel Divinity: Artisan's Blessing", 2),
+  xgeFeature(cleric24, ["Forge", "XGE"], "Channel Divinity: Artisan's Blessing", 3),
+  // The resistance to nonmagical weapon damage holds only in heavy armor.
+  xgeFeature(cleric, ["Forge", "XGE"], "Saint of Forge and Fire", 17, [
+    { kind: "defense", immune: ["fire"] },
+  ]),
+  xgeFeature(cleric, ["Grave", "XGE"], "Channel Divinity: Path to the Grave", 2),
+  xgeFeature(cleric24, ["Grave", "XGE"], "Channel Divinity: Path to the Grave", 3),
+  xgeFeature(cleric, ["Grave", "XGE"], "Potent Spellcasting", 8),
+  // Druid
+  xgeFeature(druid, ["Dreams", "XGE"], "Hearth of Moonlight and Shadow", 6),
+  xgeFeature(druid, ["Dreams", "XGE"], "Walker in Dreams", 14, [LONG_REST_USE]),
+  xgeFeature(druid, ["Shepherd", "XGE"], "Speech of the Woods", 2),
+  xgeFeature(druid, ["Shepherd", "XGE"], "Mighty Summoner", 6),
+  xgeFeature(druid, ["Shepherd", "XGE"], "Faithful Summons", 14, [LONG_REST_USE]),
+  // Fighter. Arcane Shot holds the use count Ever-Ready Shot restores.
+  xgeFeature(fighter, ["Arcane Archer", "XGE"], "Curving Shot", 7),
+  xgeFeature(fighter, ["Arcane Archer", "XGE"], "Magic Arrow", 7),
+  xgeFeature(fighter, ["Arcane Archer", "XGE"], "Ever-Ready Shot", 15),
+  xgeFeature(fighter, ["Cavalier", "XGE"], "Born to the Saddle", 3, [
+    saveAdvantage("to avoid falling off your mount"),
+  ]),
+  xgeFeature(fighter, ["Cavalier", "XGE"], "Hold the Line", 10),
+  xgeFeature(fighter, ["Cavalier", "XGE"], "Vigilant Defender", 18),
+  xgeFeature(fighter, ["Samurai", "XGE"], "Rapid Strike", 15),
+  xgeFeature(fighter, ["Samurai", "XGE"], "Strength before Death", 18, [LONG_REST_USE]),
+  // Monk
+  xgeFeature(monk, ["Drunken Master", "XGE"], "Drunken Technique", 3),
+  xgeFeature(monk, ["Drunken Master", "XGE"], "Leap to Your Feet", 6),
+  xgeFeature(monk, ["Drunken Master", "XGE"], "Redirect Attack", 6),
+  xgeFeature(monk, ["Drunken Master", "XGE"], "Tipsy Sway", 6),
+  xgeFeature(monk, ["Drunken Master", "XGE"], "Drunkard's Luck", 11),
+  xgeFeature(monk, ["Drunken Master", "XGE"], "Intoxicated Frenzy", 17),
+  xgeFeature(monk, ["Kensei", "XGE"], "Agile Parry", 3, [
+    { kind: "active" },
+    { kind: "armorClass", value: 2, while: "active" },
+  ]),
+  // The kensei weapons are chosen by type, which no pick holds.
+  xgeFeature(monk, ["Kensei", "XGE"], "Path of the Kensei", 3, [
+    {
+      kind: "pick",
+      fields: ["tools"],
+      count: 1,
+      from: ["calligrapher's supplies", "painter's supplies"],
+    },
+  ]),
+  xgeFeature(monk, ["Kensei", "XGE"], "Unerring Accuracy", 17),
+  xgeFeature(monk, ["Sun Soul", "XGE"], "Radiant Sun Bolt", 3),
+  xgeFeature(monk, ["Sun Soul", "XGE"], "Sun Shield", 17),
+  // Paladin
+  xgeFeature(paladin, ["Conquest", "XGE"], "Aura of Conquest", 7),
+  xgeFeature(paladin, ["Conquest", "XGE"], "Scornful Rebuke", 15),
+  xgeFeature(paladin, ["Redemption", "XGE"], "Emissary of Peace", 3, [
+    { kind: "active" },
+    { kind: "roll", roll: "check", skills: ["persuasion"], bonus: 5, while: "active" },
+  ]),
+  xgeFeature(paladin, ["Redemption", "XGE"], "Aura of the Guardian", 7),
+  xgeFeature(paladin, ["Redemption", "XGE"], "Emissary of Redemption", 20),
+  // Ranger
+  xgeFeature(ranger, ["Gloom Stalker", "XGE"], "Stalker's Flurry", 11),
+  xgeFeature(ranger, ["Gloom Stalker", "XGE"], "Shadowy Dodge", 15),
+  xgeFeature(ranger, ["Horizon Walker", "XGE"], "Detect Portal", 3, [SHORT_REST_USE]),
+  xgeFeature(ranger, ["Horizon Walker", "XGE"], "Ethereal Step", 7, [SHORT_REST_USE]),
+  xgeFeature(ranger, ["Horizon Walker", "XGE"], "Spectral Defense", 15),
+  xgeFeature(ranger, ["Monster Slayer", "XGE"], "Supernatural Defense", 7),
+  xgeFeature(ranger, ["Monster Slayer", "XGE"], "Slayer's Counter", 15),
+  // Rogue
+  xgeFeature(rogue, ["Inquisitive", "XGE"], "Ear for Deceit", 3),
+  xgeFeature(rogue, ["Inquisitive", "XGE"], "Eye for Detail", 3),
+  xgeFeature(rogue, ["Inquisitive", "XGE"], "Insightful Fighting", 3),
+  xgeFeature(rogue, ["Inquisitive", "XGE"], "Steady Eye", 9, [
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["perception", "investigation"],
+      advantage: true,
+      against: "if you move no more than half your speed on the same turn",
+    },
+  ]),
+  xgeFeature(rogue, ["Inquisitive", "XGE"], "Eye for Weakness", 17),
+  xgeFeature(rogue, ["Mastermind", "XGE"], "Insightful Manipulator", 9),
+  xgeFeature(rogue, ["Mastermind", "XGE"], "Misdirection", 13),
+  xgeFeature(rogue, ["Mastermind", "XGE"], "Soul of Deceit", 17),
+  xgeFeature(rogue, ["Scout", "XGE"], "Skirmisher", 3),
+  xgeFeature(rogue, ["Scout", "XGE"], "Sudden Strike", 17),
+  xgeFeature(rogue, ["Swashbuckler", "XGE"], "Fancy Footwork", 3),
+  xgeFeature(rogue, ["Swashbuckler", "XGE"], "Rakish Audacity", 3),
+  xgeFeature(rogue, ["Swashbuckler", "XGE"], "Panache", 9),
+  xgeFeature(rogue, ["Swashbuckler", "XGE"], "Elegant Maneuver", 13),
+  // Sorcerer
+  xgeFeature(sorcerer, ["Divine Soul", "XGE"], "Empowered Healing", 6),
+  xgeFeature(sorcerer, ["Divine Soul", "XGE"], "Otherworldly Wings", 14, [
+    { kind: "active", endsOn: ["incapacitated"] },
+    { kind: "speed", fly: 30, while: "active" },
+  ]),
+  xgeFeature(sorcerer, ["Shadow", "XGE"], "Shadow Walk", 14),
+  xgeFeature(sorcerer, ["Shadow", "XGE"], "Umbral Form", 18, [
+    { kind: "active", endsOn: ["incapacitated"] },
+    { kind: "defense", resist: UMBRAL_RESISTANCES, while: "active" },
+  ]),
+  xgeFeature(sorcerer, ["Storm", "XGE"], "Tempestuous Magic", 1),
+  xgeFeature(sorcerer, ["Storm", "XGE"], "Wind Speaker", 1),
+  xgeFeature(sorcerer, ["Storm", "XGE"], "Storm Guide", 6),
+  xgeFeature(sorcerer, ["Storm", "XGE"], "Wind Soul", 18, [
+    SHORT_REST_USE,
+    { kind: "defense", immune: ["lightning", "thunder"] },
+    { kind: "speed", fly: 60 },
+  ]),
+  // Warlock
+  xgeFeature(warlock, ["Celestial", "XGE"], "Radiant Soul", 6, [
+    { kind: "defense", resist: ["radiant"] },
+  ]),
+  xgeFeature(warlock, ["Hexblade", "XGE"], "Armor of Hexes", 10),
+  xgeFeature(warlock, ["Hexblade", "XGE"], "Master of Hexes", 14),
+  // Wizard
+  xgeFeature(wizard, ["War", "XGE"], "Arcane Deflection", 2),
+  xgeFeature(wizard, ["War", "XGE"], "Tactical Wit", 2),
+  xgeFeature(wizard, ["War", "XGE"], "Power Surge", 6),
+  xgeFeature(wizard, ["War", "XGE"], "Durable Magic", 10),
+  xgeFeature(wizard, ["War", "XGE"], "Deflecting Shroud", 14),
+  // Racial feats
+  xgeOptional("Bountiful Luck"),
+  xgeOptional("Elven Accuracy"),
+  xgeOptional("Fade Away", [SHORT_REST_USE]),
+  xgeOptional("Flames of Phlegethos"),
+  xgeOptional("Infernal Constitution", [
+    { kind: "defense", resist: ["cold", "poison"] },
+    saveAdvantage("against being poisoned"),
+  ]),
+  xgeOptional("Prodigy", [
+    { kind: "pick", fields: ["skills"], count: 1 },
+    { kind: "pick", fields: ["tools"], count: 1 },
+    { kind: "pick", fields: ["languages"], count: 1 },
+    { kind: "pick", fields: ["expertise"], count: 1 },
+  ]),
+  xgeOptional("Squat Nimbleness", [
+    { kind: "speed", bonus: 5 },
+    { kind: "pick", fields: ["skills"], count: 1, from: ["acrobatics", "athletics"] },
+    {
+      kind: "roll",
+      roll: "check",
+      skills: ["athletics", "acrobatics"],
+      advantage: true,
+      against: "to escape from being grappled",
+    },
+  ]),
+  // Eldritch invocations
+  xgeOptional("Aspect of the Moon"),
+  xgeOptional("Cloak of Flies", [
+    SHORT_REST_USE,
+    { kind: "active", endsOn: ["incapacitated"] },
+    { kind: "roll", roll: "check", skills: ["intimidation"], advantage: true, while: "active" },
+  ]),
+  xgeOptional("Ghostly Gaze", [SHORT_REST_USE, { kind: "active" }]),
+  xgeOptional("Grasp of Hadar"),
+  xgeOptional("Lance of Lethargy"),
+  xgeOptional("Maddening Hex"),
+  xgeOptional("Relentless Hex"),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -5276,6 +5517,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SHADOW_OF_THE_DRAGON_QUEEN,
   ...VAN_RICHTENS_GUIDE,
   ...SETTING_BOOKS,
+  ...XANATHARS_GUIDE,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
