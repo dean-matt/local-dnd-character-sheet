@@ -213,7 +213,7 @@ function ownUses(
   return row?.uses && row.uses_reset ? { key, count: row.uses, reset: row.uses_reset } : undefined;
 }
 
-/** The count a race trait records for the spells its race or subrace lists, which upstream omits. */
+/** The count a race trait records for the leveled spells its race or subrace lists, which upstream omits. */
 function raceCasts(grantor: Grantor) {
   if (grantor.kind === "race") return raceSpellCasts(grantor);
   return grantor.kind === "subrace" && grantor.parent
@@ -234,8 +234,8 @@ function grantedUses(dataDir: string, effects: Effects, grantor: Grantor, json: 
   const casts = record.casting === "atWill" ? new Map() : grantedSpellUses(json, grantor.block);
   const own = casts.size === 1 ? ownUses(dataDir, grantor, record.uses) : undefined;
   const traitCasts = raceCasts(grantor);
-  return (spellKey: string, name: string): Uses | undefined => {
-    const cast = casts.get(spellKey) ?? traitCasts;
+  return (spellKey: string, name: string, level: number): Uses | undefined => {
+    const cast = casts.get(spellKey) ?? (level > 0 ? traitCasts : undefined);
     if (!cast) return undefined;
     const key = featureUsesKey(["spell", grantor.kind, grantor.source, grantor.name], name);
     return { ...(own ?? { key, ...cast }), ...(record.casting === "slot" && { slot: true }) };
@@ -262,7 +262,7 @@ function grantedSpells(
       if (!row || found.has(entryKey(row))) continue;
       const spellKey = grantedSpellKey(`${row.name}|${row.source}`);
       const cost = costs.get(spellKey);
-      const uses = usesOf(spellKey, row.name);
+      const uses = usesOf(spellKey, row.name, row.level);
       found.set(entryKey(row), {
         row,
         grantor: label,

@@ -90,6 +90,8 @@ describe("the casts a race trait records for its known spells", () => {
     ["Hexblood", "VRGR", undefined],
     ["Genasi", "EEPC", { name: "Air", source: "EEPC" }],
     ["Genasi", "EEPC", { name: "Earth", source: "EEPC" }],
+    ["Firbolg", "MPMM", undefined],
+    ["Genasi", "MPMM", { name: "Earth", source: "MPMM" }],
   ])("counts one cast a long rest for %s %s %o", (name, source, subrace) => {
     expect(raceSpellCasts({ name, source }, subrace)).toEqual(once);
   });
