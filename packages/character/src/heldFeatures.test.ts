@@ -13,11 +13,11 @@ import { refKey } from "./keys.ts";
 import type { ContentRef } from "./refs.ts";
 import { definition } from "./test/vex.ts";
 
-const raceTraits = FEATURE_MECHANICS.flatMap(({ ref, races }) =>
-  (races ?? []).map((owner) => [ref.name, owner] as const),
+const raceTraits = FEATURE_MECHANICS.flatMap(({ ref, races, level }) =>
+  (races ?? []).map((owner) => [ref.name, owner, level ?? 1] as const),
 );
 
-const heldBy = (owner: string) => {
+const heldBy = (owner: string, level = 1) => {
   const [race, raceSource, subrace, subraceSource] = owner.split("|");
   return heldFeatures({
     ...definition,
@@ -25,15 +25,15 @@ const heldBy = (owner: string) => {
     optionalFeatures: [],
     race: { name: race ?? "", source: raceSource ?? "" },
     subrace: subrace && subraceSource ? { name: subrace, source: subraceSource } : undefined,
-    levels: [{ class: { name: "Fighter", source: "PHB" } }],
+    levels: Array.from({ length: level }, () => ({ class: { name: "Fighter", source: "PHB" } })),
   }).filter(({ origin }) => origin === "race");
 };
 
 describe("a racial trait", () => {
   it("is held, as a race trait, by every race that records it", () => {
     expect(raceTraits.length).toBeGreaterThanOrEqual(5);
-    for (const [name, owner] of raceTraits)
-      expect(heldBy(owner).map(({ ref }) => ref.name)).toContain(name);
+    for (const [name, owner, level] of raceTraits)
+      expect(heldBy(owner, level).map(({ ref }) => ref.name)).toContain(name);
   });
 
   it("is not held by a race that does not record it", () => {

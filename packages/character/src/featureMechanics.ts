@@ -139,18 +139,28 @@ const senseMechanicSchema = z.strictObject({
   raceBonus: z.int().min(1).optional(),
 });
 
-/** Resistances, damage immunities and condition immunities a feature grants, each lowercased as upstream writes it. */
+/**
+ * Resistances, damage immunities and condition immunities a feature grants, each lowercased as
+ * upstream writes it. `raceResistance` grants immunity to the damage type the character picked
+ * for its race's resistance. `races` keeps it to those of a shared trait's races that name it.
+ */
 const defenseMechanicSchema = z
   .strictObject({
     kind: z.literal("defense"),
     resist: names,
     immune: names,
     conditionImmune: names,
+    raceResistance: z.literal(true).optional(),
     while: whileSchema,
+    races: sharedRaces,
   })
-  .refine((grant) => [grant.resist, grant.immune, grant.conditionImmune].some(Boolean), {
-    error: "a defense mechanic grants something",
-  });
+  .refine(
+    (grant) =>
+      [grant.resist, grant.immune, grant.conditionImmune, grant.raceResistance].some(Boolean),
+    {
+      error: "a defense mechanic grants something",
+    },
+  );
 
 const SPEED_MODES = z
   .array(z.enum(["climb", "swim", "fly"]))
@@ -763,6 +773,8 @@ export const featureMechanicsSchema = z
     houseRule: z.literal("optionalClassFeatures").optional(),
     /** The races, keyed `race` or `race|subrace` by the `(name, source)` of each, that give a trait. */
     races: z.array(z.string().min(1)).min(1).optional(),
+    /** The total level a race trait starts at; absent, the trait is held from 1st. */
+    level: z.int().min(2).max(20).optional(),
     mechanics: mechanicListSchema.optional(),
     narrative: z.literal(true).optional(),
   })
@@ -771,6 +783,9 @@ export const featureMechanicsSchema = z
   })
   .refine((entry) => !entry.races || !("className" in entry.ref), {
     error: "only a trait with a `(name, source)` ref belongs to races",
+  })
+  .refine((entry) => !entry.level || entry.races, {
+    error: "only a race trait starts at a level",
   });
 
 export type FeatureMechanics = z.infer<typeof featureMechanicsSchema>;

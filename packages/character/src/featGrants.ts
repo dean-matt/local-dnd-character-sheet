@@ -266,6 +266,9 @@ export function featGrants(
     ...featureTraits(definition),
   ];
   const feats = held.map(featSource);
+  const pick = definition.raceResistance;
+  const racePick =
+    pick !== undefined && catalog.raceDefenses.resistChoice.includes(pick) ? [pick] : [];
   const items = wornSkillSources(definition, catalog);
   const named = (field: "tools" | "languages") =>
     gathered(held, ({ trait, picked }) => [...trait[field], ...picked[field]]);
@@ -292,7 +295,7 @@ export function featGrants(
       ...heldFeatures(definition).flatMap(({ ref, entry }) =>
         mechanicsOfKind(entry, "defense").map((grant) => ({
           resist: grant.resist ?? [],
-          immune: grant.immune ?? [],
+          immune: [...(grant.immune ?? []), ...(grant.raceResistance ? racePick : [])],
           conditionImmune: grant.conditionImmune ?? [],
           vulnerable: [],
           from: ref.name,
