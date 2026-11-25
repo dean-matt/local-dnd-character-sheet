@@ -37,6 +37,9 @@ const activeMechanicSchema = z.strictObject({
 const whileSchema = z.enum(["active", "raging"]).optional();
 const whileActive = z.literal("active").optional();
 
+/** Keeps a mechanic of a trait shared across races to those it names, keyed as the entry's `races`. */
+const sharedRaces = z.array(z.string().min(1)).min(1).optional();
+
 /**
  * Armor class added, a number or an ability's modifier of at least +1, while `when` holds:
  * any armor worn, heavy armor worn, or a melee weapon in each hand; always where absent.
@@ -46,10 +49,8 @@ const armorClassMechanicSchema = z.strictObject({
   value: z.union([z.int().min(1), abilitySchema]),
   when: z.enum(["armor", "heavyArmor", "dualWield"]).optional(),
   while: whileActive,
+  races: sharedRaces,
 });
-
-/** Keeps a mechanic of a trait shared across races to those it names, keyed as the entry's `races`. */
-const sharedRaces = z.array(z.string().min(1)).min(1).optional();
 
 /**
  * An unarmored base of 10 plus `value`, a flat number or an ability's modifier, which a shield

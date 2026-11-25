@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { armorClassEffects } from "./armorClassEffects.ts";
 import type { CharacterDefinition } from "./definition.ts";
 import { featureActionType, featureCost } from "./featureActions.ts";
 import { featureDcs } from "./featureDcs.ts";
@@ -121,5 +122,19 @@ describe("a Dungeon Master's Guide race", () => {
 
   it("leaves an orc's darkvision to the race row", () => {
     expect(held(raceOf(["Orc", "DMG"])).get("Darkvision")?.narrative).toBe(true);
+  });
+
+  it("adds Natural Armor's +3 to a lizardfolk's Armor Class and its +1 to a troglodyte's", () => {
+    const stance = {
+      armor: "none" as const,
+      shield: false,
+      meleeWeapons: 0,
+      dexterityScore: 10,
+      modifierOf: () => 0,
+    };
+    const bonus = (race: string) =>
+      armorClassEffects(raceOf([race, "DMG"]), stance).bonus.map(({ value }) => value);
+    expect(bonus("Lizardfolk")).toEqual([3]);
+    expect(bonus("Troglodyte")).toEqual([1]);
   });
 });

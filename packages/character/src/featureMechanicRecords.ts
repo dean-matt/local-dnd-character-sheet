@@ -1710,8 +1710,14 @@ const DUNGEON_MASTERS_GUIDE: FeatureMechanics[] = [
   dmgTrait("Sunlight Sensitivity", ["Kobold|DMG", "Kuo-Toa|DMG", "Troglodyte|DMG"]),
   dmgTrait("Undead Nature", ["Skeleton|DMG", "Zombie|DMG"]),
   dmgTrait("Stone Camouflage", ["Gnome (Deep)|DMG", "Grimlock|DMG"], [hideIn("rocky terrain")]),
-  // One record holds a `(name, source)`, and the lizardfolk's +3 and the troglodyte's +1 share one.
-  dmgTrait("Natural Armor", ["Lizardfolk|DMG", "Troglodyte|DMG"]),
+  dmgTrait(
+    "Natural Armor",
+    ["Lizardfolk|DMG", "Troglodyte|DMG"],
+    [
+      { kind: "armorClass", value: 3, races: ["Lizardfolk|DMG"] },
+      { kind: "armorClass", value: 1, races: ["Troglodyte|DMG"] },
+    ],
+  ),
   dmgTrait(
     "Dive Attack",
     ["Aarakocra|DMG"],
