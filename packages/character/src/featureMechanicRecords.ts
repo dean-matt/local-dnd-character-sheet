@@ -3795,15 +3795,18 @@ const XANATHARS_GUIDE: FeatureMechanics[] = [
 const tceFeature = bookFeature("TCE");
 const tceOptional = bookOptional("TCE");
 const tceTrait = bookTrait("TCE");
-const tceClassFeature = (
-  owner: [string, string],
-  name: string,
-  level: number,
-  mechanics?: Mechanic[],
-): FeatureMechanics =>
-  mechanics
-    ? classFeature(owner, [name, "TCE"], level, mechanics)
-    : narrative({ name, source: "TCE", className: owner[0], classSource: owner[1], level });
+const bookClassFeature =
+  (source: string) =>
+  (
+    owner: [string, string],
+    name: string,
+    level: number,
+    mechanics?: Mechanic[],
+  ): FeatureMechanics =>
+    mechanics
+      ? classFeature(owner, [name, source], level, mechanics)
+      : narrative({ name, source, className: owner[0], classSource: owner[1], level });
+const tceClassFeature = bookClassFeature("TCE");
 const BLESSED_STRIKES: Mechanic[] = [
   {
     kind: "extraDamage",
@@ -4107,6 +4110,96 @@ const TASHAS_CAULDRON: FeatureMechanics[] = [
     ["Custom Lineage; Skill Proficiency|TCE"],
     [skillsOf(1)],
   ),
+];
+
+const phbFeature = bookFeature("PHB");
+const phbClassFeature = bookClassFeature("PHB");
+
+/**
+ * The classic Wizard and Warlock features of the Player's Handbook that carried no record. A
+ * once-per-rest feature records its use; what a roll or a spell it adds cannot say, such as
+ * Dark One's Own Luck's d10, stays in the rules text. Spell Resistance records its saving throw
+ * advantage only, since its resistance holds against the damage of spells alone. The 2024
+ * classes hold the school and patron rows at level 3.
+ */
+const PLAYERS_HANDBOOK_ARCANE: FeatureMechanics[] = [
+  // Warlock
+  ...[4, 8, 12, 16, 19].map((level) =>
+    phbClassFeature(warlock, "Ability Score Improvement", level),
+  ),
+  phbClassFeature(warlock, "Eldritch Invocations", 2),
+  phbClassFeature(warlock, "Otherworldly Patron", 1),
+  ...[6, 10, 14].map((level) => phbClassFeature(warlock, "Otherworldly Patron feature", level)),
+  phbClassFeature(warlock, "Pact Boon", 3),
+  phbClassFeature(warlock, "Pact Magic", 1),
+  // Wizard
+  ...[4, 8, 12, 16, 19].map((level) => phbClassFeature(wizard, "Ability Score Improvement", level)),
+  phbClassFeature(wizard, "Arcane Tradition", 2),
+  ...[6, 10, 14].map((level) => phbClassFeature(wizard, "Arcane Tradition feature", level)),
+  phbClassFeature(wizard, "Spellcasting", 1),
+  // Wizard, Abjuration
+  phbFeature(wizard, ["Abjuration", "PHB"], "Abjuration Savant", 2),
+  phbFeature(wizard, ["Abjuration", "PHB"], "School of Abjuration", 2),
+  phbFeature(wizard24, ["Abjuration", "PHB"], "School of Abjuration", 3),
+  phbFeature(wizard, ["Abjuration", "PHB"], "Projected Ward", 6),
+  phbFeature(wizard, ["Abjuration", "PHB"], "Improved Abjuration", 10),
+  phbFeature(wizard, ["Abjuration", "PHB"], "Spell Resistance", 14, [saveAdvantage("spells")]),
+  // Warlock, Great Old One
+  phbFeature(warlock, ["Great Old One", "PHB"], "Awakened Mind", 1),
+  phbFeature(warlock24, ["Great Old One", "PHB"], "The Great Old One", 3),
+  phbFeature(warlock, ["Great Old One", "PHB"], "Thought Shield", 10, [PSYCHIC_RESISTANCE]),
+  phbFeature(warlock, ["Great Old One", "PHB"], "Create Thrall", 14),
+  // Wizard, Conjuration
+  phbFeature(wizard, ["Conjuration", "PHB"], "Conjuration Savant", 2),
+  phbFeature(wizard, ["Conjuration", "PHB"], "Minor Conjuration", 2),
+  phbFeature(wizard, ["Conjuration", "PHB"], "School of Conjuration", 2),
+  phbFeature(wizard24, ["Conjuration", "PHB"], "School of Conjuration", 3),
+  phbFeature(wizard, ["Conjuration", "PHB"], "Benign Transposition", 6),
+  phbFeature(wizard, ["Conjuration", "PHB"], "Focused Conjuration", 10),
+  // Warlock, Fiend
+  phbFeature(warlock24, ["Fiend", "PHB"], "The Fiend", 3),
+  phbFeature(warlock, ["Fiend", "PHB"], "Dark One's Own Luck", 6, [SHORT_REST_USE]),
+  phbFeature(warlock, ["Fiend", "PHB"], "Fiendish Resilience", 10),
+  phbFeature(warlock, ["Fiend", "PHB"], "Hurl Through Hell", 14, [LONG_REST_USE]),
+  // Wizard, Divination
+  phbFeature(wizard, ["Divination", "PHB"], "Divination Savant", 2),
+  phbFeature(wizard, ["Divination", "PHB"], "School of Divination", 2),
+  phbFeature(wizard24, ["Divination", "PHB"], "School of Divination", 3),
+  phbFeature(wizard, ["Divination", "PHB"], "Expert Divination", 6),
+  // Wizard, Evocation
+  phbFeature(wizard, ["Evocation", "PHB"], "Evocation Savant", 2),
+  phbFeature(wizard, ["Evocation", "PHB"], "School of Evocation", 2),
+  phbFeature(wizard, ["Evocation", "PHB"], "Sculpt Spells", 2),
+  phbFeature(wizard24, ["Evocation", "PHB"], "School of Evocation", 3),
+  phbFeature(wizard, ["Evocation", "PHB"], "Potent Cantrip", 6),
+  phbFeature(wizard, ["Evocation", "PHB"], "Empowered Evocation", 10),
+  // Wizard, Enchantment
+  phbFeature(wizard, ["Enchantment", "PHB"], "Enchantment Savant", 2),
+  phbFeature(wizard, ["Enchantment", "PHB"], "School of Enchantment", 2),
+  phbFeature(wizard24, ["Enchantment", "PHB"], "School of Enchantment", 3),
+  phbFeature(wizard, ["Enchantment", "PHB"], "Split Enchantment", 10),
+  // Wizard, Illusion
+  phbFeature(wizard, ["Illusion", "PHB"], "Illusion Savant", 2),
+  phbFeature(wizard, ["Illusion", "PHB"], "School of Illusion", 2),
+  phbFeature(wizard24, ["Illusion", "PHB"], "School of Illusion", 3),
+  phbFeature(wizard, ["Illusion", "PHB"], "Malleable Illusions", 6),
+  phbFeature(wizard, ["Illusion", "PHB"], "Illusory Self", 10, [SHORT_REST_USE]),
+  phbFeature(wizard, ["Illusion", "PHB"], "Illusory Reality", 14),
+  // Wizard, Transmutation
+  phbFeature(wizard, ["Transmutation", "PHB"], "Minor Alchemy", 2),
+  phbFeature(wizard, ["Transmutation", "PHB"], "School of Transmutation", 2),
+  phbFeature(wizard, ["Transmutation", "PHB"], "Transmutation Savant", 2),
+  phbFeature(wizard24, ["Transmutation", "PHB"], "School of Transmutation", 3),
+  phbFeature(wizard, ["Transmutation", "PHB"], "Transmuter's Stone", 6),
+  phbFeature(wizard, ["Transmutation", "PHB"], "Shapechanger", 10, [SHORT_REST_USE]),
+  // Warlock, Archfey
+  phbFeature(warlock24, ["Archfey", "PHB"], "The Archfey", 3),
+  phbFeature(warlock, ["Archfey", "PHB"], "Misty Escape", 6, [SHORT_REST_USE]),
+  // Wizard, Necromancy
+  phbFeature(wizard, ["Necromancy", "PHB"], "Necromancy Savant", 2),
+  phbFeature(wizard, ["Necromancy", "PHB"], "School of Necromancy", 2),
+  phbFeature(wizard24, ["Necromancy", "PHB"], "School of Necromancy", 3),
+  phbFeature(wizard, ["Necromancy", "PHB"], "Undead Thralls", 6),
 ];
 
 const RECORDS: FeatureMechanics[] = [
@@ -5839,6 +5932,7 @@ const RECORDS: FeatureMechanics[] = [
   ...SETTING_BOOKS,
   ...XANATHARS_GUIDE,
   ...TASHAS_CAULDRON,
+  ...PLAYERS_HANDBOOK_ARCANE,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
