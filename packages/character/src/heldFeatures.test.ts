@@ -5,6 +5,7 @@ import {
   featurePickOffers,
   featureSpellPickOffers,
   heldFeatures,
+  raceSpellCasts,
   spellGrantRecord,
 } from "./heldFeatures.ts";
 import { refKey } from "./keys.ts";
@@ -78,5 +79,24 @@ describe("a homebrew effect", () => {
     expect(spellGrantRecord(actor, ruling(actor, [{ kind: "spells", casting: "atWill" }]))).toEqual(
       { casting: "atWill" },
     );
+  });
+});
+
+describe("the casts a race trait records for its known spells", () => {
+  const once = { count: 1, reset: "long" };
+
+  it.each([
+    ["Hexblood", "VRGR", undefined],
+    ["Genasi", "EEPC", { name: "Air", source: "EEPC" }],
+    ["Genasi", "EEPC", { name: "Earth", source: "EEPC" }],
+  ])("counts one cast a long rest for %s %s %o", (name, source, subrace) => {
+    expect(raceSpellCasts({ name, source }, subrace)).toEqual(once);
+  });
+
+  it("counts none for a race whose spells upstream counts itself", () => {
+    expect(raceSpellCasts({ name: "Genasi", source: "EEPC" })).toBeUndefined();
+    expect(
+      raceSpellCasts({ name: "Genasi", source: "EEPC" }, { name: "Fire", source: "EEPC" }),
+    ).toBeUndefined();
   });
 });

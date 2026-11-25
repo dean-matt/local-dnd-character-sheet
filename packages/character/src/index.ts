@@ -150,7 +150,12 @@ export {
   classFeatureGrantor,
   featureSpellPicks,
 } from "./featureSpellPicks.ts";
-export { featurePickOffers, featureSpellPickOffers, spellGrantRecord } from "./heldFeatures.ts";
+export {
+  featurePickOffers,
+  featureSpellPickOffers,
+  raceSpellCasts,
+  spellGrantRecord,
+} from "./heldFeatures.ts";
 export {
   atHitPointMaximum,
   damagedState,

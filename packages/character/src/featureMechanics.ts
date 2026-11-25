@@ -642,12 +642,15 @@ const spellPickSchema = z.strictObject({
  * on the character, under the feature it was made for. The row's daily and rest counts limit
  * a feat's or optional feature's casts without a slot; `casting` says where the text differs:
  * `slot` for a spell cast with a pact slot, which the count limits to one cast, and `atWill`
- * for one the count does not limit.
+ * for one the count does not limit. A race trait whose spells upstream lists as known, with no
+ * `daily` or `rest` key, records `casts`: each spell is cast that many times without a slot
+ * between `reset` rests, the count the trait prints.
  */
 const spellsMechanicSchema = z.strictObject({
   kind: z.literal("spells"),
   picks: z.array(spellPickSchema).min(1).optional(),
   casting: z.enum(["slot", "atWill"]).optional(),
+  casts: z.strictObject({ count: z.int().min(1), reset: z.enum(["short", "long"]) }).optional(),
 });
 
 /**

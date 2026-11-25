@@ -311,11 +311,32 @@ function ownedBy(entry: FeatureMechanics, owners: string[]): FeatureMechanics {
   return mine?.length === mechanics?.length ? entry : { ...entry, mechanics: mine };
 }
 
+const ownersOf = (race: ContentRef, subrace?: ContentRef) => [
+  refKey(race),
+  ...(subrace ? [`${refKey(race)}|${refKey(subrace)}`] : []),
+];
+
+/**
+ * How often each spell a race or subrace grants is cast without a slot where its trait records
+ * the count that upstream's `additionalSpells` omits. A race holding two such traits of different
+ * counts reads the first, a ceiling no race reaches.
+ */
+export function raceSpellCasts(race: ContentRef, subrace?: ContentRef) {
+  const owners = ownersOf(race, subrace);
+  for (const feature of RACE_FEATURES) {
+    if (!feature.owners.some((owner) => owners.includes(owner))) continue;
+    const casts = mechanicsOfKind(ownedBy(feature.entry, owners), "spells").find(
+      (mechanic) => mechanic.casts,
+    )?.casts;
+    if (casts) return casts;
+  }
+  return undefined;
+}
+
 function raceTraits(definition: HoldsFeatures, levels: number): Held[] {
   const race = catalogRef(definition.race);
   if (!race) return [];
-  const subrace = catalogRef(definition.subrace);
-  const owners = [refKey(race), ...(subrace ? [`${refKey(race)}|${refKey(subrace)}`] : [])];
+  const owners = ownersOf(race, catalogRef(definition.subrace));
   return RACE_FEATURES.filter((feature) =>
     feature.owners.some((owner) => owners.includes(owner)),
   ).map(({ ref, entry }) => ({
