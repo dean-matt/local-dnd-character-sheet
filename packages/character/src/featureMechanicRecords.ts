@@ -4204,6 +4204,86 @@ const PLAYERS_HANDBOOK_ARCANE: FeatureMechanics[] = [
   phbFeature(wizard, ["Necromancy", "PHB"], "Undead Thralls", 6),
 ];
 
+/**
+ * The classic Cleric and Bard features of the Player's Handbook that carried no record. A
+ * feature that works on another creature, such as Cutting Words or Dampen Elements, a die or
+ * spell damage a record cannot say, or a condition the sheet does not track, such as Stormborn's
+ * flight outdoors and Avatar of Battle's resistance to nonmagical damage, is the narrative mark.
+ * The 2024 Cleric holds the domain rows and the domain's Channel Divinity at level 3.
+ */
+const PLAYERS_HANDBOOK_DIVINE: FeatureMechanics[] = [
+  // Bard
+  ...[4, 8, 12, 16, 19].map((level) => phbClassFeature(bard, "Ability Score Improvement", level)),
+  phbClassFeature(bard, "Spellcasting", 1),
+  phbClassFeature(bard, "Bard College", 3),
+  ...[6, 14].map((level) => phbClassFeature(bard, "Bard College feature", level)),
+  ...[
+    ["d8", 5],
+    ["d10", 10],
+    ["d12", 15],
+  ].map(([die, level]) => phbClassFeature(bard, `Bardic Inspiration (${die})`, Number(level))),
+  ...[
+    ["d8", 9],
+    ["d10", 13],
+    ["d12", 17],
+  ].map(([die, level]) => phbClassFeature(bard, `Song of Rest (${die})`, Number(level))),
+  // Bard, Lore
+  phbFeature(bard, ["Lore", "PHB"], "College of Lore", 3),
+  phbFeature(bard, ["Lore", "PHB"], "Cutting Words", 3),
+  // Bard, Valor
+  phbFeature(bard, ["Valor", "PHB"], "College of Valor", 3),
+  phbFeature(bard, ["Valor", "PHB"], "Combat Inspiration", 3),
+  phbFeature(bard, ["Valor", "PHB"], "Battle Magic", 14),
+  // Cleric
+  ...[4, 8, 12, 16, 19].map((level) => phbClassFeature(cleric, "Ability Score Improvement", level)),
+  phbClassFeature(cleric, "Spellcasting", 1),
+  ...[6, 18].map((level) => phbClassFeature(cleric, "Channel Divinity", level)),
+  ...[2, 6, 8, 17].map((level) => phbClassFeature(cleric, "Divine Domain feature", level)),
+  ...[
+    ["CR 1/2", 5],
+    ["CR 1", 8],
+    ["CR 2", 11],
+    ["CR 3", 14],
+    ["CR 4", 17],
+  ].map(([cr, level]) => phbClassFeature(cleric, `Destroy Undead (${cr})`, Number(level))),
+  phbClassFeature(cleric, "Divine Intervention Improvement", 20),
+  // Cleric, Knowledge
+  phbFeature(cleric, ["Knowledge", "PHB"], "Channel Divinity: Knowledge of the Ages", 2),
+  phbFeature(cleric24, ["Knowledge", "PHB"], "Channel Divinity: Knowledge of the Ages", 3),
+  // Cleric, Light; the 2014 row's save DC is in `SAVE_DCS`
+  phbFeature(cleric24, ["Light", "PHB"], "Channel Divinity: Radiance of the Dawn", 3, [
+    { kind: "dc", spell: "Cleric" },
+  ]),
+  // Cleric, Nature
+  phbFeature(cleric24, ["Nature", "PHB"], "Channel Divinity: Charm Animals and Plants", 3, [
+    { kind: "dc", spell: "Cleric" },
+  ]),
+  // Cleric, Tempest
+  phbFeature(cleric, ["Tempest", "PHB"], "Channel Divinity: Destructive Wrath", 2),
+  phbFeature(cleric24, ["Tempest", "PHB"], "Channel Divinity: Destructive Wrath", 3),
+  ...["Knowledge", "Life", "Light", "Nature", "Tempest", "Trickery", "War"].map((domain) =>
+    phbFeature(cleric24, [domain, "PHB"], `${domain} Domain`, 3),
+  ),
+  phbFeature(cleric, ["Knowledge", "PHB"], "Potent Spellcasting", 8),
+  phbFeature(cleric, ["Knowledge", "PHB"], "Visions of the Past", 17),
+  phbFeature(cleric, ["Light", "PHB"], "Improved Flare", 6),
+  phbFeature(cleric, ["Light", "PHB"], "Potent Spellcasting", 8),
+  phbFeature(cleric, ["Light", "PHB"], "Corona of Light", 17),
+  phbFeature(cleric, ["Nature", "PHB"], "Acolyte of Nature", 1, [
+    skillsOf(1, ["animal handling", "nature", "survival"]),
+    ...spellPicks({ count: 1, level: 0, from: "Druid" }),
+  ]),
+  phbFeature(cleric, ["Nature", "PHB"], "Dampen Elements", 6),
+  phbFeature(cleric, ["Nature", "PHB"], "Master of Nature", 17),
+  phbFeature(cleric, ["Tempest", "PHB"], "Thunderbolt Strike", 6),
+  phbFeature(cleric, ["Tempest", "PHB"], "Stormborn", 17),
+  phbFeature(cleric, ["Trickery", "PHB"], "Blessing of the Trickster", 1),
+  phbFeature(cleric, ["Trickery", "PHB"], "Channel Divinity: Cloak of Shadows", 6),
+  phbFeature(cleric, ["Trickery", "PHB"], "Improved Duplicity", 17),
+  phbFeature(cleric, ["War", "PHB"], "Channel Divinity: War God's Blessing", 6),
+  phbFeature(cleric, ["War", "PHB"], "Avatar of Battle", 17),
+];
+
 const RECORDS: FeatureMechanics[] = [
   {
     ref: { name: "Alert", source: "PHB" },
@@ -5935,6 +6015,7 @@ const RECORDS: FeatureMechanics[] = [
   ...XANATHARS_GUIDE,
   ...TASHAS_CAULDRON,
   ...PLAYERS_HANDBOOK_ARCANE,
+  ...PLAYERS_HANDBOOK_DIVINE,
   ...SWORD_COAST_AND_WILDEMOUNT,
 ];
 
