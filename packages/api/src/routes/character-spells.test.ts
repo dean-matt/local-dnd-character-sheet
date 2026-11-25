@@ -122,6 +122,8 @@ const DROW = { name: "Drow", source: "PHB" };
 const HEXBLOOD = { name: "Hexblood", source: "VRGR" };
 const GENASI = { name: "Genasi", source: "EEPC" };
 const EARTH = { name: "Earth", source: "EEPC" };
+const MPMM_GENASI = { name: "Genasi", source: "MPMM" };
+const MPMM_EARTH = { name: "Earth", source: "MPMM" };
 const OMEN = { name: "Sign of Ill Omen", source: "PHB" };
 const NIGHT_GIFT = { name: "Night Gift", source: "PHB" };
 const EACH_REST = { name: "Rest Gift", source: "PHB" };
@@ -423,6 +425,7 @@ describe("characterSpellsRoutes", () => {
           [
             ["races", HEXBLOOD, 0, undefined],
             ["subraces", EARTH, 0, GENASI],
+            ["subraces", MPMM_EARTH, 0, MPMM_GENASI],
             ["races", TIEFLING, 5, undefined],
             ["subraces", ASMODEUS, 0, TIEFLING],
             ["backgrounds", HAUNTED_ONE, 0, undefined],
@@ -430,7 +433,8 @@ describe("characterSpellsRoutes", () => {
             ["optional_features", MIST_STANCE, 0, undefined],
           ] as const
         ).map(([granted_by, row, level, parent]) => ({
-          spell_name: row === EARTH ? "Pass without Trace" : "Darkness",
+          spell_name:
+            row === EARTH ? "Pass without Trace" : row === MPMM_EARTH ? "Fire Bolt" : "Darkness",
           spell_source: "PHB",
           granted_by,
           ...row,
@@ -1031,6 +1035,11 @@ describe("characterSpellsRoutes", () => {
         expect(await usesOf()).toContainEqual({ name, uses: { key, count: 1, reset: "long" } });
       },
     );
+
+    it("counts no cast of a cantrip a race trait's count reaches", async () => {
+      wizard(1, { race: MPMM_GENASI, subrace: MPMM_EARTH });
+      expect(await usesOf()).toEqual([{ name: "Fire Bolt", uses: undefined }]);
+    });
 
     it("counts none for a spell no grantor limits", async () => {
       wizard(1, { race: DROW }, [{ ref: SHIELD_REF, prepared: true, origin: WIZARD }]);

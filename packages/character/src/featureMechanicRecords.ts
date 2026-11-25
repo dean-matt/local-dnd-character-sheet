@@ -78,7 +78,7 @@ const RUNE_USES: Mechanic = {
 const SPELLS: Mechanic = { kind: "spells" };
 const SPELLS_BY_SLOT: Mechanic = { kind: "spells", casting: "slot" };
 const SPELLS_AT_WILL: Mechanic = { kind: "spells", casting: "atWill" };
-/** Each spell cast once without a slot between long rests, which upstream's `known` list omits. */
+/** Each spell cast once without a slot between long rests, which upstream's `known` or `innate` list omits. */
 const SPELLS_ONCE_PER_LONG_REST: Mechanic = {
   kind: "spells",
   casts: { count: 1, reset: "long" },
@@ -2145,7 +2145,7 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   ]),
   mpmmTrait("Fey Step", mpmm("Eladrin"), [PROFICIENCY_USES, CHOSEN_CASTING_DC]),
   mpmmTrait("Fairy Magic", mpmm("Fairy"), [SPELLS]),
-  mpmmTrait("Firbolg Magic", mpmm("Firbolg"), [SPELLS]),
+  mpmmTrait("Firbolg Magic", mpmm("Firbolg"), [SPELLS_ONCE_PER_LONG_REST]),
   mpmmTrait("Hidden Step", mpmm("Firbolg"), [PROFICIENCY_USES]),
   mpmmTrait("Speech of Beast and Leaf", mpmm("Firbolg"), [
     {
@@ -2161,7 +2161,7 @@ const MONSTERS_OF_THE_MULTIVERSE: FeatureMechanics[] = [
   mpmmTrait("Mingle with the Wind", [genasi("Air")], [SPELLS]),
   mpmmTrait("Earth Walk", [genasi("Earth")]),
   // The uses count casting blade ward as a bonus action.
-  mpmmTrait("Merge with Stone", [genasi("Earth")], [SPELLS, PROFICIENCY_USES]),
+  mpmmTrait("Merge with Stone", [genasi("Earth")], [SPELLS_ONCE_PER_LONG_REST, PROFICIENCY_USES]),
   mpmmTrait("Fire Resistance", [genasi("Fire")]),
   mpmmTrait("Reach to the Blaze", [genasi("Fire")], [SPELLS]),
   mpmmTrait("Acid Resistance", [genasi("Water")]),
