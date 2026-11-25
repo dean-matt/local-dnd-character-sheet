@@ -2424,10 +2424,10 @@ const MAGIC_RESISTANCE = saveAdvantage("against spells and other magical effects
 const NATURAL_ARMOR_13: Mechanic = { kind: "unarmoredBase", value: 3 };
 
 /**
- * The Path of the Giant and the giant feats of Bigby Presents: Glory of the Giants. A feat's
- * DC set by the ability the feat increased has no `dc` mechanic to name it. Giant's Havoc adds the Rage Damage bonus, which a column's cell prints as
- * a bonus rather than dice, and a reach no term holds. A background feature that grants one of
- * these feats shares its `(name, source)` and so its record.
+ * The Path of the Giant and the giant feats of Bigby Presents: Glory of the Giants. Giant's
+ * Havoc adds the Rage Damage bonus, which a column's cell prints as a bonus rather than dice,
+ * and a reach no term holds. A background feature that grants one of these feats shares its
+ * `(name, source)` and so its record.
  */
 const GLORY_OF_THE_GIANTS: FeatureMechanics[] = [
   bggFeature(barbarian, giant, "Path of the Giant", 3),
