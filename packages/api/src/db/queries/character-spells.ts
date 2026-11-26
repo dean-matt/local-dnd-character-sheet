@@ -310,9 +310,15 @@ function learnedBy(dataDir: string, definition: CharacterDefinition): Map<string
     learned.map(({ spell }) => ({ name: spell })),
   );
   const found = new Map<string, GrantedSpell>();
-  learned.forEach(({ feature }, index) => {
+  learned.forEach(({ feature, casts }, index) => {
     const row = rows[index];
-    if (row && !found.has(entryKey(row))) found.set(entryKey(row), { row, grantor: feature });
+    if (!row || found.has(entryKey(row))) return;
+    const key = featureUsesKey(["spell", "learned", feature], row.name);
+    found.set(entryKey(row), {
+      row,
+      grantor: feature,
+      ...(casts && row.level > 0 && { uses: { key, ...casts } }),
+    });
   });
   return found;
 }

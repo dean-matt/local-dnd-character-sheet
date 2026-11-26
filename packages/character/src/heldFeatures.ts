@@ -340,11 +340,18 @@ export function raceSpellCasts(race: ContentRef, subrace?: ContentRef) {
   return undefined;
 }
 
-/** The spells the features a character holds teach by name, each with the feature that does. */
-export const learnedSpells = (definition: HoldsFeatures): { feature: string; spell: string }[] =>
+/**
+ * The spells the features a character holds teach by name, each with the feature that does and the
+ * casts without a slot the feature records.
+ */
+export const learnedSpells = (
+  definition: HoldsFeatures,
+): { feature: string; spell: string; casts?: NonNullable<ReturnType<typeof raceSpellCasts>> }[] =>
   heldFeatures(definition).flatMap(({ ref, entry }) =>
-    mechanicsOfKind(entry, "spells").flatMap(({ learns = [] }) =>
-      learns.map((spell) => ({ feature: ref.name, spell })),
+    mechanicsOfKind(entry, "spells").flatMap(({ learns = [], learnedAt = 1, casts }) =>
+      totalLevel(definition) >= learnedAt
+        ? learns.map((spell) => ({ feature: ref.name, spell, casts }))
+        : [],
     ),
   );
 

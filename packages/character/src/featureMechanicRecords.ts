@@ -83,6 +83,12 @@ const SPELLS_ONCE_PER_LONG_REST: Mechanic = {
   kind: "spells",
   casts: { count: 1, reset: "long" },
 };
+/** The same, plus one spell the trait grants from 3rd level, which upstream omits. */
+const ONCE_AT_3RD = (spell: string): Mechanic => ({
+  ...SPELLS_ONCE_PER_LONG_REST,
+  learns: [spell],
+  learnedAt: 3,
+});
 const barbarian: [string, string] = ["Barbarian", "PHB"];
 const barbarian24: [string, string] = ["Barbarian", "XPHB"];
 const fighter24: [string, string] = ["Fighter", "XPHB"];
@@ -2041,21 +2047,20 @@ const EBERRON: FeatureMechanics[] = [
   erlwTrait("Hunter's Intuition", MARK_OF_FINDING, [intuitionDie(["perception", "survival"])]),
   ...(
     [
-      ["Wards and Seals", "Dwarf", "Mark of Warding"],
-      ["Shape Shadows", "Elf", "Mark of Shadow"],
-      ["Scribe's Insight", "Gnome", "Mark of Scribing"],
-      ["Magical Detection", "Half-Elf", "Variant; Mark of Detection"],
-      ["Headwinds", "Half-Elf", "Variant; Mark of Storm"],
-      ["Healing Touch", "Halfling", "Mark of Healing"],
-      ["Innkeeper's Magic", "Halfling", "Mark of Hospitality"],
-      ["Primal Connection", "Human", "Mark of Handling"],
-      // Its one use is the catalog's.
-      ["Spellsmith", "Human", "Mark of Making"],
-      ["Magical Passage", "Human", "Mark of Passage"],
-      ["Guardian's Shield", "Human", "Mark of Sentinel"],
+      ["Wards and Seals", "Dwarf", "Mark of Warding", ONCE_AT_3RD("arcane lock")],
+      ["Shape Shadows", "Elf", "Mark of Shadow", SPELLS],
+      ["Scribe's Insight", "Gnome", "Mark of Scribing", SPELLS],
+      ["Magical Detection", "Half-Elf", "Variant; Mark of Detection", SPELLS_ONCE_PER_LONG_REST],
+      ["Headwinds", "Half-Elf", "Variant; Mark of Storm", ONCE_AT_3RD("gust of wind")],
+      ["Healing Touch", "Halfling", "Mark of Healing", SPELLS_ONCE_PER_LONG_REST],
+      ["Innkeeper's Magic", "Halfling", "Mark of Hospitality", SPELLS_ONCE_PER_LONG_REST],
+      ["Primal Connection", "Human", "Mark of Handling", SPELLS],
+      ["Spellsmith", "Human", "Mark of Making", SPELLS_ONCE_PER_LONG_REST],
+      ["Magical Passage", "Human", "Mark of Passage", SPELLS_ONCE_PER_LONG_REST],
+      ["Guardian's Shield", "Human", "Mark of Sentinel", SPELLS_ONCE_PER_LONG_REST],
     ] as const
-  ).map(([name, race, mark]) => erlwTrait(name, [dragonmark(race, mark)], [SPELLS])),
-  erlwTrait("Finder's Magic", MARK_OF_FINDING, [SPELLS]),
+  ).map(([name, race, mark, spells]) => erlwTrait(name, [dragonmark(race, mark)], [spells])),
+  erlwTrait("Finder's Magic", MARK_OF_FINDING, [SPELLS_ONCE_PER_LONG_REST]),
   erlwTrait("Spells of the Mark", DRAGONMARKS, [SPELLS]),
   erlwTrait("Storm's Boon", [dragonmark("Half-Elf", "Variant; Mark of Storm")]),
   erlwTrait("Maker's Gift", [dragonmark("Human", "Mark of Making")]),
