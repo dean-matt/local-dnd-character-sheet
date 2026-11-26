@@ -670,7 +670,7 @@ const spellPickSchema = z.strictObject({
  * between `reset` rests, the count the trait prints. A class or subclass feature that teaches
  * a spell by name, which no `additionalSpells` lists, records it in `learns`: the sheet lists it
  * as granted, so it counts against no spells known. `learnedAt` holds the spells back until the
- * character's level reaches it, and the mechanic's `casts` limits each to that many casts.
+ * character's total level reaches it, and the mechanic's `casts` limits each to that many casts.
  */
 const spellsMechanicSchema = z.strictObject({
   kind: z.literal("spells"),

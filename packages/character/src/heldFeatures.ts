@@ -347,9 +347,11 @@ export function raceSpellCasts(race: ContentRef, subrace?: ContentRef) {
 export const learnedSpells = (
   definition: HoldsFeatures,
 ): { feature: string; spell: string; casts?: NonNullable<ReturnType<typeof raceSpellCasts>> }[] =>
-  heldFeatures(definition).flatMap(({ ref, entry, levels }) =>
+  heldFeatures(definition).flatMap(({ ref, entry }) =>
     mechanicsOfKind(entry, "spells").flatMap(({ learns = [], learnedAt = 1, casts }) =>
-      levels >= learnedAt ? learns.map((spell) => ({ feature: ref.name, spell, casts })) : [],
+      totalLevel(definition) >= learnedAt
+        ? learns.map((spell) => ({ feature: ref.name, spell, casts }))
+        : [],
     ),
   );
 
