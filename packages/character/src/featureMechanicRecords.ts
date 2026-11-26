@@ -1906,6 +1906,14 @@ const MARK_OF_FINDING = [
   dragonmark("Half-Orc", "Variant; Mark of Finding"),
   dragonmark("Human", "Variant; Mark of Finding"),
 ];
+/** The d4 a dragonmark's intuition trait lets the player add to a check of these skills. */
+const intuitionDie = (skills: readonly string[]): Mechanic => ({
+  kind: "roll",
+  roll: "check",
+  skills: [...skills],
+  dice: "1d4",
+  against: "roll a d4 and add it to the check",
+});
 const DRAGONMARKS = [
   dragonmark("Dwarf", "Mark of Warding"),
   dragonmark("Elf", "Mark of Shadow"),
@@ -2010,20 +2018,27 @@ const EBERRON: FeatureMechanics[] = [
   erlwTrait("Specialized Design", [erlwRace("Warforged")]),
   ...(
     [
-      ["Warder's Intuition", "Dwarf", "Mark of Warding"],
-      ["Cunning Intuition", "Elf", "Mark of Shadow"],
-      ["Gifted Scribe", "Gnome", "Mark of Scribing"],
-      ["Deductive Intuition", "Half-Elf", "Variant; Mark of Detection"],
-      ["Windwright's Intuition", "Half-Elf", "Variant; Mark of Storm"],
-      ["Medical Intuition", "Halfling", "Mark of Healing"],
-      ["Ever Hospitable", "Halfling", "Mark of Hospitality"],
-      ["Wild Intuition", "Human", "Mark of Handling"],
-      ["Artisan's Intuition", "Human", "Mark of Making"],
-      ["Intuitive Motion", "Human", "Mark of Passage"],
-      ["Sentinel's Intuition", "Human", "Mark of Sentinel"],
+      ["Warder's Intuition", "Dwarf", "Mark of Warding", ["investigation"]],
+      ["Cunning Intuition", "Elf", "Mark of Shadow", ["performance", "stealth"]],
+      ["Gifted Scribe", "Gnome", "Mark of Scribing", ["history"]],
+      [
+        "Deductive Intuition",
+        "Half-Elf",
+        "Variant; Mark of Detection",
+        ["investigation", "insight"],
+      ],
+      ["Windwright's Intuition", "Half-Elf", "Variant; Mark of Storm", ["acrobatics"]],
+      ["Medical Intuition", "Halfling", "Mark of Healing", ["medicine"]],
+      ["Ever Hospitable", "Halfling", "Mark of Hospitality", ["persuasion"]],
+      ["Wild Intuition", "Human", "Mark of Handling", ["animal handling", "nature"]],
+      ["Artisan's Intuition", "Human", "Mark of Making", ["arcana"]],
+      ["Intuitive Motion", "Human", "Mark of Passage", ["acrobatics"]],
+      ["Sentinel's Intuition", "Human", "Mark of Sentinel", ["insight", "perception"]],
     ] as const
-  ).map(([name, race, mark]) => erlwTrait(name, [dragonmark(race, mark)])),
-  erlwTrait("Hunter's Intuition", MARK_OF_FINDING),
+  ).map(([name, race, mark, skills]) =>
+    erlwTrait(name, [dragonmark(race, mark)], [intuitionDie(skills)]),
+  ),
+  erlwTrait("Hunter's Intuition", MARK_OF_FINDING, [intuitionDie(["perception", "survival"])]),
   ...(
     [
       ["Wards and Seals", "Dwarf", "Mark of Warding"],

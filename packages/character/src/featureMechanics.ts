@@ -199,8 +199,10 @@ const speedMechanicSchema = z
  * Advantage, or a bonus, on saving throws, ability checks, initiative or death saves: of the
  * `abilities` named, or of every one, and for a check of the `skills` named alone. A bonus is
  * a number, an ability's modifier of at least +1, or the levels in the feature's class, and
- * falls on saves or named skills. `against` says when it holds, and the roll offers it rather
- * than applying it. `races` keeps it to those of a shared trait's races that name it.
+ * falls on saves or named skills. `dice` is a die the player adds to a check of the named
+ * skills. `against` says when it holds, and the roll offers it rather than applying it; a
+ * `dice` mechanic always names it. `races` keeps it to those of a shared trait's races that
+ * name it.
  */
 const rollMechanicSchema = z
   .strictObject({
@@ -210,12 +212,21 @@ const rollMechanicSchema = z
     skills: names,
     advantage: z.literal(true).optional(),
     bonus: z.union([z.int().min(1), abilitySchema, z.literal("level")]).optional(),
+    dice: z
+      .string()
+      .regex(/^\d+d\d+$/)
+      .optional(),
     against: z.string().min(1).optional(),
     while: whileSchema,
     races: sharedRaces,
   })
-  .refine(({ advantage, bonus }) => (advantage === undefined) !== (bonus === undefined), {
-    error: "a roll mechanic gives advantage or a bonus, never both or neither",
+  .refine(
+    ({ advantage, bonus, dice }) =>
+      [advantage, bonus, dice].filter((given) => given !== undefined).length === 1,
+    { error: "a roll mechanic gives advantage, a bonus or dice, never more than one or none" },
+  )
+  .refine(({ dice, against, skills }) => dice === undefined || (against && skills), {
+    error: "dice fall on named skills and name when they apply",
   })
   .refine(
     ({ roll, skills, abilities }) =>
