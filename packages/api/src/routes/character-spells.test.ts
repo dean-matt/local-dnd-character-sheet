@@ -318,6 +318,7 @@ describe("characterSpellsRoutes", () => {
         spellRow("Silence", "PHB", 2),
         spellRow("Burning Hands", "PHB", 1),
         spellRow("Sacred Flame", "PHB", 0),
+        spellRow("Arcane Lock", "PHB", 2),
         spellRow("Minor Illusion", "XPHB", 0),
         spellRow("Darkness", "XPHB", 2),
       ],
@@ -1035,6 +1036,26 @@ describe("characterSpellsRoutes", () => {
         expect(await usesOf()).toContainEqual({ name, uses: { key, count: 1, reset: "long" } });
       },
     );
+
+    const warding = {
+      race: { name: "Dwarf", source: "PHB" },
+      subrace: { name: "Mark of Warding", source: "ERLW" },
+    };
+
+    it("counts one cast a long rest of a spell a dragonmark grants from 3rd level", async () => {
+      wizard(3, warding);
+      expect(await usesOf()).toEqual([
+        {
+          name: "Arcane Lock",
+          uses: { key: "spell|learned|Wards and Seals|Arcane Lock", count: 1, reset: "long" },
+        },
+      ]);
+    });
+
+    it("grants a dragonmark's 3rd-level spell no sooner", async () => {
+      wizard(2, warding);
+      expect(await usesOf()).toEqual([]);
+    });
 
     it("counts no cast of a cantrip a race trait's count reaches", async () => {
       wizard(1, { race: MPMM_GENASI, subrace: MPMM_EARTH });

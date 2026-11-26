@@ -143,11 +143,12 @@ describe("an Eberron race", () => {
 describe("a dragonmark", () => {
   it("records the spells of each mark", () => {
     const finding = held(raceOf(["Half-Orc", "PHB"], ["Variant; Mark of Finding", "ERLW"]));
-    for (const name of ["Finder's Magic", "Spells of the Mark"])
-      expect(finding.get(name)?.mechanics).toEqual([{ kind: "spells" }]);
+    const once = { kind: "spells", casts: { count: 1, reset: "long" } };
+    expect(finding.get("Finder's Magic")?.mechanics).toEqual([once]);
+    expect(finding.get("Spells of the Mark")?.mechanics).toEqual([{ kind: "spells" }]);
     expect(finding.get("Darkvision")?.narrative).toBe(true);
     const sentinel = held(raceOf(["Human", "PHB"], ["Mark of Sentinel", "ERLW"]));
-    expect(sentinel.get("Guardian's Shield")?.mechanics).toEqual([{ kind: "spells" }]);
+    expect(sentinel.get("Guardian's Shield")?.mechanics).toEqual([once]);
     expect(sentinel.has("Finder's Magic")).toBe(false);
   });
 

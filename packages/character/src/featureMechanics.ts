@@ -669,7 +669,8 @@ const spellPickSchema = z.strictObject({
  * `daily` or `rest` key, records `casts`: each spell is cast that many times without a slot
  * between `reset` rests, the count the trait prints. A class or subclass feature that teaches
  * a spell by name, which no `additionalSpells` lists, records it in `learns`: the sheet lists it
- * as granted, so it counts against no spells known.
+ * as granted, so it counts against no spells known. `learnedAt` holds the spells back until the
+ * character's level reaches it, and the mechanic's `casts` limits each to that many casts.
  */
 const spellsMechanicSchema = z.strictObject({
   kind: z.literal("spells"),
@@ -677,6 +678,7 @@ const spellsMechanicSchema = z.strictObject({
   casting: z.enum(["slot", "atWill"]).optional(),
   casts: z.strictObject({ count: z.int().min(1), reset: z.enum(["short", "long"]) }).optional(),
   learns: z.array(z.string().min(1)).min(1).optional(),
+  learnedAt: z.int().min(2).max(20).optional(),
 });
 
 /**

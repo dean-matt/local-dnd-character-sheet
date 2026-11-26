@@ -92,6 +92,16 @@ describe("the casts a race trait records for its known spells", () => {
     ["Genasi", "EEPC", { name: "Earth", source: "EEPC" }],
     ["Firbolg", "MPMM", undefined],
     ["Genasi", "MPMM", { name: "Earth", source: "MPMM" }],
+    ["Dwarf", "PHB", { name: "Mark of Warding", source: "ERLW" }],
+    ["Half-Elf", "PHB", { name: "Variant; Mark of Detection", source: "ERLW" }],
+    ["Half-Elf", "PHB", { name: "Variant; Mark of Storm", source: "ERLW" }],
+    ["Half-Orc", "PHB", { name: "Variant; Mark of Finding", source: "ERLW" }],
+    ["Human", "PHB", { name: "Variant; Mark of Finding", source: "ERLW" }],
+    ["Halfling", "PHB", { name: "Mark of Healing", source: "ERLW" }],
+    ["Halfling", "PHB", { name: "Mark of Hospitality", source: "ERLW" }],
+    ["Human", "PHB", { name: "Mark of Making", source: "ERLW" }],
+    ["Human", "PHB", { name: "Mark of Passage", source: "ERLW" }],
+    ["Human", "PHB", { name: "Mark of Sentinel", source: "ERLW" }],
   ])("counts one cast a long rest for %s %s %o", (name, source, subrace) => {
     expect(raceSpellCasts({ name, source }, subrace)).toEqual(once);
   });
@@ -101,6 +111,26 @@ describe("the casts a race trait records for its known spells", () => {
     expect(
       raceSpellCasts({ name: "Genasi", source: "EEPC" }, { name: "Fire", source: "EEPC" }),
     ).toBeUndefined();
+  });
+});
+
+describe("the spells a dragonmark teaches from 3rd level", () => {
+  const marked = (race: string, subrace: string, level: number) =>
+    learnedSpells({
+      ...definition,
+      feats: [],
+      optionalFeatures: [],
+      race: { name: race, source: "PHB" },
+      subrace: { name: subrace, source: "ERLW" },
+      levels: Array.from({ length: level }, () => ({ class: { name: "Fighter", source: "PHB" } })),
+    });
+
+  it.each([
+    ["Dwarf", "Mark of Warding", "Wards and Seals", "arcane lock"],
+    ["Half-Elf", "Variant; Mark of Storm", "Headwinds", "gust of wind"],
+  ])("teaches the %s %s %s's %s once a long rest, from 3rd level", (race, mark, feature, spell) => {
+    expect(marked(race, mark, 2)).toEqual([]);
+    expect(marked(race, mark, 3)).toEqual([{ feature, spell, casts: { count: 1, reset: "long" } }]);
   });
 });
 
